@@ -629,6 +629,12 @@ body { -webkit-tap-highlight-color: transparent; }
   #tools-toggle { flex: 1 1 100%; }
 }
 
+/* הודעה בעותק מקומי של הקובץ */
+.local-notice {
+  margin: 0 0 12px; padding: 9px 13px; border-radius: 9px; font-size: 13px;
+  background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line);
+}
+
 </style>
 </head>
 <body>
@@ -693,6 +699,11 @@ body { -webkit-tap-highlight-color: transparent; }
         <div id="holiday-days" class="holiday-chips"></div>
       </div>
     </div>
+
+    <p id="local-notice" class="local-notice no-print hidden">
+      זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים.
+      לעבודה משני מחשבים יש להשתמש בגרסה המתארחת. להעברת הנתונים: ייצוא JSON בלשונית ההגדרות, וייבוא בגרסה המתארחת.
+    </p>
 
     <div id="issues" class="issues"></div>
 
@@ -924,6 +935,29 @@ body { -webkit-tap-highlight-color: transparent; }
       slice.updatedAt = Date.now();
       return slice;
     });
+  };
+
+  /* העלאת כל השבועות לענן – נדרש אחרי ייבוא נתונים, שבו נוספים שבועות
+     שלמים בבת אחת ולא רק השבוע המוצג. */
+  Platform.pushAllWeeks = function () {
+    if (!Platform.db || Platform.syncState === 'readonly') return Promise.resolve(0);
+    var state = sync.getState();
+    var keys = Object.keys(state.weeks || {});
+    var saved = 0;
+
+    return keys.reduce(function (chain, key) {
+      return chain.then(function () {
+        var week = state.weeks[key];
+        if (!week) return;
+        var slice = weekSlice(week);
+        slice.updatedAt = Date.now();
+        return Platform.db.doc('weeks/' + key).set(slice).then(function () {
+          saved++;
+          Platform.lastSyncedAt = new Date();
+          if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt);
+        }, function () { /* שבוע בודד שנכשל אינו עוצר את השאר */ });
+      });
+    }, Promise.resolve()).then(function () { return saved; });
   };
 
   function subscribeConfig() {
@@ -4052,7 +4086,12 @@ body { -webkit-tap-highlight-color: transparent; }
           state = Store.migrate(JSON.parse(reader.result));
           persist('all');
           render();
-          toast('הנתונים יובאו בהצלחה');
+          // ייבוא מביא שבועות שלמים – מעלים את כולם ולא רק את השבוע המוצג
+          Platform.pushAllWeeks().then(function (saved) {
+            toast(saved
+              ? 'הנתונים יובאו והועלו לענן (' + saved + ' שבועות)'
+              : 'הנתונים יובאו בהצלחה');
+          });
         } catch (err) {
           alert('קובץ לא תקין: ' + err.message);
         }
@@ -4243,6 +4282,11 @@ body { -webkit-tap-highlight-color: transparent; }
     node.title = syncStatus === 'live'
       ? 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור'
       : 'הנתונים נשמרים רק בדפדפן של המחשב הזה';
+
+    // עותק מקומי של הקובץ לעולם לא יסתנכרן – כדאי שזה יהיה ברור
+    var notice = $('#local-notice');
+    var isLocalFile = location.protocol === 'file:';
+    notice.classList.toggle('hidden', !(isLocalFile && syncStatus !== 'live'));
   }
 
   function onSynced(date, fromRemote) {

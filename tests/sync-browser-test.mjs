@@ -92,6 +92,30 @@ await page.waitForTimeout(1500);
 console.log('5. local edit written back to cloud:', (await page.evaluate(() => window.__writes.slice())).length > 0);
 console.log('   indicator:', (await page.locator('#sync-state').textContent()).trim());
 
+// ייבוא נתונים עם כמה שבועות – כולם צריכים לעלות לענן
+await page.evaluate(() => { window.__writes.length = 0; });
+const backup = JSON.stringify({
+  version: 1,
+  settings: { onePerDay: true, restEveningMorning: true, oneDayOffPerWeek: true, defaultShabbatEnd: '20:00' },
+  branches: [{ id: 'b1', name: 'סניף מיובא', active: true }],
+  employees: [{ id: 'e1', name: 'עובד מיובא', active: true, branches: [], shifts: ['morning'], maxShifts: 5 }],
+  weeks: {
+    '2026-09-13': { constraints: {}, assignments: { '0|b1|morning': ['e1'] }, manual: {} },
+    '2026-09-20': { constraints: {}, assignments: { '1|b1|morning': ['e1'] }, manual: {} },
+    '2026-09-27': { constraints: {}, assignments: { '2|b1|morning': ['e1'] }, manual: {} }
+  }
+});
+await page.locator('.tab[data-tab="settings"]').click();
+await page.waitForTimeout(300);
+await page.setInputFiles('#import-json', {
+  name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(backup, 'utf8')
+});
+await page.waitForTimeout(2000);
+const weekWrites = await page.evaluate(() =>
+  [...new Set(window.__writes)].filter(p => p.startsWith('weeks/')).sort());
+console.log('6. weeks uploaded after import:', JSON.stringify(weekWrites));
+if (weekWrites.length !== 3) { errors.push('ייבוא לא העלה את כל השבועות: ' + weekWrites.length); }
+
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();
 if (errors.length) process.exit(1);

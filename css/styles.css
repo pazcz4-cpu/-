@@ -621,3 +621,9 @@ body { -webkit-tap-highlight-color: transparent; }
   .sync-state { order: 4; width: 100%; justify-content: center; }
   #tools-toggle { flex: 1 1 100%; }
 }
+
+/* הודעה בעותק מקומי של הקובץ */
+.local-notice {
+  margin: 0 0 12px; padding: 9px 13px; border-radius: 9px; font-size: 13px;
+  background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line);
+}

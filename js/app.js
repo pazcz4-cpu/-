@@ -1470,7 +1470,12 @@
           state = Store.migrate(JSON.parse(reader.result));
           persist('all');
           render();
-          toast('הנתונים יובאו בהצלחה');
+          // ייבוא מביא שבועות שלמים – מעלים את כולם ולא רק את השבוע המוצג
+          Platform.pushAllWeeks().then(function (saved) {
+            toast(saved
+              ? 'הנתונים יובאו והועלו לענן (' + saved + ' שבועות)'
+              : 'הנתונים יובאו בהצלחה');
+          });
         } catch (err) {
           alert('קובץ לא תקין: ' + err.message);
         }
@@ -1661,6 +1666,11 @@
     node.title = syncStatus === 'live'
       ? 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור'
       : 'הנתונים נשמרים רק בדפדפן של המחשב הזה';
+
+    // עותק מקומי של הקובץ לעולם לא יסתנכרן – כדאי שזה יהיה ברור
+    var notice = $('#local-notice');
+    var isLocalFile = location.protocol === 'file:';
+    notice.classList.toggle('hidden', !(isLocalFile && syncStatus !== 'live'));
   }
 
   function onSynced(date, fromRemote) {

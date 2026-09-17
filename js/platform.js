@@ -127,6 +127,29 @@
     });
   };
 
+  /* העלאת כל השבועות לענן – נדרש אחרי ייבוא נתונים, שבו נוספים שבועות
+     שלמים בבת אחת ולא רק השבוע המוצג. */
+  Platform.pushAllWeeks = function () {
+    if (!Platform.db || Platform.syncState === 'readonly') return Promise.resolve(0);
+    var state = sync.getState();
+    var keys = Object.keys(state.weeks || {});
+    var saved = 0;
+
+    return keys.reduce(function (chain, key) {
+      return chain.then(function () {
+        var week = state.weeks[key];
+        if (!week) return;
+        var slice = weekSlice(week);
+        slice.updatedAt = Date.now();
+        return Platform.db.doc('weeks/' + key).set(slice).then(function () {
+          saved++;
+          Platform.lastSyncedAt = new Date();
+          if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt);
+        }, function () { /* שבוע בודד שנכשל אינו עוצר את השאר */ });
+      });
+    }, Promise.resolve()).then(function () { return saved; });
+  };
+
   function subscribeConfig() {
     sync.unsubConfig = Platform.db.doc('config/main').onSnapshot(function (snap) {
       if (!snap.exists) { Platform.pushConfig(); return; } // זריעה ראשונה

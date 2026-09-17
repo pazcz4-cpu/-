@@ -66,6 +66,7 @@
   var DEFAULT_SETTINGS = {
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
+    oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
     defaultShabbatEnd: '20:00'
   };
 

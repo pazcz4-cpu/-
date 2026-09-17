@@ -68,8 +68,10 @@
 
   function scoreCandidate(ctx, emp, demand, rand) {
     var score = 0;
-    var max = emp.maxShifts || 6;
-    score += (ctx.counts[emp.id] / Math.max(1, max)) * 100; // הוגנות: מי שעבד פחות – קודם
+    // הוגנות ביחס ליעד האישי: המכסה השבועית מוגבלת במספר הימים שבהם
+    // העובד פנוי, כך שמי שביקש יום חופש אחד אמור לעבוד בשאר הימים.
+    var target = ctx.targets[emp.id] || 1;
+    score += (ctx.counts[emp.id] / target) * 100;
 
     var constraint = ctx.constraints[emp.id + '|' + demand.dayIdx];
     if (constraint && constraint.preferred && Object.keys(constraint.preferred).length) {
@@ -98,12 +100,14 @@
       week: week,
       constraints: week.constraints || {},
       counts: {},
+      targets: {},
       byDay: {},
       branchHistory: {},
       shiftHistory: {},
       assignments: {}
     };
     state.employees.forEach(function (emp) {
+      ctx.targets[emp.id] = Math.max(1, Store.targetShifts(state, week, emp));
       ctx.counts[emp.id] = 0;
       ctx.byDay[emp.id] = [[], [], [], [], [], [], []];
       ctx.branchHistory[emp.id] = {};
@@ -368,7 +372,8 @@
   function qualityOf(state, week, result) {
     var counts = [];
     state.employees.forEach(function (emp) {
-      if (emp.active) counts.push(result.counts[emp.id] / Math.max(1, emp.maxShifts || 6));
+      if (!emp.active) return;
+      counts.push(result.counts[emp.id] / Math.max(1, Store.targetShifts(state, week, emp) || 1));
     });
     var avg = counts.reduce(function (a, b) { return a + b; }, 0) / (counts.length || 1);
     var variance = counts.reduce(function (a, b) { return a + Math.pow(b - avg, 2); }, 0) / (counts.length || 1);

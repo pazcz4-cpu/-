@@ -653,6 +653,72 @@ test('יתרה ללא ימים פנויים אינה נספרת כזמינה', f
   assertEqual(row.available, 0, 'לא ניתן לשבץ אותו בפועל');
 });
 
+console.log('\n== מדיניות יום חופש ==');
+
+test('יעד המשמרות מוגבל במספר הימים שהעובד יכול לעבוד', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[0];
+  emp.maxShifts = 7;
+  assertEqual(Store.targetShifts(state, weekData, emp), 7, 'ללא חופש – שבעה ימים');
+  Store.setConstraint(weekData, emp.id, 3, { off: true, blocked: {}, preferred: {}, note: '' });
+  assertEqual(Store.targetShifts(state, weekData, emp), 6, 'עם יום חופש אחד – שישה ימים');
+  assertEqual(Store.requestedDaysOff(weekData, emp.id).length, 1, 'יום חופש אחד נספר');
+});
+
+test('מכסה נמוכה גוברת על מספר הימים הפנויים', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[0];
+  emp.maxShifts = 3;
+  assertEqual(Store.targetShifts(state, weekData, emp), 3, 'המכסה היא הגבול');
+});
+
+test('מי שביקש יום חופש אחד משובץ בכל שאר הימים', function () {
+  var state = freshState();
+  state.employees.forEach(function (e) { e.maxShifts = 7; e.branches = []; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[0];
+  Store.setConstraint(weekData, emp.id, 3, { off: true, blocked: {}, preferred: {}, note: '' });
+  build(state, weekData);
+  assertEqual(Store.employeeDayAssignments(state, weekData, emp.id, 3).length, 0, 'יום החופש נשמר');
+  assertEqual(Store.employeeWeekCount(state, weekData, emp.id),
+    Store.targetShifts(state, weekData, emp), 'עובד בכל שאר הימים האפשריים');
+});
+
+test('סימון יותר מיום חופש אחד מפיק אזהרה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[1];
+  Store.setConstraint(weekData, emp.id, 1, { off: true, blocked: {}, preferred: {}, note: '' });
+  Store.setConstraint(weekData, emp.id, 4, { off: true, blocked: {}, preferred: {}, note: '' });
+  var found = issuesOfType(Validate.validate(state, weekData), 'extra-days-off');
+  assertEqual(found.length, 1, 'אזהרה אחת על ריבוי ימי חופש');
+  assert(found[0].text.indexOf('שני, חמישי') !== -1, 'האזהרה מפרטת את הימים');
+});
+
+test('כיבוי המדיניות מבטל את האזהרה', function () {
+  var state = freshState();
+  state.settings.oneDayOffPerWeek = false;
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[1];
+  Store.setConstraint(weekData, emp.id, 1, { off: true, blocked: {}, preferred: {}, note: '' });
+  Store.setConstraint(weekData, emp.id, 4, { off: true, blocked: {}, preferred: {}, note: '' });
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'extra-days-off').length, 0,
+    'ללא המדיניות אין אזהרה');
+});
+
+test('יום חג אינו נספר כיום חופש שהעובד ביקש', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  Store.setHoliday(weekData, 2, 'סוכות');
+  var emp = state.employees[0];
+  Store.setConstraint(weekData, emp.id, 3, { off: true, blocked: {}, preferred: {}, note: '' });
+  assertEqual(Store.requestedDaysOff(weekData, emp.id).length, 1, 'רק היום שהעובד ביקש נספר');
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'extra-days-off').length, 0,
+    'חג אינו יוצר אזהרת ריבוי ימי חופש');
+});
+
 console.log('\n== ייצוא לאקסל ==');
 
 function readZipEntries(bytes) {

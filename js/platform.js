@@ -6,6 +6,8 @@
   var Platform = {
     downloads: null,
     db: null,
+    sample: null,
+    onSampleReady: null,
     syncState: 'local',      // local | live | readonly
     onSyncState: null
   };
@@ -152,6 +154,7 @@
   /* מופעל פעם אחת בעליית האפליקציה */
   Platform.init = function (options) {
     sync.getState = options.getState;
+    Platform.onSampleReady = options.onSampleReady;
     sync.onConfig = options.onConfig;
     sync.onWeek = options.onWeek;
     Platform.onSyncState = options.onSyncState;
@@ -161,6 +164,11 @@
 
     root.claude.use('downloads').then(function (api) {
       Platform.downloads = api || null;
+    }).catch(function () {});
+
+    root.claude.use('sample').then(function (api) {
+      Platform.sample = api || null;
+      if (Platform.sample && Platform.onSampleReady) Platform.onSampleReady();
     }).catch(function () {});
 
     root.claude.use('db').then(function (api) {

@@ -222,8 +222,6 @@
     return demands;
   }
 
-  /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
-
   /* האם העובד יכול בכלל לעבוד ביום הזה – קיימת משמרת פתוחה שמתאימה לו */
   function employeeCanWorkDay(state, week, emp, dayIdx) {
     if (!emp.active) return false;
@@ -242,6 +240,34 @@
       });
     });
   }
+
+  /* ===== ימי חופש ומכסת עבודה ===== */
+
+  /* הימים שהעובד ביקש כחופש בשבוע הזה */
+  function requestedDaysOff(week, empId) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      if (getConstraint(week, empId, day).off) days.push(day);
+    }
+    return days;
+  }
+
+  /* כמה ימים בשבוע העובד יכול בכלל לעבוד (אחרי אילוצים, חגים וסניפים סגורים) */
+  function workableDays(state, week, emp) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      if (employeeCanWorkDay(state, week, emp, day)) days.push(day);
+    }
+    return days;
+  }
+
+  /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
+     ממספר הימים שבהם הוא יכול לעבוד בפועל. */
+  function targetShifts(state, week, emp) {
+    return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
+  }
+
+  /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
 
   /* סיכום לכל עובד פעיל: כמה משמרות נותרו במכסה ובאילו ימים הוא פנוי */
   function weekAvailability(state, week) {
@@ -419,6 +445,9 @@
     normalizeSchedule: normalizeSchedule,
     weekDemands: weekDemands,
     employeeCanWorkDay: employeeCanWorkDay,
+    requestedDaysOff: requestedDaysOff,
+    workableDays: workableDays,
+    targetShifts: targetShifts,
     weekAvailability: weekAvailability,
     byId: byId,
     migrate: migrate,

@@ -317,6 +317,19 @@
     $('#availability').innerHTML = html;
   }
 
+  function renderPersonalPicker() {
+    var select = $('#personal-employee');
+    var previous = select.value;
+    var html = '<option value="">בחרו עובד…</option>';
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var count = Store.employeeWeekCount(state, week(), emp.id);
+      html += '<option value="' + esc(emp.id) + '">' + esc(emp.name) + ' (' + count + ')</option>';
+    });
+    select.innerHTML = html;
+    if (previous && Store.byId(state.employees, previous)) select.value = previous;
+  }
+
   function renderWorkload() {
     var html = '';
     state.employees.forEach(function (emp) {
@@ -473,6 +486,7 @@
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
+    $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
   }
 
@@ -486,6 +500,7 @@
     renderEmployeeView(marks);
     renderWorkload();
     renderAvailability();
+    renderPersonalPicker();
     renderConstraints();
     renderEmployees();
     renderBranches();
@@ -526,6 +541,15 @@
         ' שאפשר עוד לשבץ —');
     }
     return lines.join('\n');
+  }
+
+  function copyText(text, message) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast(message); },
+        function () { window.prompt('העתיקו את הטקסט:', text); });
+    } else {
+      window.prompt('העתיקו את הטקסט:', text);
+    }
   }
 
   function saveFile(filename, content, mime) {
@@ -702,6 +726,100 @@
     return { name: 'בדיקות', cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
   }
 
+  /* ===== ייצוא אישי: רק המשמרות של עובד אחד ===== */
+  function personalRows(empId) {
+    var current = week();
+    var rows = [];
+    Data.DAYS.forEach(function (day) {
+      var slots = Store.employeeDayAssignments(state, current, empId, day.idx);
+      var constraint = Store.getConstraint(current, empId, day.idx);
+      var date = Store.formatDate(Store.dateOfDay(weekKey, day.idx));
+
+      if (!slots.length) {
+        var status = Store.isHoliday(current, day.idx)
+          ? Store.holidayName(current, day.idx)
+          : (constraint.off ? 'יום חופש' : 'לא משובץ');
+        rows.push({ day: day.name, date: date, status: status, working: false });
+        return;
+      }
+      slots.forEach(function (slot) {
+        var shift = Data.shiftById(slot.shiftId);
+        var branch = Store.byId(state.branches, slot.branchId) || {};
+        rows.push({
+          day: day.name, date: date, working: true,
+          branch: branchNameOf(slot.branchId),
+          shift: shift ? shift.name : slot.shiftId,
+          hours: Store.hoursLabel(Store.slotHours(current, branch, day.idx, slot.shiftId))
+        });
+      });
+    });
+    return rows;
+  }
+
+  function personalSheet(emp) {
+    var rows = [];
+    var data = personalRows(emp.id);
+    var total = data.filter(function (row) { return row.working; }).length;
+
+    rows.push({ cells: [{ v: 'סידור אישי – ' + emp.name, s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{ v: 'סה״כ ' + shiftsWord(total) + ' השבוע', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push({
+      cells: [{ v: 'יום', s: Xlsx.STYLE.HEADER }, { v: 'תאריך', s: Xlsx.STYLE.HEADER },
+        { v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER },
+        { v: 'שעות', s: Xlsx.STYLE.HEADER }],
+      height: 22
+    });
+
+    data.forEach(function (row) {
+      if (!row.working) {
+        rows.push([
+          { v: row.day, s: Xlsx.STYLE.ROW_HEAD }, { v: row.date, s: Xlsx.STYLE.CLOSED },
+          { v: row.status, s: Xlsx.STYLE.CLOSED }, { v: '', s: Xlsx.STYLE.CLOSED },
+          { v: '', s: Xlsx.STYLE.CLOSED }
+        ]);
+        return;
+      }
+      rows.push([
+        { v: row.day, s: Xlsx.STYLE.ROW_HEAD }, { v: row.date, s: Xlsx.STYLE.PLAIN },
+        { v: row.branch, s: Xlsx.STYLE.PLAIN }, { v: row.shift, s: Xlsx.STYLE.PLAIN },
+        { v: row.hours || '', s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return { name: 'סידור אישי', selected: true, cols: [12, 10, 22, 12, 16], freeze: { row: 4, col: 0 }, rows: rows };
+  }
+
+  function exportPersonalExcel(empId) {
+    var emp = Store.byId(state.employees, empId);
+    if (!emp) return;
+    var bytes = Xlsx.build([personalSheet(emp)]);
+    var blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    var safeName = emp.name.replace(/[\\\/:*?"<>|]/g, '').trim() || 'עובד';
+    saveFile('סידור-' + safeName + '-' + weekKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
+  function personalText(empId) {
+    var emp = Store.byId(state.employees, empId);
+    if (!emp) return '';
+    var data = personalRows(empId);
+    var total = data.filter(function (row) { return row.working; }).length;
+    var lines = ['שלום ' + emp.name + ', זה הסידור שלך:', weekTitle(), ''];
+    data.forEach(function (row) {
+      if (row.working) {
+        lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.branch + ' · ' + row.shift +
+          (row.hours ? ' · ' + row.hours : ''));
+      } else if (row.status !== 'לא משובץ') {
+        lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.status);
+      }
+    });
+    lines.push('', 'סה״כ ' + shiftsWord(total) + ' השבוע.');
+    return lines.join('\n');
+  }
+
   function availabilitySheet() {
     var summary = Store.weekAvailability(state, week());
     var rows = [];
@@ -827,13 +945,7 @@
     });
 
     $('#copy-text').addEventListener('click', function () {
-      var text = scheduleAsText();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () { toast('הסידור הועתק ללוח'); },
-          function () { window.prompt('העתיקו את הטקסט:', text); });
-      } else {
-        window.prompt('העתיקו את הטקסט:', text);
-      }
+      copyText(scheduleAsText(), 'הסידור הועתק ללוח');
     });
 
     $('#holiday-days').addEventListener('click', function (event) {
@@ -888,6 +1000,18 @@
     });
 
     $('#export-excel').addEventListener('click', exportExcel);
+
+    $('#personal-excel').addEventListener('click', function () {
+      var empId = $('#personal-employee').value;
+      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
+      exportPersonalExcel(empId);
+    });
+
+    $('#personal-text').addEventListener('click', function () {
+      var empId = $('#personal-employee').value;
+      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
+      copyText(personalText(empId), 'הסידור האישי הועתק ללוח');
+    });
     $('#export-csv').addEventListener('click', exportCsv);
     $('#print').addEventListener('click', function () {
       if (!Platform.print()) { toast('ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא CSV'); }
@@ -1135,6 +1259,12 @@
       persist('config');
       render();
     });
+    $('#opt-one-day-off').addEventListener('change', function (event) {
+      state.settings.oneDayOffPerWeek = event.target.checked;
+      persist('config');
+      render();
+    });
+
     $('#default-shabbat').addEventListener('change', function (event) {
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
@@ -1175,6 +1305,153 @@
       persist('all');
       render();
       toast('הנתונים אופסו');
+    });
+  }
+
+  /* ========== צ'אט שאלות על הסידור ========== */
+  var chatHistory = [];
+  var chatBusy = false;
+
+  /* תיאור טקסטואלי של כל מה שרלוונטי לשבוע המוצג */
+  function chatContext() {
+    var current = week();
+    var parts = [weekTitle()];
+    if (current.shabbatEnd) parts.push('צאת שבת: ' + current.shabbatEnd);
+
+    var holidays = [];
+    Data.DAYS.forEach(function (day) {
+      if (Store.isHoliday(current, day.idx)) {
+        holidays.push(day.name + ' (' + Store.holidayName(current, day.idx) + ')');
+      }
+    });
+    parts.push(holidays.length ? 'ימי חג סגורים: ' + holidays.join(', ') : 'אין ימי חג השבוע.');
+
+    parts.push('', 'כללי שיבוץ:');
+    parts.push('- ' + (state.settings.onePerDay ? 'עובד משובץ למשמרת אחת ביום לכל היותר.' : 'עובד יכול לעשות כמה משמרות ביום.'));
+    parts.push('- ' + (state.settings.restEveningMorning ? 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם.' : 'אין מגבלת מנוחה בין ערב לבוקר.'));
+
+    parts.push('', 'סניפים:');
+    state.branches.forEach(function (branch) {
+      if (!branch.active) return;
+      var days = [];
+      Data.DAYS.forEach(function (day) {
+        var open = [];
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var need = Store.slotNeed(branch, day.idx, shiftId);
+          if (!need) return;
+          var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
+          open.push(Data.shiftById(shiftId).name + ' ' + hours + ' (' + need + ' עובדים)');
+        });
+        if (open.length) days.push(day.name + ': ' + open.join(', '));
+      });
+      parts.push('- ' + branch.name + ' | ' + (days.join(' | ') || 'סגור כל השבוע'));
+    });
+
+    parts.push('', 'עובדים:');
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var branches = emp.branches.length
+        ? emp.branches.map(branchNameOf).join(', ')
+        : 'כל הסניפים';
+      var shifts = emp.shifts.map(function (id) { return Data.shiftById(id).name; }).join(', ');
+      var daysOff = Store.requestedDaysOff(current, emp.id).map(function (d) { return Data.DAYS[d].name; });
+      var blocked = [];
+      Data.DAYS.forEach(function (day) {
+        var constraint = Store.getConstraint(current, emp.id, day.idx);
+        var names = Object.keys(constraint.blocked || {});
+        if (names.length) {
+          blocked.push(day.name + ': ' + names.map(function (id) { return Data.shiftById(id).name; }).join('/'));
+        }
+      });
+      parts.push('- ' + emp.name + ' | סניפים: ' + branches + ' | משמרות: ' + shifts +
+        ' | מקסימום ' + emp.maxShifts + ' בשבוע' +
+        (daysOff.length ? ' | ביקש/ה חופש: ' + daysOff.join(', ') : '') +
+        (blocked.length ? ' | חסם/ה: ' + blocked.join('; ') : '') +
+        (emp.note ? ' | הערה: ' + emp.note : ''));
+    });
+
+    parts.push('', 'הסידור הנוכחי:', scheduleAsText());
+
+    var summary = Store.weekAvailability(state, current);
+    parts.push('', 'יתרת זמינות:');
+    summary.rows.forEach(function (row) {
+      parts.push('- ' + row.name + ': משובץ ' + row.assigned + ' מתוך מכסה ' + row.max +
+        ', ימים פנויים: ' + (row.freeDays.length ? row.freeDays.map(function (d) { return Data.DAYS[d].name; }).join(', ') : 'אין'));
+    });
+
+    if (lastReport.issues.length) {
+      parts.push('', 'התראות על הסידור:');
+      lastReport.issues.forEach(function (item) { parts.push('- ' + item.text); });
+    } else {
+      parts.push('', 'אין התראות – הסידור תקין.');
+    }
+
+    return parts.join('\n');
+  }
+
+  function addChatMessage(role, text) {
+    var node = document.createElement('div');
+    node.className = 'chat-msg ' + role;
+    node.textContent = text;
+    $('#chat-messages').appendChild(node);
+    node.scrollIntoView({ block: 'nearest' });
+    return node;
+  }
+
+  function askChat(question) {
+    if (chatBusy || !Platform.sample) return;
+    chatBusy = true;
+    $('#chat-send').disabled = true;
+
+    addChatMessage('user', question);
+    var answer = addChatMessage('bot pending', 'חושב…');
+
+    var turns = chatHistory.slice(-6).map(function (turn) { return { role: turn.role, content: turn.content }; });
+    turns.push({
+      role: 'user',
+      content: 'אתה עוזר למנהל/ת של רשת מייפון לנהל סידור משמרות. ענה בעברית, קצר ולעניין, ' +
+        'והסתמך רק על הנתונים שלהלן. אם המידע חסר – אמור זאת במפורש במקום לנחש.\n\n' +
+        '=== נתוני השבוע ===\n' + chatContext() + '\n=== סוף הנתונים ===\n\nשאלה: ' + question
+    });
+
+    Platform.sample(turns, {
+      onText: function (event) {
+        answer.className = 'chat-msg bot';
+        answer.textContent = event.text;
+      }
+    }).then(function (result) {
+      answer.className = 'chat-msg bot';
+      answer.textContent = result.text || '(לא התקבלה תשובה)';
+      chatHistory.push({ role: 'user', content: question });
+      chatHistory.push({ role: 'assistant', content: result.text || '' });
+    }).catch(function (err) {
+      var code = err && err.code;
+      answer.className = 'chat-msg error';
+      if (code === 'not_granted') {
+        answer.textContent = 'אין הרשאה לשאול שאלות בעמוד הזה.';
+        $('#chat').classList.add('hidden');
+      } else if (code === 'rate_limited') {
+        answer.textContent = 'יותר מדי שאלות ברצף – נסו שוב בעוד רגע.';
+      } else if (err && err.text) {
+        answer.className = 'chat-msg bot';
+        answer.textContent = err.text;
+      } else {
+        answer.textContent = 'לא הצלחתי לענות כרגע' + (err && err.message ? ': ' + err.message : '.');
+      }
+    }).then(function () {
+      chatBusy = false;
+      $('#chat-send').disabled = false;
+    });
+  }
+
+  function bindChat() {
+    $('#chat-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var input = $('#chat-input');
+      var question = input.value.trim();
+      if (!question) return;
+      input.value = '';
+      askChat(question);
     });
   }
 
@@ -1219,6 +1496,7 @@
   bindEmployeesTab();
   bindBranchesTab();
   bindSettingsTab();
+  bindChat();
   render();
 
   Platform.init({
@@ -1226,6 +1504,7 @@
     weekKey: function () { return weekKey; },
     onConfig: applyRemoteConfig,
     onWeek: applyRemoteWeek,
-    onSyncState: renderSyncState
+    onSyncState: renderSyncState,
+    onSampleReady: function () { $('#chat').classList.remove('hidden'); }
   });
 })();

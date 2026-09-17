@@ -214,6 +214,26 @@
         }
       }
 
+      // מדיניות: יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+      if (emp.active && state.settings.oneDayOffPerWeek) {
+        var daysOff = Store.requestedDaysOff(week, emp.id);
+        if (daysOff.length > 1) {
+          issues.push(issue('warning', 'extra-days-off',
+            emp.name + ' סימן/ה ' + daysOff.length + ' ימי חופש (' +
+            daysOff.map(dayName).join(', ') + ') – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+            { empId: emp.id }));
+        }
+
+        var workable = Store.workableDays(state, week, emp).length;
+        var expected = Math.min(emp.maxShifts || 99, workable);
+        if (daysOff.length === 1 && total < expected && total > 0) {
+          issues.push(issue('info', 'below-target',
+            emp.name + ' ביקש/ה יום חופש ב' + dayName(daysOff[0]) + ' ומשובץ/ת ' + total +
+            ' משמרות מתוך ' + expected + ' אפשריות – יש לו/ה עוד ימים פנויים.',
+            { empId: emp.id }));
+        }
+      }
+
       if (emp.active && total > (emp.maxShifts || 99)) {
         issues.push(issue('warning', 'over-max',
           'חריגה ממכסה: ' + emp.name + ' משובץ/ת ל-' + total + ' משמרות (מקסימום ' + emp.maxShifts + ').',

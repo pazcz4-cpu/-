@@ -39,8 +39,30 @@ ${js}
 </script>
 `;
 
+// גרסה עצמאית: מסמך HTML שלם שנפתח בכל דפדפן, גם בלי אינטרנט
+const standalone = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${out.replace(/<style>[\s\S]*?<\/style>/, (m) => m).split('\n').slice(0, 0).join('')}<title>${title}</title>
+<style>
+${css}
+</style>
+</head>
+<body>
+${body}
+<script>
+${js}
+<\/script>
+</body>
+</html>
+`;
+
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist/artifact.html'), out, 'utf8');
+fs.writeFileSync(path.join(root, 'dist/sidur-mishmarot.html'), standalone, 'utf8');
 
 const kb = (Buffer.byteLength(out, 'utf8') / 1024).toFixed(1);
 console.log(`נבנה dist/artifact.html (${kb} KB, ${scripts.length} קבצי JS מוטבעים)`);
+console.log('נבנה dist/sidur-mishmarot.html (מסמך עצמאי לפתיחה בכל דפדפן)');

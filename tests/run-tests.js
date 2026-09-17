@@ -550,6 +550,109 @@ test('לא נותר חוסר כשיש מספיק עובדים', function () {
   assertEqual(Validate.validate(state, weekData).errors, 0, 'ללא שגיאות');
 });
 
+console.log('\n== סיכום יתרת זמינות ==');
+
+test('בנתוני הדוגמה כל העובדים מנוצלים במלואם', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var summary = Store.weekAvailability(state, weekData);
+  assertEqual(summary.totalSpare, 0, 'אין יתרת מכסה');
+  assertEqual(summary.freeSlots, 0, 'אין משמרות שאפשר עוד לשבץ');
+  assertEqual(summary.rows.length, state.employees.length, 'שורה לכל עובד פעיל');
+});
+
+test('יתרת מכסה מחושבת נכון', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 7; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var summary = Store.weekAvailability(state, weekData);
+  summary.rows.forEach(function (row) {
+    assertEqual(row.spare, row.max - row.assigned, row.name + ': יתרה = מכסה פחות משובץ');
+    assert(row.available <= row.spare, row.name + ': לא ניתן לשבץ יותר מהיתרה');
+    assert(row.available <= row.freeDays.length, row.name + ': לא ניתן לשבץ יותר מהימים הפנויים');
+  });
+  assert(summary.totalSpare > 0, 'עם מכסה גדולה יותר נותרת יתרה');
+});
+
+test('יום שהעובד משובץ בו אינו נחשב יום פנוי', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 7; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  Store.weekAvailability(state, weekData).rows.forEach(function (row) {
+    row.freeDays.forEach(function (day) {
+      assertEqual(Store.employeeDayAssignments(state, weekData, row.empId, day).length, 0,
+        row.name + ' מסומן פנוי ביום שהוא משובץ בו');
+    });
+  });
+});
+
+test('יום חופש של העובד אינו נחשב יום פנוי', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 7; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[0];
+  Store.setConstraint(weekData, emp.id, 3, { off: true, blocked: {}, preferred: {}, note: '' });
+  build(state, weekData);
+  var row = Store.weekAvailability(state, weekData).rows.filter(function (r) { return r.empId === emp.id; })[0];
+  assert(row.freeDays.indexOf(3) === -1, 'יום שסומן כחופש לא נחשב פנוי');
+});
+
+test('יום חג אינו נחשב יום פנוי לאף עובד', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 7; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  Store.setHoliday(weekData, 2, 'סוכות');
+  build(state, weekData);
+  Store.weekAvailability(state, weekData).rows.forEach(function (row) {
+    assert(row.freeDays.indexOf(2) === -1, row.name + ': יום חג נספר כיום פנוי');
+  });
+});
+
+test('עובד שסניפיו סגורים ביום מסוים אינו פנוי בו', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 7; });
+  var branch = state.branches[0];
+  state.employees[0].branches = [branch.id];
+  delete branch.schedule[5]; // הסניף סגור בשישי
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var row = Store.weekAvailability(state, weekData).rows.filter(function (r) {
+    return r.empId === state.employees[0].id;
+  })[0];
+  assert(row.freeDays.indexOf(5) === -1, 'שישי סגור בסניף של העובד ולכן אינו יום פנוי');
+});
+
+test('עובד לא פעיל אינו מופיע בסיכום', function () {
+  var state = freshState();
+  state.employees[0].active = false;
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var summary = Store.weekAvailability(state, weekData);
+  assertEqual(summary.rows.length, state.employees.length - 1, 'רק עובדים פעילים');
+  assert(!summary.rows.some(function (row) { return row.empId === state.employees[0].id; }),
+    'העובד הלא פעיל אינו ברשימה');
+});
+
+test('יתרה ללא ימים פנויים אינה נספרת כזמינה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var emp = state.employees[0];
+  emp.maxShifts = 7;
+  // חסימת כל ימות השבוע – נותרה מכסה אך אין יום פנוי
+  for (var day = 0; day < 7; day++) {
+    Store.setConstraint(weekData, emp.id, day, { off: true, blocked: {}, preferred: {}, note: '' });
+  }
+  build(state, weekData);
+  var row = Store.weekAvailability(state, weekData).rows.filter(function (r) { return r.empId === emp.id; })[0];
+  assertEqual(row.assigned, 0, 'לא שובץ כלל');
+  assertEqual(row.spare, 7, 'כל המכסה נותרה');
+  assertEqual(row.freeDays.length, 0, 'אין ימים פנויים');
+  assertEqual(row.available, 0, 'לא ניתן לשבץ אותו בפועל');
+});
+
 console.log('\n== ייצוא לאקסל ==');
 
 function readZipEntries(bytes) {

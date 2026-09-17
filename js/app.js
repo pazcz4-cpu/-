@@ -265,6 +265,58 @@
     }
   }
 
+  function dayNames(dayIndexes) {
+    return dayIndexes.map(function (idx) { return Data.DAYS[idx].name; }).join(', ');
+  }
+
+  function shiftsWord(count) {
+    return count === 1 ? 'משמרת אחת' : count + ' משמרות';
+  }
+
+  function remainVerb(count) {
+    return count === 1 ? 'נותרה' : 'נותרו';
+  }
+
+  /* ========== סיכום: מה נותר פנוי ========== */
+  function renderAvailability() {
+    var summary = Store.weekAvailability(state, week());
+    var html = '<h3 class="summary-title">מה נותר פנוי השבוע</h3>';
+
+    if (!summary.rows.length) {
+      $('#availability').innerHTML = html + '<p class="summary-empty">לא הוגדרו עובדים פעילים.</p>';
+      return;
+    }
+
+    if (summary.freeSlots === 0) {
+      var reason = summary.totalSpare === 0
+        ? 'כל העובדים הגיעו למכסת המשמרות השבועית שלהם.'
+        : 'לעובדים שנותרה להם מכסה אין יום פנוי שבו הסניפים שלהם פתוחים.';
+      html += '<p class="summary-line none">אין יתרת זמינות – ' + reason + '</p>';
+    } else {
+      html += '<p class="summary-line total">' + remainVerb(summary.freeSlots) + ' <b>' +
+        shiftsWord(summary.freeSlots) + '</b> שאפשר עוד לשבץ, אצל ' +
+        (summary.withSpare.length === 1 ? 'עובד/ת אחד/ת' : summary.withSpare.length + ' עובדים') + ':</p>';
+    }
+
+    html += '<ul class="summary-list">';
+    summary.rows.forEach(function (row) {
+      var cls = row.available > 0 ? 'has-spare' : (row.spare > 0 ? 'no-days' : 'full');
+      var text = '<b>' + esc(row.name) + '</b> – ';
+      if (row.available > 0) {
+        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה · פנוי/ה ב' +
+          dayNames(row.freeDays);
+      } else if (row.spare > 0) {
+        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה, אך אין יום פנוי השבוע';
+      } else {
+        text += 'מנוצל/ת במלואו/ה (' + row.assigned + ' מתוך ' + row.max + ')';
+      }
+      html += '<li class="' + cls + '">' + text + '</li>';
+    });
+    html += '</ul>';
+
+    $('#availability').innerHTML = html;
+  }
+
   function renderWorkload() {
     var html = '';
     state.employees.forEach(function (emp) {
@@ -433,6 +485,7 @@
     renderBranchView(marks);
     renderEmployeeView(marks);
     renderWorkload();
+    renderAvailability();
     renderConstraints();
     renderEmployees();
     renderBranches();
@@ -467,6 +520,11 @@
         lines = lines.concat(dayLines, '');
       }
     });
+    var summary = Store.weekAvailability(state, week());
+    if (summary.freeSlots) {
+      lines.push('— ' + remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) +
+        ' שאפשר עוד לשבץ —');
+    }
     return lines.join('\n');
   }
 
@@ -644,8 +702,38 @@
     return { name: 'בדיקות', cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
   }
 
+  function availabilitySheet() {
+    var summary = Store.weekAvailability(state, week());
+    var rows = [];
+
+    rows.push({ cells: [{ v: 'מה נותר פנוי', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{
+      v: summary.freeSlots
+        ? remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) + ' שאפשר עוד לשבץ'
+        : 'אין יתרת זמינות – אי אפשר לשבץ משמרות נוספות השבוע',
+      s: Xlsx.STYLE.SUBTITLE
+    }]);
+    rows.push([{ v: 'עובד', s: Xlsx.STYLE.HEADER }, { v: 'משובץ', s: Xlsx.STYLE.HEADER },
+      { v: 'מכסה', s: Xlsx.STYLE.HEADER }, { v: 'נותרו במכסה', s: Xlsx.STYLE.HEADER },
+      { v: 'ניתן לשבץ', s: Xlsx.STYLE.HEADER }, { v: 'ימים פנויים', s: Xlsx.STYLE.HEADER }]);
+
+    summary.rows.forEach(function (row) {
+      rows.push([
+        { v: row.name, s: Xlsx.STYLE.ROW_HEAD },
+        { v: row.assigned, s: Xlsx.STYLE.TOTAL },
+        { v: row.max, s: Xlsx.STYLE.TOTAL },
+        { v: row.spare, s: Xlsx.STYLE.TOTAL },
+        { v: row.available, s: Xlsx.STYLE.TOTAL },
+        { v: row.freeDays.length ? dayNames(row.freeDays) : '—', s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return { name: 'מה נותר פנוי', cols: [22, 10, 10, 14, 12, 40], freeze: { row: 4, col: 1 }, rows: rows };
+  }
+
   function exportExcel() {
-    var bytes = Xlsx.build([branchSheet(), employeeSheet(), issuesSheet()]);
+    var bytes = Xlsx.build([branchSheet(), employeeSheet(), availabilitySheet(), issuesSheet()]);
     var blob = new Blob([bytes], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });

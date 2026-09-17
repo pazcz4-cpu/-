@@ -222,6 +222,69 @@
     return demands;
   }
 
+  /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
+
+  /* האם העובד יכול בכלל לעבוד ביום הזה – קיימת משמרת פתוחה שמתאימה לו */
+  function employeeCanWorkDay(state, week, emp, dayIdx) {
+    if (!emp.active) return false;
+    if (isHoliday(week, dayIdx)) return false;
+    var constraint = getConstraint(week, emp.id, dayIdx);
+    if (constraint.off) return false;
+
+    return state.branches.some(function (branch) {
+      if (!branch.active) return false;
+      if (emp.branches.length && emp.branches.indexOf(branch.id) === -1) return false;
+      return Data.ALL_SHIFT_IDS.some(function (shiftId) {
+        if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
+        if (emp.shifts.indexOf(shiftId) === -1) return false;
+        if (constraint.blocked && constraint.blocked[shiftId]) return false;
+        return true;
+      });
+    });
+  }
+
+  /* סיכום לכל עובד פעיל: כמה משמרות נותרו במכסה ובאילו ימים הוא פנוי */
+  function weekAvailability(state, week) {
+    var rows = [];
+    var totalSpare = 0;
+    var freeSlots = 0;
+
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var assigned = employeeWeekCount(state, week, emp.id);
+      var max = Number(emp.maxShifts) || 0;
+      var spare = Math.max(0, max - assigned);
+
+      var freeDays = [];
+      for (var day = 0; day < 7; day++) {
+        if (employeeDayAssignments(state, week, emp.id, day).length) continue;
+        if (!employeeCanWorkDay(state, week, emp, day)) continue;
+        freeDays.push(day);
+      }
+
+      totalSpare += spare;
+      // בפועל אפשר לשבץ רק את המינימום בין יתרת המכסה למספר הימים הפנויים
+      freeSlots += Math.min(spare, freeDays.length);
+
+      rows.push({
+        empId: emp.id, name: emp.name, assigned: assigned, max: max,
+        spare: spare, freeDays: freeDays,
+        available: Math.min(spare, freeDays.length)
+      });
+    });
+
+    rows.sort(function (a, b) {
+      return (b.available - a.available) || (b.spare - a.spare) || a.name.localeCompare(b.name);
+    });
+
+    return {
+      rows: rows,
+      totalSpare: totalSpare,
+      freeSlots: freeSlots,
+      withSpare: rows.filter(function (row) { return row.available > 0; })
+    };
+  }
+
   function byId(list, id) {
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
@@ -355,6 +418,8 @@
     addMinutes: addMinutes,
     normalizeSchedule: normalizeSchedule,
     weekDemands: weekDemands,
+    employeeCanWorkDay: employeeCanWorkDay,
+    weekAvailability: weekAvailability,
     byId: byId,
     migrate: migrate,
     load: load,

@@ -237,8 +237,25 @@
     return clean || ('גיליון ' + (index + 1));
   }
 
+  /* שמות הלשוניות חייבים להיות ייחודיים; כפילות מקבלת סיומת מספרית */
+  function uniqueSheetNames(sheets) {
+    var used = {};
+    return sheets.map(function (sheet, index) {
+      var base = safeSheetName(sheet.name, index);
+      var name = base;
+      var suffix = 2;
+      while (used[name.toLowerCase()]) {
+        var tag = ' (' + suffix + ')';
+        name = base.slice(0, 31 - tag.length).trim() + tag;
+        suffix++;
+      }
+      used[name.toLowerCase()] = true;
+      return name;
+    });
+  }
+
   function build(sheets) {
-    var names = sheets.map(function (sheet, index) { return safeSheetName(sheet.name, index); });
+    var names = uniqueSheetNames(sheets);
 
     var workbook = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"' +
@@ -291,7 +308,7 @@
     return zip(files);
   }
 
-  var API = { build: build, STYLE: STYLE, colName: colName };
+  var API = { build: build, STYLE: STYLE, colName: colName, uniqueSheetNames: uniqueSheetNames };
   root.ShiftXlsx = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

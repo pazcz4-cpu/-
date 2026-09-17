@@ -799,6 +799,42 @@ test('שמות עמודות מחושבים נכון', function () {
   assertEqual(Xlsx.colName(26), 'AA', 'עמודה 27');
 });
 
+test('שמות לשוניות כפולים מקבלים סיומת ייחודית', function () {
+  var names = Xlsx.uniqueSheetNames([
+    { name: 'דני כהן' }, { name: 'דני כהן' }, { name: 'דני כהן' }, { name: 'מיכל לוי' }
+  ]);
+  assertEqual(names[0], 'דני כהן', 'הראשון נשאר כפי שהוא');
+  assertEqual(names[1], 'דני כהן (2)', 'השני מקבל סיומת');
+  assertEqual(names[2], 'דני כהן (3)', 'השלישי מקבל סיומת');
+  assertEqual(names[3], 'מיכל לוי', 'שם אחר לא מושפע');
+  assertEqual(new Set(names).size, names.length, 'כל השמות ייחודיים');
+});
+
+test('שמות שנעשים זהים אחרי ניקוי תווים אסורים נשארים ייחודיים', function () {
+  var names = Xlsx.uniqueSheetNames([{ name: 'עובד/ת 1' }, { name: 'עובד:ת 1' }]);
+  assertEqual(new Set(names).size, 2, 'שני שמות שונים גם אחרי הניקוי');
+});
+
+test('שם ארוך שחוזר על עצמו נשאר בגבול 31 תווים', function () {
+  var long = 'שם עובד ארוך במיוחד שחורג בהרבה מהמגבלה';
+  var names = Xlsx.uniqueSheetNames([{ name: long }, { name: long }, { name: long }]);
+  names.forEach(function (name) { assert(name.length <= 31, 'אורך חוקי: ' + name + ' (' + name.length + ')'); });
+  assertEqual(new Set(names).size, 3, 'שלושה שמות ייחודיים');
+});
+
+test('חוברת עם לשונית לכל עובד נבנית תקין', function () {
+  var sheets = [{ name: 'לפי סניף', selected: true, rows: [[{ v: 'סיכום', s: Xlsx.STYLE.TITLE }]] }];
+  ['דני', 'מיכל', 'יוסי'].forEach(function (name) {
+    sheets.push({ name: name, rows: [[{ v: 'סידור אישי – ' + name, s: Xlsx.STYLE.TITLE }]] });
+  });
+  var text = Buffer.from(Xlsx.build(sheets)).toString('utf8');
+  ['דני', 'מיכל', 'יוסי'].forEach(function (name) {
+    assert(text.indexOf('<sheet name="' + name + '"') !== -1, 'לשונית ' + name + ' קיימת');
+    assert(text.indexOf('סידור אישי – ' + name) !== -1, 'תוכן הלשונית של ' + name);
+  });
+  assert(text.indexOf('worksheets/sheet4.xml') !== -1, 'נוצרו ארבעה גיליונות');
+});
+
 test('שם גיליון ארוך או עם תווים אסורים מנוקה', function () {
   var text = Buffer.from(Xlsx.build([
     { name: 'סניף/מרכז: דוח [2026] ארוך מאוד מאוד מאוד מאוד', rows: [['א']] }

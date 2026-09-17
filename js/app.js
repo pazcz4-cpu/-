@@ -756,7 +756,8 @@
     return rows;
   }
 
-  function personalSheet(emp) {
+  function personalSheet(emp, options) {
+    var opts = options || {};
     var rows = [];
     var data = personalRows(emp.id);
     var total = data.filter(function (row) { return row.working; }).length;
@@ -787,7 +788,21 @@
       ]);
     });
 
-    return { name: 'סידור אישי', selected: true, cols: [12, 10, 22, 12, 16], freeze: { row: 4, col: 0 }, rows: rows };
+    return {
+      name: opts.name || 'סידור אישי',
+      selected: opts.selected !== false,
+      cols: [12, 10, 22, 12, 16],
+      freeze: { row: 4, col: 0 },
+      rows: rows
+    };
+  }
+
+  /* העובדים שמקבלים לשונית אישית: פעילים, וגם מי שמשובץ השבוע */
+  function employeesForSheets() {
+    var current = week();
+    return state.employees.filter(function (emp) {
+      return emp.active || Store.employeeWeekCount(state, current, emp.id) > 0;
+    });
   }
 
   function exportPersonalExcel(empId) {
@@ -851,7 +866,12 @@
   }
 
   function exportExcel() {
-    var bytes = Xlsx.build([branchSheet(), employeeSheet(), availabilitySheet(), issuesSheet()]);
+    var sheets = [branchSheet(), employeeSheet(), availabilitySheet(), issuesSheet()];
+    // לשונית נפרדת לכל עובד, עם המשמרות שלו בלבד
+    employeesForSheets().forEach(function (emp) {
+      sheets.push(personalSheet(emp, { name: emp.name, selected: false }));
+    });
+    var bytes = Xlsx.build(sheets);
     var blob = new Blob([bytes], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/run-tests.js",
     "start": "npx http-server . -p 8080 -o",
-    "build": "node build-artifact.js"
+    "build": "node build-artifact.js",
+    "test:sync": "node tests/sync-browser-test.mjs"
   },
   "license": "MIT"
 }

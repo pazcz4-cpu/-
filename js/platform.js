@@ -8,6 +8,8 @@
     db: null,
     sample: null,
     onSampleReady: null,
+    onSynced: null,
+    lastSyncedAt: null,
     syncState: 'local',      // local | live | readonly
     onSyncState: null
   };
@@ -94,7 +96,10 @@
       sync.chains[path] = previous.then(function () {
         var body = buildBody();
         if (!body) return;
-        return Platform.db.doc(path).set(body).catch(function (err) {
+        return Platform.db.doc(path).set(body).then(function () {
+          Platform.lastSyncedAt = new Date();
+          if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt);
+        }, function (err) {
           if (err && err.code === 'invalid_argument') {
             setSyncState('readonly'); // צפייה בלבד – אין הרשאת כתיבה
           }
@@ -129,6 +134,8 @@
       var local = configSlice(sync.getState());
       if (sameJson({ s: remote.settings, b: remote.branches, e: remote.employees },
         { s: local.settings, b: local.branches, e: local.employees })) return;
+      Platform.lastSyncedAt = new Date();
+      if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt, true);
       if (sync.onConfig) sync.onConfig(remote);
     }, function () { setSyncState('local'); });
   }
@@ -142,6 +149,8 @@
       var state = sync.getState();
       var local = weekSlice(state.weeks[weekKey] || { constraints: {}, assignments: {}, manual: {} });
       if (sameJson(weekSlice(remote), local)) return;
+      Platform.lastSyncedAt = new Date();
+      if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt, true);
       if (sync.onWeek) sync.onWeek(weekKey, remote);
     }, function () { setSyncState('local'); });
   }
@@ -155,6 +164,7 @@
   Platform.init = function (options) {
     sync.getState = options.getState;
     Platform.onSampleReady = options.onSampleReady;
+    Platform.onSynced = options.onSynced;
     sync.onConfig = options.onConfig;
     sync.onWeek = options.onWeek;
     Platform.onSyncState = options.onSyncState;

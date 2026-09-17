@@ -807,6 +807,8 @@ body { -webkit-tap-highlight-color: transparent; }
     db: null,
     sample: null,
     onSampleReady: null,
+    onSynced: null,
+    lastSyncedAt: null,
     syncState: 'local',      // local | live | readonly
     onSyncState: null
   };
@@ -893,7 +895,10 @@ body { -webkit-tap-highlight-color: transparent; }
       sync.chains[path] = previous.then(function () {
         var body = buildBody();
         if (!body) return;
-        return Platform.db.doc(path).set(body).catch(function (err) {
+        return Platform.db.doc(path).set(body).then(function () {
+          Platform.lastSyncedAt = new Date();
+          if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt);
+        }, function (err) {
           if (err && err.code === 'invalid_argument') {
             setSyncState('readonly'); // צפייה בלבד – אין הרשאת כתיבה
           }
@@ -928,6 +933,8 @@ body { -webkit-tap-highlight-color: transparent; }
       var local = configSlice(sync.getState());
       if (sameJson({ s: remote.settings, b: remote.branches, e: remote.employees },
         { s: local.settings, b: local.branches, e: local.employees })) return;
+      Platform.lastSyncedAt = new Date();
+      if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt, true);
       if (sync.onConfig) sync.onConfig(remote);
     }, function () { setSyncState('local'); });
   }
@@ -941,6 +948,8 @@ body { -webkit-tap-highlight-color: transparent; }
       var state = sync.getState();
       var local = weekSlice(state.weeks[weekKey] || { constraints: {}, assignments: {}, manual: {} });
       if (sameJson(weekSlice(remote), local)) return;
+      Platform.lastSyncedAt = new Date();
+      if (Platform.onSynced) Platform.onSynced(Platform.lastSyncedAt, true);
       if (sync.onWeek) sync.onWeek(weekKey, remote);
     }, function () { setSyncState('local'); });
   }
@@ -954,6 +963,7 @@ body { -webkit-tap-highlight-color: transparent; }
   Platform.init = function (options) {
     sync.getState = options.getState;
     Platform.onSampleReady = options.onSampleReady;
+    Platform.onSynced = options.onSynced;
     sync.onConfig = options.onConfig;
     sync.onWeek = options.onWeek;
     Platform.onSyncState = options.onSyncState;
@@ -4208,16 +4218,36 @@ body { -webkit-tap-highlight-color: transparent; }
   }
 
   /* ========== סנכרון בין מכשירים ========== */
+  var syncStatus = 'local';
+
+  function timeLabel(date) {
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+  }
+
   function renderSyncState(status) {
+    syncStatus = status || syncStatus;
     var node = $('#sync-state');
     if (!node) return;
     var labels = {
       live: 'מסונכרן בין המכשירים',
-      local: 'נשמר במכשיר הזה',
+      local: 'נשמר במכשיר הזה בלבד',
       readonly: 'צפייה בלבד – אין הרשאת עריכה'
     };
-    node.textContent = labels[status] || labels.local;
-    node.className = 'sync-state ' + status;
+    var text = labels[syncStatus] || labels.local;
+    if (syncStatus === 'live' && Platform.lastSyncedAt) {
+      text += ' · עודכן ' + timeLabel(Platform.lastSyncedAt);
+    }
+    node.textContent = text;
+    node.className = 'sync-state ' + syncStatus;
+    node.title = syncStatus === 'live'
+      ? 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור'
+      : 'הנתונים נשמרים רק בדפדפן של המחשב הזה';
+  }
+
+  function onSynced(date, fromRemote) {
+    renderSyncState('live');
+    if (fromRemote) { toast('התקבל עדכון ממחשב אחר (' + timeLabel(date) + ')'); }
   }
 
   function applyRemoteConfig(remote) {
@@ -4335,7 +4365,8 @@ body { -webkit-tap-highlight-color: transparent; }
     onConfig: applyRemoteConfig,
     onWeek: applyRemoteWeek,
     onSyncState: renderSyncState,
-    onSampleReady: function () { $('#chat').classList.remove('hidden'); }
+    onSampleReady: function () { $('#chat').classList.remove('hidden'); },
+    onSynced: onSynced
   });
 })();
 

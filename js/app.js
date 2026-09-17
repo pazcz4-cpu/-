@@ -1636,16 +1636,36 @@
   }
 
   /* ========== סנכרון בין מכשירים ========== */
+  var syncStatus = 'local';
+
+  function timeLabel(date) {
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+  }
+
   function renderSyncState(status) {
+    syncStatus = status || syncStatus;
     var node = $('#sync-state');
     if (!node) return;
     var labels = {
       live: 'מסונכרן בין המכשירים',
-      local: 'נשמר במכשיר הזה',
+      local: 'נשמר במכשיר הזה בלבד',
       readonly: 'צפייה בלבד – אין הרשאת עריכה'
     };
-    node.textContent = labels[status] || labels.local;
-    node.className = 'sync-state ' + status;
+    var text = labels[syncStatus] || labels.local;
+    if (syncStatus === 'live' && Platform.lastSyncedAt) {
+      text += ' · עודכן ' + timeLabel(Platform.lastSyncedAt);
+    }
+    node.textContent = text;
+    node.className = 'sync-state ' + syncStatus;
+    node.title = syncStatus === 'live'
+      ? 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור'
+      : 'הנתונים נשמרים רק בדפדפן של המחשב הזה';
+  }
+
+  function onSynced(date, fromRemote) {
+    renderSyncState('live');
+    if (fromRemote) { toast('התקבל עדכון ממחשב אחר (' + timeLabel(date) + ')'); }
   }
 
   function applyRemoteConfig(remote) {
@@ -1763,6 +1783,7 @@
     onConfig: applyRemoteConfig,
     onWeek: applyRemoteWeek,
     onSyncState: renderSyncState,
-    onSampleReady: function () { $('#chat').classList.remove('hidden'); }
+    onSampleReady: function () { $('#chat').classList.remove('hidden'); },
+    onSynced: onSynced
   });
 })();

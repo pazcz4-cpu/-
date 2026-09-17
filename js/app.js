@@ -63,6 +63,8 @@
     $('#week-range').textContent = weekKey === Store.currentWeekKey() ? 'השבוע הנוכחי' : '';
     $('#constraints-week').textContent = 'אילוצי ' + label;
 
+    renderHolidays();
+
     var current = week();
     var field = $('#shabbat-end');
     field.value = current.shabbatEnd || '';
@@ -70,6 +72,18 @@
       return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening');
     });
     $('#shabbat-field').classList.toggle('hidden', !needsMotzash);
+  }
+
+  /* ========== ימי חג ========== */
+  function renderHolidays() {
+    var current = week();
+    var html = '';
+    Data.DAYS.forEach(function (day) {
+      var on = Store.isHoliday(current, day.idx);
+      html += '<button class="chip holiday-chip' + (on ? ' active' : '') + '" data-day="' + day.idx + '">' +
+        day.name + (on ? ' · ' + esc(Store.holidayName(current, day.idx)) : '') + '</button>';
+    });
+    $('#holiday-days').innerHTML = html;
   }
 
   /* ========== לוח הסידור לפי סניף ========== */
@@ -159,6 +173,13 @@
         Data.DAYS.forEach(function (day) {
           var need = Store.slotNeed(branch, day.idx, shift.id);
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
+          if (Store.isHoliday(week(), day.idx) && !assigned.length) {
+            if (shiftIndex === 0) {
+              html += '<td class="closed holiday-cell" rowspan="' + Data.SHIFTS.length + '">' +
+                esc(Store.holidayName(week(), day.idx)) + '<br><small>הסניפים סגורים</small></td>';
+            }
+            return;
+          }
           if (need > 0) {
             html += cellHtml(day.idx, branch, shift.id, need, marks);
           } else if (assigned.length) {
@@ -194,7 +215,11 @@
         var cellClass = 'cell' + (flagged ? ' has-error' : '');
         var content = '';
         if (!slots.length) {
-          content = constraint.off ? '<span class="empty-cell">חופש</span>' : '<span class="empty-cell">—</span>';
+          if (Store.isHoliday(week(), day.idx)) {
+            content = '<span class="empty-cell holiday-text">' + esc(Store.holidayName(week(), day.idx)) + '</span>';
+          } else {
+            content = constraint.off ? '<span class="empty-cell">חופש</span>' : '<span class="empty-cell">—</span>';
+          }
         } else {
           content = slots.map(function (slot) {
             var shift = Data.shiftById(slot.shiftId);
@@ -263,7 +288,11 @@
       html += '<tr><td class="row-head">' + esc(emp.name) + '</td>';
       Data.DAYS.forEach(function (day) {
         var constraint = Store.getConstraint(week(), emp.id, day.idx);
-        var dayShifts = Store.activeShiftsForDay(state, day.idx);
+        if (Store.isHoliday(week(), day.idx)) {
+          html += '<td class="closed holiday-cell">' + esc(Store.holidayName(week(), day.idx)) + '</td>';
+          return;
+        }
+        var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
         if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {
@@ -415,6 +444,11 @@
     var lines = ['סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
       ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6)), ''];
     Data.DAYS.forEach(function (day) {
+      if (Store.isHoliday(week(), day.idx)) {
+        lines.push('📅 יום ' + day.name + ' (' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + ')');
+        lines.push('   ' + Store.holidayName(week(), day.idx) + ' – כל הסניפים סגורים', '');
+        return;
+      }
       var dayLines = [];
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
@@ -488,6 +522,10 @@
         Data.DAYS.forEach(function (day) {
           var need = Store.slotNeed(branch, day.idx, shift.id);
           var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
+          if (Store.isHoliday(current, day.idx) && !assigned.length) {
+            cells.push({ v: Store.holidayName(current, day.idx) + '\nסגור', s: Xlsx.STYLE.CLOSED });
+            return;
+          }
           if (!need && !assigned.length) {
             cells.push({ v: '—', s: Xlsx.STYLE.CLOSED });
             return;
@@ -544,7 +582,10 @@
         total += slots.length;
         var constraint = Store.getConstraint(current, emp.id, day.idx);
         if (!slots.length) {
-          cells.push({ v: constraint.off ? 'חופש' : '—', s: Xlsx.STYLE.CLOSED });
+          var empty = Store.isHoliday(current, day.idx)
+            ? Store.holidayName(current, day.idx)
+            : (constraint.off ? 'חופש' : '—');
+          cells.push({ v: empty, s: Xlsx.STYLE.CLOSED });
           return;
         }
         var lines = slots.map(function (slot) {
@@ -621,6 +662,7 @@
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
           var need = Store.slotNeed(branch, day.idx, shift.id);
           if (!assigned.length && !need) return;
+          if (Store.isHoliday(week(), day.idx) && !assigned.length) return;
           rows.push([
             Store.formatDate(Store.dateOfDay(weekKey, day.idx)), day.name, branch.name, shift.name,
             Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shift.id)),
@@ -704,6 +746,45 @@
       } else {
         window.prompt('העתיקו את הטקסט:', text);
       }
+    });
+
+    $('#holiday-days').addEventListener('click', function (event) {
+      var chip = event.target.closest('.holiday-chip');
+      if (!chip) return;
+      var dayIdx = Number(chip.dataset.day);
+      var current = week();
+
+      if (Store.isHoliday(current, dayIdx)) {
+        Store.setHoliday(current, dayIdx, null);
+        persist();
+        render();
+        toast(Data.DAYS[dayIdx].name + ' חזר להיות יום עבודה');
+        return;
+      }
+
+      var name = window.prompt('שם החג ביום ' + Data.DAYS[dayIdx].name +
+        ' (הסניפים ייסגרו והיום ייחשב חופש לכל העובדים):', 'חג');
+      if (name === null) return;
+
+      var assignedCount = 0;
+      state.employees.forEach(function (emp) {
+        assignedCount += Store.employeeDayAssignments(state, current, emp.id, dayIdx).length;
+      });
+      if (assignedCount && !confirm('ביום הזה כבר משובצים ' + assignedCount +
+        ' עובדים. לסמן כחג ולנקות את השיבוצים?')) return;
+
+      if (assignedCount) {
+        state.branches.forEach(function (branch) {
+          Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+            Store.setAssigned(current, dayIdx, branch.id, shiftId, []);
+            delete current.manual[Store.slotKey(dayIdx, branch.id, shiftId)];
+          });
+        });
+      }
+      Store.setHoliday(current, dayIdx, name.trim());
+      persist();
+      render();
+      toast('יום ' + Data.DAYS[dayIdx].name + ' סומן כחג – הסניפים סגורים');
     });
 
     $('#shabbat-end').addEventListener('change', function (event) {

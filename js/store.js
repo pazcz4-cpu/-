@@ -53,7 +53,7 @@
 
   function emptyWeek() {
     return {
-      constraints: {}, assignments: {}, manual: {},
+      constraints: {}, assignments: {}, manual: {}, holidays: {},
       shabbatEnd: '', note: '', generatedAt: null
     };
   }
@@ -64,6 +64,7 @@
     if (!w.constraints) w.constraints = {};
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
+    if (!w.holidays) w.holidays = {};
     return w;
   }
 
@@ -180,8 +181,24 @@
     return count;
   }
 
+  /* ===== ימי חג: כל הסניפים סגורים והיום נחשב חופש לכל העובדים ===== */
+  function isHoliday(week, dayIdx) {
+    return !!(week && week.holidays && week.holidays[dayIdx] !== undefined);
+  }
+
+  function holidayName(week, dayIdx) {
+    if (!isHoliday(week, dayIdx)) return '';
+    return week.holidays[dayIdx] || 'חג';
+  }
+
+  function setHoliday(week, dayIdx, name) {
+    if (name === null) { delete week.holidays[dayIdx]; }
+    else { week.holidays[dayIdx] = name || ''; }
+  }
+
   /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
-  function activeShiftsForDay(state, dayIdx) {
+  function activeShiftsForDay(state, dayIdx, week) {
+    if (isHoliday(week, dayIdx)) return [];
     return Data.ALL_SHIFT_IDS.filter(function (shiftId) {
       return state.branches.some(function (branch) {
         return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
@@ -190,9 +207,10 @@
   }
 
   /* כל הדרישות של השבוע: יום × סניף × משמרת × כמות נדרשת */
-  function weekDemands(state) {
+  function weekDemands(state, week) {
     var demands = [];
     for (var day = 0; day < 7; day++) {
+      if (isHoliday(week, day)) continue; // ביום חג הסניפים סגורים
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
         Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
@@ -234,6 +252,7 @@
     Object.keys(state.weeks).forEach(function (key) {
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
+      if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
     });
     return state;
   }
@@ -323,6 +342,9 @@
     employeeDayAssignments: employeeDayAssignments,
     employeeWeekCount: employeeWeekCount,
     activeShiftsForDay: activeShiftsForDay,
+    isHoliday: isHoliday,
+    holidayName: holidayName,
+    setHoliday: setHoliday,
     slotConfig: slotConfig,
     slotNeed: slotNeed,
     slotHours: slotHours,

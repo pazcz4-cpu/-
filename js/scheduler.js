@@ -19,20 +19,26 @@
     return !emp.branches || emp.branches.length === 0 || emp.branches.indexOf(branchId) !== -1;
   }
 
+  /* תנאי יסוד שאינם ניתנים לפתרון על ידי החלפת שיבוצים */
+  function eligibleForSlot(ctx, emp, demand) {
+    if (!emp.active) return false;
+    if (Store.isHoliday(ctx.week, demand.dayIdx)) return false; // יום חג – אין עבודה
+    if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
+    if (!employeeAllowedInBranch(emp, demand.branchId)) return false;
+    var constraint = ctx.constraints[emp.id + '|' + demand.dayIdx];
+    if (constraint) {
+      if (constraint.off) return false;
+      if (constraint.blocked && constraint.blocked[demand.shiftId]) return false;
+    }
+    return true;
+  }
+
   /* האם ניתן לשבץ את העובד לדרישה מסוימת, בהתחשב במצב השיבוץ הנוכחי */
   function canAssign(ctx, emp, demand) {
     var state = ctx.state;
     var day = demand.dayIdx;
 
-    if (!emp.active) return false;
-    if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
-    if (!employeeAllowedInBranch(emp, demand.branchId)) return false;
-
-    var constraint = ctx.constraints[emp.id + '|' + day];
-    if (constraint) {
-      if (constraint.off) return false;
-      if (constraint.blocked && constraint.blocked[demand.shiftId]) return false;
-    }
+    if (!eligibleForSlot(ctx, emp, demand)) return false;
 
     var dayList = ctx.byDay[emp.id][day];
     if (state.settings.onePerDay && dayList.length > 0) return false;
@@ -89,6 +95,7 @@
   function newContext(state, week) {
     var ctx = {
       state: state,
+      week: week,
       constraints: week.constraints || {},
       counts: {},
       byDay: {},
@@ -190,19 +197,102 @@
     return remaining;
   }
 
-  /* כמה עובדים יכולים בכלל לכסות דרישה – משמש למיון לפי נדירות */
-  function candidateCount(ctx, demand) {
-    var n = 0;
-    ctx.state.employees.forEach(function (emp) {
-      if (canAssign(ctx, emp, demand)) n++;
+  /* השיבוצים שחוסמים את העובד מלקחת את המשמרת הזו */
+  function blockingAssignments(ctx, emp, demand) {
+    var blockers = [];
+    var seen = {};
+    function push(dayIdx, slot) {
+      var key = dayIdx + '|' + slot.branchId + '|' + slot.shiftId;
+      if (seen[key]) return;
+      seen[key] = true;
+      blockers.push({ dayIdx: dayIdx, branchId: slot.branchId, shiftId: slot.shiftId });
+    }
+    [demand.dayIdx - 1, demand.dayIdx, demand.dayIdx + 1].forEach(function (day) {
+      if (day < 0 || day > 6) return;
+      ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
     });
+    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+      for (var day = 0; day < 7; day++) {
+        ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
+      }
+    }
+    return blockers;
+  }
+
+  /* מנסה לאייש משמרת ריקה: קודם שיבוץ ישיר, ואם אין – מסלול הרחבה.
+     עובד מפנה משמרת אחרת, ואת המשמרת שהתפנתה מנסים לאייש רקורסיבית.
+     כל עובד נבדק פעם אחת לכל חיפוש (כמו באלגוריתם התאמה דו-צדדית),
+     ולכן החיפוש שלם ומסתיים בזמן סביר. */
+  function fillSlot(ctx, demand, visited, locked) {
+    var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+    var taken = ctx.assignments[key] || [];
+    var employees = ctx.state.employees;
+    var i;
+
+    for (i = 0; i < employees.length; i++) {
+      if (taken.indexOf(employees[i].id) !== -1) continue;
+      if (canAssign(ctx, employees[i], demand)) {
+        applyAssignment(ctx, employees[i].id, demand);
+        return true;
+      }
+    }
+
+    for (i = 0; i < employees.length; i++) {
+      var emp = employees[i];
+      if (visited[emp.id]) continue;
+      if (taken.indexOf(emp.id) !== -1) continue;
+      if (!eligibleForSlot(ctx, emp, demand)) continue;
+      visited[emp.id] = true;
+
+      var blockers = blockingAssignments(ctx, emp, demand);
+      for (var b = 0; b < blockers.length; b++) {
+        var blocker = blockers[b];
+        if (locked[Store.slotKey(blocker.dayIdx, blocker.branchId, blocker.shiftId)]) continue;
+
+        removeAssignment(ctx, emp.id, blocker.dayIdx, blocker.branchId, blocker.shiftId);
+        if (canAssign(ctx, emp, demand)) {
+          applyAssignment(ctx, emp.id, demand);
+          if (fillSlot(ctx, blocker, visited, locked)) return true;
+          removeAssignment(ctx, emp.id, demand.dayIdx, demand.branchId, demand.shiftId);
+        }
+        applyAssignment(ctx, emp.id, blocker); // שחזור המצב הקודם
+      }
+    }
+    return false;
+  }
+
+  /* מעבר אחרון על כל המשמרות שנותרו ריקות */
+  function deepFill(ctx, unfilled, keepManual, week) {
+    var locked = {};
+    if (keepManual && week) {
+      Object.keys(week.manual || {}).forEach(function (key) { locked[key] = true; });
+    }
+    var remaining = [];
+    unfilled.forEach(function (demand) {
+      if (!fillSlot(ctx, demand, {}, locked)) remaining.push(demand);
+    });
+    return remaining;
+  }
+
+  /* כמה עובדים יכולים לכסות דרישה. limit מאפשר עצירה מוקדמת:
+     כדי לאתר את המשמרת הנדירה ביותר אין צורך לספור מעבר למינימום הנוכחי. */
+  function candidateCount(ctx, demand, limit) {
+    var cap = limit == null ? Infinity : limit;
+    var employees = ctx.state.employees;
+    var n = 0;
+    for (var i = 0; i < employees.length; i++) {
+      if (canAssign(ctx, employees[i], demand)) {
+        n++;
+        if (n > cap) return n;
+      }
+    }
     return n;
   }
 
   function runOnce(state, week, keepManual, seed) {
     var rand = makeRandom(seed);
     var ctx = newContext(state, week);
-    var demands = Store.weekDemands(state);
+    var demands = Store.weekDemands(state, week);
     var unfilled = [];
 
     // שמירת שיבוצים ידניים קיימים
@@ -232,9 +322,9 @@
        החישוב מחדש אחרי כל שיבוץ מונע מצב שבו שיבוץ מוקדם חוסם משמרת נדירה. */
     var remaining = slots.slice();
     while (remaining.length) {
-      var pickIndex = -1, fewest = Infinity;
+      var pickIndex = 0, fewest = Infinity;
       for (var i = 0; i < remaining.length; i++) {
-        var count = candidateCount(ctx, remaining[i]);
+        var count = candidateCount(ctx, remaining[i], fewest);
         if (count < fewest) { fewest = count; pickIndex = i; }
         if (fewest === 0) break;
       }
@@ -297,9 +387,18 @@
   }
 
   /* הרצה מרובה עם זריעה אקראית ובחירת התוצאה הטובה ביותר */
+  /* תקציב עבודה קבוע: בעיות גדולות מקבלות פחות ניסיונות, כדי שזמן
+     התגובה יישאר סביר גם עם הרבה סניפים ועובדים. */
+  function attemptBudget(state, week) {
+    var slots = Store.weekDemands(state, week).reduce(function (sum, d) { return sum + d.need; }, 0);
+    var employees = state.employees.filter(function (emp) { return emp.active; }).length;
+    var work = Math.max(1, slots * Math.max(1, employees));
+    return Math.max(12, Math.min(120, Math.round(120000 / work)));
+  }
+
   function generate(state, week, options) {
     var opts = options || {};
-    var attempts = opts.attempts || 120;
+    var attempts = opts.attempts || attemptBudget(state, week);
     var keepManual = opts.keepManual !== false;
     var best = null, bestQ = null;
     for (var i = 0; i < attempts; i++) {
@@ -308,11 +407,24 @@
       if (!best || betterThan(q, bestQ)) { best = result; bestQ = q; }
       if (bestQ.unfilled === 0 && bestQ.misses === 0 && bestQ.variance < 0.01) break;
     }
+
+    // מעבר אחרון ויסודי על התוצאה הטובה ביותר, עם שרשראות החלפה עמוקות
+    if (best.unfilled.length) {
+      best.unfilled = deepFill(best.ctx, best.unfilled, keepManual, week);
+      best.assignments = best.ctx.assignments;
+      best.counts = best.ctx.counts;
+      bestQ = qualityOf(state, week, best);
+    }
+
     return { assignments: best.assignments, counts: best.counts, unfilled: best.unfilled, quality: bestQ };
   }
 
   var API = {
     generate: generate,
+    attemptBudget: attemptBudget,
+    fillSlot: fillSlot,
+    deepFill: deepFill,
+    eligibleForSlot: eligibleForSlot,
     repair: repair,
     removeAssignment: removeAssignment,
     runOnce: runOnce,

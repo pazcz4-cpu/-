@@ -20,13 +20,66 @@
   }
   function dayName(dayIdx) { return Data.DAYS[dayIdx].name; }
 
+  function nameList(names, limit) {
+    var max = limit || 3;
+    if (names.length <= max) return names.join(', ');
+    return names.slice(0, max).join(', ') + ' ועוד ' + (names.length - max);
+  }
+
+  /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
+  function explainShortage(state, week, demand) {
+    var eligible = [], busy = [], atMax = [], resting = [], free = [];
+
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      if (emp.shifts.indexOf(demand.shiftId) === -1) return;
+      if (!Scheduler.employeeAllowedInBranch(emp, demand.branchId)) return;
+      var constraint = Store.getConstraint(week, emp.id, demand.dayIdx);
+      if (constraint.off || (constraint.blocked && constraint.blocked[demand.shiftId])) return;
+      eligible.push(emp);
+
+      if (Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx).length) { busy.push(emp.name); return; }
+      if (Store.employeeWeekCount(state, week, emp.id) >= (emp.maxShifts || 99)) { atMax.push(emp.name); return; }
+      if (state.settings.restEveningMorning) {
+        var before = demand.dayIdx > 0 && demand.shiftId === 'morning' &&
+          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx - 1)
+            .some(function (s) { return s.shiftId === 'evening'; });
+        var after = demand.dayIdx < 6 && demand.shiftId === 'evening' &&
+          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx + 1)
+            .some(function (s) { return s.shiftId === 'morning'; });
+        if (before || after) { resting.push(emp.name); return; }
+      }
+      free.push(emp.name);
+    });
+
+    if (!eligible.length) {
+      return 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.';
+    }
+    if (free.length) {
+      return 'יש עובדים פנויים (' + nameList(free) + ') – נסו לבנות את הסידור מחדש.';
+    }
+
+    var reasons = [];
+    if (busy.length) reasons.push(nameList(busy) + ' כבר משובצים במשמרת אחרת באותו יום');
+    if (atMax.length) reasons.push(nameList(atMax) + ' הגיעו למכסת המשמרות השבועית');
+    if (resting.length) reasons.push(nameList(resting) + ' חייבים מנוחה בין ערב לבוקר');
+
+    var text = 'הסיבה: ' + reasons.join('; ') + '.';
+    if (busy.length && !atMax.length) {
+      text += ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.';
+    } else if (atMax.length) {
+      text += ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.';
+    }
+    return text;
+  }
+
   function issue(level, type, text, ref) {
     return { level: level, type: type, text: text, ref: ref || {} };
   }
 
   function validate(state, week) {
     var issues = [];
-    var demands = Store.weekDemands(state);
+    var demands = Store.weekDemands(state, week);
     var demandMap = {};
     demands.forEach(function (d) { demandMap[Store.slotKey(d.dayIdx, d.branchId, d.shiftId)] = d; });
 
@@ -38,7 +91,8 @@
 
       if (assigned.length < demand.need) {
         issues.push(issue('warning', 'understaffed',
-          'חוסר באיוש: ' + label + ' – משובצים ' + assigned.length + ' מתוך ' + demand.need + '.',
+          'חוסר באיוש: ' + label + ' – משובצים ' + assigned.length + ' מתוך ' + demand.need + '. ' +
+          explainShortage(state, week, demand),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
@@ -60,6 +114,21 @@
         seen[id] = true;
       });
     });
+
+    // 1א2. שיבוץ ביום חג
+    for (var holidayDay = 0; holidayDay < 7; holidayDay++) {
+      if (!Store.isHoliday(week, holidayDay)) continue;
+      var onHoliday = [];
+      state.employees.forEach(function (emp) {
+        if (Store.employeeDayAssignments(state, week, emp.id, holidayDay).length) onHoliday.push(emp.name);
+      });
+      if (onHoliday.length) {
+        issues.push(issue('warning', 'holiday-assignment',
+          'שיבוץ ביום חג: ' + dayName(holidayDay) + ' (' + Store.holidayName(week, holidayDay) +
+          ') מוגדר כיום סגור, אך משובצים בו ' + nameList(onHoliday, 5) + '.',
+          { dayIdx: holidayDay }));
+      }
+    }
 
     // 1ב. מוצ״ש ללא שעת צאת שבת – לא ניתן לחשב מתי המשמרת מתחילה
     var missingShabbat = state.branches.filter(function (branch) {
@@ -150,7 +219,7 @@
           'חריגה ממכסה: ' + emp.name + ' משובץ/ת ל-' + total + ' משמרות (מקסימום ' + emp.maxShifts + ').',
           { empId: emp.id }));
       }
-      if (emp.active && total === 0) {
+      if (emp.active && total === 0 && Store.weekDemands(state, week).length) {
         issues.push(issue('info', 'no-shifts', emp.name + ' לא משובץ/ת השבוע כלל.', { empId: emp.id }));
       }
     });

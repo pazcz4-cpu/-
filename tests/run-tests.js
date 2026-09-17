@@ -63,7 +63,7 @@ test('חוסר באיוש נובע ממחסור אמיתי בעובדים', func
   var weekData = Store.getWeek(state, '2026-09-13');
   var result = build(state, weekData);
   // ביום חול נדרשות 9 משמרות ויש 8 עובדים, ועובד עושה משמרת אחת ביום
-  var weekdaySlots = Store.weekDemands(state)
+  var weekdaySlots = Store.weekDemands(state, weekData)
     .filter(function (d) { return d.dayIdx === 0; })
     .reduce(function (sum, d) { return sum + d.need; }, 0);
   assert(weekdaySlots > state.employees.length, 'ההנחה של הבדיקה: ביום חול יש יותר משמרות מעובדים');
@@ -251,7 +251,7 @@ test('מזהה חוסר באיוש', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');
   var report = Validate.validate(state, weekData); // שבוע ריק לגמרי
-  var demandSlots = Store.weekDemands(state).length;
+  var demandSlots = Store.weekDemands(state, weekData).length;
   assertEqual(issuesOfType(report, 'understaffed').length, demandSlots, 'לא כל החוסרים זוהו');
 });
 
@@ -414,6 +414,140 @@ test('שיבוץ מוצ״ש מכבד את מגבלת משמרת אחת ביום'
     assert(Store.employeeDayAssignments(state, weekData, emp.id, 6).length <= 1,
       emp.name + ' שובץ ליותר ממשמרת אחת במוצ״ש');
   });
+});
+
+console.log('\n== ימי חג ==');
+
+test('יום חג מבטל את כל הדרישות של אותו יום', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var before = Store.weekDemands(state, weekData).filter(function (d) { return d.dayIdx === 2; }).length;
+  assert(before > 0, 'לפני החג יש דרישות ביום שלישי');
+  Store.setHoliday(weekData, 2, 'ראש השנה');
+  assertEqual(Store.weekDemands(state, weekData).filter(function (d) { return d.dayIdx === 2; }).length, 0,
+    'ביום חג אין דרישות');
+  assertEqual(Store.activeShiftsForDay(state, 2, weekData).length, 0, 'אין משמרות פעילות ביום חג');
+  assertEqual(Store.holidayName(weekData, 2), 'ראש השנה', 'שם החג נשמר');
+});
+
+test('השיבוץ האוטומטי אינו משבץ אף אחד ביום חג', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  Store.setHoliday(weekData, 1, 'סוכות');
+  Store.setHoliday(weekData, 2, '');
+  build(state, weekData);
+  state.employees.forEach(function (emp) {
+    assertEqual(Store.employeeDayAssignments(state, weekData, emp.id, 1).length, 0, emp.name + ' שובץ בחג');
+    assertEqual(Store.employeeDayAssignments(state, weekData, emp.id, 2).length, 0, emp.name + ' שובץ בחג');
+  });
+});
+
+test('חג ללא שם מוצג כ"חג"', function () {
+  var weekData = Store.emptyWeek();
+  Store.setHoliday(weekData, 3, '');
+  assert(Store.isHoliday(weekData, 3), 'היום מסומן כחג');
+  assertEqual(Store.holidayName(weekData, 3), 'חג', 'שם ברירת מחדל');
+});
+
+test('ביטול חג מחזיר את הדרישות', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var before = Store.weekDemands(state, weekData).length;
+  Store.setHoliday(weekData, 4, 'פסח');
+  Store.setHoliday(weekData, 4, null);
+  assertEqual(Store.weekDemands(state, weekData).length, before, 'הדרישות חזרו');
+  assert(!Store.isHoliday(weekData, 4), 'היום כבר לא חג');
+});
+
+test('שיבוץ ידני ביום חג מסומן כאזהרה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  Store.setHoliday(weekData, 3, 'שבועות');
+  Store.setAssigned(weekData, 3, state.branches[0].id, 'morning', [state.employees[0].id]);
+  var report = Validate.validate(state, weekData);
+  assertEqual(issuesOfType(report, 'holiday-assignment').length, 1, 'לא זוהה שיבוץ ביום חג');
+});
+
+test('חג משחרר קיבולת לשאר השבוע', function () {
+  var state = freshState();
+  var plain = Store.getWeek(state, '2026-09-20');
+  var withoutHoliday = build(state, plain).unfilled.length;
+
+  var state2 = freshState();
+  var holidayWeek = Store.getWeek(state2, '2026-09-27');
+  Store.setHoliday(holidayWeek, 1, 'חג');
+  var withHoliday = build(state2, holidayWeek).unfilled.length;
+  assert(withHoliday < withoutHoliday,
+    'סגירת יום אמורה להקטין את החוסר (' + withHoliday + ' מול ' + withoutHoliday + ')');
+});
+
+console.log('\n== הסבר לחוסר באיוש ==');
+
+test('כל חוסר באיוש מלווה בהסבר', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var report = Validate.validate(state, weekData);
+  var shortages = issuesOfType(report, 'understaffed');
+  assert(shortages.length > 0, 'בנתוני הדוגמה יש חוסר');
+  shortages.forEach(function (item) {
+    assert(item.text.indexOf('הסיבה:') !== -1 || item.text.indexOf('אין עובד') !== -1,
+      'ההתראה חייבת להסביר את הסיבה: ' + item.text);
+  });
+});
+
+test('ההסבר מזהה שהעובדים כבר משובצים באותו יום', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var report = Validate.validate(state, weekData);
+  var busy = issuesOfType(report, 'understaffed').filter(function (item) {
+    return item.text.indexOf('כבר משובצים במשמרת אחרת באותו יום') !== -1;
+  });
+  assert(busy.length > 0, 'ההסבר אמור לציין שהעובדים תפוסים באותו יום');
+  assert(busy[0].text.indexOf('שתי משמרות ביום') !== -1, 'ההסבר מציע פתרון');
+});
+
+test('ההסבר מזהה מכסה שבועית מלאה', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.maxShifts = 1; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var report = Validate.validate(state, weekData);
+  var maxed = issuesOfType(report, 'understaffed').filter(function (item) {
+    return item.text.indexOf('הגיעו למכסת המשמרות השבועית') !== -1;
+  });
+  assert(maxed.length > 0, 'ההסבר אמור לציין מכסה מלאה');
+  assert(maxed[0].text.indexOf('להעלות את מכסת המשמרות') !== -1, 'ההסבר מציע פתרון');
+});
+
+test('ההסבר מזהה שאין עובד מתאים לסניף או למשמרת', function () {
+  var state = freshState();
+  state.employees.forEach(function (emp) { emp.shifts = ['morning']; });
+  var weekData = Store.getWeek(state, '2026-09-20');
+  build(state, weekData);
+  var report = Validate.validate(state, weekData);
+  var none = issuesOfType(report, 'understaffed').filter(function (item) {
+    return item.text.indexOf('אין עובד שמוגדר') !== -1;
+  });
+  assert(none.length > 0, 'ההסבר אמור לציין שאין עובד מתאים');
+});
+
+test('לא נותר חוסר כשיש מספיק עובדים', function () {
+  var state = freshState();
+  // מספיק עובדים לכל משמרת בכל יום
+  state.employees = [];
+  for (var i = 0; i < 12; i++) {
+    state.employees.push({
+      id: 'emp-' + i, name: 'עובד/ת ' + (i + 1), active: true, branches: [],
+      shifts: ['morning', 'middle', 'evening'], maxShifts: 7, note: ''
+    });
+  }
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var result = build(state, weekData);
+  assertEqual(result.unfilled.length, 0,
+    'עם 12 עובדים ו-9 משמרות ביום הכל אמור להתאייש');
+  assertEqual(Validate.validate(state, weekData).errors, 0, 'ללא שגיאות');
 });
 
 console.log('\n== ייצוא לאקסל ==');

@@ -6,6 +6,7 @@
   var Store = window.ShiftStore;
   var Scheduler = window.ShiftScheduler;
   var Validate = window.ShiftValidate;
+  var Platform = window.ShiftPlatform;
 
   var state = Store.load();
   var weekKey = Store.currentWeekKey();
@@ -20,7 +21,12 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   function week() { return Store.getWeek(state, weekKey); }
-  function persist() { Store.save(state); }
+
+  function persist(scope) {
+    Store.save(state);
+    if (scope === 'config' || scope === 'all') Platform.pushConfig();
+    if (scope !== 'config') Platform.pushWeek(weekKey);
+  }
 
   var toastTimer = null;
   function toast(message) {
@@ -373,16 +379,10 @@
     return lines.join('\n');
   }
 
-  function download(filename, content, mime) {
-    var blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  function saveFile(filename, content, mime) {
+    Platform.saveFile(filename, content, mime).then(function (message) {
+      if (message) toast(message);
+    });
   }
 
   function exportCsv() {
@@ -404,7 +404,7 @@
     var csv = '﻿' + rows.map(function (row) {
       return row.map(function (cell) { return '"' + String(cell).replace(/"/g, '""') + '"'; }).join(',');
     }).join('\r\n');
-    download('sidur-' + weekKey + '.csv', csv, 'text/csv;charset=utf-8');
+    saveFile('sidur-' + weekKey + '.csv', csv, 'text/csv;charset=utf-8');
   }
 
   /* ========== אירועים ========== */
@@ -420,9 +420,14 @@
   }
 
   function bindScheduleTab() {
-    $('#prev-week').addEventListener('click', function () { weekKey = Store.shiftWeekKey(weekKey, -1); render(); });
-    $('#next-week').addEventListener('click', function () { weekKey = Store.shiftWeekKey(weekKey, 1); render(); });
-    $('#this-week').addEventListener('click', function () { weekKey = Store.currentWeekKey(); render(); });
+    function goToWeek(nextKey) {
+      weekKey = nextKey;
+      Platform.watchWeek(weekKey);
+      render();
+    }
+    $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
+    $('#next-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, 1)); });
+    $('#this-week').addEventListener('click', function () { goToWeek(Store.currentWeekKey()); });
 
     document.querySelectorAll('.view-switch .chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
@@ -474,7 +479,9 @@
     });
 
     $('#export-csv').addEventListener('click', exportCsv);
-    $('#print').addEventListener('click', function () { window.print(); });
+    $('#print').addEventListener('click', function () {
+      if (!Platform.print()) { toast('ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא CSV'); }
+    });
 
     $('#schedule-branch').addEventListener('change', function (event) {
       var select = event.target.closest('.emp-select');
@@ -553,7 +560,7 @@
         id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
         branches: [], shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, note: ''
       });
-      persist();
+      persist('config');
       render();
     });
 
@@ -578,7 +585,7 @@
             if (constraintKey.indexOf(emp.id + '|') === 0) delete weekData.constraints[constraintKey];
           });
         });
-        persist();
+        persist('all');
         render();
         return;
       }
@@ -586,14 +593,14 @@
         var branchId = event.target.dataset.branch;
         var index = emp.branches.indexOf(branchId);
         if (index === -1) emp.branches.push(branchId); else emp.branches.splice(index, 1);
-        persist();
+        persist('config');
         render();
       }
       if (action === 'toggle-shift') {
         var shiftId = event.target.dataset.shift;
         var pos = emp.shifts.indexOf(shiftId);
         if (pos === -1) emp.shifts.push(shiftId); else emp.shifts.splice(pos, 1);
-        persist();
+        persist('config');
         render();
       }
     });
@@ -607,7 +614,7 @@
       if (field === 'active') emp.active = event.target.checked;
       else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
       else emp[field] = event.target.value;
-      persist();
+      persist('config');
       if (field === 'active' || field === 'maxShifts') render();
     });
   }
@@ -618,7 +625,7 @@
         id: Store.newId('br'), name: 'סניף חדש', active: true,
         need: { morning: 1, middle: 1, evening: 1 }
       });
-      persist();
+      persist('config');
       render();
     });
 
@@ -639,7 +646,7 @@
           if (slot.split('|')[1] === branch.id) delete weekData.assignments[slot];
         });
       });
-      persist();
+      persist('all');
       render();
     });
 
@@ -650,25 +657,25 @@
       if (!branch) return;
       if (event.target.dataset.need) {
         branch.need[event.target.dataset.need] = Math.max(0, Number(event.target.value) || 0);
-        persist();
+        persist('config');
         render();
         return;
       }
       var field = event.target.dataset.field;
-      if (field === 'active') { branch.active = event.target.checked; persist(); render(); }
-      else if (field) { branch[field] = event.target.value; persist(); render(); }
+      if (field === 'active') { branch.active = event.target.checked; persist('config'); render(); }
+      else if (field) { branch[field] = event.target.value; persist('config'); render(); }
     });
   }
 
   function bindSettingsTab() {
     $('#opt-one-per-day').addEventListener('change', function (event) {
       state.settings.onePerDay = event.target.checked;
-      persist();
+      persist('config');
       render();
     });
     $('#opt-rest').addEventListener('change', function (event) {
       state.settings.restEveningMorning = event.target.checked;
-      persist();
+      persist('config');
       render();
     });
     $('#day-shifts').addEventListener('change', function (event) {
@@ -680,12 +687,12 @@
       if (input.checked && index === -1) list.push(input.dataset.shift);
       if (!input.checked && index !== -1) list.splice(index, 1);
       state.settings.dayShifts[dayIdx] = list;
-      persist();
+      persist('config');
       render();
     });
 
     $('#export-json').addEventListener('click', function () {
-      download('maiphone-shifts-backup.json', JSON.stringify(state, null, 2), 'application/json');
+      saveFile('maiphone-shifts-backup.json', JSON.stringify(state, null, 2), 'application/json');
     });
 
     $('#import-json').addEventListener('change', function (event) {
@@ -695,7 +702,7 @@
       reader.onload = function () {
         try {
           state = Store.migrate(JSON.parse(reader.result));
-          persist();
+          persist('all');
           render();
           toast('הנתונים יובאו בהצלחה');
         } catch (err) {
@@ -709,11 +716,46 @@
     $('#reset-all').addEventListener('click', function () {
       if (!confirm('לאפס את כל הנתונים (עובדים, סניפים, סידורים ואילוצים) לברירת המחדל?')) return;
       state = Store.emptyState();
-      persist();
+      persist('all');
       render();
       toast('הנתונים אופסו');
     });
   }
+
+  /* ========== סנכרון בין מכשירים ========== */
+  function renderSyncState(status) {
+    var node = $('#sync-state');
+    if (!node) return;
+    var labels = {
+      live: 'מסונכרן בין המכשירים',
+      local: 'נשמר במכשיר הזה',
+      readonly: 'צפייה בלבד – אין הרשאת עריכה'
+    };
+    node.textContent = labels[status] || labels.local;
+    node.className = 'sync-state ' + status;
+  }
+
+  function applyRemoteConfig(remote) {
+    if (remote.settings) state.settings = remote.settings;
+    if (Array.isArray(remote.branches)) state.branches = remote.branches;
+    if (Array.isArray(remote.employees)) state.employees = remote.employees;
+    state = Store.migrate(state);
+    Store.save(state);
+    render();
+  }
+
+  function applyRemoteWeek(key, remote) {
+    var target = Store.getWeek(state, key);
+    target.constraints = remote.constraints || {};
+    target.assignments = remote.assignments || {};
+    target.manual = remote.manual || {};
+    target.note = remote.note || '';
+    Store.save(state);
+    if (key === weekKey) render();
+  }
+
+  document.documentElement.setAttribute('dir', 'rtl');
+  document.documentElement.setAttribute('lang', 'he');
 
   bindTabs();
   bindScheduleTab();
@@ -722,4 +764,12 @@
   bindBranchesTab();
   bindSettingsTab();
   render();
+
+  Platform.init({
+    getState: function () { return state; },
+    weekKey: function () { return weekKey; },
+    onConfig: applyRemoteConfig,
+    onWeek: applyRemoteWeek,
+    onSyncState: renderSyncState
+  });
 })();

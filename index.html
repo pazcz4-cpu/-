@@ -37,6 +37,7 @@
       </div>
       <div class="actions">
         <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
+        <button id="view-only-toggle" class="btn ghost" aria-pressed="false">🔒 מצב צפייה</button>
         <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ כלים נוספים</button>
       </div>
     </div>
@@ -68,6 +69,11 @@
         <div id="holiday-days" class="holiday-chips"></div>
       </div>
     </div>
+
+    <p id="view-only-banner" class="view-only-banner hidden">
+      <b>מצב צפייה</b> – הסידור מוצג לבדיקה בלבד והעריכה חסומה.
+      הייצוא, ההדפסה והמעבר בין שבועות פועלים כרגיל.
+    </p>
 
     <p id="local-notice" class="local-notice no-print hidden">
       זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים.

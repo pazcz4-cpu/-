@@ -13,6 +13,13 @@
   var weekKey = Store.currentWeekKey();
   var view = 'branch';
   var mobileDay = new Date().getDay();
+  var VIEW_ONLY_KEY = 'maiphone-shifts-view-only';
+  /* מצב צפייה הוא העדפה של המכשיר הזה בלבד – הוא לא נשמר בנתונים
+     ולא עובר בייצוא, כדי שהעובד לא יירש אותו. */
+  var viewOnly = (function () {
+    try { return window.localStorage.getItem(VIEW_ONLY_KEY) === '1'; }
+    catch (err) { return false; }
+  })();
   var showAllIssues = false;
   var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
 
@@ -34,6 +41,13 @@
     Store.save(state);
     if (scope === 'config' || scope === 'all') Platform.pushConfig();
     if (scope !== 'config') Platform.pushWeek(weekKey);
+  }
+
+  /* שער יחיד לכל פעולה שמשנה נתונים */
+  function blocked() {
+    if (!viewOnly) return false;
+    toast('מצב צפייה – העריכה חסומה. אפשר לכבות אותו בכפתור שבראש המסך.');
+    return true;
   }
 
   var toastTimer = null;
@@ -615,6 +629,32 @@
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
   }
 
+  var LOCKED_SELECTORS = [
+    'select.emp-select', '.cstate', '.pill', '.holiday-chip',
+    '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
+    '#clear-constraints', '#copy-constraints',
+    '#add-employee', '#add-branch',
+    '#employees-list input', '#employees-list button',
+    '#branches-list input', '#branches-list button', '#branches-list select',
+    '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
+    '#reset-all'
+  ];
+
+  function applyViewOnly() {
+    document.body.classList.toggle('view-only', viewOnly);
+    $('#view-only-banner').classList.toggle('hidden', !viewOnly);
+
+    var button = $('#view-only-toggle');
+    button.textContent = viewOnly ? '🔓 יציאה ממצב צפייה' : '🔒 מצב צפייה';
+    button.setAttribute('aria-pressed', viewOnly ? 'true' : 'false');
+
+    LOCKED_SELECTORS.forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (node) {
+        node.disabled = viewOnly;
+      });
+    });
+  }
+
   /* ========== רינדור כולל ========== */
   function render() {
     renderWeekHeader();
@@ -634,6 +674,7 @@
     renderEmployees();
     renderBranches();
     renderSettings();
+    applyViewOnly();
   }
 
   /* ========== ייצוא ========== */
@@ -674,6 +715,7 @@
 
   /* שינוי שיבוץ – משותף לתצוגת המחשב ולתצוגת הנייד */
   function applyCellChange(cell, dayIdx, branchId, shiftId) {
+    if (blocked()) { render(); return; }
     var values = Array.prototype.map.call(cell.querySelectorAll('.emp-select'), function (node) {
       return node.value;
     }).filter(function (value) { return value; });
@@ -1082,6 +1124,7 @@
     });
 
     $('#generate').addEventListener('click', function () {
+      if (blocked()) return;
       var current = week();
       var keepManual = $('#keep-manual').checked;
       var result = Scheduler.generate(state, current, { keepManual: keepManual, seed: Date.now() % 100000 });
@@ -1101,6 +1144,7 @@
     });
 
     $('#clear-week').addEventListener('click', function () {
+      if (blocked()) return;
       if (!confirm('לנקות את כל השיבוצים של השבוע הזה? האילוצים יישמרו.')) return;
       var current = week();
       current.assignments = {};
@@ -1112,6 +1156,15 @@
 
     $('#copy-text').addEventListener('click', function () {
       copyText(scheduleAsText(), 'הסידור הועתק ללוח');
+    });
+
+    $('#view-only-toggle').addEventListener('click', function () {
+      viewOnly = !viewOnly;
+      try { window.localStorage.setItem(VIEW_ONLY_KEY, viewOnly ? '1' : '0'); } catch (err) { /* לא קריטי */ }
+      render();
+      toast(viewOnly
+        ? 'מצב צפייה הופעל – העריכה חסומה'
+        : 'מצב צפייה כובה – אפשר לערוך');
     });
 
     $('#tools-toggle').addEventListener('click', function () {
@@ -1142,6 +1195,7 @@
     $('#holiday-days').addEventListener('click', function (event) {
       var chip = event.target.closest('.holiday-chip');
       if (!chip) return;
+      if (blocked()) return;
       var dayIdx = Number(chip.dataset.day);
       var current = week();
 
@@ -1179,6 +1233,7 @@
     });
 
     $('#shabbat-end').addEventListener('change', function (event) {
+      if (blocked()) { render(); return; }
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
         toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 19:45');
@@ -1220,6 +1275,7 @@
     function onConstraintClick(event) {
       var button = event.target.closest('.cstate');
       if (!button) return;
+      if (blocked()) return;
       var empId = button.dataset.emp;
       var dayIdx = Number(button.dataset.day);
       var current = week();

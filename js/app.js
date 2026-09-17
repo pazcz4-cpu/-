@@ -627,6 +627,21 @@
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
+
+    var hours = state.settings.defaultHours || {};
+    var html = '';
+    Data.SHIFTS.forEach(function (shift) {
+      var range = hours[shift.id] || {};
+      html += '<div class="hours-row"><span class="hours-name ' + shiftClass(shift.id) + '">' +
+        shift.name + '</span>' +
+        '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+        ' data-hours="' + shift.id + '" data-edge="from" value="' + esc(range.from || '') + '">' +
+        '<span class="dash">–</span>' +
+        '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+        ' data-hours="' + shift.id + '" data-edge="to" value="' + esc(range.to || '') + '">' +
+        '</div>';
+    });
+    $('#default-hours').innerHTML = html;
   }
 
   var LOCKED_SELECTORS = [
@@ -1393,7 +1408,7 @@
     $('#add-branch').addEventListener('click', function () {
       state.branches.push({
         id: Store.newId('br'), name: 'סניף חדש', active: true,
-        need: { morning: 1, middle: 1, evening: 1 }
+        schedule: Data.defaultSchedule(state.settings.defaultHours)
       });
       persist('config');
       render();
@@ -1453,7 +1468,7 @@
           if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
           else if (config) { config.need = need; }
           else {
-            var template = Data.defaultSchedule();
+            var template = Data.defaultSchedule(state.settings.defaultHours);
             var fallback = (template[dayIdx] && template[dayIdx][shiftId]) ||
               (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
             branch.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
@@ -1495,6 +1510,34 @@
       persist('config');
       render();
     });
+    $('#default-hours').addEventListener('change', function (event) {
+      var input = event.target;
+      if (!input.dataset.hours) return;
+      if (blocked()) { render(); return; }
+      var normalized = Store.normalizeTimeInput(input.value);
+      if (normalized === null || !normalized) {
+        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30');
+        render();
+        return;
+      }
+      state.settings.defaultHours[input.dataset.hours][input.dataset.edge] = normalized;
+      persist('config');
+      render();
+    });
+
+    $('#apply-default-hours').addEventListener('click', function () {
+      if (blocked()) return;
+      var branches = state.branches.length;
+      if (!confirm('להחיל את שעות ברירת המחדל על ' + branches + ' הסניפים, בימים ראשון עד חמישי?\n\n' +
+        'הימים הפתוחים וכמות העובדים בכל משמרת יישארו כפי שהם. שישי ומוצ״ש לא ישתנו.')) return;
+      var changed = Store.applyDefaultHours(state);
+      persist('config');
+      render();
+      toast(changed
+        ? 'השעות עודכנו ב-' + changed + ' משמרות'
+        : 'כל המשמרות כבר בשעות האלה');
+    });
+
     $('#opt-one-day-off').addEventListener('change', function (event) {
       state.settings.oneDayOffPerWeek = event.target.checked;
       persist('config');

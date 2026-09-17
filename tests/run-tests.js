@@ -334,6 +334,73 @@ test('migrate ממיר את המבנה הישן (need + dayShifts) ללוח לפ
   assert(migrated.branches[0].schedule[0].morning.from, 'הושלמו שעות ברירת מחדל');
 });
 
+console.log('\n== שעות ברירת מחדל ==');
+
+test('שעות ברירת המחדל הן 09:30-16:00 / 12:30-20:00 / 15:00-22:00', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var branch = state.branches[0];
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, branch, 0, 'morning')), '09:30-16:00', 'בוקר');
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, branch, 0, 'middle')), '12:30-20:00', 'אמצע');
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, branch, 0, 'evening')), '15:00-22:00', 'ערב');
+});
+
+test('שישי נשאר מקוצר ומוצ״ש נשאר לפי צאת שבת', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-20');
+  var branch = state.branches[0];
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, branch, 5, 'morning')), '09:30-14:30', 'שישי מקוצר');
+  assertEqual(Store.slotConfig(branch, 6, 'evening').auto, 'motzash', 'מוצ״ש אוטומטי');
+});
+
+test('החלת שעות ברירת מחדל שומרת על הימים ועל כמות העובדים', function () {
+  var state = freshState();
+  var branch = state.branches[0];
+  branch.schedule[0].morning = { need: 3, from: '08:00', to: '13:00' };
+  branch.schedule[1].evening = { need: 2, from: '16:00', to: '21:00' };
+  delete branch.schedule[2]; // יום סגור
+
+  var changed = Store.applyDefaultHours(state);
+  assert(changed >= 2, 'עודכנו משמרות');
+  assertEqual(branch.schedule[0].morning.from, '09:30', 'שעת ההתחלה עודכנה');
+  assertEqual(branch.schedule[0].morning.to, '16:00', 'שעת הסיום עודכנה');
+  assertEqual(branch.schedule[0].morning.need, 3, 'כמות העובדים נשמרה');
+  assertEqual(branch.schedule[1].evening.need, 2, 'כמות העובדים נשמרה גם בערב');
+  assert(branch.schedule[2] === undefined, 'יום סגור נשאר סגור');
+});
+
+test('החלת שעות אינה נוגעת בשישי ובמוצ״ש', function () {
+  var state = freshState();
+  var branch = state.branches[0];
+  branch.schedule[5].morning.to = '13:45';
+  Store.applyDefaultHours(state);
+  assertEqual(branch.schedule[5].morning.to, '13:45', 'שישי לא הושפע');
+  assertEqual(branch.schedule[6].evening.auto, 'motzash', 'מוצ״ש נשאר אוטומטי');
+  assert(!branch.schedule[6].evening.from, 'למוצ״ש אין שעת התחלה קבועה');
+});
+
+test('שינוי שעות ברירת המחדל משפיע על ההחלה ועל סניף חדש', function () {
+  var state = freshState();
+  state.settings.defaultHours.morning = { from: '07:00', to: '12:00' };
+  Store.applyDefaultHours(state);
+  assertEqual(state.branches[0].schedule[0].morning.from, '07:00', 'ההחלה לפי ההגדרה החדשה');
+
+  var fresh = Data.defaultSchedule(state.settings.defaultHours);
+  assertEqual(fresh[0].morning.from, '07:00', 'סניף חדש מקבל את השעות החדשות');
+  assertEqual(fresh[0].evening.from, '15:00', 'משמרת שלא שונתה נשארת בברירת המחדל');
+});
+
+test('migrate משלים שעות ברירת מחדל חסרות', function () {
+  var migrated = Store.migrate({
+    settings: { onePerDay: true },
+    branches: [{ id: 'b', name: 'ס' }],
+    employees: [{ id: 'e', name: 'ע' }],
+    weeks: {}
+  });
+  assertEqual(migrated.settings.defaultHours.morning.from, '09:30', 'הושלמו שעות הבוקר');
+  assertEqual(migrated.settings.defaultHours.evening.to, '22:00', 'הושלמו שעות הערב');
+});
+
 console.log('\n== ימים, שעות ומוצ״ש ==');
 
 test('שעת מוצ״ש מחושבת חצי שעה אחרי צאת השבת', function () {
@@ -380,7 +447,7 @@ test('שעות נערכות לכל סניף ויום בנפרד', function () {
   state.branches[0].schedule[5].morning.to = '15:00';
   assertEqual(Store.hoursLabel(Store.slotHours(weekData, state.branches[0], 5, 'morning')), '08:30-15:00',
     'השעות של הסניף הראשון השתנו');
-  assertEqual(Store.hoursLabel(Store.slotHours(weekData, state.branches[1], 5, 'morning')), '09:00-14:30',
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, state.branches[1], 5, 'morning')), '09:30-14:30',
     'הסניף השני לא הושפע');
 });
 

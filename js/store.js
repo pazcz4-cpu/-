@@ -45,7 +45,7 @@
     return {
       version: VERSION,
       settings: clone(Data.DEFAULT_SETTINGS),
-      branches: Data.defaultBranches(),
+      branches: Data.defaultBranches(Data.DEFAULT_SETTINGS.defaultHours),
       employees: clone(Data.DEFAULT_EMPLOYEES),
       weeks: {}
     };
@@ -311,6 +311,32 @@
     };
   }
 
+  /* החלת שעות ברירת המחדל על משמרות קיימות בימי חול.
+     נשמרים: אילו ימים פתוחים, כמות העובדים, שישי ומוצ״ש. */
+  function applyDefaultHours(state, options) {
+    var opts = options || {};
+    var hours = state.settings.defaultHours || Data.DEFAULT_HOURS;
+    var days = opts.days || Data.WEEKDAYS;
+    var changed = 0;
+
+    state.branches.forEach(function (branch) {
+      days.forEach(function (day) {
+        var dayConfig = (branch.schedule || {})[day];
+        if (!dayConfig) return;
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var config = dayConfig[shiftId];
+          if (!config || config.auto) return; // משמרת אוטומטית (מוצ״ש) אינה מושפעת
+          var range = hours[shiftId] || Data.DEFAULT_HOURS[shiftId];
+          if (config.from === range.from && config.to === range.to) return;
+          config.from = range.from;
+          config.to = range.to;
+          changed++;
+        });
+      });
+    });
+    return changed;
+  }
+
   function byId(list, id) {
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
@@ -323,6 +349,14 @@
     var legacyDayShifts = (state.settings && state.settings.dayShifts) || null;
     state.settings = Object.assign({}, base.settings, state.settings || {});
     delete state.settings.dayShifts;
+    state.settings.defaultHours = Object.assign({}, base.settings.defaultHours,
+      state.settings.defaultHours || {});
+    Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+      var range = state.settings.defaultHours[shiftId] || {};
+      if (!range.from || !range.to) {
+        state.settings.defaultHours[shiftId] = Object.assign({}, base.settings.defaultHours[shiftId]);
+      }
+    });
     if (!Array.isArray(state.branches) || !state.branches.length) state.branches = base.branches;
     if (!Array.isArray(state.employees) || !state.employees.length) state.employees = base.employees;
     if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
@@ -443,6 +477,7 @@
     formatTime: formatTime,
     addMinutes: addMinutes,
     normalizeSchedule: normalizeSchedule,
+    applyDefaultHours: applyDefaultHours,
     weekDemands: weekDemands,
     employeeCanWorkDay: employeeCanWorkDay,
     requestedDaysOff: requestedDaysOff,

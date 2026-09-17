@@ -5,6 +5,7 @@ var Data = require('../js/data.js');
 var Store = require('../js/store.js');
 var Scheduler = require('../js/scheduler.js');
 var Validate = require('../js/validate.js');
+var Xlsx = require('../js/xlsx.js');
 
 var passed = 0, failed = 0;
 
@@ -413,6 +414,96 @@ test('שיבוץ מוצ״ש מכבד את מגבלת משמרת אחת ביום'
     assert(Store.employeeDayAssignments(state, weekData, emp.id, 6).length <= 1,
       emp.name + ' שובץ ליותר ממשמרת אחת במוצ״ש');
   });
+});
+
+console.log('\n== ייצוא לאקסל ==');
+
+function readZipEntries(bytes) {
+  /* קריאת שמות הקבצים מתוך הספרייה המרכזית של ה-ZIP */
+  var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  var names = [];
+  for (var i = bytes.length - 22; i >= 0; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      var count = view.getUint16(i + 10, true);
+      var offset = view.getUint32(i + 16, true);
+      for (var n = 0; n < count; n++) {
+        var nameLength = view.getUint16(offset + 28, true);
+        var extraLength = view.getUint16(offset + 30, true);
+        var commentLength = view.getUint16(offset + 32, true);
+        names.push(Buffer.from(bytes.slice(offset + 46, offset + 46 + nameLength)).toString('utf8'));
+        offset += 46 + nameLength + extraLength + commentLength;
+      }
+      return names;
+    }
+  }
+  throw new Error('לא נמצאה ספריית ZIP מרכזית');
+}
+
+function sampleWorkbook() {
+  return Xlsx.build([
+    {
+      name: 'לפי סניף', selected: true, cols: [18, 10], freeze: { row: 4, col: 2 },
+      merges: [{ r1: 3, c1: 0, r2: 5, c2: 0 }],
+      rows: [
+        { cells: [{ v: 'סידור עבודה', s: Xlsx.STYLE.TITLE }], height: 22 },
+        [{ v: 'צאת שבת 19:45 & "מוצ״ש"', s: Xlsx.STYLE.SUBTITLE }],
+        [],
+        [{ v: 'מייפון מרכז', s: Xlsx.STYLE.ROW_HEAD }, { v: '09:00-14:00\nעובד/ת 1', s: Xlsx.STYLE.MORNING }]
+      ]
+    },
+    { name: 'לפי עובד', rows: [[{ v: 'עובד/ת 1', s: Xlsx.STYLE.ROW_HEAD }, { v: 6, s: Xlsx.STYLE.TOTAL }]] }
+  ]);
+}
+
+test('נוצר קובץ ZIP תקין עם כל חלקי ה-xlsx', function () {
+  var bytes = sampleWorkbook();
+  assertEqual(bytes[0], 0x50, 'חתימת ZIP');
+  assertEqual(bytes[1], 0x4B, 'חתימת ZIP');
+  var names = readZipEntries(bytes);
+  ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels',
+    'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet2.xml'].forEach(function (name) {
+    assert(names.indexOf(name) !== -1, 'חסר הקובץ ' + name + ' (יש: ' + names.join(', ') + ')');
+  });
+});
+
+test('שמות הגיליונות והתוכן נכתבים לקובץ', function () {
+  var text = Buffer.from(sampleWorkbook()).toString('utf8');
+  assert(text.indexOf('לפי סניף') !== -1, 'שם הגיליון הראשון');
+  assert(text.indexOf('לפי עובד') !== -1, 'שם הגיליון השני');
+  assert(text.indexOf('עובד/ת 1') !== -1, 'תוכן התא');
+  assert(text.indexOf('rightToLeft="1"') !== -1, 'גיליון מימין לשמאל');
+  assert(text.indexOf('state="frozen"') !== -1, 'הקפאת שורת הכותרת');
+  assert(text.indexOf('<mergeCell ref="A4:A6"/>') !== -1, 'מיזוג תא שם הסניף');
+});
+
+test('תווים מיוחדים בטקסט מקודדים כראוי', function () {
+  var text = Buffer.from(sampleWorkbook()).toString('utf8');
+  assert(text.indexOf('&amp;') !== -1, 'הסימן & קודד');
+  assert(text.indexOf('&quot;') !== -1, 'מרכאות קודדו');
+  assert(text.indexOf('&#10;') !== -1, 'ירידת שורה בתוך תא קודדה');
+  assert(text.indexOf('& "מוצ') === -1, 'לא נשאר טקסט לא מקודד');
+});
+
+test('מספרים נשמרים כמספרים ולא כטקסט', function () {
+  var text = Buffer.from(sampleWorkbook()).toString('utf8');
+  assert(/<c r="B1" s="10"><v>6<\/v><\/c>/.test(text), 'תא מספרי נכתב ללא inlineStr');
+});
+
+test('שמות עמודות מחושבים נכון', function () {
+  assertEqual(Xlsx.colName(0), 'A', 'עמודה ראשונה');
+  assertEqual(Xlsx.colName(8), 'I', 'עמודה תשיעית');
+  assertEqual(Xlsx.colName(25), 'Z', 'עמודה 26');
+  assertEqual(Xlsx.colName(26), 'AA', 'עמודה 27');
+});
+
+test('שם גיליון ארוך או עם תווים אסורים מנוקה', function () {
+  var text = Buffer.from(Xlsx.build([
+    { name: 'סניף/מרכז: דוח [2026] ארוך מאוד מאוד מאוד מאוד', rows: [['א']] }
+  ])).toString('utf8');
+  var match = /<sheet name="([^"]*)"/.exec(text);
+  assert(match, 'נמצא שם גיליון');
+  assert(match[1].length <= 31, 'שם הגיליון קוצר ל-31 תווים');
+  assert(!/[:\\\/?*\[\]]/.test(match[1]), 'הוסרו תווים אסורים: ' + match[1]);
 });
 
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

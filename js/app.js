@@ -7,6 +7,7 @@
   var Scheduler = window.ShiftScheduler;
   var Validate = window.ShiftValidate;
   var Platform = window.ShiftPlatform;
+  var Xlsx = window.ShiftXlsx;
 
   var state = Store.load();
   var weekKey = Store.currentWeekKey();
@@ -441,6 +442,176 @@
     });
   }
 
+  /* ===== ייצוא לאקסל: גיליון לפי סניף וגיליון לפי עובד ===== */
+  function shiftStyle(shiftId) {
+    if (shiftId === 'morning') return Xlsx.STYLE.MORNING;
+    if (shiftId === 'middle') return Xlsx.STYLE.MIDDLE;
+    if (shiftId === 'evening') return Xlsx.STYLE.EVENING;
+    return Xlsx.STYLE.PLAIN;
+  }
+
+  function weekTitle() {
+    return 'סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
+      ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6));
+  }
+
+  function dayHeaderCells() {
+    return Data.DAYS.map(function (day) {
+      return { v: day.name + '\n' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)), s: Xlsx.STYLE.HEADER };
+    });
+  }
+
+  function branchSheet() {
+    var current = week();
+    var rows = [];
+    var merges = [];
+
+    rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
+    var subtitle = 'תצוגה לפי סניף';
+    if (current.shabbatEnd) subtitle += ' · צאת שבת ' + current.shabbatEnd;
+    rows.push([{ v: subtitle, s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+
+    var headerRow = [{ v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER }]
+      .concat(dayHeaderCells());
+    rows.push({ cells: headerRow, height: 30 });
+
+    var activeBranches = state.branches.filter(function (branch) { return branch.active; });
+    activeBranches.forEach(function (branch) {
+      var firstRow = rows.length;
+      Data.SHIFTS.forEach(function (shift, shiftIndex) {
+        var cells = [
+          shiftIndex === 0 ? { v: branch.name, s: Xlsx.STYLE.ROW_HEAD } : { v: '', s: Xlsx.STYLE.ROW_HEAD },
+          { v: shift.name, s: Xlsx.STYLE.ROW_HEAD }
+        ];
+        var maxLines = 1;
+        Data.DAYS.forEach(function (day) {
+          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
+          if (!need && !assigned.length) {
+            cells.push({ v: '—', s: Xlsx.STYLE.CLOSED });
+            return;
+          }
+          var lines = [];
+          var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shift.id));
+          if (hours) lines.push(hours);
+          if (assigned.length) {
+            assigned.forEach(function (id) { lines.push(empNameOf(id)); });
+          }
+          for (var i = assigned.length; i < need; i++) { lines.push('— חסר —'); }
+          maxLines = Math.max(maxLines, lines.length);
+          cells.push({ v: lines.join('\n'), s: shiftStyle(shift.id) });
+        });
+        rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
+      });
+      merges.push({ r1: firstRow, c1: 0, r2: firstRow + Data.SHIFTS.length - 1, c2: 0 });
+    });
+
+    if (!activeBranches.length) {
+      rows.push([{ v: 'לא הוגדרו סניפים פעילים', s: Xlsx.STYLE.PLAIN }]);
+    }
+
+    return {
+      name: 'לפי סניף',
+      selected: true,
+      cols: [18, 10, 20, 20, 20, 20, 20, 20, 20],
+      freeze: { row: 4, col: 2 },
+      merges: merges,
+      rows: rows
+    };
+  }
+
+  function employeeSheet() {
+    var current = week();
+    var rows = [];
+
+    rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: 'תצוגה לפי עובד', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+
+    var headerRow = [{ v: 'עובד', s: Xlsx.STYLE.HEADER }]
+      .concat(dayHeaderCells())
+      .concat([{ v: 'סה״כ משמרות', s: Xlsx.STYLE.HEADER }]);
+    rows.push({ cells: headerRow, height: 30 });
+
+    state.employees.forEach(function (emp) {
+      var cells = [{ v: emp.name + (emp.active ? '' : ' (לא פעיל)'), s: Xlsx.STYLE.ROW_HEAD }];
+      var total = 0;
+      var maxLines = 1;
+
+      Data.DAYS.forEach(function (day) {
+        var slots = Store.employeeDayAssignments(state, current, emp.id, day.idx);
+        total += slots.length;
+        var constraint = Store.getConstraint(current, emp.id, day.idx);
+        if (!slots.length) {
+          cells.push({ v: constraint.off ? 'חופש' : '—', s: Xlsx.STYLE.CLOSED });
+          return;
+        }
+        var lines = slots.map(function (slot) {
+          var shift = Data.shiftById(slot.shiftId);
+          var hours = Store.hoursLabel(Store.slotHours(current,
+            Store.byId(state.branches, slot.branchId) || {}, day.idx, slot.shiftId));
+          return branchNameOf(slot.branchId) + ' · ' + (shift ? shift.name : slot.shiftId) +
+            (hours ? '\n' + hours : '');
+        });
+        maxLines = Math.max(maxLines, lines.join('\n').split('\n').length);
+        cells.push({ v: lines.join('\n'), s: shiftStyle(slots[0].shiftId) });
+      });
+
+      cells.push({ v: total + ' מתוך ' + (emp.maxShifts || 0), s: Xlsx.STYLE.TOTAL });
+      rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
+    });
+
+    return {
+      name: 'לפי עובד',
+      cols: [20, 22, 22, 22, 22, 22, 22, 22, 14],
+      freeze: { row: 4, col: 1 },
+      rows: rows
+    };
+  }
+
+  function issuesSheet() {
+    var rows = [];
+    rows.push({ cells: [{ v: 'בדיקות הסידור', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+    rows.push([{ v: 'חומרה', s: Xlsx.STYLE.HEADER }, { v: 'סוג', s: Xlsx.STYLE.HEADER },
+      { v: 'פירוט', s: Xlsx.STYLE.HEADER }]);
+
+    var levels = { error: 'שגיאה', warning: 'אזהרה', info: 'הערה' };
+    var types = {
+      'duplicate-shift': 'כפל משמרת', 'duplicate-employee-slot': 'כפל משמרת',
+      'double-booked': 'כפל משמרת לעובד', 'understaffed': 'חוסר באיוש',
+      'constraint-off': 'הפרת אילוץ', 'constraint-blocked': 'הפרת אילוץ',
+      'branch-mismatch': 'סניף לא מתאים', 'shift-mismatch': 'משמרת לא מתאימה',
+      'over-max': 'חריגה ממכסה', 'rest': 'מנוחה קצרה', 'no-shifts': 'ללא משמרות',
+      'missing-shabbat-end': 'חסרה שעת צאת שבת', 'inactive-slot': 'משמרת סגורה'
+    };
+
+    if (!lastReport.issues.length) {
+      rows.push([{ v: '✔', s: Xlsx.STYLE.PLAIN }, { v: 'תקין', s: Xlsx.STYLE.PLAIN },
+        { v: 'אין כפל משמרות, חוסרים או הפרות אילוצים', s: Xlsx.STYLE.PLAIN }]);
+    }
+    lastReport.issues.forEach(function (item) {
+      rows.push([
+        { v: levels[item.level] || item.level, s: Xlsx.STYLE.PLAIN },
+        { v: types[item.type] || item.type, s: Xlsx.STYLE.PLAIN },
+        { v: item.text, s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return { name: 'בדיקות', cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
+  }
+
+  function exportExcel() {
+    var bytes = Xlsx.build([branchSheet(), employeeSheet(), issuesSheet()]);
+    var blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    saveFile('sidur-' + weekKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
   function exportCsv() {
     var rows = [['תאריך', 'יום', 'סניף', 'משמרת', 'שעות', 'עובדים', 'נדרשים', 'משובצים']];
     Data.DAYS.forEach(function (day) {
@@ -547,6 +718,7 @@
       render();
     });
 
+    $('#export-excel').addEventListener('click', exportExcel);
     $('#export-csv').addEventListener('click', exportCsv);
     $('#print').addEventListener('click', function () {
       if (!Platform.print()) { toast('ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא CSV'); }

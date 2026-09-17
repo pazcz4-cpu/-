@@ -9,34 +9,47 @@
     { idx: 3, name: 'רביעי', short: "ד'" },
     { idx: 4, name: 'חמישי', short: "ה'" },
     { idx: 5, name: 'שישי', short: "ו'" },
-    { idx: 6, name: 'שבת', short: "ש'" }
+    { idx: 6, name: 'מוצ״ש', short: "ש'" }
   ];
 
   var SHIFTS = [
-    { id: 'morning', name: 'בוקר', hours: '09:00-14:00', color: '#f6c453' },
-    { id: 'middle', name: 'אמצע', hours: '13:00-17:30', color: '#7ec8a9' },
-    { id: 'evening', name: 'ערב', hours: '17:00-22:00', color: '#8ea8e8' }
-  ];
-
-  /* ברירת מחדל: אילו משמרות פעילות בכל יום (שישי מקוצר, שבת סגור) */
-  var DEFAULT_DAY_SHIFTS = {
-    0: ['morning', 'middle', 'evening'],
-    1: ['morning', 'middle', 'evening'],
-    2: ['morning', 'middle', 'evening'],
-    3: ['morning', 'middle', 'evening'],
-    4: ['morning', 'middle', 'evening'],
-    5: ['morning', 'middle'],
-    6: []
-  };
-
-  /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
-  var DEFAULT_BRANCHES = [
-    { id: 'br-center', name: 'מייפון מרכז', active: true, need: { morning: 1, middle: 1, evening: 1 } },
-    { id: 'br-north', name: 'מייפון צפון', active: true, need: { morning: 1, middle: 1, evening: 1 } },
-    { id: 'br-south', name: 'מייפון דרום', active: true, need: { morning: 1, middle: 0, evening: 1 } }
+    { id: 'morning', name: 'בוקר' },
+    { id: 'middle', name: 'אמצע' },
+    { id: 'evening', name: 'ערב' }
   ];
 
   var ALL_SHIFT_IDS = ['morning', 'middle', 'evening'];
+
+  /* מוצ״ש: ההתחלה נגזרת משעת צאת השבת של אותו שבוע ועד 23:00 */
+  var MOTZASH = { dayIdx: 6, offsetMinutes: 30, defaultEnd: '23:00' };
+
+  /* תבנית ברירת מחדל לסניף חדש: ימים, שעות וכמות עובדים בכל משמרת */
+  function defaultSchedule() {
+    var schedule = {};
+    [0, 1, 2, 3, 4].forEach(function (day) {
+      schedule[day] = {
+        morning: { need: 1, from: '09:00', to: '14:00' },
+        middle: { need: 1, from: '13:00', to: '17:30' },
+        evening: { need: 1, from: '17:00', to: '22:00' }
+      };
+    });
+    schedule[5] = { // שישי – שני עובדים בבוקר וסגירה מוקדמת
+      morning: { need: 2, from: '09:00', to: '14:30' }
+    };
+    schedule[6] = { // מוצ״ש – חצי שעה מצאת שבת עד 23:00
+      evening: { need: 1, auto: 'motzash', to: MOTZASH.defaultEnd }
+    };
+    return schedule;
+  }
+
+  /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
+  function defaultBranches() {
+    return [
+      { id: 'br-center', name: 'מייפון מרכז', active: true, schedule: defaultSchedule() },
+      { id: 'br-north', name: 'מייפון צפון', active: true, schedule: defaultSchedule() },
+      { id: 'br-south', name: 'מייפון דרום', active: true, schedule: defaultSchedule() }
+    ];
+  }
 
   /* עובדים מוגדרים מראש – ניתנים לעריכה במסך "עובדים" */
   var DEFAULT_EMPLOYEES = [
@@ -53,15 +66,16 @@
   var DEFAULT_SETTINGS = {
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
-    dayShifts: DEFAULT_DAY_SHIFTS
+    defaultShabbatEnd: '20:00'
   };
 
   var API = {
     DAYS: DAYS,
     SHIFTS: SHIFTS,
     ALL_SHIFT_IDS: ALL_SHIFT_IDS,
-    DEFAULT_DAY_SHIFTS: DEFAULT_DAY_SHIFTS,
-    DEFAULT_BRANCHES: DEFAULT_BRANCHES,
+    MOTZASH: MOTZASH,
+    defaultSchedule: defaultSchedule,
+    defaultBranches: defaultBranches,
     DEFAULT_EMPLOYEES: DEFAULT_EMPLOYEES,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     shiftById: function (id) {

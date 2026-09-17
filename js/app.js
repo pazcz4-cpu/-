@@ -20,7 +20,13 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  function week() { return Store.getWeek(state, weekKey); }
+  function week() {
+    var current = Store.getWeek(state, weekKey);
+    if (!current.shabbatEnd && state.settings.defaultShabbatEnd) {
+      current.shabbatEnd = state.settings.defaultShabbatEnd;
+    }
+    return current;
+  }
 
   function persist(scope) {
     Store.save(state);
@@ -55,6 +61,14 @@
     $('#week-title').textContent = label;
     $('#week-range').textContent = weekKey === Store.currentWeekKey() ? 'השבוע הנוכחי' : '';
     $('#constraints-week').textContent = 'אילוצי ' + label;
+
+    var current = week();
+    var field = $('#shabbat-end');
+    field.value = current.shabbatEnd || '';
+    var needsMotzash = state.branches.some(function (branch) {
+      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening');
+    });
+    $('#shabbat-field').classList.toggle('hidden', !needsMotzash);
   }
 
   /* ========== לוח הסידור לפי סניף ========== */
@@ -97,6 +111,13 @@
     else if (marks.cells[key]) cls += ' has-warning';
 
     var html = '<td class="' + cls + '" data-day="' + dayIdx + '" data-branch="' + esc(branch.id) + '" data-shift="' + shiftId + '">';
+    var hours = Store.slotHours(week(), branch, dayIdx, shiftId);
+    if (hours) {
+      var label = Store.hoursLabel(hours);
+      html += '<div class="cell-hours">' +
+        (label ? esc(label) : '<span class="missing">חסרה שעת צאת שבת</span>') +
+        (need > 1 ? ' · ' + need + ' עובדים' : '') + '</div>';
+    }
     for (var i = 0; i < rows; i++) {
       var value = assigned[i] || '';
       var extra = i >= need ? ' extra' : '';
@@ -128,22 +149,19 @@
 
     activeBranches.forEach(function (branch) {
       Data.SHIFTS.forEach(function (shift, shiftIndex) {
-        var need = Number((branch.need || {})[shift.id] || 0);
         html += shiftIndex === 0 ? '<tr class="branch-start">' : '<tr>';
         if (shiftIndex === 0) {
           html += '<td class="row-head" rowspan="' + Data.SHIFTS.length + '">' + esc(branch.name) + '</td>';
         }
-        html += '<td class="row-head ' + shiftClass(shift.id) + '">' + shift.name +
-          '<br><small>' + shift.hours + '</small><br><small>נדרשים: ' + need + '</small></td>';
+        html += '<td class="row-head ' + shiftClass(shift.id) + '">' + shift.name + '</td>';
 
         Data.DAYS.forEach(function (day) {
-          var dayShifts = Store.activeShiftsForDay(state, day.idx);
-          var isOpen = dayShifts.indexOf(shift.id) !== -1 && need > 0;
+          var need = Store.slotNeed(branch, day.idx, shift.id);
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
-          if (isOpen) {
+          if (need > 0) {
             html += cellHtml(day.idx, branch, shift.id, need, marks);
           } else if (assigned.length) {
-            html += cellHtml(day.idx, branch, shift.id, 0, marks); // שיבוץ חריג במשמרת לא פעילה
+            html += cellHtml(day.idx, branch, shift.id, 0, marks); // שיבוץ חריג ביום סגור
           } else {
             html += '<td class="closed">—</td>';
           }
@@ -298,21 +316,73 @@
     $('#employees-list').innerHTML = html;
   }
 
-  /* ========== סניפים ========== */
+  /* ========== סניפים: ימים, שעות וכמות עובדים ========== */
+  function timeInputHtml(field, value) {
+    return '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+      ' data-sched="' + field + '" value="' + esc(value || '') + '">';
+  }
+
+  function scheduleCellHtml(branch, dayIdx, shiftId) {
+    var config = (branch.schedule[dayIdx] || {})[shiftId] || null;
+    var need = config ? Number(config.need) || 0 : 0;
+    var isMotzash = config && config.auto === 'motzash';
+    var html = '<td class="sched-cell ' + (need ? shiftClass(shiftId) : 'closed') + '"' +
+      ' data-day="' + dayIdx + '" data-shift="' + shiftId + '">';
+    html += '<label class="sched-need"><span>עובדים</span>' +
+      '<input class="num-input" type="number" min="0" max="9" data-sched="need" value="' + need + '"></label>';
+    if (need > 0) {
+      html += '<div class="sched-times">';
+      if (isMotzash) {
+        html += '<span class="auto-time" title="חצי שעה אחרי צאת השבת של אותו שבוע">מצאת שבת +30 דק׳</span>';
+      } else {
+        html += timeInputHtml('from', config.from);
+      }
+      html += '<span class="dash">–</span>';
+      html += timeInputHtml('to', config.to);
+      html += '</div>';
+      if (dayIdx === Data.MOTZASH.dayIdx) {
+        html += '<label class="check tiny"><input type="checkbox" data-sched="auto"' +
+          (isMotzash ? ' checked' : '') + '> לפי צאת שבת</label>';
+      }
+    } else {
+      html += '<div class="sched-closed">סגור</div>';
+    }
+    return html + '</td>';
+  }
+
   function renderBranches() {
     var html = '';
     state.branches.forEach(function (branch) {
-      html += '<div class="card' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
+      html += '<div class="card wide' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
-        '<button class="btn icon danger" data-action="delete-branch" title="מחיקה">🗑</button></div>';
-      html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
-        (branch.active ? ' checked' : '') + '> סניף פעיל</label></div>';
-      html += '<div class="field"><label class="title">כמה עובדים נדרשים בכל משמרת</label><div class="need-row">';
+        '<label class="check"><input type="checkbox" data-field="active"' +
+        (branch.active ? ' checked' : '') + '> פעיל</label>' +
+        '<button class="btn icon danger" data-action="delete-branch" title="מחיקת הסניף">🗑</button></div>';
+
+      html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">יום</th>';
       Data.SHIFTS.forEach(function (shift) {
-        html += '<label>' + shift.name + '<input class="num-input" type="number" min="0" max="9" data-need="' +
-          shift.id + '" value="' + esc((branch.need || {})[shift.id] || 0) + '"></label>';
+        html += '<th class="' + shiftClass(shift.id) + '">' + shift.name + '</th>';
       });
-      html += '</div></div></div>';
+      html += '</tr></thead><tbody>';
+      Data.DAYS.forEach(function (day) {
+        html += '<tr><td class="row-head">' + day.name + '</td>';
+        Data.SHIFTS.forEach(function (shift) {
+          html += scheduleCellHtml(branch, day.idx, shift.id);
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+
+      if (state.branches.length > 1) {
+        html += '<div class="field copy-row"><label class="title">העתקת ימים ושעות מסניף אחר</label>' +
+          '<select class="text-input" data-action="copy-schedule"><option value="">בחרו סניף…</option>';
+        state.branches.forEach(function (other) {
+          if (other.id === branch.id) return;
+          html += '<option value="' + esc(other.id) + '">' + esc(other.name) + '</option>';
+        });
+        html += '</select></div>';
+      }
+      html += '</div>';
     });
     $('#branches-list').innerHTML = html;
   }
@@ -321,21 +391,7 @@
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
-
-    var html = '<table><thead><tr><th class="row-head">יום</th>';
-    Data.SHIFTS.forEach(function (shift) { html += '<th>' + shift.name + '<small>' + shift.hours + '</small></th>'; });
-    html += '</tr></thead><tbody>';
-    Data.DAYS.forEach(function (day) {
-      html += '<tr><td class="row-head">' + day.name + '</td>';
-      Data.SHIFTS.forEach(function (shift) {
-        var active = (state.settings.dayShifts[day.idx] || []).indexOf(shift.id) !== -1;
-        html += '<td><input type="checkbox" data-day="' + day.idx + '" data-shift="' + shift.id + '"' +
-          (active ? ' checked' : '') + '></td>';
-      });
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-    $('#day-shifts').innerHTML = html;
+    $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
   }
 
   /* ========== רינדור כולל ========== */
@@ -358,17 +414,17 @@
     var lines = ['סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
       ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6)), ''];
     Data.DAYS.forEach(function (day) {
-      var dayShifts = Store.activeShiftsForDay(state, day.idx);
-      if (!dayShifts.length) return;
       var dayLines = [];
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
-        dayShifts.forEach(function (shiftId) {
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
-          var need = Number((branch.need || {})[shiftId] || 0);
+          var need = Store.slotNeed(branch, day.idx, shiftId);
           if (!assigned.length && !need) return;
           var names = assigned.map(empNameOf).join(', ') || '‼ חסר איוש';
-          dayLines.push('   ' + branch.name + ' – ' + Data.shiftById(shiftId).name + ': ' + names);
+          var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
+          dayLines.push('   ' + branch.name + ' – ' + Data.shiftById(shiftId).name +
+            (hours ? ' (' + hours + ')' : '') + ': ' + names);
         });
       });
       if (dayLines.length) {
@@ -392,11 +448,12 @@
         if (!branch.active) return;
         Data.SHIFTS.forEach(function (shift) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
-          var need = Number((branch.need || {})[shift.id] || 0);
+          var need = Store.slotNeed(branch, day.idx, shift.id);
           if (!assigned.length && !need) return;
           rows.push([
             Store.formatDate(Store.dateOfDay(weekKey, day.idx)), day.name, branch.name, shift.name,
-            shift.hours, assigned.map(empNameOf).join(' | '), need, assigned.length
+            Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shift.id)),
+            assigned.map(empNameOf).join(' | '), need, assigned.length
           ]);
         });
       });
@@ -476,6 +533,18 @@
       } else {
         window.prompt('העתיקו את הטקסט:', text);
       }
+    });
+
+    $('#shabbat-end').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) {
+        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 19:45');
+        render();
+        return;
+      }
+      week().shabbatEnd = normalized;
+      persist();
+      render();
     });
 
     $('#export-csv').addEventListener('click', exportCsv);
@@ -655,15 +724,62 @@
       if (!card) return;
       var branch = Store.byId(state.branches, card.dataset.branch);
       if (!branch) return;
-      if (event.target.dataset.need) {
-        branch.need[event.target.dataset.need] = Math.max(0, Number(event.target.value) || 0);
+      var input = event.target;
+
+      if (input.dataset.action === 'copy-schedule') {
+        var source = Store.byId(state.branches, input.value);
+        if (!source) return;
+        if (!confirm('להעתיק את הימים והשעות מ' + source.name + ' אל ' + branch.name + '?')) {
+          input.value = '';
+          return;
+        }
+        branch.schedule = Store.clone(source.schedule);
+        persist('config');
+        render();
+        toast('הימים והשעות הועתקו');
+        return;
+      }
+
+      if (input.dataset.sched) {
+        var cell = input.closest('.sched-cell');
+        var dayIdx = cell.dataset.day;
+        var shiftId = cell.dataset.shift;
+        if (!branch.schedule[dayIdx]) branch.schedule[dayIdx] = {};
+        var config = branch.schedule[dayIdx][shiftId];
+
+        if (input.dataset.sched === 'need') {
+          var need = Math.max(0, Number(input.value) || 0);
+          if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
+          else if (config) { config.need = need; }
+          else {
+            var template = Data.defaultSchedule();
+            var fallback = (template[dayIdx] && template[dayIdx][shiftId]) ||
+              (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
+            branch.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
+          }
+        } else if (config) {
+          if (input.dataset.sched === 'auto') {
+            if (input.checked) { config.auto = 'motzash'; delete config.from; }
+            else { delete config.auto; config.from = config.from || '20:30'; }
+          } else {
+            var normalized = Store.normalizeTimeInput(input.value);
+            if (normalized === null) {
+              toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 14:30');
+              render();
+              return;
+            }
+            config[input.dataset.sched] = normalized;
+          }
+        }
+        Store.normalizeSchedule(branch.schedule);
         persist('config');
         render();
         return;
       }
-      var field = event.target.dataset.field;
-      if (field === 'active') { branch.active = event.target.checked; persist('config'); render(); }
-      else if (field) { branch[field] = event.target.value; persist('config'); render(); }
+
+      var field = input.dataset.field;
+      if (field === 'active') { branch.active = input.checked; persist('config'); render(); }
+      else if (field) { branch[field] = input.value; persist('config'); render(); }
     });
   }
 
@@ -678,15 +794,14 @@
       persist('config');
       render();
     });
-    $('#day-shifts').addEventListener('change', function (event) {
-      var input = event.target;
-      if (!input.dataset.shift) return;
-      var dayIdx = input.dataset.day;
-      var list = (state.settings.dayShifts[dayIdx] || []).slice();
-      var index = list.indexOf(input.dataset.shift);
-      if (input.checked && index === -1) list.push(input.dataset.shift);
-      if (!input.checked && index !== -1) list.splice(index, 1);
-      state.settings.dayShifts[dayIdx] = list;
+    $('#default-shabbat').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) {
+        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 20:00');
+        render();
+        return;
+      }
+      state.settings.defaultShabbatEnd = normalized;
       persist('config');
       render();
     });

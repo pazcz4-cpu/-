@@ -45,14 +45,17 @@
     return {
       version: VERSION,
       settings: clone(Data.DEFAULT_SETTINGS),
-      branches: clone(Data.DEFAULT_BRANCHES),
+      branches: Data.defaultBranches(),
       employees: clone(Data.DEFAULT_EMPLOYEES),
       weeks: {}
     };
   }
 
   function emptyWeek() {
-    return { constraints: {}, assignments: {}, manual: {}, note: '', generatedAt: null };
+    return {
+      constraints: {}, assignments: {}, manual: {},
+      shabbatEnd: '', note: '', generatedAt: null
+    };
   }
 
   function getWeek(state, weekKey) {
@@ -62,6 +65,74 @@
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
     return w;
+  }
+
+  /* ===== שעות ===== */
+  function parseTime(value) {
+    var match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return null;
+    var hours = Number(match[1]), minutes = Number(match[2]);
+    if (hours > 23 || minutes > 59) return null;
+    return hours * 60 + minutes;
+  }
+
+  function formatTime(totalMinutes) {
+    var wrapped = ((totalMinutes % 1440) + 1440) % 1440;
+    return pad(Math.floor(wrapped / 60)) + ':' + pad(wrapped % 60);
+  }
+
+  /* קלט שעה גמיש: "830" → 08:30, "8:5" → 08:05, "1430" → 14:30. null אם לא תקין. */
+  function normalizeTimeInput(raw) {
+    var text = String(raw == null ? '' : raw).trim().replace(/[.\u05f4"']/g, ':');
+    if (!text) return '';
+    var hours, minutes, match;
+    if ((match = /^(\d{1,2}):(\d{1,2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = Number(match[2]);
+    } else if ((match = /^(\d{1,2})(\d{2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = Number(match[2]);
+    } else if ((match = /^(\d{1,2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = 0;
+    } else {
+      return null;
+    }
+    if (hours > 23 || minutes > 59) return null;
+    return pad(hours) + ':' + pad(minutes);
+  }
+
+  function addMinutes(value, minutes) {
+    var base = parseTime(value);
+    return base === null ? null : formatTime(base + minutes);
+  }
+
+  /* הגדרת משמרת בסניף ביום מסוים, או null אם הסניף סגור אז */
+  function slotConfig(branch, dayIdx, shiftId) {
+    var day = (branch.schedule || {})[dayIdx];
+    var config = day && day[shiftId];
+    if (!config || Number(config.need) <= 0) return null;
+    return config;
+  }
+
+  function slotNeed(branch, dayIdx, shiftId) {
+    var config = slotConfig(branch, dayIdx, shiftId);
+    return config ? Number(config.need) || 0 : 0;
+  }
+
+  /* שעות בפועל. במוצ״ש ההתחלה נגזרת משעת צאת השבת של אותו שבוע. */
+  function slotHours(week, branch, dayIdx, shiftId) {
+    var config = slotConfig(branch, dayIdx, shiftId);
+    if (!config) return null;
+    var from = config.from || '';
+    if (config.auto === 'motzash') {
+      var shabbatEnd = (week && week.shabbatEnd) || '';
+      from = shabbatEnd ? addMinutes(shabbatEnd, Data.MOTZASH.offsetMinutes) : '';
+    }
+    return { from: from, to: config.to || '', auto: config.auto || null };
+  }
+
+  function hoursLabel(hours) {
+    if (!hours) return '';
+    if (!hours.from) return hours.to ? 'עד ' + hours.to : '';
+    return hours.from + '-' + (hours.to || '');
   }
 
   function slotKey(dayIdx, branchId, shiftId) { return dayIdx + '|' + branchId + '|' + shiftId; }
@@ -109,20 +180,23 @@
     return count;
   }
 
+  /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
   function activeShiftsForDay(state, dayIdx) {
-    var list = (state.settings.dayShifts && state.settings.dayShifts[dayIdx]) || [];
-    return Data.ALL_SHIFT_IDS.filter(function (id) { return list.indexOf(id) !== -1; });
+    return Data.ALL_SHIFT_IDS.filter(function (shiftId) {
+      return state.branches.some(function (branch) {
+        return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
+      });
+    });
   }
 
   /* כל הדרישות של השבוע: יום × סניף × משמרת × כמות נדרשת */
   function weekDemands(state) {
     var demands = [];
     for (var day = 0; day < 7; day++) {
-      var shifts = activeShiftsForDay(state, day);
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
-        shifts.forEach(function (shiftId) {
-          var need = Number((branch.need || {})[shiftId] || 0);
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var need = slotNeed(branch, day, shiftId);
           if (need > 0) { demands.push({ dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need }); }
         });
       });
@@ -139,8 +213,9 @@
     if (!state || typeof state !== 'object') return emptyState();
     var base = emptyState();
     state.version = VERSION;
+    var legacyDayShifts = (state.settings && state.settings.dayShifts) || null;
     state.settings = Object.assign({}, base.settings, state.settings || {});
-    state.settings.dayShifts = Object.assign({}, base.settings.dayShifts, state.settings.dayShifts || {});
+    delete state.settings.dayShifts;
     if (!Array.isArray(state.branches) || !state.branches.length) state.branches = base.branches;
     if (!Array.isArray(state.employees) || !state.employees.length) state.employees = base.employees;
     if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
@@ -151,10 +226,55 @@
       if (typeof emp.active !== 'boolean') emp.active = true;
     });
     state.branches.forEach(function (branch) {
-      if (!branch.need) branch.need = { morning: 1, middle: 1, evening: 1 };
       if (typeof branch.active !== 'boolean') branch.active = true;
+      if (!branch.schedule) { branch.schedule = legacySchedule(branch, legacyDayShifts); }
+      normalizeSchedule(branch.schedule);
+      delete branch.need;
+    });
+    Object.keys(state.weeks).forEach(function (key) {
+      var weekData = state.weeks[key];
+      if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
     });
     return state;
+  }
+
+  /* המרת המבנה הישן (need לכל סניף + dayShifts גלובלי) למבנה לפי יום */
+  function legacySchedule(branch, legacyDayShifts) {
+    var template = Data.defaultSchedule();
+    if (!branch.need && !legacyDayShifts) return template;
+    var schedule = {};
+    for (var day = 0; day < 7; day++) {
+      var allowed = legacyDayShifts ? (legacyDayShifts[day] || []) : Data.ALL_SHIFT_IDS;
+      var dayConfig = {};
+      Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        if (allowed.indexOf(shiftId) === -1) return;
+        var need = Number((branch.need || {})[shiftId] || 0);
+        if (need <= 0) return;
+        var fallback = (template[day] && template[day][shiftId]) ||
+          (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
+        dayConfig[shiftId] = { need: need, from: fallback.from, to: fallback.to };
+        if (fallback.auto) { dayConfig[shiftId].auto = fallback.auto; delete dayConfig[shiftId].from; }
+      });
+      if (Object.keys(dayConfig).length) schedule[day] = dayConfig;
+    }
+    // המשמרת החדשה של מוצ״ש לא קיימת בנתונים ישנים – מוסיפים אותה
+    if (!schedule[6] && template[6]) { schedule[6] = clone(template[6]); }
+    return schedule;
+  }
+
+  function normalizeSchedule(schedule) {
+    Object.keys(schedule).forEach(function (day) {
+      var dayConfig = schedule[day];
+      Object.keys(dayConfig).forEach(function (shiftId) {
+        var config = dayConfig[shiftId];
+        config.need = Math.max(0, Number(config.need) || 0);
+        if (config.need === 0) { delete dayConfig[shiftId]; return; }
+        if (config.auto !== 'motzash') { delete config.auto; }
+        config.to = config.to || '';
+        if (config.auto === 'motzash') { delete config.from; } else { config.from = config.from || ''; }
+      });
+      if (!Object.keys(dayConfig).length) delete schedule[day];
+    });
   }
 
   function load() {
@@ -203,6 +323,15 @@
     employeeDayAssignments: employeeDayAssignments,
     employeeWeekCount: employeeWeekCount,
     activeShiftsForDay: activeShiftsForDay,
+    slotConfig: slotConfig,
+    slotNeed: slotNeed,
+    slotHours: slotHours,
+    hoursLabel: hoursLabel,
+    parseTime: parseTime,
+    normalizeTimeInput: normalizeTimeInput,
+    formatTime: formatTime,
+    addMinutes: addMinutes,
+    normalizeSchedule: normalizeSchedule,
     weekDemands: weekDemands,
     byId: byId,
     migrate: migrate,

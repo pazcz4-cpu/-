@@ -359,3 +359,41 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
   .issue.info { display: none; }
   @page { size: landscape; margin: 10mm; }
 }
+
+/* ===== שעות בתאי הסידור ===== */
+.cell-hours {
+  font-size: 11px; color: var(--muted); margin-bottom: 3px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.cell-hours .missing { color: var(--err); font-weight: 600; }
+
+.shabbat-field {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted);
+}
+.time-input {
+  font-family: inherit; font-size: 13px; padding: 4px 7px;
+  border: 1px solid var(--line); border-radius: 7px;
+  background: var(--input-bg); color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== עורך הימים והשעות של הסניף ===== */
+.card.wide { grid-column: 1 / -1; }
+.sched-wrap { margin-top: 4px; }
+.sched-table { min-width: 620px; }
+.sched-table th { font-size: 13px; }
+td.sched-cell { min-width: 150px; vertical-align: middle; }
+td.sched-cell.closed { background: none; }
+.sched-need { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.sched-need .num-input { width: 58px; }
+.sched-times { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 5px; }
+.sched-times .time-input { width: 88px; padding: 3px 5px; }
+.sched-times .dash { color: var(--muted); }
+.sched-times .auto-time {
+  font-size: 11.5px; color: var(--ink); background: var(--surface-sunken);
+  border: 1px dashed var(--line); border-radius: 6px; padding: 3px 7px; white-space: nowrap;
+}
+.sched-closed { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.check.tiny { font-size: 11.5px; color: var(--muted); justify-content: center; margin-top: 4px; }
+.copy-row { margin-top: 10px; max-width: 320px; }

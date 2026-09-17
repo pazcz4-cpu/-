@@ -61,7 +61,18 @@
       });
     });
 
-    // 1ב. שיבוץ בסניף/משמרת שאינם פעילים באותו יום
+    // 1ב. מוצ״ש ללא שעת צאת שבת – לא ניתן לחשב מתי המשמרת מתחילה
+    var missingShabbat = state.branches.filter(function (branch) {
+      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening') &&
+        Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening').auto === 'motzash';
+    });
+    if (missingShabbat.length && !week.shabbatEnd) {
+      issues.push(issue('warning', 'missing-shabbat-end',
+        'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        { dayIdx: Data.MOTZASH.dayIdx }));
+    }
+
+    // 1ג. שיבוץ בסניף/משמרת שאינם פעילים באותו יום
     Object.keys(week.assignments).forEach(function (key) {
       if (demandMap[key]) return;
       var list = week.assignments[key] || [];

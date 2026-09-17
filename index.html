@@ -34,6 +34,9 @@
         <button id="next-week" class="btn ghost" title="שבוע הבא">◀</button>
         <button id="this-week" class="btn ghost small">השבוע הנוכחי</button>
         <span id="sync-state" class="sync-state local">נשמר במכשיר הזה</span>
+        <label class="shabbat-field" id="shabbat-field">צאת שבת
+          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+        </label>
       </div>
       <div class="actions">
         <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
@@ -91,7 +94,11 @@
       <h2>סניפים מוגדרים</h2>
       <button id="add-branch" class="btn primary">+ הוסף סניף</button>
     </div>
-    <p class="hint">"נדרשים" = כמה עובדים צריכים להיות בכל משמרת בסניף. שיבוץ של יותר מהמספר הזה יסומן כ<b>כפל משמרת</b>.</p>
+    <p class="hint">
+      לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת.
+      <b>עובדים = 0</b> סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן כ<b>כפל משמרת</b>.
+      במוצ״ש, "לפי צאת שבת" מתחיל את המשמרת חצי שעה אחרי צאת השבת שמזינים בלשונית הסידור.
+    </p>
     <div id="branches-list" class="cards"></div>
   </section>
 
@@ -103,8 +110,16 @@
       <label class="check"><input type="checkbox" id="opt-rest"> אין משמרת בוקר אחרי משמרת ערב של היום הקודם</label>
     </div>
 
-    <h2>ימי ומשמרות פעילות</h2>
-    <div id="day-shifts" class="table-wrap"></div>
+    <h2>מוצאי שבת</h2>
+    <div class="settings-block">
+      <label class="check">שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:
+        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד">
+      </label>
+      <p class="hint" style="margin:0">
+        בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. משמרת מוצ״ש מתחילה חצי שעה אחריה.
+        הימים והשעות של שאר המשמרות נקבעים לכל סניף בנפרד בלשונית "סניפים".
+      </p>
+    </div>
 
     <h2>גיבוי ושחזור</h2>
     <div class="settings-block row">

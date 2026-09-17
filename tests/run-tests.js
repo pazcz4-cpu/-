@@ -29,14 +29,44 @@ function issuesOfType(report, type) {
 
 console.log('\n== מנוע השיבוץ ==');
 
-test('משבץ עובד לכל משמרת נדרשת עד גבול קיבולת העובדים', function () {
+/* האם עובד כלשהו היה יכול לאייש את המשמרת הזו במצב הסופי? */
+function anyoneCouldFill(state, weekData, demand) {
+  return state.employees.some(function (emp) {
+    if (!emp.active) return false;
+    if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
+    if (emp.branches.length && emp.branches.indexOf(demand.branchId) === -1) return false;
+    var constraint = Store.getConstraint(weekData, emp.id, demand.dayIdx);
+    if (constraint.off || (constraint.blocked && constraint.blocked[demand.shiftId])) return false;
+    if (Store.employeeDayAssignments(state, weekData, emp.id, demand.dayIdx).length) return false;
+    if (Store.employeeWeekCount(state, weekData, emp.id) >= emp.maxShifts) return false;
+    if (state.settings.restEveningMorning && demand.shiftId === 'morning' && demand.dayIdx > 0) {
+      var prev = Store.employeeDayAssignments(state, weekData, emp.id, demand.dayIdx - 1);
+      if (prev.some(function (s) { return s.shiftId === 'evening'; })) return false;
+    }
+    return true;
+  });
+}
+
+test('לא נותרת משמרת ריקה שהיה אפשר לאייש', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');
   var result = build(state, weekData);
-  var demandTotal = Store.weekDemands(state).reduce(function (sum, d) { return sum + d.need; }, 0);
-  var capacity = state.employees.reduce(function (sum, e) { return sum + e.maxShifts; }, 0);
-  assertEqual(result.unfilled.length, Math.max(0, demandTotal - capacity),
-    'מספר המשמרות הלא מאוישות אמור להיות בדיוק הפער בין הדרישה לקיבולת');
+  result.unfilled.forEach(function (demand) {
+    assert(!anyoneCouldFill(state, weekData, demand),
+      'נותרה ריקה משמרת שהיה אפשר לאייש: יום ' + demand.dayIdx + ' ' + demand.branchId + ' ' + demand.shiftId);
+  });
+});
+
+test('חוסר באיוש נובע ממחסור אמיתי בעובדים', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var result = build(state, weekData);
+  // ביום חול נדרשות 9 משמרות ויש 8 עובדים, ועובד עושה משמרת אחת ביום
+  var weekdaySlots = Store.weekDemands(state)
+    .filter(function (d) { return d.dayIdx === 0; })
+    .reduce(function (sum, d) { return sum + d.need; }, 0);
+  assert(weekdaySlots > state.employees.length, 'ההנחה של הבדיקה: ביום חול יש יותר משמרות מעובדים');
+  assert(result.unfilled.length >= weekdaySlots - state.employees.length, 'חוסר מינימלי צפוי');
 });
 
 test('הסידור האוטומטי אינו יוצר שגיאות תקינות', function () {
@@ -161,10 +191,21 @@ test('סניף לא פעיל אינו מקבל שיבוצים', function () {
   });
 });
 
-test('שבת סגורה כברירת מחדל – אין דרישות ליום שבת', function () {
+test('שישי: שני עובדים בבוקר וללא משמרות אמצע וערב', function () {
   var state = freshState();
-  var saturday = Store.weekDemands(state).filter(function (d) { return d.dayIdx === 6; });
-  assertEqual(saturday.length, 0, 'נמצאו דרישות בשבת');
+  var friday = Store.weekDemands(state).filter(function (d) { return d.dayIdx === 5; });
+  assertEqual(friday.length, state.branches.length, 'משמרת אחת בכל סניף בשישי');
+  friday.forEach(function (demand) {
+    assertEqual(demand.shiftId, 'morning', 'בשישי רק משמרת בוקר כברירת מחדל');
+    assertEqual(demand.need, 2, 'בשישי נדרשים שני עובדים');
+  });
+});
+
+test('מוצ״ש: משמרת ערב אחת בכל סניף', function () {
+  var state = freshState();
+  var motzash = Store.weekDemands(state).filter(function (d) { return d.dayIdx === 6; });
+  assertEqual(motzash.length, state.branches.length, 'משמרת מוצ״ש בכל סניף');
+  motzash.forEach(function (demand) { assertEqual(demand.shiftId, 'evening', 'מוצ״ש היא משמרת ערב'); });
 });
 
 console.log('\n== בדיקות תקינות (כפל משמרת וחוסרים) ==');
@@ -270,8 +311,108 @@ test('migrate משלים שדות חסרים בנתונים ישנים', functio
   var migrated = Store.migrate({ employees: [{ id: 'x', name: 'בדיקה' }], branches: [{ id: 'b', name: 'ס' }] });
   assertEqual(migrated.employees[0].maxShifts, 6, 'ברירת מחדל למכסה');
   assert(Array.isArray(migrated.employees[0].branches), 'מערך סניפים הושלם');
-  assert(migrated.branches[0].need, 'דרישות סניף הושלמו');
+  assert(migrated.branches[0].schedule, 'לוח הימים והשעות של הסניף הושלם');
   assertEqual(migrated.settings.onePerDay, true, 'הגדרות הושלמו');
+});
+
+test('migrate ממיר את המבנה הישן (need + dayShifts) ללוח לפי יום', function () {
+  var legacy = {
+    settings: { onePerDay: true, dayShifts: { 0: ['morning', 'evening'], 1: ['morning'], 5: ['morning'], 6: [] } },
+    branches: [{ id: 'b1', name: 'סניף ותיק', active: true, need: { morning: 1, middle: 1, evening: 2 } }],
+    employees: [{ id: 'e1', name: 'עובד ותיק', active: true, branches: [], shifts: ['morning', 'evening'], maxShifts: 5 }],
+    weeks: {}
+  };
+  var migrated = Store.migrate(legacy);
+  var branch = migrated.branches[0];
+  assertEqual(Store.slotNeed(branch, 0, 'morning'), 1, 'בוקר ביום ראשון נשמר');
+  assertEqual(Store.slotNeed(branch, 0, 'evening'), 2, 'כמות הערב נשמרה');
+  assertEqual(Store.slotNeed(branch, 0, 'middle'), 0, 'משמרת שלא הייתה פעילה ביום ראשון נשארה סגורה');
+  assertEqual(Store.slotNeed(branch, 1, 'evening'), 0, 'יום שני היה בוקר בלבד');
+  assert(!branch.need, 'השדה הישן הוסר');
+  assert(Store.slotConfig(branch, 6, 'evening'), 'משמרת מוצ״ש נוספה לנתונים ישנים');
+  assert(migrated.branches[0].schedule[0].morning.from, 'הושלמו שעות ברירת מחדל');
+});
+
+console.log('\n== ימים, שעות ומוצ״ש ==');
+
+test('שעת מוצ״ש מחושבת חצי שעה אחרי צאת השבת', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  weekData.shabbatEnd = '19:42';
+  var hours = Store.slotHours(weekData, state.branches[0], 6, 'evening');
+  assertEqual(hours.from, '20:12', 'התחלה = צאת שבת + 30 דקות');
+  assertEqual(hours.to, '23:00', 'סיום ברירת המחדל');
+  assertEqual(Store.hoursLabel(hours), '20:12-23:00', 'תווית השעות');
+});
+
+test('קלט שעה מתקבל בכמה פורמטים ותמיד נשמר כ-24 שעות', function () {
+  assertEqual(Store.normalizeTimeInput('830'), '08:30', 'ארבע ספרות ללא נקודתיים');
+  assertEqual(Store.normalizeTimeInput('1430'), '14:30', 'שעה אחר הצהריים');
+  assertEqual(Store.normalizeTimeInput('8:5'), '08:05', 'השלמת אפסים');
+  assertEqual(Store.normalizeTimeInput('9'), '09:00', 'שעה עגולה');
+  assertEqual(Store.normalizeTimeInput('20.30'), '20:30', 'נקודה כמפריד');
+  assertEqual(Store.normalizeTimeInput(''), '', 'ריק נשאר ריק');
+  assertEqual(Store.normalizeTimeInput('25:00'), null, 'שעה לא קיימת');
+  assertEqual(Store.normalizeTimeInput('12:75'), null, 'דקות לא קיימות');
+  assertEqual(Store.normalizeTimeInput('בוקר'), null, 'טקסט חופשי');
+});
+
+test('חציית חצות בחישוב שעת מוצ״ש', function () {
+  assertEqual(Store.addMinutes('23:45', 30), '00:15', 'מעבר חצות');
+  assertEqual(Store.addMinutes('20:00', 30), '20:30', 'חישוב רגיל');
+  assertEqual(Store.addMinutes('לא שעה', 30), null, 'קלט לא תקין');
+});
+
+test('ללא שעת צאת שבת – אין שעת התחלה והמערכת מתריעה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  weekData.shabbatEnd = '';
+  assertEqual(Store.slotHours(weekData, state.branches[0], 6, 'evening').from, '', 'אין שעת התחלה');
+  var report = Validate.validate(state, weekData);
+  assertEqual(issuesOfType(report, 'missing-shabbat-end').length, 1, 'לא הוצגה התראה על צאת שבת');
+});
+
+test('שעות נערכות לכל סניף ויום בנפרד', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  state.branches[0].schedule[5].morning.from = '08:30';
+  state.branches[0].schedule[5].morning.to = '15:00';
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, state.branches[0], 5, 'morning')), '08:30-15:00',
+    'השעות של הסניף הראשון השתנו');
+  assertEqual(Store.hoursLabel(Store.slotHours(weekData, state.branches[1], 5, 'morning')), '09:00-14:30',
+    'הסניף השני לא הושפע');
+});
+
+test('סגירת יום בסניף אחד אינה משפיעה על האחרים', function () {
+  var state = freshState();
+  delete state.branches[0].schedule[5];
+  var friday = Store.weekDemands(state).filter(function (d) { return d.dayIdx === 5; });
+  assertEqual(friday.length, state.branches.length - 1, 'נותרו דרישות שישי רק בשאר הסניפים');
+  assert(Store.activeShiftsForDay(state, 5).indexOf('morning') !== -1, 'שישי עדיין יום פעיל במערכת');
+});
+
+test('שינוי כמות העובדים ליום מסוים משפיע על הדרישה ועל זיהוי הכפל', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var branch = state.branches[0];
+  branch.schedule[5].morning.need = 2;
+  Store.setAssigned(weekData, 5, branch.id, 'morning', [state.employees[0].id, state.employees[1].id]);
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'duplicate-shift').length, 0,
+    'שני עובדים תקינים כשנדרשים שניים');
+  branch.schedule[5].morning.need = 1;
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'duplicate-shift').length, 1,
+    'אותו שיבוץ הופך לכפל משמרת כשנדרש עובד אחד');
+});
+
+test('שיבוץ מוצ״ש מכבד את מגבלת משמרת אחת ביום', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  weekData.shabbatEnd = '20:00';
+  build(state, weekData);
+  state.employees.forEach(function (emp) {
+    assert(Store.employeeDayAssignments(state, weekData, emp.id, 6).length <= 1,
+      emp.name + ' שובץ ליותר ממשמרת אחת במוצ״ש');
+  });
 });
 
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

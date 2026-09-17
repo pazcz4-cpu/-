@@ -228,14 +228,17 @@
       for (var i = already; i < demand.need; i++) { slots.push(demand); }
     });
 
-    // מיון לפי נדירות: קודם דרישות עם מעט מועמדים
-    slots.sort(function (a, b) {
-      var diff = candidateCount(ctx, a) - candidateCount(ctx, b);
-      if (diff !== 0) return diff;
-      return (a.dayIdx - b.dayIdx) || a.branchId.localeCompare(b.branchId);
-    });
-
-    slots.forEach(function (demand) {
+    /* בכל צעד נבחרת המשמרת עם הכי מעט מועמדים אפשריים כרגע.
+       החישוב מחדש אחרי כל שיבוץ מונע מצב שבו שיבוץ מוקדם חוסם משמרת נדירה. */
+    var remaining = slots.slice();
+    while (remaining.length) {
+      var pickIndex = -1, fewest = Infinity;
+      for (var i = 0; i < remaining.length; i++) {
+        var count = candidateCount(ctx, remaining[i]);
+        if (count < fewest) { fewest = count; pickIndex = i; }
+        if (fewest === 0) break;
+      }
+      var demand = remaining.splice(pickIndex, 1)[0];
       var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
       var taken = ctx.assignments[key] || [];
       var best = null, bestScore = Infinity;
@@ -247,7 +250,7 @@
       });
       if (best) { applyAssignment(ctx, best.id, demand); }
       else { unfilled.push(demand); }
-    });
+    }
 
     if (unfilled.length) { unfilled = repair(ctx, unfilled, keepManual, week); }
 

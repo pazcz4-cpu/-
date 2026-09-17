@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סידור משמרות – מייפון</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="app-header no-print">
+  <div class="brand">
+    <span class="logo">📱</span>
+    <div>
+      <h1>סידור משמרות – מייפון</h1>
+      <p class="sub">שיבוץ שבועי לכל סניף במשמרות בוקר / אמצע / ערב, עם בדיקת כפל משמרות ואילוצי עובדים</p>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="schedule">סידור שבועי</button>
+    <button class="tab" data-tab="constraints">אילוצים</button>
+    <button class="tab" data-tab="employees">עובדים</button>
+    <button class="tab" data-tab="branches">סניפים</button>
+    <button class="tab" data-tab="settings">הגדרות</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== סידור שבועי ===== -->
+  <section class="panel active" id="tab-schedule">
+    <div class="toolbar no-print">
+      <div class="week-nav">
+        <button id="prev-week" class="btn ghost" title="שבוע קודם">▶</button>
+        <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
+        <button id="next-week" class="btn ghost" title="שבוע הבא">◀</button>
+        <button id="this-week" class="btn ghost small">השבוע הנוכחי</button>
+      </div>
+      <div class="actions">
+        <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
+        <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
+        <button id="clear-week" class="btn ghost">נקה סידור</button>
+        <button id="copy-text" class="btn ghost">📋 העתק כטקסט</button>
+        <button id="export-csv" class="btn ghost">⬇ CSV</button>
+        <button id="print" class="btn ghost">🖨 הדפסה</button>
+      </div>
+    </div>
+
+    <div id="issues" class="issues"></div>
+
+    <div class="view-switch no-print">
+      <button class="chip active" data-view="branch">תצוגה לפי סניף</button>
+      <button class="chip" data-view="employee">תצוגה לפי עובד</button>
+    </div>
+
+    <div id="schedule-branch" class="table-wrap"></div>
+    <div id="schedule-employee" class="table-wrap hidden"></div>
+    <div id="workload" class="workload"></div>
+  </section>
+
+  <!-- ===== אילוצים ===== -->
+  <section class="panel" id="tab-constraints">
+    <div class="toolbar no-print">
+      <div class="week-label"><strong id="constraints-week">—</strong></div>
+      <div class="actions">
+        <button id="clear-constraints" class="btn ghost">נקה אילוצי השבוע</button>
+        <button id="copy-constraints" class="btn ghost">העתק אילוצים משבוע קודם</button>
+      </div>
+    </div>
+    <p class="hint">
+      לחיצה על כפתור משמרת מחליפה מצב:
+      <span class="legend free">זמין</span> →
+      <span class="legend pref">מעדיף/ה</span> →
+      <span class="legend block">לא יכול/ה</span>.
+      סימון <b>חופש</b> חוסם את כל היום.
+    </p>
+    <div id="constraints-grid" class="table-wrap"></div>
+  </section>
+
+  <!-- ===== עובדים ===== -->
+  <section class="panel" id="tab-employees">
+    <div class="toolbar no-print">
+      <h2>עובדים מוגדרים</h2>
+      <button id="add-employee" class="btn primary">+ הוסף עובד</button>
+    </div>
+    <div id="employees-list" class="cards"></div>
+  </section>
+
+  <!-- ===== סניפים ===== -->
+  <section class="panel" id="tab-branches">
+    <div class="toolbar no-print">
+      <h2>סניפים מוגדרים</h2>
+      <button id="add-branch" class="btn primary">+ הוסף סניף</button>
+    </div>
+    <p class="hint">"נדרשים" = כמה עובדים צריכים להיות בכל משמרת בסניף. שיבוץ של יותר מהמספר הזה יסומן כ<b>כפל משמרת</b>.</p>
+    <div id="branches-list" class="cards"></div>
+  </section>
+
+  <!-- ===== הגדרות ===== -->
+  <section class="panel" id="tab-settings">
+    <h2>כללי שיבוץ</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-one-per-day"> עובד משובץ למשמרת אחת ביום לכל היותר</label>
+      <label class="check"><input type="checkbox" id="opt-rest"> אין משמרת בוקר אחרי משמרת ערב של היום הקודם</label>
+    </div>
+
+    <h2>ימי ומשמרות פעילות</h2>
+    <div id="day-shifts" class="table-wrap"></div>
+
+    <h2>גיבוי ושחזור</h2>
+    <div class="settings-block row">
+      <button id="export-json" class="btn ghost">⬇ ייצוא כל הנתונים (JSON)</button>
+      <label class="btn ghost file-btn">⬆ ייבוא נתונים<input type="file" id="import-json" accept="application/json" hidden></label>
+      <button id="reset-all" class="btn danger">איפוס להגדרות ברירת מחדל</button>
+    </div>
+    <p class="hint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה (localStorage). לשיתוף בין מחשבים – ייצאו קובץ JSON.</p>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/scheduler.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "maiphone-shift-scheduler",
+  "version": "1.0.0",
+  "description": "מערכת סידור משמרות שבועי לעובדים בסניפי מייפון – שיבוץ אוטומטי, אילוצים וזיהוי כפל משמרות",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-tests.js",
+    "start": "npx http-server . -p 8080 -o"
+  },
+  "license": "MIT"
+}

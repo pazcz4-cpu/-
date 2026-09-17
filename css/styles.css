@@ -464,3 +464,160 @@ td.holiday-cell small { display: block; font-weight: 400; opacity: .8; }
 .chat-form { display: flex; gap: 8px; }
 .chat-form .text-input { flex: 1; }
 .chat-form .btn { white-space: nowrap; }
+
+/* ===================== אייפון / נייד ===================== */
+.mobile-only { display: none; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body { -webkit-tap-highlight-color: transparent; }
+
+/* גלילה חלקה בטבלאות רחבות */
+.table-wrap { -webkit-overflow-scrolling: touch; }
+
+/* בורר היום – הרצועה העליונה בנייד */
+.day-nav {
+  gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px 0 8px; scrollbar-width: none;
+}
+.day-nav::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-width: 52px; padding: 7px 4px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-family: inherit; line-height: 1.2;
+}
+.day-tab-name { font-size: 14px; font-weight: 700; }
+.day-tab-date { font-size: 10.5px; opacity: .85; font-variant-numeric: tabular-nums; }
+.day-tab.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.day-tab.holiday { border-color: var(--err-line); color: var(--err); background: var(--err-bg); }
+.day-tab.holiday.active { background: var(--err); color: #fff; border-color: var(--err); }
+
+/* כרטיסי היום */
+.m-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  margin-bottom: 10px; overflow: hidden;
+}
+.m-card-head {
+  padding: 10px 14px; font-weight: 700; font-size: 15px;
+  background: var(--surface-head); border-bottom: 1px solid var(--line);
+}
+.m-shift { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.m-shift:last-child { border-bottom: 0; }
+.m-shift-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 10px; margin-bottom: 7px;
+}
+.m-shift-head b { font-size: 14.5px; }
+.m-shift-head span { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.m-shift.flag-error { box-shadow: inset 3px 0 0 var(--err); }
+.m-shift.flag-warning { box-shadow: inset 3px 0 0 var(--badge-warn); }
+.m-shift .emp-select { margin-bottom: 6px; }
+.m-shift .emp-select:last-child { margin-bottom: 0; }
+.m-closed { padding: 14px; color: var(--muted); font-size: 13.5px; text-align: center; }
+.m-holiday {
+  padding: 18px 14px; text-align: center; font-size: 16px; font-weight: 700; color: var(--err);
+}
+.m-holiday small { display: block; margin-top: 4px; font-weight: 400; font-size: 13px; color: var(--muted); }
+.m-card.holiday { border-color: var(--err-line); }
+.m-constraint .m-card-head { font-size: 14px; padding: 8px 12px; }
+.m-cstates { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
+.m-cstates .cstate { flex: 1 1 auto; min-width: 70px; min-height: 40px; font-size: 13.5px; }
+
+@media (max-width: 820px) {
+  .mobile-only { display: block; }
+  .day-nav.mobile-only { display: flex; }
+  .desktop-only { display: none !important; }
+  .view-switch { display: none; }
+
+  /* אזורים בטוחים של האייפון: מגן המסך למעלה ופס הבית למטה */
+  .app-header {
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
+    position: sticky; top: 0; z-index: 20;
+  }
+  main {
+    padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-header h1 { font-size: 16px; }
+  .sub { display: none; }
+  .logo { font-size: 24px; }
+
+  /* לשוניות ניתנות לגלילה במקום לרדת שורה */
+  .tabs {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; margin: 0 -14px; padding: 0 14px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 0 0 auto; padding: 9px 13px; font-size: 13.5px; }
+
+  /* יעדי מגע נוחים, וללא זום אוטומטי בהתמקדות על שדה */
+  .btn { min-height: 42px; padding: 10px 14px; }
+  .btn.ghost.small { min-height: 38px; }
+  select.emp-select, .text-input, .num-input, .time-input {
+    font-size: 16px; min-height: 42px; padding: 9px 11px;
+  }
+  .num-input { width: 82px; }
+  .cstate { min-height: 38px; padding: 6px 10px; font-size: 13px; }
+  .chip, .holiday-chip { min-height: 36px; }
+  .check { min-height: 34px; }
+  input[type="checkbox"] { width: 20px; height: 20px; }
+
+  .toolbar { gap: 8px; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1 1 auto; }
+  #generate { flex-basis: 100%; }
+  .week-nav { width: 100%; justify-content: space-between; }
+  .week-label { min-width: auto; flex: 1; }
+
+  .personal-bar, .holiday-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .personal-select { width: 100%; min-width: 0; }
+  .personal-bar .btn { width: 100%; }
+
+  .issue { font-size: 13px; padding: 9px 11px; }
+  .workload { gap: 6px; }
+  .load-pill { font-size: 12.5px; padding: 5px 10px; }
+  .summary-list li { font-size: 13px; }
+  .chat-msg { max-width: 92%; }
+  .chat-form { flex-direction: column; }
+  .chat-form .btn { width: 100%; }
+
+  .sched-table { min-width: 560px; }
+  .sched-times .time-input { width: 96px; }
+}
+
+/* מסכים צרים במיוחד */
+@media (max-width: 380px) {
+  main { padding-left: 12px; padding-right: 12px; }
+  .day-tab { min-width: 46px; padding: 6px 2px; }
+  .m-card-head { font-size: 14px; }
+}
+
+/* במצב אפליקציה (הוסף למסך הבית) אין סרגל דפדפן */
+@media (display-mode: standalone) {
+  .app-header { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+}
+
+/* ===== כלים נוספים (מקופלים בנייד) ===== */
+.more-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.tools-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 820px) {
+  .more-tools {
+    display: none;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px;
+  }
+  .more-tools.open { display: flex; }
+  .more-tools .personal-bar,
+  .more-tools .holiday-bar { border: 0; padding: 0; background: none; }
+  .more-tools .tools-row .btn { flex: 1 1 45%; }
+  .week-label strong { font-size: 14px; white-space: nowrap; }
+  .week-label span { font-size: 11px; }
+  .week-nav .btn { padding: 8px 12px; }
+  #this-week { order: 3; }
+  .sync-state { order: 4; width: 100%; justify-content: center; }
+  #tools-toggle { flex: 1 1 100%; }
+}

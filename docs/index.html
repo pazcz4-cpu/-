@@ -1,0 +1,4344 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>סידור משמרות – מייפון</title>
+<style>
+/* ===== טוקנים – ערכת בהיר ===== */
+:root {
+  --bg: #f1f4fa;
+  --surface: #ffffff;
+  --surface-head: #e7ecf7;
+  --surface-row: #f5f8fd;
+  --surface-sunken: #fbfcff;
+  --input-bg: rgba(255, 255, 255, .78);
+  --ink: #1d2733;
+  --muted: #66748a;
+  --line: #dfe4ef;
+  --brand: #2f5fe0;
+  --brand-dark: #23499f;
+  --brand-ink: #ffffff;
+  --closed-a: #f4f5f9;
+  --closed-b: #eaecf3;
+
+  --morning: #fbeecb;
+  --morning-line: #d99f22;
+  --middle: #d6f0e4;
+  --middle-line: #2c9770;
+  --evening: #dde5fa;
+  --evening-line: #4763c9;
+
+  --err: #bc2f47;
+  --err-bg: #fdecef;
+  --err-line: #f0bcc7;
+  --warn: #8a5a00;
+  --warn-bg: #fff5e0;
+  --warn-line: #efd8a4;
+  --info: #26647f;
+  --info-bg: #e9f3f9;
+  --info-line: #c9e1ee;
+  --ok: #1a7048;
+  --ok-bg: #e6f5ec;
+  --ok-line: #b2dfc4;
+  --badge-warn: #d9941f;
+  --off-day: #48546a;
+
+  --header-from: #23499f;
+  --header-to: #2f5fe0;
+  --header-ink: #ffffff;
+  --toast-bg: #1d2733;
+  --toast-ink: #ffffff;
+  --shadow: 0 2px 12px rgba(29, 39, 51, .12);
+  --shadow-lg: 0 6px 20px rgba(29, 39, 51, .28);
+}
+
+/* ===== ערכה כהה – לפי העדפת המערכת ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131722;
+    --surface: #1b2130;
+    --surface-head: #232b3d;
+    --surface-row: #202736;
+    --surface-sunken: #1f2635;
+    --input-bg: rgba(255, 255, 255, .06);
+    --ink: #e6eaf2;
+    --muted: #97a3b8;
+    --line: #313a4e;
+    --brand: #6d91f0;
+    --brand-dark: #4d72d8;
+    --brand-ink: #10141d;
+    --closed-a: #1a202d;
+    --closed-b: #222a3a;
+
+    --morning: #4a3a14;
+    --morning-line: #d99f22;
+    --middle: #123a2c;
+    --middle-line: #35b184;
+    --evening: #1f2b50;
+    --evening-line: #7590e8;
+
+    --err: #ff8098;
+    --err-bg: #3a1b23;
+    --err-line: #7a3548;
+    --warn: #f0b95c;
+    --warn-bg: #3a2c12;
+    --warn-line: #7a5c22;
+    --info: #86c4e0;
+    --info-bg: #17303c;
+    --info-line: #2f5a70;
+    --ok: #6fd3a0;
+    --ok-bg: #16352a;
+    --ok-line: #2d6a4c;
+    --badge-warn: #b57a12;
+    --off-day: #5b6880;
+
+    --header-from: #18213a;
+    --header-to: #27406f;
+    --header-ink: #eaf0fb;
+    --toast-bg: #e6eaf2;
+    --toast-ink: #131722;
+    --shadow: 0 2px 12px rgba(0, 0, 0, .45);
+    --shadow-lg: 0 6px 22px rgba(0, 0, 0, .6);
+  }
+}
+
+/* ===== ערכה כהה – לפי בחירה מפורשת ===== */
+:root[data-theme="dark"] {
+  --bg: #131722;
+  --surface: #1b2130;
+  --surface-head: #232b3d;
+  --surface-row: #202736;
+  --surface-sunken: #1f2635;
+  --input-bg: rgba(255, 255, 255, .06);
+  --ink: #e6eaf2;
+  --muted: #97a3b8;
+  --line: #313a4e;
+  --brand: #6d91f0;
+  --brand-dark: #4d72d8;
+  --brand-ink: #10141d;
+  --closed-a: #1a202d;
+  --closed-b: #222a3a;
+
+  --morning: #4a3a14;
+  --morning-line: #d99f22;
+  --middle: #123a2c;
+  --middle-line: #35b184;
+  --evening: #1f2b50;
+  --evening-line: #7590e8;
+
+  --err: #ff8098;
+  --err-bg: #3a1b23;
+  --err-line: #7a3548;
+  --warn: #f0b95c;
+  --warn-bg: #3a2c12;
+  --warn-line: #7a5c22;
+  --info: #86c4e0;
+  --info-bg: #17303c;
+  --info-line: #2f5a70;
+  --ok: #6fd3a0;
+  --ok-bg: #16352a;
+  --ok-line: #2d6a4c;
+  --badge-warn: #b57a12;
+  --off-day: #5b6880;
+
+  --header-from: #18213a;
+  --header-to: #27406f;
+  --header-ink: #eaf0fb;
+  --toast-bg: #e6eaf2;
+  --toast-ink: #131722;
+  --shadow: 0 2px 12px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 6px 22px rgba(0, 0, 0, .6);
+}
+
+* { box-sizing: border-box; }
+
+html { direction: rtl; }
+
+body {
+  direction: rtl;
+  margin: 0;
+  font-family: "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+/* ===== כותרת ולשוניות ===== */
+.app-header {
+  background: linear-gradient(135deg, var(--header-from), var(--header-to));
+  color: var(--header-ink);
+  padding: 14px 16px 0;
+  box-shadow: var(--shadow);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 30px; }
+.app-header h1 { margin: 0; font-size: 20px; }
+.sub { margin: 2px 0 10px; font-size: 13px; opacity: .88; }
+
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab {
+  background: rgba(255, 255, 255, .14);
+  border: 0; color: var(--header-ink); cursor: pointer;
+  padding: 9px 16px; font-size: 14px; font-family: inherit;
+  border-radius: 10px 10px 0 0;
+}
+.tab:hover { background: rgba(255, 255, 255, .26); }
+.tab.active { background: var(--bg); color: var(--ink); font-weight: 700; }
+.tab:focus-visible, .btn:focus-visible, .chip:focus-visible,
+.pill:focus-visible, .cstate:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+main { padding: 16px; max-width: 1500px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+h2 { font-size: 17px; margin: 18px 0 10px; }
+
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+}
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.btn {
+  font-family: inherit; font-size: 14px; cursor: pointer;
+  border-radius: 9px; padding: 9px 14px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); transition: .15s;
+}
+.btn:hover { border-color: var(--brand); color: var(--brand); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); font-weight: 600; }
+.btn.primary:hover { background: var(--brand-dark); color: var(--brand-ink); }
+.btn.danger { border-color: var(--err); color: var(--err); }
+.btn.danger:hover { background: var(--err); color: var(--surface); }
+.btn.ghost.small { padding: 6px 10px; font-size: 13px; }
+.btn.icon { padding: 4px 9px; line-height: 1.2; }
+.file-btn { display: inline-flex; align-items: center; }
+
+.week-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.week-label { display: flex; flex-direction: column; min-width: 180px; text-align: center; }
+.week-label span { font-size: 12px; color: var(--muted); }
+
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+
+.sync-state { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+.sync-state::before { content: "●"; color: var(--muted); font-size: 10px; }
+.sync-state.live::before { color: var(--ok); }
+.sync-state.local::before { color: var(--badge-warn); }
+
+.view-switch { display: flex; gap: 6px; margin: 10px 0; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 13px;
+}
+.chip.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+
+/* ===== טבלאות ===== */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 900px; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: top; font-size: 13px; }
+thead th { background: var(--surface-head); position: sticky; top: 0; z-index: 2; font-size: 13px; }
+th.day-head small { display: block; font-weight: 400; color: var(--muted); }
+td.row-head, th.row-head { background: var(--surface-row); text-align: right; font-weight: 600; white-space: nowrap; }
+tr.branch-start td, tr.branch-start th { border-top: 2px solid var(--brand); }
+td.closed {
+  background: repeating-linear-gradient(45deg, var(--closed-a), var(--closed-a) 6px, var(--closed-b) 6px, var(--closed-b) 12px);
+  color: var(--muted);
+}
+
+.shift-morning { background: var(--morning); border-right: 4px solid var(--morning-line); }
+.shift-middle  { background: var(--middle);  border-right: 4px solid var(--middle-line); }
+.shift-evening { background: var(--evening); border-right: 4px solid var(--evening-line); }
+
+td.cell { min-width: 130px; }
+td.cell.has-error { outline: 2px solid var(--err); outline-offset: -2px; }
+td.cell.has-warning { outline: 2px dashed var(--badge-warn); outline-offset: -2px; }
+
+select.emp-select {
+  width: 100%; font-family: inherit; font-size: 13px; padding: 4px 6px; margin-bottom: 3px;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--input-bg); color: var(--ink);
+}
+select.emp-select.extra { border-style: dashed; color: var(--muted); }
+
+/* ===== פאנל התראות ===== */
+.issues { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+.issue { padding: 8px 12px; border-radius: 9px; font-size: 13.5px; border: 1px solid transparent; }
+.issue.error { background: var(--err-bg); color: var(--err); border-color: var(--err-line); font-weight: 600; }
+.issue.warning { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+.issue.info { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
+.issues-summary { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 2px; }
+.badge { border-radius: 999px; padding: 3px 11px; font-size: 12.5px; font-weight: 700; color: #fff; }
+.badge.error { background: var(--err); color: var(--surface); }
+.badge.warning { background: var(--badge-warn); color: #fff; }
+.badge.info { background: var(--info); color: var(--surface); }
+.badge.ok { background: var(--ok); color: var(--surface); }
+.issues-toggle { background: none; border: 0; color: var(--brand); cursor: pointer; font-family: inherit; font-size: 13px; text-decoration: underline; }
+
+.workload { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+.load-pill {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 13px; font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.load-pill b { color: var(--brand); }
+.load-pill.over { border-color: var(--err); color: var(--err); }
+.load-pill.over b { color: var(--err); }
+.load-pill.zero { color: var(--muted); }
+
+/* ===== כרטיסים ===== */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.card.inactive { opacity: .6; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.card-head input.name {
+  font-size: 15px; font-weight: 700; border: 1px solid transparent; background: transparent;
+  border-radius: 7px; padding: 4px 6px; width: 100%; font-family: inherit; color: var(--ink);
+}
+.card-head input.name:hover, .card-head input.name:focus { border-color: var(--line); background: var(--surface-sunken); outline: none; }
+.field { margin-bottom: 9px; }
+.field > label.title { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  border: 1px solid var(--line); background: var(--surface-sunken); border-radius: 999px;
+  padding: 4px 11px; font-size: 12.5px; cursor: pointer; user-select: none; font-family: inherit; color: var(--muted);
+}
+.pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.num-input, .text-input {
+  font-family: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line);
+  border-radius: 7px; width: 100%; background: var(--input-bg); color: var(--ink);
+}
+.num-input { width: 74px; }
+.need-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.need-row label { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+
+/* ===== אילוצים ===== */
+.cstate {
+  border: 1px solid var(--line); border-radius: 7px; padding: 3px 7px; font-size: 12px;
+  cursor: pointer; font-family: inherit; margin: 1px; min-width: 42px;
+  background: var(--surface); color: var(--muted);
+}
+.cstate.pref { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); font-weight: 700; }
+.cstate.block { background: var(--err-bg); border-color: var(--err-line); color: var(--err); font-weight: 700; text-decoration: line-through; }
+.cstate.off-day { background: var(--off-day); border-color: var(--off-day); color: #fff; font-weight: 700; }
+.day-off-btn { display: block; width: 100%; margin-top: 3px; }
+.legend { border-radius: 6px; padding: 1px 8px; font-size: 12px; margin: 0 2px; }
+.legend.free { background: var(--surface); border: 1px solid var(--line); }
+.legend.pref { background: var(--ok-bg); color: var(--ok); }
+.legend.block { background: var(--err-bg); color: var(--err); }
+.hint { font-size: 13px; color: var(--muted); margin: 6px 0 12px; }
+
+.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.settings-block.row { flex-direction: row; flex-wrap: wrap; align-items: center; }
+
+.emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
+.emp-chip.dup { outline: 2px solid var(--err); font-weight: 700; }
+.empty-cell { color: var(--muted); font-size: 12px; }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(150%);
+  background: var(--toast-bg); color: var(--toast-ink); padding: 11px 20px; border-radius: 10px;
+  font-size: 14px; transition: transform .25s; z-index: 50; box-shadow: var(--shadow-lg);
+  max-width: min(92vw, 420px); text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.hidden { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 640px) {
+  .app-header h1 { font-size: 17px; }
+  .sub { font-size: 12px; }
+  main { padding: 12px 16px; }
+  .cards { grid-template-columns: 1fr; }
+  .week-label { min-width: 140px; }
+}
+
+@media print {
+  .no-print, .app-header, .view-switch, .workload { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11px; }
+  main { padding: 0; max-width: none; }
+  .panel { display: none !important; }
+  .panel.active { display: block !important; }
+  .table-wrap { border: 0; overflow: visible; }
+  table { min-width: 0; }
+  select.emp-select { border: 0; background: transparent; appearance: none; -webkit-appearance: none; padding: 1px; color: #000; }
+  select.emp-select.extra { display: none; }
+  .issue.info { display: none; }
+  @page { size: landscape; margin: 10mm; }
+}
+
+/* ===== שעות בתאי הסידור ===== */
+.cell-hours {
+  font-size: 11px; color: var(--muted); margin-bottom: 3px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.cell-hours .missing { color: var(--err); font-weight: 600; }
+
+.shabbat-field {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted);
+}
+.time-input {
+  font-family: inherit; font-size: 13px; padding: 4px 7px;
+  border: 1px solid var(--line); border-radius: 7px;
+  background: var(--input-bg); color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== עורך הימים והשעות של הסניף ===== */
+.card.wide { grid-column: 1 / -1; }
+.sched-wrap { margin-top: 4px; }
+.sched-table { min-width: 620px; }
+.sched-table th { font-size: 13px; }
+td.sched-cell { min-width: 150px; vertical-align: middle; }
+td.sched-cell.closed { background: none; }
+.sched-need { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.sched-need .num-input { width: 58px; }
+.sched-times { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 5px; }
+.sched-times .time-input { width: 88px; padding: 3px 5px; }
+.sched-times .dash { color: var(--muted); }
+.sched-times .auto-time {
+  font-size: 11.5px; color: var(--ink); background: var(--surface-sunken);
+  border: 1px dashed var(--line); border-radius: 6px; padding: 3px 7px; white-space: nowrap;
+}
+.sched-closed { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.check.tiny { font-size: 11.5px; color: var(--muted); justify-content: center; margin-top: 4px; }
+.copy-row { margin-top: 10px; max-width: 320px; }
+
+/* ===== ימי חג ===== */
+.holiday-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 8px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+}
+.holiday-label { font-size: 13px; color: var(--muted); }
+.holiday-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.holiday-chip { padding: 4px 12px; font-size: 12.5px; }
+.holiday-chip.active {
+  background: var(--err-bg); border-color: var(--err-line); color: var(--err); font-weight: 700;
+}
+td.holiday-cell {
+  background: var(--err-bg); color: var(--err); font-weight: 600; vertical-align: middle;
+}
+td.holiday-cell small { display: block; font-weight: 400; opacity: .8; }
+.holiday-text { color: var(--err); font-weight: 600; }
+
+/* ===== סיכום יתרת הזמינות ===== */
+.availability {
+  margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px 16px;
+}
+.summary-title { margin: 0 0 8px; font-size: 15px; }
+.summary-line { margin: 0 0 10px; font-size: 14px; }
+.summary-line.total b { color: var(--brand); }
+.summary-line.none { color: var(--muted); }
+.summary-empty { color: var(--muted); font-size: 14px; margin: 0; }
+.summary-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.summary-list li {
+  font-size: 13.5px; padding: 6px 11px; border-radius: 8px;
+  border-right: 3px solid var(--line); background: var(--surface-sunken);
+}
+.summary-list li.has-spare { border-right-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.summary-list li.has-spare b { color: inherit; }
+.summary-list li.no-days { border-right-color: var(--badge-warn); background: var(--warn-bg); color: var(--warn); }
+.summary-list li.full { color: var(--muted); }
+
+/* ===== ייצוא אישי לעובד ===== */
+.personal-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 10px; padding: 8px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+}
+.personal-label { font-size: 13px; color: var(--muted); }
+.personal-select { width: auto; min-width: 170px; }
+
+/* ===== צ'אט שאלות על הסידור ===== */
+.chat {
+  margin-top: 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px 16px;
+}
+.chat-hint { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+.chat-messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.chat-messages:empty { display: none; }
+.chat-msg {
+  padding: 9px 13px; border-radius: 12px; font-size: 14px; line-height: 1.55;
+  max-width: 85%; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.chat-msg.user { align-self: flex-start; background: var(--brand); color: var(--brand-ink); }
+.chat-msg.bot { align-self: flex-end; background: var(--surface-sunken); border: 1px solid var(--line); }
+.chat-msg.error { align-self: flex-end; background: var(--err-bg); color: var(--err); border: 1px solid var(--err-line); }
+.chat-msg.pending { color: var(--muted); font-style: italic; }
+.chat-form { display: flex; gap: 8px; }
+.chat-form .text-input { flex: 1; }
+.chat-form .btn { white-space: nowrap; }
+
+/* ===================== אייפון / נייד ===================== */
+.mobile-only { display: none; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body { -webkit-tap-highlight-color: transparent; }
+
+/* גלילה חלקה בטבלאות רחבות */
+.table-wrap { -webkit-overflow-scrolling: touch; }
+
+/* בורר היום – הרצועה העליונה בנייד */
+.day-nav {
+  gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px 0 8px; scrollbar-width: none;
+}
+.day-nav::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-width: 52px; padding: 7px 4px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-family: inherit; line-height: 1.2;
+}
+.day-tab-name { font-size: 14px; font-weight: 700; }
+.day-tab-date { font-size: 10.5px; opacity: .85; font-variant-numeric: tabular-nums; }
+.day-tab.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.day-tab.holiday { border-color: var(--err-line); color: var(--err); background: var(--err-bg); }
+.day-tab.holiday.active { background: var(--err); color: #fff; border-color: var(--err); }
+
+/* כרטיסי היום */
+.m-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  margin-bottom: 10px; overflow: hidden;
+}
+.m-card-head {
+  padding: 10px 14px; font-weight: 700; font-size: 15px;
+  background: var(--surface-head); border-bottom: 1px solid var(--line);
+}
+.m-shift { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.m-shift:last-child { border-bottom: 0; }
+.m-shift-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 10px; margin-bottom: 7px;
+}
+.m-shift-head b { font-size: 14.5px; }
+.m-shift-head span { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.m-shift.flag-error { box-shadow: inset 3px 0 0 var(--err); }
+.m-shift.flag-warning { box-shadow: inset 3px 0 0 var(--badge-warn); }
+.m-shift .emp-select { margin-bottom: 6px; }
+.m-shift .emp-select:last-child { margin-bottom: 0; }
+.m-closed { padding: 14px; color: var(--muted); font-size: 13.5px; text-align: center; }
+.m-holiday {
+  padding: 18px 14px; text-align: center; font-size: 16px; font-weight: 700; color: var(--err);
+}
+.m-holiday small { display: block; margin-top: 4px; font-weight: 400; font-size: 13px; color: var(--muted); }
+.m-card.holiday { border-color: var(--err-line); }
+.m-constraint .m-card-head { font-size: 14px; padding: 8px 12px; }
+.m-cstates { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
+.m-cstates .cstate { flex: 1 1 auto; min-width: 70px; min-height: 40px; font-size: 13.5px; }
+
+@media (max-width: 820px) {
+  .mobile-only { display: block; }
+  .day-nav.mobile-only { display: flex; }
+  .desktop-only { display: none !important; }
+  .view-switch { display: none; }
+
+  /* אזורים בטוחים של האייפון: מגן המסך למעלה ופס הבית למטה */
+  .app-header {
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
+    position: sticky; top: 0; z-index: 20;
+  }
+  main {
+    padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-header h1 { font-size: 16px; }
+  .sub { display: none; }
+  .logo { font-size: 24px; }
+
+  /* לשוניות ניתנות לגלילה במקום לרדת שורה */
+  .tabs {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; margin: 0 -14px; padding: 0 14px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 0 0 auto; padding: 9px 13px; font-size: 13.5px; }
+
+  /* יעדי מגע נוחים, וללא זום אוטומטי בהתמקדות על שדה */
+  .btn { min-height: 42px; padding: 10px 14px; }
+  .btn.ghost.small { min-height: 38px; }
+  select.emp-select, .text-input, .num-input, .time-input {
+    font-size: 16px; min-height: 42px; padding: 9px 11px;
+  }
+  .num-input { width: 82px; }
+  .cstate { min-height: 38px; padding: 6px 10px; font-size: 13px; }
+  .chip, .holiday-chip { min-height: 36px; }
+  .check { min-height: 34px; }
+  input[type="checkbox"] { width: 20px; height: 20px; }
+
+  .toolbar { gap: 8px; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1 1 auto; }
+  #generate { flex-basis: 100%; }
+  .week-nav { width: 100%; justify-content: space-between; }
+  .week-label { min-width: auto; flex: 1; }
+
+  .personal-bar, .holiday-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .personal-select { width: 100%; min-width: 0; }
+  .personal-bar .btn { width: 100%; }
+
+  .issue { font-size: 13px; padding: 9px 11px; }
+  .workload { gap: 6px; }
+  .load-pill { font-size: 12.5px; padding: 5px 10px; }
+  .summary-list li { font-size: 13px; }
+  .chat-msg { max-width: 92%; }
+  .chat-form { flex-direction: column; }
+  .chat-form .btn { width: 100%; }
+
+  .sched-table { min-width: 560px; }
+  .sched-times .time-input { width: 96px; }
+}
+
+/* מסכים צרים במיוחד */
+@media (max-width: 380px) {
+  main { padding-left: 12px; padding-right: 12px; }
+  .day-tab { min-width: 46px; padding: 6px 2px; }
+  .m-card-head { font-size: 14px; }
+}
+
+/* במצב אפליקציה (הוסף למסך הבית) אין סרגל דפדפן */
+@media (display-mode: standalone) {
+  .app-header { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+}
+
+/* ===== כלים נוספים (מקופלים בנייד) ===== */
+.more-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.tools-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 820px) {
+  .more-tools {
+    display: none;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px;
+  }
+  .more-tools.open { display: flex; }
+  .more-tools .personal-bar,
+  .more-tools .holiday-bar { border: 0; padding: 0; background: none; }
+  .more-tools .tools-row .btn { flex: 1 1 45%; }
+  .week-label strong { font-size: 14px; white-space: nowrap; }
+  .week-label span { font-size: 11px; }
+  .week-nav .btn { padding: 8px 12px; }
+  #this-week { order: 3; }
+  .sync-state { order: 4; width: 100%; justify-content: center; }
+  #tools-toggle { flex: 1 1 100%; }
+}
+
+</style>
+</head>
+<body>
+<header class="app-header no-print">
+  <div class="brand">
+    <span class="logo">📱</span>
+    <div>
+      <h1>סידור משמרות – מייפון</h1>
+      <p class="sub">שיבוץ שבועי לכל סניף במשמרות בוקר / אמצע / ערב, עם בדיקת כפל משמרות ואילוצי עובדים</p>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="schedule">סידור שבועי</button>
+    <button class="tab" data-tab="constraints">אילוצים</button>
+    <button class="tab" data-tab="employees">עובדים</button>
+    <button class="tab" data-tab="branches">סניפים</button>
+    <button class="tab" data-tab="settings">הגדרות</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== סידור שבועי ===== -->
+  <section class="panel active" id="tab-schedule">
+    <div class="toolbar no-print">
+      <div class="week-nav">
+        <button id="prev-week" class="btn ghost" title="שבוע קודם">▶</button>
+        <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
+        <button id="next-week" class="btn ghost" title="שבוע הבא">◀</button>
+        <button id="this-week" class="btn ghost small">השבוע הנוכחי</button>
+        <span id="sync-state" class="sync-state local">נשמר במכשיר הזה</span>
+      </div>
+      <div class="actions">
+        <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
+        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ כלים נוספים</button>
+      </div>
+    </div>
+
+    <div id="more-tools" class="more-tools no-print">
+      <div class="tools-row">
+        <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
+        <label class="shabbat-field" id="shabbat-field">צאת שבת
+          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+        </label>
+      </div>
+      <div class="tools-row actions">
+        <button id="clear-week" class="btn ghost">נקה סידור</button>
+        <button id="copy-text" class="btn ghost">📋 העתק כטקסט</button>
+        <button id="export-excel" class="btn ghost">⬇ אקסל</button>
+        <button id="export-csv" class="btn ghost">⬇ CSV</button>
+        <button id="print" class="btn ghost">🖨 הדפסה</button>
+      </div>
+
+      <div class="personal-bar">
+        <span class="personal-label">ייצוא אישי לעובד (רק המשמרות שלו):</span>
+        <select id="personal-employee" class="text-input personal-select"></select>
+        <button id="personal-excel" class="btn ghost small">⬇ אקסל</button>
+        <button id="personal-text" class="btn ghost small">📋 טקסט לוואטסאפ</button>
+      </div>
+
+      <div class="holiday-bar">
+        <span class="holiday-label">ימי חג (הסניפים סגורים):</span>
+        <div id="holiday-days" class="holiday-chips"></div>
+      </div>
+    </div>
+
+    <div id="issues" class="issues"></div>
+
+    <div class="view-switch no-print">
+      <button class="chip active" data-view="branch">תצוגה לפי סניף</button>
+      <button class="chip" data-view="employee">תצוגה לפי עובד</button>
+    </div>
+
+    <nav id="day-nav" class="day-nav mobile-only no-print"></nav>
+    <div id="schedule-mobile" class="mobile-only"></div>
+
+    <div id="schedule-branch" class="table-wrap desktop-only"></div>
+    <div id="schedule-employee" class="table-wrap desktop-only hidden"></div>
+    <div id="workload" class="workload"></div>
+    <div id="availability" class="availability no-print"></div>
+
+    <section id="chat" class="chat no-print hidden">
+      <h3 class="summary-title">שאלות על הסידור</h3>
+      <p class="chat-hint">אפשר לשאול על השבוע שמוצג – למשל "מי עובד בשלישי בערב?", "למה עובד/ת 3 לא משובץ/ת בחמישי?" או "מי יכול להחליף את עובד/ת 5 ביום רביעי?"</p>
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="chat-input" class="text-input" placeholder="כתבו שאלה על הסידור…" autocomplete="off">
+        <button type="submit" id="chat-send" class="btn primary">שליחה</button>
+      </form>
+    </section>
+  </section>
+
+  <!-- ===== אילוצים ===== -->
+  <section class="panel" id="tab-constraints">
+    <div class="toolbar no-print">
+      <div class="week-label"><strong id="constraints-week">—</strong></div>
+      <div class="actions">
+        <button id="clear-constraints" class="btn ghost">נקה אילוצי השבוע</button>
+        <button id="copy-constraints" class="btn ghost">העתק אילוצים משבוע קודם</button>
+      </div>
+    </div>
+    <p class="hint">
+      לחיצה על כפתור משמרת מחליפה מצב:
+      <span class="legend free">זמין</span> →
+      <span class="legend pref">מעדיף/ה</span> →
+      <span class="legend block">לא יכול/ה</span>.
+      סימון <b>חופש</b> חוסם את כל היום.
+    </p>
+    <nav id="constraints-day-nav" class="day-nav mobile-only"></nav>
+    <div id="constraints-mobile" class="mobile-only"></div>
+    <div id="constraints-grid" class="table-wrap desktop-only"></div>
+  </section>
+
+  <!-- ===== עובדים ===== -->
+  <section class="panel" id="tab-employees">
+    <div class="toolbar no-print">
+      <h2>עובדים מוגדרים</h2>
+      <button id="add-employee" class="btn primary">+ הוסף עובד</button>
+    </div>
+    <div id="employees-list" class="cards"></div>
+  </section>
+
+  <!-- ===== סניפים ===== -->
+  <section class="panel" id="tab-branches">
+    <div class="toolbar no-print">
+      <h2>סניפים מוגדרים</h2>
+      <button id="add-branch" class="btn primary">+ הוסף סניף</button>
+    </div>
+    <p class="hint">
+      לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת.
+      <b>עובדים = 0</b> סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן כ<b>כפל משמרת</b>.
+      במוצ״ש, "לפי צאת שבת" מתחיל את המשמרת חצי שעה אחרי צאת השבת שמזינים בלשונית הסידור.
+    </p>
+    <div id="branches-list" class="cards"></div>
+  </section>
+
+  <!-- ===== הגדרות ===== -->
+  <section class="panel" id="tab-settings">
+    <h2>כללי שיבוץ</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-one-per-day"> עובד משובץ למשמרת אחת ביום לכל היותר</label>
+      <label class="check"><input type="checkbox" id="opt-rest"> אין משמרת בוקר אחרי משמרת ערב של היום הקודם</label>
+      <label class="check"><input type="checkbox" id="opt-one-day-off"> יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</label>
+    </div>
+
+    <h2>מוצאי שבת</h2>
+    <div class="settings-block">
+      <label class="check">שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:
+        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד">
+      </label>
+      <p class="hint" style="margin:0">
+        בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. משמרת מוצ״ש מתחילה חצי שעה אחריה.
+        הימים והשעות של שאר המשמרות נקבעים לכל סניף בנפרד בלשונית "סניפים".
+      </p>
+    </div>
+
+    <h2>גיבוי ושחזור</h2>
+    <div class="settings-block row">
+      <button id="export-json" class="btn ghost">⬇ ייצוא כל הנתונים (JSON)</button>
+      <label class="btn ghost file-btn">⬆ ייבוא נתונים<input type="file" id="import-json" accept="application/json" hidden></label>
+      <button id="reset-all" class="btn danger">איפוס להגדרות ברירת מחדל</button>
+    </div>
+    <p class="hint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה (localStorage). לשיתוף בין מחשבים – ייצאו קובץ JSON.</p>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<script>
+/* ===== js/platform.js ===== */
+/* שכבת התאמה לסביבת ההרצה: הורדת קבצים, הדפסה וסנכרון ענן (כשזמין).
+   הכל אופציונלי – בפתיחה כקובץ מקומי הכל נופל חזרה להתנהגות הרגילה. */
+(function (root) {
+  'use strict';
+
+  var Platform = {
+    downloads: null,
+    db: null,
+    sample: null,
+    onSampleReady: null,
+    syncState: 'local',      // local | live | readonly
+    onSyncState: null
+  };
+
+  function setSyncState(next) {
+    Platform.syncState = next;
+    if (Platform.onSyncState) Platform.onSyncState(next);
+  }
+
+  /* ===== הורדת קובץ ===== */
+  function blobDownload(filename, content, mime) {
+    var blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  }
+
+  /* מחזיר Promise עם הודעה למשתמש (או null כשאין מה להודיע) */
+  Platform.saveFile = function (filename, content, mime) {
+    if (Platform.downloads) {
+      return Platform.downloads.save({ filename: filename, data: content })
+        .then(function () { return 'הקובץ נשמר'; })
+        .catch(function (err) {
+          if (err && err.code === 'declined') return null;
+          return 'שמירת הקובץ נכשלה: ' + ((err && err.message) || 'שגיאה לא ידועה');
+        });
+    }
+    try {
+      blobDownload(filename, content, mime);
+      return Promise.resolve(null);
+    } catch (err) {
+      return Promise.resolve('לא ניתן להוריד קובץ בסביבה הזו');
+    }
+  };
+
+  Platform.print = function () {
+    try { root.print(); return true; } catch (err) { return false; }
+  };
+
+  /* ===== סנכרון ===== */
+  var sync = {
+    getState: null,
+    onConfig: null,
+    onWeek: null,
+    weekKey: null,
+    unsubConfig: null,
+    unsubWeek: null,
+    timers: {},
+    chains: {}
+  };
+
+  function configSlice(state) {
+    return {
+      settings: state.settings,
+      branches: state.branches,
+      employees: state.employees
+    };
+  }
+
+  function weekSlice(week) {
+    return {
+      constraints: week.constraints || {},
+      assignments: week.assignments || {},
+      manual: week.manual || {},
+      note: week.note || ''
+    };
+  }
+
+  function sameJson(a, b) {
+    try { return JSON.stringify(a) === JSON.stringify(b); } catch (err) { return false; }
+  }
+
+  /* כתיבה מושהית, כתיבה אחת בכל רגע נתון לכל מסמך */
+  function queueWrite(path, buildBody) {
+    if (!Platform.db || Platform.syncState === 'readonly') return;
+    clearTimeout(sync.timers[path]);
+    sync.timers[path] = setTimeout(function () {
+      var previous = sync.chains[path] || Promise.resolve();
+      sync.chains[path] = previous.then(function () {
+        var body = buildBody();
+        if (!body) return;
+        return Platform.db.doc(path).set(body).catch(function (err) {
+          if (err && err.code === 'invalid_argument') {
+            setSyncState('readonly'); // צפייה בלבד – אין הרשאת כתיבה
+          }
+        });
+      }).catch(function () {});
+    }, 700);
+  }
+
+  Platform.pushConfig = function () {
+    queueWrite('config/main', function () {
+      var slice = configSlice(sync.getState());
+      slice.updatedAt = Date.now();
+      return slice;
+    });
+  };
+
+  Platform.pushWeek = function (weekKey) {
+    queueWrite('weeks/' + weekKey, function () {
+      var state = sync.getState();
+      var week = state.weeks[weekKey];
+      if (!week) return null;
+      var slice = weekSlice(week);
+      slice.updatedAt = Date.now();
+      return slice;
+    });
+  };
+
+  function subscribeConfig() {
+    sync.unsubConfig = Platform.db.doc('config/main').onSnapshot(function (snap) {
+      if (!snap.exists) { Platform.pushConfig(); return; } // זריעה ראשונה
+      var remote = snap.data();
+      var local = configSlice(sync.getState());
+      if (sameJson({ s: remote.settings, b: remote.branches, e: remote.employees },
+        { s: local.settings, b: local.branches, e: local.employees })) return;
+      if (sync.onConfig) sync.onConfig(remote);
+    }, function () { setSyncState('local'); });
+  }
+
+  function subscribeWeek(weekKey) {
+    if (sync.unsubWeek) { sync.unsubWeek(); sync.unsubWeek = null; }
+    sync.weekKey = weekKey;
+    sync.unsubWeek = Platform.db.doc('weeks/' + weekKey).onSnapshot(function (snap) {
+      if (!snap.exists) return;
+      var remote = snap.data();
+      var state = sync.getState();
+      var local = weekSlice(state.weeks[weekKey] || { constraints: {}, assignments: {}, manual: {} });
+      if (sameJson(weekSlice(remote), local)) return;
+      if (sync.onWeek) sync.onWeek(weekKey, remote);
+    }, function () { setSyncState('local'); });
+  }
+
+  Platform.watchWeek = function (weekKey) {
+    if (!Platform.db || sync.weekKey === weekKey) return;
+    subscribeWeek(weekKey);
+  };
+
+  /* מופעל פעם אחת בעליית האפליקציה */
+  Platform.init = function (options) {
+    sync.getState = options.getState;
+    Platform.onSampleReady = options.onSampleReady;
+    sync.onConfig = options.onConfig;
+    sync.onWeek = options.onWeek;
+    Platform.onSyncState = options.onSyncState;
+    setSyncState('local');
+
+    if (!root.claude || typeof root.claude.use !== 'function') return;
+
+    root.claude.use('downloads').then(function (api) {
+      Platform.downloads = api || null;
+    }).catch(function () {});
+
+    root.claude.use('sample').then(function (api) {
+      Platform.sample = api || null;
+      if (Platform.sample && Platform.onSampleReady) Platform.onSampleReady();
+    }).catch(function () {});
+
+    root.claude.use('db').then(function (api) {
+      if (!api) return;
+      Platform.db = api;
+      setSyncState('live');
+      subscribeConfig();
+      subscribeWeek(options.weekKey());
+    }).catch(function () {});
+  };
+
+  root.ShiftPlatform = Platform;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = Platform; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/xlsx.js ===== */
+/* יצירת קובץ Excel (.xlsx) ללא ספריות חיצוניות.
+   xlsx הוא קובץ ZIP של מסמכי XML; כאן נבנה ZIP ללא דחיסה (stored). */
+(function (root) {
+  'use strict';
+
+  /* ===== CRC32 ===== */
+  var crcTable = (function () {
+    var table = new Int32Array(256);
+    for (var i = 0; i < 256; i++) {
+      var value = i;
+      for (var bit = 0; bit < 8; bit++) {
+        value = (value & 1) ? (0xEDB88320 ^ (value >>> 1)) : (value >>> 1);
+      }
+      table[i] = value;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var crc = -1;
+    for (var i = 0; i < bytes.length; i++) {
+      crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xFF];
+    }
+    return (crc ^ -1) >>> 0;
+  }
+
+  var encoder = new TextEncoder();
+  function utf8(text) { return encoder.encode(text); }
+
+  /* ===== ZIP (stored) ===== */
+  function zip(files) {
+    var parts = [], central = [], offset = 0;
+
+    files.forEach(function (file) {
+      var nameBytes = utf8(file.name);
+      var data = file.data;
+      var crc = crc32(data);
+
+      var local = new Uint8Array(30 + nameBytes.length);
+      var view = new DataView(local.buffer);
+      view.setUint32(0, 0x04034b50, true);
+      view.setUint16(4, 20, true);        // version needed
+      view.setUint16(6, 0x0800, true);    // שמות קבצים ב-UTF-8
+      view.setUint16(8, 0, true);         // ללא דחיסה
+      view.setUint16(10, 0, true);        // שעה
+      view.setUint16(12, 0x21, true);     // תאריך (1980-01-01)
+      view.setUint32(14, crc, true);
+      view.setUint32(18, data.length, true);
+      view.setUint32(22, data.length, true);
+      view.setUint16(26, nameBytes.length, true);
+      view.setUint16(28, 0, true);
+      local.set(nameBytes, 30);
+
+      parts.push(local, data);
+
+      var entry = new Uint8Array(46 + nameBytes.length);
+      var entryView = new DataView(entry.buffer);
+      entryView.setUint32(0, 0x02014b50, true);
+      entryView.setUint16(4, 20, true);
+      entryView.setUint16(6, 20, true);
+      entryView.setUint16(8, 0x0800, true);
+      entryView.setUint16(10, 0, true);
+      entryView.setUint16(12, 0, true);
+      entryView.setUint16(14, 0x21, true);
+      entryView.setUint32(16, crc, true);
+      entryView.setUint32(20, data.length, true);
+      entryView.setUint32(24, data.length, true);
+      entryView.setUint16(28, nameBytes.length, true);
+      entryView.setUint32(42, offset, true);
+      entry.set(nameBytes, 46);
+      central.push(entry);
+
+      offset += local.length + data.length;
+    });
+
+    var centralSize = central.reduce(function (sum, entry) { return sum + entry.length; }, 0);
+    var end = new Uint8Array(22);
+    var endView = new DataView(end.buffer);
+    endView.setUint32(0, 0x06054b50, true);
+    endView.setUint16(8, files.length, true);
+    endView.setUint16(10, files.length, true);
+    endView.setUint32(12, centralSize, true);
+    endView.setUint32(16, offset, true);
+
+    var all = parts.concat(central, [end]);
+    var total = all.reduce(function (sum, part) { return sum + part.length; }, 0);
+    var out = new Uint8Array(total);
+    var pos = 0;
+    all.forEach(function (part) { out.set(part, pos); pos += part.length; });
+    return out;
+  }
+
+  /* ===== XML ===== */
+  function esc(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+  }
+
+  function colName(index) {
+    var name = '';
+    var n = index + 1;
+    while (n > 0) {
+      var rem = (n - 1) % 26;
+      name = String.fromCharCode(65 + rem) + name;
+      n = Math.floor((n - 1) / 26);
+    }
+    return name;
+  }
+
+  /* מזהי העיצובים הזמינים לתאים (ראו cellXfs להלן) */
+  var STYLE = {
+    DEFAULT: 0, TITLE: 1, SUBTITLE: 2, HEADER: 3, ROW_HEAD: 4,
+    MORNING: 5, MIDDLE: 6, EVENING: 7, PLAIN: 8, CLOSED: 9, TOTAL: 10
+  };
+
+  function stylesXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<fonts count="6">' +
+        '<font><sz val="11"/><name val="Arial"/></font>' +
+        '<font><b/><sz val="11"/><name val="Arial"/></font>' +
+        '<font><b/><sz val="14"/><name val="Arial"/></font>' +
+        '<font><i/><sz val="10"/><color rgb="FF667085"/><name val="Arial"/></font>' +
+        '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>' +
+        '<font><sz val="10"/><color rgb="FF8A94A6"/><name val="Arial"/></font>' +
+      '</fonts>' +
+      '<fills count="8">' +
+        '<fill><patternFill patternType="none"/></fill>' +
+        '<fill><patternFill patternType="gray125"/></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FF2F5FE0"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFF0F3FA"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFFBEECB"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFD6F0E4"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFDDE5FA"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFF2F3F5"/><bgColor indexed="64"/></patternFill></fill>' +
+      '</fills>' +
+      '<borders count="2">' +
+        '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+        '<border>' +
+          '<left style="thin"><color rgb="FFD5DBE7"/></left>' +
+          '<right style="thin"><color rgb="FFD5DBE7"/></right>' +
+          '<top style="thin"><color rgb="FFD5DBE7"/></top>' +
+          '<bottom style="thin"><color rgb="FFD5DBE7"/></bottom>' +
+          '<diagonal/>' +
+        '</border>' +
+      '</borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="11">' +
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+        '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+        '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+        '<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="right" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+        '<xf numFmtId="0" fontId="5" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center"/></xf>' +
+        '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+          '<alignment horizontal="center" vertical="center"/></xf>' +
+      '</cellXfs>' +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+      '</styleSheet>';
+  }
+
+  function sheetXml(sheet) {
+    var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+
+    xml += '<sheetViews><sheetView rightToLeft="1" workbookViewId="0"';
+    xml += sheet.selected ? ' tabSelected="1"' : '';
+    xml += '>';
+    if (sheet.freeze) {
+      var topLeft = colName(sheet.freeze.col) + (sheet.freeze.row + 1);
+      xml += '<pane xSplit="' + sheet.freeze.col + '" ySplit="' + sheet.freeze.row +
+        '" topLeftCell="' + topLeft + '" activePane="bottomRight" state="frozen"/>';
+    }
+    xml += '</sheetView></sheetViews>';
+    xml += '<sheetFormatPr defaultRowHeight="15"/>';
+
+    if (sheet.cols && sheet.cols.length) {
+      xml += '<cols>';
+      sheet.cols.forEach(function (width, index) {
+        xml += '<col min="' + (index + 1) + '" max="' + (index + 1) + '" width="' + width + '" customWidth="1"/>';
+      });
+      xml += '</cols>';
+    }
+
+    xml += '<sheetData>';
+    sheet.rows.forEach(function (row, rowIndex) {
+      var cells = row.cells || row;
+      xml += '<row r="' + (rowIndex + 1) + '"';
+      if (row.height) xml += ' ht="' + row.height + '" customHeight="1"';
+      xml += '>';
+      cells.forEach(function (cell, colIndex) {
+        if (cell == null || cell === '') return;
+        var value = typeof cell === 'object' ? cell.v : cell;
+        var style = typeof cell === 'object' ? (cell.s || 0) : 0;
+        if (value == null || value === '') return;
+        var ref = colName(colIndex) + (rowIndex + 1);
+        if (typeof value === 'number') {
+          xml += '<c r="' + ref + '" s="' + style + '"><v>' + value + '</v></c>';
+        } else {
+          xml += '<c r="' + ref + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' +
+            esc(value) + '</t></is></c>';
+        }
+      });
+      xml += '</row>';
+    });
+    xml += '</sheetData>';
+
+    if (sheet.merges && sheet.merges.length) {
+      xml += '<mergeCells count="' + sheet.merges.length + '">';
+      sheet.merges.forEach(function (merge) {
+        xml += '<mergeCell ref="' + colName(merge.c1) + (merge.r1 + 1) + ':' +
+          colName(merge.c2) + (merge.r2 + 1) + '"/>';
+      });
+      xml += '</mergeCells>';
+    }
+
+    xml += '<pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>';
+    xml += '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>';
+    return xml + '</worksheet>';
+  }
+
+  /* שם גיליון חוקי: עד 31 תווים, ללא : \ / ? * [ ] */
+  function safeSheetName(name, index) {
+    var clean = String(name || '').replace(/[:\\\/?*\[\]]/g, ' ').slice(0, 31).trim();
+    return clean || ('גיליון ' + (index + 1));
+  }
+
+  /* שמות הלשוניות חייבים להיות ייחודיים; כפילות מקבלת סיומת מספרית */
+  function uniqueSheetNames(sheets) {
+    var used = {};
+    return sheets.map(function (sheet, index) {
+      var base = safeSheetName(sheet.name, index);
+      var name = base;
+      var suffix = 2;
+      while (used[name.toLowerCase()]) {
+        var tag = ' (' + suffix + ')';
+        name = base.slice(0, 31 - tag.length).trim() + tag;
+        suffix++;
+      }
+      used[name.toLowerCase()] = true;
+      return name;
+    });
+  }
+
+  function build(sheets) {
+    var names = uniqueSheetNames(sheets);
+
+    var workbook = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"' +
+      ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets>' +
+      names.map(function (name, index) {
+        return '<sheet name="' + esc(name) + '" sheetId="' + (index + 1) + '" r:id="rId' + (index + 1) + '"/>';
+      }).join('') +
+      '</sheets></workbook>';
+
+    var workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sheets.map(function (sheet, index) {
+        return '<Relationship Id="rId' + (index + 1) +
+          '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"' +
+          ' Target="worksheets/sheet' + (index + 1) + '.xml"/>';
+      }).join('') +
+      '<Relationship Id="rId' + (sheets.length + 1) +
+      '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      '</Relationships>';
+
+    var contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      sheets.map(function (sheet, index) {
+        return '<Override PartName="/xl/worksheets/sheet' + (index + 1) +
+          '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+      }).join('') +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '</Types>';
+
+    var rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      '</Relationships>';
+
+    var files = [
+      { name: '[Content_Types].xml', data: utf8(contentTypes) },
+      { name: '_rels/.rels', data: utf8(rootRels) },
+      { name: 'xl/workbook.xml', data: utf8(workbook) },
+      { name: 'xl/_rels/workbook.xml.rels', data: utf8(workbookRels) },
+      { name: 'xl/styles.xml', data: utf8(stylesXml()) }
+    ];
+    sheets.forEach(function (sheet, index) {
+      files.push({ name: 'xl/worksheets/sheet' + (index + 1) + '.xml', data: utf8(sheetXml(sheet)) });
+    });
+
+    return zip(files);
+  }
+
+  var API = { build: build, STYLE: STYLE, colName: colName, uniqueSheetNames: uniqueSheetNames };
+  root.ShiftXlsx = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/data.js ===== */
+/* נתוני בסיס: ימים, משמרות, סניפים ועובדים מוגדרים מראש */
+(function (root) {
+  'use strict';
+
+  var DAYS = [
+    { idx: 0, name: 'ראשון', short: "א'" },
+    { idx: 1, name: 'שני', short: "ב'" },
+    { idx: 2, name: 'שלישי', short: "ג'" },
+    { idx: 3, name: 'רביעי', short: "ד'" },
+    { idx: 4, name: 'חמישי', short: "ה'" },
+    { idx: 5, name: 'שישי', short: "ו'" },
+    { idx: 6, name: 'מוצ״ש', short: "ש'" }
+  ];
+
+  var SHIFTS = [
+    { id: 'morning', name: 'בוקר' },
+    { id: 'middle', name: 'אמצע' },
+    { id: 'evening', name: 'ערב' }
+  ];
+
+  var ALL_SHIFT_IDS = ['morning', 'middle', 'evening'];
+
+  /* מוצ״ש: ההתחלה נגזרת משעת צאת השבת של אותו שבוע ועד 23:00 */
+  var MOTZASH = { dayIdx: 6, offsetMinutes: 30, defaultEnd: '23:00' };
+
+  /* תבנית ברירת מחדל לסניף חדש: ימים, שעות וכמות עובדים בכל משמרת */
+  function defaultSchedule() {
+    var schedule = {};
+    [0, 1, 2, 3, 4].forEach(function (day) {
+      schedule[day] = {
+        morning: { need: 1, from: '09:00', to: '14:00' },
+        middle: { need: 1, from: '13:00', to: '17:30' },
+        evening: { need: 1, from: '17:00', to: '22:00' }
+      };
+    });
+    schedule[5] = { // שישי – שני עובדים בבוקר וסגירה מוקדמת
+      morning: { need: 2, from: '09:00', to: '14:30' }
+    };
+    schedule[6] = { // מוצ״ש – חצי שעה מצאת שבת עד 23:00
+      evening: { need: 1, auto: 'motzash', to: MOTZASH.defaultEnd }
+    };
+    return schedule;
+  }
+
+  /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
+  function defaultBranches() {
+    return [
+      { id: 'br-center', name: 'מייפון מרכז', active: true, schedule: defaultSchedule() },
+      { id: 'br-north', name: 'מייפון צפון', active: true, schedule: defaultSchedule() },
+      { id: 'br-south', name: 'מייפון דרום', active: true, schedule: defaultSchedule() }
+    ];
+  }
+
+  /* עובדים מוגדרים מראש – ניתנים לעריכה במסך "עובדים" */
+  var DEFAULT_EMPLOYEES = [
+    { id: 'emp-1', name: 'עובד/ת 1', active: true, branches: ['br-center'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
+    { id: 'emp-2', name: 'עובד/ת 2', active: true, branches: ['br-center', 'br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
+    { id: 'emp-3', name: 'עובד/ת 3', active: true, branches: ['br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
+    { id: 'emp-4', name: 'עובד/ת 4', active: true, branches: ['br-north', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
+    { id: 'emp-5', name: 'עובד/ת 5', active: true, branches: ['br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
+    { id: 'emp-6', name: 'עובד/ת 6', active: true, branches: ['br-center', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
+    { id: 'emp-7', name: 'עובד/ת 7', active: true, branches: [], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: 'מחליף/ה בכל הסניפים' },
+    { id: 'emp-8', name: 'עובד/ת 8', active: true, branches: [], shifts: ['middle', 'evening'], maxShifts: 4, note: 'סטודנט/ית – ללא בקרים' }
+  ];
+
+  var DEFAULT_SETTINGS = {
+    onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
+    restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
+    oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+    defaultShabbatEnd: '20:00'
+  };
+
+  var API = {
+    DAYS: DAYS,
+    SHIFTS: SHIFTS,
+    ALL_SHIFT_IDS: ALL_SHIFT_IDS,
+    MOTZASH: MOTZASH,
+    defaultSchedule: defaultSchedule,
+    defaultBranches: defaultBranches,
+    DEFAULT_EMPLOYEES: DEFAULT_EMPLOYEES,
+    DEFAULT_SETTINGS: DEFAULT_SETTINGS,
+    shiftById: function (id) {
+      for (var i = 0; i < SHIFTS.length; i++) { if (SHIFTS[i].id === id) return SHIFTS[i]; }
+      return null;
+    }
+  };
+
+  root.ShiftData = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/store.js ===== */
+/* ניהול מצב: טעינה/שמירה ב-localStorage, מפתחות שבוע, אילוצים ושיבוצים */
+(function (root) {
+  'use strict';
+
+  var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
+  var STORAGE_KEY = 'maiphone-shifts-v1';
+  var VERSION = 1;
+
+  function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function toKey(date) {
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+  }
+
+  /* תחילת השבוע = יום ראשון */
+  function weekStart(date) {
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    d.setDate(d.getDate() - d.getDay());
+    return d;
+  }
+
+  function currentWeekKey(today) {
+    return toKey(weekStart(today || new Date()));
+  }
+
+  function shiftWeekKey(weekKey, deltaWeeks) {
+    var parts = weekKey.split('-');
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() + deltaWeeks * 7);
+    return toKey(d);
+  }
+
+  function dateOfDay(weekKey, dayIdx) {
+    var parts = weekKey.split('-');
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() + dayIdx);
+    return d;
+  }
+
+  function formatDate(date) { return pad(date.getDate()) + '/' + pad(date.getMonth() + 1); }
+
+  function emptyState() {
+    return {
+      version: VERSION,
+      settings: clone(Data.DEFAULT_SETTINGS),
+      branches: Data.defaultBranches(),
+      employees: clone(Data.DEFAULT_EMPLOYEES),
+      weeks: {}
+    };
+  }
+
+  function emptyWeek() {
+    return {
+      constraints: {}, assignments: {}, manual: {}, holidays: {},
+      shabbatEnd: '', note: '', generatedAt: null
+    };
+  }
+
+  function getWeek(state, weekKey) {
+    if (!state.weeks[weekKey]) { state.weeks[weekKey] = emptyWeek(); }
+    var w = state.weeks[weekKey];
+    if (!w.constraints) w.constraints = {};
+    if (!w.assignments) w.assignments = {};
+    if (!w.manual) w.manual = {};
+    if (!w.holidays) w.holidays = {};
+    return w;
+  }
+
+  /* ===== שעות ===== */
+  function parseTime(value) {
+    var match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return null;
+    var hours = Number(match[1]), minutes = Number(match[2]);
+    if (hours > 23 || minutes > 59) return null;
+    return hours * 60 + minutes;
+  }
+
+  function formatTime(totalMinutes) {
+    var wrapped = ((totalMinutes % 1440) + 1440) % 1440;
+    return pad(Math.floor(wrapped / 60)) + ':' + pad(wrapped % 60);
+  }
+
+  /* קלט שעה גמיש: "830" → 08:30, "8:5" → 08:05, "1430" → 14:30. null אם לא תקין. */
+  function normalizeTimeInput(raw) {
+    var text = String(raw == null ? '' : raw).trim().replace(/[.\u05f4"']/g, ':');
+    if (!text) return '';
+    var hours, minutes, match;
+    if ((match = /^(\d{1,2}):(\d{1,2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = Number(match[2]);
+    } else if ((match = /^(\d{1,2})(\d{2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = Number(match[2]);
+    } else if ((match = /^(\d{1,2})$/.exec(text))) {
+      hours = Number(match[1]); minutes = 0;
+    } else {
+      return null;
+    }
+    if (hours > 23 || minutes > 59) return null;
+    return pad(hours) + ':' + pad(minutes);
+  }
+
+  function addMinutes(value, minutes) {
+    var base = parseTime(value);
+    return base === null ? null : formatTime(base + minutes);
+  }
+
+  /* הגדרת משמרת בסניף ביום מסוים, או null אם הסניף סגור אז */
+  function slotConfig(branch, dayIdx, shiftId) {
+    var day = (branch.schedule || {})[dayIdx];
+    var config = day && day[shiftId];
+    if (!config || Number(config.need) <= 0) return null;
+    return config;
+  }
+
+  function slotNeed(branch, dayIdx, shiftId) {
+    var config = slotConfig(branch, dayIdx, shiftId);
+    return config ? Number(config.need) || 0 : 0;
+  }
+
+  /* שעות בפועל. במוצ״ש ההתחלה נגזרת משעת צאת השבת של אותו שבוע. */
+  function slotHours(week, branch, dayIdx, shiftId) {
+    var config = slotConfig(branch, dayIdx, shiftId);
+    if (!config) return null;
+    var from = config.from || '';
+    if (config.auto === 'motzash') {
+      var shabbatEnd = (week && week.shabbatEnd) || '';
+      from = shabbatEnd ? addMinutes(shabbatEnd, Data.MOTZASH.offsetMinutes) : '';
+    }
+    return { from: from, to: config.to || '', auto: config.auto || null };
+  }
+
+  function hoursLabel(hours) {
+    if (!hours) return '';
+    if (!hours.from) return hours.to ? 'עד ' + hours.to : '';
+    return hours.from + '-' + (hours.to || '');
+  }
+
+  function slotKey(dayIdx, branchId, shiftId) { return dayIdx + '|' + branchId + '|' + shiftId; }
+  function constraintKey(empId, dayIdx) { return empId + '|' + dayIdx; }
+
+  function getConstraint(week, empId, dayIdx) {
+    return week.constraints[constraintKey(empId, dayIdx)] || { off: false, blocked: {}, preferred: {}, note: '' };
+  }
+
+  function setConstraint(week, empId, dayIdx, value) {
+    var key = constraintKey(empId, dayIdx);
+    var isEmpty = !value.off && !value.note &&
+      Object.keys(value.blocked || {}).length === 0 &&
+      Object.keys(value.preferred || {}).length === 0;
+    if (isEmpty) { delete week.constraints[key]; } else { week.constraints[key] = value; }
+  }
+
+  function getAssigned(week, dayIdx, branchId, shiftId) {
+    return week.assignments[slotKey(dayIdx, branchId, shiftId)] || [];
+  }
+
+  function setAssigned(week, dayIdx, branchId, shiftId, empIds) {
+    var key = slotKey(dayIdx, branchId, shiftId);
+    var clean = (empIds || []).filter(function (id) { return !!id; });
+    if (clean.length === 0) { delete week.assignments[key]; } else { week.assignments[key] = clean; }
+  }
+
+  /* כל המשמרות של עובד ביום מסוים – הבסיס לזיהוי כפל משמרת */
+  function employeeDayAssignments(state, week, empId, dayIdx) {
+    var out = [];
+    state.branches.forEach(function (branch) {
+      Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        var list = getAssigned(week, dayIdx, branch.id, shiftId);
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] === empId) { out.push({ branchId: branch.id, shiftId: shiftId }); }
+        }
+      });
+    });
+    return out;
+  }
+
+  function employeeWeekCount(state, week, empId) {
+    var count = 0;
+    for (var day = 0; day < 7; day++) { count += employeeDayAssignments(state, week, empId, day).length; }
+    return count;
+  }
+
+  /* ===== ימי חג: כל הסניפים סגורים והיום נחשב חופש לכל העובדים ===== */
+  function isHoliday(week, dayIdx) {
+    return !!(week && week.holidays && week.holidays[dayIdx] !== undefined);
+  }
+
+  function holidayName(week, dayIdx) {
+    if (!isHoliday(week, dayIdx)) return '';
+    return week.holidays[dayIdx] || 'חג';
+  }
+
+  function setHoliday(week, dayIdx, name) {
+    if (name === null) { delete week.holidays[dayIdx]; }
+    else { week.holidays[dayIdx] = name || ''; }
+  }
+
+  /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
+  function activeShiftsForDay(state, dayIdx, week) {
+    if (isHoliday(week, dayIdx)) return [];
+    return Data.ALL_SHIFT_IDS.filter(function (shiftId) {
+      return state.branches.some(function (branch) {
+        return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
+      });
+    });
+  }
+
+  /* כל הדרישות של השבוע: יום × סניף × משמרת × כמות נדרשת */
+  function weekDemands(state, week) {
+    var demands = [];
+    for (var day = 0; day < 7; day++) {
+      if (isHoliday(week, day)) continue; // ביום חג הסניפים סגורים
+      state.branches.forEach(function (branch) {
+        if (!branch.active) return;
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var need = slotNeed(branch, day, shiftId);
+          if (need > 0) { demands.push({ dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need }); }
+        });
+      });
+    }
+    return demands;
+  }
+
+  /* האם העובד יכול בכלל לעבוד ביום הזה – קיימת משמרת פתוחה שמתאימה לו */
+  function employeeCanWorkDay(state, week, emp, dayIdx) {
+    if (!emp.active) return false;
+    if (isHoliday(week, dayIdx)) return false;
+    var constraint = getConstraint(week, emp.id, dayIdx);
+    if (constraint.off) return false;
+
+    return state.branches.some(function (branch) {
+      if (!branch.active) return false;
+      if (emp.branches.length && emp.branches.indexOf(branch.id) === -1) return false;
+      return Data.ALL_SHIFT_IDS.some(function (shiftId) {
+        if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
+        if (emp.shifts.indexOf(shiftId) === -1) return false;
+        if (constraint.blocked && constraint.blocked[shiftId]) return false;
+        return true;
+      });
+    });
+  }
+
+  /* ===== ימי חופש ומכסת עבודה ===== */
+
+  /* הימים שהעובד ביקש כחופש בשבוע הזה */
+  function requestedDaysOff(week, empId) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      if (getConstraint(week, empId, day).off) days.push(day);
+    }
+    return days;
+  }
+
+  /* כמה ימים בשבוע העובד יכול בכלל לעבוד (אחרי אילוצים, חגים וסניפים סגורים) */
+  function workableDays(state, week, emp) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      if (employeeCanWorkDay(state, week, emp, day)) days.push(day);
+    }
+    return days;
+  }
+
+  /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
+     ממספר הימים שבהם הוא יכול לעבוד בפועל. */
+  function targetShifts(state, week, emp) {
+    return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
+  }
+
+  /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
+
+  /* סיכום לכל עובד פעיל: כמה משמרות נותרו במכסה ובאילו ימים הוא פנוי */
+  function weekAvailability(state, week) {
+    var rows = [];
+    var totalSpare = 0;
+    var freeSlots = 0;
+
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var assigned = employeeWeekCount(state, week, emp.id);
+      var max = Number(emp.maxShifts) || 0;
+      var spare = Math.max(0, max - assigned);
+
+      var freeDays = [];
+      for (var day = 0; day < 7; day++) {
+        if (employeeDayAssignments(state, week, emp.id, day).length) continue;
+        if (!employeeCanWorkDay(state, week, emp, day)) continue;
+        freeDays.push(day);
+      }
+
+      totalSpare += spare;
+      // בפועל אפשר לשבץ רק את המינימום בין יתרת המכסה למספר הימים הפנויים
+      freeSlots += Math.min(spare, freeDays.length);
+
+      rows.push({
+        empId: emp.id, name: emp.name, assigned: assigned, max: max,
+        spare: spare, freeDays: freeDays,
+        available: Math.min(spare, freeDays.length)
+      });
+    });
+
+    rows.sort(function (a, b) {
+      return (b.available - a.available) || (b.spare - a.spare) || a.name.localeCompare(b.name);
+    });
+
+    return {
+      rows: rows,
+      totalSpare: totalSpare,
+      freeSlots: freeSlots,
+      withSpare: rows.filter(function (row) { return row.available > 0; })
+    };
+  }
+
+  function byId(list, id) {
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
+
+  function migrate(state) {
+    if (!state || typeof state !== 'object') return emptyState();
+    var base = emptyState();
+    state.version = VERSION;
+    var legacyDayShifts = (state.settings && state.settings.dayShifts) || null;
+    state.settings = Object.assign({}, base.settings, state.settings || {});
+    delete state.settings.dayShifts;
+    if (!Array.isArray(state.branches) || !state.branches.length) state.branches = base.branches;
+    if (!Array.isArray(state.employees) || !state.employees.length) state.employees = base.employees;
+    if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
+    state.employees.forEach(function (emp) {
+      if (!Array.isArray(emp.branches)) emp.branches = [];
+      if (!Array.isArray(emp.shifts)) emp.shifts = Data.ALL_SHIFT_IDS.slice();
+      if (typeof emp.maxShifts !== 'number') emp.maxShifts = 6;
+      if (typeof emp.active !== 'boolean') emp.active = true;
+    });
+    state.branches.forEach(function (branch) {
+      if (typeof branch.active !== 'boolean') branch.active = true;
+      if (!branch.schedule) { branch.schedule = legacySchedule(branch, legacyDayShifts); }
+      normalizeSchedule(branch.schedule);
+      delete branch.need;
+    });
+    Object.keys(state.weeks).forEach(function (key) {
+      var weekData = state.weeks[key];
+      if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
+      if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
+    });
+    return state;
+  }
+
+  /* המרת המבנה הישן (need לכל סניף + dayShifts גלובלי) למבנה לפי יום */
+  function legacySchedule(branch, legacyDayShifts) {
+    var template = Data.defaultSchedule();
+    if (!branch.need && !legacyDayShifts) return template;
+    var schedule = {};
+    for (var day = 0; day < 7; day++) {
+      var allowed = legacyDayShifts ? (legacyDayShifts[day] || []) : Data.ALL_SHIFT_IDS;
+      var dayConfig = {};
+      Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        if (allowed.indexOf(shiftId) === -1) return;
+        var need = Number((branch.need || {})[shiftId] || 0);
+        if (need <= 0) return;
+        var fallback = (template[day] && template[day][shiftId]) ||
+          (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
+        dayConfig[shiftId] = { need: need, from: fallback.from, to: fallback.to };
+        if (fallback.auto) { dayConfig[shiftId].auto = fallback.auto; delete dayConfig[shiftId].from; }
+      });
+      if (Object.keys(dayConfig).length) schedule[day] = dayConfig;
+    }
+    // המשמרת החדשה של מוצ״ש לא קיימת בנתונים ישנים – מוסיפים אותה
+    if (!schedule[6] && template[6]) { schedule[6] = clone(template[6]); }
+    return schedule;
+  }
+
+  function normalizeSchedule(schedule) {
+    Object.keys(schedule).forEach(function (day) {
+      var dayConfig = schedule[day];
+      Object.keys(dayConfig).forEach(function (shiftId) {
+        var config = dayConfig[shiftId];
+        config.need = Math.max(0, Number(config.need) || 0);
+        if (config.need === 0) { delete dayConfig[shiftId]; return; }
+        if (config.auto !== 'motzash') { delete config.auto; }
+        config.to = config.to || '';
+        if (config.auto === 'motzash') { delete config.from; } else { config.from = config.from || ''; }
+      });
+      if (!Object.keys(dayConfig).length) delete schedule[day];
+    });
+  }
+
+  function load() {
+    try {
+      var raw = root.localStorage && root.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return emptyState();
+      return migrate(JSON.parse(raw));
+    } catch (err) {
+      console.warn('טעינת הנתונים נכשלה, נטענת ברירת מחדל', err);
+      return emptyState();
+    }
+  }
+
+  function save(state) {
+    try {
+      root.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (err) {
+      console.warn('שמירת הנתונים נכשלה', err);
+      return false;
+    }
+  }
+
+  function newId(prefix) {
+    return prefix + '-' + Math.random().toString(36).slice(2, 8);
+  }
+
+  var API = {
+    STORAGE_KEY: STORAGE_KEY,
+    clone: clone,
+    toKey: toKey,
+    weekStart: weekStart,
+    currentWeekKey: currentWeekKey,
+    shiftWeekKey: shiftWeekKey,
+    dateOfDay: dateOfDay,
+    formatDate: formatDate,
+    emptyState: emptyState,
+    emptyWeek: emptyWeek,
+    getWeek: getWeek,
+    slotKey: slotKey,
+    constraintKey: constraintKey,
+    getConstraint: getConstraint,
+    setConstraint: setConstraint,
+    getAssigned: getAssigned,
+    setAssigned: setAssigned,
+    employeeDayAssignments: employeeDayAssignments,
+    employeeWeekCount: employeeWeekCount,
+    activeShiftsForDay: activeShiftsForDay,
+    isHoliday: isHoliday,
+    holidayName: holidayName,
+    setHoliday: setHoliday,
+    slotConfig: slotConfig,
+    slotNeed: slotNeed,
+    slotHours: slotHours,
+    hoursLabel: hoursLabel,
+    parseTime: parseTime,
+    normalizeTimeInput: normalizeTimeInput,
+    formatTime: formatTime,
+    addMinutes: addMinutes,
+    normalizeSchedule: normalizeSchedule,
+    weekDemands: weekDemands,
+    employeeCanWorkDay: employeeCanWorkDay,
+    requestedDaysOff: requestedDaysOff,
+    workableDays: workableDays,
+    targetShifts: targetShifts,
+    weekAvailability: weekAvailability,
+    byId: byId,
+    migrate: migrate,
+    load: load,
+    save: save,
+    newId: newId
+  };
+
+  root.ShiftStore = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/scheduler.js ===== */
+/* מנוע שיבוץ אוטומטי: מציב עובד לכל יום/סניף/משמרת לפי אילוצים והוגנות */
+(function (root) {
+  'use strict';
+
+  var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
+  var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
+
+  function makeRandom(seed) {
+    var s = seed >>> 0 || 1;
+    return function () {
+      s ^= s << 13; s >>>= 0;
+      s ^= s >> 17;
+      s ^= s << 5; s >>>= 0;
+      return s / 4294967296;
+    };
+  }
+
+  function employeeAllowedInBranch(emp, branchId) {
+    return !emp.branches || emp.branches.length === 0 || emp.branches.indexOf(branchId) !== -1;
+  }
+
+  /* תנאי יסוד שאינם ניתנים לפתרון על ידי החלפת שיבוצים */
+  function eligibleForSlot(ctx, emp, demand) {
+    if (!emp.active) return false;
+    if (Store.isHoliday(ctx.week, demand.dayIdx)) return false; // יום חג – אין עבודה
+    if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
+    if (!employeeAllowedInBranch(emp, demand.branchId)) return false;
+    var constraint = ctx.constraints[emp.id + '|' + demand.dayIdx];
+    if (constraint) {
+      if (constraint.off) return false;
+      if (constraint.blocked && constraint.blocked[demand.shiftId]) return false;
+    }
+    return true;
+  }
+
+  /* האם ניתן לשבץ את העובד לדרישה מסוימת, בהתחשב במצב השיבוץ הנוכחי */
+  function canAssign(ctx, emp, demand) {
+    var state = ctx.state;
+    var day = demand.dayIdx;
+
+    if (!eligibleForSlot(ctx, emp, demand)) return false;
+
+    var dayList = ctx.byDay[emp.id][day];
+    if (state.settings.onePerDay && dayList.length > 0) return false;
+    for (var i = 0; i < dayList.length; i++) {
+      if (dayList[i].shiftId === demand.shiftId) return false; // אותה משמרת פעמיים באותו יום
+    }
+
+    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) return false;
+
+    // מנוחה בין ערב לבוקר – נבדק לשני הכיוונים, כי סדר השיבוץ אינו כרונולוגי
+    if (state.settings.restEveningMorning) {
+      if (demand.shiftId === 'morning' && day > 0) {
+        var prev = ctx.byDay[emp.id][day - 1];
+        for (var j = 0; j < prev.length; j++) {
+          if (prev[j].shiftId === 'evening') return false;
+        }
+      }
+      if (demand.shiftId === 'evening' && day < 6) {
+        var next = ctx.byDay[emp.id][day + 1];
+        for (var k = 0; k < next.length; k++) {
+          if (next[k].shiftId === 'morning') return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function scoreCandidate(ctx, emp, demand, rand) {
+    var score = 0;
+    // הוגנות ביחס ליעד האישי: המכסה השבועית מוגבלת במספר הימים שבהם
+    // העובד פנוי, כך שמי שביקש יום חופש אחד אמור לעבוד בשאר הימים.
+    var target = ctx.targets[emp.id] || 1;
+    score += (ctx.counts[emp.id] / target) * 100;
+
+    var constraint = ctx.constraints[emp.id + '|' + demand.dayIdx];
+    if (constraint && constraint.preferred && Object.keys(constraint.preferred).length) {
+      // העדפה למשמרת מסוימת באותו יום – בונוס למשמרת המועדפת, קנס לשאר
+      score += constraint.preferred[demand.shiftId] ? -45 : 30;
+    }
+
+    // רציפות סניף: עדיף שעובד יישאר באותו סניף לאורך השבוע
+    var branchHits = ctx.branchHistory[emp.id][demand.branchId] || 0;
+    score -= Math.min(branchHits, 3) * 8;
+
+    // רציפות סוג משמרת
+    var shiftHits = ctx.shiftHistory[emp.id][demand.shiftId] || 0;
+    score -= Math.min(shiftHits, 3) * 4;
+
+    // עובד המשויך במפורש לסניף עדיף על מחליף כללי
+    if (emp.branches && emp.branches.length > 0) score -= 6;
+
+    score += rand() * 12; // רעש קטן ליצירת גיוון בין הרצות
+    return score;
+  }
+
+  function newContext(state, week) {
+    var ctx = {
+      state: state,
+      week: week,
+      constraints: week.constraints || {},
+      counts: {},
+      targets: {},
+      byDay: {},
+      branchHistory: {},
+      shiftHistory: {},
+      assignments: {}
+    };
+    state.employees.forEach(function (emp) {
+      ctx.targets[emp.id] = Math.max(1, Store.targetShifts(state, week, emp));
+      ctx.counts[emp.id] = 0;
+      ctx.byDay[emp.id] = [[], [], [], [], [], [], []];
+      ctx.branchHistory[emp.id] = {};
+      ctx.shiftHistory[emp.id] = {};
+    });
+    return ctx;
+  }
+
+  function applyAssignment(ctx, empId, demand) {
+    ctx.counts[empId] += 1;
+    ctx.byDay[empId][demand.dayIdx].push({ branchId: demand.branchId, shiftId: demand.shiftId });
+    ctx.branchHistory[empId][demand.branchId] = (ctx.branchHistory[empId][demand.branchId] || 0) + 1;
+    ctx.shiftHistory[empId][demand.shiftId] = (ctx.shiftHistory[empId][demand.shiftId] || 0) + 1;
+    var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+    if (!ctx.assignments[key]) ctx.assignments[key] = [];
+    ctx.assignments[key].push(empId);
+  }
+
+  function removeAssignment(ctx, empId, dayIdx, branchId, shiftId) {
+    var list = ctx.byDay[empId][dayIdx];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].branchId === branchId && list[i].shiftId === shiftId) { list.splice(i, 1); break; }
+    }
+    ctx.counts[empId] -= 1;
+    ctx.branchHistory[empId][branchId] = Math.max(0, (ctx.branchHistory[empId][branchId] || 1) - 1);
+    ctx.shiftHistory[empId][shiftId] = Math.max(0, (ctx.shiftHistory[empId][shiftId] || 1) - 1);
+    var key = Store.slotKey(dayIdx, branchId, shiftId);
+    var slot = ctx.assignments[key] || [];
+    var pos = slot.indexOf(empId);
+    if (pos !== -1) slot.splice(pos, 1);
+    if (slot.length === 0) delete ctx.assignments[key];
+  }
+
+  /* פאזת תיקון: מנסה לפנות עובד ממשמרת אחרת כדי לכסות משמרת שנשארה ריקה */
+  function repair(ctx, unfilled, keepManual, week) {
+    var remaining = [];
+    unfilled.forEach(function (demand) {
+      var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+      var taken = ctx.assignments[key] || [];
+      var fixed = false;
+
+      for (var e = 0; e < ctx.state.employees.length && !fixed; e++) {
+        var emp = ctx.state.employees[e];
+        if (taken.indexOf(emp.id) !== -1) continue;
+        if (canAssign(ctx, emp, demand)) { applyAssignment(ctx, emp.id, demand); fixed = true; break; }
+
+        // אילו שיבוצים קיימים חוסמים את העובד? (אותו יום, או כלל המנוחה, או המכסה)
+        var blockers = [];
+        [demand.dayIdx - 1, demand.dayIdx, demand.dayIdx + 1].forEach(function (day) {
+          if (day < 0 || day > 6) return;
+          ctx.byDay[emp.id][day].forEach(function (slot) {
+            blockers.push({ dayIdx: day, branchId: slot.branchId, shiftId: slot.shiftId });
+          });
+        });
+        if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+          for (var d = 0; d < 7; d++) {
+            ctx.byDay[emp.id][d].forEach(function (slot) {
+              blockers.push({ dayIdx: d, branchId: slot.branchId, shiftId: slot.shiftId });
+            });
+          }
+        }
+
+        for (var b = 0; b < blockers.length && !fixed; b++) {
+          var blocker = blockers[b];
+          var blockerKey = Store.slotKey(blocker.dayIdx, blocker.branchId, blocker.shiftId);
+          if (keepManual && week && week.manual[blockerKey]) continue; // לא נוגעים בשיבוץ ידני
+
+          removeAssignment(ctx, emp.id, blocker.dayIdx, blocker.branchId, blocker.shiftId);
+          if (canAssign(ctx, emp, demand)) {
+            // מחפשים מחליף למשמרת שהתפנתה
+            var replacement = null;
+            var blockerTaken = ctx.assignments[blockerKey] || [];
+            for (var r = 0; r < ctx.state.employees.length; r++) {
+              var other = ctx.state.employees[r];
+              if (other.id === emp.id || blockerTaken.indexOf(other.id) !== -1) continue;
+              if (canAssign(ctx, other, blocker)) { replacement = other; break; }
+            }
+            if (replacement) {
+              applyAssignment(ctx, emp.id, demand);
+              applyAssignment(ctx, replacement.id, blocker);
+              fixed = true;
+              break;
+            }
+          }
+          applyAssignment(ctx, emp.id, blocker); // שחזור המצב הקודם
+        }
+      }
+
+      if (!fixed) remaining.push(demand);
+    });
+    return remaining;
+  }
+
+  /* השיבוצים שחוסמים את העובד מלקחת את המשמרת הזו */
+  function blockingAssignments(ctx, emp, demand) {
+    var blockers = [];
+    var seen = {};
+    function push(dayIdx, slot) {
+      var key = dayIdx + '|' + slot.branchId + '|' + slot.shiftId;
+      if (seen[key]) return;
+      seen[key] = true;
+      blockers.push({ dayIdx: dayIdx, branchId: slot.branchId, shiftId: slot.shiftId });
+    }
+    [demand.dayIdx - 1, demand.dayIdx, demand.dayIdx + 1].forEach(function (day) {
+      if (day < 0 || day > 6) return;
+      ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
+    });
+    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+      for (var day = 0; day < 7; day++) {
+        ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
+      }
+    }
+    return blockers;
+  }
+
+  /* מנסה לאייש משמרת ריקה: קודם שיבוץ ישיר, ואם אין – מסלול הרחבה.
+     עובד מפנה משמרת אחרת, ואת המשמרת שהתפנתה מנסים לאייש רקורסיבית.
+     כל עובד נבדק פעם אחת לכל חיפוש (כמו באלגוריתם התאמה דו-צדדית),
+     ולכן החיפוש שלם ומסתיים בזמן סביר. */
+  function fillSlot(ctx, demand, visited, locked) {
+    var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+    var taken = ctx.assignments[key] || [];
+    var employees = ctx.state.employees;
+    var i;
+
+    for (i = 0; i < employees.length; i++) {
+      if (taken.indexOf(employees[i].id) !== -1) continue;
+      if (canAssign(ctx, employees[i], demand)) {
+        applyAssignment(ctx, employees[i].id, demand);
+        return true;
+      }
+    }
+
+    for (i = 0; i < employees.length; i++) {
+      var emp = employees[i];
+      if (visited[emp.id]) continue;
+      if (taken.indexOf(emp.id) !== -1) continue;
+      if (!eligibleForSlot(ctx, emp, demand)) continue;
+      visited[emp.id] = true;
+
+      var blockers = blockingAssignments(ctx, emp, demand);
+      for (var b = 0; b < blockers.length; b++) {
+        var blocker = blockers[b];
+        if (locked[Store.slotKey(blocker.dayIdx, blocker.branchId, blocker.shiftId)]) continue;
+
+        removeAssignment(ctx, emp.id, blocker.dayIdx, blocker.branchId, blocker.shiftId);
+        if (canAssign(ctx, emp, demand)) {
+          applyAssignment(ctx, emp.id, demand);
+          if (fillSlot(ctx, blocker, visited, locked)) return true;
+          removeAssignment(ctx, emp.id, demand.dayIdx, demand.branchId, demand.shiftId);
+        }
+        applyAssignment(ctx, emp.id, blocker); // שחזור המצב הקודם
+      }
+    }
+    return false;
+  }
+
+  /* מעבר אחרון על כל המשמרות שנותרו ריקות */
+  function deepFill(ctx, unfilled, keepManual, week) {
+    var locked = {};
+    if (keepManual && week) {
+      Object.keys(week.manual || {}).forEach(function (key) { locked[key] = true; });
+    }
+    var remaining = [];
+    unfilled.forEach(function (demand) {
+      if (!fillSlot(ctx, demand, {}, locked)) remaining.push(demand);
+    });
+    return remaining;
+  }
+
+  /* כמה עובדים יכולים לכסות דרישה. limit מאפשר עצירה מוקדמת:
+     כדי לאתר את המשמרת הנדירה ביותר אין צורך לספור מעבר למינימום הנוכחי. */
+  function candidateCount(ctx, demand, limit) {
+    var cap = limit == null ? Infinity : limit;
+    var employees = ctx.state.employees;
+    var n = 0;
+    for (var i = 0; i < employees.length; i++) {
+      if (canAssign(ctx, employees[i], demand)) {
+        n++;
+        if (n > cap) return n;
+      }
+    }
+    return n;
+  }
+
+  function runOnce(state, week, keepManual, seed) {
+    var rand = makeRandom(seed);
+    var ctx = newContext(state, week);
+    var demands = Store.weekDemands(state, week);
+    var unfilled = [];
+
+    // שמירת שיבוצים ידניים קיימים
+    if (keepManual) {
+      demands.forEach(function (demand) {
+        var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+        if (!week.manual[key]) return;
+        var existing = week.assignments[key] || [];
+        existing.slice(0, demand.need).forEach(function (empId) {
+          var emp = Store.byId(state.employees, empId);
+          if (!emp) return;
+          if (ctx.assignments[key] && ctx.assignments[key].indexOf(empId) !== -1) return;
+          applyAssignment(ctx, empId, demand);
+        });
+      });
+    }
+
+    // פירוק לדרישות בודדות (סלוט אחד = עובד אחד)
+    var slots = [];
+    demands.forEach(function (demand) {
+      var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+      var already = (ctx.assignments[key] || []).length;
+      for (var i = already; i < demand.need; i++) { slots.push(demand); }
+    });
+
+    /* בכל צעד נבחרת המשמרת עם הכי מעט מועמדים אפשריים כרגע.
+       החישוב מחדש אחרי כל שיבוץ מונע מצב שבו שיבוץ מוקדם חוסם משמרת נדירה. */
+    var remaining = slots.slice();
+    while (remaining.length) {
+      var pickIndex = 0, fewest = Infinity;
+      for (var i = 0; i < remaining.length; i++) {
+        var count = candidateCount(ctx, remaining[i], fewest);
+        if (count < fewest) { fewest = count; pickIndex = i; }
+        if (fewest === 0) break;
+      }
+      var demand = remaining.splice(pickIndex, 1)[0];
+      var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+      var taken = ctx.assignments[key] || [];
+      var best = null, bestScore = Infinity;
+      state.employees.forEach(function (emp) {
+        if (taken.indexOf(emp.id) !== -1) return;
+        if (!canAssign(ctx, emp, demand)) return;
+        var score = scoreCandidate(ctx, emp, demand, rand);
+        if (score < bestScore) { bestScore = score; best = emp; }
+      });
+      if (best) { applyAssignment(ctx, best.id, demand); }
+      else { unfilled.push(demand); }
+    }
+
+    if (unfilled.length) { unfilled = repair(ctx, unfilled, keepManual, week); }
+
+    return { assignments: ctx.assignments, counts: ctx.counts, unfilled: unfilled, ctx: ctx };
+  }
+
+  /* כמה העדפות משמרת לא כובדו: העובד עבד באותו יום, אך לא במשמרת שביקש */
+  function preferenceMisses(state, week, ctx) {
+    var misses = 0;
+    state.employees.forEach(function (emp) {
+      for (var day = 0; day < 7; day++) {
+        var constraint = (week.constraints || {})[emp.id + '|' + day];
+        if (!constraint || !constraint.preferred) continue;
+        var wanted = Object.keys(constraint.preferred);
+        if (!wanted.length) continue;
+        var slots = ctx.byDay[emp.id][day];
+        if (!slots.length) continue;
+        var honored = slots.some(function (slot) { return wanted.indexOf(slot.shiftId) !== -1; });
+        if (!honored) misses++;
+      }
+    });
+    return misses;
+  }
+
+  function qualityOf(state, week, result) {
+    var counts = [];
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      counts.push(result.counts[emp.id] / Math.max(1, Store.targetShifts(state, week, emp) || 1));
+    });
+    var avg = counts.reduce(function (a, b) { return a + b; }, 0) / (counts.length || 1);
+    var variance = counts.reduce(function (a, b) { return a + Math.pow(b - avg, 2); }, 0) / (counts.length || 1);
+    return {
+      unfilled: result.unfilled.length,
+      misses: preferenceMisses(state, week, result.ctx),
+      variance: variance
+    };
+  }
+
+  /* השוואת איכות: קודם כיסוי, אחר כך כיבוד העדפות, ולבסוף הוגנות בחלוקה */
+  function betterThan(candidate, best) {
+    if (candidate.unfilled !== best.unfilled) return candidate.unfilled < best.unfilled;
+    if (candidate.misses !== best.misses) return candidate.misses < best.misses;
+    return candidate.variance < best.variance;
+  }
+
+  /* הרצה מרובה עם זריעה אקראית ובחירת התוצאה הטובה ביותר */
+  /* תקציב עבודה קבוע: בעיות גדולות מקבלות פחות ניסיונות, כדי שזמן
+     התגובה יישאר סביר גם עם הרבה סניפים ועובדים. */
+  function attemptBudget(state, week) {
+    var slots = Store.weekDemands(state, week).reduce(function (sum, d) { return sum + d.need; }, 0);
+    var employees = state.employees.filter(function (emp) { return emp.active; }).length;
+    var work = Math.max(1, slots * Math.max(1, employees));
+    return Math.max(12, Math.min(120, Math.round(120000 / work)));
+  }
+
+  function generate(state, week, options) {
+    var opts = options || {};
+    var attempts = opts.attempts || attemptBudget(state, week);
+    var keepManual = opts.keepManual !== false;
+    var best = null, bestQ = null;
+    for (var i = 0; i < attempts; i++) {
+      var result = runOnce(state, week, keepManual, (opts.seed || 20260101) + i * 7919);
+      var q = qualityOf(state, week, result);
+      if (!best || betterThan(q, bestQ)) { best = result; bestQ = q; }
+      if (bestQ.unfilled === 0 && bestQ.misses === 0 && bestQ.variance < 0.01) break;
+    }
+
+    // מעבר אחרון ויסודי על התוצאה הטובה ביותר, עם שרשראות החלפה עמוקות
+    if (best.unfilled.length) {
+      best.unfilled = deepFill(best.ctx, best.unfilled, keepManual, week);
+      best.assignments = best.ctx.assignments;
+      best.counts = best.ctx.counts;
+      bestQ = qualityOf(state, week, best);
+    }
+
+    return { assignments: best.assignments, counts: best.counts, unfilled: best.unfilled, quality: bestQ };
+  }
+
+  var API = {
+    generate: generate,
+    attemptBudget: attemptBudget,
+    fillSlot: fillSlot,
+    deepFill: deepFill,
+    eligibleForSlot: eligibleForSlot,
+    repair: repair,
+    removeAssignment: removeAssignment,
+    runOnce: runOnce,
+    canAssign: canAssign,
+    employeeAllowedInBranch: employeeAllowedInBranch,
+    newContext: newContext,
+    applyAssignment: applyAssignment
+  };
+
+  root.ShiftScheduler = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/validate.js ===== */
+/* בדיקות תקינות לסידור: כפל משמרת, חוסרים, הפרות אילוצים ומכסות */
+(function (root) {
+  'use strict';
+
+  var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
+  var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
+  var Scheduler = root.ShiftScheduler || (typeof require === 'function' ? require('./scheduler.js') : null);
+
+  function empName(state, id) {
+    var emp = Store.byId(state.employees, id);
+    return emp ? emp.name : '(עובד שנמחק: ' + id + ')';
+  }
+  function branchName(state, id) {
+    var branch = Store.byId(state.branches, id);
+    return branch ? branch.name : '(סניף שנמחק)';
+  }
+  function shiftName(id) {
+    var shift = Data.shiftById(id);
+    return shift ? shift.name : id;
+  }
+  function dayName(dayIdx) { return Data.DAYS[dayIdx].name; }
+
+  function nameList(names, limit) {
+    var max = limit || 3;
+    if (names.length <= max) return names.join(', ');
+    return names.slice(0, max).join(', ') + ' ועוד ' + (names.length - max);
+  }
+
+  /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
+  function explainShortage(state, week, demand) {
+    var eligible = [], busy = [], atMax = [], resting = [], free = [];
+
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      if (emp.shifts.indexOf(demand.shiftId) === -1) return;
+      if (!Scheduler.employeeAllowedInBranch(emp, demand.branchId)) return;
+      var constraint = Store.getConstraint(week, emp.id, demand.dayIdx);
+      if (constraint.off || (constraint.blocked && constraint.blocked[demand.shiftId])) return;
+      eligible.push(emp);
+
+      if (Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx).length) { busy.push(emp.name); return; }
+      if (Store.employeeWeekCount(state, week, emp.id) >= (emp.maxShifts || 99)) { atMax.push(emp.name); return; }
+      if (state.settings.restEveningMorning) {
+        var before = demand.dayIdx > 0 && demand.shiftId === 'morning' &&
+          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx - 1)
+            .some(function (s) { return s.shiftId === 'evening'; });
+        var after = demand.dayIdx < 6 && demand.shiftId === 'evening' &&
+          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx + 1)
+            .some(function (s) { return s.shiftId === 'morning'; });
+        if (before || after) { resting.push(emp.name); return; }
+      }
+      free.push(emp.name);
+    });
+
+    if (!eligible.length) {
+      return 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.';
+    }
+    if (free.length) {
+      return 'יש עובדים פנויים (' + nameList(free) + ') – נסו לבנות את הסידור מחדש.';
+    }
+
+    var reasons = [];
+    if (busy.length) reasons.push(nameList(busy) + ' כבר משובצים במשמרת אחרת באותו יום');
+    if (atMax.length) reasons.push(nameList(atMax) + ' הגיעו למכסת המשמרות השבועית');
+    if (resting.length) reasons.push(nameList(resting) + ' חייבים מנוחה בין ערב לבוקר');
+
+    var text = 'הסיבה: ' + reasons.join('; ') + '.';
+    if (busy.length && !atMax.length) {
+      text += ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.';
+    } else if (atMax.length) {
+      text += ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.';
+    }
+    return text;
+  }
+
+  function issue(level, type, text, ref) {
+    return { level: level, type: type, text: text, ref: ref || {} };
+  }
+
+  function validate(state, week) {
+    var issues = [];
+    var demands = Store.weekDemands(state, week);
+    var demandMap = {};
+    demands.forEach(function (d) { demandMap[Store.slotKey(d.dayIdx, d.branchId, d.shiftId)] = d; });
+
+    // 1. בדיקות ברמת הסלוט: חוסר, עודף (כפל משמרת בסניף) ועובד כפול באותו סלוט
+    Object.keys(demandMap).forEach(function (key) {
+      var demand = demandMap[key];
+      var assigned = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
+      var label = dayName(demand.dayIdx) + ' · ' + branchName(state, demand.branchId) + ' · משמרת ' + shiftName(demand.shiftId);
+
+      if (assigned.length < demand.need) {
+        issues.push(issue('warning', 'understaffed',
+          'חוסר באיוש: ' + label + ' – משובצים ' + assigned.length + ' מתוך ' + demand.need + '. ' +
+          explainShortage(state, week, demand),
+          { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
+      }
+
+      if (assigned.length > demand.need) {
+        issues.push(issue('warning', 'duplicate-shift',
+          'כפל משמרת: ' + label + ' – משובצים ' + assigned.length + ' עובדים (' +
+          assigned.map(function (id) { return empName(state, id); }).join(', ') +
+          ') במקום ' + demand.need + '.',
+          { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
+      }
+
+      var seen = {};
+      assigned.forEach(function (id) {
+        if (seen[id]) {
+          issues.push(issue('error', 'duplicate-employee-slot',
+            'כפל משמרת: ' + empName(state, id) + ' משובץ/ת פעמיים באותה משמרת – ' + label + '.',
+            { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId, empId: id }));
+        }
+        seen[id] = true;
+      });
+    });
+
+    // 1א2. שיבוץ ביום חג
+    for (var holidayDay = 0; holidayDay < 7; holidayDay++) {
+      if (!Store.isHoliday(week, holidayDay)) continue;
+      var onHoliday = [];
+      state.employees.forEach(function (emp) {
+        if (Store.employeeDayAssignments(state, week, emp.id, holidayDay).length) onHoliday.push(emp.name);
+      });
+      if (onHoliday.length) {
+        issues.push(issue('warning', 'holiday-assignment',
+          'שיבוץ ביום חג: ' + dayName(holidayDay) + ' (' + Store.holidayName(week, holidayDay) +
+          ') מוגדר כיום סגור, אך משובצים בו ' + nameList(onHoliday, 5) + '.',
+          { dayIdx: holidayDay }));
+      }
+    }
+
+    // 1ב. מוצ״ש ללא שעת צאת שבת – לא ניתן לחשב מתי המשמרת מתחילה
+    var missingShabbat = state.branches.filter(function (branch) {
+      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening') &&
+        Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening').auto === 'motzash';
+    });
+    if (missingShabbat.length && !week.shabbatEnd) {
+      issues.push(issue('warning', 'missing-shabbat-end',
+        'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        { dayIdx: Data.MOTZASH.dayIdx }));
+    }
+
+    // 1ג. שיבוץ בסניף/משמרת שאינם פעילים באותו יום
+    Object.keys(week.assignments).forEach(function (key) {
+      if (demandMap[key]) return;
+      var list = week.assignments[key] || [];
+      if (!list.length) return;
+      var parts = key.split('|');
+      issues.push(issue('warning', 'inactive-slot',
+        'שיבוץ במשמרת שאינה פעילה: ' + dayName(Number(parts[0])) + ' · ' + branchName(state, parts[1]) +
+        ' · ' + shiftName(parts[2]) + ' (' + list.map(function (id) { return empName(state, id); }).join(', ') + ').',
+        { dayIdx: Number(parts[0]), branchId: parts[1], shiftId: parts[2] }));
+    });
+
+    // 2. בדיקות ברמת העובד
+    state.employees.forEach(function (emp) {
+      var total = 0;
+      var eveningDays = {};
+
+      for (var day = 0; day < 7; day++) {
+        var slots = Store.employeeDayAssignments(state, week, emp.id, day);
+        total += slots.length;
+        var constraint = Store.getConstraint(week, emp.id, day);
+
+        // כפל משמרת לעובד באותו יום
+        if (slots.length > 1) {
+          var desc = slots.map(function (s) {
+            return branchName(state, s.branchId) + ' / ' + shiftName(s.shiftId);
+          }).join(' + ');
+          var sameBranch = slots.every(function (s) { return s.branchId === slots[0].branchId; });
+          issues.push(issue(state.settings.onePerDay ? 'error' : 'info', 'double-booked',
+            'כפל משמרת לעובד: ' + emp.name + ' משובץ/ת ל-' + slots.length + ' משמרות ביום ' + dayName(day) +
+            (sameBranch ? ' באותו סניף' : ' בסניפים שונים') + ' (' + desc + ').',
+            { dayIdx: day, empId: emp.id }));
+        }
+
+        slots.forEach(function (s) {
+          if (constraint.off) {
+            issues.push(issue('error', 'constraint-off',
+              'הפרת אילוץ: ' + emp.name + ' ביקש/ה יום חופש ב' + dayName(day) +
+              ' אך משובץ/ת ל' + shiftName(s.shiftId) + ' ב' + branchName(state, s.branchId) + '.',
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          } else if (constraint.blocked && constraint.blocked[s.shiftId]) {
+            issues.push(issue('error', 'constraint-blocked',
+              'הפרת אילוץ: ' + emp.name + ' חסם/ה משמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
+              ' אך משובץ/ת אליה ב' + branchName(state, s.branchId) + '.',
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          }
+          if (!Scheduler.employeeAllowedInBranch(emp, s.branchId)) {
+            issues.push(issue('warning', 'branch-mismatch',
+              emp.name + ' משובץ/ת ב' + branchName(state, s.branchId) + ' (' + dayName(day) +
+              ') למרות שהסניף אינו מוגדר בכרטיס העובד.',
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          }
+          if (emp.shifts.indexOf(s.shiftId) === -1) {
+            issues.push(issue('warning', 'shift-mismatch',
+              emp.name + ' משובץ/ת למשמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
+              ' למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          }
+          if (s.shiftId === 'evening') eveningDays[day] = true;
+        });
+
+        // מנוחה בין ערב לבוקר
+        if (state.settings.restEveningMorning && day > 0 && eveningDays[day - 1]) {
+          var morning = slots.some(function (s) { return s.shiftId === 'morning'; });
+          if (morning) {
+            issues.push(issue('warning', 'rest',
+              'מנוחה קצרה: ' + emp.name + ' סיים/ה ערב ב' + dayName(day - 1) +
+              ' ומשובץ/ת לבוקר ב' + dayName(day) + '.',
+              { dayIdx: day, empId: emp.id }));
+          }
+        }
+      }
+
+      // מדיניות: יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+      if (emp.active && state.settings.oneDayOffPerWeek) {
+        var daysOff = Store.requestedDaysOff(week, emp.id);
+        if (daysOff.length > 1) {
+          issues.push(issue('warning', 'extra-days-off',
+            emp.name + ' סימן/ה ' + daysOff.length + ' ימי חופש (' +
+            daysOff.map(dayName).join(', ') + ') – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+            { empId: emp.id }));
+        }
+
+        var workable = Store.workableDays(state, week, emp).length;
+        var expected = Math.min(emp.maxShifts || 99, workable);
+        if (daysOff.length === 1 && total < expected && total > 0) {
+          issues.push(issue('info', 'below-target',
+            emp.name + ' ביקש/ה יום חופש ב' + dayName(daysOff[0]) + ' ומשובץ/ת ' + total +
+            ' משמרות מתוך ' + expected + ' אפשריות – יש לו/ה עוד ימים פנויים.',
+            { empId: emp.id }));
+        }
+      }
+
+      if (emp.active && total > (emp.maxShifts || 99)) {
+        issues.push(issue('warning', 'over-max',
+          'חריגה ממכסה: ' + emp.name + ' משובץ/ת ל-' + total + ' משמרות (מקסימום ' + emp.maxShifts + ').',
+          { empId: emp.id }));
+      }
+      if (emp.active && total === 0 && Store.weekDemands(state, week).length) {
+        issues.push(issue('info', 'no-shifts', emp.name + ' לא משובץ/ת השבוע כלל.', { empId: emp.id }));
+      }
+    });
+
+    var order = { error: 0, warning: 1, info: 2 };
+    issues.sort(function (a, b) { return order[a.level] - order[b.level]; });
+
+    return {
+      issues: issues,
+      errors: issues.filter(function (i) { return i.level === 'error'; }).length,
+      warnings: issues.filter(function (i) { return i.level === 'warning'; }).length,
+      infos: issues.filter(function (i) { return i.level === 'info'; }).length
+    };
+  }
+
+  var API = { validate: validate };
+  root.ShiftValidate = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/app.js ===== */
+/* ממשק המשתמש: תצוגת הסידור, עריכה ידנית, אילוצים, עובדים, סניפים והגדרות */
+(function () {
+  'use strict';
+
+  var Data = window.ShiftData;
+  var Store = window.ShiftStore;
+  var Scheduler = window.ShiftScheduler;
+  var Validate = window.ShiftValidate;
+  var Platform = window.ShiftPlatform;
+  var Xlsx = window.ShiftXlsx;
+
+  var state = Store.load();
+  var weekKey = Store.currentWeekKey();
+  var view = 'branch';
+  var mobileDay = new Date().getDay();
+  var showAllIssues = false;
+  var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
+
+  function $(sel) { return document.querySelector(sel); }
+  function esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function week() {
+    var current = Store.getWeek(state, weekKey);
+    if (!current.shabbatEnd && state.settings.defaultShabbatEnd) {
+      current.shabbatEnd = state.settings.defaultShabbatEnd;
+    }
+    return current;
+  }
+
+  function persist(scope) {
+    Store.save(state);
+    if (scope === 'config' || scope === 'all') Platform.pushConfig();
+    if (scope !== 'config') Platform.pushWeek(weekKey);
+  }
+
+  var toastTimer = null;
+  function toast(message) {
+    var node = $('#toast');
+    node.textContent = message;
+    node.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { node.classList.remove('show'); }, 2600);
+  }
+
+  function shiftClass(shiftId) { return 'shift-' + shiftId; }
+  function branchNameOf(id) {
+    var branch = Store.byId(state.branches, id);
+    return branch ? branch.name : 'סניף לא ידוע';
+  }
+  function empNameOf(id) {
+    var emp = Store.byId(state.employees, id);
+    return emp ? emp.name : 'עובד לא ידוע';
+  }
+
+  /* ========== כותרת השבוע ========== */
+  function renderWeekHeader() {
+    var start = Store.dateOfDay(weekKey, 0);
+    var end = Store.dateOfDay(weekKey, 6);
+    var label = 'שבוע ' + Store.formatDate(start) + ' – ' + Store.formatDate(end);
+    $('#week-title').textContent = label;
+    $('#week-range').textContent = weekKey === Store.currentWeekKey() ? 'השבוע הנוכחי' : '';
+    $('#constraints-week').textContent = 'אילוצי ' + label;
+
+    renderHolidays();
+
+    var current = week();
+    var field = $('#shabbat-end');
+    field.value = current.shabbatEnd || '';
+    var needsMotzash = state.branches.some(function (branch) {
+      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening');
+    });
+    $('#shabbat-field').classList.toggle('hidden', !needsMotzash);
+  }
+
+  /* ========== תצוגת נייד: יום אחד בכל פעם ========== */
+  function renderDayNav(container, selected) {
+    var html = '';
+    Data.DAYS.forEach(function (day) {
+      var isHoliday = Store.isHoliday(week(), day.idx);
+      var classes = 'day-tab' + (day.idx === selected ? ' active' : '') + (isHoliday ? ' holiday' : '');
+      html += '<button class="' + classes + '" data-day="' + day.idx + '">' +
+        '<span class="day-tab-name">' + day.short + '</span>' +
+        '<span class="day-tab-date">' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</span>' +
+        '</button>';
+    });
+    $(container).innerHTML = html;
+  }
+
+  function mobileSelectHtml(dayIdx, branch, shiftId, slotIndex, value, isExtra) {
+    var html = '<select class="emp-select' + (isExtra ? ' extra' : '') + '" data-slot="' + slotIndex + '">';
+    html += '<option value="">' + (isExtra ? '+ הוסף עובד' : '— לא משובץ —') + '</option>';
+    state.employees.forEach(function (emp) {
+      html += '<option value="' + esc(emp.id) + '"' + (value === emp.id ? ' selected' : '') + '>' +
+        esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
+    });
+    if (value && !Store.byId(state.employees, value)) {
+      html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
+    }
+    return html + '</select>';
+  }
+
+  function renderMobileSchedule(marks) {
+    var current = week();
+    var day = Data.DAYS[mobileDay];
+    var html = '';
+
+    if (Store.isHoliday(current, mobileDay)) {
+      html = '<div class="m-card holiday"><div class="m-card-head">' + esc(day.name) + '</div>' +
+        '<div class="m-holiday">' + esc(Store.holidayName(current, mobileDay)) +
+        '<small>כל הסניפים סגורים – יום חופש לכל העובדים</small></div></div>';
+      $('#schedule-mobile').innerHTML = html;
+      return;
+    }
+
+    var activeBranches = state.branches.filter(function (branch) { return branch.active; });
+    activeBranches.forEach(function (branch) {
+      var shiftsHtml = '';
+      Data.SHIFTS.forEach(function (shift) {
+        var need = Store.slotNeed(branch, mobileDay, shift.id);
+        var assigned = Store.getAssigned(current, mobileDay, branch.id, shift.id);
+        if (!need && !assigned.length) return;
+
+        var key = Store.slotKey(mobileDay, branch.id, shift.id);
+        var flag = marks.cells[key];
+        var hours = Store.hoursLabel(Store.slotHours(current, branch, mobileDay, shift.id));
+        var rows = Math.max(need, assigned.length) + 1;
+
+        shiftsHtml += '<div class="m-shift ' + shiftClass(shift.id) +
+          (flag ? ' flag-' + flag : '') + '" data-day="' + mobileDay +
+          '" data-branch="' + esc(branch.id) + '" data-shift="' + shift.id + '">';
+        shiftsHtml += '<div class="m-shift-head"><b>' + shift.name + '</b>' +
+          '<span>' + (hours ? esc(hours) : 'ללא שעות') +
+          (need > 1 ? ' · ' + need + ' עובדים' : '') + '</span></div>';
+        for (var i = 0; i < rows; i++) {
+          shiftsHtml += mobileSelectHtml(mobileDay, branch, shift.id, i, assigned[i] || '', i >= need);
+        }
+        shiftsHtml += '</div>';
+      });
+
+      if (!shiftsHtml) {
+        shiftsHtml = '<div class="m-closed">הסניף סגור ביום זה</div>';
+      }
+      html += '<div class="m-card"><div class="m-card-head">' + esc(branch.name) + '</div>' + shiftsHtml + '</div>';
+    });
+
+    if (!activeBranches.length) {
+      html = '<div class="m-card"><div class="m-closed">לא הוגדרו סניפים פעילים.</div></div>';
+    }
+    $('#schedule-mobile').innerHTML = html;
+  }
+
+  function renderMobileConstraints() {
+    var current = week();
+    var day = Data.DAYS[mobileDay];
+
+    if (Store.isHoliday(current, mobileDay)) {
+      $('#constraints-mobile').innerHTML = '<div class="m-card holiday"><div class="m-holiday">' +
+        esc(Store.holidayName(current, mobileDay)) + '<small>יום חג – אין צורך באילוצים</small></div></div>';
+      return;
+    }
+
+    var dayShifts = Store.activeShiftsForDay(state, mobileDay, current);
+    if (!dayShifts.length) {
+      $('#constraints-mobile').innerHTML = '<div class="m-card"><div class="m-closed">' +
+        'כל הסניפים סגורים ב' + day.name + '.</div></div>';
+      return;
+    }
+
+    var html = '';
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var constraint = Store.getConstraint(current, emp.id, mobileDay);
+      html += '<div class="m-card m-constraint"><div class="m-card-head">' + esc(emp.name) + '</div>';
+      html += '<div class="m-cstates">';
+      dayShifts.forEach(function (shiftId) {
+        var cls = 'free', title = 'זמין';
+        if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
+        else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
+        else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
+        html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
+          '" data-day="' + mobileDay + '" data-shift="' + shiftId + '">' +
+          Data.shiftById(shiftId).name + '</button>';
+      });
+      html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
+        '" data-emp="' + esc(emp.id) + '" data-day="' + mobileDay + '" data-off="1">' +
+        (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+      html += '</div></div>';
+    });
+    $('#constraints-mobile').innerHTML = html;
+  }
+
+  /* ========== ימי חג ========== */
+  function renderHolidays() {
+    var current = week();
+    var html = '';
+    Data.DAYS.forEach(function (day) {
+      var on = Store.isHoliday(current, day.idx);
+      html += '<button class="chip holiday-chip' + (on ? ' active' : '') + '" data-day="' + day.idx + '">' +
+        day.name + (on ? ' · ' + esc(Store.holidayName(current, day.idx)) : '') + '</button>';
+    });
+    $('#holiday-days').innerHTML = html;
+  }
+
+  /* ========== לוח הסידור לפי סניף ========== */
+  function issueMaps(report) {
+    var cells = {}, employeesDay = {};
+    report.issues.forEach(function (item) {
+      var ref = item.ref || {};
+      if (ref.branchId && ref.shiftId && ref.dayIdx != null) {
+        var key = Store.slotKey(ref.dayIdx, ref.branchId, ref.shiftId);
+        if (cells[key] !== 'error') cells[key] = item.level === 'error' ? 'error' : (cells[key] || item.level);
+      }
+      if (ref.empId && ref.dayIdx != null && (item.type === 'double-booked' || item.type === 'constraint-off' || item.type === 'constraint-blocked')) {
+        employeesDay[ref.empId + '|' + ref.dayIdx] = true;
+      }
+    });
+    return { cells: cells, employeesDay: employeesDay };
+  }
+
+  function optionLabel(emp, dayIdx, branchId, shiftId) {
+    var constraint = Store.getConstraint(week(), emp.id, dayIdx);
+    var marks = [];
+    if (constraint.off) marks.push('חופש');
+    else if (constraint.blocked && constraint.blocked[shiftId]) marks.push('חסום');
+    else if (constraint.preferred && constraint.preferred[shiftId]) marks.push('מעדיף');
+    if (!Scheduler.employeeAllowedInBranch(emp, branchId)) marks.push('לא בסניף');
+    if (emp.shifts.indexOf(shiftId) === -1) marks.push('לא במשמרת');
+    var busy = Store.employeeDayAssignments(state, week(), emp.id, dayIdx)
+      .filter(function (s) { return !(s.branchId === branchId && s.shiftId === shiftId); });
+    if (busy.length) marks.push('כבר משובץ');
+    if (!emp.active) marks.push('לא פעיל');
+    return emp.name + (marks.length ? ' ⚠ (' + marks.join(', ') + ')' : '');
+  }
+
+  function cellHtml(dayIdx, branch, shiftId, need, marks) {
+    var assigned = Store.getAssigned(week(), dayIdx, branch.id, shiftId);
+    var rows = Math.max(need, assigned.length) + 1; // שורה נוספת לשיבוץ חריג (מזוהה ככפל)
+    var key = Store.slotKey(dayIdx, branch.id, shiftId);
+    var cls = 'cell ' + shiftClass(shiftId);
+    if (marks.cells[key] === 'error') cls += ' has-error';
+    else if (marks.cells[key]) cls += ' has-warning';
+
+    var html = '<td class="' + cls + '" data-day="' + dayIdx + '" data-branch="' + esc(branch.id) + '" data-shift="' + shiftId + '">';
+    var hours = Store.slotHours(week(), branch, dayIdx, shiftId);
+    if (hours) {
+      var label = Store.hoursLabel(hours);
+      html += '<div class="cell-hours">' +
+        (label ? esc(label) : '<span class="missing">חסרה שעת צאת שבת</span>') +
+        (need > 1 ? ' · ' + need + ' עובדים' : '') + '</div>';
+    }
+    for (var i = 0; i < rows; i++) {
+      var value = assigned[i] || '';
+      var extra = i >= need ? ' extra' : '';
+      html += '<select class="emp-select' + extra + '" data-slot="' + i + '">';
+      html += '<option value="">' + (i >= need ? '+ הוסף' : '— ריק —') + '</option>';
+      state.employees.forEach(function (emp) {
+        var selected = value === emp.id ? ' selected' : '';
+        html += '<option value="' + esc(emp.id) + '"' + selected + '>' + esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
+      });
+      if (value && !Store.byId(state.employees, value)) {
+        html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
+      }
+      html += '</select>';
+    }
+    return html + '</td>';
+  }
+
+  function renderBranchView(marks) {
+    var html = '<table><thead><tr><th class="row-head">סניף</th><th class="row-head">משמרת</th>';
+    Data.DAYS.forEach(function (day) {
+      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    var activeBranches = state.branches.filter(function (b) { return b.active; });
+    if (!activeBranches.length) {
+      html += '<tr><td colspan="9">לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".</td></tr>';
+    }
+
+    activeBranches.forEach(function (branch) {
+      Data.SHIFTS.forEach(function (shift, shiftIndex) {
+        html += shiftIndex === 0 ? '<tr class="branch-start">' : '<tr>';
+        if (shiftIndex === 0) {
+          html += '<td class="row-head" rowspan="' + Data.SHIFTS.length + '">' + esc(branch.name) + '</td>';
+        }
+        html += '<td class="row-head ' + shiftClass(shift.id) + '">' + shift.name + '</td>';
+
+        Data.DAYS.forEach(function (day) {
+          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
+          if (Store.isHoliday(week(), day.idx) && !assigned.length) {
+            if (shiftIndex === 0) {
+              html += '<td class="closed holiday-cell" rowspan="' + Data.SHIFTS.length + '">' +
+                esc(Store.holidayName(week(), day.idx)) + '<br><small>הסניפים סגורים</small></td>';
+            }
+            return;
+          }
+          if (need > 0) {
+            html += cellHtml(day.idx, branch, shift.id, need, marks);
+          } else if (assigned.length) {
+            html += cellHtml(day.idx, branch, shift.id, 0, marks); // שיבוץ חריג ביום סגור
+          } else {
+            html += '<td class="closed">—</td>';
+          }
+        });
+        html += '</tr>';
+      });
+    });
+
+    html += '</tbody></table>';
+    $('#schedule-branch').innerHTML = html;
+  }
+
+  /* ========== תצוגה לפי עובד ========== */
+  function renderEmployeeView(marks) {
+    var html = '<table><thead><tr><th class="row-head">עובד</th>';
+    Data.DAYS.forEach(function (day) {
+      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+    });
+    html += '<th class="row-head">סה״כ משמרות</th></tr></thead><tbody>';
+
+    state.employees.forEach(function (emp) {
+      var total = 0;
+      var row = '<tr><td class="row-head">' + esc(emp.name) + (emp.active ? '' : ' <small>(לא פעיל)</small>') + '</td>';
+      Data.DAYS.forEach(function (day) {
+        var slots = Store.employeeDayAssignments(state, week(), emp.id, day.idx);
+        total += slots.length;
+        var constraint = Store.getConstraint(week(), emp.id, day.idx);
+        var flagged = marks.employeesDay[emp.id + '|' + day.idx];
+        var cellClass = 'cell' + (flagged ? ' has-error' : '');
+        var content = '';
+        if (!slots.length) {
+          if (Store.isHoliday(week(), day.idx)) {
+            content = '<span class="empty-cell holiday-text">' + esc(Store.holidayName(week(), day.idx)) + '</span>';
+          } else {
+            content = constraint.off ? '<span class="empty-cell">חופש</span>' : '<span class="empty-cell">—</span>';
+          }
+        } else {
+          content = slots.map(function (slot) {
+            var shift = Data.shiftById(slot.shiftId);
+            return '<span class="emp-chip ' + shiftClass(slot.shiftId) + (slots.length > 1 ? ' dup' : '') + '">' +
+              esc(branchNameOf(slot.branchId)) + ' · ' + (shift ? shift.name : slot.shiftId) + '</span>';
+          }).join('');
+        }
+        row += '<td class="' + cellClass + '">' + content + '</td>';
+      });
+      row += '<td class="row-head">' + total + ' מתוך ' + (emp.maxShifts || '-') + '</td></tr>';
+      html += row;
+    });
+
+    html += '</tbody></table>';
+    $('#schedule-employee').innerHTML = html;
+  }
+
+  /* ========== פאנל הבדיקות ========== */
+  function isMobile() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 820px)').matches;
+  }
+
+  function plural(count, singular, pluralWord) {
+    return count === 1 ? singular : count + ' ' + pluralWord;
+  }
+
+  function renderIssues(report) {
+    var container = $('#issues');
+    // בנייד ההתראות מקופלות כברירת מחדל, כדי שהסידור עצמו יהיה מיד על המסך
+    var limit = isMobile() ? 0 : 6;
+    var visible = showAllIssues ? report.issues : report.issues.slice(0, limit);
+    var html = '<div class="issues-summary">';
+    if (report.errors) html += '<span class="badge error">' + plural(report.errors, 'שגיאה אחת', 'שגיאות') + '</span>';
+    if (report.warnings) html += '<span class="badge warning">' + plural(report.warnings, 'אזהרה אחת', 'אזהרות') + '</span>';
+    if (report.infos) html += '<span class="badge info">' + plural(report.infos, 'הערה אחת', 'הערות') + '</span>';
+    if (!report.issues.length) html += '<span class="badge ok">✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים</span>';
+    if (report.issues.length > limit) {
+      html += '<button class="issues-toggle" id="toggle-issues">' +
+        (showAllIssues ? 'הסתרת ההתראות' : 'הצג את ' + plural(report.issues.length, 'ההתראה', 'ההתראות')) +
+        '</button>';
+    }
+    html += '</div>';
+    visible.forEach(function (item) {
+      html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
+    });
+    container.innerHTML = html;
+    var toggle = $('#toggle-issues');
+    if (toggle) {
+      toggle.addEventListener('click', function () { showAllIssues = !showAllIssues; renderIssues(report); });
+    }
+  }
+
+  function dayNames(dayIndexes) {
+    return dayIndexes.map(function (idx) { return Data.DAYS[idx].name; }).join(', ');
+  }
+
+  function shiftsWord(count) {
+    return count === 1 ? 'משמרת אחת' : count + ' משמרות';
+  }
+
+  function remainVerb(count) {
+    return count === 1 ? 'נותרה' : 'נותרו';
+  }
+
+  /* ========== סיכום: מה נותר פנוי ========== */
+  function renderAvailability() {
+    var summary = Store.weekAvailability(state, week());
+    var html = '<h3 class="summary-title">מה נותר פנוי השבוע</h3>';
+
+    if (!summary.rows.length) {
+      $('#availability').innerHTML = html + '<p class="summary-empty">לא הוגדרו עובדים פעילים.</p>';
+      return;
+    }
+
+    if (summary.freeSlots === 0) {
+      var reason = summary.totalSpare === 0
+        ? 'כל העובדים הגיעו למכסת המשמרות השבועית שלהם.'
+        : 'לעובדים שנותרה להם מכסה אין יום פנוי שבו הסניפים שלהם פתוחים.';
+      html += '<p class="summary-line none">אין יתרת זמינות – ' + reason + '</p>';
+    } else {
+      html += '<p class="summary-line total">' + remainVerb(summary.freeSlots) + ' <b>' +
+        shiftsWord(summary.freeSlots) + '</b> שאפשר עוד לשבץ, אצל ' +
+        (summary.withSpare.length === 1 ? 'עובד/ת אחד/ת' : summary.withSpare.length + ' עובדים') + ':</p>';
+    }
+
+    html += '<ul class="summary-list">';
+    summary.rows.forEach(function (row) {
+      var cls = row.available > 0 ? 'has-spare' : (row.spare > 0 ? 'no-days' : 'full');
+      var text = '<b>' + esc(row.name) + '</b> – ';
+      if (row.available > 0) {
+        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה · פנוי/ה ב' +
+          dayNames(row.freeDays);
+      } else if (row.spare > 0) {
+        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה, אך אין יום פנוי השבוע';
+      } else {
+        text += 'מנוצל/ת במלואו/ה (' + row.assigned + ' מתוך ' + row.max + ')';
+      }
+      html += '<li class="' + cls + '">' + text + '</li>';
+    });
+    html += '</ul>';
+
+    $('#availability').innerHTML = html;
+  }
+
+  function renderPersonalPicker() {
+    var select = $('#personal-employee');
+    var previous = select.value;
+    var html = '<option value="">בחרו עובד…</option>';
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var count = Store.employeeWeekCount(state, week(), emp.id);
+      html += '<option value="' + esc(emp.id) + '">' + esc(emp.name) + ' (' + count + ')</option>';
+    });
+    select.innerHTML = html;
+    if (previous && Store.byId(state.employees, previous)) select.value = previous;
+  }
+
+  function renderWorkload() {
+    var html = '';
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var count = Store.employeeWeekCount(state, week(), emp.id);
+      var cls = count > (emp.maxShifts || 99) ? ' over' : (count === 0 ? ' zero' : '');
+      html += '<div class="load-pill' + cls + '">' + esc(emp.name) + ': <b>' + count + '</b> מתוך ' + (emp.maxShifts || '-') + '</div>';
+    });
+    $('#workload').innerHTML = html;
+  }
+
+  /* ========== לוח האילוצים ========== */
+  function renderConstraints() {
+    var html = '<table><thead><tr><th class="row-head">עובד</th>';
+    Data.DAYS.forEach(function (day) {
+      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    state.employees.forEach(function (emp) {
+      html += '<tr><td class="row-head">' + esc(emp.name) + '</td>';
+      Data.DAYS.forEach(function (day) {
+        var constraint = Store.getConstraint(week(), emp.id, day.idx);
+        if (Store.isHoliday(week(), day.idx)) {
+          html += '<td class="closed holiday-cell">' + esc(Store.holidayName(week(), day.idx)) + '</td>';
+          return;
+        }
+        var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
+        if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
+        html += '<td>';
+        dayShifts.forEach(function (shiftId) {
+          var shift = Data.shiftById(shiftId);
+          var cls = 'free', title = 'זמין';
+          if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
+          else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
+          else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
+          html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
+            '" data-day="' + day.idx + '" data-shift="' + shiftId + '">' + shift.name + '</button>';
+        });
+        html += '<button class="cstate day-off-btn ' + (constraint.off ? 'off-day' : 'free') +
+          '" data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
+          (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+        html += '</td>';
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    $('#constraints-grid').innerHTML = html;
+  }
+
+  /* ========== עובדים ========== */
+  function renderEmployees() {
+    var html = '';
+    state.employees.forEach(function (emp) {
+      html += '<div class="card' + (emp.active ? '' : ' inactive') + '" data-emp="' + esc(emp.id) + '">';
+      html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(emp.name) + '">' +
+        '<button class="btn icon danger" data-action="delete-emp" title="מחיקה">🗑</button></div>';
+      html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
+        (emp.active ? ' checked' : '') + '> עובד/ת פעיל/ה</label></div>';
+      html += '<div class="field"><label class="title">סניפים (ללא בחירה = זמין בכל הסניפים)</label><div class="pills">';
+      state.branches.forEach(function (branch) {
+        var on = emp.branches.indexOf(branch.id) !== -1 ? ' on' : '';
+        html += '<button class="pill' + on + '" data-action="toggle-branch" data-branch="' + esc(branch.id) + '">' + esc(branch.name) + '</button>';
+      });
+      html += '</div></div>';
+      html += '<div class="field"><label class="title">סוגי משמרות אפשריים</label><div class="pills">';
+      Data.SHIFTS.forEach(function (shift) {
+        var on = emp.shifts.indexOf(shift.id) !== -1 ? ' on' : '';
+        html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + shift.name + '</button>';
+      });
+      html += '</div></div>';
+      html += '<div class="field"><label class="title">מקסימום משמרות בשבוע</label>' +
+        '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
+      html += '<div class="field"><label class="title">הערה</label>' +
+        '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
+      html += '</div>';
+    });
+    $('#employees-list').innerHTML = html;
+  }
+
+  /* ========== סניפים: ימים, שעות וכמות עובדים ========== */
+  function timeInputHtml(field, value) {
+    return '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+      ' data-sched="' + field + '" value="' + esc(value || '') + '">';
+  }
+
+  function scheduleCellHtml(branch, dayIdx, shiftId) {
+    var config = (branch.schedule[dayIdx] || {})[shiftId] || null;
+    var need = config ? Number(config.need) || 0 : 0;
+    var isMotzash = config && config.auto === 'motzash';
+    var html = '<td class="sched-cell ' + (need ? shiftClass(shiftId) : 'closed') + '"' +
+      ' data-day="' + dayIdx + '" data-shift="' + shiftId + '">';
+    html += '<label class="sched-need"><span>עובדים</span>' +
+      '<input class="num-input" type="number" min="0" max="9" data-sched="need" value="' + need + '"></label>';
+    if (need > 0) {
+      html += '<div class="sched-times">';
+      if (isMotzash) {
+        html += '<span class="auto-time" title="חצי שעה אחרי צאת השבת של אותו שבוע">מצאת שבת +30 דק׳</span>';
+      } else {
+        html += timeInputHtml('from', config.from);
+      }
+      html += '<span class="dash">–</span>';
+      html += timeInputHtml('to', config.to);
+      html += '</div>';
+      if (dayIdx === Data.MOTZASH.dayIdx) {
+        html += '<label class="check tiny"><input type="checkbox" data-sched="auto"' +
+          (isMotzash ? ' checked' : '') + '> לפי צאת שבת</label>';
+      }
+    } else {
+      html += '<div class="sched-closed">סגור</div>';
+    }
+    return html + '</td>';
+  }
+
+  function renderBranches() {
+    var html = '';
+    state.branches.forEach(function (branch) {
+      html += '<div class="card wide' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
+      html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
+        '<label class="check"><input type="checkbox" data-field="active"' +
+        (branch.active ? ' checked' : '') + '> פעיל</label>' +
+        '<button class="btn icon danger" data-action="delete-branch" title="מחיקת הסניף">🗑</button></div>';
+
+      html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">יום</th>';
+      Data.SHIFTS.forEach(function (shift) {
+        html += '<th class="' + shiftClass(shift.id) + '">' + shift.name + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      Data.DAYS.forEach(function (day) {
+        html += '<tr><td class="row-head">' + day.name + '</td>';
+        Data.SHIFTS.forEach(function (shift) {
+          html += scheduleCellHtml(branch, day.idx, shift.id);
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+
+      if (state.branches.length > 1) {
+        html += '<div class="field copy-row"><label class="title">העתקת ימים ושעות מסניף אחר</label>' +
+          '<select class="text-input" data-action="copy-schedule"><option value="">בחרו סניף…</option>';
+        state.branches.forEach(function (other) {
+          if (other.id === branch.id) return;
+          html += '<option value="' + esc(other.id) + '">' + esc(other.name) + '</option>';
+        });
+        html += '</select></div>';
+      }
+      html += '</div>';
+    });
+    $('#branches-list').innerHTML = html;
+  }
+
+  /* ========== הגדרות ========== */
+  function renderSettings() {
+    $('#opt-one-per-day').checked = !!state.settings.onePerDay;
+    $('#opt-rest').checked = !!state.settings.restEveningMorning;
+    $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
+    $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
+  }
+
+  /* ========== רינדור כולל ========== */
+  function render() {
+    renderWeekHeader();
+    lastReport = Validate.validate(state, week());
+    var marks = issueMaps(lastReport);
+    renderIssues(lastReport);
+    renderDayNav('#day-nav', mobileDay);
+    renderDayNav('#constraints-day-nav', mobileDay);
+    renderMobileSchedule(marks);
+    renderMobileConstraints();
+    renderBranchView(marks);
+    renderEmployeeView(marks);
+    renderWorkload();
+    renderAvailability();
+    renderPersonalPicker();
+    renderConstraints();
+    renderEmployees();
+    renderBranches();
+    renderSettings();
+  }
+
+  /* ========== ייצוא ========== */
+  function scheduleAsText() {
+    var lines = ['סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
+      ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6)), ''];
+    Data.DAYS.forEach(function (day) {
+      if (Store.isHoliday(week(), day.idx)) {
+        lines.push('📅 יום ' + day.name + ' (' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + ')');
+        lines.push('   ' + Store.holidayName(week(), day.idx) + ' – כל הסניפים סגורים', '');
+        return;
+      }
+      var dayLines = [];
+      state.branches.forEach(function (branch) {
+        if (!branch.active) return;
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
+          var need = Store.slotNeed(branch, day.idx, shiftId);
+          if (!assigned.length && !need) return;
+          var names = assigned.map(empNameOf).join(', ') || '‼ חסר איוש';
+          var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
+          dayLines.push('   ' + branch.name + ' – ' + Data.shiftById(shiftId).name +
+            (hours ? ' (' + hours + ')' : '') + ': ' + names);
+        });
+      });
+      if (dayLines.length) {
+        lines.push('📅 יום ' + day.name + ' (' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + ')');
+        lines = lines.concat(dayLines, '');
+      }
+    });
+    var summary = Store.weekAvailability(state, week());
+    if (summary.freeSlots) {
+      lines.push('— ' + remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) +
+        ' שאפשר עוד לשבץ —');
+    }
+    return lines.join('\n');
+  }
+
+  /* שינוי שיבוץ – משותף לתצוגת המחשב ולתצוגת הנייד */
+  function applyCellChange(cell, dayIdx, branchId, shiftId) {
+    var values = Array.prototype.map.call(cell.querySelectorAll('.emp-select'), function (node) {
+      return node.value;
+    }).filter(function (value) { return value; });
+
+    var seen = {}, unique = [];
+    values.forEach(function (value) { if (!seen[value]) { seen[value] = true; unique.push(value); } });
+
+    var current = week();
+    Store.setAssigned(current, dayIdx, branchId, shiftId, unique);
+    current.manual[Store.slotKey(dayIdx, branchId, shiftId)] = true;
+    persist();
+    render();
+    if (unique.length !== values.length) { toast('אותו עובד לא יכול להופיע פעמיים באותה משמרת'); }
+  }
+
+  function copyText(text, message) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast(message); },
+        function () { window.prompt('העתיקו את הטקסט:', text); });
+    } else {
+      window.prompt('העתיקו את הטקסט:', text);
+    }
+  }
+
+  function saveFile(filename, content, mime) {
+    Platform.saveFile(filename, content, mime).then(function (message) {
+      if (message) toast(message);
+    });
+  }
+
+  /* ===== ייצוא לאקסל: גיליון לפי סניף וגיליון לפי עובד ===== */
+  function shiftStyle(shiftId) {
+    if (shiftId === 'morning') return Xlsx.STYLE.MORNING;
+    if (shiftId === 'middle') return Xlsx.STYLE.MIDDLE;
+    if (shiftId === 'evening') return Xlsx.STYLE.EVENING;
+    return Xlsx.STYLE.PLAIN;
+  }
+
+  function weekTitle() {
+    return 'סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
+      ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6));
+  }
+
+  function dayHeaderCells() {
+    return Data.DAYS.map(function (day) {
+      return { v: day.name + '\n' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)), s: Xlsx.STYLE.HEADER };
+    });
+  }
+
+  function branchSheet() {
+    var current = week();
+    var rows = [];
+    var merges = [];
+
+    rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
+    var subtitle = 'תצוגה לפי סניף';
+    if (current.shabbatEnd) subtitle += ' · צאת שבת ' + current.shabbatEnd;
+    rows.push([{ v: subtitle, s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+
+    var headerRow = [{ v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER }]
+      .concat(dayHeaderCells());
+    rows.push({ cells: headerRow, height: 30 });
+
+    var activeBranches = state.branches.filter(function (branch) { return branch.active; });
+    activeBranches.forEach(function (branch) {
+      var firstRow = rows.length;
+      Data.SHIFTS.forEach(function (shift, shiftIndex) {
+        var cells = [
+          shiftIndex === 0 ? { v: branch.name, s: Xlsx.STYLE.ROW_HEAD } : { v: '', s: Xlsx.STYLE.ROW_HEAD },
+          { v: shift.name, s: Xlsx.STYLE.ROW_HEAD }
+        ];
+        var maxLines = 1;
+        Data.DAYS.forEach(function (day) {
+          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
+          if (Store.isHoliday(current, day.idx) && !assigned.length) {
+            cells.push({ v: Store.holidayName(current, day.idx) + '\nסגור', s: Xlsx.STYLE.CLOSED });
+            return;
+          }
+          if (!need && !assigned.length) {
+            cells.push({ v: '—', s: Xlsx.STYLE.CLOSED });
+            return;
+          }
+          var lines = [];
+          var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shift.id));
+          if (hours) lines.push(hours);
+          if (assigned.length) {
+            assigned.forEach(function (id) { lines.push(empNameOf(id)); });
+          }
+          for (var i = assigned.length; i < need; i++) { lines.push('— חסר —'); }
+          maxLines = Math.max(maxLines, lines.length);
+          cells.push({ v: lines.join('\n'), s: shiftStyle(shift.id) });
+        });
+        rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
+      });
+      merges.push({ r1: firstRow, c1: 0, r2: firstRow + Data.SHIFTS.length - 1, c2: 0 });
+    });
+
+    if (!activeBranches.length) {
+      rows.push([{ v: 'לא הוגדרו סניפים פעילים', s: Xlsx.STYLE.PLAIN }]);
+    }
+
+    return {
+      name: 'לפי סניף',
+      selected: true,
+      cols: [18, 10, 20, 20, 20, 20, 20, 20, 20],
+      freeze: { row: 4, col: 2 },
+      merges: merges,
+      rows: rows
+    };
+  }
+
+  function employeeSheet() {
+    var current = week();
+    var rows = [];
+
+    rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: 'תצוגה לפי עובד', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+
+    var headerRow = [{ v: 'עובד', s: Xlsx.STYLE.HEADER }]
+      .concat(dayHeaderCells())
+      .concat([{ v: 'סה״כ משמרות', s: Xlsx.STYLE.HEADER }]);
+    rows.push({ cells: headerRow, height: 30 });
+
+    state.employees.forEach(function (emp) {
+      var cells = [{ v: emp.name + (emp.active ? '' : ' (לא פעיל)'), s: Xlsx.STYLE.ROW_HEAD }];
+      var total = 0;
+      var maxLines = 1;
+
+      Data.DAYS.forEach(function (day) {
+        var slots = Store.employeeDayAssignments(state, current, emp.id, day.idx);
+        total += slots.length;
+        var constraint = Store.getConstraint(current, emp.id, day.idx);
+        if (!slots.length) {
+          var empty = Store.isHoliday(current, day.idx)
+            ? Store.holidayName(current, day.idx)
+            : (constraint.off ? 'חופש' : '—');
+          cells.push({ v: empty, s: Xlsx.STYLE.CLOSED });
+          return;
+        }
+        var lines = slots.map(function (slot) {
+          var shift = Data.shiftById(slot.shiftId);
+          var hours = Store.hoursLabel(Store.slotHours(current,
+            Store.byId(state.branches, slot.branchId) || {}, day.idx, slot.shiftId));
+          return branchNameOf(slot.branchId) + ' · ' + (shift ? shift.name : slot.shiftId) +
+            (hours ? '\n' + hours : '');
+        });
+        maxLines = Math.max(maxLines, lines.join('\n').split('\n').length);
+        cells.push({ v: lines.join('\n'), s: shiftStyle(slots[0].shiftId) });
+      });
+
+      cells.push({ v: total + ' מתוך ' + (emp.maxShifts || 0), s: Xlsx.STYLE.TOTAL });
+      rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
+    });
+
+    return {
+      name: 'לפי עובד',
+      cols: [20, 22, 22, 22, 22, 22, 22, 22, 14],
+      freeze: { row: 4, col: 1 },
+      rows: rows
+    };
+  }
+
+  function issuesSheet() {
+    var rows = [];
+    rows.push({ cells: [{ v: 'בדיקות הסידור', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([]);
+    rows.push([{ v: 'חומרה', s: Xlsx.STYLE.HEADER }, { v: 'סוג', s: Xlsx.STYLE.HEADER },
+      { v: 'פירוט', s: Xlsx.STYLE.HEADER }]);
+
+    var levels = { error: 'שגיאה', warning: 'אזהרה', info: 'הערה' };
+    var types = {
+      'duplicate-shift': 'כפל משמרת', 'duplicate-employee-slot': 'כפל משמרת',
+      'double-booked': 'כפל משמרת לעובד', 'understaffed': 'חוסר באיוש',
+      'constraint-off': 'הפרת אילוץ', 'constraint-blocked': 'הפרת אילוץ',
+      'branch-mismatch': 'סניף לא מתאים', 'shift-mismatch': 'משמרת לא מתאימה',
+      'over-max': 'חריגה ממכסה', 'rest': 'מנוחה קצרה', 'no-shifts': 'ללא משמרות',
+      'missing-shabbat-end': 'חסרה שעת צאת שבת', 'inactive-slot': 'משמרת סגורה'
+    };
+
+    if (!lastReport.issues.length) {
+      rows.push([{ v: '✔', s: Xlsx.STYLE.PLAIN }, { v: 'תקין', s: Xlsx.STYLE.PLAIN },
+        { v: 'אין כפל משמרות, חוסרים או הפרות אילוצים', s: Xlsx.STYLE.PLAIN }]);
+    }
+    lastReport.issues.forEach(function (item) {
+      rows.push([
+        { v: levels[item.level] || item.level, s: Xlsx.STYLE.PLAIN },
+        { v: types[item.type] || item.type, s: Xlsx.STYLE.PLAIN },
+        { v: item.text, s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return { name: 'בדיקות', cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
+  }
+
+  /* ===== ייצוא אישי: רק המשמרות של עובד אחד ===== */
+  function personalRows(empId) {
+    var current = week();
+    var rows = [];
+    Data.DAYS.forEach(function (day) {
+      var slots = Store.employeeDayAssignments(state, current, empId, day.idx);
+      var constraint = Store.getConstraint(current, empId, day.idx);
+      var date = Store.formatDate(Store.dateOfDay(weekKey, day.idx));
+
+      if (!slots.length) {
+        var status = Store.isHoliday(current, day.idx)
+          ? Store.holidayName(current, day.idx)
+          : (constraint.off ? 'יום חופש' : 'לא משובץ');
+        rows.push({ day: day.name, date: date, status: status, working: false });
+        return;
+      }
+      slots.forEach(function (slot) {
+        var shift = Data.shiftById(slot.shiftId);
+        var branch = Store.byId(state.branches, slot.branchId) || {};
+        rows.push({
+          day: day.name, date: date, working: true,
+          branch: branchNameOf(slot.branchId),
+          shift: shift ? shift.name : slot.shiftId,
+          hours: Store.hoursLabel(Store.slotHours(current, branch, day.idx, slot.shiftId))
+        });
+      });
+    });
+    return rows;
+  }
+
+  function personalSheet(emp, options) {
+    var opts = options || {};
+    var rows = [];
+    var data = personalRows(emp.id);
+    var total = data.filter(function (row) { return row.working; }).length;
+
+    rows.push({ cells: [{ v: 'סידור אישי – ' + emp.name, s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{ v: 'סה״כ ' + shiftsWord(total) + ' השבוע', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push({
+      cells: [{ v: 'יום', s: Xlsx.STYLE.HEADER }, { v: 'תאריך', s: Xlsx.STYLE.HEADER },
+        { v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER },
+        { v: 'שעות', s: Xlsx.STYLE.HEADER }],
+      height: 22
+    });
+
+    data.forEach(function (row) {
+      if (!row.working) {
+        rows.push([
+          { v: row.day, s: Xlsx.STYLE.ROW_HEAD }, { v: row.date, s: Xlsx.STYLE.CLOSED },
+          { v: row.status, s: Xlsx.STYLE.CLOSED }, { v: '', s: Xlsx.STYLE.CLOSED },
+          { v: '', s: Xlsx.STYLE.CLOSED }
+        ]);
+        return;
+      }
+      rows.push([
+        { v: row.day, s: Xlsx.STYLE.ROW_HEAD }, { v: row.date, s: Xlsx.STYLE.PLAIN },
+        { v: row.branch, s: Xlsx.STYLE.PLAIN }, { v: row.shift, s: Xlsx.STYLE.PLAIN },
+        { v: row.hours || '', s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return {
+      name: opts.name || 'סידור אישי',
+      selected: opts.selected !== false,
+      cols: [12, 10, 22, 12, 16],
+      freeze: { row: 4, col: 0 },
+      rows: rows
+    };
+  }
+
+  /* העובדים שמקבלים לשונית אישית: פעילים, וגם מי שמשובץ השבוע */
+  function employeesForSheets() {
+    var current = week();
+    return state.employees.filter(function (emp) {
+      return emp.active || Store.employeeWeekCount(state, current, emp.id) > 0;
+    });
+  }
+
+  function exportPersonalExcel(empId) {
+    var emp = Store.byId(state.employees, empId);
+    if (!emp) return;
+    var bytes = Xlsx.build([personalSheet(emp)]);
+    var blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    var safeName = emp.name.replace(/[\\\/:*?"<>|]/g, '').trim() || 'עובד';
+    saveFile('סידור-' + safeName + '-' + weekKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
+  function personalText(empId) {
+    var emp = Store.byId(state.employees, empId);
+    if (!emp) return '';
+    var data = personalRows(empId);
+    var total = data.filter(function (row) { return row.working; }).length;
+    var lines = ['שלום ' + emp.name + ', זה הסידור שלך:', weekTitle(), ''];
+    data.forEach(function (row) {
+      if (row.working) {
+        lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.branch + ' · ' + row.shift +
+          (row.hours ? ' · ' + row.hours : ''));
+      } else if (row.status !== 'לא משובץ') {
+        lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.status);
+      }
+    });
+    lines.push('', 'סה״כ ' + shiftsWord(total) + ' השבוע.');
+    return lines.join('\n');
+  }
+
+  function availabilitySheet() {
+    var summary = Store.weekAvailability(state, week());
+    var rows = [];
+
+    rows.push({ cells: [{ v: 'מה נותר פנוי', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{
+      v: summary.freeSlots
+        ? remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) + ' שאפשר עוד לשבץ'
+        : 'אין יתרת זמינות – אי אפשר לשבץ משמרות נוספות השבוע',
+      s: Xlsx.STYLE.SUBTITLE
+    }]);
+    rows.push([{ v: 'עובד', s: Xlsx.STYLE.HEADER }, { v: 'משובץ', s: Xlsx.STYLE.HEADER },
+      { v: 'מכסה', s: Xlsx.STYLE.HEADER }, { v: 'נותרו במכסה', s: Xlsx.STYLE.HEADER },
+      { v: 'ניתן לשבץ', s: Xlsx.STYLE.HEADER }, { v: 'ימים פנויים', s: Xlsx.STYLE.HEADER }]);
+
+    summary.rows.forEach(function (row) {
+      rows.push([
+        { v: row.name, s: Xlsx.STYLE.ROW_HEAD },
+        { v: row.assigned, s: Xlsx.STYLE.TOTAL },
+        { v: row.max, s: Xlsx.STYLE.TOTAL },
+        { v: row.spare, s: Xlsx.STYLE.TOTAL },
+        { v: row.available, s: Xlsx.STYLE.TOTAL },
+        { v: row.freeDays.length ? dayNames(row.freeDays) : '—', s: Xlsx.STYLE.PLAIN }
+      ]);
+    });
+
+    return { name: 'מה נותר פנוי', cols: [22, 10, 10, 14, 12, 40], freeze: { row: 4, col: 1 }, rows: rows };
+  }
+
+  function exportExcel() {
+    var sheets = [branchSheet(), employeeSheet(), availabilitySheet(), issuesSheet()];
+    // לשונית נפרדת לכל עובד, עם המשמרות שלו בלבד
+    employeesForSheets().forEach(function (emp) {
+      sheets.push(personalSheet(emp, { name: emp.name, selected: false }));
+    });
+    var bytes = Xlsx.build(sheets);
+    var blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    saveFile('sidur-' + weekKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
+  function exportCsv() {
+    var rows = [['תאריך', 'יום', 'סניף', 'משמרת', 'שעות', 'עובדים', 'נדרשים', 'משובצים']];
+    Data.DAYS.forEach(function (day) {
+      state.branches.forEach(function (branch) {
+        if (!branch.active) return;
+        Data.SHIFTS.forEach(function (shift) {
+          var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id);
+          if (!assigned.length && !need) return;
+          if (Store.isHoliday(week(), day.idx) && !assigned.length) return;
+          rows.push([
+            Store.formatDate(Store.dateOfDay(weekKey, day.idx)), day.name, branch.name, shift.name,
+            Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shift.id)),
+            assigned.map(empNameOf).join(' | '), need, assigned.length
+          ]);
+        });
+      });
+    });
+    var csv = '﻿' + rows.map(function (row) {
+      return row.map(function (cell) { return '"' + String(cell).replace(/"/g, '""') + '"'; }).join(',');
+    }).join('\r\n');
+    saveFile('sidur-' + weekKey + '.csv', csv, 'text/csv;charset=utf-8');
+  }
+
+  /* ========== אירועים ========== */
+  function bindTabs() {
+    $('#tabs').addEventListener('click', function (event) {
+      var button = event.target.closest('.tab');
+      if (!button) return;
+      document.querySelectorAll('.tab').forEach(function (tab) { tab.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function (panel) { panel.classList.remove('active'); });
+      button.classList.add('active');
+      $('#tab-' + button.dataset.tab).classList.add('active');
+    });
+  }
+
+  function bindScheduleTab() {
+    function goToWeek(nextKey) {
+      weekKey = nextKey;
+      Platform.watchWeek(weekKey);
+      render();
+    }
+    $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
+    $('#next-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, 1)); });
+    $('#this-week').addEventListener('click', function () { goToWeek(Store.currentWeekKey()); });
+
+    document.querySelectorAll('.view-switch .chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        view = chip.dataset.view;
+        document.querySelectorAll('.view-switch .chip').forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        $('#schedule-branch').classList.toggle('hidden', view !== 'branch');
+        $('#schedule-employee').classList.toggle('hidden', view !== 'employee');
+      });
+    });
+
+    $('#generate').addEventListener('click', function () {
+      var current = week();
+      var keepManual = $('#keep-manual').checked;
+      var result = Scheduler.generate(state, current, { keepManual: keepManual, seed: Date.now() % 100000 });
+      if (!keepManual) { current.manual = {}; }
+      var kept = {};
+      if (keepManual) {
+        Object.keys(current.manual).forEach(function (key) { kept[key] = current.assignments[key]; });
+      }
+      current.assignments = result.assignments;
+      Object.keys(kept).forEach(function (key) { if (kept[key]) current.assignments[key] = kept[key]; });
+      current.generatedAt = new Date().toISOString();
+      persist();
+      render();
+      toast(result.unfilled.length
+        ? 'הסידור נבנה – ' + plural(result.unfilled.length, 'משמרת אחת נותרה', 'משמרות נותרו') + ' ללא איוש'
+        : 'הסידור נבנה בהצלחה – כל המשמרות מאוישות');
+    });
+
+    $('#clear-week').addEventListener('click', function () {
+      if (!confirm('לנקות את כל השיבוצים של השבוע הזה? האילוצים יישמרו.')) return;
+      var current = week();
+      current.assignments = {};
+      current.manual = {};
+      persist();
+      render();
+      toast('הסידור נוקה');
+    });
+
+    $('#copy-text').addEventListener('click', function () {
+      copyText(scheduleAsText(), 'הסידור הועתק ללוח');
+    });
+
+    $('#tools-toggle').addEventListener('click', function () {
+      var panel = $('#more-tools');
+      var open = panel.classList.toggle('open');
+      this.setAttribute('aria-expanded', open ? 'true' : 'false');
+      this.textContent = open ? '✕ סגירת הכלים' : '⋯ כלים נוספים';
+    });
+
+    function bindDayNav(selector) {
+      $(selector).addEventListener('click', function (event) {
+        var tab = event.target.closest('.day-tab');
+        if (!tab) return;
+        mobileDay = Number(tab.dataset.day);
+        render();
+      });
+    }
+    bindDayNav('#day-nav');
+    bindDayNav('#constraints-day-nav');
+
+    $('#schedule-mobile').addEventListener('change', function (event) {
+      var select = event.target.closest('.emp-select');
+      if (!select) return;
+      var cell = select.closest('.m-shift');
+      applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
+    });
+
+    $('#holiday-days').addEventListener('click', function (event) {
+      var chip = event.target.closest('.holiday-chip');
+      if (!chip) return;
+      var dayIdx = Number(chip.dataset.day);
+      var current = week();
+
+      if (Store.isHoliday(current, dayIdx)) {
+        Store.setHoliday(current, dayIdx, null);
+        persist();
+        render();
+        toast(Data.DAYS[dayIdx].name + ' חזר להיות יום עבודה');
+        return;
+      }
+
+      var name = window.prompt('שם החג ביום ' + Data.DAYS[dayIdx].name +
+        ' (הסניפים ייסגרו והיום ייחשב חופש לכל העובדים):', 'חג');
+      if (name === null) return;
+
+      var assignedCount = 0;
+      state.employees.forEach(function (emp) {
+        assignedCount += Store.employeeDayAssignments(state, current, emp.id, dayIdx).length;
+      });
+      if (assignedCount && !confirm('ביום הזה כבר משובצים ' + assignedCount +
+        ' עובדים. לסמן כחג ולנקות את השיבוצים?')) return;
+
+      if (assignedCount) {
+        state.branches.forEach(function (branch) {
+          Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+            Store.setAssigned(current, dayIdx, branch.id, shiftId, []);
+            delete current.manual[Store.slotKey(dayIdx, branch.id, shiftId)];
+          });
+        });
+      }
+      Store.setHoliday(current, dayIdx, name.trim());
+      persist();
+      render();
+      toast('יום ' + Data.DAYS[dayIdx].name + ' סומן כחג – הסניפים סגורים');
+    });
+
+    $('#shabbat-end').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) {
+        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 19:45');
+        render();
+        return;
+      }
+      week().shabbatEnd = normalized;
+      persist();
+      render();
+    });
+
+    $('#export-excel').addEventListener('click', exportExcel);
+
+    $('#personal-excel').addEventListener('click', function () {
+      var empId = $('#personal-employee').value;
+      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
+      exportPersonalExcel(empId);
+    });
+
+    $('#personal-text').addEventListener('click', function () {
+      var empId = $('#personal-employee').value;
+      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
+      copyText(personalText(empId), 'הסידור האישי הועתק ללוח');
+    });
+    $('#export-csv').addEventListener('click', exportCsv);
+    $('#print').addEventListener('click', function () {
+      if (!Platform.print()) { toast('ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא CSV'); }
+    });
+
+    $('#schedule-branch').addEventListener('change', function (event) {
+      var select = event.target.closest('.emp-select');
+      if (!select) return;
+      var cell = select.closest('td');
+      applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
+    });
+  }
+
+  function bindConstraintsTab() {
+    function onConstraintClick(event) {
+      var button = event.target.closest('.cstate');
+      if (!button) return;
+      var empId = button.dataset.emp;
+      var dayIdx = Number(button.dataset.day);
+      var current = week();
+      var constraint = Store.clone(Store.getConstraint(current, empId, dayIdx));
+      constraint.blocked = constraint.blocked || {};
+      constraint.preferred = constraint.preferred || {};
+
+      if (button.dataset.off) {
+        constraint.off = !constraint.off;
+        if (constraint.off) { constraint.blocked = {}; constraint.preferred = {}; }
+      } else {
+        var shiftId = button.dataset.shift;
+        constraint.off = false;
+        if (constraint.preferred[shiftId]) {            // מעדיף → חסום
+          delete constraint.preferred[shiftId];
+          constraint.blocked[shiftId] = true;
+        } else if (constraint.blocked[shiftId]) {       // חסום → זמין
+          delete constraint.blocked[shiftId];
+        } else {                                        // זמין → מעדיף
+          constraint.preferred[shiftId] = true;
+        }
+      }
+      Store.setConstraint(current, empId, dayIdx, constraint);
+      persist();
+      render();
+    }
+
+    $('#constraints-grid').addEventListener('click', onConstraintClick);
+    $('#constraints-mobile').addEventListener('click', onConstraintClick);
+
+    $('#clear-constraints').addEventListener('click', function () {
+      if (!confirm('לנקות את כל האילוצים של השבוע הזה?')) return;
+      week().constraints = {};
+      persist();
+      render();
+      toast('האילוצים נוקו');
+    });
+
+    $('#copy-constraints').addEventListener('click', function () {
+      var previous = state.weeks[Store.shiftWeekKey(weekKey, -1)];
+      if (!previous || !Object.keys(previous.constraints || {}).length) { toast('אין אילוצים בשבוע הקודם'); return; }
+      week().constraints = Store.clone(previous.constraints);
+      persist();
+      render();
+      toast('האילוצים הועתקו מהשבוע הקודם');
+    });
+  }
+
+  function bindEmployeesTab() {
+    $('#add-employee').addEventListener('click', function () {
+      state.employees.push({
+        id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
+        branches: [], shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, note: ''
+      });
+      persist('config');
+      render();
+    });
+
+    var list = $('#employees-list');
+    list.addEventListener('click', function (event) {
+      var card = event.target.closest('.card');
+      if (!card) return;
+      var emp = Store.byId(state.employees, card.dataset.emp);
+      if (!emp) return;
+      var action = event.target.dataset.action;
+
+      if (action === 'delete-emp') {
+        if (!confirm('למחוק את ' + emp.name + '? השיבוצים הקיימים של העובד/ת יוסרו מכל השבועות.')) return;
+        state.employees = state.employees.filter(function (item) { return item.id !== emp.id; });
+        Object.keys(state.weeks).forEach(function (key) {
+          var weekData = state.weeks[key];
+          Object.keys(weekData.assignments || {}).forEach(function (slot) {
+            weekData.assignments[slot] = weekData.assignments[slot].filter(function (id) { return id !== emp.id; });
+            if (!weekData.assignments[slot].length) delete weekData.assignments[slot];
+          });
+          Object.keys(weekData.constraints || {}).forEach(function (constraintKey) {
+            if (constraintKey.indexOf(emp.id + '|') === 0) delete weekData.constraints[constraintKey];
+          });
+        });
+        persist('all');
+        render();
+        return;
+      }
+      if (action === 'toggle-branch') {
+        var branchId = event.target.dataset.branch;
+        var index = emp.branches.indexOf(branchId);
+        if (index === -1) emp.branches.push(branchId); else emp.branches.splice(index, 1);
+        persist('config');
+        render();
+      }
+      if (action === 'toggle-shift') {
+        var shiftId = event.target.dataset.shift;
+        var pos = emp.shifts.indexOf(shiftId);
+        if (pos === -1) emp.shifts.push(shiftId); else emp.shifts.splice(pos, 1);
+        persist('config');
+        render();
+      }
+    });
+
+    list.addEventListener('change', function (event) {
+      var card = event.target.closest('.card');
+      if (!card) return;
+      var emp = Store.byId(state.employees, card.dataset.emp);
+      var field = event.target.dataset.field;
+      if (!emp || !field) return;
+      if (field === 'active') emp.active = event.target.checked;
+      else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
+      else emp[field] = event.target.value;
+      persist('config');
+      if (field === 'active' || field === 'maxShifts') render();
+    });
+  }
+
+  function bindBranchesTab() {
+    $('#add-branch').addEventListener('click', function () {
+      state.branches.push({
+        id: Store.newId('br'), name: 'סניף חדש', active: true,
+        need: { morning: 1, middle: 1, evening: 1 }
+      });
+      persist('config');
+      render();
+    });
+
+    var list = $('#branches-list');
+    list.addEventListener('click', function (event) {
+      if (event.target.dataset.action !== 'delete-branch') return;
+      var card = event.target.closest('.card');
+      var branch = Store.byId(state.branches, card.dataset.branch);
+      if (!branch) return;
+      if (!confirm('למחוק את ' + branch.name + '? השיבוצים של הסניף יוסרו מכל השבועות.')) return;
+      state.branches = state.branches.filter(function (item) { return item.id !== branch.id; });
+      state.employees.forEach(function (emp) {
+        emp.branches = emp.branches.filter(function (id) { return id !== branch.id; });
+      });
+      Object.keys(state.weeks).forEach(function (key) {
+        var weekData = state.weeks[key];
+        Object.keys(weekData.assignments || {}).forEach(function (slot) {
+          if (slot.split('|')[1] === branch.id) delete weekData.assignments[slot];
+        });
+      });
+      persist('all');
+      render();
+    });
+
+    list.addEventListener('change', function (event) {
+      var card = event.target.closest('.card');
+      if (!card) return;
+      var branch = Store.byId(state.branches, card.dataset.branch);
+      if (!branch) return;
+      var input = event.target;
+
+      if (input.dataset.action === 'copy-schedule') {
+        var source = Store.byId(state.branches, input.value);
+        if (!source) return;
+        if (!confirm('להעתיק את הימים והשעות מ' + source.name + ' אל ' + branch.name + '?')) {
+          input.value = '';
+          return;
+        }
+        branch.schedule = Store.clone(source.schedule);
+        persist('config');
+        render();
+        toast('הימים והשעות הועתקו');
+        return;
+      }
+
+      if (input.dataset.sched) {
+        var cell = input.closest('.sched-cell');
+        var dayIdx = cell.dataset.day;
+        var shiftId = cell.dataset.shift;
+        if (!branch.schedule[dayIdx]) branch.schedule[dayIdx] = {};
+        var config = branch.schedule[dayIdx][shiftId];
+
+        if (input.dataset.sched === 'need') {
+          var need = Math.max(0, Number(input.value) || 0);
+          if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
+          else if (config) { config.need = need; }
+          else {
+            var template = Data.defaultSchedule();
+            var fallback = (template[dayIdx] && template[dayIdx][shiftId]) ||
+              (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
+            branch.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
+          }
+        } else if (config) {
+          if (input.dataset.sched === 'auto') {
+            if (input.checked) { config.auto = 'motzash'; delete config.from; }
+            else { delete config.auto; config.from = config.from || '20:30'; }
+          } else {
+            var normalized = Store.normalizeTimeInput(input.value);
+            if (normalized === null) {
+              toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 14:30');
+              render();
+              return;
+            }
+            config[input.dataset.sched] = normalized;
+          }
+        }
+        Store.normalizeSchedule(branch.schedule);
+        persist('config');
+        render();
+        return;
+      }
+
+      var field = input.dataset.field;
+      if (field === 'active') { branch.active = input.checked; persist('config'); render(); }
+      else if (field) { branch[field] = input.value; persist('config'); render(); }
+    });
+  }
+
+  function bindSettingsTab() {
+    $('#opt-one-per-day').addEventListener('change', function (event) {
+      state.settings.onePerDay = event.target.checked;
+      persist('config');
+      render();
+    });
+    $('#opt-rest').addEventListener('change', function (event) {
+      state.settings.restEveningMorning = event.target.checked;
+      persist('config');
+      render();
+    });
+    $('#opt-one-day-off').addEventListener('change', function (event) {
+      state.settings.oneDayOffPerWeek = event.target.checked;
+      persist('config');
+      render();
+    });
+
+    $('#default-shabbat').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) {
+        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 20:00');
+        render();
+        return;
+      }
+      state.settings.defaultShabbatEnd = normalized;
+      persist('config');
+      render();
+    });
+
+    $('#export-json').addEventListener('click', function () {
+      saveFile('maiphone-shifts-backup.json', JSON.stringify(state, null, 2), 'application/json');
+    });
+
+    $('#import-json').addEventListener('change', function (event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          state = Store.migrate(JSON.parse(reader.result));
+          persist('all');
+          render();
+          toast('הנתונים יובאו בהצלחה');
+        } catch (err) {
+          alert('קובץ לא תקין: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    });
+
+    $('#reset-all').addEventListener('click', function () {
+      if (!confirm('לאפס את כל הנתונים (עובדים, סניפים, סידורים ואילוצים) לברירת המחדל?')) return;
+      state = Store.emptyState();
+      persist('all');
+      render();
+      toast('הנתונים אופסו');
+    });
+  }
+
+  /* ========== צ'אט שאלות על הסידור ========== */
+  var chatHistory = [];
+  var chatBusy = false;
+
+  /* תיאור טקסטואלי של כל מה שרלוונטי לשבוע המוצג */
+  function chatContext() {
+    var current = week();
+    var parts = [weekTitle()];
+    if (current.shabbatEnd) parts.push('צאת שבת: ' + current.shabbatEnd);
+
+    var holidays = [];
+    Data.DAYS.forEach(function (day) {
+      if (Store.isHoliday(current, day.idx)) {
+        holidays.push(day.name + ' (' + Store.holidayName(current, day.idx) + ')');
+      }
+    });
+    parts.push(holidays.length ? 'ימי חג סגורים: ' + holidays.join(', ') : 'אין ימי חג השבוע.');
+
+    parts.push('', 'כללי שיבוץ:');
+    parts.push('- ' + (state.settings.onePerDay ? 'עובד משובץ למשמרת אחת ביום לכל היותר.' : 'עובד יכול לעשות כמה משמרות ביום.'));
+    parts.push('- ' + (state.settings.restEveningMorning ? 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם.' : 'אין מגבלת מנוחה בין ערב לבוקר.'));
+
+    parts.push('', 'סניפים:');
+    state.branches.forEach(function (branch) {
+      if (!branch.active) return;
+      var days = [];
+      Data.DAYS.forEach(function (day) {
+        var open = [];
+        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          var need = Store.slotNeed(branch, day.idx, shiftId);
+          if (!need) return;
+          var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
+          open.push(Data.shiftById(shiftId).name + ' ' + hours + ' (' + need + ' עובדים)');
+        });
+        if (open.length) days.push(day.name + ': ' + open.join(', '));
+      });
+      parts.push('- ' + branch.name + ' | ' + (days.join(' | ') || 'סגור כל השבוע'));
+    });
+
+    parts.push('', 'עובדים:');
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var branches = emp.branches.length
+        ? emp.branches.map(branchNameOf).join(', ')
+        : 'כל הסניפים';
+      var shifts = emp.shifts.map(function (id) { return Data.shiftById(id).name; }).join(', ');
+      var daysOff = Store.requestedDaysOff(current, emp.id).map(function (d) { return Data.DAYS[d].name; });
+      var blocked = [];
+      Data.DAYS.forEach(function (day) {
+        var constraint = Store.getConstraint(current, emp.id, day.idx);
+        var names = Object.keys(constraint.blocked || {});
+        if (names.length) {
+          blocked.push(day.name + ': ' + names.map(function (id) { return Data.shiftById(id).name; }).join('/'));
+        }
+      });
+      parts.push('- ' + emp.name + ' | סניפים: ' + branches + ' | משמרות: ' + shifts +
+        ' | מקסימום ' + emp.maxShifts + ' בשבוע' +
+        (daysOff.length ? ' | ביקש/ה חופש: ' + daysOff.join(', ') : '') +
+        (blocked.length ? ' | חסם/ה: ' + blocked.join('; ') : '') +
+        (emp.note ? ' | הערה: ' + emp.note : ''));
+    });
+
+    parts.push('', 'הסידור הנוכחי:', scheduleAsText());
+
+    var summary = Store.weekAvailability(state, current);
+    parts.push('', 'יתרת זמינות:');
+    summary.rows.forEach(function (row) {
+      parts.push('- ' + row.name + ': משובץ ' + row.assigned + ' מתוך מכסה ' + row.max +
+        ', ימים פנויים: ' + (row.freeDays.length ? row.freeDays.map(function (d) { return Data.DAYS[d].name; }).join(', ') : 'אין'));
+    });
+
+    if (lastReport.issues.length) {
+      parts.push('', 'התראות על הסידור:');
+      lastReport.issues.forEach(function (item) { parts.push('- ' + item.text); });
+    } else {
+      parts.push('', 'אין התראות – הסידור תקין.');
+    }
+
+    return parts.join('\n');
+  }
+
+  function addChatMessage(role, text) {
+    var node = document.createElement('div');
+    node.className = 'chat-msg ' + role;
+    node.textContent = text;
+    $('#chat-messages').appendChild(node);
+    node.scrollIntoView({ block: 'nearest' });
+    return node;
+  }
+
+  function askChat(question) {
+    if (chatBusy || !Platform.sample) return;
+    chatBusy = true;
+    $('#chat-send').disabled = true;
+
+    addChatMessage('user', question);
+    var answer = addChatMessage('bot pending', 'חושב…');
+
+    var turns = chatHistory.slice(-6).map(function (turn) { return { role: turn.role, content: turn.content }; });
+    turns.push({
+      role: 'user',
+      content: 'אתה עוזר למנהל/ת של רשת מייפון לנהל סידור משמרות. ענה בעברית, קצר ולעניין, ' +
+        'והסתמך רק על הנתונים שלהלן. אם המידע חסר – אמור זאת במפורש במקום לנחש.\n\n' +
+        '=== נתוני השבוע ===\n' + chatContext() + '\n=== סוף הנתונים ===\n\nשאלה: ' + question
+    });
+
+    Platform.sample(turns, {
+      onText: function (event) {
+        answer.className = 'chat-msg bot';
+        answer.textContent = event.text;
+      }
+    }).then(function (result) {
+      answer.className = 'chat-msg bot';
+      answer.textContent = result.text || '(לא התקבלה תשובה)';
+      chatHistory.push({ role: 'user', content: question });
+      chatHistory.push({ role: 'assistant', content: result.text || '' });
+    }).catch(function (err) {
+      var code = err && err.code;
+      answer.className = 'chat-msg error';
+      if (code === 'not_granted') {
+        answer.textContent = 'אין הרשאה לשאול שאלות בעמוד הזה.';
+        $('#chat').classList.add('hidden');
+      } else if (code === 'rate_limited') {
+        answer.textContent = 'יותר מדי שאלות ברצף – נסו שוב בעוד רגע.';
+      } else if (err && err.text) {
+        answer.className = 'chat-msg bot';
+        answer.textContent = err.text;
+      } else {
+        answer.textContent = 'לא הצלחתי לענות כרגע' + (err && err.message ? ': ' + err.message : '.');
+      }
+    }).then(function () {
+      chatBusy = false;
+      $('#chat-send').disabled = false;
+    });
+  }
+
+  function bindChat() {
+    $('#chat-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var input = $('#chat-input');
+      var question = input.value.trim();
+      if (!question) return;
+      input.value = '';
+      askChat(question);
+    });
+  }
+
+  /* ========== סנכרון בין מכשירים ========== */
+  function renderSyncState(status) {
+    var node = $('#sync-state');
+    if (!node) return;
+    var labels = {
+      live: 'מסונכרן בין המכשירים',
+      local: 'נשמר במכשיר הזה',
+      readonly: 'צפייה בלבד – אין הרשאת עריכה'
+    };
+    node.textContent = labels[status] || labels.local;
+    node.className = 'sync-state ' + status;
+  }
+
+  function applyRemoteConfig(remote) {
+    if (remote.settings) state.settings = remote.settings;
+    if (Array.isArray(remote.branches)) state.branches = remote.branches;
+    if (Array.isArray(remote.employees)) state.employees = remote.employees;
+    state = Store.migrate(state);
+    Store.save(state);
+    render();
+  }
+
+  function applyRemoteWeek(key, remote) {
+    var target = Store.getWeek(state, key);
+    target.constraints = remote.constraints || {};
+    target.assignments = remote.assignments || {};
+    target.manual = remote.manual || {};
+    target.note = remote.note || '';
+    Store.save(state);
+    if (key === weekKey) render();
+  }
+
+  /* הופך את העמוד לאפליקציה שניתן להוסיף למסך הבית באייפון */
+  function setupAppMeta() {
+    function meta(name, content) {
+      if (document.querySelector('meta[name="' + name + '"]')) return;
+      var tag = document.createElement('meta');
+      tag.name = name;
+      tag.content = content;
+      document.head.appendChild(tag);
+    }
+    meta('apple-mobile-web-app-capable', 'yes');
+    meta('mobile-web-app-capable', 'yes');
+    meta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    meta('apple-mobile-web-app-title', 'סידור משמרות');
+    meta('format-detection', 'telephone=no');
+    meta('theme-color', '#23499f');
+
+    var viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      meta('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+    } else if (viewport.content.indexOf('viewport-fit') === -1) {
+      viewport.content += ', viewport-fit=cover'; // נדרש לאזורים הבטוחים באייפון
+    }
+
+    // אייקון למסך הבית – מצויר בזמן אמת, כדי שלא יידרש קובץ חיצוני
+    try {
+      var size = 180;
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#23499f');
+      gradient.addColorStop(1, '#2f5fe0');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 84px "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('סד', size / 2, size / 2 - 14);
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      ctx.font = '26px "Segoe UI", Arial, sans-serif';
+      ctx.fillText('משמרות', size / 2, size / 2 + 48);
+      var url = canvas.toDataURL('image/png');
+
+      [['apple-touch-icon', url], ['icon', url]].forEach(function (pair) {
+        var link = document.createElement('link');
+        link.rel = pair[0];
+        link.href = pair[1];
+        document.head.appendChild(link);
+      });
+
+      var manifest = {
+        name: 'סידור משמרות – מייפון',
+        short_name: 'סידור משמרות',
+        start_url: '.',
+        display: 'standalone',
+        background_color: '#f1f4fa',
+        theme_color: '#23499f',
+        dir: 'rtl',
+        lang: 'he',
+        icons: [{ src: url, sizes: '180x180', type: 'image/png' }]
+      };
+      var manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+      document.head.appendChild(manifestLink);
+    } catch (err) {
+      /* ללא אייקון – האפליקציה עדיין עובדת */
+    }
+  }
+
+  setupAppMeta();
+  document.documentElement.setAttribute('dir', 'rtl');
+  document.documentElement.setAttribute('lang', 'he');
+
+  // מעבר בין תצוגת נייד למחשב (סיבוב המכשיר, שינוי גודל חלון)
+  var wasMobile = isMobile();
+  window.addEventListener('resize', function () {
+    if (isMobile() !== wasMobile) { wasMobile = isMobile(); render(); }
+  });
+
+  bindTabs();
+  bindScheduleTab();
+  bindConstraintsTab();
+  bindEmployeesTab();
+  bindBranchesTab();
+  bindSettingsTab();
+  bindChat();
+  render();
+
+  Platform.init({
+    getState: function () { return state; },
+    weekKey: function () { return weekKey; },
+    onConfig: applyRemoteConfig,
+    onWeek: applyRemoteWeek,
+    onSyncState: renderSyncState,
+    onSampleReady: function () { $('#chat').classList.remove('hidden'); }
+  });
+})();
+
+</script>
+</body>
+</html>

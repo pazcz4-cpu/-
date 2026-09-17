@@ -12,6 +12,7 @@
   var state = Store.load();
   var weekKey = Store.currentWeekKey();
   var view = 'branch';
+  var mobileDay = new Date().getDay();
   var showAllIssues = false;
   var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
 
@@ -72,6 +73,123 @@
       return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening');
     });
     $('#shabbat-field').classList.toggle('hidden', !needsMotzash);
+  }
+
+  /* ========== תצוגת נייד: יום אחד בכל פעם ========== */
+  function renderDayNav(container, selected) {
+    var html = '';
+    Data.DAYS.forEach(function (day) {
+      var isHoliday = Store.isHoliday(week(), day.idx);
+      var classes = 'day-tab' + (day.idx === selected ? ' active' : '') + (isHoliday ? ' holiday' : '');
+      html += '<button class="' + classes + '" data-day="' + day.idx + '">' +
+        '<span class="day-tab-name">' + day.short + '</span>' +
+        '<span class="day-tab-date">' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</span>' +
+        '</button>';
+    });
+    $(container).innerHTML = html;
+  }
+
+  function mobileSelectHtml(dayIdx, branch, shiftId, slotIndex, value, isExtra) {
+    var html = '<select class="emp-select' + (isExtra ? ' extra' : '') + '" data-slot="' + slotIndex + '">';
+    html += '<option value="">' + (isExtra ? '+ הוסף עובד' : '— לא משובץ —') + '</option>';
+    state.employees.forEach(function (emp) {
+      html += '<option value="' + esc(emp.id) + '"' + (value === emp.id ? ' selected' : '') + '>' +
+        esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
+    });
+    if (value && !Store.byId(state.employees, value)) {
+      html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
+    }
+    return html + '</select>';
+  }
+
+  function renderMobileSchedule(marks) {
+    var current = week();
+    var day = Data.DAYS[mobileDay];
+    var html = '';
+
+    if (Store.isHoliday(current, mobileDay)) {
+      html = '<div class="m-card holiday"><div class="m-card-head">' + esc(day.name) + '</div>' +
+        '<div class="m-holiday">' + esc(Store.holidayName(current, mobileDay)) +
+        '<small>כל הסניפים סגורים – יום חופש לכל העובדים</small></div></div>';
+      $('#schedule-mobile').innerHTML = html;
+      return;
+    }
+
+    var activeBranches = state.branches.filter(function (branch) { return branch.active; });
+    activeBranches.forEach(function (branch) {
+      var shiftsHtml = '';
+      Data.SHIFTS.forEach(function (shift) {
+        var need = Store.slotNeed(branch, mobileDay, shift.id);
+        var assigned = Store.getAssigned(current, mobileDay, branch.id, shift.id);
+        if (!need && !assigned.length) return;
+
+        var key = Store.slotKey(mobileDay, branch.id, shift.id);
+        var flag = marks.cells[key];
+        var hours = Store.hoursLabel(Store.slotHours(current, branch, mobileDay, shift.id));
+        var rows = Math.max(need, assigned.length) + 1;
+
+        shiftsHtml += '<div class="m-shift ' + shiftClass(shift.id) +
+          (flag ? ' flag-' + flag : '') + '" data-day="' + mobileDay +
+          '" data-branch="' + esc(branch.id) + '" data-shift="' + shift.id + '">';
+        shiftsHtml += '<div class="m-shift-head"><b>' + shift.name + '</b>' +
+          '<span>' + (hours ? esc(hours) : 'ללא שעות') +
+          (need > 1 ? ' · ' + need + ' עובדים' : '') + '</span></div>';
+        for (var i = 0; i < rows; i++) {
+          shiftsHtml += mobileSelectHtml(mobileDay, branch, shift.id, i, assigned[i] || '', i >= need);
+        }
+        shiftsHtml += '</div>';
+      });
+
+      if (!shiftsHtml) {
+        shiftsHtml = '<div class="m-closed">הסניף סגור ביום זה</div>';
+      }
+      html += '<div class="m-card"><div class="m-card-head">' + esc(branch.name) + '</div>' + shiftsHtml + '</div>';
+    });
+
+    if (!activeBranches.length) {
+      html = '<div class="m-card"><div class="m-closed">לא הוגדרו סניפים פעילים.</div></div>';
+    }
+    $('#schedule-mobile').innerHTML = html;
+  }
+
+  function renderMobileConstraints() {
+    var current = week();
+    var day = Data.DAYS[mobileDay];
+
+    if (Store.isHoliday(current, mobileDay)) {
+      $('#constraints-mobile').innerHTML = '<div class="m-card holiday"><div class="m-holiday">' +
+        esc(Store.holidayName(current, mobileDay)) + '<small>יום חג – אין צורך באילוצים</small></div></div>';
+      return;
+    }
+
+    var dayShifts = Store.activeShiftsForDay(state, mobileDay, current);
+    if (!dayShifts.length) {
+      $('#constraints-mobile').innerHTML = '<div class="m-card"><div class="m-closed">' +
+        'כל הסניפים סגורים ב' + day.name + '.</div></div>';
+      return;
+    }
+
+    var html = '';
+    state.employees.forEach(function (emp) {
+      if (!emp.active) return;
+      var constraint = Store.getConstraint(current, emp.id, mobileDay);
+      html += '<div class="m-card m-constraint"><div class="m-card-head">' + esc(emp.name) + '</div>';
+      html += '<div class="m-cstates">';
+      dayShifts.forEach(function (shiftId) {
+        var cls = 'free', title = 'זמין';
+        if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
+        else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
+        else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
+        html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
+          '" data-day="' + mobileDay + '" data-shift="' + shiftId + '">' +
+          Data.shiftById(shiftId).name + '</button>';
+      });
+      html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
+        '" data-emp="' + esc(emp.id) + '" data-day="' + mobileDay + '" data-off="1">' +
+        (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+      html += '</div></div>';
+    });
+    $('#constraints-mobile').innerHTML = html;
   }
 
   /* ========== ימי חג ========== */
@@ -238,21 +356,28 @@
   }
 
   /* ========== פאנל הבדיקות ========== */
+  function isMobile() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 820px)').matches;
+  }
+
   function plural(count, singular, pluralWord) {
     return count === 1 ? singular : count + ' ' + pluralWord;
   }
 
   function renderIssues(report) {
     var container = $('#issues');
-    var visible = showAllIssues ? report.issues : report.issues.slice(0, 6);
+    // בנייד ההתראות מקופלות כברירת מחדל, כדי שהסידור עצמו יהיה מיד על המסך
+    var limit = isMobile() ? 0 : 6;
+    var visible = showAllIssues ? report.issues : report.issues.slice(0, limit);
     var html = '<div class="issues-summary">';
     if (report.errors) html += '<span class="badge error">' + plural(report.errors, 'שגיאה אחת', 'שגיאות') + '</span>';
     if (report.warnings) html += '<span class="badge warning">' + plural(report.warnings, 'אזהרה אחת', 'אזהרות') + '</span>';
     if (report.infos) html += '<span class="badge info">' + plural(report.infos, 'הערה אחת', 'הערות') + '</span>';
     if (!report.issues.length) html += '<span class="badge ok">✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים</span>';
-    if (report.issues.length > 6) {
+    if (report.issues.length > limit) {
       html += '<button class="issues-toggle" id="toggle-issues">' +
-        (showAllIssues ? 'הצג פחות' : 'הצג את כל ' + report.issues.length + ' ההתראות') + '</button>';
+        (showAllIssues ? 'הסתרת ההתראות' : 'הצג את ' + plural(report.issues.length, 'ההתראה', 'ההתראות')) +
+        '</button>';
     }
     html += '</div>';
     visible.forEach(function (item) {
@@ -496,6 +621,10 @@
     lastReport = Validate.validate(state, week());
     var marks = issueMaps(lastReport);
     renderIssues(lastReport);
+    renderDayNav('#day-nav', mobileDay);
+    renderDayNav('#constraints-day-nav', mobileDay);
+    renderMobileSchedule(marks);
+    renderMobileConstraints();
     renderBranchView(marks);
     renderEmployeeView(marks);
     renderWorkload();
@@ -541,6 +670,23 @@
         ' שאפשר עוד לשבץ —');
     }
     return lines.join('\n');
+  }
+
+  /* שינוי שיבוץ – משותף לתצוגת המחשב ולתצוגת הנייד */
+  function applyCellChange(cell, dayIdx, branchId, shiftId) {
+    var values = Array.prototype.map.call(cell.querySelectorAll('.emp-select'), function (node) {
+      return node.value;
+    }).filter(function (value) { return value; });
+
+    var seen = {}, unique = [];
+    values.forEach(function (value) { if (!seen[value]) { seen[value] = true; unique.push(value); } });
+
+    var current = week();
+    Store.setAssigned(current, dayIdx, branchId, shiftId, unique);
+    current.manual[Store.slotKey(dayIdx, branchId, shiftId)] = true;
+    persist();
+    render();
+    if (unique.length !== values.length) { toast('אותו עובד לא יכול להופיע פעמיים באותה משמרת'); }
   }
 
   function copyText(text, message) {
@@ -968,6 +1114,31 @@
       copyText(scheduleAsText(), 'הסידור הועתק ללוח');
     });
 
+    $('#tools-toggle').addEventListener('click', function () {
+      var panel = $('#more-tools');
+      var open = panel.classList.toggle('open');
+      this.setAttribute('aria-expanded', open ? 'true' : 'false');
+      this.textContent = open ? '✕ סגירת הכלים' : '⋯ כלים נוספים';
+    });
+
+    function bindDayNav(selector) {
+      $(selector).addEventListener('click', function (event) {
+        var tab = event.target.closest('.day-tab');
+        if (!tab) return;
+        mobileDay = Number(tab.dataset.day);
+        render();
+      });
+    }
+    bindDayNav('#day-nav');
+    bindDayNav('#constraints-day-nav');
+
+    $('#schedule-mobile').addEventListener('change', function (event) {
+      var select = event.target.closest('.emp-select');
+      if (!select) return;
+      var cell = select.closest('.m-shift');
+      applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
+    });
+
     $('#holiday-days').addEventListener('click', function (event) {
       var chip = event.target.closest('.holiday-chip');
       if (!chip) return;
@@ -1041,26 +1212,12 @@
       var select = event.target.closest('.emp-select');
       if (!select) return;
       var cell = select.closest('td');
-      var dayIdx = Number(cell.dataset.day);
-      var branchId = cell.dataset.branch;
-      var shiftId = cell.dataset.shift;
-      var values = Array.prototype.map.call(cell.querySelectorAll('.emp-select'), function (node) { return node.value; })
-        .filter(function (value) { return value; });
-
-      var seen = {}, unique = [];
-      values.forEach(function (value) { if (!seen[value]) { seen[value] = true; unique.push(value); } });
-
-      var current = week();
-      Store.setAssigned(current, dayIdx, branchId, shiftId, unique);
-      current.manual[Store.slotKey(dayIdx, branchId, shiftId)] = true;
-      persist();
-      render();
-      if (unique.length !== values.length) { toast('אותו עובד לא יכול להופיע פעמיים באותה משמרת'); }
+      applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
     });
   }
 
   function bindConstraintsTab() {
-    $('#constraints-grid').addEventListener('click', function (event) {
+    function onConstraintClick(event) {
       var button = event.target.closest('.cstate');
       if (!button) return;
       var empId = button.dataset.emp;
@@ -1088,7 +1245,10 @@
       Store.setConstraint(current, empId, dayIdx, constraint);
       persist();
       render();
-    });
+    }
+
+    $('#constraints-grid').addEventListener('click', onConstraintClick);
+    $('#constraints-mobile').addEventListener('click', onConstraintClick);
 
     $('#clear-constraints').addEventListener('click', function () {
       if (!confirm('לנקות את כל האילוצים של השבוע הזה?')) return;
@@ -1507,8 +1667,86 @@
     if (key === weekKey) render();
   }
 
+  /* הופך את העמוד לאפליקציה שניתן להוסיף למסך הבית באייפון */
+  function setupAppMeta() {
+    function meta(name, content) {
+      if (document.querySelector('meta[name="' + name + '"]')) return;
+      var tag = document.createElement('meta');
+      tag.name = name;
+      tag.content = content;
+      document.head.appendChild(tag);
+    }
+    meta('apple-mobile-web-app-capable', 'yes');
+    meta('mobile-web-app-capable', 'yes');
+    meta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    meta('apple-mobile-web-app-title', 'סידור משמרות');
+    meta('format-detection', 'telephone=no');
+    meta('theme-color', '#23499f');
+
+    var viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      meta('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+    } else if (viewport.content.indexOf('viewport-fit') === -1) {
+      viewport.content += ', viewport-fit=cover'; // נדרש לאזורים הבטוחים באייפון
+    }
+
+    // אייקון למסך הבית – מצויר בזמן אמת, כדי שלא יידרש קובץ חיצוני
+    try {
+      var size = 180;
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#23499f');
+      gradient.addColorStop(1, '#2f5fe0');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 84px "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('סד', size / 2, size / 2 - 14);
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      ctx.font = '26px "Segoe UI", Arial, sans-serif';
+      ctx.fillText('משמרות', size / 2, size / 2 + 48);
+      var url = canvas.toDataURL('image/png');
+
+      [['apple-touch-icon', url], ['icon', url]].forEach(function (pair) {
+        var link = document.createElement('link');
+        link.rel = pair[0];
+        link.href = pair[1];
+        document.head.appendChild(link);
+      });
+
+      var manifest = {
+        name: 'סידור משמרות – מייפון',
+        short_name: 'סידור משמרות',
+        start_url: '.',
+        display: 'standalone',
+        background_color: '#f1f4fa',
+        theme_color: '#23499f',
+        dir: 'rtl',
+        lang: 'he',
+        icons: [{ src: url, sizes: '180x180', type: 'image/png' }]
+      };
+      var manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+      document.head.appendChild(manifestLink);
+    } catch (err) {
+      /* ללא אייקון – האפליקציה עדיין עובדת */
+    }
+  }
+
+  setupAppMeta();
   document.documentElement.setAttribute('dir', 'rtl');
   document.documentElement.setAttribute('lang', 'he');
+
+  // מעבר בין תצוגת נייד למחשב (סיבוב המכשיר, שינוי גודל חלון)
+  var wasMobile = isMobile();
+  window.addEventListener('resize', function () {
+    if (isMobile() !== wasMobile) { wasMobile = isMobile(); render(); }
+  });
 
   bindTabs();
   bindScheduleTab();

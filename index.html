@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>סידור משמרות – מייפון</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -34,31 +34,39 @@
         <button id="next-week" class="btn ghost" title="שבוע הבא">◀</button>
         <button id="this-week" class="btn ghost small">השבוע הנוכחי</button>
         <span id="sync-state" class="sync-state local">נשמר במכשיר הזה</span>
+      </div>
+      <div class="actions">
+        <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
+        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ כלים נוספים</button>
+      </div>
+    </div>
+
+    <div id="more-tools" class="more-tools no-print">
+      <div class="tools-row">
+        <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
         <label class="shabbat-field" id="shabbat-field">צאת שבת
           <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
         </label>
       </div>
-      <div class="actions">
-        <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
-        <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
+      <div class="tools-row actions">
         <button id="clear-week" class="btn ghost">נקה סידור</button>
         <button id="copy-text" class="btn ghost">📋 העתק כטקסט</button>
         <button id="export-excel" class="btn ghost">⬇ אקסל</button>
         <button id="export-csv" class="btn ghost">⬇ CSV</button>
         <button id="print" class="btn ghost">🖨 הדפסה</button>
       </div>
-    </div>
 
-    <div class="personal-bar no-print">
-      <span class="personal-label">ייצוא אישי לעובד (רק המשמרות שלו):</span>
-      <select id="personal-employee" class="text-input personal-select"></select>
-      <button id="personal-excel" class="btn ghost small">⬇ אקסל</button>
-      <button id="personal-text" class="btn ghost small">📋 טקסט לוואטסאפ</button>
-    </div>
+      <div class="personal-bar">
+        <span class="personal-label">ייצוא אישי לעובד (רק המשמרות שלו):</span>
+        <select id="personal-employee" class="text-input personal-select"></select>
+        <button id="personal-excel" class="btn ghost small">⬇ אקסל</button>
+        <button id="personal-text" class="btn ghost small">📋 טקסט לוואטסאפ</button>
+      </div>
 
-    <div class="holiday-bar no-print">
-      <span class="holiday-label">ימי חג (הסניפים סגורים):</span>
-      <div id="holiday-days" class="holiday-chips"></div>
+      <div class="holiday-bar">
+        <span class="holiday-label">ימי חג (הסניפים סגורים):</span>
+        <div id="holiday-days" class="holiday-chips"></div>
+      </div>
     </div>
 
     <div id="issues" class="issues"></div>
@@ -68,8 +76,11 @@
       <button class="chip" data-view="employee">תצוגה לפי עובד</button>
     </div>
 
-    <div id="schedule-branch" class="table-wrap"></div>
-    <div id="schedule-employee" class="table-wrap hidden"></div>
+    <nav id="day-nav" class="day-nav mobile-only no-print"></nav>
+    <div id="schedule-mobile" class="mobile-only"></div>
+
+    <div id="schedule-branch" class="table-wrap desktop-only"></div>
+    <div id="schedule-employee" class="table-wrap desktop-only hidden"></div>
     <div id="workload" class="workload"></div>
     <div id="availability" class="availability no-print"></div>
 
@@ -100,7 +111,9 @@
       <span class="legend block">לא יכול/ה</span>.
       סימון <b>חופש</b> חוסם את כל היום.
     </p>
-    <div id="constraints-grid" class="table-wrap"></div>
+    <nav id="constraints-day-nav" class="day-nav mobile-only"></nav>
+    <div id="constraints-mobile" class="mobile-only"></div>
+    <div id="constraints-grid" class="table-wrap desktop-only"></div>
   </section>
 
   <!-- ===== עובדים ===== -->

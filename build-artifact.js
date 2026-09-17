@@ -44,7 +44,7 @@ const standalone = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 ${out.replace(/<style>[\s\S]*?<\/style>/, (m) => m).split('\n').slice(0, 0).join('')}<title>${title}</title>
 <style>
 ${css}
@@ -63,6 +63,12 @@ fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist/artifact.html'), out, 'utf8');
 fs.writeFileSync(path.join(root, 'dist/sidur-mishmarot.html'), standalone, 'utf8');
 
+// docs/ מיועד ל-GitHub Pages: כתובת אמיתית שאפשר להוסיף למסך הבית באייפון
+fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+fs.writeFileSync(path.join(root, 'docs/index.html'), standalone, 'utf8');
+fs.writeFileSync(path.join(root, 'docs/.nojekyll'), '', 'utf8');
+
 const kb = (Buffer.byteLength(out, 'utf8') / 1024).toFixed(1);
 console.log(`נבנה dist/artifact.html (${kb} KB, ${scripts.length} קבצי JS מוטבעים)`);
 console.log('נבנה dist/sidur-mishmarot.html (מסמך עצמאי לפתיחה בכל דפדפן)');
+console.log('נבנה docs/index.html (לפרסום ב-GitHub Pages)');

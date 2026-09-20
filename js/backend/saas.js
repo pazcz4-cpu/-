@@ -16,6 +16,17 @@
       role: role,
       session: session,
 
+      /* מגבלת התוכנית – נבדקת לפני הוספת עובד */
+      planLimit: function (employeeCount) {
+        var current = backend.session();
+        return Model.withinPlanLimits(current ? current.company : session.company,
+          { employees: employeeCount });
+      },
+      onPlanBlocked: function () {
+        var tab = document.querySelector('.tab[data-tab="billing"]');
+        if (tab && !tab.classList.contains('hidden')) { tab.click(); }
+      },
+
       loadState: function () {
         var state = Store.emptyState();
         return backend.loadConfig().then(function (config) {
@@ -78,15 +89,18 @@
     };
   }
 
+  var opts = {};
+  var authRef = null;
+
   function boot(options) {
-    var opts = options || {};
+    opts = options || {};
     var backend = opts.backend;
-    var authUI = new root.ShiftAuthUI.AuthUI({
+    authRef = new root.ShiftAuthUI.AuthUI({
       backend: backend,
       onSignedIn: function (session) { return enterApp(backend, session); },
       onSignedOut: function () { root.location.reload(); }
     });
-    return authUI.start();
+    return authRef.start();
   }
 
   var started = false;
@@ -126,9 +140,23 @@
           root.ShiftApp.applyRemoteWeek(change.weekKey, change.week);
         }
       });
+      var getEmployees = function () { return root.ShiftApp.getState().employees; };
+
       if (root.ShiftUsersUI) {
-        root.ShiftUsersUI.init({ backend: backend, session: session,
-          getEmployees: function () { return root.ShiftApp.getState().employees; } });
+        root.ShiftUsersUI.init({ backend: backend, session: session, getEmployees: getEmployees });
+      }
+
+      if (root.ShiftBillingUI && root.ShiftBilling) {
+        var provider = opts.billingProvider ||
+          new root.ShiftBilling.MockProvider({ backend: backend });
+        var billing = new root.ShiftBilling.BillingService({ backend: backend, provider: provider });
+        root.ShiftBillingUI.init({
+          billing: billing, session: session, getEmployees: getEmployees,
+          onChange: function () {
+            var updated = backend.session();
+            if (updated) { authRef.renderUserBar(updated); }
+          }
+        });
       }
       return session;
     });

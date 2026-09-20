@@ -745,6 +745,35 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .users-message.hidden { display: none; }
 .tab.hidden { display: none; }
 
+/* ===================== מנוי ותוכניות ===================== */
+.billing-current { gap: 8px; }
+.billing-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.billing-row span { color: var(--muted); }
+.billing-row b.status-trial { color: var(--info); }
+.billing-row b.status-active { color: var(--ok); }
+.billing-row b.status-past_due { color: var(--warn); }
+.billing-row b.status-canceled, .billing-row b.status-expired { color: var(--err); }
+.billing-note {
+  margin: 4px 0 0; font-size: 13px; padding: 8px 11px; border-radius: 8px;
+  background: var(--info-bg); color: var(--info); border: 1px solid var(--info-line);
+}
+.billing-note.error { background: var(--err-bg); color: var(--err); border-color: var(--err-line); }
+
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.plan-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px;
+}
+.plan-card.current { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.plan-card.too-small { opacity: .6; }
+.plan-name { font-size: 15px; font-weight: 700; }
+.plan-price { font-size: 30px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
+.plan-price small { font-size: 13px; font-weight: 400; color: var(--muted); margin-inline-start: 3px; }
+.plan-range { font-size: 13px; color: var(--muted); }
+.plan-tag { font-size: 12.5px; color: var(--brand); font-weight: 600; padding: 6px 0; }
+.plan-tag.warn { color: var(--warn); }
+.plan-card .btn { margin-top: auto; }
+
 </style>
 </head>
 <body>
@@ -4164,6 +4193,17 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   function bindEmployeesTab() {
     $('#add-employee').addEventListener('click', function () {
+      if (blocked()) return;
+      // מגבלת התוכנית נבדקת לפני ההוספה, אם הוגדרה
+      if (source.planLimit) {
+        var active = state.employees.filter(function (emp) { return emp.active; }).length;
+        var check = source.planLimit(active + 1);
+        if (!check.ok) {
+          toast(check.problems.join(' '));
+          if (source.onPlanBlocked) source.onPlanBlocked(check);
+          return;
+        }
+      }
       state.employees.push({
         id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
         branches: [], shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, note: ''

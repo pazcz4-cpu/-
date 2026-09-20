@@ -49,14 +49,45 @@
   var TRIAL_DAYS = 14;
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
 
+  /* התוכניות נקבעות לפי מספר העובדים בלבד. אין הגבלת סניפים.
+     maxEmployees ערך 0 = ללא הגבלה. */
   var PLANS = {
-    basic: { id: 'basic', name: 'בסיסי', maxBranches: 3, maxEmployees: 15, priceMonthly: 99 },
-    pro: { id: 'pro', name: 'מורחב', maxBranches: 10, maxEmployees: 60, priceMonthly: 199 },
-    unlimited: { id: 'unlimited', name: 'ללא הגבלה', maxBranches: 0, maxEmployees: 0, priceMonthly: 349 }
+    starter: {
+      id: 'starter', name: 'קטן', range: 'עד 10 עובדים',
+      minEmployees: 1, maxEmployees: 10, priceMonthly: 199
+    },
+    growth: {
+      id: 'growth', name: 'בינוני', range: '11 עד 30 עובדים',
+      minEmployees: 11, maxEmployees: 30, priceMonthly: 399
+    },
+    business: {
+      id: 'business', name: 'גדול', range: '31 עובדים ומעלה',
+      minEmployees: 31, maxEmployees: 0, priceMonthly: 599
+    }
   };
 
+  var PLAN_ORDER = ['starter', 'growth', 'business'];
+  var DEFAULT_PLAN = 'starter';
+
   function planOf(company) {
-    return PLANS[(company && company.plan) || 'basic'] || PLANS.basic;
+    return PLANS[(company && company.plan) || DEFAULT_PLAN] || PLANS[DEFAULT_PLAN];
+  }
+
+  /* התוכנית המתאימה למספר עובדים נתון */
+  function planForEmployees(count) {
+    var employees = Math.max(0, Number(count) || 0);
+    for (var i = 0; i < PLAN_ORDER.length; i++) {
+      var plan = PLANS[PLAN_ORDER[i]];
+      if (!plan.maxEmployees || employees <= plan.maxEmployees) return plan;
+    }
+    return PLANS[PLAN_ORDER[PLAN_ORDER.length - 1]];
+  }
+
+  /* כמה עובדים אפשר עוד להוסיף בתוכנית הנוכחית (null = ללא הגבלה) */
+  function employeesLeft(company, currentCount) {
+    var plan = planOf(company);
+    if (!plan.maxEmployees) return null;
+    return Math.max(0, plan.maxEmployees - (Number(currentCount) || 0));
   }
 
   /* האם לחברה יש גישה למערכת כרגע, ומה הסיבה אם לא. */
@@ -96,21 +127,33 @@
         text: 'התשלום האחרון לא עבר. הגישה תיחסם בעוד ' + daysLeft + ' ימים.' };
     }
 
+    if (company.status === SUBSCRIPTION.EXPIRED) {
+      return { allowed: false, reason: 'expired', daysLeft: 0,
+        text: 'המנוי פג ולא חודש. בחירת תוכנית תחזיר את הגישה מיד, והנתונים שמורים.' };
+    }
+    if (company.status === SUBSCRIPTION.CANCELED) {
+      return { allowed: false, reason: 'canceled', daysLeft: 0,
+        text: 'המנוי בוטל. אפשר לחדש בכל רגע – הנתונים שמורים.' };
+    }
     return { allowed: false, reason: company.status || 'canceled', daysLeft: 0,
       text: 'המנוי אינו פעיל.' };
   }
 
-  /* בדיקת מגבלות התוכנית לפני הוספת סניף או עובד */
+  /* בדיקת מגבלת התוכנית לפי מספר העובדים */
   function withinPlanLimits(company, counts) {
     var plan = planOf(company);
-    var problems = [];
-    if (plan.maxBranches && counts.branches > plan.maxBranches) {
-      problems.push('תוכנית ' + plan.name + ' מוגבלת ל-' + plan.maxBranches + ' סניפים');
+    var employees = Number((counts && counts.employees) || 0);
+    if (!plan.maxEmployees || employees <= plan.maxEmployees) {
+      return { ok: true, problems: [], suggested: null };
     }
-    if (plan.maxEmployees && counts.employees > plan.maxEmployees) {
-      problems.push('תוכנית ' + plan.name + ' מוגבלת ל-' + plan.maxEmployees + ' עובדים');
-    }
-    return { ok: problems.length === 0, problems: problems };
+    var suggested = planForEmployees(employees);
+    return {
+      ok: false,
+      suggested: suggested,
+      problems: ['תוכנית ' + plan.name + ' כוללת עד ' + plan.maxEmployees + ' עובדים. ' +
+        'יש ' + employees + ' עובדים – נדרשת תוכנית ' + suggested.name +
+        ' (' + suggested.range + ', ' + suggested.priceMonthly + '₪ לחודש).']
+    };
   }
 
   function addDays(date, days) {
@@ -123,7 +166,7 @@
     var today = now ? new Date(now) : new Date();
     return {
       name: name,
-      plan: 'basic',
+      plan: DEFAULT_PLAN,
       status: SUBSCRIPTION.TRIAL,
       validUntil: addDays(today, TRIAL_DAYS).toISOString(),
       createdAt: today.toISOString()
@@ -133,8 +176,10 @@
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
-    PLANS: PLANS, planOf: planOf, accessState: accessState,
-    withinPlanLimits: withinPlanLimits, newTrialCompany: newTrialCompany, addDays: addDays
+    PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
+    planOf: planOf, planForEmployees: planForEmployees, employeesLeft: employeesLeft,
+    accessState: accessState, withinPlanLimits: withinPlanLimits,
+    newTrialCompany: newTrialCompany, addDays: addDays
   };
 
   root.ShiftModel = API;

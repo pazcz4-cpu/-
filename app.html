@@ -18,8 +18,8 @@
   <div class="brand">
     <span class="logo">📱</span>
     <div>
-      <h1>סידור משמרות – מייפון</h1>
-      <p class="sub">שיבוץ שבועי לכל סניף במשמרות בוקר / אמצע / ערב, עם בדיקת כפל משמרות ואילוצי עובדים</p>
+      <h1>סידור משמרות</h1>
+      <p class="sub">שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים</p>
     </div>
   </div>
   <nav class="tabs" id="tabs">
@@ -28,6 +28,7 @@
     <button class="tab" data-tab="employees">עובדים</button>
     <button class="tab" data-tab="branches">סניפים</button>
     <button class="tab hidden" data-tab="users">משתמשים</button>
+    <button class="tab hidden" data-tab="billing">מנוי</button>
     <button class="tab" data-tab="settings">הגדרות</button>
   </nav>
 </header>
@@ -190,6 +191,12 @@
     <div id="users-list" class="table-wrap"></div>
   </section>
 
+  <!-- ===== מנוי ===== -->
+  <section class="panel" id="tab-billing">
+    <h2>המנוי שלך</h2>
+    <div id="billing-panel"></div>
+  </section>
+
   <!-- ===== הגדרות ===== -->
   <section class="panel" id="tab-settings">
     <h2>כללי שיבוץ</h2>
@@ -258,6 +265,8 @@
 <script src="js/backend/auth-ui.js"></script>
 <script src="js/backend/employee-ui.js"></script>
 <script src="js/backend/users-ui.js"></script>
+<script src="js/backend/billing.js"></script>
+<script src="js/backend/billing-ui.js"></script>
 <script src="js/app.js"></script>
 <script src="js/backend/saas.js"></script>
 <script>

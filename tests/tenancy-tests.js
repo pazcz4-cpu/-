@@ -314,12 +314,69 @@ test('מנוי מבוטל חוסם גישה', function () {
   assertEqual(Model.accessState(company, new Date('2026-09-18')).allowed, false, 'מבוטל');
 });
 
-test('מגבלות התוכנית נאכפות', function () {
-  var basic = { plan: 'basic' };
-  assertEqual(Model.withinPlanLimits(basic, { branches: 3, employees: 15 }).ok, true, 'בתוך המגבלה');
-  assertEqual(Model.withinPlanLimits(basic, { branches: 4, employees: 15 }).ok, false, 'חריגה בסניפים');
-  assertEqual(Model.withinPlanLimits({ plan: 'unlimited' }, { branches: 99, employees: 999 }).ok, true,
-    'תוכנית ללא הגבלה');
+console.log('\n== תוכניות ותמחור ==');
+
+test('שלוש התוכניות במחירים ובטווחים שנקבעו', function () {
+  assertEqual(Model.PLANS.starter.priceMonthly, 199, 'תוכנית קטן');
+  assertEqual(Model.PLANS.starter.maxEmployees, 10, 'עד 10 עובדים');
+  assertEqual(Model.PLANS.growth.priceMonthly, 399, 'תוכנית בינוני');
+  assertEqual(Model.PLANS.growth.maxEmployees, 30, 'עד 30 עובדים');
+  assertEqual(Model.PLANS.business.priceMonthly, 599, 'תוכנית גדול');
+  assertEqual(Model.PLANS.business.maxEmployees, 0, '31 ומעלה – ללא תקרה');
+});
+
+test('התוכנית המתאימה נבחרת לפי מספר העובדים', function () {
+  assertEqual(Model.planForEmployees(1).id, 'starter', 'עובד אחד');
+  assertEqual(Model.planForEmployees(10).id, 'starter', 'בדיוק 10');
+  assertEqual(Model.planForEmployees(11).id, 'growth', '11 – מעבר לתוכנית הבאה');
+  assertEqual(Model.planForEmployees(30).id, 'growth', 'בדיוק 30');
+  assertEqual(Model.planForEmployees(31).id, 'business', '31 – התוכנית הגדולה');
+  assertEqual(Model.planForEmployees(500).id, 'business', 'הרבה עובדים');
+});
+
+test('מגבלת העובדים נאכפת ומוצעת התוכנית הנכונה', function () {
+  var starter = { plan: 'starter' };
+  assertEqual(Model.withinPlanLimits(starter, { employees: 10 }).ok, true, 'בדיוק במגבלה');
+  var over = Model.withinPlanLimits(starter, { employees: 11 });
+  assertEqual(over.ok, false, 'חריגה');
+  assertEqual(over.suggested.id, 'growth', 'מוצעת התוכנית הבאה');
+  assert(over.problems[0].indexOf('399') !== -1, 'ההודעה כוללת את המחיר');
+});
+
+test('התוכנית הגדולה אינה מוגבלת במספר עובדים', function () {
+  assertEqual(Model.withinPlanLimits({ plan: 'business' }, { employees: 999 }).ok, true, 'ללא תקרה');
+  assertEqual(Model.employeesLeft({ plan: 'business' }, 999), null, 'אין מכסה שנותרה');
+});
+
+test('אין הגבלת סניפים באף תוכנית', function () {
+  Model.PLAN_ORDER.forEach(function (id) {
+    assert(!('maxBranches' in Model.PLANS[id]), 'תוכנית ' + id + ' אינה מגבילה סניפים');
+  });
+  assertEqual(Model.withinPlanLimits({ plan: 'starter' }, { employees: 5, branches: 50 }).ok, true,
+    'חמישים סניפים בתוכנית הקטנה');
+});
+
+test('כמה עובדים אפשר עוד להוסיף', function () {
+  assertEqual(Model.employeesLeft({ plan: 'starter' }, 7), 3, 'נותרו שלושה');
+  assertEqual(Model.employeesLeft({ plan: 'starter' }, 10), 0, 'המכסה מלאה');
+  assertEqual(Model.employeesLeft({ plan: 'growth' }, 12), 18, 'בתוכנית בינוני');
+});
+
+test('חברה חדשה נפתחת בתוכנית הקטנה בתקופת ניסיון', function () {
+  var company = Model.newTrialCompany('חברה', new Date('2026-09-01'));
+  assertEqual(company.plan, 'starter', 'תוכנית ברירת מחדל');
+  assertEqual(company.status, Model.SUBSCRIPTION.TRIAL, 'סטטוס ניסיון');
+});
+
+test('מנוי שפג ומנוי שבוטל מציגים הסבר נכון', function () {
+  var expired = Model.accessState({ status: 'expired', validUntil: '2026-01-01T00:00:00.000Z' },
+    new Date('2026-09-20'));
+  assertEqual(expired.allowed, false, 'פג – חסום');
+  assert(expired.text.indexOf('הנתונים שמורים') !== -1, 'מרגיע שהנתונים לא אבדו');
+
+  var canceled = Model.accessState({ status: 'canceled' }, new Date('2026-09-20'));
+  assertEqual(canceled.reason, 'canceled', 'מבוטל');
+  assert(canceled.text.indexOf('לחדש') !== -1, 'מציע לחדש');
 });
 
 queue.then(function () {

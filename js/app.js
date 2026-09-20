@@ -1358,6 +1358,17 @@
 
   function bindEmployeesTab() {
     $('#add-employee').addEventListener('click', function () {
+      if (blocked()) return;
+      // מגבלת התוכנית נבדקת לפני ההוספה, אם הוגדרה
+      if (source.planLimit) {
+        var active = state.employees.filter(function (emp) { return emp.active; }).length;
+        var check = source.planLimit(active + 1);
+        if (!check.ok) {
+          toast(check.problems.join(' '));
+          if (source.onPlanBlocked) source.onPlanBlocked(check);
+          return;
+        }
+      }
       state.employees.push({
         id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
         branches: [], shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, note: ''

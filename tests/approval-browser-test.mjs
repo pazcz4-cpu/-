@@ -16,7 +16,7 @@ const APP = 'file://' + path.join(here, '..', 'app.html');
 const OUT = path.join(here, '..', 'dist');
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1450, height: 1000 } });
+const ctx = await browser.newContext({ viewport: { width: 1450, height: 1000 }, locale: 'he-IL' });
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('PAGE: ' + e.message));

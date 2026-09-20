@@ -13,7 +13,7 @@ const APP = 'file://' + path.join(here, '..', 'app.html');
 const browser = await chromium.launch();
 
 async function newSession() {
-  const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 } });
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));

@@ -142,6 +142,10 @@
       },
 
       ui: {
+        until: 'until {time}', sheet: 'Sheet {n}',
+        fileSaved: 'File saved', fileFailed: 'Could not save the file: {message}',
+        unknownError: 'unknown error', downloadUnavailable: 'Downloading files is not available here',
+        loadFailed: 'Loading data failed, defaults loaded', saveFailed: 'Saving data failed',
         iconLetters: 'SH',
         dayHeading: '{day} ({date})',
         missingStaff: 'understaffed',
@@ -306,7 +310,50 @@
         languageTitle: 'Language', languageHint: 'Changes the whole interface. Saved for this device.'
       },
 
+      server: {
+        credentialsRequired: 'Email and password are required',
+        passwordTooShort: 'The password must be at least 6 characters',
+        emailTaken: 'That email address is already registered',
+        companyRequired: 'A company name is required',
+        badCredentials: 'Wrong email or password',
+        userInactive: 'This user is not active. Contact your company manager.',
+        signInRequired: 'Please sign in',
+        noPermission: 'You are not allowed to do that',
+        notLinked: 'This user is not linked to a staff card',
+        weekPublished: 'The schedule for this week is published, so requests can no longer be changed',
+        weekPublishedShort: 'The schedule for this week is already published',
+        noRequest: 'There is no request for that day',
+        badDecision: 'Invalid decision',
+        requestNotFound: 'Request not found',
+        weekMissing: 'That week does not exist',
+        userNotFound: 'User not found',
+        cannotChangeOwner: 'The account owner cannot be changed'
+      },
+
+      notify: {
+        published: 'Schedule published',
+        publishedBody: 'The schedule for the new week is ready. You can see your shifts.',
+        requestApproved: 'Your request was approved',
+        requestApprovedBody: 'Your request for {day} was approved.',
+        requestRejected: 'Your request was declined',
+        requestRejectedBody: 'Your request for {day} was declined',
+        newRequest: 'New request',
+        newRequestBody: 'Someone sent a request that is waiting for your approval.',
+        newRequestsBody: '{count} new requests are waiting for your approval.'
+      },
+
+      payments: {
+        mockProvider: 'Test provider (development)',
+        mockNote: 'Payment is approved immediately with no real charge. For development and demos only.',
+        unknownPlan: 'Unknown plan',
+        serverProvider: 'Server billing ({name})',
+        notConfigured: 'Billing is not configured in this environment',
+        requestFailed: 'The billing request failed ({status})'
+      },
+
       billing: {
+        priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
+        updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',
         activeStaff: 'Active staff', of: '{count} of {max}', unlimited: '{count} (unlimited)',
         plans: 'Plans', choose: 'Choose', currentPlan: 'Current plan',
@@ -320,6 +367,9 @@
       },
 
       auth: {
+        wait: 'One moment…',
+        notifyEnabled: 'Notifications are on',
+        notifyBody: 'We will let you know about schedule updates.',
         signIn: 'Sign in', signUp: 'Create a business account',
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
@@ -333,6 +383,7 @@
       },
 
       users: {
+        nameColumn: 'Name', emailColumn: 'Email', createFailed: 'Could not create the user',
         title: 'Users',
         hint: 'Every person can have their own login. They see only their own shifts and submit their own requests – ' +
           'they cannot see the full schedule or change anything. Managers see and edit everything. ' +
@@ -343,7 +394,21 @@
         created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
       },
 
+      access: {
+        noCompany: 'No company found',
+        trialEnded: 'The trial has ended. Activate a subscription to continue.',
+        trial: 'Trial – {days} days left.',
+        expired: 'The subscription has expired. Renew to continue.',
+        pastDueBlocked: 'Payment was not received and access is blocked. Please update the payment method.',
+        pastDue: 'The last payment did not go through. Access will be blocked in {days} days.',
+        expiredKept: 'The subscription expired and was not renewed. Choosing a plan restores access immediately, and your data is safe.',
+        canceled: 'The subscription was cancelled. You can renew at any time – your data is safe.',
+        inactive: 'The subscription is not active.',
+        overLimit: 'The {plan} plan covers up to {max} staff. You have {count} – the {suggested} plan is needed ({range}, {price}).'
+      },
+
       plans: {
+        starter: 'Small', growth: 'Medium', business: 'Large',
         upTo: 'Up to {count} staff',
         between: '{from} to {to} staff',
         from: '{count} staff and up'
@@ -352,6 +417,9 @@
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },
 
       employee: {
+        prevWeek: '▶ Previous week', nextWeek: 'Next week ◀',
+        loadFailed: 'Could not load the data: {message}',
+        saveFailed: 'Saving failed', reasonSaveFailed: 'Could not save the reason',
         myShifts: 'My shifts', myRequests: 'My requests',
         notPublished: 'The schedule for this week has not been published yet.',
         noShifts: 'You have no shifts this week.',

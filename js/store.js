@@ -3,6 +3,14 @@
   'use strict';
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  /* טקסטים למשתמש מגיעים משכבת התרגום; בלעדיה מוצג המפתח */
+  function t(key, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return key;
+    try { return i18n.t(key, params); } catch (err) { return key; }
+  }
   var STORAGE_KEY = 'maiphone-shifts-v1';
   var VERSION = 1;
 
@@ -166,7 +174,7 @@
 
   function hoursLabel(hours) {
     if (!hours) return '';
-    if (!hours.from) return hours.to ? 'עד ' + hours.to : '';
+    if (!hours.from) return hours.to ? t('ui.until', { time: hours.to }) : '';
     return hours.from + '-' + (hours.to || '');
   }
 
@@ -270,7 +278,7 @@
 
   function holidayName(week, dayIdx) {
     if (!isHoliday(week, dayIdx)) return '';
-    return week.holidays[dayIdx] || 'חג';
+    return week.holidays[dayIdx] || t('toast.holidayDefault');
   }
 
   function setHoliday(week, dayIdx, name) {
@@ -474,7 +482,7 @@
       var hours = (legacyHours && legacyHours[id]) || {};
       out.push({
         id: id,
-        name: String(item.name || '').trim() || fallback.name || ('משמרת ' + (index + 1)),
+        name: String(item.name || '').trim() || fallback.name || t('toast.newShift', { n: index + 1 }),
         from: hours.from || item.from || fallback.from,
         to: hours.to || item.to || fallback.to,
         color: typeof item.color === 'number' ? item.color : (index % Data.SHIFT_COLORS.length)
@@ -576,7 +584,7 @@
       if (!raw) return emptyState();
       return migrate(JSON.parse(raw));
     } catch (err) {
-      console.warn('טעינת הנתונים נכשלה, נטענת ברירת מחדל', err);
+      console.warn(t('ui.loadFailed'), err);
       return emptyState();
     }
   }
@@ -586,7 +594,7 @@
       root.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       return true;
     } catch (err) {
-      console.warn('שמירת הנתונים נכשלה', err);
+      console.warn(t('ui.saveFailed'), err);
       return false;
     }
   }

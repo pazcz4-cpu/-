@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>סידור משמרות – מערכת לעסקים</title>
+<title data-i18n="app.title">סידור משמרות</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -18,18 +18,18 @@
   <div class="brand">
     <span class="logo">📱</span>
     <div>
-      <h1>סידור משמרות</h1>
-      <p class="sub">שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים</p>
+      <h1 data-i18n="app.title">סידור משמרות</h1>
+      <p class="sub" data-i18n="app.subtitle">שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים</p>
     </div>
   </div>
   <nav class="tabs" id="tabs">
-    <button class="tab active" data-tab="schedule">סידור שבועי</button>
-    <button class="tab" data-tab="constraints">אילוצים</button>
-    <button class="tab" data-tab="employees">עובדים</button>
-    <button class="tab" data-tab="branches">סניפים</button>
-    <button class="tab hidden" data-tab="users">משתמשים</button>
-    <button class="tab hidden" data-tab="billing">מנוי</button>
-    <button class="tab" data-tab="settings">הגדרות</button>
+    <button class="tab active" data-tab="schedule" data-i18n="tabs.schedule">סידור שבועי</button>
+    <button class="tab" data-tab="constraints" data-i18n="tabs.constraints">אילוצים</button>
+    <button class="tab" data-tab="employees" data-i18n="tabs.employees">עובדים</button>
+    <button class="tab" data-tab="branches" data-i18n="tabs.branches">סניפים</button>
+    <button class="tab hidden" data-tab="users" data-i18n="tabs.users">משתמשים</button>
+    <button class="tab hidden" data-tab="billing" data-i18n="tabs.billing">מנוי</button>
+    <button class="tab" data-tab="settings" data-i18n="tabs.settings">הגדרות</button>
   </nav>
 </header>
 
@@ -38,62 +38,60 @@
   <section class="panel active" id="tab-schedule">
     <div class="toolbar no-print">
       <div class="week-nav">
-        <button id="prev-week" class="btn ghost" title="שבוע קודם">▶</button>
+        <button id="prev-week" class="btn ghost" data-i18n-title="toolbar.prevWeek" title="שבוע קודם">▶</button>
         <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
-        <button id="next-week" class="btn ghost" title="שבוע הבא">◀</button>
-        <button id="this-week" class="btn ghost small">השבוע הנוכחי</button>
-        <span id="sync-state" class="sync-state local">נשמר במכשיר הזה</span>
+        <button id="next-week" class="btn ghost" data-i18n-title="toolbar.nextWeek" title="שבוע הבא">◀</button>
+        <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
+        <span id="sync-state" class="sync-state local" data-i18n="status.localOnly">נשמר במכשיר הזה</span>
       </div>
       <div class="actions">
-        <button id="generate" class="btn primary">✨ בנה סידור אוטומטי</button>
-        <button id="view-only-toggle" class="btn ghost" aria-pressed="false">🔒 מצב צפייה</button>
-        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ כלים נוספים</button>
+        <button id="generate" class="btn primary">✨ <span data-i18n="toolbar.generate">בנה סידור אוטומטי</span></button>
+        <button id="view-only-toggle" class="btn ghost" aria-pressed="false">🔒 <span data-i18n="toolbar.viewOnly">מצב צפייה</span></button>
+        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ <span data-i18n="toolbar.moreTools">כלים נוספים</span></button>
       </div>
     </div>
 
     <div id="more-tools" class="more-tools no-print">
       <div class="tools-row">
-        <label class="check"><input type="checkbox" id="keep-manual" checked> שמירת שיבוצים ידניים</label>
-        <label class="shabbat-field" id="shabbat-field">צאת שבת
-          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+        <label class="check"><input type="checkbox" id="keep-manual" checked> <span data-i18n="toolbar.keepManual">שמירת שיבוצים ידניים</span></label>
+        <label class="shabbat-field" id="shabbat-field"><span data-i18n="toolbar.shabbatEnd">צאת שבת</span>
+          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
         </label>
       </div>
       <div class="tools-row actions">
-        <button id="clear-week" class="btn ghost">נקה סידור</button>
-        <button id="copy-text" class="btn ghost">📋 העתק כטקסט</button>
-        <button id="export-excel" class="btn ghost">⬇ אקסל</button>
-        <button id="export-csv" class="btn ghost">⬇ CSV</button>
-        <button id="print" class="btn ghost">🖨 הדפסה</button>
+        <button id="clear-week" class="btn ghost" data-i18n="toolbar.clear">נקה סידור</button>
+        <button id="copy-text" class="btn ghost">📋 <span data-i18n="toolbar.copyText">העתק כטקסט</span></button>
+        <button id="export-excel" class="btn ghost">⬇ <span data-i18n="toolbar.excel">אקסל</span></button>
+        <button id="export-csv" class="btn ghost">⬇ <span data-i18n="toolbar.csv">CSV</span></button>
+        <button id="print" class="btn ghost">🖨 <span data-i18n="toolbar.print">הדפסה</span></button>
       </div>
 
       <div class="personal-bar">
-        <span class="personal-label">ייצוא אישי לעובד (רק המשמרות שלו):</span>
+        <span class="personal-label" data-i18n="toolbar.personalExport">ייצוא אישי לעובד (רק המשמרות שלו):</span>
         <select id="personal-employee" class="text-input personal-select"></select>
-        <button id="personal-excel" class="btn ghost small">⬇ אקסל</button>
-        <button id="personal-text" class="btn ghost small">📋 טקסט לוואטסאפ</button>
+        <button id="personal-excel" class="btn ghost small">⬇ <span data-i18n="toolbar.excel">אקסל</span></button>
+        <button id="personal-text" class="btn ghost small">📋 <span data-i18n="excel.personalText">טקסט לוואטסאפ</span></button>
       </div>
 
       <div class="holiday-bar">
-        <span class="holiday-label">ימי חג (הסניפים סגורים):</span>
+        <span class="holiday-label" data-i18n="toolbar.holidays">ימי חג (הסניפים סגורים):</span>
         <div id="holiday-days" class="holiday-chips"></div>
       </div>
     </div>
 
-    <p id="view-only-banner" class="view-only-banner hidden">
-      <b>מצב צפייה</b> – הסידור מוצג לבדיקה בלבד והעריכה חסומה.
-      הייצוא, ההדפסה והמעבר בין שבועות פועלים כרגיל.
+    <p id="view-only-banner" class="view-only-banner hidden" data-i18n="status.viewOnlyBanner">
+      מצב צפייה – הסידור מוצג לבדיקה בלבד והעריכה חסומה.
     </p>
 
-    <p id="local-notice" class="local-notice no-print hidden">
+    <p id="local-notice" class="local-notice no-print hidden" data-i18n="status.localCopy">
       זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים.
-      לעבודה משני מחשבים יש להשתמש בגרסה המתארחת. להעברת הנתונים: ייצוא JSON בלשונית ההגדרות, וייבוא בגרסה המתארחת.
     </p>
 
     <div id="issues" class="issues"></div>
 
     <div class="view-switch no-print">
-      <button class="chip active" data-view="branch">תצוגה לפי סניף</button>
-      <button class="chip" data-view="employee">תצוגה לפי עובד</button>
+      <button class="chip active" data-view="branch" data-i18n="toolbar.byBranch">תצוגה לפי סניף</button>
+      <button class="chip" data-view="employee" data-i18n="toolbar.byEmployee">תצוגה לפי עובד</button>
     </div>
 
     <nav id="day-nav" class="day-nav mobile-only no-print"></nav>
@@ -105,12 +103,12 @@
     <div id="availability" class="availability no-print"></div>
 
     <section id="chat" class="chat no-print hidden">
-      <h3 class="summary-title">שאלות על הסידור</h3>
-      <p class="chat-hint">אפשר לשאול על השבוע שמוצג – למשל "מי עובד בשלישי בערב?", "למה עובד/ת 3 לא משובץ/ת בחמישי?" או "מי יכול להחליף את עובד/ת 5 ביום רביעי?"</p>
+      <h3 class="summary-title" data-i18n="chat.title">שאלות על הסידור</h3>
+      <p class="chat-hint" data-i18n="chat.hint">אפשר לשאול על השבוע שמוצג</p>
       <div id="chat-messages" class="chat-messages"></div>
       <form id="chat-form" class="chat-form">
-        <input type="text" id="chat-input" class="text-input" placeholder="כתבו שאלה על הסידור…" autocomplete="off">
-        <button type="submit" id="chat-send" class="btn primary">שליחה</button>
+        <input type="text" id="chat-input" class="text-input" data-i18n-placeholder="chat.placeholder" placeholder="כתבו שאלה על הסידור…" autocomplete="off">
+        <button type="submit" id="chat-send" class="btn primary" data-i18n="chat.send">שליחה</button>
       </form>
     </section>
   </section>
@@ -120,17 +118,11 @@
     <div class="toolbar no-print">
       <div class="week-label"><strong id="constraints-week">—</strong></div>
       <div class="actions">
-        <button id="clear-constraints" class="btn ghost">נקה אילוצי השבוע</button>
-        <button id="copy-constraints" class="btn ghost">העתק אילוצים משבוע קודם</button>
+        <button id="clear-constraints" class="btn ghost" data-i18n="constraints.clear">נקה אילוצי השבוע</button>
+        <button id="copy-constraints" class="btn ghost" data-i18n="constraints.copyPrevious">העתק אילוצים משבוע קודם</button>
       </div>
     </div>
-    <p class="hint">
-      לחיצה על כפתור משמרת מחליפה מצב:
-      <span class="legend free">זמין</span> →
-      <span class="legend pref">מעדיף/ה</span> →
-      <span class="legend block">לא יכול/ה</span>.
-      סימון <b>חופש</b> חוסם את כל היום.
-    </p>
+    <p class="hint" id="constraints-legend"></p>
     <div id="pending-constraints" class="pending-panel hidden"></div>
 
     <nav id="constraints-day-nav" class="day-nav mobile-only"></nav>
@@ -141,8 +133,8 @@
   <!-- ===== עובדים ===== -->
   <section class="panel" id="tab-employees">
     <div class="toolbar no-print">
-      <h2>עובדים מוגדרים</h2>
-      <button id="add-employee" class="btn primary">+ הוסף עובד</button>
+      <h2 data-i18n="employees.title">עובדים מוגדרים</h2>
+      <button id="add-employee" class="btn primary" data-i18n="employees.add">+ הוסף עובד</button>
     </div>
     <div id="employees-list" class="cards"></div>
   </section>
@@ -150,42 +142,38 @@
   <!-- ===== סניפים ===== -->
   <section class="panel" id="tab-branches">
     <div class="toolbar no-print">
-      <h2>סניפים מוגדרים</h2>
-      <button id="add-branch" class="btn primary">+ הוסף סניף</button>
+      <h2 data-i18n="branches.title">סניפים מוגדרים</h2>
+      <button id="add-branch" class="btn primary" data-i18n="branches.add">+ הוסף סניף</button>
     </div>
-    <p class="hint">
+    <p class="hint" data-i18n="branches.hint">
       לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת.
-      <b>עובדים = 0</b> סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן כ<b>כפל משמרת</b>.
-      במוצ״ש, "לפי צאת שבת" מתחיל את המשמרת חצי שעה אחרי צאת השבת שמזינים בלשונית הסידור.
     </p>
     <div id="branches-list" class="cards"></div>
   </section>
 
   <!-- ===== משתמשים ===== -->
   <section class="panel" id="tab-users">
-    <h2>משתמשי החברה</h2>
-    <p class="hint">
-      כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו –
-      הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל.
-      כדי שעובד יראה את המשמרות שלו יש לקשר את המשתמש לכרטיס העובד.
+    <h2 data-i18n="users.title">משתמשי החברה</h2>
+    <p class="hint" data-i18n="users.hint">
+      כל עובד יכול לקבל כניסה משלו.
     </p>
 
     <form id="invite-form" class="settings-block invite-form">
-      <h3>הוספת משתמש</h3>
+      <h3 data-i18n="users.add">הוספת משתמש</h3>
       <div class="invite-row">
-        <label>שם<input type="text" name="name" class="text-input"></label>
-        <label>אימייל<input type="email" name="email" class="text-input" required></label>
-        <label>סיסמה ראשונית<input type="password" name="password" class="text-input" required minlength="6"></label>
+        <label><span data-i18n="users.nameColumn">שם</span><input type="text" name="name" class="text-input"></label>
+        <label><span data-i18n="users.emailColumn">אימייל</span><input type="email" name="email" class="text-input" required></label>
+        <label><span data-i18n="users.initialPassword">סיסמה ראשונית</span><input type="password" name="password" class="text-input" required minlength="6"></label>
       </div>
       <div class="invite-row">
-        <label>תפקיד
+        <label><span data-i18n="users.role">תפקיד</span>
           <select name="role" class="text-input">
-            <option value="employee">עובד/ת</option>
-            <option value="manager">מנהל/ת</option>
+            <option value="employee" data-i18n="roles.employee">עובד/ת</option>
+            <option value="manager" data-i18n="roles.manager">מנהל/ת</option>
           </select>
         </label>
-        <label>כרטיס עובד<select name="employeeId" class="text-input"></select></label>
-        <button type="submit" class="btn primary">יצירת משתמש</button>
+        <label><span data-i18n="users.staffCard">כרטיס עובד</span><select name="employeeId" class="text-input"></select></label>
+        <button type="submit" class="btn primary" data-i18n="users.createUser">יצירת משתמש</button>
       </div>
       <p id="users-message" class="users-message hidden"></p>
     </form>
@@ -195,52 +183,55 @@
 
   <!-- ===== מנוי ===== -->
   <section class="panel" id="tab-billing">
-    <h2>המנוי שלך</h2>
+    <h2 data-i18n="billing.title">המנוי שלך</h2>
     <div id="billing-panel"></div>
   </section>
 
   <!-- ===== הגדרות ===== -->
   <section class="panel" id="tab-settings">
-    <h2>כללי שיבוץ</h2>
+    <h2 data-i18n="settings.rules">כללי שיבוץ</h2>
     <div class="settings-block">
-      <label class="check"><input type="checkbox" id="opt-one-per-day"> עובד משובץ למשמרת אחת ביום לכל היותר</label>
-      <label class="check"><input type="checkbox" id="opt-rest"> אין משמרת בוקר אחרי משמרת ערב של היום הקודם</label>
-      <label class="check"><input type="checkbox" id="opt-one-day-off"> יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</label>
+      <label class="check"><input type="checkbox" id="opt-one-per-day"> <span data-i18n="settings.onePerDay">עובד משובץ למשמרת אחת ביום לכל היותר</span></label>
+      <label class="check"><input type="checkbox" id="opt-rest"> <span data-i18n="settings.rest">אין משמרת בוקר אחרי משמרת ערב של היום הקודם</span></label>
+      <label class="check"><input type="checkbox" id="opt-one-day-off"> <span data-i18n="settings.oneDayOff">יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</span></label>
     </div>
 
-    <h2>סוגי המשמרות בעסק</h2>
+    <h2 data-i18n="settings.shiftTypes">סוגי המשמרות בעסק</h2>
     <div class="settings-block">
       <div id="default-hours" class="shift-grid"></div>
       <div class="row">
-        <button id="add-shift" class="btn primary">+ הוספת משמרת</button>
-        <button id="apply-default-hours" class="btn ghost">החל שעות על כל הסניפים (ראשון–חמישי)</button>
+        <button id="add-shift" class="btn primary" data-i18n="settings.addShift">+ הוספת משמרת</button>
+        <button id="apply-default-hours" class="btn ghost" data-i18n="settings.applyHours">החל שעות על כל הסניפים (ראשון–חמישי)</button>
       </div>
-      <p class="hint" style="margin:0">
+      <p class="hint" style="margin:0" data-i18n="settings.shiftsHint">
         כאן מגדירים כמה משמרות יש בעסק, איך הן נקראות, מה השעות שלהן ובאיזה צבע הן מוצגות.
-        אפשר להוסיף משמרות (לילה, צהריים, סוף שבוע) ולשנות את הסדר.
-        השעות כאן הן ברירת המחדל; לכל סניף אפשר לקבוע שעות משלו בלשונית "סניפים".
-        הכפתור מחיל את השעות על כל הסניפים הקיימים, בלי לשנות ימים פתוחים או כמות עובדים.
       </p>
     </div>
 
-    <h2>מוצאי שבת</h2>
+    <h2 data-i18n="settings.sabbathTitle">מוצאי שבת</h2>
     <div class="settings-block">
-      <label class="check">שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:
-        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד">
+      <label class="check"><span data-i18n="settings.sabbathDefault">שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:</span>
+        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד">
       </label>
-      <p class="hint" style="margin:0">
+      <p class="hint" style="margin:0" data-i18n="settings.sabbathHint">
         בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. משמרת מוצ״ש מתחילה חצי שעה אחריה.
-        הימים והשעות של שאר המשמרות נקבעים לכל סניף בנפרד בלשונית "סניפים".
       </p>
     </div>
 
-    <h2>גיבוי ושחזור</h2>
+    <h2 data-i18n="settings.backup">גיבוי ושחזור</h2>
     <div class="settings-block row">
-      <button id="export-json" class="btn ghost">⬇ ייצוא כל הנתונים (JSON)</button>
-      <label class="btn ghost file-btn">⬆ ייבוא נתונים<input type="file" id="import-json" accept="application/json" hidden></label>
-      <button id="reset-all" class="btn danger">איפוס להגדרות ברירת מחדל</button>
+      <button id="export-json" class="btn ghost">⬇ <span data-i18n="settings.exportJson">ייצוא כל הנתונים (JSON)</span></button>
+      <label class="btn ghost file-btn">⬆ <span data-i18n="settings.importJson">ייבוא נתונים</span><input type="file" id="import-json" accept="application/json" hidden></label>
+      <button id="reset-all" class="btn danger" data-i18n="settings.reset">איפוס להגדרות ברירת מחדל</button>
     </div>
-    <p class="hint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה (localStorage). לשיתוף בין מחשבים – ייצאו קובץ JSON.</p>
+    <p class="hint" data-i18n="settings.backupHint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה.</p>
+    <h2 data-i18n="settings.languageTitle">שפה</h2>
+    <div class="settings-block row">
+      <label class="check"><span data-i18n="app.language">שפה</span>
+        <select id="language-select" class="text-input"></select>
+      </label>
+      <p class="hint" style="margin:0" data-i18n="settings.languageHint">מחליף את כל הממשק. נשמר במכשיר הזה.</p>
+    </div>
   </section>
 </main>
 
@@ -261,6 +252,7 @@
 <script src="js/i18n/core.js"></script>
 <script src="js/i18n/en.js"></script>
 <script src="js/i18n/he.js"></script>
+<script src="js/i18n/dom.js"></script>
 <script src="js/platform.js"></script>
 <script src="js/xlsx.js"></script>
 <script src="js/data.js"></script>

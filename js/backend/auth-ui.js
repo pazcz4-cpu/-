@@ -4,6 +4,11 @@
 
   var Model = root.ShiftModel;
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -23,6 +28,7 @@
   AuthUI.prototype.start = function () {
     var self = this;
     this._bind();
+    this.watchLanguage();
     var session = this.backend.session();
     if (session) { return this._enter(session); }
     this.showGate();
@@ -40,6 +46,13 @@
         return;
       }
       if (event.target.closest('#auth-signout-blocked')) { self.signOut(); }
+    });
+
+    /* החלפת שפה במסך הכניסה מציירת אותו מחדש בשפה החדשה */
+    this.gate.addEventListener('change', function (event) {
+      if (!event.target.closest('#auth-language') || !root.I18nDom) return;
+      root.I18nDom.setLanguage(event.target.value);
+      self.showGate();
     });
 
     this.gate.addEventListener('submit', function (event) {
@@ -64,7 +77,7 @@
           var session = self.backend.session();
           if (session) self.renderUserBar(session);
           if (permission === 'granted') {
-            Notify.show({ title: 'ההתראות הופעלו', body: 'נודיע לך על עדכונים בסידור.', tag: 'welcome' });
+            Notify.show({ title: t('auth.notifyEnabled'), body: t('auth.notifyBody'), tag: 'welcome' });
           }
         });
       }
@@ -83,14 +96,14 @@
     var button = this.gate.querySelector('button[type="submit"]');
     if (!button) return;
     button.disabled = busy;
-    if (busy) { button.dataset.idle = button.textContent; button.textContent = label || 'רגע…'; }
+    if (busy) { button.dataset.idle = button.textContent; button.textContent = label || t('auth.wait'); }
     else if (button.dataset.idle) { button.textContent = button.dataset.idle; }
   };
 
   AuthUI.prototype._signIn = function (form) {
     var self = this;
     this._error('');
-    this._setBusy(true, 'מתחבר…');
+    this._setBusy(true, t('auth.signingIn'));
     this.backend.signIn({
       email: form.email.value, password: form.password.value
     }).then(function (session) {
@@ -98,14 +111,14 @@
       self._enter(session);
     }, function (err) {
       self._setBusy(false);
-      self._error((err && err.message) || 'ההתחברות נכשלה');
+      self._error((err && err.message) || t('auth.failedSignIn'));
     });
   };
 
   AuthUI.prototype._signUp = function (form) {
     var self = this;
     this._error('');
-    this._setBusy(true, 'פותח חשבון…');
+    this._setBusy(true, t('auth.creating'));
     this.backend.signUpCompany({
       companyName: form.companyName.value,
       name: form.name.value,
@@ -116,7 +129,7 @@
       self._enter(session);
     }, function (err) {
       self._setBusy(false);
-      self._error((err && err.message) || 'ההרשמה נכשלה');
+      self._error((err && err.message) || t('auth.failedSignUp'));
     });
   };
 
@@ -149,16 +162,30 @@
     var Notify = root.ShiftNotify;
     var notifyButton = '';
     if (Notify && Notify.supported() && !(Notify.enabled() && Notify.permission() === 'granted')) {
-      notifyButton = '<button id="user-notify" class="btn ghost small">🔔 הפעלת התראות</button>';
+      notifyButton = '<button id="user-notify" class="btn ghost small">' + t('auth.enableNotifications') + '</button>';
     }
+
+    var langSelect = '<select id="user-language" class="user-lang" aria-label="' +
+      esc(t('app.language')) + '"></select>';
 
     bar.innerHTML =
       '<span class="user-company">' + esc(session.company.name) + '</span>' +
       '<span class="user-name">' + esc(session.user.name) +
       ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
-      notice + notifyButton +
-      '<button id="user-signout" class="btn ghost small">יציאה</button>';
+      notice + langSelect + notifyButton +
+      '<button id="user-signout" class="btn ghost small">' + t('auth.signOut') + '</button>';
     bar.classList.remove('hidden');
+    if (root.I18nDom) { root.I18nDom.fillPicker(bar.querySelector('#user-language')); }
+  };
+
+  /* שורת המשתמש נכתבת מחדש כשהשפה מתחלפת */
+  AuthUI.prototype.watchLanguage = function () {
+    var self = this;
+    if (!root.I18n) return;
+    root.I18n.onChange(function () {
+      var session = self.backend.session();
+      if (session) self.renderUserBar(session);
+    });
   };
 
   AuthUI.prototype.showBlocked = function (session) {
@@ -168,13 +195,13 @@
       '<div class="auth-card">' +
         '<h1 class="auth-title">' + esc(session.company.name) + '</h1>' +
         '<div class="auth-blocked">' +
-          '<h2>הגישה חסומה</h2>' +
+          '<h2>' + t('auth.blocked') + '</h2>' +
           '<p>' + esc(session.access.text) + '</p>' +
           (Model.can(session.user.role, 'billing.manage')
-            ? '<p class="auth-hint">להפעלת המנוי יש לפנות לתמיכה.</p>'
-            : '<p class="auth-hint">יש לפנות לבעל החשבון בחברה כדי לחדש את המנוי.</p>') +
+            ? '<p class="auth-hint">' + t('auth.blockedOwner') + '</p>'
+            : '<p class="auth-hint">' + t('auth.blockedMember') + '</p>') +
         '</div>' +
-        '<button id="auth-signout-blocked" class="btn ghost">יציאה</button>' +
+        '<button id="auth-signout-blocked" class="btn ghost">' + t('auth.signOut') + '</button>' +
       '</div>';
     return Promise.resolve(null);
   };
@@ -188,36 +215,41 @@
     var signin = this.mode === 'signin';
     var html = '<div class="auth-card">';
     html += '<div class="auth-brand"><span class="logo">📱</span><div>' +
-      '<h1 class="auth-title">סידור משמרות</h1>' +
-      '<p class="auth-sub">שיבוץ עובדים לסניפים, בלי כפל משמרות ובלי חוסרים</p></div></div>';
+      '<h1 class="auth-title">' + t('app.title') + '</h1>' +
+      '<p class="auth-sub">' + t('app.subtitle') + '</p></div></div>';
+
+    /* בורר שפה כבר במסך הכניסה – לפני שיש חשבון או העדפה שמורה */
+    html += '<div class="auth-lang"><label>' + t('app.language') +
+      ' <select id="auth-language" class="text-input"></select></label></div>';
 
     html += '<div class="auth-tabs">' +
-      '<button class="auth-tab' + (signin ? ' active' : '') + '" data-auth-mode="signin">התחברות</button>' +
-      '<button class="auth-tab' + (signin ? '' : ' active') + '" data-auth-mode="signup">פתיחת חשבון לעסק</button>' +
+      '<button class="auth-tab' + (signin ? ' active' : '') + '" data-auth-mode="signin">' + t('auth.signIn') + '</button>' +
+      '<button class="auth-tab' + (signin ? '' : ' active') + '" data-auth-mode="signup">' + t('auth.signUp') + '</button>' +
       '</div>';
 
     html += '<p class="auth-error hidden"></p>';
 
     if (signin) {
       html += '<form id="signin-form" class="auth-form">' +
-        '<label>אימייל<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
-        '<label>סיסמה<input type="password" name="password" class="text-input" autocomplete="current-password" required></label>' +
-        '<button type="submit" class="btn primary">כניסה</button>' +
+        '<label>' + t('auth.email') + '<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
+        '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="current-password" required></label>' +
+        '<button type="submit" class="btn primary">' + t('auth.enter') + '</button>' +
         '</form>';
     } else {
       html += '<form id="signup-form" class="auth-form">' +
-        '<label>שם העסק<input type="text" name="companyName" class="text-input" required></label>' +
-        '<label>השם שלך<input type="text" name="name" class="text-input" autocomplete="name"></label>' +
-        '<label>אימייל<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
-        '<label>סיסמה<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
-        '<small>לפחות 6 תווים</small></label>' +
-        '<button type="submit" class="btn primary">פתיחת חשבון</button>' +
-        '<p class="auth-hint">' + Model.TRIAL_DAYS + ' ימי ניסיון ללא תשלום. לא נדרש אמצעי תשלום.</p>' +
+        '<label>' + t('auth.companyName') + '<input type="text" name="companyName" class="text-input" required></label>' +
+        '<label>' + t('auth.name') + '<input type="text" name="name" class="text-input" autocomplete="name"></label>' +
+        '<label>' + t('auth.email') + '<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
+        '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
+        '<small>' + t('auth.passwordHint') + '</small></label>' +
+        '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +
+        '<p class="auth-hint">' + t('auth.trialNote', { days: Model.TRIAL_DAYS }) + '</p>' +
         '</form>';
     }
 
     html += '</div>';
     this.gate.innerHTML = html;
+    if (root.I18nDom) { root.I18nDom.fillPicker(this.gate.querySelector('#auth-language')); }
   };
 
   var API = { AuthUI: AuthUI };

@@ -3,6 +3,11 @@
 (function (root) {
   'use strict';
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Model = root.ShiftModel;
 
   function esc(value) {
@@ -19,8 +24,11 @@
     ctx.backend.listUsers().then(function (users) {
       var employees = ctx.getEmployees() || [];
       var html = '<table><thead><tr>' +
-        '<th class="row-head">שם</th><th>אימייל</th><th>תפקיד</th>' +
-        '<th>כרטיס עובד</th><th>פעיל</th></tr></thead><tbody>';
+        '<th class="row-head">' + t('users.nameColumn') + '</th>' +
+        '<th>' + t('users.emailColumn') + '</th>' +
+        '<th>' + t('users.role') + '</th>' +
+        '<th>' + t('users.staffCard') + '</th>' +
+        '<th>' + t('users.activeColumn') + '</th></tr></thead><tbody>';
 
       users.forEach(function (user) {
         var isOwner = user.role === 'owner';
@@ -30,11 +38,11 @@
         html += '<td>' + (isOwner
           ? esc(Model.ROLE_NAMES.owner)
           : '<select data-field="role" class="text-input">' +
-              '<option value="manager"' + (user.role === 'manager' ? ' selected' : '') + '>מנהל/ת</option>' +
-              '<option value="employee"' + (user.role === 'employee' ? ' selected' : '') + '>עובד/ת</option>' +
+              '<option value="manager"' + (user.role === 'manager' ? ' selected' : '') + '>' + esc(t('roles.manager')) + '</option>' +
+              '<option value="employee"' + (user.role === 'employee' ? ' selected' : '') + '>' + esc(t('roles.employee')) + '</option>' +
             '</select>') + '</td>';
         html += '<td>' + (isOwner ? '—' :
-          '<select data-field="employeeId" class="text-input"><option value="">ללא</option>' +
+          '<select data-field="employeeId" class="text-input"><option value="">' + t('users.none') + '</option>' +
           employees.map(function (emp) {
             return '<option value="' + esc(emp.id) + '"' +
               (user.employeeId === emp.id ? ' selected' : '') + '>' + esc(emp.name) + '</option>';
@@ -70,10 +78,10 @@
       else return;
 
       ctx.backend.updateUser(row.dataset.user, patch).then(function () {
-        say('העדכון נשמר');
+        say(t('users.updated'));
         render();
       }, function (err) {
-        say((err && err.message) || 'העדכון נכשל', true);
+        say((err && err.message) || t('users.updateFailed'), true);
         render();
       });
     });
@@ -89,10 +97,10 @@
         employeeId: form.employeeId.value || null
       }).then(function (user) {
         form.reset();
-        say('נוצר משתמש עבור ' + user.email);
+        say(t('users.created', { email: user.email }));
         render();
       }, function (err) {
-        say((err && err.message) || 'יצירת המשתמש נכשלה', true);
+        say((err && err.message) || t('users.createFailed'), true);
       });
     });
   }
@@ -101,7 +109,7 @@
     var select = document.querySelector('#invite-form select[name="employeeId"]');
     if (!select || !ctx) return;
     var employees = ctx.getEmployees() || [];
-    select.innerHTML = '<option value="">ללא קישור</option>' + employees.map(function (emp) {
+    select.innerHTML = '<option value="">' + t('users.noLink') + '</option>' + employees.map(function (emp) {
       return '<option value="' + esc(emp.id) + '">' + esc(emp.name) + '</option>';
     }).join('');
   }
@@ -113,6 +121,7 @@
     bind();
     refreshEmployeeOptions();
     render();
+    if (root.I18n) { root.I18n.onChange(render); }
 
     document.getElementById('tabs').addEventListener('click', function (event) {
       var button = event.target.closest('.tab[data-tab="users"]');

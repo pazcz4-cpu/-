@@ -2134,13 +2134,14 @@
 
   /* ========== בחירת שפה ========== */
   function bindLanguage() {
-    var select = $('#language-select');
-    if (!select || !window.I18nDom) return;
-    window.I18nDom.fillPicker(select);
-    select.addEventListener('change', function () {
+    /* השפה משנה גם טקסטים שנבנים ב-JS, ולכן מציירים הכול מחדש */
+    if (I18n) { I18n.onChange(function () { render(); }); }
+    if (!window.I18nDom) return;
+    /* הבורר מוחלף בכל ציור, ולכן מאזינים ברמת המסמך */
+    document.addEventListener('change', function (event) {
+      var select = event.target.closest('#language-select, #user-language');
+      if (!select) return;
       window.I18nDom.setLanguage(select.value);
-      /* השפה משנה גם טקסטים שנבנים ב-JS, ולכן מציירים הכול מחדש */
-      render();
     });
   }
 

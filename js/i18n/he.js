@@ -141,6 +141,10 @@
       },
 
       ui: {
+        until: 'עד {time}', sheet: 'גיליון {n}',
+        fileSaved: 'הקובץ נשמר', fileFailed: 'שמירת הקובץ נכשלה: {message}',
+        unknownError: 'שגיאה לא ידועה', downloadUnavailable: 'לא ניתן להוריד קובץ בסביבה הזו',
+        loadFailed: 'טעינת הנתונים נכשלה, נטענת ברירת מחדל', saveFailed: 'שמירת הנתונים נכשלה',
         iconLetters: 'סד',
         dayHeading: 'יום {day} ({date})',
         missingStaff: 'חסר איוש',
@@ -305,7 +309,50 @@
         languageTitle: 'שפה', languageHint: 'משנה את כל הממשק. נשמר למכשיר הזה.'
       },
 
+      server: {
+        credentialsRequired: 'נדרשים אימייל וסיסמה',
+        passwordTooShort: 'הסיסמה חייבת להכיל לפחות 6 תווים',
+        emailTaken: 'כתובת האימייל כבר רשומה',
+        companyRequired: 'נדרש שם חברה',
+        badCredentials: 'אימייל או סיסמה שגויים',
+        userInactive: 'המשתמש אינו פעיל. פנו למנהל החברה.',
+        signInRequired: 'יש להתחבר',
+        noPermission: 'אין לך הרשאה לפעולה הזו',
+        notLinked: 'המשתמש אינו מקושר לכרטיס עובד',
+        weekPublished: 'הסידור לשבוע הזה כבר פורסם ולא ניתן לשנות אילוצים',
+        weekPublishedShort: 'הסידור לשבוע הזה כבר פורסם',
+        noRequest: 'אין בקשה ליום הזה',
+        badDecision: 'החלטה לא חוקית',
+        requestNotFound: 'הבקשה לא נמצאה',
+        weekMissing: 'השבוע אינו קיים',
+        userNotFound: 'המשתמש לא נמצא',
+        cannotChangeOwner: 'לא ניתן לשנות את בעל החשבון'
+      },
+
+      notify: {
+        published: 'הסידור פורסם',
+        publishedBody: 'הסידור לשבוע החדש זמין. אפשר לראות את המשמרות שלך.',
+        requestApproved: 'הבקשה שלך אושרה',
+        requestApprovedBody: 'הבקשה ליום {day} אושרה.',
+        requestRejected: 'הבקשה שלך נדחתה',
+        requestRejectedBody: 'הבקשה ליום {day} נדחתה',
+        newRequest: 'בקשת אילוץ חדשה',
+        newRequestBody: 'עובד/ת הגיש/ה בקשה שממתינה לאישורך.',
+        newRequestsBody: '{count} בקשות חדשות ממתינות לאישורך.'
+      },
+
+      payments: {
+        mockProvider: 'ספק מדומה (פיתוח)',
+        mockNote: 'התשלום מאושר מיד ללא חיוב אמיתי. משמש לפיתוח ולהדגמה בלבד.',
+        unknownPlan: 'תוכנית לא מוכרת',
+        serverProvider: 'חיוב דרך השרת ({name})',
+        notConfigured: 'שכבת החיוב אינה מוגדרת בסביבה הזו',
+        requestFailed: 'בקשת החיוב נכשלה ({status})'
+      },
+
       billing: {
+        priceMonthly: '{amount}₪ לחודש', priceAmount: '{amount}₪',
+        updateFailed: 'העדכון נכשל', cancelFailed: 'הביטול נכשל',
         title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',
         activeStaff: 'עובדים פעילים', of: '{count} מתוך {max}', unlimited: '{count} (ללא הגבלה)',
         plans: 'תוכניות', choose: 'בחירה', currentPlan: 'התוכנית הנוכחית',
@@ -319,6 +366,9 @@
       },
 
       auth: {
+        wait: 'רגע…',
+        notifyEnabled: 'ההתראות הופעלו',
+        notifyBody: 'נודיע לך על עדכונים בסידור.',
         signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
         email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
         passwordHint: 'לפחות 6 תווים',
@@ -332,6 +382,7 @@
       },
 
       users: {
+        nameColumn: 'שם', emailColumn: 'אימייל', createFailed: 'יצירת המשתמש נכשלה',
         title: 'משתמשי החברה',
         hint: 'כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו – ' +
           'הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל. ' +
@@ -342,7 +393,21 @@
         created: 'נוצר משתמש עבור {email}', updated: 'העדכון נשמר', updateFailed: 'העדכון נכשל'
       },
 
+      access: {
+        noCompany: 'לא נמצאה חברה',
+        trialEnded: 'תקופת הניסיון הסתיימה. יש להפעיל מנוי כדי להמשיך.',
+        trial: 'תקופת ניסיון – נותרו {days} ימים.',
+        expired: 'המנוי פג. יש לחדש כדי להמשיך.',
+        pastDueBlocked: 'התשלום לא התקבל והגישה נחסמה. יש לעדכן אמצעי תשלום.',
+        pastDue: 'התשלום האחרון לא עבר. הגישה תיחסם בעוד {days} ימים.',
+        expiredKept: 'המנוי פג ולא חודש. בחירת תוכנית תחזיר את הגישה מיד, והנתונים שמורים.',
+        canceled: 'המנוי בוטל. אפשר לחדש בכל רגע – הנתונים שמורים.',
+        inactive: 'המנוי אינו פעיל.',
+        overLimit: 'תוכנית {plan} כוללת עד {max} עובדים. יש {count} עובדים – נדרשת תוכנית {suggested} ({range}, {price}).'
+      },
+
       plans: {
+        starter: 'קטן', growth: 'בינוני', business: 'גדול',
         upTo: 'עד {count} עובדים',
         between: '{from} עד {to} עובדים',
         from: '{count} עובדים ומעלה'
@@ -351,6 +416,9 @@
       roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
 
       employee: {
+        prevWeek: '▶ שבוע קודם', nextWeek: 'שבוע הבא ◀',
+        loadFailed: 'לא ניתן לטעון את הנתונים: {message}',
+        saveFailed: 'השמירה נכשלה', reasonSaveFailed: 'שמירת הסיבה נכשלה',
         myShifts: 'המשמרות שלי', myRequests: 'האילוצים שלי',
         notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
         noShifts: 'אין לך משמרות בשבוע הזה.',

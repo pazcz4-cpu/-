@@ -265,7 +265,7 @@ table { border-collapse: collapse; width: 100%; min-width: 900px; }
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: top; font-size: 13px; }
 thead th { background: var(--surface-head); position: sticky; top: 0; z-index: 2; font-size: 13px; }
 th.day-head small { display: block; font-weight: 400; color: var(--muted); }
-td.row-head, th.row-head { background: var(--surface-row); text-align: right; font-weight: 600; white-space: nowrap; }
+td.row-head, th.row-head { background: var(--surface-row); text-align: start; font-weight: 600; white-space: nowrap; }
 tr.branch-start td, tr.branch-start th { border-top: 2px solid var(--brand); }
 td.closed {
   background: repeating-linear-gradient(45deg, var(--closed-a), var(--closed-a) 6px, var(--closed-b) 6px, var(--closed-b) 12px);
@@ -273,7 +273,7 @@ td.closed {
 }
 
 /* צבעי המשמרות: לוח קבוע שכל עסק בוחר ממנו לכל משמרת שהגדיר */
-.sh { background: var(--sh-bg); border-right: 4px solid var(--sh-line); }
+.sh { background: var(--sh-bg); border-inline-start: 4px solid var(--sh-line); }
 .sh-0 { --sh-bg: var(--c0-bg); --sh-line: var(--c0-line); }
 .sh-1 { --sh-bg: var(--c1-bg); --sh-line: var(--c1-line); }
 .sh-2 { --sh-bg: var(--c2-bg); --sh-line: var(--c2-line); }
@@ -284,9 +284,9 @@ td.closed {
 .sh-7 { --sh-bg: var(--c7-bg); --sh-line: var(--c7-line); }
 
 /* תאימות לאחור לסגנונות שעדיין מזכירים את שלוש המשמרות המקוריות */
-.shift-morning { background: var(--c0-bg); border-right: 4px solid var(--c0-line); }
-.shift-middle  { background: var(--c1-bg); border-right: 4px solid var(--c1-line); }
-.shift-evening { background: var(--c2-bg); border-right: 4px solid var(--c2-line); }
+.shift-morning { background: var(--c0-bg); border-inline-start: 4px solid var(--c0-line); }
+.shift-middle  { background: var(--c1-bg); border-inline-start: 4px solid var(--c1-line); }
+.shift-evening { background: var(--c2-bg); border-inline-start: 4px solid var(--c2-line); }
 
 td.cell { min-width: 130px; }
 td.cell.has-error { outline: 2px solid var(--err); outline-offset: -2px; }
@@ -475,11 +475,11 @@ td.holiday-cell small { display: block; font-weight: 400; opacity: .8; }
 .summary-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .summary-list li {
   font-size: 13.5px; padding: 6px 11px; border-radius: 8px;
-  border-right: 3px solid var(--line); background: var(--surface-sunken);
+  border-inline-start: 3px solid var(--line); background: var(--surface-sunken);
 }
-.summary-list li.has-spare { border-right-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.summary-list li.has-spare { border-inline-start-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
 .summary-list li.has-spare b { color: inherit; }
-.summary-list li.no-days { border-right-color: var(--badge-warn); background: var(--warn-bg); color: var(--warn); }
+.summary-list li.no-days { border-inline-start-color: var(--badge-warn); background: var(--warn-bg); color: var(--warn); }
 .summary-list li.full { color: var(--muted); }
 
 /* ===== ייצוא אישי לעובד ===== */
@@ -636,7 +636,7 @@ body { -webkit-tap-highlight-color: transparent; }
 
 /* מסכים צרים במיוחד */
 @media (max-width: 380px) {
-  main { padding-left: 12px; padding-right: 12px; }
+  main { padding-inline: 12px; }
   .day-tab { min-width: 46px; padding: 6px 2px; }
   .m-card-head { font-size: 14px; }
 }
@@ -765,7 +765,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .employee-shifts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .employee-shift {
   border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
-  border-right-width: 4px; border-right-style: solid;
+  border-inline-start-width: 4px; border-inline-start-style: solid;
 }
 .employee-shift b { font-size: 15px; }
 .employee-shift span { font-size: 12.5px; color: var(--muted); margin-inline-start: 6px; }
@@ -843,7 +843,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* סטטוס בקשת אילוץ במסך העובד */
 .req-badge {
-  float: left; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+  float: inline-end; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
 }
 .req-badge.pending { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
 .req-badge.approved { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line); }
@@ -861,7 +861,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .shift-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 12px; border-radius: 10px;
-  border: 1px solid var(--line); border-right-width: 4px; border-right-style: solid;
+  border: 1px solid var(--line); border-inline-start-width: 4px; border-inline-start-style: solid;
 }
 .shift-row .shift-name { flex: 1 1 150px; font-weight: 600; background: var(--surface); }
 .shift-times { display: flex; align-items: center; gap: 6px; }
@@ -875,6 +875,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .color-dot.active { border-color: var(--ink); }
 .shift-actions { display: flex; gap: 4px; margin-inline-start: auto; }
 .shift-actions .btn { padding: 4px 9px; }
+
+/* בורר השפה בשורת המשתמש ובמסך הכניסה */
+.user-lang {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  color: inherit; font: inherit; font-size: 12.5px; padding: 3px 8px;
+}
+.auth-lang { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.auth-lang select { margin-inline-start: 6px; }
 
 </style>
 </head>
@@ -918,7 +926,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       <div class="tools-row">
         <label class="check"><input type="checkbox" id="keep-manual" checked> <span data-i18n="toolbar.keepManual">שמירת שיבוצים ידניים</span></label>
         <label class="shabbat-field" id="shabbat-field"><span data-i18n="toolbar.shabbatEnd">צאת שבת</span>
-          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
         </label>
       </div>
       <div class="tools-row actions">
@@ -1039,7 +1047,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     <h2 data-i18n="settings.sabbathTitle">מוצאי שבת</h2>
     <div class="settings-block">
       <label class="check"><span data-i18n="settings.sabbathDefault">שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:</span>
-        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" placeholder="שש:דד">
+        <input type="text" id="default-shabbat" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד">
       </label>
       <p class="hint" style="margin:0" data-i18n="settings.sabbathHint">
         בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. משמרת מוצ״ש מתחילה חצי שעה אחריה.
@@ -1350,6 +1358,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       ui: {
+        until: 'until {time}', sheet: 'Sheet {n}',
+        fileSaved: 'File saved', fileFailed: 'Could not save the file: {message}',
+        unknownError: 'unknown error', downloadUnavailable: 'Downloading files is not available here',
+        loadFailed: 'Loading data failed, defaults loaded', saveFailed: 'Saving data failed',
         iconLetters: 'SH',
         dayHeading: '{day} ({date})',
         missingStaff: 'understaffed',
@@ -1514,7 +1526,50 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         languageTitle: 'Language', languageHint: 'Changes the whole interface. Saved for this device.'
       },
 
+      server: {
+        credentialsRequired: 'Email and password are required',
+        passwordTooShort: 'The password must be at least 6 characters',
+        emailTaken: 'That email address is already registered',
+        companyRequired: 'A company name is required',
+        badCredentials: 'Wrong email or password',
+        userInactive: 'This user is not active. Contact your company manager.',
+        signInRequired: 'Please sign in',
+        noPermission: 'You are not allowed to do that',
+        notLinked: 'This user is not linked to a staff card',
+        weekPublished: 'The schedule for this week is published, so requests can no longer be changed',
+        weekPublishedShort: 'The schedule for this week is already published',
+        noRequest: 'There is no request for that day',
+        badDecision: 'Invalid decision',
+        requestNotFound: 'Request not found',
+        weekMissing: 'That week does not exist',
+        userNotFound: 'User not found',
+        cannotChangeOwner: 'The account owner cannot be changed'
+      },
+
+      notify: {
+        published: 'Schedule published',
+        publishedBody: 'The schedule for the new week is ready. You can see your shifts.',
+        requestApproved: 'Your request was approved',
+        requestApprovedBody: 'Your request for {day} was approved.',
+        requestRejected: 'Your request was declined',
+        requestRejectedBody: 'Your request for {day} was declined',
+        newRequest: 'New request',
+        newRequestBody: 'Someone sent a request that is waiting for your approval.',
+        newRequestsBody: '{count} new requests are waiting for your approval.'
+      },
+
+      payments: {
+        mockProvider: 'Test provider (development)',
+        mockNote: 'Payment is approved immediately with no real charge. For development and demos only.',
+        unknownPlan: 'Unknown plan',
+        serverProvider: 'Server billing ({name})',
+        notConfigured: 'Billing is not configured in this environment',
+        requestFailed: 'The billing request failed ({status})'
+      },
+
       billing: {
+        priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
+        updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',
         activeStaff: 'Active staff', of: '{count} of {max}', unlimited: '{count} (unlimited)',
         plans: 'Plans', choose: 'Choose', currentPlan: 'Current plan',
@@ -1528,6 +1583,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        wait: 'One moment…',
+        notifyEnabled: 'Notifications are on',
+        notifyBody: 'We will let you know about schedule updates.',
         signIn: 'Sign in', signUp: 'Create a business account',
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
@@ -1541,6 +1599,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       users: {
+        nameColumn: 'Name', emailColumn: 'Email', createFailed: 'Could not create the user',
         title: 'Users',
         hint: 'Every person can have their own login. They see only their own shifts and submit their own requests – ' +
           'they cannot see the full schedule or change anything. Managers see and edit everything. ' +
@@ -1551,7 +1610,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
       },
 
+      access: {
+        noCompany: 'No company found',
+        trialEnded: 'The trial has ended. Activate a subscription to continue.',
+        trial: 'Trial – {days} days left.',
+        expired: 'The subscription has expired. Renew to continue.',
+        pastDueBlocked: 'Payment was not received and access is blocked. Please update the payment method.',
+        pastDue: 'The last payment did not go through. Access will be blocked in {days} days.',
+        expiredKept: 'The subscription expired and was not renewed. Choosing a plan restores access immediately, and your data is safe.',
+        canceled: 'The subscription was cancelled. You can renew at any time – your data is safe.',
+        inactive: 'The subscription is not active.',
+        overLimit: 'The {plan} plan covers up to {max} staff. You have {count} – the {suggested} plan is needed ({range}, {price}).'
+      },
+
       plans: {
+        starter: 'Small', growth: 'Medium', business: 'Large',
         upTo: 'Up to {count} staff',
         between: '{from} to {to} staff',
         from: '{count} staff and up'
@@ -1560,6 +1633,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },
 
       employee: {
+        prevWeek: '▶ Previous week', nextWeek: 'Next week ◀',
+        loadFailed: 'Could not load the data: {message}',
+        saveFailed: 'Saving failed', reasonSaveFailed: 'Could not save the reason',
         myShifts: 'My shifts', myRequests: 'My requests',
         notPublished: 'The schedule for this week has not been published yet.',
         noShifts: 'You have no shifts this week.',
@@ -1761,6 +1837,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       ui: {
+        until: 'עד {time}', sheet: 'גיליון {n}',
+        fileSaved: 'הקובץ נשמר', fileFailed: 'שמירת הקובץ נכשלה: {message}',
+        unknownError: 'שגיאה לא ידועה', downloadUnavailable: 'לא ניתן להוריד קובץ בסביבה הזו',
+        loadFailed: 'טעינת הנתונים נכשלה, נטענת ברירת מחדל', saveFailed: 'שמירת הנתונים נכשלה',
         iconLetters: 'סד',
         dayHeading: 'יום {day} ({date})',
         missingStaff: 'חסר איוש',
@@ -1925,7 +2005,50 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         languageTitle: 'שפה', languageHint: 'משנה את כל הממשק. נשמר למכשיר הזה.'
       },
 
+      server: {
+        credentialsRequired: 'נדרשים אימייל וסיסמה',
+        passwordTooShort: 'הסיסמה חייבת להכיל לפחות 6 תווים',
+        emailTaken: 'כתובת האימייל כבר רשומה',
+        companyRequired: 'נדרש שם חברה',
+        badCredentials: 'אימייל או סיסמה שגויים',
+        userInactive: 'המשתמש אינו פעיל. פנו למנהל החברה.',
+        signInRequired: 'יש להתחבר',
+        noPermission: 'אין לך הרשאה לפעולה הזו',
+        notLinked: 'המשתמש אינו מקושר לכרטיס עובד',
+        weekPublished: 'הסידור לשבוע הזה כבר פורסם ולא ניתן לשנות אילוצים',
+        weekPublishedShort: 'הסידור לשבוע הזה כבר פורסם',
+        noRequest: 'אין בקשה ליום הזה',
+        badDecision: 'החלטה לא חוקית',
+        requestNotFound: 'הבקשה לא נמצאה',
+        weekMissing: 'השבוע אינו קיים',
+        userNotFound: 'המשתמש לא נמצא',
+        cannotChangeOwner: 'לא ניתן לשנות את בעל החשבון'
+      },
+
+      notify: {
+        published: 'הסידור פורסם',
+        publishedBody: 'הסידור לשבוע החדש זמין. אפשר לראות את המשמרות שלך.',
+        requestApproved: 'הבקשה שלך אושרה',
+        requestApprovedBody: 'הבקשה ליום {day} אושרה.',
+        requestRejected: 'הבקשה שלך נדחתה',
+        requestRejectedBody: 'הבקשה ליום {day} נדחתה',
+        newRequest: 'בקשת אילוץ חדשה',
+        newRequestBody: 'עובד/ת הגיש/ה בקשה שממתינה לאישורך.',
+        newRequestsBody: '{count} בקשות חדשות ממתינות לאישורך.'
+      },
+
+      payments: {
+        mockProvider: 'ספק מדומה (פיתוח)',
+        mockNote: 'התשלום מאושר מיד ללא חיוב אמיתי. משמש לפיתוח ולהדגמה בלבד.',
+        unknownPlan: 'תוכנית לא מוכרת',
+        serverProvider: 'חיוב דרך השרת ({name})',
+        notConfigured: 'שכבת החיוב אינה מוגדרת בסביבה הזו',
+        requestFailed: 'בקשת החיוב נכשלה ({status})'
+      },
+
       billing: {
+        priceMonthly: '{amount}₪ לחודש', priceAmount: '{amount}₪',
+        updateFailed: 'העדכון נכשל', cancelFailed: 'הביטול נכשל',
         title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',
         activeStaff: 'עובדים פעילים', of: '{count} מתוך {max}', unlimited: '{count} (ללא הגבלה)',
         plans: 'תוכניות', choose: 'בחירה', currentPlan: 'התוכנית הנוכחית',
@@ -1939,6 +2062,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        wait: 'רגע…',
+        notifyEnabled: 'ההתראות הופעלו',
+        notifyBody: 'נודיע לך על עדכונים בסידור.',
         signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
         email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
         passwordHint: 'לפחות 6 תווים',
@@ -1952,6 +2078,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       users: {
+        nameColumn: 'שם', emailColumn: 'אימייל', createFailed: 'יצירת המשתמש נכשלה',
         title: 'משתמשי החברה',
         hint: 'כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו – ' +
           'הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל. ' +
@@ -1962,7 +2089,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         created: 'נוצר משתמש עבור {email}', updated: 'העדכון נשמר', updateFailed: 'העדכון נכשל'
       },
 
+      access: {
+        noCompany: 'לא נמצאה חברה',
+        trialEnded: 'תקופת הניסיון הסתיימה. יש להפעיל מנוי כדי להמשיך.',
+        trial: 'תקופת ניסיון – נותרו {days} ימים.',
+        expired: 'המנוי פג. יש לחדש כדי להמשיך.',
+        pastDueBlocked: 'התשלום לא התקבל והגישה נחסמה. יש לעדכן אמצעי תשלום.',
+        pastDue: 'התשלום האחרון לא עבר. הגישה תיחסם בעוד {days} ימים.',
+        expiredKept: 'המנוי פג ולא חודש. בחירת תוכנית תחזיר את הגישה מיד, והנתונים שמורים.',
+        canceled: 'המנוי בוטל. אפשר לחדש בכל רגע – הנתונים שמורים.',
+        inactive: 'המנוי אינו פעיל.',
+        overLimit: 'תוכנית {plan} כוללת עד {max} עובדים. יש {count} עובדים – נדרשת תוכנית {suggested} ({range}, {price}).'
+      },
+
       plans: {
+        starter: 'קטן', growth: 'בינוני', business: 'גדול',
         upTo: 'עד {count} עובדים',
         between: '{from} עד {to} עובדים',
         from: '{count} עובדים ומעלה'
@@ -1971,6 +2112,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
 
       employee: {
+        prevWeek: '▶ שבוע קודם', nextWeek: 'שבוע הבא ◀',
+        loadFailed: 'לא ניתן לטעון את הנתונים: {message}',
+        saveFailed: 'השמירה נכשלה', reasonSaveFailed: 'שמירת הסיבה נכשלה',
         myShifts: 'המשמרות שלי', myRequests: 'האילוצים שלי',
         notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
         noShifts: 'אין לך משמרות בשבוע הזה.',
@@ -2139,6 +2283,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 (function (root) {
   'use strict';
 
+  /* הודעות למשתמש מגיעות משכבת התרגום; בלעדיה מוצג המפתח */
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Platform = {
     downloads: null,
     db: null,
@@ -2172,17 +2322,17 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   Platform.saveFile = function (filename, content, mime) {
     if (Platform.downloads) {
       return Platform.downloads.save({ filename: filename, data: content })
-        .then(function () { return 'הקובץ נשמר'; })
+        .then(function () { return t('ui.fileSaved'); })
         .catch(function (err) {
           if (err && err.code === 'declined') return null;
-          return 'שמירת הקובץ נכשלה: ' + ((err && err.message) || 'שגיאה לא ידועה');
+          return t('ui.fileFailed', { message: (err && err.message) || t('ui.unknownError') });
         });
     }
     try {
       blobDownload(filename, content, mime);
       return Promise.resolve(null);
     } catch (err) {
-      return Promise.resolve('לא ניתן להוריד קובץ בסביבה הזו');
+      return Promise.resolve(t('ui.downloadUnavailable'));
     }
   };
 
@@ -2359,6 +2509,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
    xlsx הוא קובץ ZIP של מסמכי XML; כאן נבנה ZIP ללא דחיסה (stored). */
 (function (root) {
   'use strict';
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  /* שמות לשוניות גיבוי מגיעים מהתרגום */
+  function t(key, params) {
+    if (!I18n) return key;
+    try { return I18n.t(key, params); } catch (err) { return key; }
+  }
 
   /* ===== CRC32 ===== */
   var crcTable = (function () {
@@ -2605,7 +2762,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   /* שם גיליון חוקי: עד 31 תווים, ללא : \ / ? * [ ] */
   function safeSheetName(name, index) {
     var clean = String(name || '').replace(/[:\\\/?*\[\]]/g, ' ').slice(0, 31).trim();
-    return clean || ('גיליון ' + (index + 1));
+    return clean || t('ui.sheet', { n: index + 1 });
   }
 
   /* שמות הלשוניות חייבים להיות ייחודיים; כפילות מקבלת סיומת מספרית */
@@ -2894,6 +3051,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   'use strict';
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  /* טקסטים למשתמש מגיעים משכבת התרגום; בלעדיה מוצג המפתח */
+  function t(key, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return key;
+    try { return i18n.t(key, params); } catch (err) { return key; }
+  }
   var STORAGE_KEY = 'maiphone-shifts-v1';
   var VERSION = 1;
 
@@ -3057,7 +3222,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   function hoursLabel(hours) {
     if (!hours) return '';
-    if (!hours.from) return hours.to ? 'עד ' + hours.to : '';
+    if (!hours.from) return hours.to ? t('ui.until', { time: hours.to }) : '';
     return hours.from + '-' + (hours.to || '');
   }
 
@@ -3161,7 +3326,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   function holidayName(week, dayIdx) {
     if (!isHoliday(week, dayIdx)) return '';
-    return week.holidays[dayIdx] || 'חג';
+    return week.holidays[dayIdx] || t('toast.holidayDefault');
   }
 
   function setHoliday(week, dayIdx, name) {
@@ -3365,7 +3530,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       var hours = (legacyHours && legacyHours[id]) || {};
       out.push({
         id: id,
-        name: String(item.name || '').trim() || fallback.name || ('משמרת ' + (index + 1)),
+        name: String(item.name || '').trim() || fallback.name || t('toast.newShift', { n: index + 1 }),
         from: hours.from || item.from || fallback.from,
         to: hours.to || item.to || fallback.to,
         color: typeof item.color === 'number' ? item.color : (index % Data.SHIFT_COLORS.length)
@@ -3467,7 +3632,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       if (!raw) return emptyState();
       return migrate(JSON.parse(raw));
     } catch (err) {
-      console.warn('טעינת הנתונים נכשלה, נטענת ברירת מחדל', err);
+      console.warn(t('ui.loadFailed'), err);
       return emptyState();
     }
   }
@@ -3477,7 +3642,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       root.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       return true;
     } catch (err) {
-      console.warn('שמירת הנתונים נכשלה', err);
+      console.warn(t('ui.saveFailed'), err);
       return false;
     }
   }
@@ -6472,13 +6637,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   /* ========== בחירת שפה ========== */
   function bindLanguage() {
-    var select = $('#language-select');
-    if (!select || !window.I18nDom) return;
-    window.I18nDom.fillPicker(select);
-    select.addEventListener('change', function () {
+    /* השפה משנה גם טקסטים שנבנים ב-JS, ולכן מציירים הכול מחדש */
+    if (I18n) { I18n.onChange(function () { render(); }); }
+    if (!window.I18nDom) return;
+    /* הבורר מוחלף בכל ציור, ולכן מאזינים ברמת המסמך */
+    document.addEventListener('change', function (event) {
+      var select = event.target.closest('#language-select, #user-language');
+      if (!select) return;
       window.I18nDom.setLanguage(select.value);
-      /* השפה משנה גם טקסטים שנבנים ב-JS, ולכן מציירים הכול מחדש */
-      render();
     });
   }
 

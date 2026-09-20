@@ -2,6 +2,11 @@
 (function (root) {
   'use strict';
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Model = root.ShiftModel;
 
   function esc(value) {
@@ -19,13 +24,15 @@
 
   var ctx = null;
 
-  var STATUS_TEXT = {
-    trial: 'תקופת ניסיון',
-    active: 'מנוי פעיל',
-    past_due: 'תשלום לא התקבל',
-    canceled: 'המנוי בוטל',
-    expired: 'המנוי פג'
-  };
+  /* נקרא בכל ציור, כדי שהחלפת שפה תשתקף מיד */
+  function statusText(status) {
+    var keys = {
+      trial: 'billing.statusTrial', active: 'billing.statusActive',
+      past_due: 'billing.statusPastDue', canceled: 'billing.statusCanceled',
+      expired: 'billing.statusExpired'
+    };
+    return keys[status] ? t(keys[status]) : status;
+  }
 
   function render() {
     var container = document.getElementById('billing-panel');
@@ -40,13 +47,16 @@
 
     /* מצב נוכחי */
     html += '<div class="settings-block billing-current">';
-    html += '<div class="billing-row"><span>סטטוס</span><b class="status-' + esc(state.company.status) + '">' +
-      esc(STATUS_TEXT[state.company.status] || state.company.status) + '</b></div>';
-    html += '<div class="billing-row"><span>תוכנית</span><b>' + esc(state.plan.name) +
-      ' · ' + esc(state.plan.range) + ' · ' + state.plan.priceMonthly + '₪ לחודש</b></div>';
-    html += '<div class="billing-row"><span>בתוקף עד</span><b>' + formatDate(state.company.validUntil) + '</b></div>';
-    html += '<div class="billing-row"><span>עובדים פעילים</span><b>' + employees +
-      (state.plan.maxEmployees ? ' מתוך ' + state.plan.maxEmployees : ' (ללא הגבלה)') + '</b></div>';
+    html += '<div class="billing-row"><span>' + t('billing.status') + '</span><b class="status-' +
+      esc(state.company.status) + '">' + esc(statusText(state.company.status)) + '</b></div>';
+    html += '<div class="billing-row"><span>' + t('billing.plan') + '</span><b>' + esc(state.plan.name) +
+      ' · ' + esc(state.plan.range) + ' · ' + esc(t('billing.priceMonthly', { amount: state.plan.priceMonthly })) + '</b></div>';
+    html += '<div class="billing-row"><span>' + t('billing.validUntil') + '</span><b>' +
+      formatDate(state.company.validUntil) + '</b></div>';
+    html += '<div class="billing-row"><span>' + t('billing.activeStaff') + '</span><b>' +
+      esc(state.plan.maxEmployees
+        ? t('billing.of', { count: employees, max: state.plan.maxEmployees })
+        : t('billing.unlimited', { count: employees })) + '</b></div>';
     if (state.access.text) {
       html += '<p class="billing-note ' + (state.access.allowed ? '' : 'error') + '">' +
         esc(state.access.text) + '</p>';
@@ -58,23 +68,24 @@
 
     if (!state.canManage) {
       container.innerHTML = html +
-        '<p class="hint">רק בעל החשבון יכול לשנות את המנוי.</p>';
+        '<p class="hint">' + t('billing.ownerOnly') + '</p>';
       return;
     }
 
     /* בחירת תוכנית */
-    html += '<h2>תוכניות</h2>';
+    html += '<h2>' + t('billing.plans') + '</h2>';
     html += '<div class="plan-grid">';
     ctx.billing.plans().forEach(function (plan) {
       var current = plan.id === state.plan.id;
       var fits = !plan.maxEmployees || employees <= plan.maxEmployees;
       html += '<div class="plan-card' + (current ? ' current' : '') + (fits ? '' : ' too-small') + '">';
       html += '<div class="plan-name">' + esc(plan.name) + '</div>';
-      html += '<div class="plan-price">' + plan.priceMonthly + '<small>₪ לחודש</small></div>';
+      html += '<div class="plan-price">' + plan.priceMonthly +
+        '<small>' + esc(t('billing.priceMonthly', { amount: '' }).trim()) + '</small></div>';
       html += '<div class="plan-range">' + esc(plan.range) + '</div>';
-      if (current) { html += '<div class="plan-tag">התוכנית הנוכחית</div>'; }
-      else if (!fits) { html += '<div class="plan-tag warn">קטנה מדי עבור ' + employees + ' עובדים</div>'; }
-      else { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">בחירה</button>'; }
+      if (current) { html += '<div class="plan-tag">' + t('billing.currentPlan') + '</div>'; }
+      else if (!fits) { html += '<div class="plan-tag warn">' + esc(t('billing.tooSmall', { count: employees })) + '</div>'; }
+      else { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
       html += '</div>';
     });
     html += '</div>';
@@ -83,7 +94,8 @@
       (provider.note ? ' — ' + esc(provider.note) : '') + '</p>';
 
     if (state.company.status === Model.SUBSCRIPTION.ACTIVE) {
-      html += '<div class="settings-block row"><button id="billing-cancel" class="btn danger">ביטול המנוי</button></div>';
+      html += '<div class="settings-block row"><button id="billing-cancel" class="btn danger">' +
+        t('billing.cancel') + '</button></div>';
     }
 
     html += '<p id="billing-message" class="users-message hidden"></p>';
@@ -111,27 +123,29 @@
         ctx.billing.choosePlan(choose.dataset.plan).then(function (result) {
           if (result.redirectUrl) { root.location.href = result.redirectUrl; return; }
           render();
-          say('התוכנית עודכנה');
+          say(t('billing.planUpdated'));
           if (ctx.onChange) ctx.onChange();
         }, function (err) {
           render();
-          say((err && err.message) || 'העדכון נכשל', true);
+          say((err && err.message) || t('billing.updateFailed'), true);
         });
         return;
       }
       if (event.target.closest('#billing-cancel')) {
-        if (!root.confirm('לבטל את המנוי? הגישה תיחסם בתום התקופה ששולמה.')) return;
+        if (!root.confirm(t('billing.cancelConfirm'))) return;
         ctx.billing.cancel().then(function () {
           render();
-          say('המנוי בוטל');
+          say(t('billing.canceled'));
           if (ctx.onChange) ctx.onChange();
-        }, function (err) { say((err && err.message) || 'הביטול נכשל', true); });
+        }, function (err) { say((err && err.message) || t('billing.cancelFailed'), true); });
       }
     });
 
     document.getElementById('tabs').addEventListener('click', function (event) {
       if (event.target.closest('.tab[data-tab="billing"]')) { render(); }
     });
+
+    if (root.I18n) { root.I18n.onChange(render); }
 
     render();
   }

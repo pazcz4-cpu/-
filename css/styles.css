@@ -868,3 +868,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .color-dot.active { border-color: var(--ink); }
 .shift-actions { display: flex; gap: 4px; margin-inline-start: auto; }
 .shift-actions .btn { padding: 4px 9px; }
+
+/* בורר השפה בשורת המשתמש ובמסך הכניסה */
+.user-lang {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  color: inherit; font: inherit; font-size: 12.5px; padding: 3px 8px;
+}
+.auth-lang { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.auth-lang select { margin-inline-start: 6px; }

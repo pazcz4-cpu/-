@@ -3,6 +3,11 @@
 (function (root) {
   'use strict';
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Store = root.ShiftStore;
   var Data = root.ShiftData;
   var Model = root.ShiftModel;
@@ -118,8 +123,8 @@
 
     if (role === 'employee') {
       if (after && after.published && !(before && before.published)) {
-        out.push({ tag: 'published', title: 'הסידור פורסם',
-          body: 'הסידור לשבוע החדש זמין. אפשר לראות את המשמרות שלך.' });
+        out.push({ tag: 'published', title: t('notify.published'),
+          body: t('notify.publishedBody') });
       }
       Object.keys(afterConstraints).forEach(function (key) {
         if (key.split('|')[0] !== employeeId) return;
@@ -128,11 +133,11 @@
         var dayName = (Data.DAYS[Number(key.split('|')[1])] || {}).name || '';
         if (Store.constraintStatus(now) === Store.constraintStatus(was)) return;
         if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.APPROVED) {
-          out.push({ tag: 'decision-' + key, title: 'הבקשה שלך אושרה',
-            body: 'הבקשה ליום ' + dayName + ' אושרה.' });
+          out.push({ tag: 'decision-' + key, title: t('notify.requestApproved'),
+            body: t('notify.requestApprovedBody', { day: dayName }) });
         } else if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.REJECTED) {
-          out.push({ tag: 'decision-' + key, title: 'הבקשה שלך נדחתה',
-            body: 'הבקשה ליום ' + dayName + ' נדחתה' +
+          out.push({ tag: 'decision-' + key, title: t('notify.requestRejected'),
+            body: t('notify.requestRejectedBody', { day: dayName }) +
               (now.managerNote ? ': ' + now.managerNote : '.') });
         }
       });
@@ -150,9 +155,9 @@
       fresh.push(key);
     });
     if (fresh.length) {
-      out.push({ tag: 'pending', title: 'בקשת אילוץ חדשה',
-        body: fresh.length === 1 ? 'עובד/ת הגיש/ה בקשה שממתינה לאישורך.'
-          : fresh.length + ' בקשות חדשות ממתינות לאישורך.' });
+      out.push({ tag: 'pending', title: t('notify.newRequest'),
+        body: fresh.length === 1 ? t('notify.newRequestBody')
+          : t('notify.newRequestsBody', { count: fresh.length }) });
     }
     return out;
   }

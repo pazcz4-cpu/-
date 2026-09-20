@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appPath = 'file://' + path.join(here, '..', 'dist', 'sidur-mishmarot.html');
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1400, height: 950 } });
+const page = await browser.newPage({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

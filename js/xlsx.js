@@ -2,6 +2,13 @@
    xlsx הוא קובץ ZIP של מסמכי XML; כאן נבנה ZIP ללא דחיסה (stored). */
 (function (root) {
   'use strict';
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  /* שמות לשוניות גיבוי מגיעים מהתרגום */
+  function t(key, params) {
+    if (!I18n) return key;
+    try { return I18n.t(key, params); } catch (err) { return key; }
+  }
 
   /* ===== CRC32 ===== */
   var crcTable = (function () {
@@ -248,7 +255,7 @@
   /* שם גיליון חוקי: עד 31 תווים, ללא : \ / ? * [ ] */
   function safeSheetName(name, index) {
     var clean = String(name || '').replace(/[:\\\/?*\[\]]/g, ' ').slice(0, 31).trim();
-    return clean || ('גיליון ' + (index + 1));
+    return clean || t('ui.sheet', { n: index + 1 });
   }
 
   /* שמות הלשוניות חייבים להיות ייחודיים; כפילות מקבלת סיומת מספרית */

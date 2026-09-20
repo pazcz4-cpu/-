@@ -8,6 +8,11 @@
 (function (root) {
   'use strict';
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Model = root.ShiftModel || (typeof require === 'function' ? require('./model.js') : null);
 
   /* ===== ספק מדומה לפיתוח: מאשר כל תשלום מיד ===== */
@@ -20,16 +25,16 @@
 
   MockProvider.prototype.describe = function () {
     return {
-      name: 'ספק מדומה (פיתוח)',
+      name: t('payments.mockProvider'),
       live: false,
-      note: 'התשלום מאושר מיד ללא חיוב אמיתי. משמש לפיתוח ולהדגמה בלבד.'
+      note: t('payments.mockNote')
     };
   };
 
   /* פתיחת תשלום. בספק אמיתי זה יחזיר כתובת לדף תשלום מאובטח. */
   MockProvider.prototype.startCheckout = function (input) {
     var plan = Model.PLANS[input.planId];
-    if (!plan) return Promise.reject(new Error('תוכנית לא מוכרת'));
+    if (!plan) return Promise.reject(new Error(t('payments.unknownPlan')));
 
     var validUntil = Model.addDays(this.now(), 30).toISOString();
     return this.backend.setSubscription({
@@ -60,12 +65,12 @@
   ServerProvider.prototype.name = 'server';
 
   ServerProvider.prototype.describe = function () {
-    return { name: 'חיוב דרך השרת (' + this.providerName + ')', live: true, note: '' };
+    return { name: t('payments.serverProvider', { name: this.providerName }), live: true, note: '' };
   };
 
   ServerProvider.prototype._call = function (action, body) {
     if (!this.fetchImpl || !this.endpoint) {
-      return Promise.reject(new Error('שכבת החיוב אינה מוגדרת בסביבה הזו'));
+      return Promise.reject(new Error(t('payments.notConfigured')));
     }
     return this.fetchImpl(this.endpoint + '/' + action, {
       method: 'POST',
@@ -73,7 +78,7 @@
       credentials: 'include',
       body: JSON.stringify(body || {})
     }).then(function (response) {
-      if (!response.ok) { throw new Error('בקשת החיוב נכשלה (' + response.status + ')'); }
+      if (!response.ok) { throw new Error(t('payments.requestFailed', { status: response.status })); }
       return response.json();
     });
   };

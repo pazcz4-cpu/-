@@ -22,7 +22,7 @@ async function mk(ctx) {
 }
 
 // המנהל נרשם
-const mgrCtx = await browser.newContext({ viewport: { width: 1400, height: 950 } });
+const mgrCtx = await browser.newContext({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
 const mgr = await mk(mgrCtx);
 await mgr.goto(APP);
 await mgr.waitForTimeout(400);

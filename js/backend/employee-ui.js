@@ -3,6 +3,11 @@
 (function (root) {
   'use strict';
 
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Data = root.ShiftData;
   var Store = root.ShiftStore;
 
@@ -25,6 +30,8 @@
   EmployeeUI.prototype.start = function () {
     var self = this;
     this._bind();
+    /* החלפת שפה מציירת מחדש גם את מסך העובד */
+    if (root.I18n) { root.I18n.onChange(function () { if (self.state) self.render(); }); }
     return this.load();
   };
 
@@ -43,8 +50,8 @@
       self.state.weeks[self.weekKey] = self.week;
       self.render();
     }, function (err) {
-      self.root.innerHTML = '<p class="auth-error">לא ניתן לטעון את הנתונים: ' +
-        esc((err && err.message) || '') + '</p>';
+      self.root.innerHTML = '<p class="auth-error">' +
+        esc(t('employee.loadFailed', { message: (err && err.message) || '' })) + '</p>';
     });
   };
 
@@ -82,7 +89,7 @@
   EmployeeUI.prototype._toggle = function (button) {
     var self = this;
     if (this.busy) return;
-    if (this.week.published) { this._flash('הסידור לשבוע הזה כבר פורסם – לא ניתן לשנות אילוצים.'); return; }
+    if (this.week.published) { this._flash(t('employee.publishedLocked')); return; }
 
     var dayIdx = Number(button.dataset.day);
     var constraint = JSON.parse(JSON.stringify(this._constraint(dayIdx)));
@@ -113,7 +120,7 @@
         self.render();
       }, function (err) {
         self.busy = false;
-        self._flash((err && err.message) || 'השמירה נכשלה');
+        self._flash((err && err.message) || t('employee.saveFailed'));
       });
   };
 
@@ -126,9 +133,9 @@
     this.backend.saveOwnNote(this.weekKey, dayIdx, note).then(function (week) {
       self.week = week;
       self.state.weeks[self.weekKey] = week;
-      self._flash('הסיבה נשמרה');
+      self._flash(t('constraints.reasonSaved'));
     }, function (err) {
-      self._flash((err && err.message) || 'שמירת הסיבה נכשלה');
+      self._flash((err && err.message) || t('employee.reasonSaveFailed'));
       self.render();
     });
   };
@@ -165,7 +172,7 @@
         out.push({
           day: day.name,
           date: Store.formatDate(Store.dateOfDay(self.weekKey, day.idx)),
-          branch: branch.name || 'סניף',
+          branch: branch.name || t('schedule.branch'),
           shift: shift ? shift.name : slot.shiftId,
           shiftId: slot.shiftId,
           hours: Store.hoursLabel(Store.slotHours(self.week, branch, day.idx, slot.shiftId))
@@ -183,16 +190,16 @@
 
     var html = '<div class="employee-screen">';
     html += '<div class="employee-weeknav">' +
-      '<button class="btn ghost" data-week-step="-1">▶ שבוע קודם</button>' +
+      '<button class="btn ghost" data-week-step="-1">' + t('employee.prevWeek') + '</button>' +
       '<strong>' + Store.formatDate(start) + ' – ' + Store.formatDate(end) + '</strong>' +
-      '<button class="btn ghost" data-week-step="1">שבוע הבא ◀</button>' +
+      '<button class="btn ghost" data-week-step="1">' + t('employee.nextWeek') + '</button>' +
       '</div>';
 
     html += '<p class="employee-flash hidden"></p>';
 
     if (!this._employeeId()) {
       html += '<div class="m-card"><div class="m-closed">' +
-        'המשתמש שלך עדיין לא קושר לכרטיס עובד. פנה/י למנהל/ת.' +
+        t('employee.notLinked') +
         '</div></div></div>';
       this.root.innerHTML = html;
       return;
@@ -200,11 +207,11 @@
 
     /* המשמרות שלי */
     var shifts = this._myShifts();
-    html += '<h2 class="employee-title">המשמרות שלי</h2>';
+    html += '<h2 class="employee-title">' + t('employee.myShifts') + '</h2>';
     if (!this.week.published) {
-      html += '<p class="employee-note">הסידור לשבוע הזה עדיין לא פורסם.</p>';
+      html += '<p class="employee-note">' + t('employee.notPublished') + '</p>';
     } else if (!shifts.length) {
-      html += '<p class="employee-note">אין לך משמרות בשבוע הזה.</p>';
+      html += '<p class="employee-note">' + t('employee.noShifts') + '</p>';
     } else {
       html += '<div class="employee-shifts">';
       shifts.forEach(function (item) {
@@ -215,19 +222,19 @@
           '</div>';
       });
       html += '</div>';
-      html += '<p class="employee-note">סה״כ ' + shifts.length + ' משמרות השבוע.</p>';
+      html += '<p class="employee-note">' + esc(t('employee.totalWeek', { count: shifts.length })) + '</p>';
     }
 
     /* האילוצים שלי */
-    html += '<h2 class="employee-title">האילוצים שלי</h2>';
+    html += '<h2 class="employee-title">' + t('employee.myRequests') + '</h2>';
     if (this.week.published) {
-      html += '<p class="employee-note">הסידור פורסם – לא ניתן עוד לשנות אילוצים לשבוע הזה.</p>';
+      html += '<p class="employee-note">' + t('employee.publishedLocked') + '</p>';
     } else {
-      html += '<p class="employee-note">לחיצה על משמרת מחליפה בין ' +
-        '<span class="legend free">זמין</span> ' +
-        '<span class="legend pref">מעדיף/ה</span> ' +
-        '<span class="legend block">לא יכול/ה</span>. "חופש" חוסם את כל היום.<br>' +
-        '<b>כל בקשה עוברת לאישור המנהל/ת</b> ומשפיעה על הסידור רק אחרי שאושרה.</p>';
+      html += '<p class="employee-note">' + esc(t('constraints.legend', {
+        free: t('constraints.free'),
+        preferred: t('constraints.preferred'),
+        blocked: t('constraints.blocked')
+      })) + '<br><b>' + esc(t('constraints.needsApproval')) + '</b></p>';
     }
 
     html += '<div class="employee-days">';
@@ -239,11 +246,11 @@
       var status = Store.constraintStatus(self._record(day.idx));
       var badge = '';
       if (status === Store.CONSTRAINT_STATUS.PENDING) {
-        badge = '<span class="req-badge pending">ממתין לאישור</span>';
+        badge = '<span class="req-badge pending">' + t('constraints.pending') + '</span>';
       } else if (status === Store.CONSTRAINT_STATUS.APPROVED) {
-        badge = '<span class="req-badge approved">אושר</span>';
+        badge = '<span class="req-badge approved">' + t('constraints.approved') + '</span>';
       } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
-        badge = '<span class="req-badge rejected">נדחה</span>';
+        badge = '<span class="req-badge rejected">' + t('constraints.rejected') + '</span>';
       }
 
       html += '<div class="m-card"><div class="m-card-head">' + esc(day.name) +
@@ -252,9 +259,9 @@
 
       if (holiday) {
         html += '<div class="m-holiday">' + esc(Store.holidayName(self.week, day.idx)) +
-          '<small>יום חג – אין עבודה</small></div>';
+          '<small>' + t('employee.holidayNoWork') + '</small></div>';
       } else if (!shiftIds.length) {
-        html += '<div class="m-closed">אין משמרות ביום הזה</div>';
+        html += '<div class="m-closed">' + t('employee.noShiftsToday') + '</div>';
       } else {
         var locked = self.week.published ? ' disabled' : '';
         html += '<div class="m-cstates">';
@@ -268,20 +275,20 @@
         });
         html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
           '" data-day="' + day.idx + '" data-off="1"' + locked + '>' +
-          (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+          (constraint.off ? '✓ ' : '') + esc(t('constraints.dayOff')) + '</button>';
         html += '</div>';
         var record = self._record(day.idx);
         if (record && !self.week.published) {
           html += '<div class="req-reason">' +
-            '<label>סיבה (לא חובה)' +
+            '<label>' + esc(t('constraints.reason')) +
             '<input type="text" class="text-input" maxlength="300" data-note-day="' + day.idx + '"' +
-            ' placeholder="למשל: חתונה, בחינה, תור לרופא" value="' + esc(record.note || '') + '">' +
+            ' placeholder="' + esc(t('constraints.reasonPlaceholder')) + '" value="' + esc(record.note || '') + '">' +
             '</label></div>';
         } else if (record && record.note) {
-          html += '<p class="req-note">הסיבה שציינת: ' + esc(record.note) + '</p>';
+          html += '<p class="req-note">' + esc(t('constraints.reasonGiven', { text: record.note })) + '</p>';
         }
         if (record && record.managerNote) {
-          html += '<p class="req-note">הערת מנהל/ת: ' + esc(record.managerNote) + '</p>';
+          html += '<p class="req-note">' + esc(t('constraints.managerNote', { text: record.managerNote })) + '</p>';
         }
       }
       html += '</div>';

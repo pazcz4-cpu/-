@@ -14,7 +14,7 @@ const APP = 'file://' + path.join(here, '..', 'dist', 'sidur-mishmarot.html');
 const OUT = path.join(here, '..', 'dist');
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1500, height: 1050 } });
+const page = await browser.newPage({ viewport: { width: 1500, height: 1050 }, locale: 'he-IL' });
 const errors = [];
 page.on('pageerror', e => errors.push('PAGE: ' + e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });

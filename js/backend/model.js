@@ -65,20 +65,30 @@
 
   /* התוכניות נקבעות לפי מספר העובדים בלבד. אין הגבלת סניפים.
      maxEmployees ערך 0 = ללא הגבלה. */
-  var PLANS = {
-    starter: {
-      id: 'starter', name: 'קטן', range: 'עד 10 עובדים',
-      minEmployees: 1, maxEmployees: 10, priceMonthly: 199
-    },
-    growth: {
-      id: 'growth', name: 'בינוני', range: '11 עד 30 עובדים',
-      minEmployees: 11, maxEmployees: 30, priceMonthly: 399
-    },
-    business: {
-      id: 'business', name: 'גדול', range: '31 עובדים ומעלה',
-      minEmployees: 31, maxEmployees: 0, priceMonthly: 599
-    }
-  };
+  var PLAN_FALLBACK = { starter: 'קטן', growth: 'בינוני', business: 'גדול' };
+  var PLAN_SPEC = [
+    { id: 'starter', minEmployees: 1, maxEmployees: 10, priceMonthly: 199 },
+    { id: 'growth', minEmployees: 11, maxEmployees: 30, priceMonthly: 399 },
+    { id: 'business', minEmployees: 31, maxEmployees: 0, priceMonthly: 599 }
+  ];
+
+  /* השם והטווח נקראים בכל גישה, כדי שהחלפת שפה תשתקף מיד */
+  var PLANS = {};
+  PLAN_SPEC.forEach(function (spec) {
+    var plan = {
+      id: spec.id, minEmployees: spec.minEmployees,
+      maxEmployees: spec.maxEmployees, priceMonthly: spec.priceMonthly
+    };
+    Object.defineProperty(plan, 'name', {
+      enumerable: true,
+      get: function () { return translate('plans.' + spec.id, PLAN_FALLBACK[spec.id]); }
+    });
+    Object.defineProperty(plan, 'range', {
+      enumerable: true,
+      get: function () { return planRange(plan); }
+    });
+    PLANS[spec.id] = plan;
+  });
 
   var PLAN_ORDER = ['starter', 'growth', 'business'];
   var DEFAULT_PLAN = 'starter';
@@ -90,12 +100,12 @@
   /* טווח התוכנית בשפה הפעילה */
   function planRange(plan) {
     if (!plan.maxEmployees) {
-      return translate('plans.from', plan.range, { count: plan.minEmployees });
+      return translate('plans.from', plan.minEmployees + '+', { count: plan.minEmployees });
     }
     if (plan.minEmployees <= 1) {
-      return translate('plans.upTo', plan.range, { count: plan.maxEmployees });
+      return translate('plans.upTo', '≤ ' + plan.maxEmployees, { count: plan.maxEmployees });
     }
-    return translate('plans.between', plan.range,
+    return translate('plans.between', plan.minEmployees + '–' + plan.maxEmployees,
       { from: plan.minEmployees, to: plan.maxEmployees });
   }
 
@@ -119,7 +129,7 @@
   /* האם לחברה יש גישה למערכת כרגע, ומה הסיבה אם לא. */
   function accessState(company, now) {
     var today = now ? new Date(now) : new Date();
-    if (!company) return { allowed: false, reason: 'no-company', text: 'לא נמצאה חברה' };
+    if (!company) return { allowed: false, reason: 'no-company', text: translate('access.noCompany', 'לא נמצאה חברה') };
 
     var validUntil = company.validUntil ? new Date(company.validUntil) : null;
     var expired = validUntil ? today > validUntil : false;
@@ -130,16 +140,16 @@
     if (company.status === SUBSCRIPTION.TRIAL) {
       if (expired) {
         return { allowed: false, reason: 'trial-ended', daysLeft: 0,
-          text: 'תקופת הניסיון הסתיימה. יש להפעיל מנוי כדי להמשיך.' };
+          text: translate('access.trialEnded', 'תקופת הניסיון הסתיימה.') };
       }
       return { allowed: true, reason: 'trial', daysLeft: daysLeft,
-        text: 'תקופת ניסיון – נותרו ' + daysLeft + ' ימים.' };
+        text: translate('access.trial', 'תקופת ניסיון', { days: daysLeft }) };
     }
 
     if (company.status === SUBSCRIPTION.ACTIVE) {
       if (expired) {
         return { allowed: false, reason: 'expired', daysLeft: 0,
-          text: 'המנוי פג. יש לחדש כדי להמשיך.' };
+          text: translate('access.expired', 'המנוי פג.') };
       }
       return { allowed: true, reason: 'active', daysLeft: daysLeft, text: '' };
     }
@@ -147,22 +157,22 @@
     if (company.status === SUBSCRIPTION.PAST_DUE) {
       if (expired) {
         return { allowed: false, reason: 'past-due-expired', daysLeft: 0,
-          text: 'התשלום לא התקבל והגישה נחסמה. יש לעדכן אמצעי תשלום.' };
+          text: translate('access.pastDueBlocked', 'התשלום לא התקבל והגישה נחסמה.') };
       }
       return { allowed: true, reason: 'past-due', daysLeft: daysLeft,
-        text: 'התשלום האחרון לא עבר. הגישה תיחסם בעוד ' + daysLeft + ' ימים.' };
+        text: translate('access.pastDue', 'התשלום האחרון לא עבר.', { days: daysLeft }) };
     }
 
     if (company.status === SUBSCRIPTION.EXPIRED) {
       return { allowed: false, reason: 'expired', daysLeft: 0,
-        text: 'המנוי פג ולא חודש. בחירת תוכנית תחזיר את הגישה מיד, והנתונים שמורים.' };
+        text: translate('access.expiredKept', 'המנוי פג ולא חודש.') };
     }
     if (company.status === SUBSCRIPTION.CANCELED) {
       return { allowed: false, reason: 'canceled', daysLeft: 0,
-        text: 'המנוי בוטל. אפשר לחדש בכל רגע – הנתונים שמורים.' };
+        text: translate('access.canceled', 'המנוי בוטל.') };
     }
     return { allowed: false, reason: company.status || 'canceled', daysLeft: 0,
-      text: 'המנוי אינו פעיל.' };
+      text: translate('access.inactive', 'המנוי אינו פעיל.') };
   }
 
   /* בדיקת מגבלת התוכנית לפי מספר העובדים */
@@ -176,9 +186,12 @@
     return {
       ok: false,
       suggested: suggested,
-      problems: ['תוכנית ' + plan.name + ' כוללת עד ' + plan.maxEmployees + ' עובדים. ' +
-        'יש ' + employees + ' עובדים – נדרשת תוכנית ' + suggested.name +
-        ' (' + suggested.range + ', ' + suggested.priceMonthly + '₪ לחודש).']
+      problems: [translate('access.overLimit', 'חריגה ממגבלת התוכנית', {
+        plan: plan.name, max: plan.maxEmployees, count: employees,
+        suggested: suggested.name, range: suggested.range,
+        price: translate('billing.priceMonthly', suggested.priceMonthly + '₪',
+          { amount: suggested.priceMonthly })
+      })]
     };
   }
 

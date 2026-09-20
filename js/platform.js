@@ -3,6 +3,12 @@
 (function (root) {
   'use strict';
 
+  /* הודעות למשתמש מגיעות משכבת התרגום; בלעדיה מוצג המפתח */
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Platform = {
     downloads: null,
     db: null,
@@ -36,17 +42,17 @@
   Platform.saveFile = function (filename, content, mime) {
     if (Platform.downloads) {
       return Platform.downloads.save({ filename: filename, data: content })
-        .then(function () { return 'הקובץ נשמר'; })
+        .then(function () { return t('ui.fileSaved'); })
         .catch(function (err) {
           if (err && err.code === 'declined') return null;
-          return 'שמירת הקובץ נכשלה: ' + ((err && err.message) || 'שגיאה לא ידועה');
+          return t('ui.fileFailed', { message: (err && err.message) || t('ui.unknownError') });
         });
     }
     try {
       blobDownload(filename, content, mime);
       return Promise.resolve(null);
     } catch (err) {
-      return Promise.resolve('לא ניתן להוריד קובץ בסביבה הזו');
+      return Promise.resolve(t('ui.downloadUnavailable'));
     }
   };
 

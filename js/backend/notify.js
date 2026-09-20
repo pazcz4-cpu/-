@@ -58,7 +58,7 @@
 
       var payload = {
         type: 'notify',
-        title: options.title || 'סידור משמרות',
+        title: options.title || (root.I18n ? root.I18n.t('app.title') : 'Shift Scheduler'),
         body: options.body || '',
         tag: options.tag || 'shift',
         url: options.url || root.location.href

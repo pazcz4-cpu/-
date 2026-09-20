@@ -6,6 +6,14 @@
 (function (root) {
   'use strict';
 
+  /* הודעות השגיאה מהשרת המדומה מגיעות משכבת התרגום, כדי שהן יוצגו
+     בשפת המשתמש בדיוק כמו שאר הממשק. */
+  function t(key, params) {
+    var i18n = root.I18n || (typeof require === 'function' ? require('../i18n/core.js') : null);
+    if (!i18n) return key;
+    try { return i18n.t(key, params); } catch (err) { return key; }
+  }
+
   var Model = root.ShiftModel || (typeof require === 'function' ? require('./model.js') : null);
 
   var STORE_KEY = 'maiphone-mock-server-v1';
@@ -85,16 +93,16 @@
   MockBackend.prototype.signUpCompany = function (input) {
     var email = normalizeEmail(input.email);
     if (!email || !input.password) {
-      return Promise.reject(this._fail('invalid_input', 'נדרשים אימייל וסיסמה'));
+      return Promise.reject(this._fail('invalid_input', t('server.credentialsRequired')));
     }
     if (String(input.password).length < 6) {
-      return Promise.reject(this._fail('weak_password', 'הסיסמה חייבת להכיל לפחות 6 תווים'));
+      return Promise.reject(this._fail('weak_password', t('server.passwordTooShort')));
     }
     if (this._findUserByEmail(email)) {
-      return Promise.reject(this._fail('email_taken', 'כתובת האימייל כבר רשומה'));
+      return Promise.reject(this._fail('email_taken', t('server.emailTaken')));
     }
     if (!input.companyName || !String(input.companyName).trim()) {
-      return Promise.reject(this._fail('invalid_input', 'נדרש שם חברה'));
+      return Promise.reject(this._fail('invalid_input', t('server.companyRequired')));
     }
 
     var companyId = newId('co');
@@ -127,10 +135,10 @@
   MockBackend.prototype.signIn = function (input) {
     var user = this._findUserByEmail(normalizeEmail(input.email));
     if (!user || user.password !== String(input.password)) {
-      return Promise.reject(this._fail('bad_credentials', 'אימייל או סיסמה שגויים'));
+      return Promise.reject(this._fail('bad_credentials', t('server.badCredentials')));
     }
     if (!user.active) {
-      return Promise.reject(this._fail('user_disabled', 'המשתמש אינו פעיל. פנו למנהל החברה.'));
+      return Promise.reject(this._fail('user_disabled', t('server.userInactive')));
     }
     return this._startSession(user.id);
   };
@@ -163,9 +171,9 @@
 
   MockBackend.prototype._require = function (capability) {
     var session = this.session();
-    if (!session) throw this._fail('not_signed_in', 'יש להתחבר');
+    if (!session) throw this._fail('not_signed_in', t('server.signInRequired'));
     if (capability && !Model.can(session.user.role, capability)) {
-      throw this._fail('forbidden', 'אין לך הרשאה לפעולה הזו');
+      throw this._fail('forbidden', t('server.noPermission'));
     }
     return session;
   };
@@ -218,7 +226,7 @@
     var session;
     try { session = this._require('constraints.editOwn'); } catch (err) { return Promise.reject(err); }
     if (!session.user.employeeId) {
-      return Promise.reject(this._fail('no_employee_link', 'המשתמש אינו מקושר לכרטיס עובד'));
+      return Promise.reject(this._fail('no_employee_link', t('server.notLinked')));
     }
 
     var data = this._companyData(session.company.id);
@@ -227,7 +235,7 @@
     }
     var week = data.weeks[weekKey];
     if (week.published && session.user.role === 'employee') {
-      return Promise.reject(this._fail('week_published', 'הסידור לשבוע הזה כבר פורסם ולא ניתן לשנות אילוצים'));
+      return Promise.reject(this._fail('week_published', t('server.weekPublished')));
     }
 
     var key = session.user.employeeId + '|' + dayIdx;
@@ -256,17 +264,17 @@
     var session;
     try { session = this._require('constraints.editOwn'); } catch (err) { return Promise.reject(err); }
     if (!session.user.employeeId) {
-      return Promise.reject(this._fail('no_employee_link', 'המשתמש אינו מקושר לכרטיס עובד'));
+      return Promise.reject(this._fail('no_employee_link', t('server.notLinked')));
     }
 
     var data = this._companyData(session.company.id);
     var week = data.weeks[weekKey];
     var key = session.user.employeeId + '|' + dayIdx;
     if (!week || !week.constraints || !week.constraints[key]) {
-      return Promise.reject(this._fail('not_found', 'אין בקשה ליום הזה'));
+      return Promise.reject(this._fail('not_found', t('server.noRequest')));
     }
     if (week.published && session.user.role === 'employee') {
-      return Promise.reject(this._fail('week_published', 'הסידור לשבוע הזה כבר פורסם'));
+      return Promise.reject(this._fail('week_published', t('server.weekPublishedShort')));
     }
 
     week.constraints[key].note = String(note || '').slice(0, 300);
@@ -281,14 +289,14 @@
     var session;
     try { session = this._require('constraints.editAny'); } catch (err) { return Promise.reject(err); }
     if (decision !== 'approved' && decision !== 'rejected') {
-      return Promise.reject(this._fail('invalid_input', 'החלטה לא חוקית'));
+      return Promise.reject(this._fail('invalid_input', t('server.badDecision')));
     }
 
     var data = this._companyData(session.company.id);
     var week = data.weeks[weekKey];
     var key = employeeId + '|' + dayIdx;
     if (!week || !week.constraints || !week.constraints[key]) {
-      return Promise.reject(this._fail('not_found', 'הבקשה לא נמצאה'));
+      return Promise.reject(this._fail('not_found', t('server.requestNotFound')));
     }
 
     week.constraints[key].status = decision;
@@ -306,7 +314,7 @@
     var session;
     try { session = this._require('schedule.publish'); } catch (err) { return Promise.reject(err); }
     var data = this._companyData(session.company.id);
-    if (!data.weeks[weekKey]) return Promise.reject(this._fail('not_found', 'השבוע אינו קיים'));
+    if (!data.weeks[weekKey]) return Promise.reject(this._fail('not_found', t('server.weekMissing')));
     data.weeks[weekKey].published = published !== false;
     data.weeks[weekKey].updatedAt = this.now().toISOString();
     this._save();
@@ -334,13 +342,13 @@
     try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
     var email = normalizeEmail(input.email);
     if (!email || !input.password) {
-      return Promise.reject(this._fail('invalid_input', 'נדרשים אימייל וסיסמה'));
+      return Promise.reject(this._fail('invalid_input', t('server.credentialsRequired')));
     }
     if (String(input.password).length < 6) {
-      return Promise.reject(this._fail('weak_password', 'הסיסמה חייבת להכיל לפחות 6 תווים'));
+      return Promise.reject(this._fail('weak_password', t('server.passwordTooShort')));
     }
     if (this._findUserByEmail(email)) {
-      return Promise.reject(this._fail('email_taken', 'כתובת האימייל כבר רשומה'));
+      return Promise.reject(this._fail('email_taken', t('server.emailTaken')));
     }
     var role = input.role === 'manager' ? 'manager' : 'employee';  // owner אינו ניתן להענקה
     var userId = newId('user');
@@ -362,10 +370,10 @@
     try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
     var user = this.db.users[userId];
     if (!user || user.companyId !== session.company.id) {
-      return Promise.reject(this._fail('not_found', 'המשתמש לא נמצא'));   // בידוד
+      return Promise.reject(this._fail('not_found', t('server.userNotFound')));   // בידוד
     }
     if (user.role === 'owner' && (patch.role || patch.active === false)) {
-      return Promise.reject(this._fail('forbidden', 'לא ניתן לשנות את בעל החשבון'));
+      return Promise.reject(this._fail('forbidden', t('server.cannotChangeOwner')));
     }
     if (patch.role === 'manager' || patch.role === 'employee') user.role = patch.role;
     if (typeof patch.active === 'boolean') user.active = patch.active;

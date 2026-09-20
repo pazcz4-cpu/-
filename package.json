@@ -14,7 +14,8 @@
     "test:billing": "node tests/billing-browser-test.mjs",
     "test:approval": "node tests/approval-browser-test.mjs",
     "test:reason": "node tests/reason-notify-test.mjs",
-    "test:shifts": "node tests/shifts-browser-test.mjs"
+    "test:shifts": "node tests/shifts-browser-test.mjs",
+    "test:lang": "node tests/language-browser-test.mjs"
   },
   "license": "MIT"
 }

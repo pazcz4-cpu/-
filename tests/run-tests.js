@@ -1,6 +1,10 @@
 /* בדיקות למנוע השיבוץ ולבדיקות התקינות. הרצה: node tests/run-tests.js */
 'use strict';
 
+/* הבדיקות כתובות בעברית, ולכן קובעות במפורש את שפת המערכת */
+var I18n = require('../js/i18n/core.js');
+I18n.use('he');
+
 var Data = require('../js/data.js');
 var Store = require('../js/store.js');
 var Scheduler = require('../js/scheduler.js');

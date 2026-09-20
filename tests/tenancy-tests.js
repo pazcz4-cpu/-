@@ -3,6 +3,9 @@
    הרצה: node tests/tenancy-tests.js */
 'use strict';
 
+var I18n = require('../js/i18n/core.js');
+I18n.use('he');
+
 var Model = require('../js/backend/model.js');
 var Mock = require('../js/backend/mock.js');
 

@@ -1,0 +1,279 @@
+/* עברית */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'he',
+    name: 'עברית',
+    dir: 'rtl',
+    locale: 'he-IL',
+    weekStart: 0,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'סידור משמרות',
+        subtitle: 'שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים',
+        language: 'שפה'
+      },
+
+      days: {
+        0: 'ראשון', 1: 'שני', 2: 'שלישי', 3: 'רביעי',
+        4: 'חמישי', 5: 'שישי', 6: 'מוצ״ש'
+      },
+      daysShort: { 0: "א'", 1: "ב'", 2: "ג'", 3: "ד'", 4: "ה'", 5: "ו'", 6: "ש'" },
+
+      shifts: { morning: 'בוקר', middle: 'אמצע', evening: 'ערב', night: 'לילה' },
+
+      seed: {
+        branchCenter: 'סניף מרכז', branchNorth: 'סניף צפון', branchSouth: 'סניף דרום',
+        employee: 'עובד/ת {n}',
+        noteFloater: 'מחליף/ה בכל הסניפים', noteStudent: 'סטודנט/ית – ללא בקרים'
+      },
+
+      colors: {
+        0: 'חמרה', 1: 'ירוק', 2: 'כחול', 3: 'סגול',
+        4: 'ורוד', 5: 'טורקיז', 6: 'אפור', 7: 'חום'
+      },
+
+      tabs: {
+        schedule: 'סידור שבועי', constraints: 'אילוצים', employees: 'עובדים',
+        branches: 'סניפים', users: 'משתמשים', billing: 'מנוי', settings: 'הגדרות'
+      },
+
+      toolbar: {
+        prevWeek: 'שבוע קודם', nextWeek: 'שבוע הבא', thisWeek: 'השבוע הנוכחי',
+        week: 'שבוע {from} – {to}', currentWeek: 'השבוע הנוכחי',
+        generate: '✨ בנה סידור אוטומטי', clear: 'נקה סידור',
+        keepManual: 'שמירת שיבוצים ידניים',
+        copyText: '📋 העתק כטקסט', excel: '⬇ אקסל', csv: '⬇ CSV', print: '🖨 הדפסה',
+        moreTools: '⋯ כלים נוספים', closeTools: '✕ סגירת הכלים',
+        viewOnly: '🔒 מצב צפייה', exitViewOnly: '🔓 יציאה ממצב צפייה',
+        shabbatEnd: 'צאת שבת',
+        byBranch: 'תצוגה לפי סניף', byEmployee: 'תצוגה לפי עובד',
+        personalExport: 'ייצוא אישי לעובד (רק המשמרות שלו):',
+        choosePerson: 'בחרו עובד…',
+        holidays: 'ימי חג (הסניפים סגורים):'
+      },
+
+      schedule: {
+        branch: 'סניף', shift: 'משמרת', employee: 'עובד', totalShifts: 'סה״כ משמרות',
+        empty: '— ריק —', add: '+ הוסף', addPerson: '+ הוסף עובד', notAssigned: '— לא משובץ —',
+        closed: 'הסניף סגור ביום זה', noBranches: 'לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".',
+        required: 'נדרשים: {count}', people: '{count} עובדים',
+        holidayClosed: 'הסניפים סגורים', dayOff: 'חופש', holiday: 'חג',
+        missingSabbath: 'חסרה שעת צאת שבת'
+      },
+
+      status: {
+        synced: 'מסונכרן בין המכשירים', syncedAt: 'מסונכרן בין המכשירים · עודכן {time}',
+        localOnly: 'נשמר במכשיר הזה בלבד', readOnly: 'צפייה בלבד – אין הרשאת עריכה',
+        remoteUpdate: 'התקבל עדכון ממחשב אחר ({time})',
+        localCopy: 'זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים. ' +
+          'לעבודה משני מחשבים יש להשתמש בגרסה המתארחת. להעברת הנתונים: ייצוא JSON בלשונית ההגדרות, וייבוא בגרסה המתארחת.',
+        viewOnlyBanner: 'מצב צפייה – הסידור מוצג לבדיקה בלבד והעריכה חסומה. ' +
+          'הייצוא, ההדפסה והמעבר בין שבועות פועלים כרגיל.'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · משמרת {shift}',
+        deletedEmployee: '(עובד שנמחק: {id})',
+        deletedBranch: '(סניף שנמחק)',
+        errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
+        warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
+        infosOne: 'הערה אחת', infosOther: '{count} הערות',
+        allGood: '✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים',
+        showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
+        duplicate: 'כפל משמרת: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
+        duplicateSelf: 'כפל משמרת: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
+        doubleBooked: 'כפל משמרת לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
+        sameBranch: ' באותו סניף', differentBranches: ' בסניפים שונים',
+        understaffed: 'חוסר באיוש: {label} – משובצים {assigned} מתוך {need}.',
+        reasonBusy: '{names} כבר משובצים במשמרת אחרת באותו יום',
+        reasonMaxed: '{names} הגיעו למכסת המשמרות השבועית',
+        reasonResting: '{names} חייבים מנוחה בין ערב לבוקר',
+        reasonNone: 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.',
+        reasonFree: 'יש עובדים פנויים ({names}) – נסו לבנות את הסידור מחדש.',
+        reasonPrefix: 'הסיבה: ',
+        suggestTwoPerDay: ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.',
+        suggestRaiseMax: ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.',
+        constraintOff: 'הפרת אילוץ: {name} ביקש/ה יום חופש ב{day} אך משובץ/ת ל{shift} ב{branch}.',
+        constraintBlocked: 'הפרת אילוץ: {name} חסם/ה משמרת {shift} ב{day} אך משובץ/ת אליה ב{branch}.',
+        branchMismatch: '{name} משובץ/ת ב{branch} ({day}) למרות שהסניף אינו מוגדר בכרטיס העובד.',
+        shiftMismatch: '{name} משובץ/ת למשמרת {shift} ב{day} למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
+        overMax: 'חריגה ממכסה: {name} משובץ/ת ל-{total} משמרות (מקסימום {max}).',
+        noShifts: '{name} לא משובץ/ת השבוע כלל.',
+        rest: 'מנוחה קצרה: {name} סיים/ה ערב ב{previous} ומשובץ/ת לבוקר ב{day}.',
+        holidayAssignment: 'שיבוץ ביום חג: {day} ({name}) מוגדר כיום סגור, אך משובצים בו {names}.',
+        inactiveSlot: 'שיבוץ במשמרת שאינה פעילה: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        pendingOne: 'בקשת אילוץ ממתינה לאישור: {name} ({day}). עד לאישור היא אינה משפיעה על השיבוץ.',
+        pendingOther: '{count} בקשות אילוץ ממתינות לאישור: {names}. עד לאישור הן אינן משפיעות על השיבוץ.',
+        extraDaysOff: '{name} סימן/ה {count} ימי חופש ({days}) – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+        belowTarget: '{name} ביקש/ה יום חופש ב{day} ומשובץ/ת {total} משמרות מתוך {expected} אפשריות – יש לו/ה עוד ימים פנויים.'
+      },
+
+      availability: {
+        title: 'מה נותר פנוי השבוע',
+        none: 'אין יתרת זמינות – {reason}',
+        reasonMaxed: 'כל העובדים הגיעו למכסת המשמרות השבועית שלהם.',
+        reasonNoDays: 'לעובדים שנותרה להם מכסה אין יום פנוי שבו הסניפים שלהם פתוחים.',
+        totalOne: '{verb} משמרת אחת שאפשר עוד לשבץ, אצל {people}:',
+        totalOther: '{verb} {count} משמרות שאפשר עוד לשבץ, אצל {people}:',
+        peopleOne: 'עובד/ת אחד/ת', peopleOther: '{count} עובדים',
+        left: '{verb} {shifts} במכסה · פנוי/ה ב{days}',
+        leftNoDays: '{verb} {shifts} במכסה, אך אין יום פנוי השבוע',
+        full: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max})',
+        noEmployees: 'לא הוגדרו עובדים פעילים.',
+        shiftsOne: 'משמרת אחת', shiftsOther: '{count} משמרות',
+        remains: 'נותרה', remainPlural: 'נותרו'
+      },
+
+      constraints: {
+        title: 'אילוצי {week}',
+        clear: 'נקה אילוצי השבוע', copyPrevious: 'העתק אילוצים משבוע קודם',
+        legend: 'לחיצה על כפתור משמרת מחליפה מצב: {free} → {preferred} → {blocked}. סימון "חופש" חוסם את כל היום.',
+        free: 'זמין', preferred: 'מעדיף/ה', blocked: 'לא יכול/ה', dayOff: 'חופש',
+        pendingTitle: 'בקשות שממתינות לאישורך ({count})',
+        pendingHint: 'בקשה שלא אושרה אינה משפיעה על השיבוץ.',
+        approve: 'אישור', reject: 'דחייה',
+        approved: 'אושר', rejected: 'נדחה', pending: 'ממתין לאישור',
+        requestLabel: 'בקשה: {detail}', requestRejected: 'בקשה נדחתה',
+        reason: 'סיבה (לא חובה)',
+        reasonPlaceholder: 'למשל: חתונה, בחינה, תור לרופא',
+        reasonSaved: 'הסיבה נשמרה', reasonGiven: 'הסיבה שציינת: {text}',
+        managerNote: 'הערת מנהל/ת: {text}',
+        needsApproval: 'כל בקשה עוברת לאישור המנהל/ת ומשפיעה על הסידור רק אחרי שאושרה.',
+        noChange: 'ללא שינוי'
+      },
+
+      employees: {
+        title: 'עובדים מוגדרים', add: '+ הוסף עובד', active: 'עובד/ת פעיל/ה',
+        branchesLabel: 'סניפים (ללא בחירה = זמין בכל הסניפים)',
+        shiftTypes: 'סוגי משמרות אפשריים',
+        maxShifts: 'מקסימום משמרות בשבוע', note: 'הערה',
+        deleteConfirm: 'למחוק את {name}? השיבוצים הקיימים של העובד/ת יוסרו מכל השבועות.',
+        inactive: '(לא פעיל)', newName: 'עובד/ת חדש/ה'
+      },
+
+      branches: {
+        title: 'סניפים מוגדרים', add: '+ הוסף סניף', active: 'פעיל', newName: 'סניף חדש',
+        hint: 'לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת. ' +
+          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן ככפל משמרת.',
+        peopleLabel: 'עובדים', closed: 'סגור', day: 'יום',
+        copyFrom: 'העתקת ימים ושעות מסניף אחר', chooseBranch: 'בחרו סניף…',
+        copyConfirm: 'להעתיק את הימים והשעות מ{from} אל {to}?',
+        copied: 'הימים והשעות הועתקו',
+        deleteConfirm: 'למחוק את {name}? השיבוצים של הסניף יוסרו מכל השבועות.',
+        autoSabbath: 'לפי צאת שבת', autoSabbathLabel: 'מצאת שבת +30 דק׳'
+      },
+
+      settings: {
+        rules: 'כללי שיבוץ',
+        onePerDay: 'עובד משובץ למשמרת אחת ביום לכל היותר',
+        rest: 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם',
+        oneDayOff: 'יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע',
+        shiftTypes: 'סוגי המשמרות בעסק',
+        addShift: '+ הוספת משמרת', applyHours: 'החל שעות על כל הסניפים (ראשון–חמישי)',
+        shiftsHint: 'כאן מגדירים כמה משמרות יש בעסק, איך הן נקראות, מה השעות שלהן ובאיזה צבע הן מוצגות. ' +
+          'השעות כאן הן ברירת המחדל; לכל סניף אפשר לקבוע שעות משלו. ' +
+          'הכפתור מחיל את השעות על כל הסניפים הקיימים, בלי לשנות ימים פתוחים או כמות עובדים.',
+        shiftNamePlaceholder: 'שם המשמרת',
+        sabbathTitle: 'מוצאי שבת',
+        sabbathDefault: 'שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:',
+        sabbathHint: 'בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. ' +
+          'משמרת מוצ״ש מתחילה חצי שעה אחריה.',
+        backup: 'גיבוי ושחזור',
+        exportJson: '⬇ ייצוא כל הנתונים (JSON)', importJson: '⬆ ייבוא נתונים',
+        reset: 'איפוס להגדרות ברירת מחדל',
+        backupHint: 'הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה. לשיתוף בין מחשבים – ייצאו קובץ JSON.',
+        languageTitle: 'שפה', languageHint: 'משנה את כל הממשק. נשמר למכשיר הזה.'
+      },
+
+      billing: {
+        title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',
+        activeStaff: 'עובדים פעילים', of: '{count} מתוך {max}', unlimited: '{count} (ללא הגבלה)',
+        plans: 'תוכניות', choose: 'בחירה', currentPlan: 'התוכנית הנוכחית',
+        tooSmall: 'קטנה מדי עבור {count} עובדים', cancel: 'ביטול המנוי',
+        cancelConfirm: 'לבטל את המנוי? הגישה תיחסם בתום התקופה ששולמה.',
+        planUpdated: 'התוכנית עודכנה', canceled: 'המנוי בוטל',
+        ownerOnly: 'רק בעל החשבון יכול לשנות את המנוי.',
+        perMonth: 'לחודש',
+        statusTrial: 'תקופת ניסיון', statusActive: 'מנוי פעיל', statusPastDue: 'תשלום לא התקבל',
+        statusCanceled: 'המנוי בוטל', statusExpired: 'המנוי פג'
+      },
+
+      auth: {
+        signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
+        email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
+        passwordHint: 'לפחות 6 תווים',
+        enter: 'כניסה', create: 'פתיחת חשבון', signingIn: 'מתחבר…', creating: 'פותח חשבון…',
+        trialNote: '{days} ימי ניסיון ללא תשלום. לא נדרש אמצעי תשלום.',
+        signOut: 'יציאה', blocked: 'הגישה חסומה',
+        blockedOwner: 'להפעלת המנוי יש לפנות לתמיכה.',
+        blockedMember: 'יש לפנות לבעל החשבון בחברה כדי לחדש את המנוי.',
+        enableNotifications: '🔔 הפעלת התראות',
+        failedSignIn: 'ההתחברות נכשלה', failedSignUp: 'ההרשמה נכשלה'
+      },
+
+      users: {
+        title: 'משתמשי החברה',
+        hint: 'כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו – ' +
+          'הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל. ' +
+          'כדי שעובד יראה את המשמרות שלו יש לקשר את המשתמש לכרטיס העובד.',
+        add: 'הוספת משתמש', createUser: 'יצירת משתמש',
+        role: 'תפקיד', staffCard: 'כרטיס עובד', none: 'ללא', noLink: 'ללא קישור',
+        initialPassword: 'סיסמה ראשונית', activeColumn: 'פעיל',
+        created: 'נוצר משתמש עבור {email}', updated: 'העדכון נשמר', updateFailed: 'העדכון נכשל'
+      },
+
+      plans: {
+        upTo: 'עד {count} עובדים',
+        between: '{from} עד {to} עובדים',
+        from: '{count} עובדים ומעלה'
+      },
+
+      roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
+
+      employee: {
+        myShifts: 'המשמרות שלי', myRequests: 'האילוצים שלי',
+        notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
+        noShifts: 'אין לך משמרות בשבוע הזה.',
+        totalWeek: 'סה״כ {count} משמרות השבוע.',
+        publishedLocked: 'הסידור פורסם – לא ניתן עוד לשנות אילוצים לשבוע הזה.',
+        notLinked: 'המשתמש שלך עדיין לא קושר לכרטיס עובד. פנה/י למנהל/ת.',
+        noShiftsToday: 'אין משמרות ביום הזה', holidayNoWork: 'יום חג – אין עבודה'
+      },
+
+      excel: {
+        byBranch: 'לפי סניף', byEmployee: 'לפי עובד', availability: 'מה נותר פנוי',
+        checks: 'בדיקות', personal: 'סידור אישי',
+        title: 'סידור עבודה – שבוע {from} עד {to}',
+        viewBranch: 'תצוגה לפי סניף', viewEmployee: 'תצוגה לפי עובד',
+        sabbathEnds: 'צאת שבת {time}',
+        day: 'יום', date: 'תאריך', branch: 'סניף', shift: 'משמרת', hours: 'שעות',
+        staff: 'עובד', assigned: 'משובץ', quota: 'מכסה', left: 'נותרו במכסה',
+        canAssign: 'ניתן לשבץ', freeDays: 'ימים פנויים', totalShifts: 'סה״כ משמרות',
+        severity: 'חומרה', type: 'סוג', detail: 'פירוט',
+        missing: '— חסר —', closed: 'סגור', notAssigned: 'לא משובץ',
+        personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} משמרות השבוע',
+        noIssues: 'אין כפל משמרות, חוסרים או הפרות אילוצים'
+      },
+
+      errors: {
+        invalidTime: 'שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30',
+        emptyShiftName: 'שם המשמרת אינו יכול להיות ריק',
+        lastShift: 'חייבת להישאר לפחות משמרת אחת',
+        notSaved: 'השמירה נכשלה', copied: 'הועתק ללוח',
+        viewOnlyBlocked: 'מצב צפייה – העריכה חסומה. אפשר לכבות אותו בכפתור שבראש המסך.',
+        duplicatePerson: 'אותו עובד לא יכול להופיע פעמיים באותה משמרת',
+        printBlocked: 'ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא אקסל',
+        chooseEmployee: 'בחרו עובד לייצוא אישי'
+      },
+
+      common: {
+        save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
+        yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);

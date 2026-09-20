@@ -1,18 +1,26 @@
-/* בדיקות תקינות לסידור: כפל משמרת, חוסרים, הפרות אילוצים ומכסות */
+/* בדיקות תקינות לסידור: כפל משמרת, חוסרים, הפרות אילוצים ומכסות.
+   כל הטקסטים מגיעים משכבת התרגום (I18n) כדי שההתראות יוצגו בשפת המשתמש. */
 (function (root) {
   'use strict';
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
   var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
   var Scheduler = root.ShiftScheduler || (typeof require === 'function' ? require('./scheduler.js') : null);
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  function t(key, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return key;
+    try { return i18n.t(key, params); } catch (err) { return key; }
+  }
 
   function empName(state, id) {
     var emp = Store.byId(state.employees, id);
-    return emp ? emp.name : '(עובד שנמחק: ' + id + ')';
+    return emp ? emp.name : t('alerts.deletedEmployee', { id: id });
   }
   function branchName(state, id) {
     var branch = Store.byId(state.branches, id);
-    return branch ? branch.name : '(סניף שנמחק)';
+    return branch ? branch.name : t('alerts.deletedBranch');
   }
   /* שם המשמרת נקרא מהגדרות העסק, ולא מרשימה קבועה */
   var activeState = null;
@@ -24,7 +32,15 @@
   function nameList(names, limit) {
     var max = limit || 3;
     if (names.length <= max) return names.join(', ');
-    return names.slice(0, max).join(', ') + ' ועוד ' + (names.length - max);
+    return names.slice(0, max).join(', ') + ' ' + t('common.more', { count: names.length - max });
+  }
+
+  function slotLabel(state, dayIdx, branchId, shiftId) {
+    return t('alerts.slotLabel', {
+      day: dayName(dayIdx),
+      branch: branchName(state, branchId),
+      shift: shiftName(shiftId)
+    });
   }
 
   /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
@@ -53,23 +69,19 @@
       free.push(emp.name);
     });
 
-    if (!eligible.length) {
-      return 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.';
-    }
-    if (free.length) {
-      return 'יש עובדים פנויים (' + nameList(free) + ') – נסו לבנות את הסידור מחדש.';
-    }
+    if (!eligible.length) return t('alerts.reasonNone');
+    if (free.length) return t('alerts.reasonFree', { names: nameList(free) });
 
     var reasons = [];
-    if (busy.length) reasons.push(nameList(busy) + ' כבר משובצים במשמרת אחרת באותו יום');
-    if (atMax.length) reasons.push(nameList(atMax) + ' הגיעו למכסת המשמרות השבועית');
-    if (resting.length) reasons.push(nameList(resting) + ' חייבים מנוחה בין ערב לבוקר');
+    if (busy.length) reasons.push(t('alerts.reasonBusy', { names: nameList(busy) }));
+    if (atMax.length) reasons.push(t('alerts.reasonMaxed', { names: nameList(atMax) }));
+    if (resting.length) reasons.push(t('alerts.reasonResting', { names: nameList(resting) }));
 
-    var text = 'הסיבה: ' + reasons.join('; ') + '.';
+    var text = t('alerts.reasonPrefix') + reasons.join('; ') + '.';
     if (busy.length && !atMax.length) {
-      text += ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.';
+      text += t('alerts.suggestTwoPerDay');
     } else if (atMax.length) {
-      text += ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.';
+      text += t('alerts.suggestRaiseMax');
     }
     return text;
   }
@@ -89,20 +101,23 @@
     Object.keys(demandMap).forEach(function (key) {
       var demand = demandMap[key];
       var assigned = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
-      var label = dayName(demand.dayIdx) + ' · ' + branchName(state, demand.branchId) + ' · משמרת ' + shiftName(demand.shiftId);
+      var label = slotLabel(state, demand.dayIdx, demand.branchId, demand.shiftId);
 
       if (assigned.length < demand.need) {
         issues.push(issue('warning', 'understaffed',
-          'חוסר באיוש: ' + label + ' – משובצים ' + assigned.length + ' מתוך ' + demand.need + '. ' +
-          explainShortage(state, week, demand),
+          t('alerts.understaffed', { label: label, assigned: assigned.length, need: demand.need }) +
+          ' ' + explainShortage(state, week, demand),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
       if (assigned.length > demand.need) {
         issues.push(issue('warning', 'duplicate-shift',
-          'כפל משמרת: ' + label + ' – משובצים ' + assigned.length + ' עובדים (' +
-          assigned.map(function (id) { return empName(state, id); }).join(', ') +
-          ') במקום ' + demand.need + '.',
+          t('alerts.duplicate', {
+            label: label,
+            count: assigned.length,
+            names: assigned.map(function (id) { return empName(state, id); }).join(', '),
+            need: demand.need
+          }),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
@@ -110,7 +125,7 @@
       assigned.forEach(function (id) {
         if (seen[id]) {
           issues.push(issue('error', 'duplicate-employee-slot',
-            'כפל משמרת: ' + empName(state, id) + ' משובץ/ת פעמיים באותה משמרת – ' + label + '.',
+            t('alerts.duplicateSelf', { name: empName(state, id), label: label }),
             { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId, empId: id }));
         }
         seen[id] = true;
@@ -125,9 +140,8 @@
       });
       issues.push(issue('warning', 'pending-constraints',
         pending.length === 1
-          ? 'בקשת אילוץ ממתינה לאישור: ' + names[0] + '. עד לאישור היא אינה משפיעה על השיבוץ.'
-          : pending.length + ' בקשות אילוץ ממתינות לאישור: ' + nameList(names, 4) +
-            '. עד לאישור הן אינן משפיעות על השיבוץ.',
+          ? t('alerts.pendingOne', { name: empName(state, pending[0].empId), day: dayName(pending[0].dayIdx) })
+          : t('alerts.pendingOther', { count: pending.length, names: nameList(names, 4) }),
         {}));
     }
 
@@ -140,8 +154,11 @@
       });
       if (onHoliday.length) {
         issues.push(issue('warning', 'holiday-assignment',
-          'שיבוץ ביום חג: ' + dayName(holidayDay) + ' (' + Store.holidayName(week, holidayDay) +
-          ') מוגדר כיום סגור, אך משובצים בו ' + nameList(onHoliday, 5) + '.',
+          t('alerts.holidayAssignment', {
+            day: dayName(holidayDay),
+            name: Store.holidayName(week, holidayDay),
+            names: nameList(onHoliday, 5)
+          }),
           { dayIdx: holidayDay }));
       }
     }
@@ -153,7 +170,7 @@
     });
     if (missingShabbat.length && !week.shabbatEnd) {
       issues.push(issue('warning', 'missing-shabbat-end',
-        'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        t('alerts.missingSabbath'),
         { dayIdx: Data.MOTZASH.dayIdx }));
     }
 
@@ -164,8 +181,12 @@
       if (!list.length) return;
       var parts = key.split('|');
       issues.push(issue('warning', 'inactive-slot',
-        'שיבוץ במשמרת שאינה פעילה: ' + dayName(Number(parts[0])) + ' · ' + branchName(state, parts[1]) +
-        ' · ' + shiftName(parts[2]) + ' (' + list.map(function (id) { return empName(state, id); }).join(', ') + ').',
+        t('alerts.inactiveSlot', {
+          day: dayName(Number(parts[0])),
+          branch: branchName(state, parts[1]),
+          shift: shiftName(parts[2]),
+          names: list.map(function (id) { return empName(state, id); }).join(', ')
+        }),
         { dayIdx: Number(parts[0]), branchId: parts[1], shiftId: parts[2] }));
     });
 
@@ -186,33 +207,44 @@
           }).join(' + ');
           var sameBranch = slots.every(function (s) { return s.branchId === slots[0].branchId; });
           issues.push(issue(state.settings.onePerDay ? 'error' : 'info', 'double-booked',
-            'כפל משמרת לעובד: ' + emp.name + ' משובץ/ת ל-' + slots.length + ' משמרות ביום ' + dayName(day) +
-            (sameBranch ? ' באותו סניף' : ' בסניפים שונים') + ' (' + desc + ').',
+            t('alerts.doubleBooked', {
+              name: emp.name,
+              count: slots.length,
+              day: dayName(day),
+              where: t(sameBranch ? 'alerts.sameBranch' : 'alerts.differentBranches'),
+              detail: desc
+            }),
             { dayIdx: day, empId: emp.id }));
         }
 
         slots.forEach(function (s) {
           if (constraint.off) {
             issues.push(issue('error', 'constraint-off',
-              'הפרת אילוץ: ' + emp.name + ' ביקש/ה יום חופש ב' + dayName(day) +
-              ' אך משובץ/ת ל' + shiftName(s.shiftId) + ' ב' + branchName(state, s.branchId) + '.',
+              t('alerts.constraintOff', {
+                name: emp.name, day: dayName(day),
+                shift: shiftName(s.shiftId), branch: branchName(state, s.branchId)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           } else if (constraint.blocked && constraint.blocked[s.shiftId]) {
             issues.push(issue('error', 'constraint-blocked',
-              'הפרת אילוץ: ' + emp.name + ' חסם/ה משמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
-              ' אך משובץ/ת אליה ב' + branchName(state, s.branchId) + '.',
+              t('alerts.constraintBlocked', {
+                name: emp.name, shift: shiftName(s.shiftId),
+                day: dayName(day), branch: branchName(state, s.branchId)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (!Scheduler.employeeAllowedInBranch(emp, s.branchId)) {
             issues.push(issue('warning', 'branch-mismatch',
-              emp.name + ' משובץ/ת ב' + branchName(state, s.branchId) + ' (' + dayName(day) +
-              ') למרות שהסניף אינו מוגדר בכרטיס העובד.',
+              t('alerts.branchMismatch', {
+                name: emp.name, branch: branchName(state, s.branchId), day: dayName(day)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (emp.shifts.indexOf(s.shiftId) === -1) {
             issues.push(issue('warning', 'shift-mismatch',
-              emp.name + ' משובץ/ת למשמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
-              ' למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
+              t('alerts.shiftMismatch', {
+                name: emp.name, shift: shiftName(s.shiftId), day: dayName(day)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (s.shiftId === 'evening') eveningDays[day] = true;
@@ -223,8 +255,7 @@
           var morning = slots.some(function (s) { return s.shiftId === 'morning'; });
           if (morning) {
             issues.push(issue('warning', 'rest',
-              'מנוחה קצרה: ' + emp.name + ' סיים/ה ערב ב' + dayName(day - 1) +
-              ' ומשובץ/ת לבוקר ב' + dayName(day) + '.',
+              t('alerts.rest', { name: emp.name, previous: dayName(day - 1), day: dayName(day) }),
               { dayIdx: day, empId: emp.id }));
           }
         }
@@ -235,8 +266,9 @@
         var daysOff = Store.requestedDaysOff(week, emp.id);
         if (daysOff.length > 1) {
           issues.push(issue('warning', 'extra-days-off',
-            emp.name + ' סימן/ה ' + daysOff.length + ' ימי חופש (' +
-            daysOff.map(dayName).join(', ') + ') – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+            t('alerts.extraDaysOff', {
+              name: emp.name, count: daysOff.length, days: daysOff.map(dayName).join(', ')
+            }),
             { empId: emp.id }));
         }
 
@@ -244,19 +276,20 @@
         var expected = Math.min(emp.maxShifts || 99, workable);
         if (daysOff.length === 1 && total < expected && total > 0) {
           issues.push(issue('info', 'below-target',
-            emp.name + ' ביקש/ה יום חופש ב' + dayName(daysOff[0]) + ' ומשובץ/ת ' + total +
-            ' משמרות מתוך ' + expected + ' אפשריות – יש לו/ה עוד ימים פנויים.',
+            t('alerts.belowTarget', {
+              name: emp.name, day: dayName(daysOff[0]), total: total, expected: expected
+            }),
             { empId: emp.id }));
         }
       }
 
       if (emp.active && total > (emp.maxShifts || 99)) {
         issues.push(issue('warning', 'over-max',
-          'חריגה ממכסה: ' + emp.name + ' משובץ/ת ל-' + total + ' משמרות (מקסימום ' + emp.maxShifts + ').',
+          t('alerts.overMax', { name: emp.name, total: total, max: emp.maxShifts }),
           { empId: emp.id }));
       }
       if (emp.active && total === 0 && Store.weekDemands(state, week).length) {
-        issues.push(issue('info', 'no-shifts', emp.name + ' לא משובץ/ת השבוע כלל.', { empId: emp.id }));
+        issues.push(issue('info', 'no-shifts', t('alerts.noShifts', { name: emp.name }), { empId: emp.id }));
       }
     });
 

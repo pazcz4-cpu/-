@@ -1071,6 +1071,711 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 <div id="toast" class="toast"></div>
 <script>
+/* ===== js/i18n/core.js ===== */
+/* מנגנון ריבוי שפות.
+   הוספת שפה חדשה = קובץ אחד שקורא ל-I18n.register עם מילון.
+   מפתח שחסר בשפה מסוימת נופל לאנגלית, ואם גם שם אין – מוצג המפתח,
+   כך שתרגום חלקי לעולם אינו שובר את המערכת. */
+(function (root) {
+  'use strict';
+
+  var languages = {};   // code -> { code, name, dir, locale, weekStart, currency, dict }
+  var current = null;
+  var fallback = 'en';
+  var listeners = [];
+
+  function register(definition) {
+    var code = definition.code;
+    languages[code] = {
+      code: code,
+      name: definition.name,                 // שם השפה בשפה עצמה
+      dir: definition.dir || 'ltr',
+      locale: definition.locale || code,     // לפורמט תאריכים
+      weekStart: typeof definition.weekStart === 'number' ? definition.weekStart : 1,
+      currency: definition.currency || { code: 'USD', symbol: '$', position: 'before' },
+      dict: definition.dict || {}
+    };
+    return languages[code];
+  }
+
+  function list() {
+    return Object.keys(languages).map(function (code) {
+      return { code: code, name: languages[code].name, dir: languages[code].dir };
+    });
+  }
+
+  function has(code) { return !!languages[code]; }
+
+  function definition(code) {
+    return languages[code] || languages[fallback] || languages[Object.keys(languages)[0]];
+  }
+
+  function use(code) {
+    current = has(code) ? code : detect();
+    listeners.forEach(function (fn) {
+      try { fn(current); } catch (err) { /* מאזין תקול לא מפיל את השאר */ }
+    });
+    return current;
+  }
+
+  function onChange(fn) { listeners.push(fn); }
+
+  function code() { return current || detect(); }
+
+  function active() { return definition(code()); }
+
+  /* זיהוי לפי הגדרות הדפדפן, עם נפילה לאנגלית */
+  function detect() {
+    var candidates = [];
+    var nav = root.navigator;
+    if (nav) {
+      if (nav.languages) candidates = candidates.concat(nav.languages);
+      if (nav.language) candidates.push(nav.language);
+    }
+    for (var i = 0; i < candidates.length; i++) {
+      var tag = String(candidates[i] || '');
+      if (has(tag)) return tag;
+      var base = tag.split('-')[0];
+      if (has(base)) return base;
+    }
+    return has(fallback) ? fallback : Object.keys(languages)[0];
+  }
+
+  function lookup(dict, key) {
+    if (!dict) return undefined;
+    if (Object.prototype.hasOwnProperty.call(dict, key)) return dict[key];
+    // תמיכה במפתחות מקוננים: 'schedule.generate'
+    var parts = key.split('.');
+    var node = dict;
+    for (var i = 0; i < parts.length; i++) {
+      if (!node || typeof node !== 'object') return undefined;
+      node = node[parts[i]];
+    }
+    return typeof node === 'string' ? node : undefined;
+  }
+
+  /* החלפת תבניות: "נותרו {count} ימים" */
+  function interpolate(template, params) {
+    if (!params) return template;
+    return template.replace(/\{(\w+)\}/g, function (match, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;
+    });
+  }
+
+  function t(key, params) {
+    var text = lookup(active().dict, key);
+    if (text === undefined && languages[fallback]) {
+      text = lookup(languages[fallback].dict, key);
+    }
+    if (text === undefined) return key;
+    return interpolate(text, params);
+  }
+
+  /* בחירה בין צורת יחיד לרבים: t.plural('shifts', 3) */
+  function plural(key, count, params) {
+    var suffix = count === 1 ? '.one' : '.other';
+    var merged = params || {};
+    merged.count = count;
+    var text = t(key + suffix, merged);
+    return text === key + suffix ? t(key, merged) : text;
+  }
+
+  function dir() { return active().dir; }
+  function isRtl() { return dir() === 'rtl'; }
+  function weekStart() { return active().weekStart; }
+  function currency() { return active().currency; }
+
+  function formatMoney(amount) {
+    var money = currency();
+    var value = String(amount);
+    return money.position === 'before' ? money.symbol + value : value + money.symbol;
+  }
+
+  var API = {
+    register: register, list: list, has: has, use: use, code: code, active: active,
+    detect: detect, onChange: onChange, t: t, plural: plural,
+    dir: dir, isRtl: isRtl, weekStart: weekStart, currency: currency, formatMoney: formatMoney,
+    interpolate: interpolate
+  };
+
+  root.I18n = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+
+  /* בדפדפן השפות נטענות בתגי script. ב-Node אין תגים, ולכן נטען כאן
+     את המילונים המצורפים כדי ש-t() יעבוד גם בבדיקות ובסקריפטים. */
+  if (typeof require === 'function' && typeof module !== 'undefined' && module.exports) {
+    ['en', 'he'].forEach(function (lang) {
+      try { require('./' + lang + '.js'); } catch (err) { /* שפה שאינה מצורפת */ }
+    });
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/en.js ===== */
+/* English — the base language. Every key lives here first;
+   other languages fall back to it when a key is missing. */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'en',
+    name: 'English',
+    dir: 'ltr',
+    locale: 'en-GB',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Shift Scheduler',
+        subtitle: 'Weekly staffing for every branch, with double-booking and gap detection',
+        language: 'Language'
+      },
+
+      days: {
+        0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+        4: 'Thursday', 5: 'Friday', 6: 'Saturday'
+      },
+      daysShort: { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' },
+
+      shifts: { morning: 'Morning', middle: 'Midday', evening: 'Evening', night: 'Night' },
+
+      seed: {
+        branchCenter: 'Central branch', branchNorth: 'North branch', branchSouth: 'South branch',
+        employee: 'Team member {n}',
+        noteFloater: 'Covers every branch', noteStudent: 'Student – no mornings'
+      },
+
+      colors: {
+        0: 'Amber', 1: 'Green', 2: 'Blue', 3: 'Purple',
+        4: 'Pink', 5: 'Teal', 6: 'Grey', 7: 'Brown'
+      },
+
+      tabs: {
+        schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
+        branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'
+      },
+
+      toolbar: {
+        prevWeek: 'Previous week', nextWeek: 'Next week', thisWeek: 'This week',
+        week: 'Week {from} – {to}', currentWeek: 'Current week',
+        generate: 'Build schedule', clear: 'Clear schedule',
+        keepManual: 'Keep manual assignments',
+        copyText: 'Copy as text', excel: 'Excel', csv: 'CSV', print: 'Print',
+        moreTools: 'More tools', closeTools: 'Close tools',
+        viewOnly: 'View only', exitViewOnly: 'Exit view only',
+        shabbatEnd: 'Sabbath ends',
+        byBranch: 'By branch', byEmployee: 'By employee',
+        personalExport: 'Personal export (their shifts only):',
+        choosePerson: 'Choose a person…',
+        holidays: 'Holidays (all branches closed):'
+      },
+
+      schedule: {
+        branch: 'Branch', shift: 'Shift', employee: 'Employee', totalShifts: 'Total shifts',
+        empty: '— empty —', add: '+ add', addPerson: '+ add person', notAssigned: '— not assigned —',
+        closed: 'Closed on this day', noBranches: 'No active branches. Open the Branches tab.',
+        required: 'Required: {count}', people: '{count} people',
+        holidayClosed: 'All branches closed', dayOff: 'Day off', holiday: 'Holiday',
+        missingSabbath: 'Sabbath end time missing'
+      },
+
+      status: {
+        synced: 'Synced across devices', syncedAt: 'Synced across devices · updated {time}',
+        localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
+        remoteUpdate: 'Update received from another device ({time})',
+        localCopy: 'This is a local copy – data is stored in this browser only and does not sync. ' +
+          'To work from two computers use the hosted version. To move data: export JSON in Settings, then import it there.',
+        viewOnlyBanner: 'View only – the schedule is shown for review and editing is disabled. ' +
+          'Export, printing and week navigation still work.'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · {shift} shift',
+        deletedEmployee: '(deleted person: {id})',
+        deletedBranch: '(deleted branch)',
+        errorsOne: 'One error', errorsOther: '{count} errors',
+        warningsOne: 'One warning', warningsOther: '{count} warnings',
+        infosOne: 'One note', infosOther: '{count} notes',
+        allGood: '✔ Schedule is valid – no double bookings, gaps or broken requests',
+        showAll: 'Show all {count} alerts', showLess: 'Hide alerts',
+        duplicate: 'Double booking: {label} – {count} people assigned ({names}) instead of {need}.',
+        duplicateSelf: 'Double booking: {name} is assigned twice to the same shift – {label}.',
+        doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
+        sameBranch: ' at the same branch', differentBranches: ' at different branches',
+        understaffed: 'Understaffed: {label} – {assigned} of {need} assigned.',
+        reasonBusy: '{names} are already assigned to another shift that day',
+        reasonMaxed: '{names} reached their weekly shift limit',
+        reasonResting: '{names} need rest between an evening and a morning shift',
+        reasonNone: 'No one is set up for both this branch and this shift, or everyone blocked it.',
+        reasonFree: 'These people are free ({names}) – try building the schedule again.',
+        reasonPrefix: 'Reason: ',
+        suggestTwoPerDay: ' You can allow two shifts per day per person in Settings.',
+        suggestRaiseMax: ' You can raise the weekly limit on the staff card.',
+        constraintOff: 'Request broken: {name} asked for {day} off but is assigned to {shift} at {branch}.',
+        constraintBlocked: 'Request broken: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
+        branchMismatch: '{name} is assigned to {branch} on {day} although that branch is not on their card.',
+        shiftMismatch: '{name} is assigned to {shift} on {day} although that shift type is not on their card.',
+        overMax: 'Over limit: {name} is assigned {total} shifts (maximum {max}).',
+        noShifts: '{name} has no shifts this week.',
+        rest: 'Short rest: {name} finishes an evening on {previous} and starts a morning on {day}.',
+        holidayAssignment: 'Assigned on a holiday: {day} ({name}) is marked closed, but {names} are assigned.',
+        inactiveSlot: 'Assigned to a shift that is not open: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'No Sabbath end time for this week – the start time of Saturday-night shifts cannot be calculated.',
+        pendingOne: 'A request is waiting for approval: {name} ({day}). It does not affect the schedule until approved.',
+        pendingOther: '{count} requests are waiting for approval: {names}. They do not affect the schedule until approved.',
+        extraDaysOff: '{name} asked for {count} days off ({days}) – the policy allows one day off per week.',
+        belowTarget: '{name} asked for {day} off and is assigned {total} of {expected} possible shifts – they still have free days.'
+      },
+
+      availability: {
+        title: 'What is still available',
+        none: 'Nothing available – {reason}',
+        reasonMaxed: 'everyone has reached their weekly shift limit.',
+        reasonNoDays: 'the people with quota left have no free day when their branches are open.',
+        totalOne: '{verb} one more shift to assign, across {people}:',
+        totalOther: '{verb} {count} more shifts to assign, across {people}:',
+        peopleOne: 'one person', peopleOther: '{count} people',
+        left: '{verb} {shifts} left · free on {days}',
+        leftNoDays: '{verb} {shifts} left, but no free day this week',
+        full: 'fully used ({assigned} of {max})',
+        noEmployees: 'No active staff.',
+        shiftsOne: 'one shift', shiftsOther: '{count} shifts',
+        remains: 'remains', remainPlural: 'remain'
+      },
+
+      constraints: {
+        title: 'Requests for {week}',
+        clear: 'Clear this week', copyPrevious: 'Copy from previous week',
+        legend: 'Tap a shift to cycle: {free} → {preferred} → {blocked}. "Day off" blocks the whole day.',
+        free: 'Available', preferred: 'Prefers', blocked: 'Cannot', dayOff: 'Day off',
+        pendingTitle: 'Requests waiting for your approval ({count})',
+        pendingHint: 'A request that is not approved does not affect the schedule.',
+        approve: 'Approve', reject: 'Reject',
+        approved: 'Approved', rejected: 'Rejected', pending: 'Waiting for approval',
+        requestLabel: 'Request: {detail}', requestRejected: 'Request rejected',
+        reason: 'Reason (optional)',
+        reasonPlaceholder: 'e.g. wedding, exam, doctor appointment',
+        reasonSaved: 'Reason saved', reasonGiven: 'Reason you gave: {text}',
+        managerNote: 'Manager note: {text}',
+        needsApproval: 'Every request goes to your manager and only affects the schedule once approved.',
+        noChange: 'No change'
+      },
+
+      employees: {
+        title: 'Staff', add: '+ Add person', active: 'Active',
+        branchesLabel: 'Branches (none selected = all branches)',
+        shiftTypes: 'Shift types they can work',
+        maxShifts: 'Maximum shifts per week', note: 'Note',
+        deleteConfirm: 'Delete {name}? Their assignments will be removed from every week.',
+        inactive: '(inactive)', newName: 'New person'
+      },
+
+      branches: {
+        title: 'Branches', add: '+ Add branch', active: 'Active', newName: 'New branch',
+        hint: 'Each branch has its own days, hours and headcount per shift. ' +
+          'Setting people to 0 closes that shift on that day. Assigning more than the number set is flagged as a double booking.',
+        peopleLabel: 'People', closed: 'Closed', day: 'Day',
+        copyFrom: 'Copy days and hours from another branch', chooseBranch: 'Choose a branch…',
+        copyConfirm: 'Copy the days and hours from {from} to {to}?',
+        copied: 'Days and hours copied',
+        deleteConfirm: 'Delete {name}? Its assignments will be removed from every week.',
+        autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
+      },
+
+      settings: {
+        rules: 'Scheduling rules',
+        onePerDay: 'A person works at most one shift per day',
+        rest: 'No morning shift after an evening shift the day before',
+        oneDayOff: 'A day marked off in Requests is the only day off that week',
+        shiftTypes: 'Shift types',
+        addShift: '+ Add shift', applyHours: 'Apply hours to all branches (Mon–Fri)',
+        shiftsHint: 'Define how many shifts your business runs, their names, hours, colour and order. ' +
+          'Hours here are the defaults; each branch can override them. ' +
+          'The button updates existing branches without changing open days or headcount.',
+        shiftNamePlaceholder: 'Shift name',
+        sabbathTitle: 'Saturday night',
+        sabbathDefault: 'Default Sabbath end time for a new week:',
+        sabbathHint: 'You can set the real time each week at the top of the Schedule tab. ' +
+          'Saturday-night shifts start half an hour later.',
+        backup: 'Backup and restore',
+        exportJson: 'Export all data (JSON)', importJson: 'Import data',
+        reset: 'Reset to defaults',
+        backupHint: 'Data is saved automatically in this browser. To move between computers, export a JSON file.',
+        languageTitle: 'Language', languageHint: 'Changes the whole interface. Saved for this device.'
+      },
+
+      billing: {
+        title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',
+        activeStaff: 'Active staff', of: '{count} of {max}', unlimited: '{count} (unlimited)',
+        plans: 'Plans', choose: 'Choose', currentPlan: 'Current plan',
+        tooSmall: 'Too small for {count} staff', cancel: 'Cancel subscription',
+        cancelConfirm: 'Cancel the subscription? Access ends when the paid period does.',
+        planUpdated: 'Plan updated', canceled: 'Subscription canceled',
+        ownerOnly: 'Only the account owner can change the subscription.',
+        perMonth: 'per month',
+        statusTrial: 'Trial', statusActive: 'Active', statusPastDue: 'Payment failed',
+        statusCanceled: 'Canceled', statusExpired: 'Expired'
+      },
+
+      auth: {
+        signIn: 'Sign in', signUp: 'Create a business account',
+        email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
+        passwordHint: 'At least 6 characters',
+        enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',
+        trialNote: '{days} days free. No payment details needed.',
+        signOut: 'Sign out', blocked: 'Access blocked',
+        blockedOwner: 'Contact support to activate the subscription.',
+        blockedMember: 'Ask the account owner to renew the subscription.',
+        enableNotifications: 'Enable notifications',
+        failedSignIn: 'Sign-in failed', failedSignUp: 'Sign-up failed'
+      },
+
+      users: {
+        title: 'Users',
+        hint: 'Every person can have their own login. They see only their own shifts and submit their own requests – ' +
+          'they cannot see the full schedule or change anything. Managers see and edit everything. ' +
+          'Link a user to a staff card so they can see their shifts.',
+        add: 'Add a user', createUser: 'Create user',
+        role: 'Role', staffCard: 'Staff card', none: 'None', noLink: 'No link',
+        initialPassword: 'Initial password', activeColumn: 'Active',
+        created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
+      },
+
+      plans: {
+        upTo: 'Up to {count} staff',
+        between: '{from} to {to} staff',
+        from: '{count} staff and up'
+      },
+
+      roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },
+
+      employee: {
+        myShifts: 'My shifts', myRequests: 'My requests',
+        notPublished: 'The schedule for this week has not been published yet.',
+        noShifts: 'You have no shifts this week.',
+        totalWeek: '{count} shifts this week.',
+        publishedLocked: 'The schedule is published – requests for this week can no longer be changed.',
+        notLinked: 'Your user is not linked to a staff card yet. Please contact your manager.',
+        noShiftsToday: 'No shifts on this day', holidayNoWork: 'Holiday – no work'
+      },
+
+      excel: {
+        byBranch: 'By branch', byEmployee: 'By employee', availability: 'Availability',
+        checks: 'Checks', personal: 'My schedule',
+        title: 'Work schedule – week {from} to {to}',
+        viewBranch: 'By branch', viewEmployee: 'By employee',
+        sabbathEnds: 'Sabbath ends {time}',
+        day: 'Day', date: 'Date', branch: 'Branch', shift: 'Shift', hours: 'Hours',
+        staff: 'Staff', assigned: 'Assigned', quota: 'Quota', left: 'Left in quota',
+        canAssign: 'Can assign', freeDays: 'Free days', totalShifts: 'Total shifts',
+        severity: 'Severity', type: 'Type', detail: 'Detail',
+        missing: '— missing —', closed: 'Closed', notAssigned: 'Not assigned',
+        personalTitle: 'Personal schedule – {name}', totalWeek: '{count} shifts this week',
+        noIssues: 'No double bookings, gaps or broken requests'
+      },
+
+      errors: {
+        invalidTime: 'Invalid time – use 24-hour format, for example 09:30',
+        emptyShiftName: 'A shift name cannot be empty',
+        lastShift: 'At least one shift must remain',
+        notSaved: 'Save failed', copied: 'Copied to clipboard',
+        viewOnlyBlocked: 'View only – editing is disabled. You can turn it off at the top of the screen.',
+        duplicatePerson: 'The same person cannot appear twice in one shift',
+        printBlocked: 'Printing is blocked here – use "Copy as text" or the Excel export',
+        chooseEmployee: 'Choose a person for the personal export'
+      },
+
+      common: {
+        save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
+        yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/he.js ===== */
+/* עברית */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'he',
+    name: 'עברית',
+    dir: 'rtl',
+    locale: 'he-IL',
+    weekStart: 0,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'סידור משמרות',
+        subtitle: 'שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים',
+        language: 'שפה'
+      },
+
+      days: {
+        0: 'ראשון', 1: 'שני', 2: 'שלישי', 3: 'רביעי',
+        4: 'חמישי', 5: 'שישי', 6: 'מוצ״ש'
+      },
+      daysShort: { 0: "א'", 1: "ב'", 2: "ג'", 3: "ד'", 4: "ה'", 5: "ו'", 6: "ש'" },
+
+      shifts: { morning: 'בוקר', middle: 'אמצע', evening: 'ערב', night: 'לילה' },
+
+      seed: {
+        branchCenter: 'סניף מרכז', branchNorth: 'סניף צפון', branchSouth: 'סניף דרום',
+        employee: 'עובד/ת {n}',
+        noteFloater: 'מחליף/ה בכל הסניפים', noteStudent: 'סטודנט/ית – ללא בקרים'
+      },
+
+      colors: {
+        0: 'חמרה', 1: 'ירוק', 2: 'כחול', 3: 'סגול',
+        4: 'ורוד', 5: 'טורקיז', 6: 'אפור', 7: 'חום'
+      },
+
+      tabs: {
+        schedule: 'סידור שבועי', constraints: 'אילוצים', employees: 'עובדים',
+        branches: 'סניפים', users: 'משתמשים', billing: 'מנוי', settings: 'הגדרות'
+      },
+
+      toolbar: {
+        prevWeek: 'שבוע קודם', nextWeek: 'שבוע הבא', thisWeek: 'השבוע הנוכחי',
+        week: 'שבוע {from} – {to}', currentWeek: 'השבוע הנוכחי',
+        generate: '✨ בנה סידור אוטומטי', clear: 'נקה סידור',
+        keepManual: 'שמירת שיבוצים ידניים',
+        copyText: '📋 העתק כטקסט', excel: '⬇ אקסל', csv: '⬇ CSV', print: '🖨 הדפסה',
+        moreTools: '⋯ כלים נוספים', closeTools: '✕ סגירת הכלים',
+        viewOnly: '🔒 מצב צפייה', exitViewOnly: '🔓 יציאה ממצב צפייה',
+        shabbatEnd: 'צאת שבת',
+        byBranch: 'תצוגה לפי סניף', byEmployee: 'תצוגה לפי עובד',
+        personalExport: 'ייצוא אישי לעובד (רק המשמרות שלו):',
+        choosePerson: 'בחרו עובד…',
+        holidays: 'ימי חג (הסניפים סגורים):'
+      },
+
+      schedule: {
+        branch: 'סניף', shift: 'משמרת', employee: 'עובד', totalShifts: 'סה״כ משמרות',
+        empty: '— ריק —', add: '+ הוסף', addPerson: '+ הוסף עובד', notAssigned: '— לא משובץ —',
+        closed: 'הסניף סגור ביום זה', noBranches: 'לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".',
+        required: 'נדרשים: {count}', people: '{count} עובדים',
+        holidayClosed: 'הסניפים סגורים', dayOff: 'חופש', holiday: 'חג',
+        missingSabbath: 'חסרה שעת צאת שבת'
+      },
+
+      status: {
+        synced: 'מסונכרן בין המכשירים', syncedAt: 'מסונכרן בין המכשירים · עודכן {time}',
+        localOnly: 'נשמר במכשיר הזה בלבד', readOnly: 'צפייה בלבד – אין הרשאת עריכה',
+        remoteUpdate: 'התקבל עדכון ממחשב אחר ({time})',
+        localCopy: 'זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים. ' +
+          'לעבודה משני מחשבים יש להשתמש בגרסה המתארחת. להעברת הנתונים: ייצוא JSON בלשונית ההגדרות, וייבוא בגרסה המתארחת.',
+        viewOnlyBanner: 'מצב צפייה – הסידור מוצג לבדיקה בלבד והעריכה חסומה. ' +
+          'הייצוא, ההדפסה והמעבר בין שבועות פועלים כרגיל.'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · משמרת {shift}',
+        deletedEmployee: '(עובד שנמחק: {id})',
+        deletedBranch: '(סניף שנמחק)',
+        errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
+        warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
+        infosOne: 'הערה אחת', infosOther: '{count} הערות',
+        allGood: '✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים',
+        showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
+        duplicate: 'כפל משמרת: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
+        duplicateSelf: 'כפל משמרת: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
+        doubleBooked: 'כפל משמרת לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
+        sameBranch: ' באותו סניף', differentBranches: ' בסניפים שונים',
+        understaffed: 'חוסר באיוש: {label} – משובצים {assigned} מתוך {need}.',
+        reasonBusy: '{names} כבר משובצים במשמרת אחרת באותו יום',
+        reasonMaxed: '{names} הגיעו למכסת המשמרות השבועית',
+        reasonResting: '{names} חייבים מנוחה בין ערב לבוקר',
+        reasonNone: 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.',
+        reasonFree: 'יש עובדים פנויים ({names}) – נסו לבנות את הסידור מחדש.',
+        reasonPrefix: 'הסיבה: ',
+        suggestTwoPerDay: ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.',
+        suggestRaiseMax: ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.',
+        constraintOff: 'הפרת אילוץ: {name} ביקש/ה יום חופש ב{day} אך משובץ/ת ל{shift} ב{branch}.',
+        constraintBlocked: 'הפרת אילוץ: {name} חסם/ה משמרת {shift} ב{day} אך משובץ/ת אליה ב{branch}.',
+        branchMismatch: '{name} משובץ/ת ב{branch} ({day}) למרות שהסניף אינו מוגדר בכרטיס העובד.',
+        shiftMismatch: '{name} משובץ/ת למשמרת {shift} ב{day} למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
+        overMax: 'חריגה ממכסה: {name} משובץ/ת ל-{total} משמרות (מקסימום {max}).',
+        noShifts: '{name} לא משובץ/ת השבוע כלל.',
+        rest: 'מנוחה קצרה: {name} סיים/ה ערב ב{previous} ומשובץ/ת לבוקר ב{day}.',
+        holidayAssignment: 'שיבוץ ביום חג: {day} ({name}) מוגדר כיום סגור, אך משובצים בו {names}.',
+        inactiveSlot: 'שיבוץ במשמרת שאינה פעילה: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        pendingOne: 'בקשת אילוץ ממתינה לאישור: {name} ({day}). עד לאישור היא אינה משפיעה על השיבוץ.',
+        pendingOther: '{count} בקשות אילוץ ממתינות לאישור: {names}. עד לאישור הן אינן משפיעות על השיבוץ.',
+        extraDaysOff: '{name} סימן/ה {count} ימי חופש ({days}) – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+        belowTarget: '{name} ביקש/ה יום חופש ב{day} ומשובץ/ת {total} משמרות מתוך {expected} אפשריות – יש לו/ה עוד ימים פנויים.'
+      },
+
+      availability: {
+        title: 'מה נותר פנוי השבוע',
+        none: 'אין יתרת זמינות – {reason}',
+        reasonMaxed: 'כל העובדים הגיעו למכסת המשמרות השבועית שלהם.',
+        reasonNoDays: 'לעובדים שנותרה להם מכסה אין יום פנוי שבו הסניפים שלהם פתוחים.',
+        totalOne: '{verb} משמרת אחת שאפשר עוד לשבץ, אצל {people}:',
+        totalOther: '{verb} {count} משמרות שאפשר עוד לשבץ, אצל {people}:',
+        peopleOne: 'עובד/ת אחד/ת', peopleOther: '{count} עובדים',
+        left: '{verb} {shifts} במכסה · פנוי/ה ב{days}',
+        leftNoDays: '{verb} {shifts} במכסה, אך אין יום פנוי השבוע',
+        full: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max})',
+        noEmployees: 'לא הוגדרו עובדים פעילים.',
+        shiftsOne: 'משמרת אחת', shiftsOther: '{count} משמרות',
+        remains: 'נותרה', remainPlural: 'נותרו'
+      },
+
+      constraints: {
+        title: 'אילוצי {week}',
+        clear: 'נקה אילוצי השבוע', copyPrevious: 'העתק אילוצים משבוע קודם',
+        legend: 'לחיצה על כפתור משמרת מחליפה מצב: {free} → {preferred} → {blocked}. סימון "חופש" חוסם את כל היום.',
+        free: 'זמין', preferred: 'מעדיף/ה', blocked: 'לא יכול/ה', dayOff: 'חופש',
+        pendingTitle: 'בקשות שממתינות לאישורך ({count})',
+        pendingHint: 'בקשה שלא אושרה אינה משפיעה על השיבוץ.',
+        approve: 'אישור', reject: 'דחייה',
+        approved: 'אושר', rejected: 'נדחה', pending: 'ממתין לאישור',
+        requestLabel: 'בקשה: {detail}', requestRejected: 'בקשה נדחתה',
+        reason: 'סיבה (לא חובה)',
+        reasonPlaceholder: 'למשל: חתונה, בחינה, תור לרופא',
+        reasonSaved: 'הסיבה נשמרה', reasonGiven: 'הסיבה שציינת: {text}',
+        managerNote: 'הערת מנהל/ת: {text}',
+        needsApproval: 'כל בקשה עוברת לאישור המנהל/ת ומשפיעה על הסידור רק אחרי שאושרה.',
+        noChange: 'ללא שינוי'
+      },
+
+      employees: {
+        title: 'עובדים מוגדרים', add: '+ הוסף עובד', active: 'עובד/ת פעיל/ה',
+        branchesLabel: 'סניפים (ללא בחירה = זמין בכל הסניפים)',
+        shiftTypes: 'סוגי משמרות אפשריים',
+        maxShifts: 'מקסימום משמרות בשבוע', note: 'הערה',
+        deleteConfirm: 'למחוק את {name}? השיבוצים הקיימים של העובד/ת יוסרו מכל השבועות.',
+        inactive: '(לא פעיל)', newName: 'עובד/ת חדש/ה'
+      },
+
+      branches: {
+        title: 'סניפים מוגדרים', add: '+ הוסף סניף', active: 'פעיל', newName: 'סניף חדש',
+        hint: 'לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת. ' +
+          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן ככפל משמרת.',
+        peopleLabel: 'עובדים', closed: 'סגור', day: 'יום',
+        copyFrom: 'העתקת ימים ושעות מסניף אחר', chooseBranch: 'בחרו סניף…',
+        copyConfirm: 'להעתיק את הימים והשעות מ{from} אל {to}?',
+        copied: 'הימים והשעות הועתקו',
+        deleteConfirm: 'למחוק את {name}? השיבוצים של הסניף יוסרו מכל השבועות.',
+        autoSabbath: 'לפי צאת שבת', autoSabbathLabel: 'מצאת שבת +30 דק׳'
+      },
+
+      settings: {
+        rules: 'כללי שיבוץ',
+        onePerDay: 'עובד משובץ למשמרת אחת ביום לכל היותר',
+        rest: 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם',
+        oneDayOff: 'יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע',
+        shiftTypes: 'סוגי המשמרות בעסק',
+        addShift: '+ הוספת משמרת', applyHours: 'החל שעות על כל הסניפים (ראשון–חמישי)',
+        shiftsHint: 'כאן מגדירים כמה משמרות יש בעסק, איך הן נקראות, מה השעות שלהן ובאיזה צבע הן מוצגות. ' +
+          'השעות כאן הן ברירת המחדל; לכל סניף אפשר לקבוע שעות משלו. ' +
+          'הכפתור מחיל את השעות על כל הסניפים הקיימים, בלי לשנות ימים פתוחים או כמות עובדים.',
+        shiftNamePlaceholder: 'שם המשמרת',
+        sabbathTitle: 'מוצאי שבת',
+        sabbathDefault: 'שעת צאת שבת שתוצע כברירת מחדל לשבוע חדש:',
+        sabbathHint: 'בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. ' +
+          'משמרת מוצ״ש מתחילה חצי שעה אחריה.',
+        backup: 'גיבוי ושחזור',
+        exportJson: '⬇ ייצוא כל הנתונים (JSON)', importJson: '⬆ ייבוא נתונים',
+        reset: 'איפוס להגדרות ברירת מחדל',
+        backupHint: 'הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה. לשיתוף בין מחשבים – ייצאו קובץ JSON.',
+        languageTitle: 'שפה', languageHint: 'משנה את כל הממשק. נשמר למכשיר הזה.'
+      },
+
+      billing: {
+        title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',
+        activeStaff: 'עובדים פעילים', of: '{count} מתוך {max}', unlimited: '{count} (ללא הגבלה)',
+        plans: 'תוכניות', choose: 'בחירה', currentPlan: 'התוכנית הנוכחית',
+        tooSmall: 'קטנה מדי עבור {count} עובדים', cancel: 'ביטול המנוי',
+        cancelConfirm: 'לבטל את המנוי? הגישה תיחסם בתום התקופה ששולמה.',
+        planUpdated: 'התוכנית עודכנה', canceled: 'המנוי בוטל',
+        ownerOnly: 'רק בעל החשבון יכול לשנות את המנוי.',
+        perMonth: 'לחודש',
+        statusTrial: 'תקופת ניסיון', statusActive: 'מנוי פעיל', statusPastDue: 'תשלום לא התקבל',
+        statusCanceled: 'המנוי בוטל', statusExpired: 'המנוי פג'
+      },
+
+      auth: {
+        signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
+        email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
+        passwordHint: 'לפחות 6 תווים',
+        enter: 'כניסה', create: 'פתיחת חשבון', signingIn: 'מתחבר…', creating: 'פותח חשבון…',
+        trialNote: '{days} ימי ניסיון ללא תשלום. לא נדרש אמצעי תשלום.',
+        signOut: 'יציאה', blocked: 'הגישה חסומה',
+        blockedOwner: 'להפעלת המנוי יש לפנות לתמיכה.',
+        blockedMember: 'יש לפנות לבעל החשבון בחברה כדי לחדש את המנוי.',
+        enableNotifications: '🔔 הפעלת התראות',
+        failedSignIn: 'ההתחברות נכשלה', failedSignUp: 'ההרשמה נכשלה'
+      },
+
+      users: {
+        title: 'משתמשי החברה',
+        hint: 'כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו – ' +
+          'הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל. ' +
+          'כדי שעובד יראה את המשמרות שלו יש לקשר את המשתמש לכרטיס העובד.',
+        add: 'הוספת משתמש', createUser: 'יצירת משתמש',
+        role: 'תפקיד', staffCard: 'כרטיס עובד', none: 'ללא', noLink: 'ללא קישור',
+        initialPassword: 'סיסמה ראשונית', activeColumn: 'פעיל',
+        created: 'נוצר משתמש עבור {email}', updated: 'העדכון נשמר', updateFailed: 'העדכון נכשל'
+      },
+
+      plans: {
+        upTo: 'עד {count} עובדים',
+        between: '{from} עד {to} עובדים',
+        from: '{count} עובדים ומעלה'
+      },
+
+      roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
+
+      employee: {
+        myShifts: 'המשמרות שלי', myRequests: 'האילוצים שלי',
+        notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
+        noShifts: 'אין לך משמרות בשבוע הזה.',
+        totalWeek: 'סה״כ {count} משמרות השבוע.',
+        publishedLocked: 'הסידור פורסם – לא ניתן עוד לשנות אילוצים לשבוע הזה.',
+        notLinked: 'המשתמש שלך עדיין לא קושר לכרטיס עובד. פנה/י למנהל/ת.',
+        noShiftsToday: 'אין משמרות ביום הזה', holidayNoWork: 'יום חג – אין עבודה'
+      },
+
+      excel: {
+        byBranch: 'לפי סניף', byEmployee: 'לפי עובד', availability: 'מה נותר פנוי',
+        checks: 'בדיקות', personal: 'סידור אישי',
+        title: 'סידור עבודה – שבוע {from} עד {to}',
+        viewBranch: 'תצוגה לפי סניף', viewEmployee: 'תצוגה לפי עובד',
+        sabbathEnds: 'צאת שבת {time}',
+        day: 'יום', date: 'תאריך', branch: 'סניף', shift: 'משמרת', hours: 'שעות',
+        staff: 'עובד', assigned: 'משובץ', quota: 'מכסה', left: 'נותרו במכסה',
+        canAssign: 'ניתן לשבץ', freeDays: 'ימים פנויים', totalShifts: 'סה״כ משמרות',
+        severity: 'חומרה', type: 'סוג', detail: 'פירוט',
+        missing: '— חסר —', closed: 'סגור', notAssigned: 'לא משובץ',
+        personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} משמרות השבוע',
+        noIssues: 'אין כפל משמרות, חוסרים או הפרות אילוצים'
+      },
+
+      errors: {
+        invalidTime: 'שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30',
+        emptyShiftName: 'שם המשמרת אינו יכול להיות ריק',
+        lastShift: 'חייבת להישאר לפחות משמרת אחת',
+        notSaved: 'השמירה נכשלה', copied: 'הועתק ללוח',
+        viewOnlyBlocked: 'מצב צפייה – העריכה חסומה. אפשר לכבות אותו בכפתור שבראש המסך.',
+        duplicatePerson: 'אותו עובד לא יכול להופיע פעמיים באותה משמרת',
+        printBlocked: 'ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא אקסל',
+        chooseEmployee: 'בחרו עובד לייצוא אישי'
+      },
+
+      common: {
+        save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
+        yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
 /* ===== js/platform.js ===== */
 /* שכבת התאמה לסביבת ההרצה: הורדת קבצים, הדפסה וסנכרון ענן (כשזמין).
    הכל אופציונלי – בפתיחה כקובץ מקומי הכל נופל חזרה להתנהגות הרגילה. */
@@ -1629,28 +2334,58 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 (function (root) {
   'use strict';
 
-  var DAYS = [
-    { idx: 0, name: 'ראשון', short: "א'" },
-    { idx: 1, name: 'שני', short: "ב'" },
-    { idx: 2, name: 'שלישי', short: "ג'" },
-    { idx: 3, name: 'רביעי', short: "ד'" },
-    { idx: 4, name: 'חמישי', short: "ה'" },
-    { idx: 5, name: 'שישי', short: "ו'" },
-    { idx: 6, name: 'מוצ״ש', short: "ש'" }
-  ];
+  /* שמות הימים מגיעים מהתרגום הפעיל. המערך נבנה מחדש בכל קריאה
+     כדי שהחלפת שפה תשתקף מיד. */
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  function translate(key, fallback, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return fallback;
+    var text;
+    try { text = i18n.t(key, params); } catch (err) { return fallback; }
+    return text === key ? fallback : text;
+  }
+
+  var DAY_FALLBACK = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'מוצ״ש'];
+  var DAY_SHORT_FALLBACK = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+
+  function buildDays() {
+    var out = [];
+    for (var i = 0; i < 7; i++) {
+      out.push({
+        idx: i,
+        name: translate('days.' + i, DAY_FALLBACK[i]),
+        short: translate('daysShort.' + i, DAY_SHORT_FALLBACK[i])
+      });
+    }
+    return out;
+  }
+
+  var DAYS = buildDays();
+
+  function refreshDays() {
+    var next = buildDays();
+    for (var i = 0; i < next.length; i++) {
+      DAYS[i].name = next[i].name;
+      DAYS[i].short = next[i].short;
+    }
+    return DAYS;
+  }
+
+  if (I18n && I18n.onChange) { I18n.onChange(refreshDays); }
 
   /* לוח צבעים קבוע למשמרות. כל עסק בוחר מתוכו, וכך הצבעים נשארים
      תקינים גם במצב כהה ובייצוא לאקסל. */
-  var SHIFT_COLORS = [
-    { id: 0, name: 'חמרה' },
-    { id: 1, name: 'ירוק' },
-    { id: 2, name: 'כחול' },
-    { id: 3, name: 'סגול' },
-    { id: 4, name: 'ורוד' },
-    { id: 5, name: 'טורקיז' },
-    { id: 6, name: 'אפור' },
-    { id: 7, name: 'חום' }
-  ];
+  var COLOR_FALLBACK = ['חמרה', 'ירוק', 'כחול', 'סגול', 'ורוד', 'טורקיז', 'אפור', 'חום'];
+  var SHIFT_COLORS = COLOR_FALLBACK.map(function (fallback, index) {
+    var entry = { id: index };
+    /* getter ולא ערך קבוע, כדי שהחלפת שפה תשתקף בלי לבנות מחדש */
+    Object.defineProperty(entry, 'name', {
+      enumerable: true,
+      get: function () { return translate('colors.' + index, fallback); }
+    });
+    return entry;
+  });
 
   /* משמרות ברירת המחדל לעסק חדש. מכאן ואילך כל עסק מגדיר לעצמו. */
   var DEFAULT_SHIFTS = [
@@ -1658,6 +2393,17 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     { id: 'middle', name: 'אמצע', from: '12:30', to: '20:00', color: 1 },
     { id: 'evening', name: 'ערב', from: '15:00', to: '22:00', color: 2 }
   ];
+
+  /* שמות המשמרות לעסק חדש, בשפה הפעילה */
+  function defaultShifts() {
+    return DEFAULT_SHIFTS.map(function (shift) {
+      return {
+        id: shift.id,
+        name: translate('shifts.' + shift.id, shift.name),
+        from: shift.from, to: shift.to, color: shift.color
+      };
+    });
+  }
 
   /* נשמר לתאימות לאחור בקוד שעדיין לא עודכן */
   var SHIFTS = DEFAULT_SHIFTS;
@@ -1716,31 +2462,44 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
   function defaultBranches(hours, shifts) {
     return [
-      { id: 'br-center', name: 'סניף מרכז', active: true, schedule: defaultSchedule(hours, shifts) },
-      { id: 'br-north', name: 'סניף צפון', active: true, schedule: defaultSchedule(hours, shifts) },
-      { id: 'br-south', name: 'סניף דרום', active: true, schedule: defaultSchedule(hours, shifts) }
+      { id: 'br-center', name: translate('seed.branchCenter', 'סניף מרכז'), active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-north', name: translate('seed.branchNorth', 'סניף צפון'), active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-south', name: translate('seed.branchSouth', 'סניף דרום'), active: true, schedule: defaultSchedule(hours, shifts) }
     ];
   }
 
   /* עובדים מוגדרים מראש – ניתנים לעריכה במסך "עובדים" */
-  var DEFAULT_EMPLOYEES = [
-    { id: 'emp-1', name: 'עובד/ת 1', active: true, branches: ['br-center'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-2', name: 'עובד/ת 2', active: true, branches: ['br-center', 'br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-3', name: 'עובד/ת 3', active: true, branches: ['br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
-    { id: 'emp-4', name: 'עובד/ת 4', active: true, branches: ['br-north', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-5', name: 'עובד/ת 5', active: true, branches: ['br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
-    { id: 'emp-6', name: 'עובד/ת 6', active: true, branches: ['br-center', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-7', name: 'עובד/ת 7', active: true, branches: [], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: 'מחליף/ה בכל הסניפים' },
-    { id: 'emp-8', name: 'עובד/ת 8', active: true, branches: [], shifts: ['middle', 'evening'], maxShifts: 4, note: 'סטודנט/ית – ללא בקרים' }
+  var EMPLOYEE_SEED = [
+    { n: 1, branches: ['br-center'], shifts: null, maxShifts: 6, note: '' },
+    { n: 2, branches: ['br-center', 'br-north'], shifts: null, maxShifts: 6, note: '' },
+    { n: 3, branches: ['br-north'], shifts: null, maxShifts: 5, note: '' },
+    { n: 4, branches: ['br-north', 'br-south'], shifts: null, maxShifts: 6, note: '' },
+    { n: 5, branches: ['br-south'], shifts: null, maxShifts: 5, note: '' },
+    { n: 6, branches: ['br-center', 'br-south'], shifts: null, maxShifts: 6, note: '' },
+    { n: 7, branches: [], shifts: null, maxShifts: 6, noteKey: 'seed.noteFloater', noteFallback: 'מחליף/ה בכל הסניפים' },
+    { n: 8, branches: [], shifts: ['middle', 'evening'], maxShifts: 4, noteKey: 'seed.noteStudent', noteFallback: 'סטודנט/ית – ללא בקרים' }
   ];
+
+  function defaultEmployees() {
+    return EMPLOYEE_SEED.map(function (seed) {
+      return {
+        id: 'emp-' + seed.n,
+        name: translate('seed.employee', 'עובד/ת ' + seed.n, { n: seed.n }),
+        active: true,
+        branches: seed.branches.slice(),
+        shifts: seed.shifts ? seed.shifts.slice() : ALL_SHIFT_IDS.slice(),
+        maxShifts: seed.maxShifts,
+        note: seed.noteKey ? translate(seed.noteKey, seed.noteFallback) : ''
+      };
+    });
+  }
 
   var DEFAULT_SETTINGS = {
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
     oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
-    shifts: DEFAULT_SHIFTS.map(function (shift) {
-      return { id: shift.id, name: shift.name, from: shift.from, to: shift.to, color: shift.color };
-    }),
+    /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
+    get shifts() { return defaultShifts(); },
     defaultShabbatEnd: '20:00'
   };
 
@@ -1751,12 +2510,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     MOTZASH: MOTZASH,
     SHIFT_COLORS: SHIFT_COLORS,
     DEFAULT_SHIFTS: DEFAULT_SHIFTS,
+    defaultShifts: defaultShifts,
+    refreshDays: refreshDays,
     DEFAULT_HOURS: DEFAULT_HOURS,
     DEFAULT_FRIDAY: DEFAULT_FRIDAY,
     WEEKDAYS: WEEKDAYS,
     defaultSchedule: defaultSchedule,
     defaultBranches: defaultBranches,
-    DEFAULT_EMPLOYEES: DEFAULT_EMPLOYEES,
+    get DEFAULT_EMPLOYEES() { return defaultEmployees(); },
+    defaultEmployees: defaultEmployees,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     shiftById: function (id) {
       for (var i = 0; i < SHIFTS.length; i++) { if (SHIFTS[i].id === id) return SHIFTS[i]; }
@@ -2890,21 +3652,29 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 
 /* ===== js/validate.js ===== */
-/* בדיקות תקינות לסידור: כפל משמרת, חוסרים, הפרות אילוצים ומכסות */
+/* בדיקות תקינות לסידור: כפל משמרת, חוסרים, הפרות אילוצים ומכסות.
+   כל הטקסטים מגיעים משכבת התרגום (I18n) כדי שההתראות יוצגו בשפת המשתמש. */
 (function (root) {
   'use strict';
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
   var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
   var Scheduler = root.ShiftScheduler || (typeof require === 'function' ? require('./scheduler.js') : null);
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  function t(key, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return key;
+    try { return i18n.t(key, params); } catch (err) { return key; }
+  }
 
   function empName(state, id) {
     var emp = Store.byId(state.employees, id);
-    return emp ? emp.name : '(עובד שנמחק: ' + id + ')';
+    return emp ? emp.name : t('alerts.deletedEmployee', { id: id });
   }
   function branchName(state, id) {
     var branch = Store.byId(state.branches, id);
-    return branch ? branch.name : '(סניף שנמחק)';
+    return branch ? branch.name : t('alerts.deletedBranch');
   }
   /* שם המשמרת נקרא מהגדרות העסק, ולא מרשימה קבועה */
   var activeState = null;
@@ -2916,7 +3686,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   function nameList(names, limit) {
     var max = limit || 3;
     if (names.length <= max) return names.join(', ');
-    return names.slice(0, max).join(', ') + ' ועוד ' + (names.length - max);
+    return names.slice(0, max).join(', ') + ' ' + t('common.more', { count: names.length - max });
+  }
+
+  function slotLabel(state, dayIdx, branchId, shiftId) {
+    return t('alerts.slotLabel', {
+      day: dayName(dayIdx),
+      branch: branchName(state, branchId),
+      shift: shiftName(shiftId)
+    });
   }
 
   /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
@@ -2945,23 +3723,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       free.push(emp.name);
     });
 
-    if (!eligible.length) {
-      return 'אין עובד שמוגדר גם לסניף הזה וגם למשמרת הזו, או שכולם חסמו את המשמרת.';
-    }
-    if (free.length) {
-      return 'יש עובדים פנויים (' + nameList(free) + ') – נסו לבנות את הסידור מחדש.';
-    }
+    if (!eligible.length) return t('alerts.reasonNone');
+    if (free.length) return t('alerts.reasonFree', { names: nameList(free) });
 
     var reasons = [];
-    if (busy.length) reasons.push(nameList(busy) + ' כבר משובצים במשמרת אחרת באותו יום');
-    if (atMax.length) reasons.push(nameList(atMax) + ' הגיעו למכסת המשמרות השבועית');
-    if (resting.length) reasons.push(nameList(resting) + ' חייבים מנוחה בין ערב לבוקר');
+    if (busy.length) reasons.push(t('alerts.reasonBusy', { names: nameList(busy) }));
+    if (atMax.length) reasons.push(t('alerts.reasonMaxed', { names: nameList(atMax) }));
+    if (resting.length) reasons.push(t('alerts.reasonResting', { names: nameList(resting) }));
 
-    var text = 'הסיבה: ' + reasons.join('; ') + '.';
+    var text = t('alerts.reasonPrefix') + reasons.join('; ') + '.';
     if (busy.length && !atMax.length) {
-      text += ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.';
+      text += t('alerts.suggestTwoPerDay');
     } else if (atMax.length) {
-      text += ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.';
+      text += t('alerts.suggestRaiseMax');
     }
     return text;
   }
@@ -2981,20 +3755,23 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     Object.keys(demandMap).forEach(function (key) {
       var demand = demandMap[key];
       var assigned = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
-      var label = dayName(demand.dayIdx) + ' · ' + branchName(state, demand.branchId) + ' · משמרת ' + shiftName(demand.shiftId);
+      var label = slotLabel(state, demand.dayIdx, demand.branchId, demand.shiftId);
 
       if (assigned.length < demand.need) {
         issues.push(issue('warning', 'understaffed',
-          'חוסר באיוש: ' + label + ' – משובצים ' + assigned.length + ' מתוך ' + demand.need + '. ' +
-          explainShortage(state, week, demand),
+          t('alerts.understaffed', { label: label, assigned: assigned.length, need: demand.need }) +
+          ' ' + explainShortage(state, week, demand),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
       if (assigned.length > demand.need) {
         issues.push(issue('warning', 'duplicate-shift',
-          'כפל משמרת: ' + label + ' – משובצים ' + assigned.length + ' עובדים (' +
-          assigned.map(function (id) { return empName(state, id); }).join(', ') +
-          ') במקום ' + demand.need + '.',
+          t('alerts.duplicate', {
+            label: label,
+            count: assigned.length,
+            names: assigned.map(function (id) { return empName(state, id); }).join(', '),
+            need: demand.need
+          }),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
@@ -3002,7 +3779,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       assigned.forEach(function (id) {
         if (seen[id]) {
           issues.push(issue('error', 'duplicate-employee-slot',
-            'כפל משמרת: ' + empName(state, id) + ' משובץ/ת פעמיים באותה משמרת – ' + label + '.',
+            t('alerts.duplicateSelf', { name: empName(state, id), label: label }),
             { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId, empId: id }));
         }
         seen[id] = true;
@@ -3017,9 +3794,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       });
       issues.push(issue('warning', 'pending-constraints',
         pending.length === 1
-          ? 'בקשת אילוץ ממתינה לאישור: ' + names[0] + '. עד לאישור היא אינה משפיעה על השיבוץ.'
-          : pending.length + ' בקשות אילוץ ממתינות לאישור: ' + nameList(names, 4) +
-            '. עד לאישור הן אינן משפיעות על השיבוץ.',
+          ? t('alerts.pendingOne', { name: empName(state, pending[0].empId), day: dayName(pending[0].dayIdx) })
+          : t('alerts.pendingOther', { count: pending.length, names: nameList(names, 4) }),
         {}));
     }
 
@@ -3032,8 +3808,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       });
       if (onHoliday.length) {
         issues.push(issue('warning', 'holiday-assignment',
-          'שיבוץ ביום חג: ' + dayName(holidayDay) + ' (' + Store.holidayName(week, holidayDay) +
-          ') מוגדר כיום סגור, אך משובצים בו ' + nameList(onHoliday, 5) + '.',
+          t('alerts.holidayAssignment', {
+            day: dayName(holidayDay),
+            name: Store.holidayName(week, holidayDay),
+            names: nameList(onHoliday, 5)
+          }),
           { dayIdx: holidayDay }));
       }
     }
@@ -3045,7 +3824,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     });
     if (missingShabbat.length && !week.shabbatEnd) {
       issues.push(issue('warning', 'missing-shabbat-end',
-        'לא הוזנה שעת צאת שבת לשבוע זה – שעת ההתחלה של משמרות מוצ״ש אינה מחושבת.',
+        t('alerts.missingSabbath'),
         { dayIdx: Data.MOTZASH.dayIdx }));
     }
 
@@ -3056,8 +3835,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       if (!list.length) return;
       var parts = key.split('|');
       issues.push(issue('warning', 'inactive-slot',
-        'שיבוץ במשמרת שאינה פעילה: ' + dayName(Number(parts[0])) + ' · ' + branchName(state, parts[1]) +
-        ' · ' + shiftName(parts[2]) + ' (' + list.map(function (id) { return empName(state, id); }).join(', ') + ').',
+        t('alerts.inactiveSlot', {
+          day: dayName(Number(parts[0])),
+          branch: branchName(state, parts[1]),
+          shift: shiftName(parts[2]),
+          names: list.map(function (id) { return empName(state, id); }).join(', ')
+        }),
         { dayIdx: Number(parts[0]), branchId: parts[1], shiftId: parts[2] }));
     });
 
@@ -3078,33 +3861,44 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
           }).join(' + ');
           var sameBranch = slots.every(function (s) { return s.branchId === slots[0].branchId; });
           issues.push(issue(state.settings.onePerDay ? 'error' : 'info', 'double-booked',
-            'כפל משמרת לעובד: ' + emp.name + ' משובץ/ת ל-' + slots.length + ' משמרות ביום ' + dayName(day) +
-            (sameBranch ? ' באותו סניף' : ' בסניפים שונים') + ' (' + desc + ').',
+            t('alerts.doubleBooked', {
+              name: emp.name,
+              count: slots.length,
+              day: dayName(day),
+              where: t(sameBranch ? 'alerts.sameBranch' : 'alerts.differentBranches'),
+              detail: desc
+            }),
             { dayIdx: day, empId: emp.id }));
         }
 
         slots.forEach(function (s) {
           if (constraint.off) {
             issues.push(issue('error', 'constraint-off',
-              'הפרת אילוץ: ' + emp.name + ' ביקש/ה יום חופש ב' + dayName(day) +
-              ' אך משובץ/ת ל' + shiftName(s.shiftId) + ' ב' + branchName(state, s.branchId) + '.',
+              t('alerts.constraintOff', {
+                name: emp.name, day: dayName(day),
+                shift: shiftName(s.shiftId), branch: branchName(state, s.branchId)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           } else if (constraint.blocked && constraint.blocked[s.shiftId]) {
             issues.push(issue('error', 'constraint-blocked',
-              'הפרת אילוץ: ' + emp.name + ' חסם/ה משמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
-              ' אך משובץ/ת אליה ב' + branchName(state, s.branchId) + '.',
+              t('alerts.constraintBlocked', {
+                name: emp.name, shift: shiftName(s.shiftId),
+                day: dayName(day), branch: branchName(state, s.branchId)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (!Scheduler.employeeAllowedInBranch(emp, s.branchId)) {
             issues.push(issue('warning', 'branch-mismatch',
-              emp.name + ' משובץ/ת ב' + branchName(state, s.branchId) + ' (' + dayName(day) +
-              ') למרות שהסניף אינו מוגדר בכרטיס העובד.',
+              t('alerts.branchMismatch', {
+                name: emp.name, branch: branchName(state, s.branchId), day: dayName(day)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (emp.shifts.indexOf(s.shiftId) === -1) {
             issues.push(issue('warning', 'shift-mismatch',
-              emp.name + ' משובץ/ת למשמרת ' + shiftName(s.shiftId) + ' ב' + dayName(day) +
-              ' למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
+              t('alerts.shiftMismatch', {
+                name: emp.name, shift: shiftName(s.shiftId), day: dayName(day)
+              }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
           if (s.shiftId === 'evening') eveningDays[day] = true;
@@ -3115,8 +3909,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
           var morning = slots.some(function (s) { return s.shiftId === 'morning'; });
           if (morning) {
             issues.push(issue('warning', 'rest',
-              'מנוחה קצרה: ' + emp.name + ' סיים/ה ערב ב' + dayName(day - 1) +
-              ' ומשובץ/ת לבוקר ב' + dayName(day) + '.',
+              t('alerts.rest', { name: emp.name, previous: dayName(day - 1), day: dayName(day) }),
               { dayIdx: day, empId: emp.id }));
           }
         }
@@ -3127,8 +3920,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         var daysOff = Store.requestedDaysOff(week, emp.id);
         if (daysOff.length > 1) {
           issues.push(issue('warning', 'extra-days-off',
-            emp.name + ' סימן/ה ' + daysOff.length + ' ימי חופש (' +
-            daysOff.map(dayName).join(', ') + ') – לפי ההגדרות מגיע יום חופש אחד בשבוע.',
+            t('alerts.extraDaysOff', {
+              name: emp.name, count: daysOff.length, days: daysOff.map(dayName).join(', ')
+            }),
             { empId: emp.id }));
         }
 
@@ -3136,19 +3930,20 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         var expected = Math.min(emp.maxShifts || 99, workable);
         if (daysOff.length === 1 && total < expected && total > 0) {
           issues.push(issue('info', 'below-target',
-            emp.name + ' ביקש/ה יום חופש ב' + dayName(daysOff[0]) + ' ומשובץ/ת ' + total +
-            ' משמרות מתוך ' + expected + ' אפשריות – יש לו/ה עוד ימים פנויים.',
+            t('alerts.belowTarget', {
+              name: emp.name, day: dayName(daysOff[0]), total: total, expected: expected
+            }),
             { empId: emp.id }));
         }
       }
 
       if (emp.active && total > (emp.maxShifts || 99)) {
         issues.push(issue('warning', 'over-max',
-          'חריגה ממכסה: ' + emp.name + ' משובץ/ת ל-' + total + ' משמרות (מקסימום ' + emp.maxShifts + ').',
+          t('alerts.overMax', { name: emp.name, total: total, max: emp.maxShifts }),
           { empId: emp.id }));
       }
       if (emp.active && total === 0 && Store.weekDemands(state, week).length) {
-        issues.push(issue('info', 'no-shifts', emp.name + ' לא משובץ/ת השבוע כלל.', { empId: emp.id }));
+        issues.push(issue('info', 'no-shifts', t('alerts.noShifts', { name: emp.name }), { empId: emp.id }));
       }
     });
 

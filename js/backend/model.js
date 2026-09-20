@@ -7,11 +7,25 @@
   /* תפקידים בתוך חברה. owner הוא מי שפתח את החשבון ומשלם. */
   var ROLES = ['owner', 'manager', 'employee'];
 
-  var ROLE_NAMES = {
-    owner: 'בעלים',
-    manager: 'מנהל/ת',
-    employee: 'עובד/ת'
-  };
+  function translate(key, fallback, params) {
+    var i18n = root.I18n;
+    if (!i18n) return fallback;
+    var text = i18n.t(key, params);
+    return text === key ? fallback : text;
+  }
+
+  var ROLE_FALLBACK = { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' };
+
+  /* אובייקט שמתרגם בכל קריאה, כדי שהחלפת שפה תשתקף מיד */
+  var ROLE_NAMES = {};
+  ROLES.forEach(function (role) {
+    Object.defineProperty(ROLE_NAMES, role, {
+      enumerable: true,
+      get: function () { return translate('roles.' + role, ROLE_FALLBACK[role]); }
+    });
+  });
+
+  function roleName(role) { return ROLE_NAMES[role] || role; }
 
   /* יכולות. כל בדיקת הרשאה במערכת עוברת דרך can(). */
   var CAPABILITIES = {
@@ -71,6 +85,18 @@
 
   function planOf(company) {
     return PLANS[(company && company.plan) || DEFAULT_PLAN] || PLANS[DEFAULT_PLAN];
+  }
+
+  /* טווח התוכנית בשפה הפעילה */
+  function planRange(plan) {
+    if (!plan.maxEmployees) {
+      return translate('plans.from', plan.range, { count: plan.minEmployees });
+    }
+    if (plan.minEmployees <= 1) {
+      return translate('plans.upTo', plan.range, { count: plan.maxEmployees });
+    }
+    return translate('plans.between', plan.range,
+      { from: plan.minEmployees, to: plan.maxEmployees });
   }
 
   /* התוכנית המתאימה למספר עובדים נתון */
@@ -177,7 +203,8 @@
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
-    planOf: planOf, planForEmployees: planForEmployees, employeesLeft: employeesLeft,
+    planOf: planOf, planRange: planRange, roleName: roleName,
+    planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     accessState: accessState, withinPlanLimits: withinPlanLimits,
     newTrialCompany: newTrialCompany, addDays: addDays
   };

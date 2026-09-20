@@ -2,28 +2,58 @@
 (function (root) {
   'use strict';
 
-  var DAYS = [
-    { idx: 0, name: 'ראשון', short: "א'" },
-    { idx: 1, name: 'שני', short: "ב'" },
-    { idx: 2, name: 'שלישי', short: "ג'" },
-    { idx: 3, name: 'רביעי', short: "ד'" },
-    { idx: 4, name: 'חמישי', short: "ה'" },
-    { idx: 5, name: 'שישי', short: "ו'" },
-    { idx: 6, name: 'מוצ״ש', short: "ש'" }
-  ];
+  /* שמות הימים מגיעים מהתרגום הפעיל. המערך נבנה מחדש בכל קריאה
+     כדי שהחלפת שפה תשתקף מיד. */
+  var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+
+  function translate(key, fallback, params) {
+    var i18n = I18n || root.I18n;
+    if (!i18n) return fallback;
+    var text;
+    try { text = i18n.t(key, params); } catch (err) { return fallback; }
+    return text === key ? fallback : text;
+  }
+
+  var DAY_FALLBACK = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'מוצ״ש'];
+  var DAY_SHORT_FALLBACK = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+
+  function buildDays() {
+    var out = [];
+    for (var i = 0; i < 7; i++) {
+      out.push({
+        idx: i,
+        name: translate('days.' + i, DAY_FALLBACK[i]),
+        short: translate('daysShort.' + i, DAY_SHORT_FALLBACK[i])
+      });
+    }
+    return out;
+  }
+
+  var DAYS = buildDays();
+
+  function refreshDays() {
+    var next = buildDays();
+    for (var i = 0; i < next.length; i++) {
+      DAYS[i].name = next[i].name;
+      DAYS[i].short = next[i].short;
+    }
+    return DAYS;
+  }
+
+  if (I18n && I18n.onChange) { I18n.onChange(refreshDays); }
 
   /* לוח צבעים קבוע למשמרות. כל עסק בוחר מתוכו, וכך הצבעים נשארים
      תקינים גם במצב כהה ובייצוא לאקסל. */
-  var SHIFT_COLORS = [
-    { id: 0, name: 'חמרה' },
-    { id: 1, name: 'ירוק' },
-    { id: 2, name: 'כחול' },
-    { id: 3, name: 'סגול' },
-    { id: 4, name: 'ורוד' },
-    { id: 5, name: 'טורקיז' },
-    { id: 6, name: 'אפור' },
-    { id: 7, name: 'חום' }
-  ];
+  var COLOR_FALLBACK = ['חמרה', 'ירוק', 'כחול', 'סגול', 'ורוד', 'טורקיז', 'אפור', 'חום'];
+  var SHIFT_COLORS = COLOR_FALLBACK.map(function (fallback, index) {
+    var entry = { id: index };
+    /* getter ולא ערך קבוע, כדי שהחלפת שפה תשתקף בלי לבנות מחדש */
+    Object.defineProperty(entry, 'name', {
+      enumerable: true,
+      get: function () { return translate('colors.' + index, fallback); }
+    });
+    return entry;
+  });
 
   /* משמרות ברירת המחדל לעסק חדש. מכאן ואילך כל עסק מגדיר לעצמו. */
   var DEFAULT_SHIFTS = [
@@ -31,6 +61,17 @@
     { id: 'middle', name: 'אמצע', from: '12:30', to: '20:00', color: 1 },
     { id: 'evening', name: 'ערב', from: '15:00', to: '22:00', color: 2 }
   ];
+
+  /* שמות המשמרות לעסק חדש, בשפה הפעילה */
+  function defaultShifts() {
+    return DEFAULT_SHIFTS.map(function (shift) {
+      return {
+        id: shift.id,
+        name: translate('shifts.' + shift.id, shift.name),
+        from: shift.from, to: shift.to, color: shift.color
+      };
+    });
+  }
 
   /* נשמר לתאימות לאחור בקוד שעדיין לא עודכן */
   var SHIFTS = DEFAULT_SHIFTS;
@@ -89,31 +130,44 @@
   /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
   function defaultBranches(hours, shifts) {
     return [
-      { id: 'br-center', name: 'סניף מרכז', active: true, schedule: defaultSchedule(hours, shifts) },
-      { id: 'br-north', name: 'סניף צפון', active: true, schedule: defaultSchedule(hours, shifts) },
-      { id: 'br-south', name: 'סניף דרום', active: true, schedule: defaultSchedule(hours, shifts) }
+      { id: 'br-center', name: translate('seed.branchCenter', 'סניף מרכז'), active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-north', name: translate('seed.branchNorth', 'סניף צפון'), active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-south', name: translate('seed.branchSouth', 'סניף דרום'), active: true, schedule: defaultSchedule(hours, shifts) }
     ];
   }
 
   /* עובדים מוגדרים מראש – ניתנים לעריכה במסך "עובדים" */
-  var DEFAULT_EMPLOYEES = [
-    { id: 'emp-1', name: 'עובד/ת 1', active: true, branches: ['br-center'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-2', name: 'עובד/ת 2', active: true, branches: ['br-center', 'br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-3', name: 'עובד/ת 3', active: true, branches: ['br-north'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
-    { id: 'emp-4', name: 'עובד/ת 4', active: true, branches: ['br-north', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-5', name: 'עובד/ת 5', active: true, branches: ['br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 5, note: '' },
-    { id: 'emp-6', name: 'עובד/ת 6', active: true, branches: ['br-center', 'br-south'], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: '' },
-    { id: 'emp-7', name: 'עובד/ת 7', active: true, branches: [], shifts: ALL_SHIFT_IDS.slice(), maxShifts: 6, note: 'מחליף/ה בכל הסניפים' },
-    { id: 'emp-8', name: 'עובד/ת 8', active: true, branches: [], shifts: ['middle', 'evening'], maxShifts: 4, note: 'סטודנט/ית – ללא בקרים' }
+  var EMPLOYEE_SEED = [
+    { n: 1, branches: ['br-center'], shifts: null, maxShifts: 6, note: '' },
+    { n: 2, branches: ['br-center', 'br-north'], shifts: null, maxShifts: 6, note: '' },
+    { n: 3, branches: ['br-north'], shifts: null, maxShifts: 5, note: '' },
+    { n: 4, branches: ['br-north', 'br-south'], shifts: null, maxShifts: 6, note: '' },
+    { n: 5, branches: ['br-south'], shifts: null, maxShifts: 5, note: '' },
+    { n: 6, branches: ['br-center', 'br-south'], shifts: null, maxShifts: 6, note: '' },
+    { n: 7, branches: [], shifts: null, maxShifts: 6, noteKey: 'seed.noteFloater', noteFallback: 'מחליף/ה בכל הסניפים' },
+    { n: 8, branches: [], shifts: ['middle', 'evening'], maxShifts: 4, noteKey: 'seed.noteStudent', noteFallback: 'סטודנט/ית – ללא בקרים' }
   ];
+
+  function defaultEmployees() {
+    return EMPLOYEE_SEED.map(function (seed) {
+      return {
+        id: 'emp-' + seed.n,
+        name: translate('seed.employee', 'עובד/ת ' + seed.n, { n: seed.n }),
+        active: true,
+        branches: seed.branches.slice(),
+        shifts: seed.shifts ? seed.shifts.slice() : ALL_SHIFT_IDS.slice(),
+        maxShifts: seed.maxShifts,
+        note: seed.noteKey ? translate(seed.noteKey, seed.noteFallback) : ''
+      };
+    });
+  }
 
   var DEFAULT_SETTINGS = {
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
     oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
-    shifts: DEFAULT_SHIFTS.map(function (shift) {
-      return { id: shift.id, name: shift.name, from: shift.from, to: shift.to, color: shift.color };
-    }),
+    /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
+    get shifts() { return defaultShifts(); },
     defaultShabbatEnd: '20:00'
   };
 
@@ -124,12 +178,15 @@
     MOTZASH: MOTZASH,
     SHIFT_COLORS: SHIFT_COLORS,
     DEFAULT_SHIFTS: DEFAULT_SHIFTS,
+    defaultShifts: defaultShifts,
+    refreshDays: refreshDays,
     DEFAULT_HOURS: DEFAULT_HOURS,
     DEFAULT_FRIDAY: DEFAULT_FRIDAY,
     WEEKDAYS: WEEKDAYS,
     defaultSchedule: defaultSchedule,
     defaultBranches: defaultBranches,
-    DEFAULT_EMPLOYEES: DEFAULT_EMPLOYEES,
+    get DEFAULT_EMPLOYEES() { return defaultEmployees(); },
+    defaultEmployees: defaultEmployees,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     shiftById: function (id) {
       for (var i = 0; i < SHIFTS.length; i++) { if (SHIFTS[i].id === id) return SHIFTS[i]; }

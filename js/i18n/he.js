@@ -74,6 +74,122 @@
           'הייצוא, ההדפסה והמעבר בין שבועות פועלים כרגיל.'
       },
 
+      levels: { error: 'שגיאה', warning: 'אזהרה', info: 'הערה' },
+
+      marks: {
+        dayOff: 'חופש', blocked: 'חסום', prefers: 'מעדיף',
+        notInBranch: 'לא בסניף', notInShift: 'לא במשמרת',
+        alreadyAssigned: 'כבר משובץ', inactive: 'לא פעיל'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'כפל משמרת',
+        'duplicate-employee-slot': 'כפל משמרת',
+        'double-booked': 'כפל משמרת לעובד',
+        understaffed: 'חוסר באיוש',
+        'constraint-off': 'הפרת אילוץ',
+        'constraint-blocked': 'הפרת אילוץ',
+        'branch-mismatch': 'סניף לא מתאים',
+        'shift-mismatch': 'משמרת לא מתאימה',
+        'over-max': 'חריגה ממכסה',
+        rest: 'מנוחה קצרה',
+        'no-shifts': 'ללא משמרות',
+        'missing-shabbat-end': 'חסרה שעת צאת שבת',
+        'inactive-slot': 'משמרת סגורה',
+        'pending-constraints': 'בקשות ממתינות',
+        'extra-days-off': 'יותר מדי ימי חופש',
+        'below-target': 'מתחת ליעד'
+      },
+
+      toast: {
+        generated: 'הסידור נבנה – {shifts} ללא איוש',
+        generatedFull: 'הסידור נבנה בהצלחה – כל המשמרות מאוישות',
+        clearWeekConfirm: 'לנקות את כל השיבוצים של השבוע הזה? האילוצים יישמרו.',
+        cleared: 'הסידור נוקה',
+        copied: 'הסידור הועתק ללוח',
+        personalCopied: 'הסידור האישי הועתק ללוח',
+        viewOnlyOn: 'מצב צפייה הופעל – העריכה חסומה',
+        viewOnlyOff: 'מצב צפייה כובה – אפשר לערוך',
+        copyPrompt: 'העתיקו את הטקסט:',
+        holidayCleared: '{day} חזר להיות יום עבודה',
+        holidayPrompt: 'שם החג ביום {day} (הסניפים ייסגרו והיום ייחשב חופש לכל העובדים):',
+        holidayDefault: 'חג',
+        holidayHasAssignments: 'ביום הזה כבר משובצים {count} עובדים. לסמן כחג ולנקות את השיבוצים?',
+        holidayMarked: 'יום {day} סומן כחג – הסניפים סגורים',
+        clearConstraintsConfirm: 'לנקות את כל האילוצים של השבוע הזה?',
+        constraintsCleared: 'האילוצים נוקו',
+        noPreviousConstraints: 'אין אילוצים בשבוע הקודם',
+        constraintsCopied: 'האילוצים הועתקו מהשבוע הקודם',
+        requestApproved: 'הבקשה אושרה', requestRejected: 'הבקשה נדחתה',
+        updateFailed: 'העדכון נכשל',
+        deleteShiftConfirm: 'למחוק את משמרת "{name}"?\n\n{usage}',
+        deleteShiftUsed: 'היא מוגדרת ב-{count} ימים בסניפים, וכל השיבוצים שלה יימחקו.',
+        deleteShiftUnused: 'היא אינה בשימוש בשום סניף.',
+        shiftDeleted: 'המשמרת נמחקה{removed}',
+        shiftRemovedCount: ' ({count} שיבוצים הוסרו)',
+        shiftAdded: 'נוספה משמרת. יש להגדיר אותה בסניפים כדי שתופיע בסידור.',
+        newShift: 'משמרת {n}',
+        applyHoursConfirm: 'להחיל את שעות ברירת המחדל על {count} הסניפים, בימים ראשון עד חמישי?\n\n' +
+          'הימים הפתוחים וכמות העובדים בכל משמרת יישארו כפי שהם. שישי ומוצ״ש לא ישתנו.',
+        hoursUpdated: 'השעות עודכנו ב-{count} משמרות',
+        hoursAlready: 'כל המשמרות כבר בשעות האלה',
+        imported: 'הנתונים יובאו בהצלחה',
+        importedCloud: 'הנתונים יובאו והועלו לענן ({count} שבועות)',
+        importFailed: 'קובץ לא תקין: {message}',
+        resetConfirm: 'לאפס את כל הנתונים (עובדים, סניפים, סידורים ואילוצים) לברירת המחדל?',
+        reset: 'הנתונים אופסו'
+      },
+
+      ui: {
+        iconLetters: 'סד',
+        dayHeading: 'יום {day} ({date})',
+        missingStaff: 'חסר איוש',
+        holidayClosedLine: '{name} – כל הסניפים סגורים',
+        spareLine: '— {verb} {shifts} שאפשר עוד לשבץ —',
+        unknownBranch: 'סניף לא ידוע', unknownEmployee: 'עובד לא ידוע',
+        weekLabel: 'שבוע {from} – {to}', constraintsWeek: 'אילוצי {label}',
+        holidayAllClosed: 'כל הסניפים סגורים – יום חופש לכל העובדים',
+        holidayNoRequests: 'יום חג – אין צורך באילוצים',
+        branchClosedToday: 'הסניף סגור ביום זה',
+        noActiveBranches: 'לא הוגדרו סניפים פעילים.',
+        noActiveBranchesTab: 'לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".',
+        allClosedOn: 'כל הסניפים סגורים ב{day}.',
+        branchesClosed: 'הסניפים סגורים',
+        noHours: 'ללא שעות',
+        outOf: '{done} מתוך {total}',
+        cloudSaved: 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור',
+        deviceSaved: 'הנתונים נשמרים רק בדפדפן של המחשב הזה',
+        thinking: 'חושב…',
+        noAnswer: '(לא התקבלה תשובה)',
+        chatBlocked: 'אין הרשאה לשאול שאלות בעמוד הזה.',
+        chatRateLimited: 'יותר מדי שאלות ברצף – נסו שוב בעוד רגע.',
+        chatFailed: 'לא הצלחתי לענות כרגע',
+        chatSystem: 'אתה עוזר למנהל/ת לנהל סידור משמרות. ענה ב{language}, קצר ולעניין, ' +
+          'והסתמך רק על הנתונים שלהלן. אם המידע חסר – אמור זאת במפורש במקום לנחש.',
+        chatDataStart: '=== נתוני השבוע ===',
+        chatDataEnd: '=== סוף הנתונים ===',
+        chatQuestion: 'שאלה: ',
+        summaryShabbat: 'צאת שבת: {time}',
+        summaryHolidays: 'ימי חג סגורים: {days}', summaryNoHolidays: 'אין ימי חג השבוע.',
+        summaryRules: 'כללי שיבוץ:',
+        ruleOnePerDayOn: 'עובד משובץ למשמרת אחת ביום לכל היותר.',
+        ruleOnePerDayOff: 'עובד יכול לעשות כמה משמרות ביום.',
+        ruleRestOn: 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם.',
+        ruleRestOff: 'אין מגבלת מנוחה בין ערב לבוקר.',
+        summaryBranches: 'סניפים:', summaryEmployees: 'עובדים:',
+        summaryCurrent: 'הסידור הנוכחי:', summaryAvailability: 'יתרת זמינות:',
+        summaryIssues: 'התראות על הסידור:', summaryNoIssues: 'אין התראות – הסידור תקין.',
+        closedAllWeek: 'סגור כל השבוע', allBranches: 'כל הסניפים',
+        peopleCount: '{count} עובדים',
+        empBranches: 'סניפים', empShifts: 'משמרות', empMax: 'מקסימום {count} בשבוע',
+        empAskedOff: 'ביקש/ה חופש', empBlocked: 'חסם/ה', empNote: 'הערה',
+        empAssignedOf: '{name}: משובץ {total} מתוך מכסה {max}',
+        empFreeDays: 'ימים פנויים: {days}', none: 'אין',
+        fileName: 'סידור', personalFileName: 'סידור-{name}',
+        greeting: 'שלום {name}, זה הסידור שלך:',
+        shortTitle: 'משמרות'
+      },
+
       alerts: {
         slotLabel: '{day} · {branch} · משמרת {shift}',
         deletedEmployee: '(עובד שנמחק: {id})',
@@ -244,7 +360,19 @@
         noShiftsToday: 'אין משמרות ביום הזה', holidayNoWork: 'יום חג – אין עבודה'
       },
 
+      chat: {
+        title: 'שאלות על הסידור',
+        hint: 'אפשר לשאול על השבוע שמוצג – למשל "מי עובד בשלישי בערב?", ' +
+          '"למה עובד/ת 3 לא משובץ/ת בחמישי?" או "מי יכול להחליף את עובד/ת 5 ביום רביעי?"',
+        placeholder: 'כתבו שאלה על הסידור…', send: 'שליחה'
+      },
+
       excel: {
+        availabilityNone: 'אין יתרת זמינות – אי אפשר לשבץ משמרות נוספות השבוע',
+        availabilityLeft: '{verb} {shifts} שאפשר עוד לשבץ',
+        spare: 'נותרו במכסה', required: 'נדרשים',
+        valid: 'תקין', checksTitle: 'בדיקות הסידור',
+        personalText: 'טקסט לוואטסאפ',
         byBranch: 'לפי סניף', byEmployee: 'לפי עובד', availability: 'מה נותר פנוי',
         checks: 'בדיקות', personal: 'סידור אישי',
         title: 'סידור עבודה – שבוע {from} עד {to}',
@@ -271,6 +399,7 @@
       },
 
       common: {
+        moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
         save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
         yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
       }

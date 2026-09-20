@@ -75,6 +75,122 @@
           'Export, printing and week navigation still work.'
       },
 
+      levels: { error: 'Error', warning: 'Warning', info: 'Note' },
+
+      marks: {
+        dayOff: 'day off', blocked: 'blocked', prefers: 'prefers',
+        notInBranch: 'not in this branch', notInShift: 'not in this shift',
+        alreadyAssigned: 'already assigned', inactive: 'inactive'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Double booking',
+        'duplicate-employee-slot': 'Double booking',
+        'double-booked': 'Two shifts in one day',
+        understaffed: 'Understaffed',
+        'constraint-off': 'Request broken',
+        'constraint-blocked': 'Request broken',
+        'branch-mismatch': 'Wrong branch',
+        'shift-mismatch': 'Wrong shift type',
+        'over-max': 'Over limit',
+        rest: 'Short rest',
+        'no-shifts': 'No shifts',
+        'missing-shabbat-end': 'Sabbath end time missing',
+        'inactive-slot': 'Shift not open',
+        'pending-constraints': 'Requests waiting',
+        'extra-days-off': 'Too many days off',
+        'below-target': 'Below target'
+      },
+
+      toast: {
+        generated: 'Schedule built – {shifts} still unassigned',
+        generatedFull: 'Schedule built – every shift is covered',
+        clearWeekConfirm: 'Clear every assignment for this week? Requests are kept.',
+        cleared: 'Schedule cleared',
+        copied: 'Schedule copied to clipboard',
+        personalCopied: 'Personal schedule copied to clipboard',
+        viewOnlyOn: 'View only is on – editing is disabled',
+        viewOnlyOff: 'View only is off – you can edit',
+        copyPrompt: 'Copy the text:',
+        holidayCleared: '{day} is a working day again',
+        holidayPrompt: 'Name of the holiday on {day} (branches close and the day counts as time off for everyone):',
+        holidayDefault: 'Holiday',
+        holidayHasAssignments: '{count} people are already assigned that day. Mark it as a holiday and clear them?',
+        holidayMarked: '{day} is marked as a holiday – branches are closed',
+        clearConstraintsConfirm: 'Clear every request for this week?',
+        constraintsCleared: 'Requests cleared',
+        noPreviousConstraints: 'No requests in the previous week',
+        constraintsCopied: 'Requests copied from the previous week',
+        requestApproved: 'Request approved', requestRejected: 'Request rejected',
+        updateFailed: 'Update failed',
+        deleteShiftConfirm: 'Delete the shift "{name}"?\n\n{usage}',
+        deleteShiftUsed: 'It is set on {count} branch-days, and all of its assignments will be deleted.',
+        deleteShiftUnused: 'It is not used by any branch.',
+        shiftDeleted: 'Shift deleted{removed}',
+        shiftRemovedCount: ' ({count} assignments removed)',
+        shiftAdded: 'Shift added. Set it up in Branches so it shows in the schedule.',
+        newShift: 'Shift {n}',
+        applyHoursConfirm: 'Apply the default hours to all {count} branches, Sunday to Thursday?\n\n' +
+          'Open days and headcount stay as they are. Friday and Saturday night are not changed.',
+        hoursUpdated: 'Hours updated on {count} shifts',
+        hoursAlready: 'Every shift already uses these hours',
+        imported: 'Data imported',
+        importedCloud: 'Data imported and uploaded to the cloud ({count} weeks)',
+        importFailed: 'Invalid file: {message}',
+        resetConfirm: 'Reset all data (staff, branches, schedules and requests) to the defaults?',
+        reset: 'Data reset'
+      },
+
+      ui: {
+        iconLetters: 'SH',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'understaffed',
+        holidayClosedLine: '{name} – all branches closed',
+        spareLine: '— {verb} {shifts} still to assign —',
+        unknownBranch: 'Unknown branch', unknownEmployee: 'Unknown person',
+        weekLabel: 'Week {from} – {to}', constraintsWeek: 'Requests · {label}',
+        holidayAllClosed: 'All branches closed – a day off for everyone',
+        holidayNoRequests: 'Holiday – no requests needed',
+        branchClosedToday: 'Closed on this day',
+        noActiveBranches: 'No active branches.',
+        noActiveBranchesTab: 'No active branches. Open the Branches tab.',
+        allClosedOn: 'All branches are closed on {day}.',
+        branchesClosed: 'Branches closed',
+        noHours: 'No hours',
+        outOf: '{done} of {total}',
+        cloudSaved: 'Data is saved in the cloud and updates on every computer open on this link',
+        deviceSaved: 'Data is saved only in this browser',
+        thinking: 'Thinking…',
+        noAnswer: '(no answer received)',
+        chatBlocked: 'You are not allowed to ask questions on this page.',
+        chatRateLimited: 'Too many questions at once – try again in a moment.',
+        chatFailed: 'I could not answer right now',
+        chatSystem: 'You help a manager run a shift schedule. Answer in {language}, short and to the point, ' +
+          'and rely only on the data below. If something is missing, say so instead of guessing.',
+        chatDataStart: '=== week data ===',
+        chatDataEnd: '=== end of data ===',
+        chatQuestion: 'Question: ',
+        summaryShabbat: 'Sabbath ends: {time}',
+        summaryHolidays: 'Holidays closed: {days}', summaryNoHolidays: 'No holidays this week.',
+        summaryRules: 'Scheduling rules:',
+        ruleOnePerDayOn: 'A person works at most one shift per day.',
+        ruleOnePerDayOff: 'A person may work several shifts a day.',
+        ruleRestOn: 'No morning shift after an evening shift the day before.',
+        ruleRestOff: 'No rest requirement between an evening and a morning shift.',
+        summaryBranches: 'Branches:', summaryEmployees: 'Staff:',
+        summaryCurrent: 'Current schedule:', summaryAvailability: 'Availability left:',
+        summaryIssues: 'Schedule alerts:', summaryNoIssues: 'No alerts – the schedule is valid.',
+        closedAllWeek: 'closed all week', allBranches: 'all branches',
+        peopleCount: '{count} people',
+        empBranches: 'branches', empShifts: 'shifts', empMax: 'maximum {count} per week',
+        empAskedOff: 'asked off', empBlocked: 'blocked', empNote: 'note',
+        empAssignedOf: '{name}: assigned {total} of a quota of {max}',
+        empFreeDays: 'free days: {days}', none: 'none',
+        fileName: 'schedule', personalFileName: 'schedule-{name}',
+        greeting: 'Hi {name}, here is your schedule:',
+        shortTitle: 'Shifts'
+      },
+
       alerts: {
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
@@ -245,7 +361,19 @@
         noShiftsToday: 'No shifts on this day', holidayNoWork: 'Holiday – no work'
       },
 
+      chat: {
+        title: 'Questions about this schedule',
+        hint: 'Ask about the week on screen – for example "who works Tuesday evening?", ' +
+          '"why is Team member 3 not scheduled on Thursday?" or "who can cover for Team member 5 on Wednesday?"',
+        placeholder: 'Ask about the schedule…', send: 'Send'
+      },
+
       excel: {
+        availabilityNone: 'Nothing left – no more shifts can be assigned this week',
+        availabilityLeft: '{verb} {shifts} still to assign',
+        spare: 'Left in quota', required: 'Required',
+        valid: 'Valid', checksTitle: 'Schedule checks',
+        personalText: 'Text for WhatsApp',
         byBranch: 'By branch', byEmployee: 'By employee', availability: 'Availability',
         checks: 'Checks', personal: 'My schedule',
         title: 'Work schedule – week {from} to {to}',
@@ -272,6 +400,7 @@
       },
 
       common: {
+        moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
         yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'
       }

@@ -8,6 +8,16 @@
   var Validate = window.ShiftValidate;
   var Platform = window.ShiftPlatform;
   var Xlsx = window.ShiftXlsx;
+  var I18n = window.I18n;
+
+  /* קיצור לשכבת התרגום. אם היא לא נטענה – מוצג המפתח, והמערכת ממשיכה לעבוד. */
+  function t(key, params) { return I18n ? I18n.t(key, params) : key; }
+  /* יחיד/רבים: כל שפה מנסחת אחרת, ולכן הבחירה נעשית במילון ולא בקוד */
+  function tCount(base, count, params) {
+    var merged = params || {};
+    merged.count = count;
+    return t(base + (count === 1 ? 'One' : 'Other'), merged);
+  }
 
   /* מקור הנתונים נקבע באתחול. ברירת המחדל היא שמירה מקומית, והגרסה
      המסחרית מזריקה מקור שמדבר עם השרת. */
@@ -50,7 +60,7 @@
 
   function persist(scope) {
     var failed = function (err) {
-      toast('השמירה נכשלה' + (err && err.message ? ': ' + err.message : ''));
+      toast(t('errors.notSaved') + (err && err.message ? ': ' + err.message : ''));
     };
     if (scope === 'config' || scope === 'all') {
       source.saveConfig(state, scope).catch(failed);
@@ -67,7 +77,7 @@
   /* שער יחיד לכל פעולה שמשנה נתונים */
   function blocked() {
     if (!viewOnly) return false;
-    toast('מצב צפייה – העריכה חסומה. אפשר לכבות אותו בכפתור שבראש המסך.');
+    toast(t('errors.viewOnlyBlocked'));
     return true;
   }
 
@@ -86,21 +96,21 @@
   function shiftLabel(shiftId) { return Store.shiftName(state, shiftId); }
   function branchNameOf(id) {
     var branch = Store.byId(state.branches, id);
-    return branch ? branch.name : 'סניף לא ידוע';
+    return branch ? branch.name : t('ui.unknownBranch');
   }
   function empNameOf(id) {
     var emp = Store.byId(state.employees, id);
-    return emp ? emp.name : 'עובד לא ידוע';
+    return emp ? emp.name : t('ui.unknownEmployee');
   }
 
   /* ========== כותרת השבוע ========== */
   function renderWeekHeader() {
     var start = Store.dateOfDay(weekKey, 0);
     var end = Store.dateOfDay(weekKey, 6);
-    var label = 'שבוע ' + Store.formatDate(start) + ' – ' + Store.formatDate(end);
+    var label = t('ui.weekLabel', { from: Store.formatDate(start), to: Store.formatDate(end) });
     $('#week-title').textContent = label;
-    $('#week-range').textContent = weekKey === Store.currentWeekKey() ? 'השבוע הנוכחי' : '';
-    $('#constraints-week').textContent = 'אילוצי ' + label;
+    $('#week-range').textContent = weekKey === Store.currentWeekKey() ? t('toolbar.currentWeek') : '';
+    $('#constraints-week').textContent = t('ui.constraintsWeek', { label: label });
 
     renderHolidays();
 
@@ -129,7 +139,7 @@
 
   function mobileSelectHtml(dayIdx, branch, shiftId, slotIndex, value, isExtra) {
     var html = '<select class="emp-select' + (isExtra ? ' extra' : '') + '" data-slot="' + slotIndex + '">';
-    html += '<option value="">' + (isExtra ? '+ הוסף עובד' : '— לא משובץ —') + '</option>';
+    html += '<option value="">' + (isExtra ? t('schedule.addPerson') : t('schedule.notAssigned')) + '</option>';
     state.employees.forEach(function (emp) {
       html += '<option value="' + esc(emp.id) + '"' + (value === emp.id ? ' selected' : '') + '>' +
         esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
@@ -148,7 +158,7 @@
     if (Store.isHoliday(current, mobileDay)) {
       html = '<div class="m-card holiday"><div class="m-card-head">' + esc(day.name) + '</div>' +
         '<div class="m-holiday">' + esc(Store.holidayName(current, mobileDay)) +
-        '<small>כל הסניפים סגורים – יום חופש לכל העובדים</small></div></div>';
+        '<small>' + t('ui.holidayAllClosed') + '</small></div></div>';
       $('#schedule-mobile').innerHTML = html;
       return;
     }
@@ -170,8 +180,8 @@
           (flag ? ' flag-' + flag : '') + '" data-day="' + mobileDay +
           '" data-branch="' + esc(branch.id) + '" data-shift="' + shift.id + '">';
         shiftsHtml += '<div class="m-shift-head"><b>' + shift.name + '</b>' +
-          '<span>' + (hours ? esc(hours) : 'ללא שעות') +
-          (need > 1 ? ' · ' + need + ' עובדים' : '') + '</span></div>';
+          '<span>' + (hours ? esc(hours) : t('ui.noHours')) +
+          (need > 1 ? ' · ' + t('schedule.people', { count: need }) : '') + '</span></div>';
         for (var i = 0; i < rows; i++) {
           shiftsHtml += mobileSelectHtml(mobileDay, branch, shift.id, i, assigned[i] || '', i >= need);
         }
@@ -179,13 +189,13 @@
       });
 
       if (!shiftsHtml) {
-        shiftsHtml = '<div class="m-closed">הסניף סגור ביום זה</div>';
+        shiftsHtml = '<div class="m-closed">' + t('ui.branchClosedToday') + '</div>';
       }
       html += '<div class="m-card"><div class="m-card-head">' + esc(branch.name) + '</div>' + shiftsHtml + '</div>';
     });
 
     if (!activeBranches.length) {
-      html = '<div class="m-card"><div class="m-closed">לא הוגדרו סניפים פעילים.</div></div>';
+      html = '<div class="m-card"><div class="m-closed">' + t('ui.noActiveBranches') + '</div></div>';
     }
     $('#schedule-mobile').innerHTML = html;
   }
@@ -196,14 +206,14 @@
 
     if (Store.isHoliday(current, mobileDay)) {
       $('#constraints-mobile').innerHTML = '<div class="m-card holiday"><div class="m-holiday">' +
-        esc(Store.holidayName(current, mobileDay)) + '<small>יום חג – אין צורך באילוצים</small></div></div>';
+        esc(Store.holidayName(current, mobileDay)) + '<small>' + t('ui.holidayNoRequests') + '</small></div></div>';
       return;
     }
 
     var dayShifts = Store.activeShiftsForDay(state, mobileDay, current);
     if (!dayShifts.length) {
       $('#constraints-mobile').innerHTML = '<div class="m-card"><div class="m-closed">' +
-        'כל הסניפים סגורים ב' + day.name + '.</div></div>';
+        t('ui.allClosedOn', { day: day.name }) + '</div></div>';
       return;
     }
 
@@ -214,17 +224,17 @@
       html += '<div class="m-card m-constraint"><div class="m-card-head">' + esc(emp.name) + '</div>';
       html += '<div class="m-cstates">';
       dayShifts.forEach(function (shiftId) {
-        var cls = 'free', title = 'זמין';
-        if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
-        else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
-        else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
+        var cls = 'free', title = t('constraints.free');
+        if (constraint.off) { cls = 'off-day'; title = t('constraints.dayOff'); }
+        else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = t('constraints.blocked'); }
+        else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = t('constraints.preferred'); }
         html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
           '" data-day="' + mobileDay + '" data-shift="' + shiftId + '">' +
           shiftLabel(shiftId) + '</button>';
       });
       html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
         '" data-emp="' + esc(emp.id) + '" data-day="' + mobileDay + '" data-off="1">' +
-        (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+        (constraint.off ? '✓ ' : '') + t('constraints.dayOff') + '</button>';
       html += '</div></div>';
     });
     $('#constraints-mobile').innerHTML = html;
@@ -261,15 +271,15 @@
   function optionLabel(emp, dayIdx, branchId, shiftId) {
     var constraint = Store.getConstraint(week(), emp.id, dayIdx);
     var marks = [];
-    if (constraint.off) marks.push('חופש');
-    else if (constraint.blocked && constraint.blocked[shiftId]) marks.push('חסום');
-    else if (constraint.preferred && constraint.preferred[shiftId]) marks.push('מעדיף');
-    if (!Scheduler.employeeAllowedInBranch(emp, branchId)) marks.push('לא בסניף');
-    if (emp.shifts.indexOf(shiftId) === -1) marks.push('לא במשמרת');
+    if (constraint.off) marks.push(t('marks.dayOff'));
+    else if (constraint.blocked && constraint.blocked[shiftId]) marks.push(t('marks.blocked'));
+    else if (constraint.preferred && constraint.preferred[shiftId]) marks.push(t('marks.prefers'));
+    if (!Scheduler.employeeAllowedInBranch(emp, branchId)) marks.push(t('marks.notInBranch'));
+    if (emp.shifts.indexOf(shiftId) === -1) marks.push(t('marks.notInShift'));
     var busy = Store.employeeDayAssignments(state, week(), emp.id, dayIdx)
       .filter(function (s) { return !(s.branchId === branchId && s.shiftId === shiftId); });
-    if (busy.length) marks.push('כבר משובץ');
-    if (!emp.active) marks.push('לא פעיל');
+    if (busy.length) marks.push(t('marks.alreadyAssigned'));
+    if (!emp.active) marks.push(t('marks.inactive'));
     return emp.name + (marks.length ? ' ⚠ (' + marks.join(', ') + ')' : '');
   }
 
@@ -286,14 +296,14 @@
     if (hours) {
       var label = Store.hoursLabel(hours);
       html += '<div class="cell-hours">' +
-        (label ? esc(label) : '<span class="missing">חסרה שעת צאת שבת</span>') +
-        (need > 1 ? ' · ' + need + ' עובדים' : '') + '</div>';
+        (label ? esc(label) : '<span class="missing">' + t('schedule.missingSabbath') + '</span>') +
+        (need > 1 ? ' · ' + t('schedule.people', { count: need }) : '') + '</div>';
     }
     for (var i = 0; i < rows; i++) {
       var value = assigned[i] || '';
       var extra = i >= need ? ' extra' : '';
       html += '<select class="emp-select' + extra + '" data-slot="' + i + '">';
-      html += '<option value="">' + (i >= need ? '+ הוסף' : '— ריק —') + '</option>';
+      html += '<option value="">' + (i >= need ? t('schedule.add') : t('schedule.empty')) + '</option>';
       state.employees.forEach(function (emp) {
         var selected = value === emp.id ? ' selected' : '';
         html += '<option value="' + esc(emp.id) + '"' + selected + '>' + esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
@@ -307,7 +317,8 @@
   }
 
   function renderBranchView(marks) {
-    var html = '<table><thead><tr><th class="row-head">סניף</th><th class="row-head">משמרת</th>';
+    var html = '<table><thead><tr><th class="row-head">' + t('schedule.branch') + '</th>' +
+      '<th class="row-head">' + t('schedule.shift') + '</th>';
     Data.DAYS.forEach(function (day) {
       html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
     });
@@ -315,7 +326,7 @@
 
     var activeBranches = state.branches.filter(function (b) { return b.active; });
     if (!activeBranches.length) {
-      html += '<tr><td colspan="9">לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".</td></tr>';
+      html += '<tr><td colspan="9">' + t('ui.noActiveBranchesTab') + '</td></tr>';
     }
 
     activeBranches.forEach(function (branch) {
@@ -332,7 +343,7 @@
           if (Store.isHoliday(week(), day.idx) && !assigned.length) {
             if (shiftIndex === 0) {
               html += '<td class="closed holiday-cell" rowspan="' + shiftList().length + '">' +
-                esc(Store.holidayName(week(), day.idx)) + '<br><small>הסניפים סגורים</small></td>';
+                esc(Store.holidayName(week(), day.idx)) + '<br><small>' + t('ui.branchesClosed') + '</small></td>';
             }
             return;
           }
@@ -354,15 +365,15 @@
 
   /* ========== תצוגה לפי עובד ========== */
   function renderEmployeeView(marks) {
-    var html = '<table><thead><tr><th class="row-head">עובד</th>';
+    var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
       html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
     });
-    html += '<th class="row-head">סה״כ משמרות</th></tr></thead><tbody>';
+    html += '<th class="row-head">' + t('schedule.totalShifts') + '</th></tr></thead><tbody>';
 
     state.employees.forEach(function (emp) {
       var total = 0;
-      var row = '<tr><td class="row-head">' + esc(emp.name) + (emp.active ? '' : ' <small>(לא פעיל)</small>') + '</td>';
+      var row = '<tr><td class="row-head">' + esc(emp.name) + (emp.active ? '' : ' <small>' + t('employees.inactive') + '</small>') + '</td>';
       Data.DAYS.forEach(function (day) {
         var slots = Store.employeeDayAssignments(state, week(), emp.id, day.idx);
         total += slots.length;
@@ -374,7 +385,7 @@
           if (Store.isHoliday(week(), day.idx)) {
             content = '<span class="empty-cell holiday-text">' + esc(Store.holidayName(week(), day.idx)) + '</span>';
           } else {
-            content = constraint.off ? '<span class="empty-cell">חופש</span>' : '<span class="empty-cell">—</span>';
+            content = constraint.off ? '<span class="empty-cell">' + t('schedule.dayOff') + '</span>' : '<span class="empty-cell">—</span>';
           }
         } else {
           content = slots.map(function (slot) {
@@ -385,7 +396,7 @@
         }
         row += '<td class="' + cellClass + '">' + content + '</td>';
       });
-      row += '<td class="row-head">' + total + ' מתוך ' + (emp.maxShifts || '-') + '</td></tr>';
+      row += '<td class="row-head">' + t('ui.outOf', { done: total, total: emp.maxShifts || '-' }) + '</td></tr>';
       html += row;
     });
 
@@ -398,9 +409,6 @@
     return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 820px)').matches;
   }
 
-  function plural(count, singular, pluralWord) {
-    return count === 1 ? singular : count + ' ' + pluralWord;
-  }
 
   function renderIssues(report) {
     var container = $('#issues');
@@ -408,13 +416,13 @@
     var limit = isMobile() ? 0 : 6;
     var visible = showAllIssues ? report.issues : report.issues.slice(0, limit);
     var html = '<div class="issues-summary">';
-    if (report.errors) html += '<span class="badge error">' + plural(report.errors, 'שגיאה אחת', 'שגיאות') + '</span>';
-    if (report.warnings) html += '<span class="badge warning">' + plural(report.warnings, 'אזהרה אחת', 'אזהרות') + '</span>';
-    if (report.infos) html += '<span class="badge info">' + plural(report.infos, 'הערה אחת', 'הערות') + '</span>';
-    if (!report.issues.length) html += '<span class="badge ok">✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים</span>';
+    if (report.errors) html += '<span class="badge error">' + tCount('alerts.errors', report.errors) + '</span>';
+    if (report.warnings) html += '<span class="badge warning">' + tCount('alerts.warnings', report.warnings) + '</span>';
+    if (report.infos) html += '<span class="badge info">' + tCount('alerts.infos', report.infos) + '</span>';
+    if (!report.issues.length) html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
     if (report.issues.length > limit) {
       html += '<button class="issues-toggle" id="toggle-issues">' +
-        (showAllIssues ? 'הסתרת ההתראות' : 'הצג את ' + plural(report.issues.length, 'ההתראה', 'ההתראות')) +
+        (showAllIssues ? t('alerts.showLess') : t('alerts.showAll', { count: report.issues.length })) +
         '</button>';
     }
     html += '</div>';
@@ -432,33 +440,33 @@
     return dayIndexes.map(function (idx) { return Data.DAYS[idx].name; }).join(', ');
   }
 
-  function shiftsWord(count) {
-    return count === 1 ? 'משמרת אחת' : count + ' משמרות';
-  }
+  function shiftsWord(count) { return tCount('availability.shifts', count); }
 
+  /* בעברית הפועל משתנה עם המספר; במילון כל שפה בוחרת את הניסוח שלה */
   function remainVerb(count) {
-    return count === 1 ? 'נותרה' : 'נותרו';
+    return count === 1 ? t('availability.remains') : t('availability.remainPlural');
   }
 
   /* ========== סיכום: מה נותר פנוי ========== */
   function renderAvailability() {
     var summary = Store.weekAvailability(state, week());
-    var html = '<h3 class="summary-title">מה נותר פנוי השבוע</h3>';
+    var html = '<h3 class="summary-title">' + t('availability.title') + '</h3>';
 
     if (!summary.rows.length) {
-      $('#availability').innerHTML = html + '<p class="summary-empty">לא הוגדרו עובדים פעילים.</p>';
+      $('#availability').innerHTML = html + '<p class="summary-empty">' + t('availability.noEmployees') + '</p>';
       return;
     }
 
     if (summary.freeSlots === 0) {
       var reason = summary.totalSpare === 0
-        ? 'כל העובדים הגיעו למכסת המשמרות השבועית שלהם.'
-        : 'לעובדים שנותרה להם מכסה אין יום פנוי שבו הסניפים שלהם פתוחים.';
-      html += '<p class="summary-line none">אין יתרת זמינות – ' + reason + '</p>';
+        ? t('availability.reasonMaxed')
+        : t('availability.reasonNoDays');
+      html += '<p class="summary-line none">' + t('availability.none', { reason: reason }) + '</p>';
     } else {
-      html += '<p class="summary-line total">' + remainVerb(summary.freeSlots) + ' <b>' +
-        shiftsWord(summary.freeSlots) + '</b> שאפשר עוד לשבץ, אצל ' +
-        (summary.withSpare.length === 1 ? 'עובד/ת אחד/ת' : summary.withSpare.length + ' עובדים') + ':</p>';
+      html += '<p class="summary-line total">' + tCount('availability.total', summary.freeSlots, {
+        verb: remainVerb(summary.freeSlots),
+        people: tCount('availability.people', summary.withSpare.length)
+      }) + '</p>';
     }
 
     html += '<ul class="summary-list">';
@@ -466,12 +474,13 @@
       var cls = row.available > 0 ? 'has-spare' : (row.spare > 0 ? 'no-days' : 'full');
       var text = '<b>' + esc(row.name) + '</b> – ';
       if (row.available > 0) {
-        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה · פנוי/ה ב' +
-          dayNames(row.freeDays);
+        text += t('availability.left', {
+          verb: remainVerb(row.spare), shifts: shiftsWord(row.spare), days: dayNames(row.freeDays)
+        });
       } else if (row.spare > 0) {
-        text += remainVerb(row.spare) + ' ' + shiftsWord(row.spare) + ' במכסה, אך אין יום פנוי השבוע';
+        text += t('availability.leftNoDays', { verb: remainVerb(row.spare), shifts: shiftsWord(row.spare) });
       } else {
-        text += 'מנוצל/ת במלואו/ה (' + row.assigned + ' מתוך ' + row.max + ')';
+        text += t('availability.full', { assigned: row.assigned, max: row.max });
       }
       html += '<li class="' + cls + '">' + text + '</li>';
     });
@@ -483,7 +492,7 @@
   function renderPersonalPicker() {
     var select = $('#personal-employee');
     var previous = select.value;
-    var html = '<option value="">בחרו עובד…</option>';
+    var html = '<option value="">' + t('toolbar.choosePerson') + '</option>';
     state.employees.forEach(function (emp) {
       if (!emp.active) return;
       var count = Store.employeeWeekCount(state, week(), emp.id);
@@ -499,7 +508,8 @@
       if (!emp.active) return;
       var count = Store.employeeWeekCount(state, week(), emp.id);
       var cls = count > (emp.maxShifts || 99) ? ' over' : (count === 0 ? ' zero' : '');
-      html += '<div class="load-pill' + cls + '">' + esc(emp.name) + ': <b>' + count + '</b> מתוך ' + (emp.maxShifts || '-') + '</div>';
+      html += '<div class="load-pill' + cls + '">' + esc(emp.name) + ': ' +
+        t('ui.outOf', { done: '<b>' + count + '</b>', total: emp.maxShifts || '-' }) + '</div>';
     });
     $('#workload').innerHTML = html;
   }
@@ -507,15 +517,15 @@
   /* ========== בקשות אילוץ הממתינות לאישור ========== */
   function describeConstraint(record) {
     if (!record) return '';
-    if (record.off) return 'יום חופש';
+    if (record.off) return t('constraints.dayOff');
     var parts = [];
     Object.keys(record.preferred || {}).forEach(function (id) {
-      parts.push('מעדיף/ה ' + shiftLabel(id));
+      parts.push(t('constraints.preferred') + ' ' + shiftLabel(id));
     });
     Object.keys(record.blocked || {}).forEach(function (id) {
-      parts.push('לא יכול/ה ' + shiftLabel(id));
+      parts.push(t('constraints.blocked') + ' ' + shiftLabel(id));
     });
-    return parts.join(', ') || 'ללא שינוי';
+    return parts.join(', ') || t('constraints.noChange');
   }
 
   function renderPending() {
@@ -530,8 +540,8 @@
     }
     container.classList.remove('hidden');
 
-    var html = '<h3 class="pending-title">בקשות שממתינות לאישורך (' + pending.length + ')</h3>';
-    html += '<p class="hint">בקשה שלא אושרה אינה משפיעה על השיבוץ.</p>';
+    var html = '<h3 class="pending-title">' + t('constraints.pendingTitle', { count: pending.length }) + '</h3>';
+    html += '<p class="hint">' + t('constraints.pendingHint') + '</p>';
     html += '<div class="pending-list">';
     pending.forEach(function (item) {
       html += '<div class="pending-item" data-emp="' + esc(item.empId) + '" data-day="' + item.dayIdx + '">';
@@ -542,8 +552,8 @@
         (item.record.note ? '<small>' + esc(item.record.note) + '</small>' : '') +
         '</div>';
       html += '<div class="pending-actions">' +
-        '<button class="btn small approve" data-decision="approved">אישור</button>' +
-        '<button class="btn small ghost reject" data-decision="rejected">דחייה</button>' +
+        '<button class="btn small approve" data-decision="approved">' + t('constraints.approve') + '</button>' +
+        '<button class="btn small ghost reject" data-decision="rejected">' + t('constraints.reject') + '</button>' +
         '</div></div>';
     });
     html += '</div>';
@@ -552,7 +562,7 @@
 
   /* ========== לוח האילוצים ========== */
   function renderConstraints() {
-    var html = '<table><thead><tr><th class="row-head">עובד</th>';
+    var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
       html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
     });
@@ -569,30 +579,30 @@
           return;
         }
         var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
-        if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
+        if (!dayShifts.length) { html += '<td class="closed">' + t('branches.closed') + '</td>'; return; }
         var cellTag = '';
         var reason = record && record.note ? ' · ' + record.note : '';
         if (status === Store.CONSTRAINT_STATUS.PENDING) {
-          cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">בקשה: ' +
-            esc(describeConstraint(record)) + esc(reason) + '</div>';
+          cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">' +
+            esc(t('constraints.requestLabel', { detail: describeConstraint(record) })) + esc(reason) + '</div>';
         } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
-          cellTag = '<div class="c-status rejected">בקשה נדחתה</div>';
+          cellTag = '<div class="c-status rejected">' + t('constraints.requestRejected') + '</div>';
         } else if (record && record.note) {
           cellTag = '<div class="c-status approved">' + esc(record.note) + '</div>';
         }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {
-          var cls = 'free', title = 'זמין';
-          if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
-          else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
-          else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
+          var cls = 'free', title = t('constraints.free');
+          if (constraint.off) { cls = 'off-day'; title = t('constraints.dayOff'); }
+          else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = t('constraints.blocked'); }
+          else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = t('constraints.preferred'); }
           html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
             '" data-day="' + day.idx + '" data-shift="' + esc(shiftId) + '">' +
             esc(shiftLabel(shiftId)) + '</button>';
         });
         html += '<button class="cstate day-off-btn ' + (constraint.off ? 'off-day' : 'free') +
           '" data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
-          (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
+          (constraint.off ? '✓ ' : '') + t('constraints.dayOff') + '</button>';
         html += cellTag + '</td>';
       });
       html += '</tr>';
@@ -608,24 +618,24 @@
     state.employees.forEach(function (emp) {
       html += '<div class="card' + (emp.active ? '' : ' inactive') + '" data-emp="' + esc(emp.id) + '">';
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(emp.name) + '">' +
-        '<button class="btn icon danger" data-action="delete-emp" title="מחיקה">🗑</button></div>';
+        '<button class="btn icon danger" data-action="delete-emp" title="' + t('common.delete') + '">🗑</button></div>';
       html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
-        (emp.active ? ' checked' : '') + '> עובד/ת פעיל/ה</label></div>';
-      html += '<div class="field"><label class="title">סניפים (ללא בחירה = זמין בכל הסניפים)</label><div class="pills">';
+        (emp.active ? ' checked' : '') + '> ' + t('employees.active') + '</label></div>';
+      html += '<div class="field"><label class="title">' + t('employees.branchesLabel') + '</label><div class="pills">';
       state.branches.forEach(function (branch) {
         var on = emp.branches.indexOf(branch.id) !== -1 ? ' on' : '';
         html += '<button class="pill' + on + '" data-action="toggle-branch" data-branch="' + esc(branch.id) + '">' + esc(branch.name) + '</button>';
       });
       html += '</div></div>';
-      html += '<div class="field"><label class="title">סוגי משמרות אפשריים</label><div class="pills">';
+      html += '<div class="field"><label class="title">' + t('employees.shiftTypes') + '</label><div class="pills">';
       shiftList().forEach(function (shift) {
         var on = emp.shifts.indexOf(shift.id) !== -1 ? ' on' : '';
         html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + shift.name + '</button>';
       });
       html += '</div></div>';
-      html += '<div class="field"><label class="title">מקסימום משמרות בשבוע</label>' +
+      html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
         '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
-      html += '<div class="field"><label class="title">הערה</label>' +
+      html += '<div class="field"><label class="title">' + t('employees.note') + '</label>' +
         '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
       html += '</div>';
     });
@@ -634,7 +644,8 @@
 
   /* ========== סניפים: ימים, שעות וכמות עובדים ========== */
   function timeInputHtml(field, value) {
-    return '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+    return '<input class="time-input" type="text" inputmode="numeric" maxlength="5"' +
+      ' placeholder="' + esc(t('common.timePlaceholder')) + '"' +
       ' data-sched="' + field + '" value="' + esc(value || '') + '">';
   }
 
@@ -644,12 +655,13 @@
     var isMotzash = config && config.auto === 'motzash';
     var html = '<td class="sched-cell ' + (need ? shiftClass(shiftId) : 'closed') + '"' +
       ' data-day="' + dayIdx + '" data-shift="' + shiftId + '">';
-    html += '<label class="sched-need"><span>עובדים</span>' +
+    html += '<label class="sched-need"><span>' + t('branches.peopleLabel') + '</span>' +
       '<input class="num-input" type="number" min="0" max="9" data-sched="need" value="' + need + '"></label>';
     if (need > 0) {
       html += '<div class="sched-times">';
       if (isMotzash) {
-        html += '<span class="auto-time" title="חצי שעה אחרי צאת השבת של אותו שבוע">מצאת שבת +30 דק׳</span>';
+        html += '<span class="auto-time" title="' + esc(t('settings.sabbathHint')) + '">' +
+          t('branches.autoSabbathLabel') + '</span>';
       } else {
         html += timeInputHtml('from', config.from);
       }
@@ -658,10 +670,10 @@
       html += '</div>';
       if (dayIdx === Data.MOTZASH.dayIdx) {
         html += '<label class="check tiny"><input type="checkbox" data-sched="auto"' +
-          (isMotzash ? ' checked' : '') + '> לפי צאת שבת</label>';
+          (isMotzash ? ' checked' : '') + '> ' + t('branches.autoSabbath') + '</label>';
       }
     } else {
-      html += '<div class="sched-closed">סגור</div>';
+      html += '<div class="sched-closed">' + t('branches.closed') + '</div>';
     }
     return html + '</td>';
   }
@@ -672,10 +684,11 @@
       html += '<div class="card wide' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
         '<label class="check"><input type="checkbox" data-field="active"' +
-        (branch.active ? ' checked' : '') + '> פעיל</label>' +
-        '<button class="btn icon danger" data-action="delete-branch" title="מחיקת הסניף">🗑</button></div>';
+        (branch.active ? ' checked' : '') + '> ' + t('branches.active') + '</label>' +
+        '<button class="btn icon danger" data-action="delete-branch" title="' + t('common.delete') + '">🗑</button></div>';
 
-      html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">יום</th>';
+      html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">' +
+        t('branches.day') + '</th>';
       shiftList().forEach(function (shift) {
         html += '<th class="' + shiftClass(shift.id) + '">' + shift.name + '</th>';
       });
@@ -690,8 +703,9 @@
       html += '</tbody></table></div>';
 
       if (state.branches.length > 1) {
-        html += '<div class="field copy-row"><label class="title">העתקת ימים ושעות מסניף אחר</label>' +
-          '<select class="text-input" data-action="copy-schedule"><option value="">בחרו סניף…</option>';
+        html += '<div class="field copy-row"><label class="title">' + t('branches.copyFrom') + '</label>' +
+          '<select class="text-input" data-action="copy-schedule"><option value="">' +
+          t('branches.chooseBranch') + '</option>';
         state.branches.forEach(function (other) {
           if (other.id === branch.id) return;
           html += '<option value="' + esc(other.id) + '">' + esc(other.name) + '</option>';
@@ -715,12 +729,14 @@
     list.forEach(function (shift, index) {
       html += '<div class="shift-row ' + shiftClass(shift.id) + '" data-shift="' + esc(shift.id) + '">';
       html += '<input class="text-input shift-name" data-field="name" value="' + esc(shift.name) +
-        '" maxlength="24" placeholder="שם המשמרת">';
+        '" maxlength="24" placeholder="' + esc(t('settings.shiftNamePlaceholder')) + '">';
       html += '<div class="shift-times">' +
-        '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+        '<input class="time-input" type="text" inputmode="numeric" maxlength="5"' +
+        ' placeholder="' + esc(t('common.timePlaceholder')) + '"' +
         ' data-field="from" value="' + esc(shift.from || '') + '">' +
         '<span class="dash">–</span>' +
-        '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
+        '<input class="time-input" type="text" inputmode="numeric" maxlength="5"' +
+        ' placeholder="' + esc(t('common.timePlaceholder')) + '"' +
         ' data-field="to" value="' + esc(shift.to || '') + '">' +
         '</div>';
       html += '<div class="shift-colors">';
@@ -731,15 +747,25 @@
       });
       html += '</div>';
       html += '<div class="shift-actions">' +
-        '<button class="btn icon" data-move="-1" title="העלאה"' + (index === 0 ? ' disabled' : '') + '>↑</button>' +
-        '<button class="btn icon" data-move="1" title="הורדה"' +
+        '<button class="btn icon" data-move="-1" title="' + t('common.moveUp') + '"' + (index === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button class="btn icon" data-move="1" title="' + t('common.moveDown') + '"' +
         (index === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
-        '<button class="btn icon danger" data-remove="1" title="מחיקה"' +
+        '<button class="btn icon danger" data-remove="1" title="' + t('common.delete') + '"' +
         (list.length === 1 ? ' disabled' : '') + '>🗑</button>' +
         '</div>';
       html += '</div>';
     });
     $('#default-hours').innerHTML = html;
+
+    var legend = $('#constraints-legend');
+    if (legend) {
+      legend.textContent = t('constraints.legend', {
+        free: t('constraints.free'),
+        preferred: t('constraints.preferred'),
+        blocked: t('constraints.blocked')
+      });
+    }
+    if (window.I18nDom) { window.I18nDom.fillPicker($('#language-select')); }
   }
 
   var LOCKED_SELECTORS = [
@@ -758,7 +784,7 @@
     $('#view-only-banner').classList.toggle('hidden', !viewOnly);
 
     var button = $('#view-only-toggle');
-    button.textContent = viewOnly ? '🔓 יציאה ממצב צפייה' : '🔒 מצב צפייה';
+    button.textContent = (viewOnly ? '🔓 ' : '🔒 ') + t(viewOnly ? 'toolbar.exitViewOnly' : 'toolbar.viewOnly');
     button.setAttribute('aria-pressed', viewOnly ? 'true' : 'false');
 
     LOCKED_SELECTORS.forEach(function (selector) {
@@ -793,12 +819,14 @@
 
   /* ========== ייצוא ========== */
   function scheduleAsText() {
-    var lines = ['סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
-      ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6)), ''];
+    var lines = [t('excel.title', {
+      from: Store.formatDate(Store.dateOfDay(weekKey, 0)),
+      to: Store.formatDate(Store.dateOfDay(weekKey, 6))
+    }), ''];
     Data.DAYS.forEach(function (day) {
       if (Store.isHoliday(week(), day.idx)) {
-        lines.push('📅 יום ' + day.name + ' (' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + ')');
-        lines.push('   ' + Store.holidayName(week(), day.idx) + ' – כל הסניפים סגורים', '');
+        lines.push('📅 ' + t('ui.dayHeading', { day: day.name, date: Store.formatDate(Store.dateOfDay(weekKey, day.idx)) }));
+        lines.push('   ' + t('ui.holidayClosedLine', { name: Store.holidayName(week(), day.idx) }), '');
         return;
       }
       var dayLines = [];
@@ -808,21 +836,22 @@
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
           var need = Store.slotNeed(branch, day.idx, shiftId);
           if (!assigned.length && !need) return;
-          var names = assigned.map(empNameOf).join(', ') || '‼ חסר איוש';
+          var names = assigned.map(empNameOf).join(', ') || ('‼ ' + t('ui.missingStaff'));
           var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
           dayLines.push('   ' + branch.name + ' – ' + shiftLabel(shiftId) +
             (hours ? ' (' + hours + ')' : '') + ': ' + names);
         });
       });
       if (dayLines.length) {
-        lines.push('📅 יום ' + day.name + ' (' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + ')');
+        lines.push('📅 ' + t('ui.dayHeading', { day: day.name, date: Store.formatDate(Store.dateOfDay(weekKey, day.idx)) }));
         lines = lines.concat(dayLines, '');
       }
     });
     var summary = Store.weekAvailability(state, week());
     if (summary.freeSlots) {
-      lines.push('— ' + remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) +
-        ' שאפשר עוד לשבץ —');
+      lines.push(t('ui.spareLine', {
+        verb: remainVerb(summary.freeSlots), shifts: shiftsWord(summary.freeSlots)
+      }));
     }
     return lines.join('\n');
   }
@@ -842,15 +871,15 @@
     current.manual[Store.slotKey(dayIdx, branchId, shiftId)] = true;
     persist();
     render();
-    if (unique.length !== values.length) { toast('אותו עובד לא יכול להופיע פעמיים באותה משמרת'); }
+    if (unique.length !== values.length) { toast(t('errors.duplicatePerson')); }
   }
 
   function copyText(text, message) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { toast(message); },
-        function () { window.prompt('העתיקו את הטקסט:', text); });
+        function () { window.prompt(t('toast.copyPrompt'), text); });
     } else {
-      window.prompt('העתיקו את הטקסט:', text);
+      window.prompt(t('toast.copyPrompt'), text);
     }
   }
 
@@ -866,8 +895,10 @@
   }
 
   function weekTitle() {
-    return 'סידור עבודה – שבוע ' + Store.formatDate(Store.dateOfDay(weekKey, 0)) +
-      ' עד ' + Store.formatDate(Store.dateOfDay(weekKey, 6));
+    return t('excel.title', {
+      from: Store.formatDate(Store.dateOfDay(weekKey, 0)),
+      to: Store.formatDate(Store.dateOfDay(weekKey, 6))
+    });
   }
 
   function dayHeaderCells() {
@@ -882,12 +913,12 @@
     var merges = [];
 
     rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
-    var subtitle = 'תצוגה לפי סניף';
-    if (current.shabbatEnd) subtitle += ' · צאת שבת ' + current.shabbatEnd;
+    var subtitle = t('excel.viewBranch');
+    if (current.shabbatEnd) subtitle += ' · ' + t('excel.sabbathEnds', { time: current.shabbatEnd });
     rows.push([{ v: subtitle, s: Xlsx.STYLE.SUBTITLE }]);
     rows.push([]);
 
-    var headerRow = [{ v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER }]
+    var headerRow = [{ v: t('excel.branch'), s: Xlsx.STYLE.HEADER }, { v: t('excel.shift'), s: Xlsx.STYLE.HEADER }]
       .concat(dayHeaderCells());
     rows.push({ cells: headerRow, height: 30 });
 
@@ -904,7 +935,7 @@
           var need = Store.slotNeed(branch, day.idx, shift.id);
           var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
           if (Store.isHoliday(current, day.idx) && !assigned.length) {
-            cells.push({ v: Store.holidayName(current, day.idx) + '\nסגור', s: Xlsx.STYLE.CLOSED });
+            cells.push({ v: Store.holidayName(current, day.idx) + '\n' + t('excel.closed'), s: Xlsx.STYLE.CLOSED });
             return;
           }
           if (!need && !assigned.length) {
@@ -917,7 +948,7 @@
           if (assigned.length) {
             assigned.forEach(function (id) { lines.push(empNameOf(id)); });
           }
-          for (var i = assigned.length; i < need; i++) { lines.push('— חסר —'); }
+          for (var i = assigned.length; i < need; i++) { lines.push(t('excel.missing')); }
           maxLines = Math.max(maxLines, lines.length);
           cells.push({ v: lines.join('\n'), s: shiftStyle(shift.id) });
         });
@@ -927,11 +958,11 @@
     });
 
     if (!activeBranches.length) {
-      rows.push([{ v: 'לא הוגדרו סניפים פעילים', s: Xlsx.STYLE.PLAIN }]);
+      rows.push([{ v: t('schedule.noBranches'), s: Xlsx.STYLE.PLAIN }]);
     }
 
     return {
-      name: 'לפי סניף',
+      name: t('excel.byBranch'),
       selected: true,
       cols: [18, 10, 20, 20, 20, 20, 20, 20, 20],
       freeze: { row: 4, col: 2 },
@@ -945,16 +976,16 @@
     var rows = [];
 
     rows.push({ cells: [{ v: weekTitle(), s: Xlsx.STYLE.TITLE }], height: 22 });
-    rows.push([{ v: 'תצוגה לפי עובד', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{ v: t('excel.viewEmployee'), s: Xlsx.STYLE.SUBTITLE }]);
     rows.push([]);
 
-    var headerRow = [{ v: 'עובד', s: Xlsx.STYLE.HEADER }]
+    var headerRow = [{ v: t('excel.staff'), s: Xlsx.STYLE.HEADER }]
       .concat(dayHeaderCells())
-      .concat([{ v: 'סה״כ משמרות', s: Xlsx.STYLE.HEADER }]);
+      .concat([{ v: t('excel.totalShifts'), s: Xlsx.STYLE.HEADER }]);
     rows.push({ cells: headerRow, height: 30 });
 
     state.employees.forEach(function (emp) {
-      var cells = [{ v: emp.name + (emp.active ? '' : ' (לא פעיל)'), s: Xlsx.STYLE.ROW_HEAD }];
+      var cells = [{ v: emp.name + (emp.active ? '' : ' ' + t('employees.inactive')), s: Xlsx.STYLE.ROW_HEAD }];
       var total = 0;
       var maxLines = 1;
 
@@ -965,7 +996,7 @@
         if (!slots.length) {
           var empty = Store.isHoliday(current, day.idx)
             ? Store.holidayName(current, day.idx)
-            : (constraint.off ? 'חופש' : '—');
+            : (constraint.off ? t('schedule.dayOff') : '—');
           cells.push({ v: empty, s: Xlsx.STYLE.CLOSED });
           return;
         }
@@ -980,12 +1011,12 @@
         cells.push({ v: lines.join('\n'), s: shiftStyle(slots[0].shiftId) });
       });
 
-      cells.push({ v: total + ' מתוך ' + (emp.maxShifts || 0), s: Xlsx.STYLE.TOTAL });
+      cells.push({ v: t('ui.outOf', { done: total, total: emp.maxShifts || 0 }), s: Xlsx.STYLE.TOTAL });
       rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
     });
 
     return {
-      name: 'לפי עובד',
+      name: t('excel.byEmployee'),
       cols: [20, 22, 22, 22, 22, 22, 22, 22, 14],
       freeze: { row: 4, col: 1 },
       rows: rows
@@ -994,35 +1025,27 @@
 
   function issuesSheet() {
     var rows = [];
-    rows.push({ cells: [{ v: 'בדיקות הסידור', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push({ cells: [{ v: t('excel.checksTitle'), s: Xlsx.STYLE.TITLE }], height: 22 });
     rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
     rows.push([]);
-    rows.push([{ v: 'חומרה', s: Xlsx.STYLE.HEADER }, { v: 'סוג', s: Xlsx.STYLE.HEADER },
-      { v: 'פירוט', s: Xlsx.STYLE.HEADER }]);
-
-    var levels = { error: 'שגיאה', warning: 'אזהרה', info: 'הערה' };
-    var types = {
-      'duplicate-shift': 'כפל משמרת', 'duplicate-employee-slot': 'כפל משמרת',
-      'double-booked': 'כפל משמרת לעובד', 'understaffed': 'חוסר באיוש',
-      'constraint-off': 'הפרת אילוץ', 'constraint-blocked': 'הפרת אילוץ',
-      'branch-mismatch': 'סניף לא מתאים', 'shift-mismatch': 'משמרת לא מתאימה',
-      'over-max': 'חריגה ממכסה', 'rest': 'מנוחה קצרה', 'no-shifts': 'ללא משמרות',
-      'missing-shabbat-end': 'חסרה שעת צאת שבת', 'inactive-slot': 'משמרת סגורה'
-    };
+    rows.push([{ v: t('excel.severity'), s: Xlsx.STYLE.HEADER }, { v: t('excel.type'), s: Xlsx.STYLE.HEADER },
+      { v: t('excel.detail'), s: Xlsx.STYLE.HEADER }]);
 
     if (!lastReport.issues.length) {
-      rows.push([{ v: '✔', s: Xlsx.STYLE.PLAIN }, { v: 'תקין', s: Xlsx.STYLE.PLAIN },
-        { v: 'אין כפל משמרות, חוסרים או הפרות אילוצים', s: Xlsx.STYLE.PLAIN }]);
+      rows.push([{ v: '✔', s: Xlsx.STYLE.PLAIN }, { v: t('excel.valid'), s: Xlsx.STYLE.PLAIN },
+        { v: t('excel.noIssues'), s: Xlsx.STYLE.PLAIN }]);
     }
     lastReport.issues.forEach(function (item) {
+      var level = t('levels.' + item.level);
+      var type = t('issueTypes.' + item.type);
       rows.push([
-        { v: levels[item.level] || item.level, s: Xlsx.STYLE.PLAIN },
-        { v: types[item.type] || item.type, s: Xlsx.STYLE.PLAIN },
+        { v: level === 'levels.' + item.level ? item.level : level, s: Xlsx.STYLE.PLAIN },
+        { v: type === 'issueTypes.' + item.type ? item.type : type, s: Xlsx.STYLE.PLAIN },
         { v: item.text, s: Xlsx.STYLE.PLAIN }
       ]);
     });
 
-    return { name: 'בדיקות', cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
+    return { name: t('excel.checks'), cols: [12, 20, 90], freeze: { row: 4, col: 0 }, rows: rows };
   }
 
   /* ===== ייצוא אישי: רק המשמרות של עובד אחד ===== */
@@ -1035,10 +1058,11 @@
       var date = Store.formatDate(Store.dateOfDay(weekKey, day.idx));
 
       if (!slots.length) {
+        var idle = !Store.isHoliday(current, day.idx) && !constraint.off;
         var status = Store.isHoliday(current, day.idx)
           ? Store.holidayName(current, day.idx)
-          : (constraint.off ? 'יום חופש' : 'לא משובץ');
-        rows.push({ day: day.name, date: date, status: status, working: false });
+          : (constraint.off ? t('constraints.dayOff') : t('excel.notAssigned'));
+        rows.push({ day: day.name, date: date, status: status, working: false, idle: idle });
         return;
       }
       slots.forEach(function (slot) {
@@ -1061,13 +1085,13 @@
     var data = personalRows(emp.id);
     var total = data.filter(function (row) { return row.working; }).length;
 
-    rows.push({ cells: [{ v: 'סידור אישי – ' + emp.name, s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push({ cells: [{ v: t('excel.personalTitle', { name: emp.name }), s: Xlsx.STYLE.TITLE }], height: 22 });
     rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
-    rows.push([{ v: 'סה״כ ' + shiftsWord(total) + ' השבוע', s: Xlsx.STYLE.SUBTITLE }]);
+    rows.push([{ v: t('excel.totalWeek', { count: shiftsWord(total) }), s: Xlsx.STYLE.SUBTITLE }]);
     rows.push({
-      cells: [{ v: 'יום', s: Xlsx.STYLE.HEADER }, { v: 'תאריך', s: Xlsx.STYLE.HEADER },
-        { v: 'סניף', s: Xlsx.STYLE.HEADER }, { v: 'משמרת', s: Xlsx.STYLE.HEADER },
-        { v: 'שעות', s: Xlsx.STYLE.HEADER }],
+      cells: [{ v: t('excel.day'), s: Xlsx.STYLE.HEADER }, { v: t('excel.date'), s: Xlsx.STYLE.HEADER },
+        { v: t('excel.branch'), s: Xlsx.STYLE.HEADER }, { v: t('excel.shift'), s: Xlsx.STYLE.HEADER },
+        { v: t('excel.hours'), s: Xlsx.STYLE.HEADER }],
       height: 22
     });
 
@@ -1088,7 +1112,7 @@
     });
 
     return {
-      name: opts.name || 'סידור אישי',
+      name: opts.name || t('excel.personal'),
       selected: opts.selected !== false,
       cols: [12, 10, 22, 12, 16],
       freeze: { row: 4, col: 0 },
@@ -1111,8 +1135,8 @@
     var blob = new Blob([bytes], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    var safeName = emp.name.replace(/[\\\/:*?"<>|]/g, '').trim() || 'עובד';
-    saveFile('סידור-' + safeName + '-' + weekKey + '.xlsx', blob,
+    var safeName = emp.name.replace(/[\\\/:*?"<>|]/g, '').trim() || t('schedule.employee');
+    saveFile(t('ui.personalFileName', { name: safeName }) + '-' + weekKey + '.xlsx', blob,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   }
 
@@ -1121,16 +1145,16 @@
     if (!emp) return '';
     var data = personalRows(empId);
     var total = data.filter(function (row) { return row.working; }).length;
-    var lines = ['שלום ' + emp.name + ', זה הסידור שלך:', weekTitle(), ''];
+    var lines = [t('ui.greeting', { name: emp.name }), weekTitle(), ''];
     data.forEach(function (row) {
       if (row.working) {
         lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.branch + ' · ' + row.shift +
           (row.hours ? ' · ' + row.hours : ''));
-      } else if (row.status !== 'לא משובץ') {
+      } else if (!row.idle) {
         lines.push('📅 ' + row.day + ' ' + row.date + ' – ' + row.status);
       }
     });
-    lines.push('', 'סה״כ ' + shiftsWord(total) + ' השבוע.');
+    lines.push('', t('excel.totalWeek', { count: shiftsWord(total) }));
     return lines.join('\n');
   }
 
@@ -1138,17 +1162,17 @@
     var summary = Store.weekAvailability(state, week());
     var rows = [];
 
-    rows.push({ cells: [{ v: 'מה נותר פנוי', s: Xlsx.STYLE.TITLE }], height: 22 });
+    rows.push({ cells: [{ v: t('availability.title'), s: Xlsx.STYLE.TITLE }], height: 22 });
     rows.push([{ v: weekTitle(), s: Xlsx.STYLE.SUBTITLE }]);
     rows.push([{
       v: summary.freeSlots
-        ? remainVerb(summary.freeSlots) + ' ' + shiftsWord(summary.freeSlots) + ' שאפשר עוד לשבץ'
-        : 'אין יתרת זמינות – אי אפשר לשבץ משמרות נוספות השבוע',
+        ? t('excel.availabilityLeft', { verb: remainVerb(summary.freeSlots), shifts: shiftsWord(summary.freeSlots) })
+        : t('excel.availabilityNone'),
       s: Xlsx.STYLE.SUBTITLE
     }]);
-    rows.push([{ v: 'עובד', s: Xlsx.STYLE.HEADER }, { v: 'משובץ', s: Xlsx.STYLE.HEADER },
-      { v: 'מכסה', s: Xlsx.STYLE.HEADER }, { v: 'נותרו במכסה', s: Xlsx.STYLE.HEADER },
-      { v: 'ניתן לשבץ', s: Xlsx.STYLE.HEADER }, { v: 'ימים פנויים', s: Xlsx.STYLE.HEADER }]);
+    rows.push([{ v: t('excel.staff'), s: Xlsx.STYLE.HEADER }, { v: t('excel.assigned'), s: Xlsx.STYLE.HEADER },
+      { v: t('excel.quota'), s: Xlsx.STYLE.HEADER }, { v: t('excel.spare'), s: Xlsx.STYLE.HEADER },
+      { v: t('excel.canAssign'), s: Xlsx.STYLE.HEADER }, { v: t('excel.freeDays'), s: Xlsx.STYLE.HEADER }]);
 
     summary.rows.forEach(function (row) {
       rows.push([
@@ -1161,7 +1185,7 @@
       ]);
     });
 
-    return { name: 'מה נותר פנוי', cols: [22, 10, 10, 14, 12, 40], freeze: { row: 4, col: 1 }, rows: rows };
+    return { name: t('excel.availability'), cols: [22, 10, 10, 14, 12, 40], freeze: { row: 4, col: 1 }, rows: rows };
   }
 
   function exportExcel() {
@@ -1179,7 +1203,8 @@
   }
 
   function exportCsv() {
-    var rows = [['תאריך', 'יום', 'סניף', 'משמרת', 'שעות', 'עובדים', 'נדרשים', 'משובצים']];
+    var rows = [[t('excel.date'), t('excel.day'), t('excel.branch'), t('excel.shift'),
+      t('excel.hours'), t('excel.staff'), t('excel.required'), t('excel.assigned')]];
     Data.DAYS.forEach(function (day) {
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
@@ -1246,39 +1271,37 @@
       persist();
       render();
       toast(result.unfilled.length
-        ? 'הסידור נבנה – ' + plural(result.unfilled.length, 'משמרת אחת נותרה', 'משמרות נותרו') + ' ללא איוש'
-        : 'הסידור נבנה בהצלחה – כל המשמרות מאוישות');
+        ? t('toast.generated', { shifts: shiftsWord(result.unfilled.length) })
+        : t('toast.generatedFull'));
     });
 
     $('#clear-week').addEventListener('click', function () {
       if (blocked()) return;
-      if (!confirm('לנקות את כל השיבוצים של השבוע הזה? האילוצים יישמרו.')) return;
+      if (!confirm(t('toast.clearWeekConfirm'))) return;
       var current = week();
       current.assignments = {};
       current.manual = {};
       persist();
       render();
-      toast('הסידור נוקה');
+      toast(t('toast.cleared'));
     });
 
     $('#copy-text').addEventListener('click', function () {
-      copyText(scheduleAsText(), 'הסידור הועתק ללוח');
+      copyText(scheduleAsText(), t('toast.copied'));
     });
 
     $('#view-only-toggle').addEventListener('click', function () {
       viewOnly = !viewOnly;
       try { window.localStorage.setItem(VIEW_ONLY_KEY, viewOnly ? '1' : '0'); } catch (err) { /* לא קריטי */ }
       render();
-      toast(viewOnly
-        ? 'מצב צפייה הופעל – העריכה חסומה'
-        : 'מצב צפייה כובה – אפשר לערוך');
+      toast(t(viewOnly ? 'toast.viewOnlyOn' : 'toast.viewOnlyOff'));
     });
 
     $('#tools-toggle').addEventListener('click', function () {
       var panel = $('#more-tools');
       var open = panel.classList.toggle('open');
       this.setAttribute('aria-expanded', open ? 'true' : 'false');
-      this.textContent = open ? '✕ סגירת הכלים' : '⋯ כלים נוספים';
+      this.textContent = (open ? '✕ ' : '⋯ ') + t(open ? 'toolbar.closeTools' : 'toolbar.moreTools');
     });
 
     function bindDayNav(selector) {
@@ -1310,20 +1333,19 @@
         Store.setHoliday(current, dayIdx, null);
         persist();
         render();
-        toast(Data.DAYS[dayIdx].name + ' חזר להיות יום עבודה');
+        toast(t('toast.holidayCleared', { day: Data.DAYS[dayIdx].name }));
         return;
       }
 
-      var name = window.prompt('שם החג ביום ' + Data.DAYS[dayIdx].name +
-        ' (הסניפים ייסגרו והיום ייחשב חופש לכל העובדים):', 'חג');
+      var name = window.prompt(t('toast.holidayPrompt', { day: Data.DAYS[dayIdx].name }),
+        t('toast.holidayDefault'));
       if (name === null) return;
 
       var assignedCount = 0;
       state.employees.forEach(function (emp) {
         assignedCount += Store.employeeDayAssignments(state, current, emp.id, dayIdx).length;
       });
-      if (assignedCount && !confirm('ביום הזה כבר משובצים ' + assignedCount +
-        ' עובדים. לסמן כחג ולנקות את השיבוצים?')) return;
+      if (assignedCount && !confirm(t('toast.holidayHasAssignments', { count: assignedCount }))) return;
 
       if (assignedCount) {
         state.branches.forEach(function (branch) {
@@ -1336,14 +1358,14 @@
       Store.setHoliday(current, dayIdx, name.trim());
       persist();
       render();
-      toast('יום ' + Data.DAYS[dayIdx].name + ' סומן כחג – הסניפים סגורים');
+      toast(t('toast.holidayMarked', { day: Data.DAYS[dayIdx].name }));
     });
 
     $('#shabbat-end').addEventListener('change', function (event) {
       if (blocked()) { render(); return; }
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
-        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 19:45');
+        toast(t('errors.invalidTime'));
         render();
         return;
       }
@@ -1356,18 +1378,18 @@
 
     $('#personal-excel').addEventListener('click', function () {
       var empId = $('#personal-employee').value;
-      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
+      if (!empId) { toast(t('errors.chooseEmployee')); return; }
       exportPersonalExcel(empId);
     });
 
     $('#personal-text').addEventListener('click', function () {
       var empId = $('#personal-employee').value;
-      if (!empId) { toast('בחרו עובד לייצוא אישי'); return; }
-      copyText(personalText(empId), 'הסידור האישי הועתק ללוח');
+      if (!empId) { toast(t('errors.chooseEmployee')); return; }
+      copyText(personalText(empId), t('toast.personalCopied'));
     });
     $('#export-csv').addEventListener('click', exportCsv);
     $('#print').addEventListener('click', function () {
-      if (!Platform.print()) { toast('ההדפסה חסומה כאן – השתמשו ב"העתק כטקסט" או בייצוא CSV'); }
+      if (!Platform.print()) { toast(t('errors.printBlocked')); }
     });
 
     $('#schedule-branch').addEventListener('change', function (event) {
@@ -1422,7 +1444,7 @@
       var dayIdx = Number(item.dataset.day);
       var decision = button.dataset.decision;
       var done = function () {
-        toast(decision === 'approved' ? 'הבקשה אושרה' : 'הבקשה נדחתה');
+        toast(t(decision === 'approved' ? 'toast.requestApproved' : 'toast.requestRejected'));
       };
 
       if (source.decideConstraint) {
@@ -1431,7 +1453,7 @@
           if (updated) { applyRemoteWeek(weekKey, updated); } else { render(); }
           done();
         }, function (err) {
-          toast((err && err.message) || 'העדכון נכשל');
+          toast((err && err.message) || t('toast.updateFailed'));
           render();
         });
         return;
@@ -1444,20 +1466,20 @@
     });
 
     $('#clear-constraints').addEventListener('click', function () {
-      if (!confirm('לנקות את כל האילוצים של השבוע הזה?')) return;
+      if (!confirm(t('toast.clearConstraintsConfirm'))) return;
       week().constraints = {};
       persist();
       render();
-      toast('האילוצים נוקו');
+      toast(t('toast.constraintsCleared'));
     });
 
     $('#copy-constraints').addEventListener('click', function () {
       var previous = state.weeks[Store.shiftWeekKey(weekKey, -1)];
-      if (!previous || !Object.keys(previous.constraints || {}).length) { toast('אין אילוצים בשבוע הקודם'); return; }
+      if (!previous || !Object.keys(previous.constraints || {}).length) { toast(t('toast.noPreviousConstraints')); return; }
       week().constraints = Store.clone(previous.constraints);
       persist();
       render();
-      toast('האילוצים הועתקו מהשבוע הקודם');
+      toast(t('toast.constraintsCopied'));
     });
   }
 
@@ -1475,7 +1497,7 @@
         }
       }
       state.employees.push({
-        id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
+        id: Store.newId('emp'), name: t('employees.newName'), active: true,
         branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: ''
       });
       persist('config');
@@ -1491,7 +1513,7 @@
       var action = event.target.dataset.action;
 
       if (action === 'delete-emp') {
-        if (!confirm('למחוק את ' + emp.name + '? השיבוצים הקיימים של העובד/ת יוסרו מכל השבועות.')) return;
+        if (!confirm(t('employees.deleteConfirm', { name: emp.name }))) return;
         state.employees = state.employees.filter(function (item) { return item.id !== emp.id; });
         Object.keys(state.weeks).forEach(function (key) {
           var weekData = state.weeks[key];
@@ -1540,7 +1562,7 @@
   function bindBranchesTab() {
     $('#add-branch').addEventListener('click', function () {
       state.branches.push({
-        id: Store.newId('br'), name: 'סניף חדש', active: true,
+        id: Store.newId('br'), name: t('branches.newName'), active: true,
         schedule: Data.defaultSchedule(null, state.settings.shifts)
       });
       persist('config');
@@ -1553,7 +1575,7 @@
       var card = event.target.closest('.card');
       var branch = Store.byId(state.branches, card.dataset.branch);
       if (!branch) return;
-      if (!confirm('למחוק את ' + branch.name + '? השיבוצים של הסניף יוסרו מכל השבועות.')) return;
+      if (!confirm(t('branches.deleteConfirm', { name: branch.name }))) return;
       state.branches = state.branches.filter(function (item) { return item.id !== branch.id; });
       state.employees.forEach(function (emp) {
         emp.branches = emp.branches.filter(function (id) { return id !== branch.id; });
@@ -1578,14 +1600,14 @@
       if (input.dataset.action === 'copy-schedule') {
         var source = Store.byId(state.branches, input.value);
         if (!source) return;
-        if (!confirm('להעתיק את הימים והשעות מ' + source.name + ' אל ' + branch.name + '?')) {
+        if (!confirm(t('branches.copyConfirm', { from: source.name, to: branch.name }))) {
           input.value = '';
           return;
         }
         branch.schedule = Store.clone(source.schedule);
         persist('config');
         render();
-        toast('הימים והשעות הועתקו');
+        toast(t('branches.copied'));
         return;
       }
 
@@ -1615,7 +1637,7 @@
           } else {
             var normalized = Store.normalizeTimeInput(input.value);
             if (normalized === null) {
-              toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 14:30');
+              toast(t('errors.invalidTime'));
               render();
               return;
             }
@@ -1661,12 +1683,12 @@
 
       if (field === 'name') {
         var name = event.target.value.trim();
-        if (!name) { toast('שם המשמרת אינו יכול להיות ריק'); render(); return; }
+        if (!name) { toast(t('errors.emptyShiftName')); render(); return; }
         found.shift.name = name;
       } else if (field === 'from' || field === 'to') {
         var normalized = Store.normalizeTimeInput(event.target.value);
         if (normalized === null || !normalized) {
-          toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30');
+          toast(t('errors.invalidTime'));
           render();
           return;
         }
@@ -1705,21 +1727,24 @@
       }
 
       if (event.target.closest('[data-remove]')) {
-        if (list.length === 1) { toast('חייבת להישאר לפחות משמרת אחת'); return; }
+        if (list.length === 1) { toast(t('errors.lastShift')); return; }
         var used = 0;
         state.branches.forEach(function (branch) {
           Object.keys(branch.schedule || {}).forEach(function (day) {
             if (branch.schedule[day][found.shift.id]) used++;
           });
         });
-        if (!confirm('למחוק את משמרת "' + found.shift.name + '"?\n\n' +
-          (used ? 'היא מוגדרת ב-' + used + ' ימים בסניפים, וכל השיבוצים שלה יימחקו.'
-                : 'היא אינה בשימוש בשום סניף.'))) return;
+        if (!confirm(t('toast.deleteShiftConfirm', {
+          name: found.shift.name,
+          usage: used ? t('toast.deleteShiftUsed', { count: used }) : t('toast.deleteShiftUnused')
+        }))) return;
 
         var removed = Store.removeShift(state, found.shift.id);
         persist('all');
         render();
-        toast('המשמרת נמחקה' + (removed.assignments ? ' (' + removed.assignments + ' שיבוצים הוסרו)' : ''));
+        toast(t('toast.shiftDeleted', {
+          removed: removed.assignments ? t('toast.shiftRemovedCount', { count: removed.assignments }) : ''
+        }));
       }
     });
 
@@ -1729,27 +1754,24 @@
       var last = list[list.length - 1] || { to: '22:00', color: 0 };
       list.push({
         id: Store.newId('sh'),
-        name: 'משמרת ' + (list.length + 1),
+        name: t('toast.newShift', { n: list.length + 1 }),
         from: last.to || '22:00',
         to: '23:00',
         color: list.length % Data.SHIFT_COLORS.length
       });
       persist('config');
       render();
-      toast('נוספה משמרת. יש להגדיר אותה בסניפים כדי שתופיע בסידור.');
+      toast(t('toast.shiftAdded'));
     });
 
     $('#apply-default-hours').addEventListener('click', function () {
       if (blocked()) return;
       var branches = state.branches.length;
-      if (!confirm('להחיל את שעות ברירת המחדל על ' + branches + ' הסניפים, בימים ראשון עד חמישי?\n\n' +
-        'הימים הפתוחים וכמות העובדים בכל משמרת יישארו כפי שהם. שישי ומוצ״ש לא ישתנו.')) return;
+      if (!confirm(t('toast.applyHoursConfirm', { count: branches }))) return;
       var changed = Store.applyDefaultHours(state);
       persist('config');
       render();
-      toast(changed
-        ? 'השעות עודכנו ב-' + changed + ' משמרות'
-        : 'כל המשמרות כבר בשעות האלה');
+      toast(changed ? t('toast.hoursUpdated', { count: changed }) : t('toast.hoursAlready'));
     });
 
     $('#opt-one-day-off').addEventListener('change', function (event) {
@@ -1761,7 +1783,7 @@
     $('#default-shabbat').addEventListener('change', function (event) {
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
-        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 20:00');
+        toast(t('errors.invalidTime'));
         render();
         return;
       }
@@ -1785,12 +1807,10 @@
           render();
           // ייבוא מביא שבועות שלמים – מעלים את כולם ולא רק את השבוע המוצג
           Platform.pushAllWeeks().then(function (saved) {
-            toast(saved
-              ? 'הנתונים יובאו והועלו לענן (' + saved + ' שבועות)'
-              : 'הנתונים יובאו בהצלחה');
+            toast(saved ? t('toast.importedCloud', { count: saved }) : t('toast.imported'));
           });
         } catch (err) {
-          alert('קובץ לא תקין: ' + err.message);
+          alert(t('toast.importFailed', { message: err.message }));
         }
       };
       reader.readAsText(file);
@@ -1798,11 +1818,11 @@
     });
 
     $('#reset-all').addEventListener('click', function () {
-      if (!confirm('לאפס את כל הנתונים (עובדים, סניפים, סידורים ואילוצים) לברירת המחדל?')) return;
+      if (!confirm(t('toast.resetConfirm'))) return;
       state = Store.emptyState();
       persist('all');
       render();
-      toast('הנתונים אופסו');
+      toast(t('toast.reset'));
     });
   }
 
@@ -1814,7 +1834,7 @@
   function chatContext() {
     var current = week();
     var parts = [weekTitle()];
-    if (current.shabbatEnd) parts.push('צאת שבת: ' + current.shabbatEnd);
+    if (current.shabbatEnd) parts.push(t('ui.summaryShabbat', { time: current.shabbatEnd }));
 
     var holidays = [];
     Data.DAYS.forEach(function (day) {
@@ -1822,13 +1842,15 @@
         holidays.push(day.name + ' (' + Store.holidayName(current, day.idx) + ')');
       }
     });
-    parts.push(holidays.length ? 'ימי חג סגורים: ' + holidays.join(', ') : 'אין ימי חג השבוע.');
+    parts.push(holidays.length
+      ? t('ui.summaryHolidays', { days: holidays.join(', ') })
+      : t('ui.summaryNoHolidays'));
 
-    parts.push('', 'כללי שיבוץ:');
-    parts.push('- ' + (state.settings.onePerDay ? 'עובד משובץ למשמרת אחת ביום לכל היותר.' : 'עובד יכול לעשות כמה משמרות ביום.'));
-    parts.push('- ' + (state.settings.restEveningMorning ? 'אין משמרת בוקר אחרי משמרת ערב של היום הקודם.' : 'אין מגבלת מנוחה בין ערב לבוקר.'));
+    parts.push('', t('ui.summaryRules'));
+    parts.push('- ' + t(state.settings.onePerDay ? 'ui.ruleOnePerDayOn' : 'ui.ruleOnePerDayOff'));
+    parts.push('- ' + t(state.settings.restEveningMorning ? 'ui.ruleRestOn' : 'ui.ruleRestOff'));
 
-    parts.push('', 'סניפים:');
+    parts.push('', t('ui.summaryBranches'));
     state.branches.forEach(function (branch) {
       if (!branch.active) return;
       var days = [];
@@ -1838,19 +1860,19 @@
           var need = Store.slotNeed(branch, day.idx, shiftId);
           if (!need) return;
           var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
-          open.push(shiftLabel(shiftId) + ' ' + hours + ' (' + need + ' עובדים)');
+          open.push(shiftLabel(shiftId) + ' ' + hours + ' (' + t('ui.peopleCount', { count: need }) + ')');
         });
         if (open.length) days.push(day.name + ': ' + open.join(', '));
       });
-      parts.push('- ' + branch.name + ' | ' + (days.join(' | ') || 'סגור כל השבוע'));
+      parts.push('- ' + branch.name + ' | ' + (days.join(' | ') || t('ui.closedAllWeek')));
     });
 
-    parts.push('', 'עובדים:');
+    parts.push('', t('ui.summaryEmployees'));
     state.employees.forEach(function (emp) {
       if (!emp.active) return;
       var branches = emp.branches.length
         ? emp.branches.map(branchNameOf).join(', ')
-        : 'כל הסניפים';
+        : t('ui.allBranches');
       var shifts = emp.shifts.map(function (id) { return shiftLabel(id); }).join(', ');
       var daysOff = Store.requestedDaysOff(current, emp.id).map(function (d) { return Data.DAYS[d].name; });
       var blocked = [];
@@ -1861,27 +1883,33 @@
           blocked.push(day.name + ': ' + names.map(function (id) { return shiftLabel(id); }).join('/'));
         }
       });
-      parts.push('- ' + emp.name + ' | סניפים: ' + branches + ' | משמרות: ' + shifts +
-        ' | מקסימום ' + emp.maxShifts + ' בשבוע' +
-        (daysOff.length ? ' | ביקש/ה חופש: ' + daysOff.join(', ') : '') +
-        (blocked.length ? ' | חסם/ה: ' + blocked.join('; ') : '') +
-        (emp.note ? ' | הערה: ' + emp.note : ''));
+      parts.push('- ' + emp.name +
+        ' | ' + t('ui.empBranches') + ': ' + branches +
+        ' | ' + t('ui.empShifts') + ': ' + shifts +
+        ' | ' + t('ui.empMax', { count: emp.maxShifts }) +
+        (daysOff.length ? ' | ' + t('ui.empAskedOff') + ': ' + daysOff.join(', ') : '') +
+        (blocked.length ? ' | ' + t('ui.empBlocked') + ': ' + blocked.join('; ') : '') +
+        (emp.note ? ' | ' + t('ui.empNote') + ': ' + emp.note : ''));
     });
 
-    parts.push('', 'הסידור הנוכחי:', scheduleAsText());
+    parts.push('', t('ui.summaryCurrent'), scheduleAsText());
 
     var summary = Store.weekAvailability(state, current);
-    parts.push('', 'יתרת זמינות:');
+    parts.push('', t('ui.summaryAvailability'));
     summary.rows.forEach(function (row) {
-      parts.push('- ' + row.name + ': משובץ ' + row.assigned + ' מתוך מכסה ' + row.max +
-        ', ימים פנויים: ' + (row.freeDays.length ? row.freeDays.map(function (d) { return Data.DAYS[d].name; }).join(', ') : 'אין'));
+      parts.push('- ' + t('ui.empAssignedOf', { name: row.name, total: row.assigned, max: row.max }) +
+        ', ' + t('ui.empFreeDays', {
+          days: row.freeDays.length
+            ? row.freeDays.map(function (d) { return Data.DAYS[d].name; }).join(', ')
+            : t('ui.none')
+        }));
     });
 
     if (lastReport.issues.length) {
-      parts.push('', 'התראות על הסידור:');
+      parts.push('', t('ui.summaryIssues'));
       lastReport.issues.forEach(function (item) { parts.push('- ' + item.text); });
     } else {
-      parts.push('', 'אין התראות – הסידור תקין.');
+      parts.push('', t('ui.summaryNoIssues'));
     }
 
     return parts.join('\n');
@@ -1902,14 +1930,15 @@
     $('#chat-send').disabled = true;
 
     addChatMessage('user', question);
-    var answer = addChatMessage('bot pending', 'חושב…');
+    var answer = addChatMessage('bot pending', t('ui.thinking'));
 
     var turns = chatHistory.slice(-6).map(function (turn) { return { role: turn.role, content: turn.content }; });
     turns.push({
       role: 'user',
-      content: 'אתה עוזר למנהל/ת של רשת מייפון לנהל סידור משמרות. ענה בעברית, קצר ולעניין, ' +
-        'והסתמך רק על הנתונים שלהלן. אם המידע חסר – אמור זאת במפורש במקום לנחש.\n\n' +
-        '=== נתוני השבוע ===\n' + chatContext() + '\n=== סוף הנתונים ===\n\nשאלה: ' + question
+      /* התשובה חייבת לחזור בשפת הממשק, ולכן שם השפה נשלח למודל */
+      content: t('ui.chatSystem', { language: I18n ? I18n.active().name : 'English' }) + '\n\n' +
+        t('ui.chatDataStart') + '\n' + chatContext() + '\n' + t('ui.chatDataEnd') + '\n\n' +
+        t('ui.chatQuestion') + question
     });
 
     Platform.sample(turns, {
@@ -1919,22 +1948,22 @@
       }
     }).then(function (result) {
       answer.className = 'chat-msg bot';
-      answer.textContent = result.text || '(לא התקבלה תשובה)';
+      answer.textContent = result.text || t('ui.noAnswer');
       chatHistory.push({ role: 'user', content: question });
       chatHistory.push({ role: 'assistant', content: result.text || '' });
     }).catch(function (err) {
       var code = err && err.code;
       answer.className = 'chat-msg error';
       if (code === 'not_granted') {
-        answer.textContent = 'אין הרשאה לשאול שאלות בעמוד הזה.';
+        answer.textContent = t('ui.chatBlocked');
         $('#chat').classList.add('hidden');
       } else if (code === 'rate_limited') {
-        answer.textContent = 'יותר מדי שאלות ברצף – נסו שוב בעוד רגע.';
+        answer.textContent = t('ui.chatRateLimited');
       } else if (err && err.text) {
         answer.className = 'chat-msg bot';
         answer.textContent = err.text;
       } else {
-        answer.textContent = 'לא הצלחתי לענות כרגע' + (err && err.message ? ': ' + err.message : '.');
+        answer.textContent = t('ui.chatFailed') + (err && err.message ? ': ' + err.message : '.');
       }
     }).then(function () {
       chatBusy = false;
@@ -1966,19 +1995,17 @@
     var node = $('#sync-state');
     if (!node) return;
     var labels = {
-      live: 'מסונכרן בין המכשירים',
-      local: 'נשמר במכשיר הזה בלבד',
-      readonly: 'צפייה בלבד – אין הרשאת עריכה'
+      live: t('status.synced'),
+      local: t('status.localOnly'),
+      readonly: t('status.readOnly')
     };
     var text = labels[syncStatus] || labels.local;
     if (syncStatus === 'live' && Platform.lastSyncedAt) {
-      text += ' · עודכן ' + timeLabel(Platform.lastSyncedAt);
+      text = t('status.syncedAt', { time: timeLabel(Platform.lastSyncedAt) });
     }
     node.textContent = text;
     node.className = 'sync-state ' + syncStatus;
-    node.title = syncStatus === 'live'
-      ? 'הנתונים נשמרים בענן ומתעדכנים בכל מחשב שפתוח בו אותו קישור'
-      : 'הנתונים נשמרים רק בדפדפן של המחשב הזה';
+    node.title = t(syncStatus === 'live' ? 'ui.cloudSaved' : 'ui.deviceSaved');
 
     // עותק מקומי של הקובץ לעולם לא יסתנכרן – כדאי שזה יהיה ברור
     var notice = $('#local-notice');
@@ -1988,7 +2015,7 @@
 
   function onSynced(date, fromRemote) {
     renderSyncState('live');
-    if (fromRemote) { toast('התקבל עדכון ממחשב אחר (' + timeLabel(date) + ')'); }
+    if (fromRemote) { toast(t('status.remoteUpdate', { time: timeLabel(date) })); }
   }
 
   function applyRemoteConfig(remote) {
@@ -2022,7 +2049,7 @@
     meta('apple-mobile-web-app-capable', 'yes');
     meta('mobile-web-app-capable', 'yes');
     meta('apple-mobile-web-app-status-bar-style', 'black-translucent');
-    meta('apple-mobile-web-app-title', 'סידור משמרות');
+    meta('apple-mobile-web-app-title', t('app.title'));
     meta('format-detection', 'telephone=no');
     meta('theme-color', '#23499f');
 
@@ -2048,10 +2075,10 @@
       ctx.font = 'bold 84px "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('סד', size / 2, size / 2 - 14);
+      ctx.fillText(t('ui.iconLetters'), size / 2, size / 2 - 14);
       ctx.fillStyle = 'rgba(255,255,255,.85)';
       ctx.font = '26px "Segoe UI", Arial, sans-serif';
-      ctx.fillText('משמרות', size / 2, size / 2 + 48);
+      ctx.fillText(t('ui.shortTitle'), size / 2, size / 2 + 48);
       var url = canvas.toDataURL('image/png');
 
       [['apple-touch-icon', url], ['icon', url]].forEach(function (pair) {
@@ -2062,14 +2089,14 @@
       });
 
       var manifest = {
-        name: 'סידור משמרות – מייפון',
-        short_name: 'סידור משמרות',
+        name: t('app.title'),
+        short_name: t('ui.shortTitle'),
         start_url: '.',
         display: 'standalone',
         background_color: '#f1f4fa',
         theme_color: '#23499f',
-        dir: 'rtl',
-        lang: 'he',
+        dir: I18n ? I18n.dir() : 'ltr',
+        lang: I18n ? I18n.code() : 'en',
         icons: [{ src: url, sizes: '180x180', type: 'image/png' }]
       };
       var manifestLink = document.createElement('link');
@@ -2081,9 +2108,9 @@
     }
   }
 
+  /* שפת הממשק נקבעת לפני כל ציור, כדי שהמסך הראשון כבר יהיה בשפה הנכונה */
+  if (window.I18nDom) { window.I18nDom.init(); }
   setupAppMeta();
-  document.documentElement.setAttribute('dir', 'rtl');
-  document.documentElement.setAttribute('lang', 'he');
 
   // מעבר בין תצוגת נייד למחשב (סיבוב המכשיר, שינוי גודל חלון)
   var wasMobile = isMobile();
@@ -2101,7 +2128,20 @@
     bindEmployeesTab();
     bindBranchesTab();
     bindSettingsTab();
+    bindLanguage();
     bindChat();
+  }
+
+  /* ========== בחירת שפה ========== */
+  function bindLanguage() {
+    var select = $('#language-select');
+    if (!select || !window.I18nDom) return;
+    window.I18nDom.fillPicker(select);
+    select.addEventListener('change', function () {
+      window.I18nDom.setLanguage(select.value);
+      /* השפה משנה גם טקסטים שנבנים ב-JS, ולכן מציירים הכול מחדש */
+      render();
+    });
   }
 
   /* מעבר לשבוע אחר – דואג שהנתונים שלו נטענו מהמקור */

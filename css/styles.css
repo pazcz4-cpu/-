@@ -258,7 +258,7 @@ table { border-collapse: collapse; width: 100%; min-width: 900px; }
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: top; font-size: 13px; }
 thead th { background: var(--surface-head); position: sticky; top: 0; z-index: 2; font-size: 13px; }
 th.day-head small { display: block; font-weight: 400; color: var(--muted); }
-td.row-head, th.row-head { background: var(--surface-row); text-align: right; font-weight: 600; white-space: nowrap; }
+td.row-head, th.row-head { background: var(--surface-row); text-align: start; font-weight: 600; white-space: nowrap; }
 tr.branch-start td, tr.branch-start th { border-top: 2px solid var(--brand); }
 td.closed {
   background: repeating-linear-gradient(45deg, var(--closed-a), var(--closed-a) 6px, var(--closed-b) 6px, var(--closed-b) 12px);
@@ -266,7 +266,7 @@ td.closed {
 }
 
 /* צבעי המשמרות: לוח קבוע שכל עסק בוחר ממנו לכל משמרת שהגדיר */
-.sh { background: var(--sh-bg); border-right: 4px solid var(--sh-line); }
+.sh { background: var(--sh-bg); border-inline-start: 4px solid var(--sh-line); }
 .sh-0 { --sh-bg: var(--c0-bg); --sh-line: var(--c0-line); }
 .sh-1 { --sh-bg: var(--c1-bg); --sh-line: var(--c1-line); }
 .sh-2 { --sh-bg: var(--c2-bg); --sh-line: var(--c2-line); }
@@ -277,9 +277,9 @@ td.closed {
 .sh-7 { --sh-bg: var(--c7-bg); --sh-line: var(--c7-line); }
 
 /* תאימות לאחור לסגנונות שעדיין מזכירים את שלוש המשמרות המקוריות */
-.shift-morning { background: var(--c0-bg); border-right: 4px solid var(--c0-line); }
-.shift-middle  { background: var(--c1-bg); border-right: 4px solid var(--c1-line); }
-.shift-evening { background: var(--c2-bg); border-right: 4px solid var(--c2-line); }
+.shift-morning { background: var(--c0-bg); border-inline-start: 4px solid var(--c0-line); }
+.shift-middle  { background: var(--c1-bg); border-inline-start: 4px solid var(--c1-line); }
+.shift-evening { background: var(--c2-bg); border-inline-start: 4px solid var(--c2-line); }
 
 td.cell { min-width: 130px; }
 td.cell.has-error { outline: 2px solid var(--err); outline-offset: -2px; }
@@ -468,11 +468,11 @@ td.holiday-cell small { display: block; font-weight: 400; opacity: .8; }
 .summary-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .summary-list li {
   font-size: 13.5px; padding: 6px 11px; border-radius: 8px;
-  border-right: 3px solid var(--line); background: var(--surface-sunken);
+  border-inline-start: 3px solid var(--line); background: var(--surface-sunken);
 }
-.summary-list li.has-spare { border-right-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.summary-list li.has-spare { border-inline-start-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
 .summary-list li.has-spare b { color: inherit; }
-.summary-list li.no-days { border-right-color: var(--badge-warn); background: var(--warn-bg); color: var(--warn); }
+.summary-list li.no-days { border-inline-start-color: var(--badge-warn); background: var(--warn-bg); color: var(--warn); }
 .summary-list li.full { color: var(--muted); }
 
 /* ===== ייצוא אישי לעובד ===== */
@@ -629,7 +629,7 @@ body { -webkit-tap-highlight-color: transparent; }
 
 /* מסכים צרים במיוחד */
 @media (max-width: 380px) {
-  main { padding-left: 12px; padding-right: 12px; }
+  main { padding-inline: 12px; }
   .day-tab { min-width: 46px; padding: 6px 2px; }
   .m-card-head { font-size: 14px; }
 }
@@ -758,7 +758,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .employee-shifts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .employee-shift {
   border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
-  border-right-width: 4px; border-right-style: solid;
+  border-inline-start-width: 4px; border-inline-start-style: solid;
 }
 .employee-shift b { font-size: 15px; }
 .employee-shift span { font-size: 12.5px; color: var(--muted); margin-inline-start: 6px; }
@@ -836,7 +836,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* סטטוס בקשת אילוץ במסך העובד */
 .req-badge {
-  float: left; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+  float: inline-end; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
 }
 .req-badge.pending { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
 .req-badge.approved { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line); }
@@ -854,7 +854,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .shift-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 12px; border-radius: 10px;
-  border: 1px solid var(--line); border-right-width: 4px; border-right-style: solid;
+  border: 1px solid var(--line); border-inline-start-width: 4px; border-inline-start-style: solid;
 }
 .shift-row .shift-name { flex: 1 1 150px; font-weight: 600; background: var(--surface); }
 .shift-times { display: flex; align-items: center; gap: 6px; }

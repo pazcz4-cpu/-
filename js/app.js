@@ -9,7 +9,18 @@
   var Platform = window.ShiftPlatform;
   var Xlsx = window.ShiftXlsx;
 
-  var state = Store.load();
+  /* מקור הנתונים נקבע באתחול. ברירת המחדל היא שמירה מקומית, והגרסה
+     המסחרית מזריקה מקור שמדבר עם השרת. */
+  var source = {
+    mode: 'local',
+    loadState: function () { return Promise.resolve(Store.load()); },
+    saveConfig: function (nextState) { Store.save(nextState); return Promise.resolve(); },
+    saveWeek: function (nextState) { Store.save(nextState); return Promise.resolve(); },
+    ensureWeek: function () { return Promise.resolve(); },
+    role: 'owner'
+  };
+
+  var state = Store.emptyState();
   var weekKey = Store.currentWeekKey();
   var view = 'branch';
   var mobileDay = new Date().getDay();
@@ -38,10 +49,20 @@
   }
 
   function persist(scope) {
-    Store.save(state);
-    if (scope === 'config' || scope === 'all') Platform.pushConfig();
-    if (scope !== 'config') Platform.pushWeek(weekKey);
+    var failed = function (err) {
+      toast('השמירה נכשלה' + (err && err.message ? ': ' + err.message : ''));
+    };
+    if (scope === 'config' || scope === 'all') {
+      source.saveConfig(state, scope).catch(failed);
+      Platform.pushConfig();
+    }
+    if (scope !== 'config') {
+      source.saveWeek(state, weekKey).catch(failed);
+      Platform.pushWeek(weekKey);
+    }
   }
+
+  function currentRole() { return source.role || 'owner'; }
 
   /* שער יחיד לכל פעולה שמשנה נתונים */
   function blocked() {
@@ -1119,11 +1140,7 @@
   }
 
   function bindScheduleTab() {
-    function goToWeek(nextKey) {
-      weekKey = nextKey;
-      Platform.watchWeek(weekKey);
-      render();
-    }
+    function goToWeek(nextKey) { openWeek(nextKey); }
     $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
     $('#next-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, 1)); });
     $('#this-week').addEventListener('click', function () { goToWeek(Store.currentWeekKey()); });
@@ -1877,22 +1894,64 @@
     if (isMobile() !== wasMobile) { wasMobile = isMobile(); render(); }
   });
 
-  bindTabs();
-  bindScheduleTab();
-  bindConstraintsTab();
-  bindEmployeesTab();
-  bindBranchesTab();
-  bindSettingsTab();
-  bindChat();
-  render();
+  var bound = false;
+  function bindAll() {
+    if (bound) return;
+    bound = true;
+    bindTabs();
+    bindScheduleTab();
+    bindConstraintsTab();
+    bindEmployeesTab();
+    bindBranchesTab();
+    bindSettingsTab();
+    bindChat();
+  }
 
-  Platform.init({
+  /* מעבר לשבוע אחר – דואג שהנתונים שלו נטענו מהמקור */
+  function openWeek(nextKey) {
+    weekKey = nextKey;
+    Platform.watchWeek(weekKey);
+    return Promise.resolve(source.ensureWeek(state, weekKey)).then(render, render);
+  }
+
+  /* הפעלת האפליקציה עם מקור נתונים. נקראת פעם אחת. */
+  function start(options) {
+    var opts = options || {};
+    if (opts.source) source = opts.source;
+
+    return Promise.resolve(source.loadState()).then(function (loaded) {
+      state = Store.migrate(loaded || Store.emptyState());
+      bindAll();
+      return Promise.resolve(source.ensureWeek(state, weekKey));
+    }).then(function () {
+      render();
+      if (source.mode === 'local') {
+        Platform.init({
+          getState: function () { return state; },
+          weekKey: function () { return weekKey; },
+          onConfig: applyRemoteConfig,
+          onWeek: applyRemoteWeek,
+          onSyncState: renderSyncState,
+          onSampleReady: function () { $('#chat').classList.remove('hidden'); },
+          onSynced: onSynced
+        });
+      }
+      return state;
+    });
+  }
+
+  window.ShiftApp = {
+    start: start,
+    render: render,
     getState: function () { return state; },
-    weekKey: function () { return weekKey; },
-    onConfig: applyRemoteConfig,
-    onWeek: applyRemoteWeek,
-    onSyncState: renderSyncState,
-    onSampleReady: function () { $('#chat').classList.remove('hidden'); },
-    onSynced: onSynced
-  });
+    setState: function (next) { state = Store.migrate(next); render(); },
+    applyRemoteConfig: applyRemoteConfig,
+    applyRemoteWeek: applyRemoteWeek,
+    openWeek: openWeek,
+    currentRole: currentRole,
+    weekKey: function () { return weekKey; }
+  };
+
+  /* בגרסה המקומית האפליקציה עולה מיד. הגרסה המסחרית קוראת ל-start בעצמה. */
+  if (!window.ShiftDeferStart) { start(); }
 })();

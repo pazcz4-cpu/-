@@ -9,7 +9,8 @@
     "build": "node build-artifact.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
-    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js"
+    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js",
+    "test:saas": "node tests/saas-browser-test.mjs && node tests/roles-browser-test.mjs"
   },
   "license": "MIT"
 }

@@ -139,8 +139,56 @@
   function slotKey(dayIdx, branchId, shiftId) { return dayIdx + '|' + branchId + '|' + shiftId; }
   function constraintKey(empId, dayIdx) { return empId + '|' + dayIdx; }
 
+  /* סטטוס בקשת אילוץ. אילוץ שהמנהל הזין בעצמו אינו נושא סטטוס
+     ונחשב מאושר, כך שנתונים קיימים ממשיכים לעבוד כרגיל. */
+  var CONSTRAINT_STATUS = { PENDING: 'pending', APPROVED: 'approved', REJECTED: 'rejected' };
+
+  function emptyConstraint() {
+    return { off: false, blocked: {}, preferred: {}, note: '' };
+  }
+
+  /* הרשומה כפי שנשמרה, כולל הסטטוס – לשימוש הממשק */
+  function getConstraintRecord(week, empId, dayIdx) {
+    return week.constraints[constraintKey(empId, dayIdx)] || null;
+  }
+
+  function constraintStatus(record) {
+    if (!record) return null;
+    return record.status || CONSTRAINT_STATUS.APPROVED;
+  }
+
+  function isEffective(record) {
+    return !!record && constraintStatus(record) === CONSTRAINT_STATUS.APPROVED;
+  }
+
+  /* האילוץ שתופס בפועל: רק בקשות שאושרו משפיעות על השיבוץ */
   function getConstraint(week, empId, dayIdx) {
-    return week.constraints[constraintKey(empId, dayIdx)] || { off: false, blocked: {}, preferred: {}, note: '' };
+    var record = getConstraintRecord(week, empId, dayIdx);
+    return isEffective(record) ? record : emptyConstraint();
+  }
+
+  /* עדכון סטטוס בקשה בידי מנהל */
+  function setConstraintStatus(week, empId, dayIdx, status, managerNote) {
+    var key = constraintKey(empId, dayIdx);
+    var record = week.constraints[key];
+    if (!record) return null;
+    record.status = status;
+    record.managerNote = managerNote || '';
+    record.decidedAt = new Date().toISOString();
+    return record;
+  }
+
+  /* כל הבקשות הממתינות לאישור בשבוע */
+  function pendingConstraints(week) {
+    var out = [];
+    Object.keys(week.constraints || {}).forEach(function (key) {
+      var record = week.constraints[key];
+      if (constraintStatus(record) !== CONSTRAINT_STATUS.PENDING) return;
+      var parts = key.split('|');
+      out.push({ empId: parts[0], dayIdx: Number(parts[1]), record: record });
+    });
+    out.sort(function (a, b) { return a.dayIdx - b.dayIdx; });
+    return out;
   }
 
   function setConstraint(week, empId, dayIdx, value) {
@@ -459,6 +507,12 @@
     slotKey: slotKey,
     constraintKey: constraintKey,
     getConstraint: getConstraint,
+    getConstraintRecord: getConstraintRecord,
+    constraintStatus: constraintStatus,
+    setConstraintStatus: setConstraintStatus,
+    pendingConstraints: pendingConstraints,
+    emptyConstraint: emptyConstraint,
+    CONSTRAINT_STATUS: CONSTRAINT_STATUS,
     setConstraint: setConstraint,
     getAssigned: getAssigned,
     setAssigned: setAssigned,

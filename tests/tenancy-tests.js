@@ -240,6 +240,111 @@ asyncTest('לא ניתן להעניק תפקיד בעלים דרך יצירת מ
     });
 });
 
+console.log('\n== אישור אילוצים ==');
+
+asyncTest('בקשת עובד נשמרת תמיד כממתינה לאישור', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own20@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'emp20@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-20' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp20@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 3, { off: true, blocked: {}, preferred: {} }); })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-20|3'].status, 'pending', 'הבקשה ממתינה');
+      assert(week.constraints['emp-20|3'].requestedAt, 'נשמר מועד הבקשה');
+    });
+});
+
+asyncTest('עובד אינו יכול לאשר את הבקשה של עצמו', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own21@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'emp21@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-21' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp21@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 2, { off: true, blocked: {}, preferred: {} }); })
+    .then(function () {
+      return assertRejects(backend.decideConstraint('2026-09-20', 'emp-21', 2, 'approved'), 'forbidden',
+        'עובד אישר את עצמו');
+    });
+});
+
+asyncTest('עובד אינו יכול לשלוח בקשה בשם עובד אחר', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own22@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'emp22@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-22' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp22@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 1, { off: true, blocked: {}, preferred: {} }); })
+    .then(function (week) {
+      var keys = Object.keys(week.constraints);
+      assertEqual(keys.length, 1, 'נשמרה בקשה אחת');
+      assertEqual(keys[0].split('|')[0], 'emp-22', 'תמיד על שם העובד המחובר');
+    });
+});
+
+asyncTest('מנהל מאשר ודוחה בקשות', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own23@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'emp23@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-23' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp23@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 4, { off: true, blocked: {}, preferred: {} }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'own23@a.com', password: 'secret1' }); })
+    .then(function () { return backend.decideConstraint('2026-09-20', 'emp-23', 4, 'approved', 'מאושר'); })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-23|4'].status, 'approved', 'אושר');
+      assertEqual(week.constraints['emp-23|4'].managerNote, 'מאושר', 'נשמרה הערה');
+      return backend.decideConstraint('2026-09-20', 'emp-23', 4, 'rejected', 'צריך אותך');
+    })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-23|4'].status, 'rejected', 'נדחה');
+    });
+});
+
+asyncTest('החלטה לא חוקית ובקשה שאינה קיימת נדחות', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own24@a.com', password: 'secret1' })
+    .then(function () { return backend.saveWeek('2026-09-20', { constraints: {}, assignments: {} }); })
+    .then(function () {
+      return assertRejects(backend.decideConstraint('2026-09-20', 'emp-x', 1, 'maybe'), 'invalid_input');
+    })
+    .then(function () {
+      return assertRejects(backend.decideConstraint('2026-09-20', 'emp-x', 1, 'approved'), 'not_found');
+    });
+});
+
+asyncTest('עריכה חוזרת של בקשה שאושרה מחזירה אותה לאישור', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own25@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'emp25@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-25' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp25@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 5, { off: true, blocked: {}, preferred: {} }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'own25@a.com', password: 'secret1' }); })
+    .then(function () { return backend.decideConstraint('2026-09-20', 'emp-25', 5, 'approved'); })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp25@a.com', password: 'secret1' }); })
+    .then(function () {
+      return backend.saveOwnConstraint('2026-09-20', 5, { off: false, blocked: { morning: true }, preferred: {} });
+    })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-25|5'].status, 'pending', 'חזרה להמתנה');
+      assert(!week.constraints['emp-25|5'].decidedAt, 'ההחלטה הקודמת נמחקה');
+    });
+});
+
 console.log('\n== התחברות ==');
 
 asyncTest('סיסמה שגויה נדחית', function () {

@@ -115,6 +115,20 @@
       });
     });
 
+    // 1א1. בקשות אילוץ שממתינות להחלטת מנהל
+    var pending = Store.pendingConstraints(week);
+    if (pending.length) {
+      var names = pending.map(function (item) {
+        return empName(state, item.empId) + ' (' + dayName(item.dayIdx) + ')';
+      });
+      issues.push(issue('warning', 'pending-constraints',
+        pending.length === 1
+          ? 'בקשת אילוץ ממתינה לאישור: ' + names[0] + '. עד לאישור היא אינה משפיעה על השיבוץ.'
+          : pending.length + ' בקשות אילוץ ממתינות לאישור: ' + nameList(names, 4) +
+            '. עד לאישור הן אינן משפיעות על השיבוץ.',
+        {}));
+    }
+
     // 1א2. שיבוץ ביום חג
     for (var holidayDay = 0; holidayDay < 7; holidayDay++) {
       if (!Store.isHoliday(week, holidayDay)) continue;
@@ -244,8 +258,22 @@
       }
     });
 
+    /* סדר התצוגה: קודם חומרה, ובתוך אותה חומרה – קודם מה שדורש פעולה
+       מיידית מהמנהל, ורק אחר כך דיווחי מצב כמו חוסר באיוש. */
     var order = { error: 0, warning: 1, info: 2 };
-    issues.sort(function (a, b) { return order[a.level] - order[b.level]; });
+    var typePriority = {
+      'pending-constraints': 0,
+      'holiday-assignment': 1,
+      'missing-shabbat-end': 1,
+      'duplicate-shift': 2,
+      'over-max': 3
+    };
+    function priorityOf(item) {
+      return typePriority[item.type] === undefined ? 5 : typePriority[item.type];
+    }
+    issues.sort(function (a, b) {
+      return (order[a.level] - order[b.level]) || (priorityOf(a) - priorityOf(b));
+    });
 
     return {
       issues: issues,

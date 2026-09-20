@@ -22,6 +22,9 @@
         return Model.withinPlanLimits(current ? current.company : session.company,
           { employees: employeeCount });
       },
+      decideConstraint: function (weekKey, employeeId, dayIdx, decision) {
+        return backend.decideConstraint(weekKey, employeeId, dayIdx, decision, '');
+      },
       onPlanBlocked: function () {
         var tab = document.querySelector('.tab[data-tab="billing"]');
         if (tab && !tab.classList.contains('hidden')) { tab.click(); }

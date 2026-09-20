@@ -64,8 +64,13 @@
 
   EmployeeUI.prototype._employeeId = function () { return this.session.user.employeeId; };
 
+  /* הרשומה כפי שנשמרה – העובד רואה גם בקשה שממתינה או שנדחתה */
+  EmployeeUI.prototype._record = function (dayIdx) {
+    return Store.getConstraintRecord(this.week, this._employeeId(), dayIdx);
+  };
+
   EmployeeUI.prototype._constraint = function (dayIdx) {
-    return Store.getConstraint(this.week, this._employeeId(), dayIdx);
+    return this._record(dayIdx) || Store.emptyConstraint();
   };
 
   EmployeeUI.prototype._toggle = function (button) {
@@ -187,7 +192,8 @@
       html += '<p class="employee-note">לחיצה על משמרת מחליפה בין ' +
         '<span class="legend free">זמין</span> ' +
         '<span class="legend pref">מעדיף/ה</span> ' +
-        '<span class="legend block">לא יכול/ה</span>. "חופש" חוסם את כל היום.</p>';
+        '<span class="legend block">לא יכול/ה</span>. "חופש" חוסם את כל היום.<br>' +
+        '<b>כל בקשה עוברת לאישור המנהל/ת</b> ומשפיעה על הסידור רק אחרי שאושרה.</p>';
     }
 
     html += '<div class="employee-days">';
@@ -196,8 +202,19 @@
       var shiftIds = Store.activeShiftsForDay(self.state, day.idx, self.week);
       var holiday = Store.isHoliday(self.week, day.idx);
 
+      var status = Store.constraintStatus(self._record(day.idx));
+      var badge = '';
+      if (status === Store.CONSTRAINT_STATUS.PENDING) {
+        badge = '<span class="req-badge pending">ממתין לאישור</span>';
+      } else if (status === Store.CONSTRAINT_STATUS.APPROVED) {
+        badge = '<span class="req-badge approved">אושר</span>';
+      } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
+        badge = '<span class="req-badge rejected">נדחה</span>';
+      }
+
       html += '<div class="m-card"><div class="m-card-head">' + esc(day.name) +
-        ' <small>' + Store.formatDate(Store.dateOfDay(self.weekKey, day.idx)) + '</small></div>';
+        ' <small>' + Store.formatDate(Store.dateOfDay(self.weekKey, day.idx)) + '</small>' +
+        badge + '</div>';
 
       if (holiday) {
         html += '<div class="m-holiday">' + esc(Store.holidayName(self.week, day.idx)) +
@@ -219,6 +236,10 @@
           '" data-day="' + day.idx + '" data-off="1"' + locked + '>' +
           (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
         html += '</div>';
+        var record = self._record(day.idx);
+        if (record && record.managerNote) {
+          html += '<p class="req-note">הערת מנהל/ת: ' + esc(record.managerNote) + '</p>';
+        }
       }
       html += '</div>';
     });

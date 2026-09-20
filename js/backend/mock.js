@@ -231,8 +231,43 @@
     }
 
     var key = session.user.employeeId + '|' + dayIdx;
-    if (constraint === null) { delete week.constraints[key]; }
-    else { week.constraints[key] = clone(constraint); }
+    if (constraint === null) {
+      delete week.constraints[key];
+    } else {
+      var record = clone(constraint);
+      // בקשה של עובד תמיד ממתינה לאישור מנהל, גם אם אושרה בעבר ושונתה
+      record.status = 'pending';
+      record.requestedAt = this.now().toISOString();
+      record.managerNote = '';
+      delete record.decidedAt;
+      week.constraints[key] = record;
+    }
+    week.updatedAt = this.now().toISOString();
+
+    this._save();
+    this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
+    return Promise.resolve(clone(week));
+  };
+
+  /* אישור או דחייה של בקשת אילוץ. שמור למנהל ולבעלים. */
+  MockBackend.prototype.decideConstraint = function (weekKey, employeeId, dayIdx, decision, note) {
+    var session;
+    try { session = this._require('constraints.editAny'); } catch (err) { return Promise.reject(err); }
+    if (decision !== 'approved' && decision !== 'rejected') {
+      return Promise.reject(this._fail('invalid_input', 'החלטה לא חוקית'));
+    }
+
+    var data = this._companyData(session.company.id);
+    var week = data.weeks[weekKey];
+    var key = employeeId + '|' + dayIdx;
+    if (!week || !week.constraints || !week.constraints[key]) {
+      return Promise.reject(this._fail('not_found', 'הבקשה לא נמצאה'));
+    }
+
+    week.constraints[key].status = decision;
+    week.constraints[key].managerNote = note || '';
+    week.constraints[key].decidedAt = this.now().toISOString();
+    week.constraints[key].decidedBy = session.user.id;
     week.updatedAt = this.now().toISOString();
 
     this._save();

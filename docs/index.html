@@ -774,6 +774,43 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .plan-tag.warn { color: var(--warn); }
 .plan-card .btn { margin-top: auto; }
 
+/* ===================== בקשות אילוץ לאישור ===================== */
+.pending-panel {
+  background: var(--warn-bg); border: 1px solid var(--warn-line);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+}
+.pending-panel.hidden { display: none; }
+.pending-title { margin: 0 0 4px; font-size: 15px; color: var(--warn); }
+.pending-panel .hint { margin: 0 0 10px; }
+.pending-list { display: flex; flex-direction: column; gap: 8px; }
+.pending-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 13px; flex-wrap: wrap;
+}
+.pending-info { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.pending-info span { color: var(--muted); font-size: 12.5px; }
+.pending-info em { font-style: normal; color: var(--ink); }
+.pending-info small { color: var(--muted); font-size: 12.5px; }
+.pending-actions { display: flex; gap: 6px; }
+.btn.small { padding: 6px 14px; font-size: 13px; }
+.btn.approve { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+.btn.approve:hover { background: var(--ok); color: #fff; opacity: .9; }
+.btn.reject:hover { border-color: var(--err); color: var(--err); }
+
+.c-status { font-size: 11px; margin-top: 4px; padding: 2px 6px; border-radius: 6px; line-height: 1.35; }
+.c-status.pending { background: var(--warn-bg); color: var(--warn); border: 1px dashed var(--warn-line); }
+.c-status.rejected { background: var(--err-bg); color: var(--err); }
+
+/* סטטוס בקשת אילוץ במסך העובד */
+.req-badge {
+  float: left; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+}
+.req-badge.pending { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
+.req-badge.approved { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line); }
+.req-badge.rejected { background: var(--err-bg); color: var(--err); border: 1px solid var(--err-line); }
+.req-note { font-size: 12.5px; color: var(--muted); margin: 0; padding: 0 12px 10px; }
+
 </style>
 </head>
 <body>
@@ -892,6 +929,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       <span class="legend block">לא יכול/ה</span>.
       סימון <b>חופש</b> חוסם את כל היום.
     </p>
+    <div id="pending-constraints" class="pending-panel hidden"></div>
+
     <nav id="constraints-day-nav" class="day-nav mobile-only"></nav>
     <div id="constraints-mobile" class="mobile-only"></div>
     <div id="constraints-grid" class="table-wrap desktop-only"></div>
@@ -1764,8 +1803,56 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   function slotKey(dayIdx, branchId, shiftId) { return dayIdx + '|' + branchId + '|' + shiftId; }
   function constraintKey(empId, dayIdx) { return empId + '|' + dayIdx; }
 
+  /* סטטוס בקשת אילוץ. אילוץ שהמנהל הזין בעצמו אינו נושא סטטוס
+     ונחשב מאושר, כך שנתונים קיימים ממשיכים לעבוד כרגיל. */
+  var CONSTRAINT_STATUS = { PENDING: 'pending', APPROVED: 'approved', REJECTED: 'rejected' };
+
+  function emptyConstraint() {
+    return { off: false, blocked: {}, preferred: {}, note: '' };
+  }
+
+  /* הרשומה כפי שנשמרה, כולל הסטטוס – לשימוש הממשק */
+  function getConstraintRecord(week, empId, dayIdx) {
+    return week.constraints[constraintKey(empId, dayIdx)] || null;
+  }
+
+  function constraintStatus(record) {
+    if (!record) return null;
+    return record.status || CONSTRAINT_STATUS.APPROVED;
+  }
+
+  function isEffective(record) {
+    return !!record && constraintStatus(record) === CONSTRAINT_STATUS.APPROVED;
+  }
+
+  /* האילוץ שתופס בפועל: רק בקשות שאושרו משפיעות על השיבוץ */
   function getConstraint(week, empId, dayIdx) {
-    return week.constraints[constraintKey(empId, dayIdx)] || { off: false, blocked: {}, preferred: {}, note: '' };
+    var record = getConstraintRecord(week, empId, dayIdx);
+    return isEffective(record) ? record : emptyConstraint();
+  }
+
+  /* עדכון סטטוס בקשה בידי מנהל */
+  function setConstraintStatus(week, empId, dayIdx, status, managerNote) {
+    var key = constraintKey(empId, dayIdx);
+    var record = week.constraints[key];
+    if (!record) return null;
+    record.status = status;
+    record.managerNote = managerNote || '';
+    record.decidedAt = new Date().toISOString();
+    return record;
+  }
+
+  /* כל הבקשות הממתינות לאישור בשבוע */
+  function pendingConstraints(week) {
+    var out = [];
+    Object.keys(week.constraints || {}).forEach(function (key) {
+      var record = week.constraints[key];
+      if (constraintStatus(record) !== CONSTRAINT_STATUS.PENDING) return;
+      var parts = key.split('|');
+      out.push({ empId: parts[0], dayIdx: Number(parts[1]), record: record });
+    });
+    out.sort(function (a, b) { return a.dayIdx - b.dayIdx; });
+    return out;
   }
 
   function setConstraint(week, empId, dayIdx, value) {
@@ -2084,6 +2171,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     slotKey: slotKey,
     constraintKey: constraintKey,
     getConstraint: getConstraint,
+    getConstraintRecord: getConstraintRecord,
+    constraintStatus: constraintStatus,
+    setConstraintStatus: setConstraintStatus,
+    pendingConstraints: pendingConstraints,
+    emptyConstraint: emptyConstraint,
+    CONSTRAINT_STATUS: CONSTRAINT_STATUS,
     setConstraint: setConstraint,
     getAssigned: getAssigned,
     setAssigned: setAssigned,
@@ -2219,10 +2312,20 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   }
 
   function newContext(state, week) {
+    /* רק בקשות שאושרו משפיעות על השיבוץ. בקשה שממתינה לאישור או
+       שנדחתה אינה נלקחת בחשבון. */
+    var effective = {};
+    Object.keys(week.constraints || {}).forEach(function (key) {
+      var record = week.constraints[key];
+      if (Store.constraintStatus(record) === Store.CONSTRAINT_STATUS.APPROVED) {
+        effective[key] = record;
+      }
+    });
+
     var ctx = {
       state: state,
       week: week,
-      constraints: week.constraints || {},
+      constraints: effective,
       counts: {},
       targets: {},
       byDay: {},
@@ -2686,6 +2789,20 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       });
     });
 
+    // 1א1. בקשות אילוץ שממתינות להחלטת מנהל
+    var pending = Store.pendingConstraints(week);
+    if (pending.length) {
+      var names = pending.map(function (item) {
+        return empName(state, item.empId) + ' (' + dayName(item.dayIdx) + ')';
+      });
+      issues.push(issue('warning', 'pending-constraints',
+        pending.length === 1
+          ? 'בקשת אילוץ ממתינה לאישור: ' + names[0] + '. עד לאישור היא אינה משפיעה על השיבוץ.'
+          : pending.length + ' בקשות אילוץ ממתינות לאישור: ' + nameList(names, 4) +
+            '. עד לאישור הן אינן משפיעות על השיבוץ.',
+        {}));
+    }
+
     // 1א2. שיבוץ ביום חג
     for (var holidayDay = 0; holidayDay < 7; holidayDay++) {
       if (!Store.isHoliday(week, holidayDay)) continue;
@@ -2815,8 +2932,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       }
     });
 
+    /* סדר התצוגה: קודם חומרה, ובתוך אותה חומרה – קודם מה שדורש פעולה
+       מיידית מהמנהל, ורק אחר כך דיווחי מצב כמו חוסר באיוש. */
     var order = { error: 0, warning: 1, info: 2 };
-    issues.sort(function (a, b) { return order[a.level] - order[b.level]; });
+    var typePriority = {
+      'pending-constraints': 0,
+      'holiday-assignment': 1,
+      'missing-shabbat-end': 1,
+      'duplicate-shift': 2,
+      'over-max': 3
+    };
+    function priorityOf(item) {
+      return typePriority[item.type] === undefined ? 5 : typePriority[item.type];
+    }
+    issues.sort(function (a, b) {
+      return (order[a.level] - order[b.level]) || (priorityOf(a) - priorityOf(b));
+    });
 
     return {
       issues: issues,
@@ -3336,6 +3467,52 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     $('#workload').innerHTML = html;
   }
 
+  /* ========== בקשות אילוץ הממתינות לאישור ========== */
+  function describeConstraint(record) {
+    if (!record) return '';
+    if (record.off) return 'יום חופש';
+    var parts = [];
+    Object.keys(record.preferred || {}).forEach(function (id) {
+      parts.push('מעדיף/ה ' + (Data.shiftById(id) || {}).name);
+    });
+    Object.keys(record.blocked || {}).forEach(function (id) {
+      parts.push('לא יכול/ה ' + (Data.shiftById(id) || {}).name);
+    });
+    return parts.join(', ') || 'ללא שינוי';
+  }
+
+  function renderPending() {
+    var container = $('#pending-constraints');
+    if (!container) return;
+    var pending = Store.pendingConstraints(week());
+
+    if (!pending.length) {
+      container.innerHTML = '';
+      container.classList.add('hidden');
+      return;
+    }
+    container.classList.remove('hidden');
+
+    var html = '<h3 class="pending-title">בקשות שממתינות לאישורך (' + pending.length + ')</h3>';
+    html += '<p class="hint">בקשה שלא אושרה אינה משפיעה על השיבוץ.</p>';
+    html += '<div class="pending-list">';
+    pending.forEach(function (item) {
+      html += '<div class="pending-item" data-emp="' + esc(item.empId) + '" data-day="' + item.dayIdx + '">';
+      html += '<div class="pending-info"><b>' + esc(empNameOf(item.empId)) + '</b>' +
+        '<span>' + esc(Data.DAYS[item.dayIdx].name) + ' ' +
+        Store.formatDate(Store.dateOfDay(weekKey, item.dayIdx)) + '</span>' +
+        '<em>' + esc(describeConstraint(item.record)) + '</em>' +
+        (item.record.note ? '<small>' + esc(item.record.note) + '</small>' : '') +
+        '</div>';
+      html += '<div class="pending-actions">' +
+        '<button class="btn small approve" data-decision="approved">אישור</button>' +
+        '<button class="btn small ghost reject" data-decision="rejected">דחייה</button>' +
+        '</div></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
   /* ========== לוח האילוצים ========== */
   function renderConstraints() {
     var html = '<table><thead><tr><th class="row-head">עובד</th>';
@@ -3347,6 +3524,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     state.employees.forEach(function (emp) {
       html += '<tr><td class="row-head">' + esc(emp.name) + '</td>';
       Data.DAYS.forEach(function (day) {
+        var record = Store.getConstraintRecord(week(), emp.id, day.idx);
+        var status = Store.constraintStatus(record);
         var constraint = Store.getConstraint(week(), emp.id, day.idx);
         if (Store.isHoliday(week(), day.idx)) {
           html += '<td class="closed holiday-cell">' + esc(Store.holidayName(week(), day.idx)) + '</td>';
@@ -3354,6 +3533,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         }
         var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
         if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
+        var cellTag = '';
+        if (status === Store.CONSTRAINT_STATUS.PENDING) {
+          cellTag = '<div class="c-status pending">בקשה: ' + esc(describeConstraint(record)) + '</div>';
+        } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
+          cellTag = '<div class="c-status rejected">בקשה נדחתה</div>';
+        }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {
           var shift = Data.shiftById(shiftId);
@@ -3367,7 +3552,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         html += '<button class="cstate day-off-btn ' + (constraint.off ? 'off-day' : 'free') +
           '" data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
           (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
-        html += '</td>';
+        html += cellTag + '</td>';
       });
       html += '</tr>';
     });
@@ -3542,6 +3727,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     renderAvailability();
     renderPersonalPicker();
     renderConstraints();
+    renderPending();
     renderEmployees();
     renderBranches();
     renderSettings();
@@ -4172,6 +4358,36 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);
+
+    $('#pending-constraints').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-decision]');
+      if (!button) return;
+      if (blocked()) return;
+      var item = button.closest('.pending-item');
+      var empId = item.dataset.emp;
+      var dayIdx = Number(item.dataset.day);
+      var decision = button.dataset.decision;
+      var done = function () {
+        toast(decision === 'approved' ? 'הבקשה אושרה' : 'הבקשה נדחתה');
+      };
+
+      if (source.decideConstraint) {
+        button.disabled = true;
+        source.decideConstraint(weekKey, empId, dayIdx, decision).then(function (updated) {
+          if (updated) { applyRemoteWeek(weekKey, updated); } else { render(); }
+          done();
+        }, function (err) {
+          toast((err && err.message) || 'העדכון נכשל');
+          render();
+        });
+        return;
+      }
+
+      Store.setConstraintStatus(week(), empId, dayIdx, decision, '');
+      persist();
+      render();
+      done();
+    });
 
     $('#clear-constraints').addEventListener('click', function () {
       if (!confirm('לנקות את כל האילוצים של השבוע הזה?')) return;

@@ -95,10 +95,20 @@
   }
 
   function newContext(state, week) {
+    /* רק בקשות שאושרו משפיעות על השיבוץ. בקשה שממתינה לאישור או
+       שנדחתה אינה נלקחת בחשבון. */
+    var effective = {};
+    Object.keys(week.constraints || {}).forEach(function (key) {
+      var record = week.constraints[key];
+      if (Store.constraintStatus(record) === Store.CONSTRAINT_STATUS.APPROVED) {
+        effective[key] = record;
+      }
+    });
+
     var ctx = {
       state: state,
       week: week,
-      constraints: week.constraints || {},
+      constraints: effective,
       counts: {},
       targets: {},
       byDay: {},

@@ -14,9 +14,10 @@
     var branch = Store.byId(state.branches, id);
     return branch ? branch.name : '(סניף שנמחק)';
   }
+  /* שם המשמרת נקרא מהגדרות העסק, ולא מרשימה קבועה */
+  var activeState = null;
   function shiftName(id) {
-    var shift = Data.shiftById(id);
-    return shift ? shift.name : id;
+    return activeState ? Store.shiftName(activeState, id) : id;
   }
   function dayName(dayIdx) { return Data.DAYS[dayIdx].name; }
 
@@ -78,6 +79,7 @@
   }
 
   function validate(state, week) {
+    activeState = state;
     var issues = [];
     var demands = Store.weekDemands(state, week);
     var demandMap = {};

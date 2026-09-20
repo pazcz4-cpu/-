@@ -80,7 +80,10 @@
     toastTimer = setTimeout(function () { node.classList.remove('show'); }, 2600);
   }
 
-  function shiftClass(shiftId) { return 'shift-' + shiftId; }
+  /* מחלקת הצבע נגזרת מהגדרת המשמרת בעסק, ולא ממזהה קבוע */
+  function shiftClass(shiftId) { return 'sh sh-' + Store.shiftColor(state, shiftId); }
+  function shiftList() { return Store.shifts(state); }
+  function shiftLabel(shiftId) { return Store.shiftName(state, shiftId); }
   function branchNameOf(id) {
     var branch = Store.byId(state.branches, id);
     return branch ? branch.name : 'סניף לא ידוע';
@@ -153,7 +156,7 @@
     var activeBranches = state.branches.filter(function (branch) { return branch.active; });
     activeBranches.forEach(function (branch) {
       var shiftsHtml = '';
-      Data.SHIFTS.forEach(function (shift) {
+      shiftList().forEach(function (shift) {
         var need = Store.slotNeed(branch, mobileDay, shift.id);
         var assigned = Store.getAssigned(current, mobileDay, branch.id, shift.id);
         if (!need && !assigned.length) return;
@@ -217,7 +220,7 @@
         else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
         html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
           '" data-day="' + mobileDay + '" data-shift="' + shiftId + '">' +
-          Data.shiftById(shiftId).name + '</button>';
+          shiftLabel(shiftId) + '</button>';
       });
       html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
         '" data-emp="' + esc(emp.id) + '" data-day="' + mobileDay + '" data-off="1">' +
@@ -316,19 +319,19 @@
     }
 
     activeBranches.forEach(function (branch) {
-      Data.SHIFTS.forEach(function (shift, shiftIndex) {
+      shiftList().forEach(function (shift, shiftIndex) {
         html += shiftIndex === 0 ? '<tr class="branch-start">' : '<tr>';
         if (shiftIndex === 0) {
-          html += '<td class="row-head" rowspan="' + Data.SHIFTS.length + '">' + esc(branch.name) + '</td>';
+          html += '<td class="row-head" rowspan="' + shiftList().length + '">' + esc(branch.name) + '</td>';
         }
-        html += '<td class="row-head ' + shiftClass(shift.id) + '">' + shift.name + '</td>';
+        html += '<td class="row-head ' + shiftClass(shift.id) + '">' + esc(shift.name) + '</td>';
 
         Data.DAYS.forEach(function (day) {
           var need = Store.slotNeed(branch, day.idx, shift.id);
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
           if (Store.isHoliday(week(), day.idx) && !assigned.length) {
             if (shiftIndex === 0) {
-              html += '<td class="closed holiday-cell" rowspan="' + Data.SHIFTS.length + '">' +
+              html += '<td class="closed holiday-cell" rowspan="' + shiftList().length + '">' +
                 esc(Store.holidayName(week(), day.idx)) + '<br><small>הסניפים סגורים</small></td>';
             }
             return;
@@ -375,7 +378,7 @@
           }
         } else {
           content = slots.map(function (slot) {
-            var shift = Data.shiftById(slot.shiftId);
+            var shift = Store.shiftById(state, slot.shiftId);
             return '<span class="emp-chip ' + shiftClass(slot.shiftId) + (slots.length > 1 ? ' dup' : '') + '">' +
               esc(branchNameOf(slot.branchId)) + ' · ' + (shift ? shift.name : slot.shiftId) + '</span>';
           }).join('');
@@ -507,10 +510,10 @@
     if (record.off) return 'יום חופש';
     var parts = [];
     Object.keys(record.preferred || {}).forEach(function (id) {
-      parts.push('מעדיף/ה ' + (Data.shiftById(id) || {}).name);
+      parts.push('מעדיף/ה ' + shiftLabel(id));
     });
     Object.keys(record.blocked || {}).forEach(function (id) {
-      parts.push('לא יכול/ה ' + (Data.shiftById(id) || {}).name);
+      parts.push('לא יכול/ה ' + shiftLabel(id));
     });
     return parts.join(', ') || 'ללא שינוי';
   }
@@ -579,13 +582,13 @@
         }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {
-          var shift = Data.shiftById(shiftId);
           var cls = 'free', title = 'זמין';
           if (constraint.off) { cls = 'off-day'; title = 'יום חופש'; }
           else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = 'לא יכול/ה'; }
           else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = 'מעדיף/ה'; }
           html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
-            '" data-day="' + day.idx + '" data-shift="' + shiftId + '">' + shift.name + '</button>';
+            '" data-day="' + day.idx + '" data-shift="' + esc(shiftId) + '">' +
+            esc(shiftLabel(shiftId)) + '</button>';
         });
         html += '<button class="cstate day-off-btn ' + (constraint.off ? 'off-day' : 'free') +
           '" data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
@@ -615,7 +618,7 @@
       });
       html += '</div></div>';
       html += '<div class="field"><label class="title">סוגי משמרות אפשריים</label><div class="pills">';
-      Data.SHIFTS.forEach(function (shift) {
+      shiftList().forEach(function (shift) {
         var on = emp.shifts.indexOf(shift.id) !== -1 ? ' on' : '';
         html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + shift.name + '</button>';
       });
@@ -673,13 +676,13 @@
         '<button class="btn icon danger" data-action="delete-branch" title="מחיקת הסניף">🗑</button></div>';
 
       html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">יום</th>';
-      Data.SHIFTS.forEach(function (shift) {
+      shiftList().forEach(function (shift) {
         html += '<th class="' + shiftClass(shift.id) + '">' + shift.name + '</th>';
       });
       html += '</tr></thead><tbody>';
       Data.DAYS.forEach(function (day) {
         html += '<tr><td class="row-head">' + day.name + '</td>';
-        Data.SHIFTS.forEach(function (shift) {
+        shiftList().forEach(function (shift) {
           html += scheduleCellHtml(branch, day.idx, shift.id);
         });
         html += '</tr>';
@@ -707,18 +710,34 @@
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
 
-    var hours = state.settings.defaultHours || {};
+    var list = shiftList();
     var html = '';
-    Data.SHIFTS.forEach(function (shift) {
-      var range = hours[shift.id] || {};
-      html += '<div class="hours-row"><span class="hours-name ' + shiftClass(shift.id) + '">' +
-        shift.name + '</span>' +
+    list.forEach(function (shift, index) {
+      html += '<div class="shift-row ' + shiftClass(shift.id) + '" data-shift="' + esc(shift.id) + '">';
+      html += '<input class="text-input shift-name" data-field="name" value="' + esc(shift.name) +
+        '" maxlength="24" placeholder="שם המשמרת">';
+      html += '<div class="shift-times">' +
         '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
-        ' data-hours="' + shift.id + '" data-edge="from" value="' + esc(range.from || '') + '">' +
+        ' data-field="from" value="' + esc(shift.from || '') + '">' +
         '<span class="dash">–</span>' +
         '<input class="time-input" type="text" inputmode="numeric" maxlength="5" placeholder="שש:דד"' +
-        ' data-hours="' + shift.id + '" data-edge="to" value="' + esc(range.to || '') + '">' +
+        ' data-field="to" value="' + esc(shift.to || '') + '">' +
         '</div>';
+      html += '<div class="shift-colors">';
+      Data.SHIFT_COLORS.forEach(function (color) {
+        html += '<button class="color-dot sh sh-' + color.id +
+          (Store.shiftColor(state, shift.id) === color.id ? ' active' : '') +
+          '" data-color="' + color.id + '" title="' + esc(color.name) + '"></button>';
+      });
+      html += '</div>';
+      html += '<div class="shift-actions">' +
+        '<button class="btn icon" data-move="-1" title="העלאה"' + (index === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button class="btn icon" data-move="1" title="הורדה"' +
+        (index === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
+        '<button class="btn icon danger" data-remove="1" title="מחיקה"' +
+        (list.length === 1 ? ' disabled' : '') + '>🗑</button>' +
+        '</div>';
+      html += '</div>';
     });
     $('#default-hours').innerHTML = html;
   }
@@ -785,13 +804,13 @@
       var dayLines = [];
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
-        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        Store.shiftIds(state).forEach(function (shiftId) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
           var need = Store.slotNeed(branch, day.idx, shiftId);
           if (!assigned.length && !need) return;
           var names = assigned.map(empNameOf).join(', ') || '‼ חסר איוש';
           var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
-          dayLines.push('   ' + branch.name + ' – ' + Data.shiftById(shiftId).name +
+          dayLines.push('   ' + branch.name + ' – ' + shiftLabel(shiftId) +
             (hours ? ' (' + hours + ')' : '') + ': ' + names);
         });
       });
@@ -843,10 +862,7 @@
 
   /* ===== ייצוא לאקסל: גיליון לפי סניף וגיליון לפי עובד ===== */
   function shiftStyle(shiftId) {
-    if (shiftId === 'morning') return Xlsx.STYLE.MORNING;
-    if (shiftId === 'middle') return Xlsx.STYLE.MIDDLE;
-    if (shiftId === 'evening') return Xlsx.STYLE.EVENING;
-    return Xlsx.STYLE.PLAIN;
+    return Xlsx.shiftStyle(Store.shiftColor(state, shiftId));
   }
 
   function weekTitle() {
@@ -878,7 +894,7 @@
     var activeBranches = state.branches.filter(function (branch) { return branch.active; });
     activeBranches.forEach(function (branch) {
       var firstRow = rows.length;
-      Data.SHIFTS.forEach(function (shift, shiftIndex) {
+      shiftList().forEach(function (shift, shiftIndex) {
         var cells = [
           shiftIndex === 0 ? { v: branch.name, s: Xlsx.STYLE.ROW_HEAD } : { v: '', s: Xlsx.STYLE.ROW_HEAD },
           { v: shift.name, s: Xlsx.STYLE.ROW_HEAD }
@@ -907,7 +923,7 @@
         });
         rows.push({ cells: cells, height: Math.max(20, maxLines * 14 + 6) });
       });
-      merges.push({ r1: firstRow, c1: 0, r2: firstRow + Data.SHIFTS.length - 1, c2: 0 });
+      merges.push({ r1: firstRow, c1: 0, r2: firstRow + shiftList().length - 1, c2: 0 });
     });
 
     if (!activeBranches.length) {
@@ -954,7 +970,7 @@
           return;
         }
         var lines = slots.map(function (slot) {
-          var shift = Data.shiftById(slot.shiftId);
+          var shift = Store.shiftById(state, slot.shiftId);
           var hours = Store.hoursLabel(Store.slotHours(current,
             Store.byId(state.branches, slot.branchId) || {}, day.idx, slot.shiftId));
           return branchNameOf(slot.branchId) + ' · ' + (shift ? shift.name : slot.shiftId) +
@@ -1026,7 +1042,7 @@
         return;
       }
       slots.forEach(function (slot) {
-        var shift = Data.shiftById(slot.shiftId);
+        var shift = Store.shiftById(state, slot.shiftId);
         var branch = Store.byId(state.branches, slot.branchId) || {};
         rows.push({
           day: day.name, date: date, working: true,
@@ -1167,7 +1183,7 @@
     Data.DAYS.forEach(function (day) {
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
-        Data.SHIFTS.forEach(function (shift) {
+        shiftList().forEach(function (shift) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
           var need = Store.slotNeed(branch, day.idx, shift.id);
           if (!assigned.length && !need) return;
@@ -1311,7 +1327,7 @@
 
       if (assignedCount) {
         state.branches.forEach(function (branch) {
-          Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+          Store.shiftIds(state).forEach(function (shiftId) {
             Store.setAssigned(current, dayIdx, branch.id, shiftId, []);
             delete current.manual[Store.slotKey(dayIdx, branch.id, shiftId)];
           });
@@ -1460,7 +1476,7 @@
       }
       state.employees.push({
         id: Store.newId('emp'), name: 'עובד/ת חדש/ה', active: true,
-        branches: [], shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, note: ''
+        branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: ''
       });
       persist('config');
       render();
@@ -1525,7 +1541,7 @@
     $('#add-branch').addEventListener('click', function () {
       state.branches.push({
         id: Store.newId('br'), name: 'סניף חדש', active: true,
-        schedule: Data.defaultSchedule(state.settings.defaultHours)
+        schedule: Data.defaultSchedule(null, state.settings.shifts)
       });
       persist('config');
       render();
@@ -1585,9 +1601,11 @@
           if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
           else if (config) { config.need = need; }
           else {
-            var template = Data.defaultSchedule(state.settings.defaultHours);
+            var template = Data.defaultSchedule(null, state.settings.shifts);
+            var defined = Store.shiftById(state, shiftId) || {};
             var fallback = (template[dayIdx] && template[dayIdx][shiftId]) ||
-              (template[0] && template[0][shiftId]) || { from: '09:00', to: '17:00' };
+              (template[0] && template[0][shiftId]) ||
+              { from: defined.from || '09:00', to: defined.to || '17:00' };
             branch.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
           }
         } else if (config) {
@@ -1627,19 +1645,98 @@
       persist('config');
       render();
     });
+    function shiftAt(shiftId) {
+      var list = state.settings.shifts;
+      for (var i = 0; i < list.length; i++) { if (list[i].id === shiftId) return { shift: list[i], index: i }; }
+      return null;
+    }
+
     $('#default-hours').addEventListener('change', function (event) {
-      var input = event.target;
-      if (!input.dataset.hours) return;
+      var row = event.target.closest('.shift-row');
+      if (!row) return;
       if (blocked()) { render(); return; }
-      var normalized = Store.normalizeTimeInput(input.value);
-      if (normalized === null || !normalized) {
-        toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30');
+      var found = shiftAt(row.dataset.shift);
+      if (!found) return;
+      var field = event.target.dataset.field;
+
+      if (field === 'name') {
+        var name = event.target.value.trim();
+        if (!name) { toast('שם המשמרת אינו יכול להיות ריק'); render(); return; }
+        found.shift.name = name;
+      } else if (field === 'from' || field === 'to') {
+        var normalized = Store.normalizeTimeInput(event.target.value);
+        if (normalized === null || !normalized) {
+          toast('שעה לא תקינה – הזינו בפורמט 24 שעות, למשל 09:30');
+          render();
+          return;
+        }
+        found.shift[field] = normalized;
+      } else { return; }
+
+      persist('config');
+      render();
+    });
+
+    $('#default-hours').addEventListener('click', function (event) {
+      var row = event.target.closest('.shift-row');
+      if (!row) return;
+      if (blocked()) return;
+      var found = shiftAt(row.dataset.shift);
+      if (!found) return;
+      var list = state.settings.shifts;
+
+      var colorButton = event.target.closest('[data-color]');
+      if (colorButton) {
+        found.shift.color = Number(colorButton.dataset.color);
+        persist('config');
         render();
         return;
       }
-      state.settings.defaultHours[input.dataset.hours][input.dataset.edge] = normalized;
+
+      var moveButton = event.target.closest('[data-move]');
+      if (moveButton) {
+        var target = found.index + Number(moveButton.dataset.move);
+        if (target < 0 || target >= list.length) return;
+        var moved = list.splice(found.index, 1)[0];
+        list.splice(target, 0, moved);
+        persist('config');
+        render();
+        return;
+      }
+
+      if (event.target.closest('[data-remove]')) {
+        if (list.length === 1) { toast('חייבת להישאר לפחות משמרת אחת'); return; }
+        var used = 0;
+        state.branches.forEach(function (branch) {
+          Object.keys(branch.schedule || {}).forEach(function (day) {
+            if (branch.schedule[day][found.shift.id]) used++;
+          });
+        });
+        if (!confirm('למחוק את משמרת "' + found.shift.name + '"?\n\n' +
+          (used ? 'היא מוגדרת ב-' + used + ' ימים בסניפים, וכל השיבוצים שלה יימחקו.'
+                : 'היא אינה בשימוש בשום סניף.'))) return;
+
+        var removed = Store.removeShift(state, found.shift.id);
+        persist('all');
+        render();
+        toast('המשמרת נמחקה' + (removed.assignments ? ' (' + removed.assignments + ' שיבוצים הוסרו)' : ''));
+      }
+    });
+
+    $('#add-shift').addEventListener('click', function () {
+      if (blocked()) return;
+      var list = state.settings.shifts;
+      var last = list[list.length - 1] || { to: '22:00', color: 0 };
+      list.push({
+        id: Store.newId('sh'),
+        name: 'משמרת ' + (list.length + 1),
+        from: last.to || '22:00',
+        to: '23:00',
+        color: list.length % Data.SHIFT_COLORS.length
+      });
       persist('config');
       render();
+      toast('נוספה משמרת. יש להגדיר אותה בסניפים כדי שתופיע בסידור.');
     });
 
     $('#apply-default-hours').addEventListener('click', function () {
@@ -1737,11 +1834,11 @@
       var days = [];
       Data.DAYS.forEach(function (day) {
         var open = [];
-        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        Store.shiftIds(state).forEach(function (shiftId) {
           var need = Store.slotNeed(branch, day.idx, shiftId);
           if (!need) return;
           var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
-          open.push(Data.shiftById(shiftId).name + ' ' + hours + ' (' + need + ' עובדים)');
+          open.push(shiftLabel(shiftId) + ' ' + hours + ' (' + need + ' עובדים)');
         });
         if (open.length) days.push(day.name + ': ' + open.join(', '));
       });
@@ -1754,14 +1851,14 @@
       var branches = emp.branches.length
         ? emp.branches.map(branchNameOf).join(', ')
         : 'כל הסניפים';
-      var shifts = emp.shifts.map(function (id) { return Data.shiftById(id).name; }).join(', ');
+      var shifts = emp.shifts.map(function (id) { return shiftLabel(id); }).join(', ');
       var daysOff = Store.requestedDaysOff(current, emp.id).map(function (d) { return Data.DAYS[d].name; });
       var blocked = [];
       Data.DAYS.forEach(function (day) {
         var constraint = Store.getConstraint(current, emp.id, day.idx);
         var names = Object.keys(constraint.blocked || {});
         if (names.length) {
-          blocked.push(day.name + ': ' + names.map(function (id) { return Data.shiftById(id).name; }).join('/'));
+          blocked.push(day.name + ': ' + names.map(function (id) { return shiftLabel(id); }).join('/'));
         }
       });
       parts.push('- ' + emp.name + ' | סניפים: ' + branches + ' | משמרות: ' + shifts +

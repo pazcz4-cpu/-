@@ -45,7 +45,7 @@
     return {
       version: VERSION,
       settings: clone(Data.DEFAULT_SETTINGS),
-      branches: Data.defaultBranches(Data.DEFAULT_SETTINGS.defaultHours),
+      branches: Data.defaultBranches(null, Data.DEFAULT_SETTINGS.shifts),
       employees: clone(Data.DEFAULT_EMPLOYEES),
       weeks: {}
     };
@@ -66,6 +66,40 @@
     if (!w.manual) w.manual = {};
     if (!w.holidays) w.holidays = {};
     return w;
+  }
+
+  /* ===== סוגי המשמרות של העסק ===== */
+
+  /* רשימת המשמרות המוגדרות. לעולם אינה ריקה. */
+  function shifts(state) {
+    var list = (state && state.settings && state.settings.shifts) || [];
+    return list.length ? list : Data.DEFAULT_SHIFTS;
+  }
+
+  function shiftIds(state) {
+    return shifts(state).map(function (shift) { return shift.id; });
+  }
+
+  function shiftById(state, shiftId) {
+    var list = shifts(state);
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === shiftId) return list[i];
+    }
+    return null;
+  }
+
+  function shiftName(state, shiftId) {
+    var shift = shiftById(state, shiftId);
+    return shift ? shift.name : shiftId;
+  }
+
+  /* מספר הצבע בלוח, לשימוש בממשק ובייצוא */
+  function shiftColor(state, shiftId) {
+    var shift = shiftById(state, shiftId);
+    var count = Data.SHIFT_COLORS.length;
+    if (!shift) return 6;
+    var color = Number(shift.color);
+    return isNaN(color) ? 6 : ((color % count) + count) % count;
   }
 
   /* ===== שעות ===== */
@@ -213,7 +247,7 @@
   function employeeDayAssignments(state, week, empId, dayIdx) {
     var out = [];
     state.branches.forEach(function (branch) {
-      Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+      shiftIds(state).forEach(function (shiftId) {
         var list = getAssigned(week, dayIdx, branch.id, shiftId);
         for (var i = 0; i < list.length; i++) {
           if (list[i] === empId) { out.push({ branchId: branch.id, shiftId: shiftId }); }
@@ -247,7 +281,7 @@
   /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
   function activeShiftsForDay(state, dayIdx, week) {
     if (isHoliday(week, dayIdx)) return [];
-    return Data.ALL_SHIFT_IDS.filter(function (shiftId) {
+    return shiftIds(state).filter(function (shiftId) {
       return state.branches.some(function (branch) {
         return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
       });
@@ -261,7 +295,7 @@
       if (isHoliday(week, day)) continue; // ביום חג הסניפים סגורים
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
-        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        shiftIds(state).forEach(function (shiftId) {
           var need = slotNeed(branch, day, shiftId);
           if (need > 0) { demands.push({ dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need }); }
         });
@@ -280,7 +314,7 @@
     return state.branches.some(function (branch) {
       if (!branch.active) return false;
       if (emp.branches.length && emp.branches.indexOf(branch.id) === -1) return false;
-      return Data.ALL_SHIFT_IDS.some(function (shiftId) {
+      return shiftIds(state).some(function (shiftId) {
         if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
@@ -363,7 +397,6 @@
      נשמרים: אילו ימים פתוחים, כמות העובדים, שישי ומוצ״ש. */
   function applyDefaultHours(state, options) {
     var opts = options || {};
-    var hours = state.settings.defaultHours || Data.DEFAULT_HOURS;
     var days = opts.days || Data.WEEKDAYS;
     var changed = 0;
 
@@ -371,10 +404,11 @@
       days.forEach(function (day) {
         var dayConfig = (branch.schedule || {})[day];
         if (!dayConfig) return;
-        Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+        shifts(state).forEach(function (shift) {
+          var shiftId = shift.id;
           var config = dayConfig[shiftId];
           if (!config || config.auto) return; // משמרת אוטומטית (מוצ״ש) אינה מושפעת
-          var range = hours[shiftId] || Data.DEFAULT_HOURS[shiftId];
+          var range = { from: shift.from, to: shift.to };
           if (config.from === range.from && config.to === range.to) return;
           config.from = range.from;
           config.to = range.to;
@@ -395,16 +429,11 @@
     var base = emptyState();
     state.version = VERSION;
     var legacyDayShifts = (state.settings && state.settings.dayShifts) || null;
+    var legacyHours = (state.settings && state.settings.defaultHours) || null;
     state.settings = Object.assign({}, base.settings, state.settings || {});
     delete state.settings.dayShifts;
-    state.settings.defaultHours = Object.assign({}, base.settings.defaultHours,
-      state.settings.defaultHours || {});
-    Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
-      var range = state.settings.defaultHours[shiftId] || {};
-      if (!range.from || !range.to) {
-        state.settings.defaultHours[shiftId] = Object.assign({}, base.settings.defaultHours[shiftId]);
-      }
-    });
+    state.settings.shifts = normalizeShifts(state.settings.shifts, legacyHours);
+    delete state.settings.defaultHours;
     if (!Array.isArray(state.branches) || !state.branches.length) state.branches = base.branches;
     if (!Array.isArray(state.employees) || !state.employees.length) state.employees = base.employees;
     if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
@@ -426,6 +455,80 @@
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
     });
     return state;
+  }
+
+  /* רשימת משמרות תקינה: מזהים ייחודיים, שמות, שעות וצבע.
+     legacyHours – מבנה השעות הישן, אם קיים, כדי לא לאבד התאמות. */
+  function normalizeShifts(list, legacyHours) {
+    var source = Array.isArray(list) && list.length ? list : Data.DEFAULT_SHIFTS;
+    var seen = {};
+    var out = [];
+
+    source.forEach(function (item, index) {
+      if (!item) return;
+      var id = String(item.id || '').trim() || ('shift-' + (index + 1));
+      if (seen[id]) return;
+      seen[id] = true;
+
+      var fallback = Data.DEFAULT_SHIFTS[index] || Data.DEFAULT_SHIFTS[0];
+      var hours = (legacyHours && legacyHours[id]) || {};
+      out.push({
+        id: id,
+        name: String(item.name || '').trim() || fallback.name || ('משמרת ' + (index + 1)),
+        from: hours.from || item.from || fallback.from,
+        to: hours.to || item.to || fallback.to,
+        color: typeof item.color === 'number' ? item.color : (index % Data.SHIFT_COLORS.length)
+      });
+    });
+
+    return out.length ? out : Data.DEFAULT_SHIFTS.slice();
+  }
+
+  /* הסרת סוג משמרת: מנקה אותו מלוחות הסניפים ומכרטיסי העובדים */
+  function removeShift(state, shiftId) {
+    var removed = { slots: 0, employees: 0, assignments: 0 };
+    state.settings.shifts = (state.settings.shifts || []).filter(function (shift) {
+      return shift.id !== shiftId;
+    });
+    if (!state.settings.shifts.length) {
+      state.settings.shifts = Data.DEFAULT_SHIFTS.slice();
+    }
+
+    state.branches.forEach(function (branch) {
+      Object.keys(branch.schedule || {}).forEach(function (day) {
+        if (branch.schedule[day] && branch.schedule[day][shiftId]) {
+          delete branch.schedule[day][shiftId];
+          removed.slots++;
+        }
+        if (branch.schedule[day] && !Object.keys(branch.schedule[day]).length) {
+          delete branch.schedule[day];
+        }
+      });
+    });
+
+    state.employees.forEach(function (emp) {
+      var before = emp.shifts.length;
+      emp.shifts = emp.shifts.filter(function (id) { return id !== shiftId; });
+      if (emp.shifts.length !== before) removed.employees++;
+      if (!emp.shifts.length) { emp.shifts = shiftIds(state).slice(); }
+    });
+
+    Object.keys(state.weeks || {}).forEach(function (weekKey) {
+      var week = state.weeks[weekKey];
+      Object.keys(week.assignments || {}).forEach(function (key) {
+        if (key.split('|')[2] === shiftId) {
+          delete week.assignments[key];
+          removed.assignments++;
+        }
+      });
+      Object.keys(week.constraints || {}).forEach(function (key) {
+        var record = week.constraints[key];
+        if (record.blocked) delete record.blocked[shiftId];
+        if (record.preferred) delete record.preferred[shiftId];
+      });
+    });
+
+    return removed;
   }
 
   /* המרת המבנה הישן (need לכל סניף + dayShifts גלובלי) למבנה לפי יום */
@@ -518,6 +621,13 @@
     setAssigned: setAssigned,
     employeeDayAssignments: employeeDayAssignments,
     employeeWeekCount: employeeWeekCount,
+    shifts: shifts,
+    shiftIds: shiftIds,
+    shiftById: shiftById,
+    shiftName: shiftName,
+    shiftColor: shiftColor,
+    normalizeShifts: normalizeShifts,
+    removeShift: removeShift,
     activeShiftsForDay: activeShiftsForDay,
     isHoliday: isHoliday,
     holidayName: holidayName,

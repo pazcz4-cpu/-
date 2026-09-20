@@ -12,23 +12,39 @@
     { idx: 6, name: 'מוצ״ש', short: "ש'" }
   ];
 
-  var SHIFTS = [
-    { id: 'morning', name: 'בוקר' },
-    { id: 'middle', name: 'אמצע' },
-    { id: 'evening', name: 'ערב' }
+  /* לוח צבעים קבוע למשמרות. כל עסק בוחר מתוכו, וכך הצבעים נשארים
+     תקינים גם במצב כהה ובייצוא לאקסל. */
+  var SHIFT_COLORS = [
+    { id: 0, name: 'חמרה' },
+    { id: 1, name: 'ירוק' },
+    { id: 2, name: 'כחול' },
+    { id: 3, name: 'סגול' },
+    { id: 4, name: 'ורוד' },
+    { id: 5, name: 'טורקיז' },
+    { id: 6, name: 'אפור' },
+    { id: 7, name: 'חום' }
   ];
 
-  var ALL_SHIFT_IDS = ['morning', 'middle', 'evening'];
+  /* משמרות ברירת המחדל לעסק חדש. מכאן ואילך כל עסק מגדיר לעצמו. */
+  var DEFAULT_SHIFTS = [
+    { id: 'morning', name: 'בוקר', from: '09:30', to: '16:00', color: 0 },
+    { id: 'middle', name: 'אמצע', from: '12:30', to: '20:00', color: 1 },
+    { id: 'evening', name: 'ערב', from: '15:00', to: '22:00', color: 2 }
+  ];
+
+  /* נשמר לתאימות לאחור בקוד שעדיין לא עודכן */
+  var SHIFTS = DEFAULT_SHIFTS;
+  var ALL_SHIFT_IDS = DEFAULT_SHIFTS.map(function (shift) { return shift.id; });
 
   /* מוצ״ש: ההתחלה נגזרת משעת צאת השבת של אותו שבוע ועד 23:00 */
   var MOTZASH = { dayIdx: 6, offsetMinutes: 30, defaultEnd: '23:00' };
 
-  /* שעות ברירת המחדל של המשמרות. ניתנות לעריכה בלשונית ההגדרות. */
-  var DEFAULT_HOURS = {
-    morning: { from: '09:30', to: '16:00' },
-    middle: { from: '12:30', to: '20:00' },
-    evening: { from: '15:00', to: '22:00' }
-  };
+  /* שעות ברירת המחדל, נגזרות מרשימת המשמרות */
+  var DEFAULT_HOURS = (function () {
+    var map = {};
+    DEFAULT_SHIFTS.forEach(function (shift) { map[shift.id] = { from: shift.from, to: shift.to }; });
+    return map;
+  })();
 
   /* שישי מקוצר – מתחיל כמו הבוקר הרגיל ונסגר לפני שבת */
   var DEFAULT_FRIDAY = { from: '09:30', to: '14:30' };
@@ -42,30 +58,40 @@
   }
 
   /* תבנית ברירת מחדל לסניף חדש: ימים, שעות וכמות עובדים בכל משמרת */
-  function defaultSchedule(hours) {
+  /* shifts – רשימת המשמרות של העסק. hours – דריסת שעות אופציונלית. */
+  function defaultSchedule(hours, shifts) {
+    var list = shifts && shifts.length ? shifts : DEFAULT_SHIFTS;
     var schedule = {};
+
     WEEKDAYS.forEach(function (day) {
       schedule[day] = {};
-      ALL_SHIFT_IDS.forEach(function (shiftId) {
-        var range = hoursOf(hours, shiftId);
-        schedule[day][shiftId] = { need: 1, from: range.from, to: range.to };
+      list.forEach(function (shift) {
+        var range = (hours && hours[shift.id]) || { from: shift.from, to: shift.to };
+        schedule[day][shift.id] = { need: 1, from: range.from, to: range.to };
       });
     });
-    schedule[5] = { // שישי – שני עובדים בבוקר וסגירה מוקדמת
-      morning: { need: 2, from: DEFAULT_FRIDAY.from, to: DEFAULT_FRIDAY.to }
-    };
-    schedule[6] = { // מוצ״ש – חצי שעה מצאת שבת עד 23:00
-      evening: { need: 1, auto: 'motzash', to: MOTZASH.defaultEnd }
-    };
+
+    var first = list[0];
+    var last = list[list.length - 1];
+
+    schedule[5] = {};   // שישי – המשמרת הראשונה בלבד, מקוצרת
+    if (first) {
+      schedule[5][first.id] = { need: 2, from: DEFAULT_FRIDAY.from, to: DEFAULT_FRIDAY.to };
+    }
+
+    schedule[6] = {};   // מוצ״ש – המשמרת האחרונה, לפי צאת שבת
+    if (last) {
+      schedule[6][last.id] = { need: 1, auto: 'motzash', to: MOTZASH.defaultEnd };
+    }
     return schedule;
   }
 
   /* סניפים מוגדרים מראש – ניתנים לעריכה במסך "סניפים" */
-  function defaultBranches(hours) {
+  function defaultBranches(hours, shifts) {
     return [
-      { id: 'br-center', name: 'מייפון מרכז', active: true, schedule: defaultSchedule(hours) },
-      { id: 'br-north', name: 'מייפון צפון', active: true, schedule: defaultSchedule(hours) },
-      { id: 'br-south', name: 'מייפון דרום', active: true, schedule: defaultSchedule(hours) }
+      { id: 'br-center', name: 'סניף מרכז', active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-north', name: 'סניף צפון', active: true, schedule: defaultSchedule(hours, shifts) },
+      { id: 'br-south', name: 'סניף דרום', active: true, schedule: defaultSchedule(hours, shifts) }
     ];
   }
 
@@ -85,11 +111,9 @@
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
     oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
-    defaultHours: {
-      morning: { from: DEFAULT_HOURS.morning.from, to: DEFAULT_HOURS.morning.to },
-      middle: { from: DEFAULT_HOURS.middle.from, to: DEFAULT_HOURS.middle.to },
-      evening: { from: DEFAULT_HOURS.evening.from, to: DEFAULT_HOURS.evening.to }
-    },
+    shifts: DEFAULT_SHIFTS.map(function (shift) {
+      return { id: shift.id, name: shift.name, from: shift.from, to: shift.to, color: shift.color };
+    }),
     defaultShabbatEnd: '20:00'
   };
 
@@ -98,6 +122,8 @@
     SHIFTS: SHIFTS,
     ALL_SHIFT_IDS: ALL_SHIFT_IDS,
     MOTZASH: MOTZASH,
+    SHIFT_COLORS: SHIFT_COLORS,
+    DEFAULT_SHIFTS: DEFAULT_SHIFTS,
     DEFAULT_HOURS: DEFAULT_HOURS,
     DEFAULT_FRIDAY: DEFAULT_FRIDAY,
     WEEKDAYS: WEEKDAYS,

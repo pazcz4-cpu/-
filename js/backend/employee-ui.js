@@ -161,7 +161,7 @@
       var slots = Store.employeeDayAssignments(self.state, self.week, self._employeeId(), day.idx);
       slots.forEach(function (slot) {
         var branch = Store.byId(self.state.branches, slot.branchId) || {};
-        var shift = Data.shiftById(slot.shiftId);
+        var shift = Store.shiftById(self.state, slot.shiftId);
         out.push({
           day: day.name,
           date: Store.formatDate(Store.dateOfDay(self.weekKey, day.idx)),
@@ -264,7 +264,7 @@
           else if (constraint.blocked && constraint.blocked[shiftId]) cls = 'block';
           else if (constraint.preferred && constraint.preferred[shiftId]) cls = 'pref';
           html += '<button class="cstate ' + cls + '" data-day="' + day.idx +
-            '" data-shift="' + shiftId + '"' + locked + '>' + Data.shiftById(shiftId).name + '</button>';
+            '" data-shift="' + shiftId + '"' + locked + '>' + esc(Store.shiftName(self.state, shiftId)) + '</button>';
         });
         html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
           '" data-day="' + day.idx + '" data-off="1"' + locked + '>' +

@@ -22,6 +22,15 @@
   --evening: #dde5fa;
   --evening-line: #4763c9;
 
+  --c0-bg: #fbeecb; --c0-line: #d99f22;
+  --c1-bg: #d6f0e4; --c1-line: #2c9770;
+  --c2-bg: #dde5fa; --c2-line: #4763c9;
+  --c3-bg: #e9ddf7; --c3-line: #8250c4;
+  --c4-bg: #fbdde8; --c4-line: #c94a7d;
+  --c5-bg: #d3f0f2; --c5-line: #1f8f9c;
+  --c6-bg: #e6e9ef; --c6-line: #6b7688;
+  --c7-bg: #f0e3d4; --c7-line: #a1713a;
+
   --err: #bc2f47;
   --err-bg: #fdecef;
   --err-line: #f0bcc7;
@@ -71,6 +80,15 @@
     --evening: #1f2b50;
     --evening-line: #7590e8;
 
+    --c0-bg: #4a3a14; --c0-line: #d99f22;
+    --c1-bg: #123a2c; --c1-line: #35b184;
+    --c2-bg: #1f2b50; --c2-line: #7590e8;
+    --c3-bg: #33224d; --c3-line: #a884e0;
+    --c4-bg: #451f31; --c4-line: #e87aa5;
+    --c5-bg: #10353a; --c5-line: #43b8c4;
+    --c6-bg: #2a303c; --c6-line: #94a1b5;
+    --c7-bg: #3b2d1e; --c7-line: #c4915a;
+
     --err: #ff8098;
     --err-bg: #3a1b23;
     --err-line: #7a3548;
@@ -119,6 +137,15 @@
   --middle-line: #35b184;
   --evening: #1f2b50;
   --evening-line: #7590e8;
+
+  --c0-bg: #4a3a14; --c0-line: #d99f22;
+  --c1-bg: #123a2c; --c1-line: #35b184;
+  --c2-bg: #1f2b50; --c2-line: #7590e8;
+  --c3-bg: #33224d; --c3-line: #a884e0;
+  --c4-bg: #451f31; --c4-line: #e87aa5;
+  --c5-bg: #10353a; --c5-line: #43b8c4;
+  --c6-bg: #2a303c; --c6-line: #94a1b5;
+  --c7-bg: #3b2d1e; --c7-line: #c4915a;
 
   --err: #ff8098;
   --err-bg: #3a1b23;
@@ -238,9 +265,21 @@ td.closed {
   color: var(--muted);
 }
 
-.shift-morning { background: var(--morning); border-right: 4px solid var(--morning-line); }
-.shift-middle  { background: var(--middle);  border-right: 4px solid var(--middle-line); }
-.shift-evening { background: var(--evening); border-right: 4px solid var(--evening-line); }
+/* צבעי המשמרות: לוח קבוע שכל עסק בוחר ממנו לכל משמרת שהגדיר */
+.sh { background: var(--sh-bg); border-right: 4px solid var(--sh-line); }
+.sh-0 { --sh-bg: var(--c0-bg); --sh-line: var(--c0-line); }
+.sh-1 { --sh-bg: var(--c1-bg); --sh-line: var(--c1-line); }
+.sh-2 { --sh-bg: var(--c2-bg); --sh-line: var(--c2-line); }
+.sh-3 { --sh-bg: var(--c3-bg); --sh-line: var(--c3-line); }
+.sh-4 { --sh-bg: var(--c4-bg); --sh-line: var(--c4-line); }
+.sh-5 { --sh-bg: var(--c5-bg); --sh-line: var(--c5-line); }
+.sh-6 { --sh-bg: var(--c6-bg); --sh-line: var(--c6-line); }
+.sh-7 { --sh-bg: var(--c7-bg); --sh-line: var(--c7-line); }
+
+/* תאימות לאחור לסגנונות שעדיין מזכירים את שלוש המשמרות המקוריות */
+.shift-morning { background: var(--c0-bg); border-right: 4px solid var(--c0-line); }
+.shift-middle  { background: var(--c1-bg); border-right: 4px solid var(--c1-line); }
+.shift-evening { background: var(--c2-bg); border-right: 4px solid var(--c2-line); }
 
 td.cell { min-width: 130px; }
 td.cell.has-error { outline: 2px solid var(--err); outline-offset: -2px; }
@@ -809,3 +848,23 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .req-reason label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
 .req-reason .text-input { font-size: 15px; }
 .c-status.approved { background: var(--ok-bg); color: var(--ok); }
+
+/* ===================== ניהול סוגי המשמרות ===================== */
+.shift-grid { display: flex; flex-direction: column; gap: 10px; }
+.shift-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); border-right-width: 4px; border-right-style: solid;
+}
+.shift-row .shift-name { flex: 1 1 150px; font-weight: 600; background: var(--surface); }
+.shift-times { display: flex; align-items: center; gap: 6px; }
+.shift-times .time-input { width: 96px; background: var(--surface); }
+.shift-colors { display: flex; gap: 4px; }
+.color-dot {
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 2px solid transparent; background: var(--sh-bg);
+  box-shadow: inset 0 0 0 2px var(--sh-line);
+}
+.color-dot.active { border-color: var(--ink); }
+.shift-actions { display: flex; gap: 4px; margin-inline-start: auto; }
+.shift-actions .btn { padding: 4px 9px; }

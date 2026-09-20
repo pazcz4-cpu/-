@@ -379,26 +379,40 @@ test('החלת שעות אינה נוגעת בשישי ובמוצ״ש', function
   assert(!branch.schedule[6].evening.from, 'למוצ״ש אין שעת התחלה קבועה');
 });
 
-test('שינוי שעות ברירת המחדל משפיע על ההחלה ועל סניף חדש', function () {
+test('שינוי שעות המשמרת משפיע על ההחלה ועל סניף חדש', function () {
   var state = freshState();
-  state.settings.defaultHours.morning = { from: '07:00', to: '12:00' };
+  state.settings.shifts[0].from = '07:00';
+  state.settings.shifts[0].to = '12:00';
   Store.applyDefaultHours(state);
   assertEqual(state.branches[0].schedule[0].morning.from, '07:00', 'ההחלה לפי ההגדרה החדשה');
 
-  var fresh = Data.defaultSchedule(state.settings.defaultHours);
+  var fresh = Data.defaultSchedule(null, state.settings.shifts);
   assertEqual(fresh[0].morning.from, '07:00', 'סניף חדש מקבל את השעות החדשות');
   assertEqual(fresh[0].evening.from, '15:00', 'משמרת שלא שונתה נשארת בברירת המחדל');
 });
 
-test('migrate משלים שעות ברירת מחדל חסרות', function () {
+test('migrate משלים את רשימת המשמרות כשהיא חסרה', function () {
   var migrated = Store.migrate({
     settings: { onePerDay: true },
     branches: [{ id: 'b', name: 'ס' }],
     employees: [{ id: 'e', name: 'ע' }],
     weeks: {}
   });
-  assertEqual(migrated.settings.defaultHours.morning.from, '09:30', 'הושלמו שעות הבוקר');
-  assertEqual(migrated.settings.defaultHours.evening.to, '22:00', 'הושלמו שעות הערב');
+  assertEqual(migrated.settings.shifts.length, 3, 'שלוש משמרות ברירת מחדל');
+  assertEqual(migrated.settings.shifts[0].from, '09:30', 'שעות הבוקר');
+  assertEqual(migrated.settings.shifts[2].to, '22:00', 'שעות הערב');
+});
+
+test('migrate משמר שעות שהוגדרו במבנה הישן', function () {
+  var migrated = Store.migrate({
+    settings: { onePerDay: true, defaultHours: { morning: { from: '07:15', to: '13:00' } } },
+    branches: [{ id: 'b', name: 'ס' }],
+    employees: [{ id: 'e', name: 'ע' }],
+    weeks: {}
+  });
+  assertEqual(migrated.settings.shifts[0].from, '07:15', 'השעה הישנה נשמרה');
+  assertEqual(migrated.settings.shifts[0].to, '13:00', 'שעת הסיום נשמרה');
+  assert(!migrated.settings.defaultHours, 'המבנה הישן הוסר');
 });
 
 console.log('\n== ימים, שעות ומוצ״ש ==');
@@ -856,7 +870,23 @@ test('תווים מיוחדים בטקסט מקודדים כראוי', function 
 
 test('מספרים נשמרים כמספרים ולא כטקסט', function () {
   var text = Buffer.from(sampleWorkbook()).toString('utf8');
-  assert(/<c r="B1" s="10"><v>6<\/v><\/c>/.test(text), 'תא מספרי נכתב ללא inlineStr');
+  var expected = '<c r="B1" s="' + Xlsx.STYLE.TOTAL + '"><v>6</v></c>';
+  assert(text.indexOf(expected) !== -1, 'תא מספרי נכתב ללא inlineStr (' + expected + ')');
+});
+
+test('לכל צבע משמרת יש עיצוב משלו בקובץ', function () {
+  assertEqual(new Set(Xlsx.SHIFT_FILLS).size, Xlsx.SHIFT_FILLS.length, 'שמונה צבעים שונים');
+  var styles = Xlsx.SHIFT_FILLS.map(function (_, index) { return Xlsx.shiftStyle(index); });
+  assertEqual(new Set(styles).size, styles.length, 'מזהה עיצוב ייחודי לכל צבע');
+  assertEqual(Xlsx.shiftStyle(99), Xlsx.shiftStyle(99 % Xlsx.SHIFT_FILLS.length), 'מספר חורג מתגלגל');
+
+  var text = Buffer.from(Xlsx.build([
+    { name: 'צבעים', rows: [Xlsx.SHIFT_FILLS.map(function (_, i) {
+      return { v: 'משמרת ' + i, s: Xlsx.shiftStyle(i) }; })] }
+  ])).toString('utf8');
+  Xlsx.SHIFT_FILLS.forEach(function (rgb) {
+    assert(text.indexOf(rgb) !== -1, 'הצבע ' + rgb + ' נכתב לקובץ');
+  });
 });
 
 test('שמות עמודות מחושבים נכון', function () {

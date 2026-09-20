@@ -109,10 +109,25 @@
   }
 
   /* מזהי העיצובים הזמינים לתאים (ראו cellXfs להלן) */
+  /* לוח הצבעים של המשמרות, תואם לזה שבממשק */
+  var SHIFT_FILLS = [
+    'FFFBEECB', 'FFD6F0E4', 'FFDDE5FA', 'FFE9DDF7',
+    'FFFBDDE8', 'FFD3F0F2', 'FFE6E9EF', 'FFF0E3D4'
+  ];
+
   var STYLE = {
     DEFAULT: 0, TITLE: 1, SUBTITLE: 2, HEADER: 3, ROW_HEAD: 4,
-    MORNING: 5, MIDDLE: 6, EVENING: 7, PLAIN: 8, CLOSED: 9, TOTAL: 10
+    PLAIN: 5, CLOSED: 6, TOTAL: 7,
+    /* צבעי המשמרות ממשיכים מ-8 והלאה, לפי מספר הצבע */
+    SHIFT: 8
   };
+
+  /* מזהה העיצוב של משמרת לפי מספר הצבע שלה */
+  function shiftStyle(colorIndex) {
+    var index = Number(colorIndex);
+    if (isNaN(index)) index = 6;
+    return STYLE.SHIFT + ((index % SHIFT_FILLS.length) + SHIFT_FILLS.length) % SHIFT_FILLS.length;
+  }
 
   function stylesXml() {
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -125,15 +140,15 @@
         '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>' +
         '<font><sz val="10"/><color rgb="FF8A94A6"/><name val="Arial"/></font>' +
       '</fonts>' +
-      '<fills count="8">' +
+      '<fills count="' + (4 + SHIFT_FILLS.length) + '">' +
         '<fill><patternFill patternType="none"/></fill>' +
         '<fill><patternFill patternType="gray125"/></fill>' +
         '<fill><patternFill patternType="solid"><fgColor rgb="FF2F5FE0"/><bgColor indexed="64"/></patternFill></fill>' +
         '<fill><patternFill patternType="solid"><fgColor rgb="FFF0F3FA"/><bgColor indexed="64"/></patternFill></fill>' +
-        '<fill><patternFill patternType="solid"><fgColor rgb="FFFBEECB"/><bgColor indexed="64"/></patternFill></fill>' +
-        '<fill><patternFill patternType="solid"><fgColor rgb="FFD6F0E4"/><bgColor indexed="64"/></patternFill></fill>' +
-        '<fill><patternFill patternType="solid"><fgColor rgb="FFDDE5FA"/><bgColor indexed="64"/></patternFill></fill>' +
-        '<fill><patternFill patternType="solid"><fgColor rgb="FFF2F3F5"/><bgColor indexed="64"/></patternFill></fill>' +
+        SHIFT_FILLS.map(function (rgb) {
+          return '<fill><patternFill patternType="solid"><fgColor rgb="' + rgb +
+            '"/><bgColor indexed="64"/></patternFill></fill>';
+        }).join('') +
       '</fills>' +
       '<borders count="2">' +
         '<border><left/><right/><top/><bottom/><diagonal/></border>' +
@@ -146,7 +161,7 @@
         '</border>' +
       '</borders>' +
       '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-      '<cellXfs count="11">' +
+      '<cellXfs count="' + (8 + SHIFT_FILLS.length) + '">' +
         '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
         '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
         '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
@@ -154,18 +169,17 @@
           '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
         '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
           '<alignment horizontal="right" vertical="center" wrapText="1"/></xf>' +
-        '<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
-          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-        '<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
-          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-        '<xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
-          '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
         '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">' +
           '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-        '<xf numFmtId="0" fontId="5" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+        '<xf numFmtId="0" fontId="5" fillId="9" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
           '<alignment horizontal="center" vertical="center"/></xf>' +
         '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
           '<alignment horizontal="center" vertical="center"/></xf>' +
+        SHIFT_FILLS.map(function (rgb, index) {
+          return '<xf numFmtId="0" fontId="0" fillId="' + (4 + index) +
+            '" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1">' +
+            '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>';
+        }).join('') +
       '</cellXfs>' +
       '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
       '</styleSheet>';
@@ -308,7 +322,8 @@
     return zip(files);
   }
 
-  var API = { build: build, STYLE: STYLE, colName: colName, uniqueSheetNames: uniqueSheetNames };
+  var API = { build: build, STYLE: STYLE, shiftStyle: shiftStyle, SHIFT_FILLS: SHIFT_FILLS,
+    colName: colName, uniqueSheetNames: uniqueSheetNames };
   root.ShiftXlsx = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

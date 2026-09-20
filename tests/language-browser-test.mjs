@@ -53,6 +53,23 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   check('טקסט ההתראות', await page.locator('#issues .issue').first().textContent(), /Understaffed|No Sabbath/);
   check('סיכום הזמינות', await page.locator('#availability .summary-title').textContent(), 'What is still available');
 
+  console.log('\n== ערבית: שפה שנייה עם כיוון כתיבה מימין לשמאל ==');
+  await page.click('.tab[data-tab="settings"]');
+  check('מספר השפות בבורר', await page.locator('#language-select option').count(), 8);
+  await page.selectOption('#language-select', 'ar');
+  await page.waitForTimeout(400);
+  check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'rtl');
+  check('לשונית הסידור', await page.locator('.tab[data-tab="schedule"]').textContent(), 'الجدول');
+  await page.click('.tab[data-tab="schedule"]');
+  check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'الفرع');
+
+  console.log('\n== חזרה לאנגלית ==');
+  await page.click('.tab[data-tab="settings"]');
+  await page.selectOption('#language-select', 'en');
+  await page.waitForTimeout(300);
+  await page.click('.tab[data-tab="schedule"]');
+  check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'ltr');
+
   console.log('\n== הבחירה נשמרת בין טעינות ==');
   await page.reload();
   await page.waitForTimeout(500);

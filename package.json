@@ -9,13 +9,14 @@
     "build": "node build-artifact.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
-    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js",
+    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js",
     "test:saas": "node tests/saas-browser-test.mjs && node tests/roles-browser-test.mjs",
     "test:billing": "node tests/billing-browser-test.mjs",
     "test:approval": "node tests/approval-browser-test.mjs",
     "test:reason": "node tests/reason-notify-test.mjs",
     "test:shifts": "node tests/shifts-browser-test.mjs",
-    "test:lang": "node tests/language-browser-test.mjs"
+    "test:lang": "node tests/language-browser-test.mjs",
+    "test:i18n": "node tests/i18n-tests.js"
   },
   "license": "MIT"
 }

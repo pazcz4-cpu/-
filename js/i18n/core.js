@@ -130,7 +130,7 @@
   /* בדפדפן השפות נטענות בתגי script. ב-Node אין תגים, ולכן נטען כאן
      את המילונים המצורפים כדי ש-t() יעבוד גם בבדיקות ובסקריפטים. */
   if (typeof require === 'function' && typeof module !== 'undefined' && module.exports) {
-    ['en', 'he'].forEach(function (lang) {
+    ['en', 'he', 'es', 'fr', 'ar', 'ru', 'de', 'pt'].forEach(function (lang) {
       try { require('./' + lang + '.js'); } catch (err) { /* שפה שאינה מצורפת */ }
     });
   }

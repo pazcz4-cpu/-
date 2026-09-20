@@ -1206,7 +1206,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   /* בדפדפן השפות נטענות בתגי script. ב-Node אין תגים, ולכן נטען כאן
      את המילונים המצורפים כדי ש-t() יעבוד גם בבדיקות ובסקריפטים. */
   if (typeof require === 'function' && typeof module !== 'undefined' && module.exports) {
-    ['en', 'he'].forEach(function (lang) {
+    ['en', 'he', 'es', 'fr', 'ar', 'ru', 'de', 'pt'].forEach(function (lang) {
       try { require('./' + lang + '.js'); } catch (err) { /* שפה שאינה מצורפת */ }
     });
   }
@@ -2166,6 +2166,2886 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
         save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
         yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/es.js ===== */
+/* Español */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'es',
+    name: 'Español',
+    dir: 'ltr',
+    locale: 'es-ES',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Planificador de turnos',
+        subtitle: 'Planificación semanal para cada sucursal, con detección de solapamientos y huecos',
+        language: 'Idioma'
+      },
+
+      days: {
+        0: 'Domingo', 1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
+        4: 'Jueves', 5: 'Viernes', 6: 'Sábado'
+      },
+      daysShort: { 0: 'Dom', 1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb' },
+
+      shifts: { morning: 'Mañana', middle: 'Mediodía', evening: 'Tarde', night: 'Noche' },
+
+      seed: {
+        branchCenter: 'Sucursal centro', branchNorth: 'Sucursal norte', branchSouth: 'Sucursal sur',
+        employee: 'Empleado {n}',
+        noteFloater: 'Cubre todas las sucursales', noteStudent: 'Estudiante: sin mañanas'
+      },
+
+      colors: {
+        0: 'Ámbar', 1: 'Verde', 2: 'Azul', 3: 'Morado',
+        4: 'Rosa', 5: 'Turquesa', 6: 'Gris', 7: 'Marrón'
+      },
+
+      tabs: {
+        schedule: 'Horario', constraints: 'Solicitudes', employees: 'Personal',
+        branches: 'Sucursales', users: 'Usuarios', billing: 'Suscripción', settings: 'Ajustes'
+      },
+
+      toolbar: {
+        prevWeek: 'Semana anterior', nextWeek: 'Semana siguiente', thisWeek: 'Esta semana',
+        week: 'Semana {from} – {to}', currentWeek: 'Semana actual',
+        generate: 'Generar horario', clear: 'Vaciar horario',
+        keepManual: 'Mantener las asignaciones manuales',
+        copyText: 'Copiar como texto', excel: 'Excel', csv: 'CSV', print: 'Imprimir',
+        moreTools: 'Más herramientas', closeTools: 'Cerrar herramientas',
+        viewOnly: 'Solo lectura', exitViewOnly: 'Salir de solo lectura',
+        shabbatEnd: 'Fin del Sabbat',
+        byBranch: 'Por sucursal', byEmployee: 'Por empleado',
+        personalExport: 'Exportación personal (solo sus turnos):',
+        choosePerson: 'Elige una persona…',
+        holidays: 'Festivos (todas las sucursales cerradas):'
+      },
+
+      schedule: {
+        branch: 'Sucursal', shift: 'Turno', employee: 'Empleado', totalShifts: 'Turnos en total',
+        empty: '— vacío —', add: '+ añadir', addPerson: '+ añadir persona', notAssigned: '— sin asignar —',
+        closed: 'Cerrado este día', noBranches: 'No hay sucursales activas. Abre la pestaña Sucursales.',
+        required: 'Necesarios: {count}', people: '{count} personas',
+        holidayClosed: 'Todas las sucursales cerradas', dayOff: 'Día libre', holiday: 'Festivo',
+        missingSabbath: 'Falta la hora de fin del Sabbat'
+      },
+
+      status: {
+        synced: 'Sincronizado entre dispositivos', syncedAt: 'Sincronizado entre dispositivos · actualizado {time}',
+        localOnly: 'Guardado solo en este dispositivo', readOnly: 'Solo lectura: sin permiso de edición',
+        remoteUpdate: 'Actualización recibida de otro dispositivo ({time})',
+        localCopy: 'Esta es una copia local: los datos se guardan solo en este navegador y no se sincronizan. ' +
+          'Para trabajar desde dos ordenadores usa la versión alojada. Para mover los datos: exporta el JSON en Ajustes e impórtalo allí.',
+        viewOnlyBanner: 'Solo lectura: el horario se muestra para revisión y la edición está desactivada. ' +
+          'La exportación, la impresión y el cambio de semana siguen funcionando.'
+      },
+
+      levels: { error: 'Error', warning: 'Aviso', info: 'Nota' },
+
+      marks: {
+        dayOff: 'día libre', blocked: 'bloqueado', prefers: 'prefiere',
+        notInBranch: 'no es de esta sucursal', notInShift: 'no hace este turno',
+        alreadyAssigned: 'ya asignado', inactive: 'inactivo'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Solapamiento',
+        'duplicate-employee-slot': 'Solapamiento',
+        'double-booked': 'Dos turnos en un día',
+        understaffed: 'Falta personal',
+        'constraint-off': 'Solicitud incumplida',
+        'constraint-blocked': 'Solicitud incumplida',
+        'branch-mismatch': 'Sucursal incorrecta',
+        'shift-mismatch': 'Tipo de turno incorrecto',
+        'over-max': 'Por encima del límite',
+        rest: 'Descanso corto',
+        'no-shifts': 'Sin turnos',
+        'missing-shabbat-end': 'Falta la hora de fin del Sabbat',
+        'inactive-slot': 'Turno cerrado',
+        'pending-constraints': 'Solicitudes pendientes',
+        'extra-days-off': 'Demasiados días libres',
+        'below-target': 'Por debajo del objetivo'
+      },
+
+      toast: {
+        generated: 'Horario generado: {shifts} sin cubrir',
+        generatedFull: 'Horario generado: todos los turnos están cubiertos',
+        clearWeekConfirm: '¿Vaciar todas las asignaciones de esta semana? Las solicitudes se mantienen.',
+        cleared: 'Horario vaciado',
+        copied: 'Horario copiado al portapapeles',
+        personalCopied: 'Horario personal copiado al portapapeles',
+        viewOnlyOn: 'Solo lectura activado: la edición está desactivada',
+        viewOnlyOff: 'Solo lectura desactivado: ya puedes editar',
+        copyPrompt: 'Copia el texto:',
+        holidayCleared: '{day} vuelve a ser día laborable',
+        holidayPrompt: 'Nombre del festivo del {day} (las sucursales cierran y el día cuenta como libre para todos):',
+        holidayDefault: 'Festivo',
+        holidayHasAssignments: 'Ese día ya hay {count} personas asignadas. ¿Marcarlo como festivo y vaciarlas?',
+        holidayMarked: '{day} marcado como festivo: las sucursales están cerradas',
+        clearConstraintsConfirm: '¿Borrar todas las solicitudes de esta semana?',
+        constraintsCleared: 'Solicitudes borradas',
+        noPreviousConstraints: 'No hay solicitudes en la semana anterior',
+        constraintsCopied: 'Solicitudes copiadas de la semana anterior',
+        requestApproved: 'Solicitud aprobada', requestRejected: 'Solicitud rechazada',
+        updateFailed: 'No se pudo actualizar',
+        deleteShiftConfirm: '¿Eliminar el turno "{name}"?\n\n{usage}',
+        deleteShiftUsed: 'Está configurado en {count} días de sucursal y se borrarán todas sus asignaciones.',
+        deleteShiftUnused: 'No lo usa ninguna sucursal.',
+        shiftDeleted: 'Turno eliminado{removed}',
+        shiftRemovedCount: ' ({count} asignaciones eliminadas)',
+        shiftAdded: 'Turno añadido. Configúralo en Sucursales para que aparezca en el horario.',
+        newShift: 'Turno {n}',
+        applyHoursConfirm: '¿Aplicar el horario predeterminado a las {count} sucursales, de domingo a jueves?\n\n' +
+          'Los días abiertos y el número de personas se mantienen. El viernes y la noche del sábado no cambian.',
+        hoursUpdated: 'Horas actualizadas en {count} turnos',
+        hoursAlready: 'Todos los turnos ya usan estas horas',
+        imported: 'Datos importados',
+        importedCloud: 'Datos importados y subidos a la nube ({count} semanas)',
+        importFailed: 'Archivo no válido: {message}',
+        resetConfirm: '¿Restablecer todos los datos (personal, sucursales, horarios y solicitudes) a los valores por defecto?',
+        reset: 'Datos restablecidos'
+      },
+
+      ui: {
+        until: 'hasta {time}', sheet: 'Hoja {n}',
+        fileSaved: 'Archivo guardado', fileFailed: 'No se pudo guardar el archivo: {message}',
+        unknownError: 'error desconocido', downloadUnavailable: 'Aquí no se pueden descargar archivos',
+        loadFailed: 'No se pudieron cargar los datos; se cargaron los valores por defecto',
+        saveFailed: 'No se pudieron guardar los datos',
+        iconLetters: 'TU',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'falta personal',
+        holidayClosedLine: '{name}: todas las sucursales cerradas',
+        spareLine: '— {verb} {shifts} por asignar —',
+        unknownBranch: 'Sucursal desconocida', unknownEmployee: 'Persona desconocida',
+        weekLabel: 'Semana {from} – {to}', constraintsWeek: 'Solicitudes · {label}',
+        holidayAllClosed: 'Todas las sucursales cerradas: día libre para todos',
+        holidayNoRequests: 'Festivo: no hacen falta solicitudes',
+        branchClosedToday: 'Cerrado este día',
+        noActiveBranches: 'No hay sucursales activas.',
+        noActiveBranchesTab: 'No hay sucursales activas. Abre la pestaña Sucursales.',
+        allClosedOn: 'Todas las sucursales están cerradas el {day}.',
+        branchesClosed: 'Sucursales cerradas',
+        noHours: 'Sin horario',
+        outOf: '{done} de {total}',
+        cloudSaved: 'Los datos se guardan en la nube y se actualizan en todos los ordenadores abiertos con este enlace',
+        deviceSaved: 'Los datos se guardan solo en este navegador',
+        thinking: 'Pensando…',
+        noAnswer: '(no se recibió respuesta)',
+        chatBlocked: 'No tienes permiso para hacer preguntas en esta página.',
+        chatRateLimited: 'Demasiadas preguntas seguidas: inténtalo de nuevo en un momento.',
+        chatFailed: 'No he podido responder ahora mismo',
+        chatSystem: 'Ayudas a un responsable a gestionar un horario de turnos. Responde en {language}, breve y al grano, ' +
+          'y basándote solo en los datos siguientes. Si falta información, dilo en lugar de suponer.',
+        chatDataStart: '=== datos de la semana ===',
+        chatDataEnd: '=== fin de los datos ===',
+        chatQuestion: 'Pregunta: ',
+        summaryShabbat: 'Fin del Sabbat: {time}',
+        summaryHolidays: 'Festivos cerrados: {days}', summaryNoHolidays: 'Esta semana no hay festivos.',
+        summaryRules: 'Reglas de planificación:',
+        ruleOnePerDayOn: 'Cada persona trabaja como máximo un turno al día.',
+        ruleOnePerDayOff: 'Una persona puede hacer varios turnos al día.',
+        ruleRestOn: 'Sin turno de mañana después de un turno de tarde el día anterior.',
+        ruleRestOff: 'Sin descanso obligatorio entre un turno de tarde y uno de mañana.',
+        summaryBranches: 'Sucursales:', summaryEmployees: 'Personal:',
+        summaryCurrent: 'Horario actual:', summaryAvailability: 'Disponibilidad restante:',
+        summaryIssues: 'Avisos del horario:', summaryNoIssues: 'Sin avisos: el horario es válido.',
+        closedAllWeek: 'cerrado toda la semana', allBranches: 'todas las sucursales',
+        peopleCount: '{count} personas',
+        empBranches: 'sucursales', empShifts: 'turnos', empMax: 'máximo {count} por semana',
+        empAskedOff: 'pidió libre', empBlocked: 'bloqueó', empNote: 'nota',
+        empAssignedOf: '{name}: asignado {total} de una cuota de {max}',
+        empFreeDays: 'días libres: {days}', none: 'ninguno',
+        fileName: 'horario', personalFileName: 'horario-{name}',
+        greeting: 'Hola {name}, este es tu horario:',
+        shortTitle: 'Turnos'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · turno de {shift}',
+        deletedEmployee: '(persona eliminada: {id})',
+        deletedBranch: '(sucursal eliminada)',
+        errorsOne: 'Un error', errorsOther: '{count} errores',
+        warningsOne: 'Un aviso', warningsOther: '{count} avisos',
+        infosOne: 'Una nota', infosOther: '{count} notas',
+        allGood: '✔ El horario es válido: sin solapamientos, huecos ni solicitudes incumplidas',
+        showAll: 'Ver los {count} avisos', showLess: 'Ocultar los avisos',
+        duplicate: 'Solapamiento: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
+        duplicateSelf: 'Solapamiento: {name} está asignado dos veces al mismo turno – {label}.',
+        doubleBooked: 'Solapamiento: {name} tiene {count} turnos el {day}{where} ({detail}).',
+        sameBranch: ' en la misma sucursal', differentBranches: ' en sucursales distintas',
+        understaffed: 'Falta personal: {label} – {assigned} de {need} asignados.',
+        reasonBusy: '{names} ya tienen otro turno ese día',
+        reasonMaxed: '{names} han llegado a su límite semanal de turnos',
+        reasonResting: '{names} necesitan descanso entre un turno de tarde y uno de mañana',
+        reasonNone: 'Nadie está configurado a la vez para esta sucursal y este turno, o todos lo han bloqueado.',
+        reasonFree: 'Hay personas libres ({names}): prueba a generar el horario otra vez.',
+        reasonPrefix: 'Motivo: ',
+        suggestTwoPerDay: ' Puedes permitir dos turnos al día por persona en Ajustes.',
+        suggestRaiseMax: ' Puedes subir el límite semanal en la ficha del empleado.',
+        constraintOff: 'Solicitud incumplida: {name} pidió libre el {day} pero está asignado a {shift} en {branch}.',
+        constraintBlocked: 'Solicitud incumplida: {name} bloqueó {shift} el {day} pero está asignado a ese turno en {branch}.',
+        branchMismatch: '{name} está asignado a {branch} el {day} aunque esa sucursal no está en su ficha.',
+        shiftMismatch: '{name} está asignado a {shift} el {day} aunque ese tipo de turno no está en su ficha.',
+        overMax: 'Por encima del límite: {name} tiene {total} turnos (máximo {max}).',
+        noShifts: '{name} no tiene turnos esta semana.',
+        rest: 'Descanso corto: {name} termina una tarde el {previous} y empieza una mañana el {day}.',
+        holidayAssignment: 'Asignación en festivo: {day} ({name}) está marcado como cerrado, pero hay asignados: {names}.',
+        inactiveSlot: 'Asignación a un turno que no está abierto: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'No hay hora de fin del Sabbat para esta semana: no se puede calcular el inicio de los turnos de la noche del sábado.',
+        pendingOne: 'Hay una solicitud pendiente de aprobación: {name} ({day}). Hasta que se apruebe no afecta al horario.',
+        pendingOther: 'Hay {count} solicitudes pendientes de aprobación: {names}. Hasta que se aprueben no afectan al horario.',
+        extraDaysOff: '{name} ha pedido {count} días libres ({days}): la política permite un día libre por semana.',
+        belowTarget: '{name} pidió libre el {day} y tiene {total} de {expected} turnos posibles: aún le quedan días libres.'
+      },
+
+      availability: {
+        title: 'Qué queda disponible',
+        none: 'No queda disponibilidad – {reason}',
+        reasonMaxed: 'todos han llegado a su límite semanal de turnos.',
+        reasonNoDays: 'quienes tienen cuota libre no tienen ningún día libre con sus sucursales abiertas.',
+        totalOne: '{verb} un turno más por asignar, entre {people}:',
+        totalOther: '{verb} {count} turnos más por asignar, entre {people}:',
+        peopleOne: 'una persona', peopleOther: '{count} personas',
+        left: '{verb} {shifts} de cuota · libre el {days}',
+        leftNoDays: '{verb} {shifts} de cuota, pero no hay ningún día libre esta semana',
+        full: 'cuota completa ({assigned} de {max})',
+        noEmployees: 'No hay personal activo.',
+        shiftsOne: 'un turno', shiftsOther: '{count} turnos',
+        remains: 'queda', remainPlural: 'quedan'
+      },
+
+      constraints: {
+        title: 'Solicitudes de {week}',
+        clear: 'Borrar esta semana', copyPrevious: 'Copiar de la semana anterior',
+        legend: 'Pulsa un turno para alternar: {free} → {preferred} → {blocked}. «Día libre» bloquea todo el día.',
+        free: 'Disponible', preferred: 'Prefiere', blocked: 'No puede', dayOff: 'Día libre',
+        pendingTitle: 'Solicitudes pendientes de tu aprobación ({count})',
+        pendingHint: 'Una solicitud sin aprobar no afecta al horario.',
+        approve: 'Aprobar', reject: 'Rechazar',
+        approved: 'Aprobada', rejected: 'Rechazada', pending: 'Pendiente de aprobación',
+        requestLabel: 'Solicitud: {detail}', requestRejected: 'Solicitud rechazada',
+        reason: 'Motivo (opcional)',
+        reasonPlaceholder: 'p. ej. boda, examen, cita médica',
+        reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
+        managerNote: 'Nota del responsable: {text}',
+        needsApproval: 'Cada solicitud pasa por tu responsable y solo afecta al horario una vez aprobada.',
+        noChange: 'Sin cambios'
+      },
+
+      employees: {
+        title: 'Personal', add: '+ Añadir persona', active: 'Activo',
+        branchesLabel: 'Sucursales (sin selección = todas)',
+        shiftTypes: 'Tipos de turno que puede hacer',
+        maxShifts: 'Máximo de turnos por semana', note: 'Nota',
+        deleteConfirm: '¿Eliminar a {name}? Sus asignaciones se quitarán de todas las semanas.',
+        inactive: '(inactivo)', newName: 'Persona nueva'
+      },
+
+      branches: {
+        title: 'Sucursales', add: '+ Añadir sucursal', active: 'Activa', newName: 'Sucursal nueva',
+        hint: 'Cada sucursal tiene sus propios días, horas y número de personas por turno. ' +
+          'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como solapamiento.',
+        peopleLabel: 'Personas', closed: 'Cerrado', day: 'Día',
+        copyFrom: 'Copiar días y horas de otra sucursal', chooseBranch: 'Elige una sucursal…',
+        copyConfirm: '¿Copiar los días y las horas de {from} a {to}?',
+        copied: 'Días y horas copiados',
+        deleteConfirm: '¿Eliminar {name}? Sus asignaciones se quitarán de todas las semanas.',
+        autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
+      },
+
+      settings: {
+        rules: 'Reglas de planificación',
+        onePerDay: 'Cada persona trabaja como máximo un turno al día',
+        rest: 'Sin turno de mañana después de un turno de tarde el día anterior',
+        oneDayOff: 'El día marcado como libre en Solicitudes es el único día libre de la semana',
+        shiftTypes: 'Tipos de turno',
+        addShift: '+ Añadir turno', applyHours: 'Aplicar las horas a todas las sucursales (lun–vie)',
+        shiftsHint: 'Define cuántos turnos tiene tu negocio, cómo se llaman, sus horas, color y orden. ' +
+          'Las horas de aquí son las predeterminadas; cada sucursal puede cambiarlas. ' +
+          'El botón actualiza las sucursales existentes sin tocar los días abiertos ni el número de personas.',
+        shiftNamePlaceholder: 'Nombre del turno',
+        sabbathTitle: 'Noche del sábado',
+        sabbathDefault: 'Hora de fin del Sabbat por defecto para una semana nueva:',
+        sabbathHint: 'Cada semana puedes ajustar la hora real en la parte superior de la pestaña Horario. ' +
+          'Los turnos de la noche del sábado empiezan media hora después.',
+        backup: 'Copia de seguridad',
+        exportJson: 'Exportar todos los datos (JSON)', importJson: 'Importar datos',
+        reset: 'Restablecer valores por defecto',
+        backupHint: 'Los datos se guardan automáticamente en este navegador. Para moverlos entre ordenadores, exporta un archivo JSON.',
+        languageTitle: 'Idioma', languageHint: 'Cambia toda la interfaz. Se guarda en este dispositivo.'
+      },
+
+      server: {
+        credentialsRequired: 'Hacen falta el correo y la contraseña',
+        passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+        emailTaken: 'Ese correo ya está registrado',
+        companyRequired: 'Hace falta un nombre de empresa',
+        badCredentials: 'Correo o contraseña incorrectos',
+        userInactive: 'Este usuario no está activo. Contacta con el responsable de la empresa.',
+        signInRequired: 'Inicia sesión',
+        noPermission: 'No tienes permiso para hacer eso',
+        notLinked: 'Este usuario no está vinculado a una ficha de empleado',
+        weekPublished: 'El horario de esta semana ya está publicado, así que las solicitudes ya no se pueden cambiar',
+        weekPublishedShort: 'El horario de esta semana ya está publicado',
+        noRequest: 'No hay ninguna solicitud para ese día',
+        badDecision: 'Decisión no válida',
+        requestNotFound: 'Solicitud no encontrada',
+        weekMissing: 'Esa semana no existe',
+        userNotFound: 'Usuario no encontrado',
+        cannotChangeOwner: 'El propietario de la cuenta no se puede cambiar'
+      },
+
+      notify: {
+        published: 'Horario publicado',
+        publishedBody: 'El horario de la nueva semana ya está listo. Puedes ver tus turnos.',
+        requestApproved: 'Tu solicitud ha sido aprobada',
+        requestApprovedBody: 'Tu solicitud para el {day} ha sido aprobada.',
+        requestRejected: 'Tu solicitud ha sido rechazada',
+        requestRejectedBody: 'Tu solicitud para el {day} ha sido rechazada',
+        newRequest: 'Nueva solicitud',
+        newRequestBody: 'Alguien ha enviado una solicitud pendiente de tu aprobación.',
+        newRequestsBody: 'Hay {count} solicitudes nuevas pendientes de tu aprobación.'
+      },
+
+      payments: {
+        mockProvider: 'Proveedor de prueba (desarrollo)',
+        mockNote: 'El pago se aprueba al instante sin cargo real. Solo para desarrollo y demostraciones.',
+        unknownPlan: 'Plan desconocido',
+        serverProvider: 'Cobro por servidor ({name})',
+        notConfigured: 'El cobro no está configurado en este entorno',
+        requestFailed: 'La solicitud de cobro ha fallado ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} ILS / mes', priceAmount: '{amount} ILS',
+        updateFailed: 'No se pudo actualizar', cancelFailed: 'No se pudo cancelar',
+        title: 'Tu suscripción', status: 'Estado', plan: 'Plan', validUntil: 'Válida hasta',
+        activeStaff: 'Personal activo', of: '{count} de {max}', unlimited: '{count} (sin límite)',
+        plans: 'Planes', choose: 'Elegir', currentPlan: 'Plan actual',
+        tooSmall: 'Demasiado pequeño para {count} empleados', cancel: 'Cancelar suscripción',
+        cancelConfirm: '¿Cancelar la suscripción? El acceso termina al acabar el periodo pagado.',
+        planUpdated: 'Plan actualizado', canceled: 'Suscripción cancelada',
+        ownerOnly: 'Solo el propietario de la cuenta puede cambiar la suscripción.',
+        perMonth: 'al mes',
+        statusTrial: 'Prueba', statusActive: 'Activa', statusPastDue: 'Pago fallido',
+        statusCanceled: 'Cancelada', statusExpired: 'Caducada'
+      },
+
+      auth: {
+        wait: 'Un momento…',
+        notifyEnabled: 'Notificaciones activadas',
+        notifyBody: 'Te avisaremos de los cambios en el horario.',
+        signIn: 'Iniciar sesión', signUp: 'Crear cuenta de empresa',
+        email: 'Correo', password: 'Contraseña', name: 'Tu nombre', companyName: 'Nombre de la empresa',
+        passwordHint: 'Al menos 6 caracteres',
+        enter: 'Entrar', create: 'Crear cuenta', signingIn: 'Entrando…', creating: 'Creando…',
+        trialNote: '{days} días gratis. No hace falta método de pago.',
+        signOut: 'Salir', blocked: 'Acceso bloqueado',
+        blockedOwner: 'Contacta con soporte para activar la suscripción.',
+        blockedMember: 'Pide al propietario de la cuenta que renueve la suscripción.',
+        enableNotifications: 'Activar notificaciones',
+        failedSignIn: 'No se pudo iniciar sesión', failedSignUp: 'No se pudo crear la cuenta'
+      },
+
+      users: {
+        nameColumn: 'Nombre', emailColumn: 'Correo', createFailed: 'No se pudo crear el usuario',
+        title: 'Usuarios',
+        hint: 'Cada persona puede tener su propio acceso. Solo ve sus turnos y envía sus solicitudes: ' +
+          'no ve el horario completo ni puede cambiar nada. Los responsables lo ven y lo editan todo. ' +
+          'Vincula un usuario a una ficha de empleado para que vea sus turnos.',
+        add: 'Añadir usuario', createUser: 'Crear usuario',
+        role: 'Rol', staffCard: 'Ficha de empleado', none: 'Ninguna', noLink: 'Sin vincular',
+        initialPassword: 'Contraseña inicial', activeColumn: 'Activo',
+        created: 'Usuario creado para {email}', updated: 'Guardado', updateFailed: 'No se pudo actualizar'
+      },
+
+      access: {
+        noCompany: 'No se ha encontrado la empresa',
+        trialEnded: 'La prueba ha terminado. Activa una suscripción para continuar.',
+        trial: 'Prueba: quedan {days} días.',
+        expired: 'La suscripción ha caducado. Renuévala para continuar.',
+        pastDueBlocked: 'No se ha recibido el pago y el acceso está bloqueado. Actualiza el método de pago.',
+        pastDue: 'El último pago no se ha completado. El acceso se bloqueará en {days} días.',
+        expiredKept: 'La suscripción caducó y no se renovó. Al elegir un plan se recupera el acceso al instante, y tus datos están a salvo.',
+        canceled: 'La suscripción se canceló. Puedes renovarla cuando quieras: tus datos están a salvo.',
+        inactive: 'La suscripción no está activa.',
+        overLimit: 'El plan {plan} cubre hasta {max} empleados. Tienes {count}: hace falta el plan {suggested} ({range}, {price}).'
+      },
+
+      plans: {
+        starter: 'Pequeño', growth: 'Mediano', business: 'Grande',
+        upTo: 'Hasta {count} empleados',
+        between: 'De {from} a {to} empleados',
+        from: '{count} empleados o más'
+      },
+
+      roles: { owner: 'Propietario', manager: 'Responsable', employee: 'Empleado' },
+
+      employee: {
+        prevWeek: '◀ Semana anterior', nextWeek: 'Semana siguiente ▶',
+        loadFailed: 'No se pudieron cargar los datos: {message}',
+        saveFailed: 'No se pudo guardar', reasonSaveFailed: 'No se pudo guardar el motivo',
+        myShifts: 'Mis turnos', myRequests: 'Mis solicitudes',
+        notPublished: 'El horario de esta semana todavía no se ha publicado.',
+        noShifts: 'No tienes turnos esta semana.',
+        totalWeek: '{count} turnos esta semana.',
+        publishedLocked: 'El horario está publicado: ya no se pueden cambiar las solicitudes de esta semana.',
+        notLinked: 'Tu usuario aún no está vinculado a una ficha de empleado. Habla con tu responsable.',
+        noShiftsToday: 'No hay turnos este día', holidayNoWork: 'Festivo: no se trabaja'
+      },
+
+      chat: {
+        title: 'Preguntas sobre este horario',
+        hint: 'Pregunta sobre la semana en pantalla, por ejemplo «¿quién trabaja el martes por la tarde?», ' +
+          '«¿por qué Empleado 3 no está el jueves?» o «¿quién puede cubrir a Empleado 5 el miércoles?»',
+        placeholder: 'Pregunta sobre el horario…', send: 'Enviar'
+      },
+
+      excel: {
+        availabilityNone: 'No queda nada: esta semana no se pueden asignar más turnos',
+        availabilityLeft: '{verb} {shifts} por asignar',
+        spare: 'Cuota restante', required: 'Necesarios',
+        valid: 'Válido', checksTitle: 'Comprobaciones del horario',
+        personalText: 'Texto para WhatsApp',
+        byBranch: 'Por sucursal', byEmployee: 'Por empleado', availability: 'Disponibilidad',
+        checks: 'Comprobaciones', personal: 'Mi horario',
+        title: 'Horario de trabajo – semana del {from} al {to}',
+        viewBranch: 'Por sucursal', viewEmployee: 'Por empleado',
+        sabbathEnds: 'Fin del Sabbat {time}',
+        day: 'Día', date: 'Fecha', branch: 'Sucursal', shift: 'Turno', hours: 'Horas',
+        staff: 'Empleado', assigned: 'Asignados', quota: 'Cuota', left: 'Cuota restante',
+        canAssign: 'Se puede asignar', freeDays: 'Días libres', totalShifts: 'Turnos en total',
+        severity: 'Gravedad', type: 'Tipo', detail: 'Detalle',
+        missing: '— falta —', closed: 'Cerrado', notAssigned: 'Sin asignar',
+        personalTitle: 'Horario personal – {name}', totalWeek: '{count} turnos esta semana',
+        noIssues: 'Sin solapamientos, huecos ni solicitudes incumplidas'
+      },
+
+      errors: {
+        invalidTime: 'Hora no válida: usa el formato de 24 horas, por ejemplo 09:30',
+        emptyShiftName: 'El nombre del turno no puede estar vacío',
+        lastShift: 'Debe quedar al menos un turno',
+        notSaved: 'No se pudo guardar', copied: 'Copiado al portapapeles',
+        viewOnlyBlocked: 'Solo lectura: la edición está desactivada. Puedes desactivarlo arriba en la pantalla.',
+        duplicatePerson: 'La misma persona no puede aparecer dos veces en un turno',
+        printBlocked: 'Aquí no se puede imprimir: usa «Copiar como texto» o la exportación a Excel',
+        chooseEmployee: 'Elige una persona para la exportación personal'
+      },
+
+      common: {
+        moveUp: 'Subir', moveDown: 'Bajar', timePlaceholder: 'hh:mm',
+        save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Cerrar',
+        yes: 'Sí', no: 'No', all: 'Todo', and: 'y', more: 'y {count} más'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/fr.js ===== */
+/* Français */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'fr',
+    name: 'Français',
+    dir: 'ltr',
+    locale: 'fr-FR',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Planificateur de services',
+        subtitle: 'Planning hebdomadaire par succursale, avec détection des doublons et des manques',
+        language: 'Langue'
+      },
+
+      days: {
+        0: 'Dimanche', 1: 'Lundi', 2: 'Mardi', 3: 'Mercredi',
+        4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi'
+      },
+      daysShort: { 0: 'Dim', 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam' },
+
+      shifts: { morning: 'Matin', middle: 'Midi', evening: 'Soir', night: 'Nuit' },
+
+      seed: {
+        branchCenter: 'Succursale centre', branchNorth: 'Succursale nord', branchSouth: 'Succursale sud',
+        employee: 'Employé {n}',
+        noteFloater: 'Remplace dans toutes les succursales', noteStudent: 'Étudiant – pas de matins'
+      },
+
+      colors: {
+        0: 'Ambre', 1: 'Vert', 2: 'Bleu', 3: 'Violet',
+        4: 'Rose', 5: 'Turquoise', 6: 'Gris', 7: 'Marron'
+      },
+
+      tabs: {
+        schedule: 'Planning', constraints: 'Demandes', employees: 'Personnel',
+        branches: 'Succursales', users: 'Utilisateurs', billing: 'Abonnement', settings: 'Réglages'
+      },
+
+      toolbar: {
+        prevWeek: 'Semaine précédente', nextWeek: 'Semaine suivante', thisWeek: 'Cette semaine',
+        week: 'Semaine {from} – {to}', currentWeek: 'Semaine en cours',
+        generate: 'Générer le planning', clear: 'Vider le planning',
+        keepManual: 'Conserver les affectations manuelles',
+        copyText: 'Copier en texte', excel: 'Excel', csv: 'CSV', print: 'Imprimer',
+        moreTools: 'Plus d’outils', closeTools: 'Fermer les outils',
+        viewOnly: 'Lecture seule', exitViewOnly: 'Quitter la lecture seule',
+        shabbatEnd: 'Fin du chabbat',
+        byBranch: 'Par succursale', byEmployee: 'Par employé',
+        personalExport: 'Export personnel (uniquement ses services) :',
+        choosePerson: 'Choisir une personne…',
+        holidays: 'Jours fériés (toutes les succursales fermées) :'
+      },
+
+      schedule: {
+        branch: 'Succursale', shift: 'Service', employee: 'Employé', totalShifts: 'Total des services',
+        empty: '— vide —', add: '+ ajouter', addPerson: '+ ajouter une personne', notAssigned: '— non affecté —',
+        closed: 'Fermé ce jour-là', noBranches: 'Aucune succursale active. Ouvrez l’onglet Succursales.',
+        required: 'Requis : {count}', people: '{count} personnes',
+        holidayClosed: 'Toutes les succursales fermées', dayOff: 'Jour de repos', holiday: 'Jour férié',
+        missingSabbath: 'Heure de fin du chabbat manquante'
+      },
+
+      status: {
+        synced: 'Synchronisé entre les appareils', syncedAt: 'Synchronisé entre les appareils · mis à jour à {time}',
+        localOnly: 'Enregistré sur cet appareil uniquement', readOnly: 'Lecture seule – aucun droit de modification',
+        remoteUpdate: 'Mise à jour reçue d’un autre appareil ({time})',
+        localCopy: 'Ceci est une copie locale : les données sont stockées uniquement dans ce navigateur et ne se synchronisent pas. ' +
+          'Pour travailler depuis deux ordinateurs, utilisez la version hébergée. Pour transférer les données : exportez le JSON dans les Réglages, puis importez-le là-bas.',
+        viewOnlyBanner: 'Lecture seule : le planning est affiché pour vérification et la modification est désactivée. ' +
+          'L’export, l’impression et le changement de semaine fonctionnent normalement.'
+      },
+
+      levels: { error: 'Erreur', warning: 'Avertissement', info: 'Remarque' },
+
+      marks: {
+        dayOff: 'jour de repos', blocked: 'bloqué', prefers: 'préfère',
+        notInBranch: 'pas dans cette succursale', notInShift: 'pas sur ce service',
+        alreadyAssigned: 'déjà affecté', inactive: 'inactif'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Doublon',
+        'duplicate-employee-slot': 'Doublon',
+        'double-booked': 'Deux services dans la journée',
+        understaffed: 'Effectif insuffisant',
+        'constraint-off': 'Demande non respectée',
+        'constraint-blocked': 'Demande non respectée',
+        'branch-mismatch': 'Mauvaise succursale',
+        'shift-mismatch': 'Mauvais type de service',
+        'over-max': 'Au-dessus du quota',
+        rest: 'Repos trop court',
+        'no-shifts': 'Aucun service',
+        'missing-shabbat-end': 'Heure de fin du chabbat manquante',
+        'inactive-slot': 'Service non ouvert',
+        'pending-constraints': 'Demandes en attente',
+        'extra-days-off': 'Trop de jours de repos',
+        'below-target': 'En dessous de l’objectif'
+      },
+
+      toast: {
+        generated: 'Planning généré – {shifts} encore non pourvus',
+        generatedFull: 'Planning généré – tous les services sont pourvus',
+        clearWeekConfirm: 'Vider toutes les affectations de cette semaine ? Les demandes sont conservées.',
+        cleared: 'Planning vidé',
+        copied: 'Planning copié dans le presse-papiers',
+        personalCopied: 'Planning personnel copié dans le presse-papiers',
+        viewOnlyOn: 'Lecture seule activée – la modification est désactivée',
+        viewOnlyOff: 'Lecture seule désactivée – vous pouvez modifier',
+        copyPrompt: 'Copiez le texte :',
+        holidayCleared: '{day} redevient un jour travaillé',
+        holidayPrompt: 'Nom du jour férié du {day} (les succursales ferment et la journée compte comme repos pour tous) :',
+        holidayDefault: 'Jour férié',
+        holidayHasAssignments: '{count} personnes sont déjà affectées ce jour-là. Le marquer comme férié et les retirer ?',
+        holidayMarked: '{day} est marqué comme férié – les succursales sont fermées',
+        clearConstraintsConfirm: 'Effacer toutes les demandes de cette semaine ?',
+        constraintsCleared: 'Demandes effacées',
+        noPreviousConstraints: 'Aucune demande la semaine précédente',
+        constraintsCopied: 'Demandes copiées depuis la semaine précédente',
+        requestApproved: 'Demande approuvée', requestRejected: 'Demande refusée',
+        updateFailed: 'Échec de la mise à jour',
+        deleteShiftConfirm: 'Supprimer le service « {name} » ?\n\n{usage}',
+        deleteShiftUsed: 'Il est configuré sur {count} jours de succursale, et toutes ses affectations seront supprimées.',
+        deleteShiftUnused: 'Il n’est utilisé par aucune succursale.',
+        shiftDeleted: 'Service supprimé{removed}',
+        shiftRemovedCount: ' ({count} affectations supprimées)',
+        shiftAdded: 'Service ajouté. Configurez-le dans Succursales pour qu’il apparaisse au planning.',
+        newShift: 'Service {n}',
+        applyHoursConfirm: 'Appliquer les horaires par défaut aux {count} succursales, du dimanche au jeudi ?\n\n' +
+          'Les jours ouverts et les effectifs restent inchangés. Le vendredi et le samedi soir ne changent pas.',
+        hoursUpdated: 'Horaires mis à jour sur {count} services',
+        hoursAlready: 'Tous les services utilisent déjà ces horaires',
+        imported: 'Données importées',
+        importedCloud: 'Données importées et envoyées vers le cloud ({count} semaines)',
+        importFailed: 'Fichier invalide : {message}',
+        resetConfirm: 'Réinitialiser toutes les données (personnel, succursales, plannings et demandes) aux valeurs par défaut ?',
+        reset: 'Données réinitialisées'
+      },
+
+      ui: {
+        until: 'jusqu’à {time}', sheet: 'Feuille {n}',
+        fileSaved: 'Fichier enregistré', fileFailed: 'Impossible d’enregistrer le fichier : {message}',
+        unknownError: 'erreur inconnue', downloadUnavailable: 'Le téléchargement de fichiers n’est pas possible ici',
+        loadFailed: 'Échec du chargement des données, valeurs par défaut chargées',
+        saveFailed: 'Échec de l’enregistrement des données',
+        iconLetters: 'PL',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'effectif insuffisant',
+        holidayClosedLine: '{name} – toutes les succursales fermées',
+        spareLine: '— {verb} {shifts} encore à affecter —',
+        unknownBranch: 'Succursale inconnue', unknownEmployee: 'Personne inconnue',
+        weekLabel: 'Semaine {from} – {to}', constraintsWeek: 'Demandes · {label}',
+        holidayAllClosed: 'Toutes les succursales fermées – jour de repos pour tous',
+        holidayNoRequests: 'Jour férié – aucune demande nécessaire',
+        branchClosedToday: 'Fermé ce jour-là',
+        noActiveBranches: 'Aucune succursale active.',
+        noActiveBranchesTab: 'Aucune succursale active. Ouvrez l’onglet Succursales.',
+        allClosedOn: 'Toutes les succursales sont fermées le {day}.',
+        branchesClosed: 'Succursales fermées',
+        noHours: 'Pas d’horaire',
+        outOf: '{done} sur {total}',
+        cloudSaved: 'Les données sont enregistrées dans le cloud et mises à jour sur tous les ordinateurs ouverts sur ce lien',
+        deviceSaved: 'Les données sont enregistrées uniquement dans ce navigateur',
+        thinking: 'Réflexion…',
+        noAnswer: '(aucune réponse reçue)',
+        chatBlocked: 'Vous n’êtes pas autorisé à poser des questions sur cette page.',
+        chatRateLimited: 'Trop de questions d’affilée – réessayez dans un instant.',
+        chatFailed: 'Je n’ai pas pu répondre pour le moment',
+        chatSystem: 'Vous aidez un responsable à gérer un planning de services. Répondez en {language}, de façon brève et précise, ' +
+          'en vous appuyant uniquement sur les données ci-dessous. S’il manque une information, dites-le au lieu de deviner.',
+        chatDataStart: '=== données de la semaine ===',
+        chatDataEnd: '=== fin des données ===',
+        chatQuestion: 'Question : ',
+        summaryShabbat: 'Fin du chabbat : {time}',
+        summaryHolidays: 'Jours fériés fermés : {days}', summaryNoHolidays: 'Aucun jour férié cette semaine.',
+        summaryRules: 'Règles de planification :',
+        ruleOnePerDayOn: 'Une personne travaille au plus un service par jour.',
+        ruleOnePerDayOff: 'Une personne peut faire plusieurs services par jour.',
+        ruleRestOn: 'Pas de service du matin après un service du soir la veille.',
+        ruleRestOff: 'Aucun repos obligatoire entre un service du soir et un service du matin.',
+        summaryBranches: 'Succursales :', summaryEmployees: 'Personnel :',
+        summaryCurrent: 'Planning actuel :', summaryAvailability: 'Disponibilité restante :',
+        summaryIssues: 'Alertes du planning :', summaryNoIssues: 'Aucune alerte – le planning est valide.',
+        closedAllWeek: 'fermé toute la semaine', allBranches: 'toutes les succursales',
+        peopleCount: '{count} personnes',
+        empBranches: 'succursales', empShifts: 'services', empMax: 'maximum {count} par semaine',
+        empAskedOff: 'a demandé un repos', empBlocked: 'a bloqué', empNote: 'note',
+        empAssignedOf: '{name} : affecté {total} sur un quota de {max}',
+        empFreeDays: 'jours libres : {days}', none: 'aucun',
+        fileName: 'planning', personalFileName: 'planning-{name}',
+        greeting: 'Bonjour {name}, voici votre planning :',
+        shortTitle: 'Services'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · service {shift}',
+        deletedEmployee: '(personne supprimée : {id})',
+        deletedBranch: '(succursale supprimée)',
+        errorsOne: 'Une erreur', errorsOther: '{count} erreurs',
+        warningsOne: 'Un avertissement', warningsOther: '{count} avertissements',
+        infosOne: 'Une remarque', infosOther: '{count} remarques',
+        allGood: '✔ Le planning est valide – aucun doublon, manque ou demande non respectée',
+        showAll: 'Afficher les {count} alertes', showLess: 'Masquer les alertes',
+        duplicate: 'Doublon : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
+        duplicateSelf: 'Doublon : {name} est affecté deux fois au même service – {label}.',
+        doubleBooked: 'Doublon : {name} a {count} services le {day}{where} ({detail}).',
+        sameBranch: ' dans la même succursale', differentBranches: ' dans des succursales différentes',
+        understaffed: 'Effectif insuffisant : {label} – {assigned} sur {need} affectés.',
+        reasonBusy: '{names} sont déjà affectés à un autre service ce jour-là',
+        reasonMaxed: '{names} ont atteint leur quota hebdomadaire de services',
+        reasonResting: '{names} ont besoin de repos entre un service du soir et un service du matin',
+        reasonNone: 'Personne n’est configuré à la fois pour cette succursale et ce service, ou tout le monde l’a bloqué.',
+        reasonFree: 'Des personnes sont disponibles ({names}) – essayez de regénérer le planning.',
+        reasonPrefix: 'Motif : ',
+        suggestTwoPerDay: ' Vous pouvez autoriser deux services par jour et par personne dans les Réglages.',
+        suggestRaiseMax: ' Vous pouvez augmenter le quota hebdomadaire sur la fiche de l’employé.',
+        constraintOff: 'Demande non respectée : {name} a demandé le {day} en repos mais est affecté au service {shift} à {branch}.',
+        constraintBlocked: 'Demande non respectée : {name} a bloqué le service {shift} le {day} mais y est affecté à {branch}.',
+        branchMismatch: '{name} est affecté à {branch} le {day} alors que cette succursale n’est pas sur sa fiche.',
+        shiftMismatch: '{name} est affecté au service {shift} le {day} alors que ce type de service n’est pas sur sa fiche.',
+        overMax: 'Au-dessus du quota : {name} a {total} services (maximum {max}).',
+        noShifts: '{name} n’a aucun service cette semaine.',
+        rest: 'Repos trop court : {name} termine un soir le {previous} et commence un matin le {day}.',
+        holidayAssignment: 'Affectation un jour férié : {day} ({name}) est marqué fermé, mais {names} y sont affectés.',
+        inactiveSlot: 'Affectation à un service non ouvert : {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'Aucune heure de fin du chabbat pour cette semaine – impossible de calculer le début des services du samedi soir.',
+        pendingOne: 'Une demande attend votre approbation : {name} ({day}). Tant qu’elle n’est pas approuvée, elle n’affecte pas le planning.',
+        pendingOther: '{count} demandes attendent votre approbation : {names}. Tant qu’elles ne sont pas approuvées, elles n’affectent pas le planning.',
+        extraDaysOff: '{name} a demandé {count} jours de repos ({days}) – la règle autorise un jour de repos par semaine.',
+        belowTarget: '{name} a demandé le {day} en repos et a {total} services sur {expected} possibles – il lui reste des jours libres.'
+      },
+
+      availability: {
+        title: 'Ce qui reste disponible',
+        none: 'Plus rien de disponible – {reason}',
+        reasonMaxed: 'tout le monde a atteint son quota hebdomadaire de services.',
+        reasonNoDays: 'ceux qui ont encore du quota n’ont aucun jour libre où leurs succursales sont ouvertes.',
+        totalOne: '{verb} un service de plus à affecter, chez {people} :',
+        totalOther: '{verb} {count} services de plus à affecter, chez {people} :',
+        peopleOne: 'une personne', peopleOther: '{count} personnes',
+        left: '{verb} {shifts} de quota · disponible le {days}',
+        leftNoDays: '{verb} {shifts} de quota, mais aucun jour libre cette semaine',
+        full: 'quota entièrement utilisé ({assigned} sur {max})',
+        noEmployees: 'Aucun membre du personnel actif.',
+        shiftsOne: 'un service', shiftsOther: '{count} services',
+        remains: 'il reste', remainPlural: 'il reste'
+      },
+
+      constraints: {
+        title: 'Demandes pour {week}',
+        clear: 'Effacer cette semaine', copyPrevious: 'Copier depuis la semaine précédente',
+        legend: 'Appuyez sur un service pour alterner : {free} → {preferred} → {blocked}. « Jour de repos » bloque toute la journée.',
+        free: 'Disponible', preferred: 'Préfère', blocked: 'Ne peut pas', dayOff: 'Jour de repos',
+        pendingTitle: 'Demandes en attente de votre approbation ({count})',
+        pendingHint: 'Une demande non approuvée n’affecte pas le planning.',
+        approve: 'Approuver', reject: 'Refuser',
+        approved: 'Approuvée', rejected: 'Refusée', pending: 'En attente d’approbation',
+        requestLabel: 'Demande : {detail}', requestRejected: 'Demande refusée',
+        reason: 'Motif (facultatif)',
+        reasonPlaceholder: 'ex. mariage, examen, rendez-vous médical',
+        reasonSaved: 'Motif enregistré', reasonGiven: 'Motif indiqué : {text}',
+        managerNote: 'Note du responsable : {text}',
+        needsApproval: 'Chaque demande passe par votre responsable et n’affecte le planning qu’une fois approuvée.',
+        noChange: 'Aucun changement'
+      },
+
+      employees: {
+        title: 'Personnel', add: '+ Ajouter une personne', active: 'Actif',
+        branchesLabel: 'Succursales (aucune sélection = toutes)',
+        shiftTypes: 'Types de service possibles',
+        maxShifts: 'Maximum de services par semaine', note: 'Note',
+        deleteConfirm: 'Supprimer {name} ? Ses affectations seront retirées de toutes les semaines.',
+        inactive: '(inactif)', newName: 'Nouvelle personne'
+      },
+
+      branches: {
+        title: 'Succursales', add: '+ Ajouter une succursale', active: 'Active', newName: 'Nouvelle succursale',
+        hint: 'Chaque succursale a ses propres jours, horaires et effectifs par service. ' +
+          'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un doublon.',
+        peopleLabel: 'Personnes', closed: 'Fermé', day: 'Jour',
+        copyFrom: 'Copier les jours et horaires d’une autre succursale', chooseBranch: 'Choisir une succursale…',
+        copyConfirm: 'Copier les jours et horaires de {from} vers {to} ?',
+        copied: 'Jours et horaires copiés',
+        deleteConfirm: 'Supprimer {name} ? Ses affectations seront retirées de toutes les semaines.',
+        autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
+      },
+
+      settings: {
+        rules: 'Règles de planification',
+        onePerDay: 'Une personne travaille au plus un service par jour',
+        rest: 'Pas de service du matin après un service du soir la veille',
+        oneDayOff: 'Le jour marqué en repos dans les Demandes est le seul jour de repos de la semaine',
+        shiftTypes: 'Types de service',
+        addShift: '+ Ajouter un service', applyHours: 'Appliquer les horaires à toutes les succursales (lun–ven)',
+        shiftsHint: 'Définissez combien de services compte votre entreprise, leurs noms, horaires, couleur et ordre. ' +
+          'Les horaires ici sont les valeurs par défaut ; chaque succursale peut les modifier. ' +
+          'Le bouton met à jour les succursales existantes sans toucher aux jours ouverts ni aux effectifs.',
+        shiftNamePlaceholder: 'Nom du service',
+        sabbathTitle: 'Samedi soir',
+        sabbathDefault: 'Heure de fin du chabbat par défaut pour une nouvelle semaine :',
+        sabbathHint: 'Chaque semaine, vous pouvez ajuster l’heure réelle en haut de l’onglet Planning. ' +
+          'Les services du samedi soir commencent une demi-heure plus tard.',
+        backup: 'Sauvegarde et restauration',
+        exportJson: 'Exporter toutes les données (JSON)', importJson: 'Importer des données',
+        reset: 'Réinitialiser aux valeurs par défaut',
+        backupHint: 'Les données sont enregistrées automatiquement dans ce navigateur. Pour les transférer entre ordinateurs, exportez un fichier JSON.',
+        languageTitle: 'Langue', languageHint: 'Change toute l’interface. Enregistré sur cet appareil.'
+      },
+
+      server: {
+        credentialsRequired: 'L’e-mail et le mot de passe sont obligatoires',
+        passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
+        emailTaken: 'Cette adresse e-mail est déjà enregistrée',
+        companyRequired: 'Un nom d’entreprise est obligatoire',
+        badCredentials: 'E-mail ou mot de passe incorrect',
+        userInactive: 'Cet utilisateur n’est pas actif. Contactez le responsable de l’entreprise.',
+        signInRequired: 'Veuillez vous connecter',
+        noPermission: 'Vous n’êtes pas autorisé à faire cela',
+        notLinked: 'Cet utilisateur n’est lié à aucune fiche d’employé',
+        weekPublished: 'Le planning de cette semaine est publié, les demandes ne peuvent plus être modifiées',
+        weekPublishedShort: 'Le planning de cette semaine est déjà publié',
+        noRequest: 'Il n’y a aucune demande pour ce jour',
+        badDecision: 'Décision invalide',
+        requestNotFound: 'Demande introuvable',
+        weekMissing: 'Cette semaine n’existe pas',
+        userNotFound: 'Utilisateur introuvable',
+        cannotChangeOwner: 'Le propriétaire du compte ne peut pas être modifié'
+      },
+
+      notify: {
+        published: 'Planning publié',
+        publishedBody: 'Le planning de la nouvelle semaine est prêt. Vous pouvez voir vos services.',
+        requestApproved: 'Votre demande a été approuvée',
+        requestApprovedBody: 'Votre demande pour le {day} a été approuvée.',
+        requestRejected: 'Votre demande a été refusée',
+        requestRejectedBody: 'Votre demande pour le {day} a été refusée',
+        newRequest: 'Nouvelle demande',
+        newRequestBody: 'Quelqu’un a envoyé une demande en attente de votre approbation.',
+        newRequestsBody: '{count} nouvelles demandes attendent votre approbation.'
+      },
+
+      payments: {
+        mockProvider: 'Prestataire de test (développement)',
+        mockNote: 'Le paiement est approuvé immédiatement sans débit réel. Pour le développement et les démonstrations uniquement.',
+        unknownPlan: 'Formule inconnue',
+        serverProvider: 'Facturation serveur ({name})',
+        notConfigured: 'La facturation n’est pas configurée dans cet environnement',
+        requestFailed: 'La demande de facturation a échoué ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} ILS / mois', priceAmount: '{amount} ILS',
+        updateFailed: 'Échec de la mise à jour', cancelFailed: 'Échec de l’annulation',
+        title: 'Votre abonnement', status: 'Statut', plan: 'Formule', validUntil: 'Valable jusqu’au',
+        activeStaff: 'Personnel actif', of: '{count} sur {max}', unlimited: '{count} (illimité)',
+        plans: 'Formules', choose: 'Choisir', currentPlan: 'Formule actuelle',
+        tooSmall: 'Trop petite pour {count} employés', cancel: 'Résilier l’abonnement',
+        cancelConfirm: 'Résilier l’abonnement ? L’accès prend fin à la fin de la période payée.',
+        planUpdated: 'Formule mise à jour', canceled: 'Abonnement résilié',
+        ownerOnly: 'Seul le propriétaire du compte peut modifier l’abonnement.',
+        perMonth: 'par mois',
+        statusTrial: 'Essai', statusActive: 'Actif', statusPastDue: 'Paiement échoué',
+        statusCanceled: 'Résilié', statusExpired: 'Expiré'
+      },
+
+      auth: {
+        wait: 'Un instant…',
+        notifyEnabled: 'Notifications activées',
+        notifyBody: 'Nous vous préviendrons des mises à jour du planning.',
+        signIn: 'Connexion', signUp: 'Créer un compte entreprise',
+        email: 'E-mail', password: 'Mot de passe', name: 'Votre nom', companyName: 'Nom de l’entreprise',
+        passwordHint: 'Au moins 6 caractères',
+        enter: 'Se connecter', create: 'Créer le compte', signingIn: 'Connexion…', creating: 'Création…',
+        trialNote: '{days} jours gratuits. Aucun moyen de paiement requis.',
+        signOut: 'Déconnexion', blocked: 'Accès bloqué',
+        blockedOwner: 'Contactez le support pour activer l’abonnement.',
+        blockedMember: 'Demandez au propriétaire du compte de renouveler l’abonnement.',
+        enableNotifications: 'Activer les notifications',
+        failedSignIn: 'Échec de la connexion', failedSignUp: 'Échec de la création du compte'
+      },
+
+      users: {
+        nameColumn: 'Nom', emailColumn: 'E-mail', createFailed: 'Impossible de créer l’utilisateur',
+        title: 'Utilisateurs',
+        hint: 'Chaque personne peut avoir son propre accès. Elle ne voit que ses services et envoie ses propres demandes – ' +
+          'elle ne voit pas le planning complet et ne peut rien modifier. Les responsables voient et modifient tout. ' +
+          'Liez un utilisateur à une fiche d’employé pour qu’il voie ses services.',
+        add: 'Ajouter un utilisateur', createUser: 'Créer l’utilisateur',
+        role: 'Rôle', staffCard: 'Fiche d’employé', none: 'Aucune', noLink: 'Aucun lien',
+        initialPassword: 'Mot de passe initial', activeColumn: 'Actif',
+        created: 'Utilisateur créé pour {email}', updated: 'Enregistré', updateFailed: 'Échec de la mise à jour'
+      },
+
+      access: {
+        noCompany: 'Aucune entreprise trouvée',
+        trialEnded: 'La période d’essai est terminée. Activez un abonnement pour continuer.',
+        trial: 'Essai – {days} jours restants.',
+        expired: 'L’abonnement a expiré. Renouvelez-le pour continuer.',
+        pastDueBlocked: 'Le paiement n’a pas été reçu et l’accès est bloqué. Veuillez mettre à jour le moyen de paiement.',
+        pastDue: 'Le dernier paiement n’est pas passé. L’accès sera bloqué dans {days} jours.',
+        expiredKept: 'L’abonnement a expiré et n’a pas été renouvelé. Choisir une formule rétablit l’accès immédiatement, et vos données sont conservées.',
+        canceled: 'L’abonnement a été résilié. Vous pouvez le renouveler à tout moment – vos données sont conservées.',
+        inactive: 'L’abonnement n’est pas actif.',
+        overLimit: 'La formule {plan} couvre jusqu’à {max} employés. Vous en avez {count} – la formule {suggested} est nécessaire ({range}, {price}).'
+      },
+
+      plans: {
+        starter: 'Petite', growth: 'Moyenne', business: 'Grande',
+        upTo: 'Jusqu’à {count} employés',
+        between: 'De {from} à {to} employés',
+        from: '{count} employés et plus'
+      },
+
+      roles: { owner: 'Propriétaire', manager: 'Responsable', employee: 'Employé' },
+
+      employee: {
+        prevWeek: '◀ Semaine précédente', nextWeek: 'Semaine suivante ▶',
+        loadFailed: 'Impossible de charger les données : {message}',
+        saveFailed: 'Échec de l’enregistrement', reasonSaveFailed: 'Impossible d’enregistrer le motif',
+        myShifts: 'Mes services', myRequests: 'Mes demandes',
+        notPublished: 'Le planning de cette semaine n’est pas encore publié.',
+        noShifts: 'Vous n’avez aucun service cette semaine.',
+        totalWeek: '{count} services cette semaine.',
+        publishedLocked: 'Le planning est publié – les demandes pour cette semaine ne peuvent plus être modifiées.',
+        notLinked: 'Votre utilisateur n’est pas encore lié à une fiche d’employé. Contactez votre responsable.',
+        noShiftsToday: 'Aucun service ce jour-là', holidayNoWork: 'Jour férié – pas de travail'
+      },
+
+      chat: {
+        title: 'Questions sur ce planning',
+        hint: 'Posez une question sur la semaine affichée – par exemple « qui travaille mardi soir ? », ' +
+          '« pourquoi Employé 3 n’est-il pas prévu jeudi ? » ou « qui peut remplacer Employé 5 mercredi ? »',
+        placeholder: 'Posez une question sur le planning…', send: 'Envoyer'
+      },
+
+      excel: {
+        availabilityNone: 'Plus rien de disponible – aucun service supplémentaire ne peut être affecté cette semaine',
+        availabilityLeft: '{verb} {shifts} encore à affecter',
+        spare: 'Quota restant', required: 'Requis',
+        valid: 'Valide', checksTitle: 'Contrôles du planning',
+        personalText: 'Texte pour WhatsApp',
+        byBranch: 'Par succursale', byEmployee: 'Par employé', availability: 'Disponibilité',
+        checks: 'Contrôles', personal: 'Mon planning',
+        title: 'Planning de travail – semaine du {from} au {to}',
+        viewBranch: 'Par succursale', viewEmployee: 'Par employé',
+        sabbathEnds: 'Fin du chabbat {time}',
+        day: 'Jour', date: 'Date', branch: 'Succursale', shift: 'Service', hours: 'Horaires',
+        staff: 'Employé', assigned: 'Affectés', quota: 'Quota', left: 'Quota restant',
+        canAssign: 'Peut être affecté', freeDays: 'Jours libres', totalShifts: 'Total des services',
+        severity: 'Gravité', type: 'Type', detail: 'Détail',
+        missing: '— manquant —', closed: 'Fermé', notAssigned: 'Non affecté',
+        personalTitle: 'Planning personnel – {name}', totalWeek: '{count} services cette semaine',
+        noIssues: 'Aucun doublon, manque ni demande non respectée'
+      },
+
+      errors: {
+        invalidTime: 'Heure invalide – utilisez le format 24 heures, par exemple 09:30',
+        emptyShiftName: 'Le nom du service ne peut pas être vide',
+        lastShift: 'Il doit rester au moins un service',
+        notSaved: 'Échec de l’enregistrement', copied: 'Copié dans le presse-papiers',
+        viewOnlyBlocked: 'Lecture seule – la modification est désactivée. Vous pouvez la désactiver en haut de l’écran.',
+        duplicatePerson: 'La même personne ne peut pas apparaître deux fois sur un service',
+        printBlocked: 'L’impression est bloquée ici – utilisez « Copier en texte » ou l’export Excel',
+        chooseEmployee: 'Choisissez une personne pour l’export personnel'
+      },
+
+      common: {
+        moveUp: 'Monter', moveDown: 'Descendre', timePlaceholder: 'hh:mm',
+        save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', close: 'Fermer',
+        yes: 'Oui', no: 'Non', all: 'Tout', and: 'et', more: 'et {count} de plus'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/ar.js ===== */
+/* العربية */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'ar',
+    name: 'العربية',
+    dir: 'rtl',
+    locale: 'ar',
+    weekStart: 6,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'جدول المناوبات',
+        subtitle: 'جدولة أسبوعية لكل فرع، مع كشف الازدواج والنقص في التغطية',
+        language: 'اللغة'
+      },
+
+      days: {
+        0: 'الأحد', 1: 'الاثنين', 2: 'الثلاثاء', 3: 'الأربعاء',
+        4: 'الخميس', 5: 'الجمعة', 6: 'السبت'
+      },
+      daysShort: { 0: 'أحد', 1: 'إثن', 2: 'ثلا', 3: 'أرب', 4: 'خمي', 5: 'جمع', 6: 'سبت' },
+
+      shifts: { morning: 'صباحية', middle: 'وسطى', evening: 'مسائية', night: 'ليلية' },
+
+      seed: {
+        branchCenter: 'الفرع المركزي', branchNorth: 'الفرع الشمالي', branchSouth: 'الفرع الجنوبي',
+        employee: 'موظف {n}',
+        noteFloater: 'يغطي جميع الفروع', noteStudent: 'طالب – بدون مناوبات صباحية'
+      },
+
+      colors: {
+        0: 'كهرماني', 1: 'أخضر', 2: 'أزرق', 3: 'بنفسجي',
+        4: 'وردي', 5: 'فيروزي', 6: 'رمادي', 7: 'بني'
+      },
+
+      tabs: {
+        schedule: 'الجدول', constraints: 'الطلبات', employees: 'الموظفون',
+        branches: 'الفروع', users: 'المستخدمون', billing: 'الاشتراك', settings: 'الإعدادات'
+      },
+
+      toolbar: {
+        prevWeek: 'الأسبوع السابق', nextWeek: 'الأسبوع التالي', thisWeek: 'هذا الأسبوع',
+        week: 'أسبوع {from} – {to}', currentWeek: 'الأسبوع الحالي',
+        generate: 'إنشاء الجدول', clear: 'تفريغ الجدول',
+        keepManual: 'الإبقاء على التعيينات اليدوية',
+        copyText: 'نسخ كنص', excel: 'إكسل', csv: 'CSV', print: 'طباعة',
+        moreTools: 'أدوات إضافية', closeTools: 'إغلاق الأدوات',
+        viewOnly: 'وضع العرض فقط', exitViewOnly: 'الخروج من وضع العرض',
+        shabbatEnd: 'خروج السبت',
+        byBranch: 'حسب الفرع', byEmployee: 'حسب الموظف',
+        personalExport: 'تصدير شخصي (مناوباته فقط):',
+        choosePerson: 'اختر موظفًا…',
+        holidays: 'أيام العطل (جميع الفروع مغلقة):'
+      },
+
+      schedule: {
+        branch: 'الفرع', shift: 'المناوبة', employee: 'الموظف', totalShifts: 'إجمالي المناوبات',
+        empty: '— فارغ —', add: '+ إضافة', addPerson: '+ إضافة موظف', notAssigned: '— غير معيَّن —',
+        closed: 'مغلق في هذا اليوم', noBranches: 'لا توجد فروع نشطة. افتح تبويب الفروع.',
+        required: 'المطلوب: {count}', people: '{count} موظفين',
+        holidayClosed: 'جميع الفروع مغلقة', dayOff: 'يوم إجازة', holiday: 'عطلة',
+        missingSabbath: 'وقت خروج السبت غير محدد'
+      },
+
+      status: {
+        synced: 'متزامن بين الأجهزة', syncedAt: 'متزامن بين الأجهزة · آخر تحديث {time}',
+        localOnly: 'محفوظ على هذا الجهاز فقط', readOnly: 'عرض فقط – لا صلاحية للتعديل',
+        remoteUpdate: 'وصل تحديث من جهاز آخر ({time})',
+        localCopy: 'هذه نسخة محلية – البيانات محفوظة في هذا المتصفح فقط ولا تتزامن. ' +
+          'للعمل من جهازين استخدم النسخة المستضافة. لنقل البيانات: صدّر ملف JSON من الإعدادات ثم استورده هناك.',
+        viewOnlyBanner: 'وضع العرض فقط – الجدول معروض للمراجعة والتعديل معطّل. ' +
+          'التصدير والطباعة والتنقل بين الأسابيع تعمل كالمعتاد.'
+      },
+
+      levels: { error: 'خطأ', warning: 'تنبيه', info: 'ملاحظة' },
+
+      marks: {
+        dayOff: 'إجازة', blocked: 'محجوب', prefers: 'يفضّل',
+        notInBranch: 'ليس في هذا الفرع', notInShift: 'ليس في هذه المناوبة',
+        alreadyAssigned: 'معيَّن مسبقًا', inactive: 'غير نشط'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'ازدواج مناوبة',
+        'duplicate-employee-slot': 'ازدواج مناوبة',
+        'double-booked': 'مناوبتان في يوم واحد',
+        understaffed: 'نقص في التغطية',
+        'constraint-off': 'مخالفة طلب',
+        'constraint-blocked': 'مخالفة طلب',
+        'branch-mismatch': 'فرع غير مناسب',
+        'shift-mismatch': 'نوع مناوبة غير مناسب',
+        'over-max': 'تجاوز الحد',
+        rest: 'راحة قصيرة',
+        'no-shifts': 'بدون مناوبات',
+        'missing-shabbat-end': 'وقت خروج السبت غير محدد',
+        'inactive-slot': 'مناوبة غير مفتوحة',
+        'pending-constraints': 'طلبات بانتظار الموافقة',
+        'extra-days-off': 'أيام إجازة أكثر من اللازم',
+        'below-target': 'أقل من الهدف'
+      },
+
+      toast: {
+        generated: 'تم إنشاء الجدول – {shifts} بلا تغطية',
+        generatedFull: 'تم إنشاء الجدول – جميع المناوبات مغطاة',
+        clearWeekConfirm: 'هل تريد تفريغ كل تعيينات هذا الأسبوع؟ الطلبات ستبقى محفوظة.',
+        cleared: 'تم تفريغ الجدول',
+        copied: 'تم نسخ الجدول إلى الحافظة',
+        personalCopied: 'تم نسخ الجدول الشخصي إلى الحافظة',
+        viewOnlyOn: 'تم تفعيل وضع العرض – التعديل معطّل',
+        viewOnlyOff: 'تم إيقاف وضع العرض – يمكنك التعديل',
+        copyPrompt: 'انسخ النص:',
+        holidayCleared: 'عاد {day} يوم عمل',
+        holidayPrompt: 'اسم العطلة في {day} (ستُغلق الفروع ويُحتسب اليوم إجازة للجميع):',
+        holidayDefault: 'عطلة',
+        holidayHasAssignments: 'يوجد {count} موظفين معيَّنين في هذا اليوم. هل نعلّمه كعطلة ونلغي التعيينات؟',
+        holidayMarked: 'تم تعليم {day} كعطلة – الفروع مغلقة',
+        clearConstraintsConfirm: 'هل تريد مسح كل طلبات هذا الأسبوع؟',
+        constraintsCleared: 'تم مسح الطلبات',
+        noPreviousConstraints: 'لا توجد طلبات في الأسبوع السابق',
+        constraintsCopied: 'تم نسخ الطلبات من الأسبوع السابق',
+        requestApproved: 'تمت الموافقة على الطلب', requestRejected: 'تم رفض الطلب',
+        updateFailed: 'فشل التحديث',
+        deleteShiftConfirm: 'هل تريد حذف المناوبة "{name}"؟\n\n{usage}',
+        deleteShiftUsed: 'هي مُعرَّفة في {count} أيام في الفروع، وستُحذف جميع تعييناتها.',
+        deleteShiftUnused: 'غير مستخدمة في أي فرع.',
+        shiftDeleted: 'تم حذف المناوبة{removed}',
+        shiftRemovedCount: ' (تم حذف {count} تعيينات)',
+        shiftAdded: 'تمت إضافة المناوبة. عرّفها في الفروع لتظهر في الجدول.',
+        newShift: 'مناوبة {n}',
+        applyHoursConfirm: 'هل تريد تطبيق الأوقات الافتراضية على {count} فروع، من الأحد إلى الخميس؟\n\n' +
+          'أيام العمل وعدد الموظفين تبقى كما هي. الجمعة وليلة السبت لن تتغيّرا.',
+        hoursUpdated: 'تم تحديث الأوقات في {count} مناوبات',
+        hoursAlready: 'جميع المناوبات تستخدم هذه الأوقات بالفعل',
+        imported: 'تم استيراد البيانات',
+        importedCloud: 'تم استيراد البيانات ورفعها إلى السحابة ({count} أسابيع)',
+        importFailed: 'ملف غير صالح: {message}',
+        resetConfirm: 'هل تريد إعادة كل البيانات (الموظفون، الفروع، الجداول والطلبات) إلى الوضع الافتراضي؟',
+        reset: 'تمت إعادة البيانات'
+      },
+
+      ui: {
+        until: 'حتى {time}', sheet: 'ورقة {n}',
+        fileSaved: 'تم حفظ الملف', fileFailed: 'تعذّر حفظ الملف: {message}',
+        unknownError: 'خطأ غير معروف', downloadUnavailable: 'لا يمكن تنزيل الملفات هنا',
+        loadFailed: 'فشل تحميل البيانات، تم تحميل الإعدادات الافتراضية',
+        saveFailed: 'فشل حفظ البيانات',
+        iconLetters: 'جم',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'نقص في التغطية',
+        holidayClosedLine: '{name} – جميع الفروع مغلقة',
+        spareLine: '— {verb} {shifts} يمكن تعيينها —',
+        unknownBranch: 'فرع غير معروف', unknownEmployee: 'موظف غير معروف',
+        weekLabel: 'أسبوع {from} – {to}', constraintsWeek: 'طلبات · {label}',
+        holidayAllClosed: 'جميع الفروع مغلقة – إجازة للجميع',
+        holidayNoRequests: 'عطلة – لا حاجة للطلبات',
+        branchClosedToday: 'الفرع مغلق في هذا اليوم',
+        noActiveBranches: 'لا توجد فروع نشطة.',
+        noActiveBranchesTab: 'لا توجد فروع نشطة. افتح تبويب الفروع.',
+        allClosedOn: 'جميع الفروع مغلقة يوم {day}.',
+        branchesClosed: 'الفروع مغلقة',
+        noHours: 'بدون أوقات',
+        outOf: '{done} من {total}',
+        cloudSaved: 'البيانات محفوظة في السحابة وتتحدّث على كل جهاز مفتوح على هذا الرابط',
+        deviceSaved: 'البيانات محفوظة في هذا المتصفح فقط',
+        thinking: 'جارٍ التفكير…',
+        noAnswer: '(لم يصل أي جواب)',
+        chatBlocked: 'لا تملك صلاحية طرح الأسئلة في هذه الصفحة.',
+        chatRateLimited: 'أسئلة كثيرة متتالية – حاول مرة أخرى بعد لحظة.',
+        chatFailed: 'لم أتمكن من الإجابة الآن',
+        chatSystem: 'أنت تساعد مديرًا في إدارة جدول مناوبات. أجب بـ{language}، باختصار ووضوح، ' +
+          'واعتمد فقط على البيانات التالية. إن كانت معلومة ناقصة فقل ذلك صراحةً بدل التخمين.',
+        chatDataStart: '=== بيانات الأسبوع ===',
+        chatDataEnd: '=== نهاية البيانات ===',
+        chatQuestion: 'السؤال: ',
+        summaryShabbat: 'خروج السبت: {time}',
+        summaryHolidays: 'أيام العطل المغلقة: {days}', summaryNoHolidays: 'لا توجد عطل هذا الأسبوع.',
+        summaryRules: 'قواعد الجدولة:',
+        ruleOnePerDayOn: 'يعمل الموظف مناوبة واحدة في اليوم كحد أقصى.',
+        ruleOnePerDayOff: 'يمكن للموظف العمل في عدة مناوبات في اليوم.',
+        ruleRestOn: 'لا مناوبة صباحية بعد مناوبة مسائية في اليوم السابق.',
+        ruleRestOff: 'لا يوجد شرط راحة بين المناوبة المسائية والصباحية.',
+        summaryBranches: 'الفروع:', summaryEmployees: 'الموظفون:',
+        summaryCurrent: 'الجدول الحالي:', summaryAvailability: 'ما تبقّى من إتاحة:',
+        summaryIssues: 'تنبيهات الجدول:', summaryNoIssues: 'لا توجد تنبيهات – الجدول سليم.',
+        closedAllWeek: 'مغلق طوال الأسبوع', allBranches: 'جميع الفروع',
+        peopleCount: '{count} موظفين',
+        empBranches: 'الفروع', empShifts: 'المناوبات', empMax: 'بحد أقصى {count} أسبوعيًا',
+        empAskedOff: 'طلب إجازة', empBlocked: 'حجب', empNote: 'ملاحظة',
+        empAssignedOf: '{name}: معيَّن {total} من حصة {max}',
+        empFreeDays: 'أيام متاحة: {days}', none: 'لا يوجد',
+        fileName: 'الجدول', personalFileName: 'جدول-{name}',
+        greeting: 'مرحبًا {name}، هذا جدولك:',
+        shortTitle: 'مناوبات'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · مناوبة {shift}',
+        deletedEmployee: '(موظف محذوف: {id})',
+        deletedBranch: '(فرع محذوف)',
+        errorsOne: 'خطأ واحد', errorsOther: '{count} أخطاء',
+        warningsOne: 'تنبيه واحد', warningsOther: '{count} تنبيهات',
+        infosOne: 'ملاحظة واحدة', infosOther: '{count} ملاحظات',
+        allGood: '✔ الجدول سليم – لا ازدواج ولا نقص ولا مخالفة طلبات',
+        showAll: 'عرض كل التنبيهات ({count})', showLess: 'إخفاء التنبيهات',
+        duplicate: 'ازدواج مناوبة: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
+        duplicateSelf: 'ازدواج مناوبة: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
+        doubleBooked: 'ازدواج مناوبة: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
+        sameBranch: ' في الفرع نفسه', differentBranches: ' في فروع مختلفة',
+        understaffed: 'نقص في التغطية: {label} – معيَّن {assigned} من {need}.',
+        reasonBusy: '{names} معيَّنون في مناوبة أخرى في اليوم نفسه',
+        reasonMaxed: '{names} بلغوا حدهم الأسبوعي من المناوبات',
+        reasonResting: '{names} يحتاجون راحة بين المناوبة المسائية والصباحية',
+        reasonNone: 'لا يوجد موظف معرَّف لهذا الفرع ولهذه المناوبة معًا، أو أن الجميع حجبوها.',
+        reasonFree: 'هناك موظفون متاحون ({names}) – جرّب إنشاء الجدول من جديد.',
+        reasonPrefix: 'السبب: ',
+        suggestTwoPerDay: ' يمكنك السماح بمناوبتين في اليوم للموظف الواحد من الإعدادات.',
+        suggestRaiseMax: ' يمكنك رفع الحد الأسبوعي في بطاقة الموظف.',
+        constraintOff: 'مخالفة طلب: {name} طلب إجازة يوم {day} لكنه معيَّن في مناوبة {shift} في {branch}.',
+        constraintBlocked: 'مخالفة طلب: {name} حجب مناوبة {shift} يوم {day} لكنه معيَّن فيها في {branch}.',
+        branchMismatch: '{name} معيَّن في {branch} يوم {day} رغم أن هذا الفرع غير مُدرج في بطاقته.',
+        shiftMismatch: '{name} معيَّن في مناوبة {shift} يوم {day} رغم أن هذا النوع غير مُدرج في بطاقته.',
+        overMax: 'تجاوز الحد: {name} معيَّن في {total} مناوبات (الحد الأقصى {max}).',
+        noShifts: '{name} بلا مناوبات هذا الأسبوع.',
+        rest: 'راحة قصيرة: {name} ينهي مناوبة مسائية يوم {previous} ويبدأ مناوبة صباحية يوم {day}.',
+        holidayAssignment: 'تعيين في يوم عطلة: {day} ({name}) معلَّم كيوم مغلق، لكن يوجد تعيينات لـ{names}.',
+        inactiveSlot: 'تعيين في مناوبة غير مفتوحة: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'لم يُدخَل وقت خروج السبت لهذا الأسبوع – لا يمكن حساب بداية مناوبات ليلة السبت.',
+        pendingOne: 'طلب بانتظار الموافقة: {name} ({day}). لا يؤثر على الجدول حتى الموافقة عليه.',
+        pendingOther: '{count} طلبات بانتظار الموافقة: {names}. لا تؤثر على الجدول حتى الموافقة عليها.',
+        extraDaysOff: '{name} طلب {count} أيام إجازة ({days}) – السياسة تسمح بيوم إجازة واحد أسبوعيًا.',
+        belowTarget: '{name} طلب إجازة يوم {day} ومعيَّن في {total} من {expected} مناوبات ممكنة – ما زالت لديه أيام متاحة.'
+      },
+
+      availability: {
+        title: 'ما تبقّى متاحًا',
+        none: 'لا إتاحة متبقية – {reason}',
+        reasonMaxed: 'جميع الموظفين بلغوا حدهم الأسبوعي من المناوبات.',
+        reasonNoDays: 'من تبقّت لديهم حصة ليس لديهم يوم متاح تكون فروعهم فيه مفتوحة.',
+        totalOne: '{verb} مناوبة إضافية يمكن تعيينها، لدى {people}:',
+        totalOther: '{verb} {count} مناوبات إضافية يمكن تعيينها، لدى {people}:',
+        peopleOne: 'موظف واحد', peopleOther: '{count} موظفين',
+        left: '{verb} {shifts} من الحصة · متاح يوم {days}',
+        leftNoDays: '{verb} {shifts} من الحصة، لكن لا يوجد يوم متاح هذا الأسبوع',
+        full: 'استُهلكت الحصة بالكامل ({assigned} من {max})',
+        noEmployees: 'لا يوجد موظفون نشطون.',
+        shiftsOne: 'مناوبة واحدة', shiftsOther: '{count} مناوبات',
+        remains: 'تبقّت', remainPlural: 'تبقّت'
+      },
+
+      constraints: {
+        title: 'طلبات {week}',
+        clear: 'مسح هذا الأسبوع', copyPrevious: 'نسخ من الأسبوع السابق',
+        legend: 'اضغط على مناوبة للتبديل: {free} ← {preferred} ← {blocked}. «إجازة» تحجب اليوم كاملًا.',
+        free: 'متاح', preferred: 'يفضّل', blocked: 'لا يستطيع', dayOff: 'إجازة',
+        pendingTitle: 'طلبات بانتظار موافقتك ({count})',
+        pendingHint: 'الطلب غير المعتمد لا يؤثر على الجدول.',
+        approve: 'موافقة', reject: 'رفض',
+        approved: 'مقبول', rejected: 'مرفوض', pending: 'بانتظار الموافقة',
+        requestLabel: 'طلب: {detail}', requestRejected: 'تم رفض الطلب',
+        reason: 'السبب (اختياري)',
+        reasonPlaceholder: 'مثلًا: عرس، امتحان، موعد طبيب',
+        reasonSaved: 'تم حفظ السبب', reasonGiven: 'السبب الذي ذكرته: {text}',
+        managerNote: 'ملاحظة المدير: {text}',
+        needsApproval: 'كل طلب يمر على المدير ولا يؤثر على الجدول إلا بعد الموافقة عليه.',
+        noChange: 'بلا تغيير'
+      },
+
+      employees: {
+        title: 'الموظفون', add: '+ إضافة موظف', active: 'نشط',
+        branchesLabel: 'الفروع (بدون اختيار = كل الفروع)',
+        shiftTypes: 'أنواع المناوبات الممكنة',
+        maxShifts: 'الحد الأقصى للمناوبات أسبوعيًا', note: 'ملاحظة',
+        deleteConfirm: 'هل تريد حذف {name}؟ ستُزال تعييناته من جميع الأسابيع.',
+        inactive: '(غير نشط)', newName: 'موظف جديد'
+      },
+
+      branches: {
+        title: 'الفروع', add: '+ إضافة فرع', active: 'نشط', newName: 'فرع جديد',
+        hint: 'لكل فرع أيامه وأوقاته وعدد موظفيه في كل مناوبة. ' +
+          'وضع 0 موظفين يغلق تلك المناوبة في ذلك اليوم. تعيين أكثر من العدد المحدد يُعلَّم كازدواج مناوبة.',
+        peopleLabel: 'موظفون', closed: 'مغلق', day: 'اليوم',
+        copyFrom: 'نسخ الأيام والأوقات من فرع آخر', chooseBranch: 'اختر فرعًا…',
+        copyConfirm: 'هل تريد نسخ الأيام والأوقات من {from} إلى {to}؟',
+        copied: 'تم نسخ الأيام والأوقات',
+        deleteConfirm: 'هل تريد حذف {name}؟ ستُزال تعييناته من جميع الأسابيع.',
+        autoSabbath: 'حسب خروج السبت', autoSabbathLabel: 'خروج السبت +30 دقيقة'
+      },
+
+      settings: {
+        rules: 'قواعد الجدولة',
+        onePerDay: 'يعمل الموظف مناوبة واحدة في اليوم كحد أقصى',
+        rest: 'لا مناوبة صباحية بعد مناوبة مسائية في اليوم السابق',
+        oneDayOff: 'اليوم المعلَّم كإجازة في الطلبات هو يوم الإجازة الوحيد في الأسبوع',
+        shiftTypes: 'أنواع المناوبات',
+        addShift: '+ إضافة مناوبة', applyHours: 'تطبيق الأوقات على كل الفروع (الاثنين–الجمعة)',
+        shiftsHint: 'هنا تحدد عدد المناوبات في عملك وأسماءها وأوقاتها ولونها وترتيبها. ' +
+          'الأوقات هنا افتراضية؛ ويمكن لكل فرع تحديد أوقاته الخاصة. ' +
+          'الزر يحدّث الفروع القائمة دون تغيير أيام العمل أو عدد الموظفين.',
+        shiftNamePlaceholder: 'اسم المناوبة',
+        sabbathTitle: 'ليلة السبت',
+        sabbathDefault: 'وقت خروج السبت الافتراضي لأسبوع جديد:',
+        sabbathHint: 'يمكنك تعديل الوقت الفعلي كل أسبوع في أعلى تبويب الجدول. ' +
+          'مناوبات ليلة السبت تبدأ بعده بنصف ساعة.',
+        backup: 'نسخ احتياطي واستعادة',
+        exportJson: 'تصدير كل البيانات (JSON)', importJson: 'استيراد البيانات',
+        reset: 'إعادة للإعدادات الافتراضية',
+        backupHint: 'تُحفظ البيانات تلقائيًا في هذا المتصفح. لنقلها بين الأجهزة، صدّر ملف JSON.',
+        languageTitle: 'اللغة', languageHint: 'يغيّر الواجهة بالكامل. يُحفظ على هذا الجهاز.'
+      },
+
+      server: {
+        credentialsRequired: 'البريد الإلكتروني وكلمة المرور مطلوبان',
+        passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
+        emailTaken: 'هذا البريد الإلكتروني مسجَّل بالفعل',
+        companyRequired: 'اسم الشركة مطلوب',
+        badCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+        userInactive: 'هذا المستخدم غير نشط. تواصل مع مدير الشركة.',
+        signInRequired: 'يجب تسجيل الدخول',
+        noPermission: 'لا تملك صلاحية لهذا الإجراء',
+        notLinked: 'هذا المستخدم غير مرتبط ببطاقة موظف',
+        weekPublished: 'تم نشر جدول هذا الأسبوع، ولم يعد بالإمكان تغيير الطلبات',
+        weekPublishedShort: 'تم نشر جدول هذا الأسبوع بالفعل',
+        noRequest: 'لا يوجد طلب لهذا اليوم',
+        badDecision: 'قرار غير صالح',
+        requestNotFound: 'الطلب غير موجود',
+        weekMissing: 'هذا الأسبوع غير موجود',
+        userNotFound: 'المستخدم غير موجود',
+        cannotChangeOwner: 'لا يمكن تغيير مالك الحساب'
+      },
+
+      notify: {
+        published: 'تم نشر الجدول',
+        publishedBody: 'جدول الأسبوع الجديد جاهز. يمكنك رؤية مناوباتك.',
+        requestApproved: 'تمت الموافقة على طلبك',
+        requestApprovedBody: 'تمت الموافقة على طلبك ليوم {day}.',
+        requestRejected: 'تم رفض طلبك',
+        requestRejectedBody: 'تم رفض طلبك ليوم {day}',
+        newRequest: 'طلب جديد',
+        newRequestBody: 'أرسل أحد الموظفين طلبًا بانتظار موافقتك.',
+        newRequestsBody: '{count} طلبات جديدة بانتظار موافقتك.'
+      },
+
+      payments: {
+        mockProvider: 'مزوّد تجريبي (تطوير)',
+        mockNote: 'تتم الموافقة على الدفع فورًا بدون خصم حقيقي. للتطوير والعروض التوضيحية فقط.',
+        unknownPlan: 'خطة غير معروفة',
+        serverProvider: 'فوترة عبر الخادم ({name})',
+        notConfigured: 'الفوترة غير مهيأة في هذه البيئة',
+        requestFailed: 'فشل طلب الفوترة ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} شيكل / شهر', priceAmount: '{amount} شيكل',
+        updateFailed: 'فشل التحديث', cancelFailed: 'فشل الإلغاء',
+        title: 'اشتراكك', status: 'الحالة', plan: 'الخطة', validUntil: 'سارٍ حتى',
+        activeStaff: 'الموظفون النشطون', of: '{count} من {max}', unlimited: '{count} (بلا حد)',
+        plans: 'الخطط', choose: 'اختيار', currentPlan: 'الخطة الحالية',
+        tooSmall: 'صغيرة جدًا لـ{count} موظفين', cancel: 'إلغاء الاشتراك',
+        cancelConfirm: 'هل تريد إلغاء الاشتراك؟ ينتهي الوصول بانتهاء الفترة المدفوعة.',
+        planUpdated: 'تم تحديث الخطة', canceled: 'تم إلغاء الاشتراك',
+        ownerOnly: 'مالك الحساب وحده يمكنه تغيير الاشتراك.',
+        perMonth: 'شهريًا',
+        statusTrial: 'فترة تجريبية', statusActive: 'اشتراك نشط', statusPastDue: 'فشل الدفع',
+        statusCanceled: 'ملغى', statusExpired: 'منتهٍ'
+      },
+
+      auth: {
+        wait: 'لحظة…',
+        notifyEnabled: 'تم تفعيل الإشعارات',
+        notifyBody: 'سنبلغك بتحديثات الجدول.',
+        signIn: 'تسجيل الدخول', signUp: 'فتح حساب للشركة',
+        email: 'البريد الإلكتروني', password: 'كلمة المرور', name: 'اسمك', companyName: 'اسم الشركة',
+        passwordHint: '6 أحرف على الأقل',
+        enter: 'دخول', create: 'فتح حساب', signingIn: 'جارٍ الدخول…', creating: 'جارٍ الإنشاء…',
+        trialNote: '{days} يومًا مجانًا. لا حاجة لوسيلة دفع.',
+        signOut: 'خروج', blocked: 'الوصول محجوب',
+        blockedOwner: 'تواصل مع الدعم لتفعيل الاشتراك.',
+        blockedMember: 'اطلب من مالك الحساب تجديد الاشتراك.',
+        enableNotifications: 'تفعيل الإشعارات',
+        failedSignIn: 'فشل تسجيل الدخول', failedSignUp: 'فشل إنشاء الحساب'
+      },
+
+      users: {
+        nameColumn: 'الاسم', emailColumn: 'البريد الإلكتروني', createFailed: 'تعذّر إنشاء المستخدم',
+        title: 'المستخدمون',
+        hint: 'يمكن لكل موظف الحصول على دخول خاص به. يرى مناوباته فقط ويقدّم طلباته – ' +
+          'لا يرى الجدول الكامل ولا يستطيع تعديل شيء. المدير يرى ويعدّل كل شيء. ' +
+          'اربط المستخدم ببطاقة موظف لكي يرى مناوباته.',
+        add: 'إضافة مستخدم', createUser: 'إنشاء مستخدم',
+        role: 'الدور', staffCard: 'بطاقة موظف', none: 'بدون', noLink: 'بدون ربط',
+        initialPassword: 'كلمة مرور أولية', activeColumn: 'نشط',
+        created: 'تم إنشاء مستخدم لـ{email}', updated: 'تم الحفظ', updateFailed: 'فشل التحديث'
+      },
+
+      access: {
+        noCompany: 'لم يتم العثور على الشركة',
+        trialEnded: 'انتهت الفترة التجريبية. فعّل اشتراكًا للمتابعة.',
+        trial: 'فترة تجريبية – بقي {days} يومًا.',
+        expired: 'انتهى الاشتراك. جدّده للمتابعة.',
+        pastDueBlocked: 'لم يصل الدفع وتم حجب الوصول. يرجى تحديث وسيلة الدفع.',
+        pastDue: 'لم تتم آخر عملية دفع. سيُحجب الوصول بعد {days} يومًا.',
+        expiredKept: 'انتهى الاشتراك ولم يُجدَّد. اختيار خطة يعيد الوصول فورًا، وبياناتك محفوظة.',
+        canceled: 'تم إلغاء الاشتراك. يمكنك التجديد في أي وقت – بياناتك محفوظة.',
+        inactive: 'الاشتراك غير نشط.',
+        overLimit: 'خطة {plan} تغطي حتى {max} موظفين. لديك {count} – تحتاج إلى خطة {suggested} ({range}، {price}).'
+      },
+
+      plans: {
+        starter: 'صغيرة', growth: 'متوسطة', business: 'كبيرة',
+        upTo: 'حتى {count} موظفين',
+        between: 'من {from} إلى {to} موظفين',
+        from: '{count} موظفين فأكثر'
+      },
+
+      roles: { owner: 'المالك', manager: 'مدير', employee: 'موظف' },
+
+      employee: {
+        prevWeek: '▶ الأسبوع السابق', nextWeek: 'الأسبوع التالي ◀',
+        loadFailed: 'تعذّر تحميل البيانات: {message}',
+        saveFailed: 'فشل الحفظ', reasonSaveFailed: 'تعذّر حفظ السبب',
+        myShifts: 'مناوباتي', myRequests: 'طلباتي',
+        notPublished: 'لم يُنشر جدول هذا الأسبوع بعد.',
+        noShifts: 'لا توجد لك مناوبات هذا الأسبوع.',
+        totalWeek: '{count} مناوبات هذا الأسبوع.',
+        publishedLocked: 'تم نشر الجدول – لم يعد بالإمكان تغيير طلبات هذا الأسبوع.',
+        notLinked: 'مستخدمك غير مرتبط ببطاقة موظف بعد. تواصل مع المدير.',
+        noShiftsToday: 'لا مناوبات في هذا اليوم', holidayNoWork: 'عطلة – لا عمل'
+      },
+
+      chat: {
+        title: 'أسئلة حول الجدول',
+        hint: 'اسأل عن الأسبوع المعروض – مثلًا «من يعمل مساء الثلاثاء؟»، ' +
+          '«لماذا لم يُعيَّن موظف 3 يوم الخميس؟» أو «من يمكنه أن يحل محل موظف 5 يوم الأربعاء؟»',
+        placeholder: 'اكتب سؤالًا عن الجدول…', send: 'إرسال'
+      },
+
+      excel: {
+        availabilityNone: 'لا يوجد ما يُعيَّن – لا يمكن إضافة مناوبات أخرى هذا الأسبوع',
+        availabilityLeft: '{verb} {shifts} يمكن تعيينها',
+        spare: 'المتبقي من الحصة', required: 'المطلوب',
+        valid: 'سليم', checksTitle: 'فحوصات الجدول',
+        personalText: 'نص لواتساب',
+        byBranch: 'حسب الفرع', byEmployee: 'حسب الموظف', availability: 'الإتاحة',
+        checks: 'الفحوصات', personal: 'جدولي',
+        title: 'جدول العمل – أسبوع {from} حتى {to}',
+        viewBranch: 'حسب الفرع', viewEmployee: 'حسب الموظف',
+        sabbathEnds: 'خروج السبت {time}',
+        day: 'اليوم', date: 'التاريخ', branch: 'الفرع', shift: 'المناوبة', hours: 'الأوقات',
+        staff: 'الموظف', assigned: 'المعيَّنون', quota: 'الحصة', left: 'المتبقي من الحصة',
+        canAssign: 'يمكن تعيينه', freeDays: 'أيام متاحة', totalShifts: 'إجمالي المناوبات',
+        severity: 'الخطورة', type: 'النوع', detail: 'التفاصيل',
+        missing: '— ناقص —', closed: 'مغلق', notAssigned: 'غير معيَّن',
+        personalTitle: 'جدول شخصي – {name}', totalWeek: '{count} مناوبات هذا الأسبوع',
+        noIssues: 'لا ازدواج ولا نقص ولا مخالفة طلبات'
+      },
+
+      errors: {
+        invalidTime: 'وقت غير صالح – استخدم صيغة 24 ساعة، مثلًا 09:30',
+        emptyShiftName: 'اسم المناوبة لا يمكن أن يكون فارغًا',
+        lastShift: 'يجب أن تبقى مناوبة واحدة على الأقل',
+        notSaved: 'فشل الحفظ', copied: 'تم النسخ إلى الحافظة',
+        viewOnlyBlocked: 'وضع العرض فقط – التعديل معطّل. يمكنك إيقافه من أعلى الشاشة.',
+        duplicatePerson: 'لا يمكن أن يظهر الموظف نفسه مرتين في مناوبة واحدة',
+        printBlocked: 'الطباعة محجوبة هنا – استخدم «نسخ كنص» أو التصدير إلى إكسل',
+        chooseEmployee: 'اختر موظفًا للتصدير الشخصي'
+      },
+
+      common: {
+        moveUp: 'رفع', moveDown: 'خفض', timePlaceholder: 'سس:دد',
+        save: 'حفظ', cancel: 'إلغاء', delete: 'حذف', close: 'إغلاق',
+        yes: 'نعم', no: 'لا', all: 'الكل', and: 'و', more: 'و{count} آخرين'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/ru.js ===== */
+/* Русский */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'ru',
+    name: 'Русский',
+    dir: 'ltr',
+    locale: 'ru-RU',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Планировщик смен',
+        subtitle: 'Недельный график по каждому филиалу, с проверкой накладок и нехватки людей',
+        language: 'Язык'
+      },
+
+      days: {
+        0: 'Воскресенье', 1: 'Понедельник', 2: 'Вторник', 3: 'Среда',
+        4: 'Четверг', 5: 'Пятница', 6: 'Суббота'
+      },
+      daysShort: { 0: 'Вс', 1: 'Пн', 2: 'Вт', 3: 'Ср', 4: 'Чт', 5: 'Пт', 6: 'Сб' },
+
+      shifts: { morning: 'Утро', middle: 'День', evening: 'Вечер', night: 'Ночь' },
+
+      seed: {
+        branchCenter: 'Центральный филиал', branchNorth: 'Северный филиал', branchSouth: 'Южный филиал',
+        employee: 'Сотрудник {n}',
+        noteFloater: 'Подменяет во всех филиалах', noteStudent: 'Студент — без утренних смен'
+      },
+
+      colors: {
+        0: 'Янтарный', 1: 'Зелёный', 2: 'Синий', 3: 'Фиолетовый',
+        4: 'Розовый', 5: 'Бирюзовый', 6: 'Серый', 7: 'Коричневый'
+      },
+
+      tabs: {
+        schedule: 'График', constraints: 'Заявки', employees: 'Сотрудники',
+        branches: 'Филиалы', users: 'Пользователи', billing: 'Подписка', settings: 'Настройки'
+      },
+
+      toolbar: {
+        prevWeek: 'Предыдущая неделя', nextWeek: 'Следующая неделя', thisWeek: 'Эта неделя',
+        week: 'Неделя {from} – {to}', currentWeek: 'Текущая неделя',
+        generate: 'Построить график', clear: 'Очистить график',
+        keepManual: 'Сохранить ручные назначения',
+        copyText: 'Копировать текстом', excel: 'Excel', csv: 'CSV', print: 'Печать',
+        moreTools: 'Ещё инструменты', closeTools: 'Закрыть инструменты',
+        viewOnly: 'Только просмотр', exitViewOnly: 'Выйти из просмотра',
+        shabbatEnd: 'Исход субботы',
+        byBranch: 'По филиалам', byEmployee: 'По сотрудникам',
+        personalExport: 'Личный экспорт (только его смены):',
+        choosePerson: 'Выберите сотрудника…',
+        holidays: 'Праздники (все филиалы закрыты):'
+      },
+
+      schedule: {
+        branch: 'Филиал', shift: 'Смена', employee: 'Сотрудник', totalShifts: 'Всего смен',
+        empty: '— пусто —', add: '+ добавить', addPerson: '+ добавить сотрудника', notAssigned: '— не назначен —',
+        closed: 'Закрыто в этот день', noBranches: 'Нет активных филиалов. Откройте вкладку «Филиалы».',
+        required: 'Требуется: {count}', people: '{count} чел.',
+        holidayClosed: 'Все филиалы закрыты', dayOff: 'Выходной', holiday: 'Праздник',
+        missingSabbath: 'Не указано время исхода субботы'
+      },
+
+      status: {
+        synced: 'Синхронизировано между устройствами', syncedAt: 'Синхронизировано между устройствами · обновлено в {time}',
+        localOnly: 'Сохранено только на этом устройстве', readOnly: 'Только просмотр — нет прав на изменение',
+        remoteUpdate: 'Получено обновление с другого устройства ({time})',
+        localCopy: 'Это локальная копия — данные хранятся только в этом браузере и не синхронизируются. ' +
+          'Для работы с двух компьютеров используйте размещённую версию. Чтобы перенести данные: экспортируйте JSON в настройках и импортируйте его там.',
+        viewOnlyBanner: 'Только просмотр — график показан для проверки, редактирование отключено. ' +
+          'Экспорт, печать и переход между неделями работают как обычно.'
+      },
+
+      levels: { error: 'Ошибка', warning: 'Предупреждение', info: 'Заметка' },
+
+      marks: {
+        dayOff: 'выходной', blocked: 'заблокировано', prefers: 'предпочитает',
+        notInBranch: 'не в этом филиале', notInShift: 'не на этой смене',
+        alreadyAssigned: 'уже назначен', inactive: 'неактивен'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Накладка',
+        'duplicate-employee-slot': 'Накладка',
+        'double-booked': 'Две смены в один день',
+        understaffed: 'Не хватает людей',
+        'constraint-off': 'Заявка нарушена',
+        'constraint-blocked': 'Заявка нарушена',
+        'branch-mismatch': 'Не тот филиал',
+        'shift-mismatch': 'Не тот тип смены',
+        'over-max': 'Превышен лимит',
+        rest: 'Короткий отдых',
+        'no-shifts': 'Нет смен',
+        'missing-shabbat-end': 'Не указано время исхода субботы',
+        'inactive-slot': 'Смена не открыта',
+        'pending-constraints': 'Заявки на рассмотрении',
+        'extra-days-off': 'Слишком много выходных',
+        'below-target': 'Ниже нормы'
+      },
+
+      toast: {
+        generated: 'График построен — {shifts} без назначения',
+        generatedFull: 'График построен — все смены закрыты',
+        clearWeekConfirm: 'Очистить все назначения этой недели? Заявки сохранятся.',
+        cleared: 'График очищен',
+        copied: 'График скопирован в буфер обмена',
+        personalCopied: 'Личный график скопирован в буфер обмена',
+        viewOnlyOn: 'Режим просмотра включён — редактирование отключено',
+        viewOnlyOff: 'Режим просмотра выключен — можно редактировать',
+        copyPrompt: 'Скопируйте текст:',
+        holidayCleared: '{day} снова рабочий день',
+        holidayPrompt: 'Название праздника {day} (филиалы закрываются, день считается выходным для всех):',
+        holidayDefault: 'Праздник',
+        holidayHasAssignments: 'В этот день уже назначено {count} чел. Отметить как праздник и снять назначения?',
+        holidayMarked: '{day} отмечен как праздник — филиалы закрыты',
+        clearConstraintsConfirm: 'Удалить все заявки этой недели?',
+        constraintsCleared: 'Заявки удалены',
+        noPreviousConstraints: 'На прошлой неделе заявок нет',
+        constraintsCopied: 'Заявки скопированы с прошлой недели',
+        requestApproved: 'Заявка одобрена', requestRejected: 'Заявка отклонена',
+        updateFailed: 'Не удалось обновить',
+        deleteShiftConfirm: 'Удалить смену «{name}»?\n\n{usage}',
+        deleteShiftUsed: 'Она настроена в {count} днях филиалов, и все её назначения будут удалены.',
+        deleteShiftUnused: 'Она не используется ни в одном филиале.',
+        shiftDeleted: 'Смена удалена{removed}',
+        shiftRemovedCount: ' (удалено назначений: {count})',
+        shiftAdded: 'Смена добавлена. Настройте её во вкладке «Филиалы», чтобы она появилась в графике.',
+        newShift: 'Смена {n}',
+        applyHoursConfirm: 'Применить время по умолчанию ко всем филиалам ({count}), с воскресенья по четверг?\n\n' +
+          'Рабочие дни и количество людей останутся прежними. Пятница и вечер субботы не изменятся.',
+        hoursUpdated: 'Время обновлено в {count} сменах',
+        hoursAlready: 'Во всех сменах уже такое время',
+        imported: 'Данные импортированы',
+        importedCloud: 'Данные импортированы и загружены в облако (недель: {count})',
+        importFailed: 'Неверный файл: {message}',
+        resetConfirm: 'Сбросить все данные (сотрудники, филиалы, графики и заявки) к значениям по умолчанию?',
+        reset: 'Данные сброшены'
+      },
+
+      ui: {
+        until: 'до {time}', sheet: 'Лист {n}',
+        fileSaved: 'Файл сохранён', fileFailed: 'Не удалось сохранить файл: {message}',
+        unknownError: 'неизвестная ошибка', downloadUnavailable: 'Скачивание файлов здесь недоступно',
+        loadFailed: 'Не удалось загрузить данные, загружены значения по умолчанию',
+        saveFailed: 'Не удалось сохранить данные',
+        iconLetters: 'СМ',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'не хватает людей',
+        holidayClosedLine: '{name} — все филиалы закрыты',
+        spareLine: '— {verb} {shifts}, которые ещё можно назначить —',
+        unknownBranch: 'Неизвестный филиал', unknownEmployee: 'Неизвестный сотрудник',
+        weekLabel: 'Неделя {from} – {to}', constraintsWeek: 'Заявки · {label}',
+        holidayAllClosed: 'Все филиалы закрыты — выходной для всех',
+        holidayNoRequests: 'Праздник — заявки не нужны',
+        branchClosedToday: 'Закрыто в этот день',
+        noActiveBranches: 'Нет активных филиалов.',
+        noActiveBranchesTab: 'Нет активных филиалов. Откройте вкладку «Филиалы».',
+        allClosedOn: 'Все филиалы закрыты в {day}.',
+        branchesClosed: 'Филиалы закрыты',
+        noHours: 'Без времени',
+        outOf: '{done} из {total}',
+        cloudSaved: 'Данные хранятся в облаке и обновляются на каждом компьютере, открытом по этой ссылке',
+        deviceSaved: 'Данные сохраняются только в этом браузере',
+        thinking: 'Думаю…',
+        noAnswer: '(ответ не получен)',
+        chatBlocked: 'У вас нет прав задавать вопросы на этой странице.',
+        chatRateLimited: 'Слишком много вопросов подряд — попробуйте через мгновение.',
+        chatFailed: 'Сейчас не получилось ответить',
+        chatSystem: 'Вы помогаете руководителю вести график смен. Отвечайте на языке {language}, коротко и по делу, ' +
+          'опираясь только на данные ниже. Если чего-то не хватает, так и скажите, а не угадывайте.',
+        chatDataStart: '=== данные недели ===',
+        chatDataEnd: '=== конец данных ===',
+        chatQuestion: 'Вопрос: ',
+        summaryShabbat: 'Исход субботы: {time}',
+        summaryHolidays: 'Праздники (закрыто): {days}', summaryNoHolidays: 'На этой неделе праздников нет.',
+        summaryRules: 'Правила составления графика:',
+        ruleOnePerDayOn: 'Сотрудник работает не более одной смены в день.',
+        ruleOnePerDayOff: 'Сотрудник может работать несколько смен в день.',
+        ruleRestOn: 'Нет утренней смены после вечерней накануне.',
+        ruleRestOff: 'Отдых между вечерней и утренней сменой не требуется.',
+        summaryBranches: 'Филиалы:', summaryEmployees: 'Сотрудники:',
+        summaryCurrent: 'Текущий график:', summaryAvailability: 'Остаток доступности:',
+        summaryIssues: 'Предупреждения по графику:', summaryNoIssues: 'Предупреждений нет — график корректен.',
+        closedAllWeek: 'закрыт всю неделю', allBranches: 'все филиалы',
+        peopleCount: '{count} чел.',
+        empBranches: 'филиалы', empShifts: 'смены', empMax: 'максимум {count} в неделю',
+        empAskedOff: 'просил выходной', empBlocked: 'заблокировал', empNote: 'заметка',
+        empAssignedOf: '{name}: назначено {total} из нормы {max}',
+        empFreeDays: 'свободные дни: {days}', none: 'нет',
+        fileName: 'график', personalFileName: 'график-{name}',
+        greeting: 'Здравствуйте, {name}! Вот ваш график:',
+        shortTitle: 'Смены'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · смена {shift}',
+        deletedEmployee: '(удалённый сотрудник: {id})',
+        deletedBranch: '(удалённый филиал)',
+        errorsOne: 'Одна ошибка', errorsOther: 'Ошибок: {count}',
+        warningsOne: 'Одно предупреждение', warningsOther: 'Предупреждений: {count}',
+        infosOne: 'Одна заметка', infosOther: 'Заметок: {count}',
+        allGood: '✔ График корректен — нет накладок, нехватки людей и нарушенных заявок',
+        showAll: 'Показать все предупреждения ({count})', showLess: 'Скрыть предупреждения',
+        duplicate: 'Накладка: {label} — назначено {count} чел. ({names}) вместо {need}.',
+        duplicateSelf: 'Накладка: {name} назначен дважды на одну смену — {label}.',
+        doubleBooked: 'Накладка: у {name} {count} смен в {day}{where} ({detail}).',
+        sameBranch: ' в одном филиале', differentBranches: ' в разных филиалах',
+        understaffed: 'Не хватает людей: {label} — назначено {assigned} из {need}.',
+        reasonBusy: '{names} уже назначены на другую смену в этот день',
+        reasonMaxed: '{names} достигли недельного лимита смен',
+        reasonResting: '{names} нужен отдых между вечерней и утренней сменой',
+        reasonNone: 'Нет сотрудника, настроенного одновременно на этот филиал и эту смену, либо все её заблокировали.',
+        reasonFree: 'Есть свободные сотрудники ({names}) — попробуйте построить график заново.',
+        reasonPrefix: 'Причина: ',
+        suggestTwoPerDay: ' В настройках можно разрешить две смены в день на сотрудника.',
+        suggestRaiseMax: ' Недельный лимит можно поднять в карточке сотрудника.',
+        constraintOff: 'Заявка нарушена: {name} просил выходной в {day}, но назначен на смену {shift} в {branch}.',
+        constraintBlocked: 'Заявка нарушена: {name} заблокировал смену {shift} в {day}, но назначен на неё в {branch}.',
+        branchMismatch: '{name} назначен в {branch} в {day}, хотя этот филиал не указан в его карточке.',
+        shiftMismatch: '{name} назначен на смену {shift} в {day}, хотя этот тип смены не указан в его карточке.',
+        overMax: 'Превышен лимит: у {name} {total} смен (максимум {max}).',
+        noShifts: 'У {name} нет смен на этой неделе.',
+        rest: 'Короткий отдых: {name} заканчивает вечернюю смену в {previous} и выходит в утреннюю в {day}.',
+        holidayAssignment: 'Назначение в праздник: {day} ({name}) отмечен как закрытый, но назначены: {names}.',
+        inactiveSlot: 'Назначение на закрытую смену: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'Не указано время исхода субботы на эту неделю — начало смен вечера субботы посчитать нельзя.',
+        pendingOne: 'Заявка ждёт одобрения: {name} ({day}). До одобрения она не влияет на график.',
+        pendingOther: 'Заявок на одобрение: {count} — {names}. До одобрения они не влияют на график.',
+        extraDaysOff: '{name} запросил {count} выходных ({days}) — по правилам положен один выходной в неделю.',
+        belowTarget: '{name} просил выходной в {day} и назначен на {total} из {expected} возможных смен — у него ещё есть свободные дни.'
+      },
+
+      availability: {
+        title: 'Что ещё доступно',
+        none: 'Доступного не осталось — {reason}',
+        reasonMaxed: 'все достигли недельного лимита смен.',
+        reasonNoDays: 'у тех, у кого остался запас, нет свободного дня с открытыми филиалами.',
+        totalOne: '{verb} ещё одна смена для назначения, у {people}:',
+        totalOther: '{verb} ещё {count} смен для назначения, у {people}:',
+        peopleOne: 'один сотрудник', peopleOther: '{count} сотрудников',
+        left: '{verb} {shifts} в норме · свободен в {days}',
+        leftNoDays: '{verb} {shifts} в норме, но свободных дней на этой неделе нет',
+        full: 'норма выбрана полностью ({assigned} из {max})',
+        noEmployees: 'Нет активных сотрудников.',
+        shiftsOne: 'одна смена', shiftsOther: '{count} смен',
+        remains: 'осталась', remainPlural: 'осталось'
+      },
+
+      constraints: {
+        title: 'Заявки на {week}',
+        clear: 'Очистить эту неделю', copyPrevious: 'Скопировать с прошлой недели',
+        legend: 'Нажмите на смену, чтобы переключить: {free} → {preferred} → {blocked}. «Выходной» блокирует весь день.',
+        free: 'Доступен', preferred: 'Предпочитает', blocked: 'Не может', dayOff: 'Выходной',
+        pendingTitle: 'Заявки, ожидающие вашего решения ({count})',
+        pendingHint: 'Неодобренная заявка не влияет на график.',
+        approve: 'Одобрить', reject: 'Отклонить',
+        approved: 'Одобрена', rejected: 'Отклонена', pending: 'Ожидает одобрения',
+        requestLabel: 'Заявка: {detail}', requestRejected: 'Заявка отклонена',
+        reason: 'Причина (необязательно)',
+        reasonPlaceholder: 'например: свадьба, экзамен, приём у врача',
+        reasonSaved: 'Причина сохранена', reasonGiven: 'Указанная причина: {text}',
+        managerNote: 'Заметка руководителя: {text}',
+        needsApproval: 'Каждая заявка проходит через руководителя и влияет на график только после одобрения.',
+        noChange: 'Без изменений'
+      },
+
+      employees: {
+        title: 'Сотрудники', add: '+ Добавить сотрудника', active: 'Активен',
+        branchesLabel: 'Филиалы (ничего не выбрано = все филиалы)',
+        shiftTypes: 'Доступные типы смен',
+        maxShifts: 'Максимум смен в неделю', note: 'Заметка',
+        deleteConfirm: 'Удалить {name}? Его назначения будут убраны из всех недель.',
+        inactive: '(неактивен)', newName: 'Новый сотрудник'
+      },
+
+      branches: {
+        title: 'Филиалы', add: '+ Добавить филиал', active: 'Активен', newName: 'Новый филиал',
+        hint: 'У каждого филиала свои дни, время и количество людей на смену. ' +
+          'Значение 0 закрывает эту смену в этот день. Назначение сверх указанного числа помечается как накладка.',
+        peopleLabel: 'Людей', closed: 'Закрыто', day: 'День',
+        copyFrom: 'Скопировать дни и время из другого филиала', chooseBranch: 'Выберите филиал…',
+        copyConfirm: 'Скопировать дни и время из {from} в {to}?',
+        copied: 'Дни и время скопированы',
+        deleteConfirm: 'Удалить {name}? Его назначения будут убраны из всех недель.',
+        autoSabbath: 'По исходу субботы', autoSabbathLabel: 'Исход субботы +30 мин'
+      },
+
+      settings: {
+        rules: 'Правила составления графика',
+        onePerDay: 'Сотрудник работает не более одной смены в день',
+        rest: 'Нет утренней смены после вечерней накануне',
+        oneDayOff: 'День, отмеченный выходным в заявках, — единственный выходной на неделе',
+        shiftTypes: 'Типы смен',
+        addShift: '+ Добавить смену', applyHours: 'Применить время ко всем филиалам (пн–пт)',
+        shiftsHint: 'Здесь задаётся, сколько смен в вашем бизнесе, как они называются, их время, цвет и порядок. ' +
+          'Указанное время — по умолчанию; каждый филиал может задать своё. ' +
+          'Кнопка обновляет существующие филиалы, не меняя рабочие дни и количество людей.',
+        shiftNamePlaceholder: 'Название смены',
+        sabbathTitle: 'Вечер субботы',
+        sabbathDefault: 'Время исхода субботы по умолчанию для новой недели:',
+        sabbathHint: 'Каждую неделю фактическое время можно поправить вверху вкладки «График». ' +
+          'Смены вечера субботы начинаются через полчаса после него.',
+        backup: 'Резервная копия',
+        exportJson: 'Экспорт всех данных (JSON)', importJson: 'Импорт данных',
+        reset: 'Сбросить к значениям по умолчанию',
+        backupHint: 'Данные сохраняются автоматически в этом браузере. Для переноса между компьютерами экспортируйте файл JSON.',
+        languageTitle: 'Язык', languageHint: 'Меняет весь интерфейс. Сохраняется на этом устройстве.'
+      },
+
+      server: {
+        credentialsRequired: 'Нужны электронная почта и пароль',
+        passwordTooShort: 'Пароль должен содержать не менее 6 символов',
+        emailTaken: 'Этот адрес электронной почты уже зарегистрирован',
+        companyRequired: 'Нужно название компании',
+        badCredentials: 'Неверная почта или пароль',
+        userInactive: 'Этот пользователь неактивен. Обратитесь к руководителю компании.',
+        signInRequired: 'Войдите в систему',
+        noPermission: 'У вас нет прав на это действие',
+        notLinked: 'Этот пользователь не связан с карточкой сотрудника',
+        weekPublished: 'График этой недели опубликован, заявки больше нельзя менять',
+        weekPublishedShort: 'График этой недели уже опубликован',
+        noRequest: 'На этот день заявки нет',
+        badDecision: 'Недопустимое решение',
+        requestNotFound: 'Заявка не найдена',
+        weekMissing: 'Такой недели не существует',
+        userNotFound: 'Пользователь не найден',
+        cannotChangeOwner: 'Владельца аккаунта нельзя изменить'
+      },
+
+      notify: {
+        published: 'График опубликован',
+        publishedBody: 'График новой недели готов. Вы можете посмотреть свои смены.',
+        requestApproved: 'Ваша заявка одобрена',
+        requestApprovedBody: 'Ваша заявка на {day} одобрена.',
+        requestRejected: 'Ваша заявка отклонена',
+        requestRejectedBody: 'Ваша заявка на {day} отклонена',
+        newRequest: 'Новая заявка',
+        newRequestBody: 'Поступила заявка, ожидающая вашего решения.',
+        newRequestsBody: 'Новых заявок на рассмотрение: {count}.'
+      },
+
+      payments: {
+        mockProvider: 'Тестовый провайдер (разработка)',
+        mockNote: 'Платёж подтверждается сразу, без реального списания. Только для разработки и демонстраций.',
+        unknownPlan: 'Неизвестный тариф',
+        serverProvider: 'Оплата через сервер ({name})',
+        notConfigured: 'Оплата не настроена в этой среде',
+        requestFailed: 'Запрос на оплату не выполнен ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} ILS / мес.', priceAmount: '{amount} ILS',
+        updateFailed: 'Не удалось обновить', cancelFailed: 'Не удалось отменить',
+        title: 'Ваша подписка', status: 'Статус', plan: 'Тариф', validUntil: 'Действует до',
+        activeStaff: 'Активных сотрудников', of: '{count} из {max}', unlimited: '{count} (без ограничений)',
+        plans: 'Тарифы', choose: 'Выбрать', currentPlan: 'Текущий тариф',
+        tooSmall: 'Мало для {count} сотрудников', cancel: 'Отменить подписку',
+        cancelConfirm: 'Отменить подписку? Доступ закончится вместе с оплаченным периодом.',
+        planUpdated: 'Тариф обновлён', canceled: 'Подписка отменена',
+        ownerOnly: 'Менять подписку может только владелец аккаунта.',
+        perMonth: 'в месяц',
+        statusTrial: 'Пробный период', statusActive: 'Активна', statusPastDue: 'Платёж не прошёл',
+        statusCanceled: 'Отменена', statusExpired: 'Истекла'
+      },
+
+      auth: {
+        wait: 'Минуту…',
+        notifyEnabled: 'Уведомления включены',
+        notifyBody: 'Мы сообщим вам об изменениях в графике.',
+        signIn: 'Вход', signUp: 'Создать аккаунт компании',
+        email: 'Электронная почта', password: 'Пароль', name: 'Ваше имя', companyName: 'Название компании',
+        passwordHint: 'Не менее 6 символов',
+        enter: 'Войти', create: 'Создать аккаунт', signingIn: 'Вход…', creating: 'Создание…',
+        trialNote: '{days} дней бесплатно. Платёжные данные не нужны.',
+        signOut: 'Выйти', blocked: 'Доступ закрыт',
+        blockedOwner: 'Обратитесь в поддержку, чтобы активировать подписку.',
+        blockedMember: 'Попросите владельца аккаунта продлить подписку.',
+        enableNotifications: 'Включить уведомления',
+        failedSignIn: 'Не удалось войти', failedSignUp: 'Не удалось создать аккаунт'
+      },
+
+      users: {
+        nameColumn: 'Имя', emailColumn: 'Почта', createFailed: 'Не удалось создать пользователя',
+        title: 'Пользователи',
+        hint: 'У каждого сотрудника может быть свой вход. Он видит только свои смены и подаёт свои заявки — ' +
+          'полный график ему недоступен, и менять он ничего не может. Руководитель видит и меняет всё. ' +
+          'Свяжите пользователя с карточкой сотрудника, чтобы он видел свои смены.',
+        add: 'Добавить пользователя', createUser: 'Создать пользователя',
+        role: 'Роль', staffCard: 'Карточка сотрудника', none: 'Нет', noLink: 'Без связи',
+        initialPassword: 'Начальный пароль', activeColumn: 'Активен',
+        created: 'Пользователь создан для {email}', updated: 'Сохранено', updateFailed: 'Не удалось обновить'
+      },
+
+      access: {
+        noCompany: 'Компания не найдена',
+        trialEnded: 'Пробный период закончился. Активируйте подписку, чтобы продолжить.',
+        trial: 'Пробный период — осталось дней: {days}.',
+        expired: 'Подписка истекла. Продлите её, чтобы продолжить.',
+        pastDueBlocked: 'Платёж не получен, доступ закрыт. Обновите способ оплаты.',
+        pastDue: 'Последний платёж не прошёл. Доступ будет закрыт через {days} дней.',
+        expiredKept: 'Подписка истекла и не была продлена. Выбор тарифа сразу вернёт доступ, данные сохранены.',
+        canceled: 'Подписка отменена. Продлить можно в любой момент — данные сохранены.',
+        inactive: 'Подписка неактивна.',
+        overLimit: 'Тариф «{plan}» рассчитан до {max} сотрудников. У вас {count} — нужен тариф «{suggested}» ({range}, {price}).'
+      },
+
+      plans: {
+        starter: 'Малый', growth: 'Средний', business: 'Большой',
+        upTo: 'До {count} сотрудников',
+        between: 'От {from} до {to} сотрудников',
+        from: '{count} сотрудников и больше'
+      },
+
+      roles: { owner: 'Владелец', manager: 'Руководитель', employee: 'Сотрудник' },
+
+      employee: {
+        prevWeek: '◀ Предыдущая неделя', nextWeek: 'Следующая неделя ▶',
+        loadFailed: 'Не удалось загрузить данные: {message}',
+        saveFailed: 'Не удалось сохранить', reasonSaveFailed: 'Не удалось сохранить причину',
+        myShifts: 'Мои смены', myRequests: 'Мои заявки',
+        notPublished: 'График этой недели ещё не опубликован.',
+        noShifts: 'На этой неделе у вас нет смен.',
+        totalWeek: 'Смен на этой неделе: {count}.',
+        publishedLocked: 'График опубликован — заявки на эту неделю изменить уже нельзя.',
+        notLinked: 'Ваш пользователь ещё не связан с карточкой сотрудника. Обратитесь к руководителю.',
+        noShiftsToday: 'В этот день смен нет', holidayNoWork: 'Праздник — работы нет'
+      },
+
+      chat: {
+        title: 'Вопросы по графику',
+        hint: 'Спросите о неделе на экране — например «кто работает во вторник вечером?», ' +
+          '«почему Сотрудник 3 не поставлен в четверг?» или «кто может подменить Сотрудника 5 в среду?»',
+        placeholder: 'Задайте вопрос о графике…', send: 'Отправить'
+      },
+
+      excel: {
+        availabilityNone: 'Ничего не осталось — на этой неделе больше смен назначить нельзя',
+        availabilityLeft: '{verb} {shifts} для назначения',
+        spare: 'Остаток нормы', required: 'Требуется',
+        valid: 'Корректен', checksTitle: 'Проверки графика',
+        personalText: 'Текст для WhatsApp',
+        byBranch: 'По филиалам', byEmployee: 'По сотрудникам', availability: 'Доступность',
+        checks: 'Проверки', personal: 'Мой график',
+        title: 'Рабочий график — неделя с {from} по {to}',
+        viewBranch: 'По филиалам', viewEmployee: 'По сотрудникам',
+        sabbathEnds: 'Исход субботы {time}',
+        day: 'День', date: 'Дата', branch: 'Филиал', shift: 'Смена', hours: 'Время',
+        staff: 'Сотрудник', assigned: 'Назначено', quota: 'Норма', left: 'Остаток нормы',
+        canAssign: 'Можно назначить', freeDays: 'Свободные дни', totalShifts: 'Всего смен',
+        severity: 'Уровень', type: 'Тип', detail: 'Подробности',
+        missing: '— не хватает —', closed: 'Закрыто', notAssigned: 'Не назначен',
+        personalTitle: 'Личный график — {name}', totalWeek: 'Смен на этой неделе: {count}',
+        noIssues: 'Нет накладок, нехватки людей и нарушенных заявок'
+      },
+
+      errors: {
+        invalidTime: 'Неверное время — используйте 24-часовой формат, например 09:30',
+        emptyShiftName: 'Название смены не может быть пустым',
+        lastShift: 'Должна остаться хотя бы одна смена',
+        notSaved: 'Не удалось сохранить', copied: 'Скопировано в буфер обмена',
+        viewOnlyBlocked: 'Только просмотр — редактирование отключено. Выключить можно вверху экрана.',
+        duplicatePerson: 'Один и тот же сотрудник не может стоять дважды в одной смене',
+        printBlocked: 'Печать здесь недоступна — используйте «Копировать текстом» или экспорт в Excel',
+        chooseEmployee: 'Выберите сотрудника для личного экспорта'
+      },
+
+      common: {
+        moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
+        save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', close: 'Закрыть',
+        yes: 'Да', no: 'Нет', all: 'Все', and: 'и', more: 'и ещё {count}'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/de.js ===== */
+/* Deutsch */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'de',
+    name: 'Deutsch',
+    dir: 'ltr',
+    locale: 'de-DE',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Schichtplaner',
+        subtitle: 'Wochenplanung für jede Filiale, mit Erkennung von Doppelbelegungen und Lücken',
+        language: 'Sprache'
+      },
+
+      days: {
+        0: 'Sonntag', 1: 'Montag', 2: 'Dienstag', 3: 'Mittwoch',
+        4: 'Donnerstag', 5: 'Freitag', 6: 'Samstag'
+      },
+      daysShort: { 0: 'So', 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa' },
+
+      shifts: { morning: 'Früh', middle: 'Mittag', evening: 'Abend', night: 'Nacht' },
+
+      seed: {
+        branchCenter: 'Filiale Mitte', branchNorth: 'Filiale Nord', branchSouth: 'Filiale Süd',
+        employee: 'Mitarbeiter {n}',
+        noteFloater: 'Springt in allen Filialen ein', noteStudent: 'Studentisch – keine Frühschichten'
+      },
+
+      colors: {
+        0: 'Bernstein', 1: 'Grün', 2: 'Blau', 3: 'Violett',
+        4: 'Rosa', 5: 'Türkis', 6: 'Grau', 7: 'Braun'
+      },
+
+      tabs: {
+        schedule: 'Dienstplan', constraints: 'Wünsche', employees: 'Team',
+        branches: 'Filialen', users: 'Benutzer', billing: 'Abonnement', settings: 'Einstellungen'
+      },
+
+      toolbar: {
+        prevWeek: 'Vorherige Woche', nextWeek: 'Nächste Woche', thisWeek: 'Diese Woche',
+        week: 'Woche {from} – {to}', currentWeek: 'Aktuelle Woche',
+        generate: 'Plan erstellen', clear: 'Plan leeren',
+        keepManual: 'Manuelle Zuweisungen behalten',
+        copyText: 'Als Text kopieren', excel: 'Excel', csv: 'CSV', print: 'Drucken',
+        moreTools: 'Weitere Werkzeuge', closeTools: 'Werkzeuge schließen',
+        viewOnly: 'Nur Ansicht', exitViewOnly: 'Ansichtsmodus beenden',
+        shabbatEnd: 'Schabbat-Ende',
+        byBranch: 'Nach Filiale', byEmployee: 'Nach Mitarbeiter',
+        personalExport: 'Persönlicher Export (nur eigene Schichten):',
+        choosePerson: 'Person auswählen…',
+        holidays: 'Feiertage (alle Filialen geschlossen):'
+      },
+
+      schedule: {
+        branch: 'Filiale', shift: 'Schicht', employee: 'Mitarbeiter', totalShifts: 'Schichten gesamt',
+        empty: '— leer —', add: '+ hinzufügen', addPerson: '+ Person hinzufügen', notAssigned: '— nicht eingeteilt —',
+        closed: 'An diesem Tag geschlossen', noBranches: 'Keine aktiven Filialen. Öffnen Sie den Reiter „Filialen“.',
+        required: 'Benötigt: {count}', people: '{count} Personen',
+        holidayClosed: 'Alle Filialen geschlossen', dayOff: 'Freier Tag', holiday: 'Feiertag',
+        missingSabbath: 'Schabbat-Ende fehlt'
+      },
+
+      status: {
+        synced: 'Zwischen Geräten synchronisiert', syncedAt: 'Zwischen Geräten synchronisiert · aktualisiert um {time}',
+        localOnly: 'Nur auf diesem Gerät gespeichert', readOnly: 'Nur Ansicht – keine Bearbeitungsrechte',
+        remoteUpdate: 'Aktualisierung von einem anderen Gerät erhalten ({time})',
+        localCopy: 'Dies ist eine lokale Kopie – die Daten liegen nur in diesem Browser und werden nicht synchronisiert. ' +
+          'Für die Arbeit an zwei Rechnern nutzen Sie die gehostete Version. Zum Übertragen: JSON in den Einstellungen exportieren und dort importieren.',
+        viewOnlyBanner: 'Nur Ansicht – der Plan wird zur Kontrolle angezeigt, Bearbeiten ist deaktiviert. ' +
+          'Export, Druck und Wochenwechsel funktionieren weiterhin.'
+      },
+
+      levels: { error: 'Fehler', warning: 'Warnung', info: 'Hinweis' },
+
+      marks: {
+        dayOff: 'freier Tag', blocked: 'gesperrt', prefers: 'bevorzugt',
+        notInBranch: 'nicht in dieser Filiale', notInShift: 'nicht für diese Schicht',
+        alreadyAssigned: 'bereits eingeteilt', inactive: 'inaktiv'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Doppelbelegung',
+        'duplicate-employee-slot': 'Doppelbelegung',
+        'double-booked': 'Zwei Schichten an einem Tag',
+        understaffed: 'Unterbesetzt',
+        'constraint-off': 'Wunsch verletzt',
+        'constraint-blocked': 'Wunsch verletzt',
+        'branch-mismatch': 'Falsche Filiale',
+        'shift-mismatch': 'Falscher Schichttyp',
+        'over-max': 'Über dem Limit',
+        rest: 'Kurze Ruhezeit',
+        'no-shifts': 'Keine Schichten',
+        'missing-shabbat-end': 'Schabbat-Ende fehlt',
+        'inactive-slot': 'Schicht nicht geöffnet',
+        'pending-constraints': 'Offene Wünsche',
+        'extra-days-off': 'Zu viele freie Tage',
+        'below-target': 'Unter dem Soll'
+      },
+
+      toast: {
+        generated: 'Plan erstellt – {shifts} noch unbesetzt',
+        generatedFull: 'Plan erstellt – alle Schichten sind besetzt',
+        clearWeekConfirm: 'Alle Zuweisungen dieser Woche löschen? Die Wünsche bleiben erhalten.',
+        cleared: 'Plan geleert',
+        copied: 'Plan in die Zwischenablage kopiert',
+        personalCopied: 'Persönlicher Plan in die Zwischenablage kopiert',
+        viewOnlyOn: 'Nur Ansicht ist aktiv – Bearbeiten ist deaktiviert',
+        viewOnlyOff: 'Nur Ansicht ist aus – Sie können bearbeiten',
+        copyPrompt: 'Text kopieren:',
+        holidayCleared: '{day} ist wieder ein Arbeitstag',
+        holidayPrompt: 'Name des Feiertags am {day} (die Filialen schließen und der Tag gilt für alle als frei):',
+        holidayDefault: 'Feiertag',
+        holidayHasAssignments: 'An diesem Tag sind bereits {count} Personen eingeteilt. Als Feiertag markieren und die Einteilungen löschen?',
+        holidayMarked: '{day} ist als Feiertag markiert – die Filialen sind geschlossen',
+        clearConstraintsConfirm: 'Alle Wünsche dieser Woche löschen?',
+        constraintsCleared: 'Wünsche gelöscht',
+        noPreviousConstraints: 'In der Vorwoche gibt es keine Wünsche',
+        constraintsCopied: 'Wünsche aus der Vorwoche übernommen',
+        requestApproved: 'Wunsch genehmigt', requestRejected: 'Wunsch abgelehnt',
+        updateFailed: 'Aktualisierung fehlgeschlagen',
+        deleteShiftConfirm: 'Die Schicht „{name}“ löschen?\n\n{usage}',
+        deleteShiftUsed: 'Sie ist an {count} Filialtagen eingerichtet, und alle ihre Einteilungen werden gelöscht.',
+        deleteShiftUnused: 'Sie wird in keiner Filiale verwendet.',
+        shiftDeleted: 'Schicht gelöscht{removed}',
+        shiftRemovedCount: ' ({count} Einteilungen entfernt)',
+        shiftAdded: 'Schicht hinzugefügt. Richten Sie sie unter „Filialen“ ein, damit sie im Plan erscheint.',
+        newShift: 'Schicht {n}',
+        applyHoursConfirm: 'Die Standardzeiten auf alle {count} Filialen anwenden, Sonntag bis Donnerstag?\n\n' +
+          'Öffnungstage und Personalstärke bleiben unverändert. Freitag und Samstagabend werden nicht geändert.',
+        hoursUpdated: 'Zeiten in {count} Schichten aktualisiert',
+        hoursAlready: 'Alle Schichten nutzen bereits diese Zeiten',
+        imported: 'Daten importiert',
+        importedCloud: 'Daten importiert und in die Cloud geladen ({count} Wochen)',
+        importFailed: 'Ungültige Datei: {message}',
+        resetConfirm: 'Alle Daten (Team, Filialen, Pläne und Wünsche) auf die Standardwerte zurücksetzen?',
+        reset: 'Daten zurückgesetzt'
+      },
+
+      ui: {
+        until: 'bis {time}', sheet: 'Blatt {n}',
+        fileSaved: 'Datei gespeichert', fileFailed: 'Datei konnte nicht gespeichert werden: {message}',
+        unknownError: 'unbekannter Fehler', downloadUnavailable: 'Dateien können hier nicht heruntergeladen werden',
+        loadFailed: 'Laden der Daten fehlgeschlagen, Standardwerte geladen',
+        saveFailed: 'Speichern der Daten fehlgeschlagen',
+        iconLetters: 'SP',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'unterbesetzt',
+        holidayClosedLine: '{name} – alle Filialen geschlossen',
+        spareLine: '— {verb} {shifts} noch zu vergeben —',
+        unknownBranch: 'Unbekannte Filiale', unknownEmployee: 'Unbekannte Person',
+        weekLabel: 'Woche {from} – {to}', constraintsWeek: 'Wünsche · {label}',
+        holidayAllClosed: 'Alle Filialen geschlossen – freier Tag für alle',
+        holidayNoRequests: 'Feiertag – keine Wünsche nötig',
+        branchClosedToday: 'An diesem Tag geschlossen',
+        noActiveBranches: 'Keine aktiven Filialen.',
+        noActiveBranchesTab: 'Keine aktiven Filialen. Öffnen Sie den Reiter „Filialen“.',
+        allClosedOn: 'Am {day} sind alle Filialen geschlossen.',
+        branchesClosed: 'Filialen geschlossen',
+        noHours: 'Keine Zeiten',
+        outOf: '{done} von {total}',
+        cloudSaved: 'Die Daten liegen in der Cloud und aktualisieren sich auf jedem Rechner, der diesen Link geöffnet hat',
+        deviceSaved: 'Die Daten liegen nur in diesem Browser',
+        thinking: 'Denke nach…',
+        noAnswer: '(keine Antwort erhalten)',
+        chatBlocked: 'Sie dürfen auf dieser Seite keine Fragen stellen.',
+        chatRateLimited: 'Zu viele Fragen hintereinander – versuchen Sie es gleich noch einmal.',
+        chatFailed: 'Ich konnte gerade nicht antworten',
+        chatSystem: 'Sie helfen einer Führungskraft bei der Schichtplanung. Antworten Sie auf {language}, kurz und sachlich, ' +
+          'und stützen Sie sich nur auf die folgenden Daten. Fehlt eine Information, sagen Sie das, statt zu raten.',
+        chatDataStart: '=== Wochendaten ===',
+        chatDataEnd: '=== Ende der Daten ===',
+        chatQuestion: 'Frage: ',
+        summaryShabbat: 'Schabbat-Ende: {time}',
+        summaryHolidays: 'Feiertage geschlossen: {days}', summaryNoHolidays: 'Diese Woche gibt es keine Feiertage.',
+        summaryRules: 'Planungsregeln:',
+        ruleOnePerDayOn: 'Eine Person arbeitet höchstens eine Schicht pro Tag.',
+        ruleOnePerDayOff: 'Eine Person darf mehrere Schichten am Tag arbeiten.',
+        ruleRestOn: 'Keine Frühschicht nach einer Abendschicht am Vortag.',
+        ruleRestOff: 'Keine Ruhezeit zwischen Abend- und Frühschicht erforderlich.',
+        summaryBranches: 'Filialen:', summaryEmployees: 'Team:',
+        summaryCurrent: 'Aktueller Plan:', summaryAvailability: 'Verbleibende Verfügbarkeit:',
+        summaryIssues: 'Hinweise zum Plan:', summaryNoIssues: 'Keine Hinweise – der Plan ist in Ordnung.',
+        closedAllWeek: 'die ganze Woche geschlossen', allBranches: 'alle Filialen',
+        peopleCount: '{count} Personen',
+        empBranches: 'Filialen', empShifts: 'Schichten', empMax: 'höchstens {count} pro Woche',
+        empAskedOff: 'hat frei beantragt', empBlocked: 'hat gesperrt', empNote: 'Notiz',
+        empAssignedOf: '{name}: {total} von {max} eingeteilt',
+        empFreeDays: 'freie Tage: {days}', none: 'keine',
+        fileName: 'dienstplan', personalFileName: 'dienstplan-{name}',
+        greeting: 'Hallo {name}, hier ist Ihr Dienstplan:',
+        shortTitle: 'Schichten'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · {shift}schicht',
+        deletedEmployee: '(gelöschte Person: {id})',
+        deletedBranch: '(gelöschte Filiale)',
+        errorsOne: 'Ein Fehler', errorsOther: '{count} Fehler',
+        warningsOne: 'Eine Warnung', warningsOther: '{count} Warnungen',
+        infosOne: 'Ein Hinweis', infosOther: '{count} Hinweise',
+        allGood: '✔ Der Plan ist in Ordnung – keine Doppelbelegungen, Lücken oder verletzten Wünsche',
+        showAll: 'Alle {count} Hinweise anzeigen', showLess: 'Hinweise ausblenden',
+        duplicate: 'Doppelbelegung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
+        duplicateSelf: 'Doppelbelegung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
+        doubleBooked: 'Doppelbelegung: {name} hat {count} Schichten am {day}{where} ({detail}).',
+        sameBranch: ' in derselben Filiale', differentBranches: ' in verschiedenen Filialen',
+        understaffed: 'Unterbesetzt: {label} – {assigned} von {need} eingeteilt.',
+        reasonBusy: '{names} sind an diesem Tag bereits einer anderen Schicht zugeteilt',
+        reasonMaxed: '{names} haben ihr Wochenlimit an Schichten erreicht',
+        reasonResting: '{names} brauchen Ruhezeit zwischen Abend- und Frühschicht',
+        reasonNone: 'Niemand ist sowohl für diese Filiale als auch für diese Schicht eingerichtet, oder alle haben sie gesperrt.',
+        reasonFree: 'Es sind Personen frei ({names}) – versuchen Sie, den Plan neu zu erstellen.',
+        reasonPrefix: 'Grund: ',
+        suggestTwoPerDay: ' In den Einstellungen können Sie zwei Schichten pro Tag und Person erlauben.',
+        suggestRaiseMax: ' Das Wochenlimit lässt sich in der Mitarbeiterkarte erhöhen.',
+        constraintOff: 'Wunsch verletzt: {name} wollte am {day} frei, ist aber der Schicht {shift} in {branch} zugeteilt.',
+        constraintBlocked: 'Wunsch verletzt: {name} hat die Schicht {shift} am {day} gesperrt, ist ihr aber in {branch} zugeteilt.',
+        branchMismatch: '{name} ist am {day} in {branch} eingeteilt, obwohl diese Filiale nicht in der Mitarbeiterkarte steht.',
+        shiftMismatch: '{name} ist am {day} der Schicht {shift} zugeteilt, obwohl dieser Schichttyp nicht in der Mitarbeiterkarte steht.',
+        overMax: 'Über dem Limit: {name} hat {total} Schichten (Maximum {max}).',
+        noShifts: '{name} hat diese Woche keine Schichten.',
+        rest: 'Kurze Ruhezeit: {name} beendet am {previous} eine Abendschicht und beginnt am {day} eine Frühschicht.',
+        holidayAssignment: 'Einteilung an einem Feiertag: {day} ({name}) ist als geschlossen markiert, eingeteilt sind aber {names}.',
+        inactiveSlot: 'Einteilung in eine nicht geöffnete Schicht: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'Für diese Woche fehlt das Schabbat-Ende – der Beginn der Samstagabendschichten lässt sich nicht berechnen.',
+        pendingOne: 'Ein Wunsch wartet auf Genehmigung: {name} ({day}). Bis zur Genehmigung wirkt er sich nicht auf den Plan aus.',
+        pendingOther: '{count} Wünsche warten auf Genehmigung: {names}. Bis zur Genehmigung wirken sie sich nicht auf den Plan aus.',
+        extraDaysOff: '{name} hat {count} freie Tage beantragt ({days}) – die Regel erlaubt einen freien Tag pro Woche.',
+        belowTarget: '{name} wollte am {day} frei und hat {total} von {expected} möglichen Schichten – es bleiben noch freie Tage.'
+      },
+
+      availability: {
+        title: 'Was noch verfügbar ist',
+        none: 'Nichts mehr verfügbar – {reason}',
+        reasonMaxed: 'alle haben ihr Wochenlimit an Schichten erreicht.',
+        reasonNoDays: 'wer noch Kontingent hat, hat keinen freien Tag, an dem seine Filialen geöffnet sind.',
+        totalOne: '{verb} noch eine Schicht zu vergeben, bei {people}:',
+        totalOther: '{verb} noch {count} Schichten zu vergeben, bei {people}:',
+        peopleOne: 'einer Person', peopleOther: '{count} Personen',
+        left: '{verb} {shifts} im Kontingent · frei am {days}',
+        leftNoDays: '{verb} {shifts} im Kontingent, aber kein freier Tag in dieser Woche',
+        full: 'Kontingent voll ausgeschöpft ({assigned} von {max})',
+        noEmployees: 'Kein aktives Team.',
+        shiftsOne: 'eine Schicht', shiftsOther: '{count} Schichten',
+        remains: 'bleibt', remainPlural: 'bleiben'
+      },
+
+      constraints: {
+        title: 'Wünsche für {week}',
+        clear: 'Diese Woche löschen', copyPrevious: 'Aus der Vorwoche übernehmen',
+        legend: 'Auf eine Schicht tippen zum Wechseln: {free} → {preferred} → {blocked}. „Freier Tag“ sperrt den ganzen Tag.',
+        free: 'Verfügbar', preferred: 'Bevorzugt', blocked: 'Kann nicht', dayOff: 'Freier Tag',
+        pendingTitle: 'Wünsche, die auf Ihre Genehmigung warten ({count})',
+        pendingHint: 'Ein nicht genehmigter Wunsch wirkt sich nicht auf den Plan aus.',
+        approve: 'Genehmigen', reject: 'Ablehnen',
+        approved: 'Genehmigt', rejected: 'Abgelehnt', pending: 'Wartet auf Genehmigung',
+        requestLabel: 'Wunsch: {detail}', requestRejected: 'Wunsch abgelehnt',
+        reason: 'Grund (optional)',
+        reasonPlaceholder: 'z. B. Hochzeit, Prüfung, Arzttermin',
+        reasonSaved: 'Grund gespeichert', reasonGiven: 'Angegebener Grund: {text}',
+        managerNote: 'Notiz der Führungskraft: {text}',
+        needsApproval: 'Jeder Wunsch geht an Ihre Führungskraft und wirkt sich erst nach der Genehmigung auf den Plan aus.',
+        noChange: 'Keine Änderung'
+      },
+
+      employees: {
+        title: 'Team', add: '+ Person hinzufügen', active: 'Aktiv',
+        branchesLabel: 'Filialen (keine Auswahl = alle Filialen)',
+        shiftTypes: 'Mögliche Schichttypen',
+        maxShifts: 'Maximale Schichten pro Woche', note: 'Notiz',
+        deleteConfirm: '{name} löschen? Die Einteilungen werden aus allen Wochen entfernt.',
+        inactive: '(inaktiv)', newName: 'Neue Person'
+      },
+
+      branches: {
+        title: 'Filialen', add: '+ Filiale hinzufügen', active: 'Aktiv', newName: 'Neue Filiale',
+        hint: 'Jede Filiale hat eigene Tage, Zeiten und Personalstärke pro Schicht. ' +
+          '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Doppelbelegung.',
+        peopleLabel: 'Personen', closed: 'Geschlossen', day: 'Tag',
+        copyFrom: 'Tage und Zeiten aus einer anderen Filiale kopieren', chooseBranch: 'Filiale auswählen…',
+        copyConfirm: 'Tage und Zeiten von {from} nach {to} kopieren?',
+        copied: 'Tage und Zeiten kopiert',
+        deleteConfirm: '{name} löschen? Die Einteilungen werden aus allen Wochen entfernt.',
+        autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
+      },
+
+      settings: {
+        rules: 'Planungsregeln',
+        onePerDay: 'Eine Person arbeitet höchstens eine Schicht pro Tag',
+        rest: 'Keine Frühschicht nach einer Abendschicht am Vortag',
+        oneDayOff: 'Der in den Wünschen markierte freie Tag ist der einzige freie Tag der Woche',
+        shiftTypes: 'Schichttypen',
+        addShift: '+ Schicht hinzufügen', applyHours: 'Zeiten auf alle Filialen anwenden (Mo–Fr)',
+        shiftsHint: 'Legen Sie fest, wie viele Schichten Ihr Betrieb hat, wie sie heißen, ihre Zeiten, Farbe und Reihenfolge. ' +
+          'Die Zeiten hier sind Standardwerte; jede Filiale kann eigene festlegen. ' +
+          'Die Schaltfläche aktualisiert bestehende Filialen, ohne Öffnungstage oder Personalstärke zu ändern.',
+        shiftNamePlaceholder: 'Name der Schicht',
+        sabbathTitle: 'Samstagabend',
+        sabbathDefault: 'Standard-Schabbat-Ende für eine neue Woche:',
+        sabbathHint: 'Die tatsächliche Zeit lässt sich jede Woche oben im Reiter „Dienstplan“ anpassen. ' +
+          'Die Samstagabendschichten beginnen eine halbe Stunde später.',
+        backup: 'Sicherung und Wiederherstellung',
+        exportJson: 'Alle Daten exportieren (JSON)', importJson: 'Daten importieren',
+        reset: 'Auf Standardwerte zurücksetzen',
+        backupHint: 'Die Daten werden automatisch in diesem Browser gespeichert. Zum Übertragen zwischen Rechnern exportieren Sie eine JSON-Datei.',
+        languageTitle: 'Sprache', languageHint: 'Ändert die gesamte Oberfläche. Wird auf diesem Gerät gespeichert.'
+      },
+
+      server: {
+        credentialsRequired: 'E-Mail und Passwort sind erforderlich',
+        passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen haben',
+        emailTaken: 'Diese E-Mail-Adresse ist bereits registriert',
+        companyRequired: 'Ein Firmenname ist erforderlich',
+        badCredentials: 'E-Mail oder Passwort ist falsch',
+        userInactive: 'Dieser Benutzer ist nicht aktiv. Wenden Sie sich an die Firmenleitung.',
+        signInRequired: 'Bitte melden Sie sich an',
+        noPermission: 'Dazu haben Sie keine Berechtigung',
+        notLinked: 'Dieser Benutzer ist mit keiner Mitarbeiterkarte verknüpft',
+        weekPublished: 'Der Plan dieser Woche ist veröffentlicht, Wünsche können nicht mehr geändert werden',
+        weekPublishedShort: 'Der Plan dieser Woche ist bereits veröffentlicht',
+        noRequest: 'Für diesen Tag gibt es keinen Wunsch',
+        badDecision: 'Ungültige Entscheidung',
+        requestNotFound: 'Wunsch nicht gefunden',
+        weekMissing: 'Diese Woche existiert nicht',
+        userNotFound: 'Benutzer nicht gefunden',
+        cannotChangeOwner: 'Der Kontoinhaber kann nicht geändert werden'
+      },
+
+      notify: {
+        published: 'Plan veröffentlicht',
+        publishedBody: 'Der Plan für die neue Woche steht bereit. Sie können Ihre Schichten sehen.',
+        requestApproved: 'Ihr Wunsch wurde genehmigt',
+        requestApprovedBody: 'Ihr Wunsch für {day} wurde genehmigt.',
+        requestRejected: 'Ihr Wunsch wurde abgelehnt',
+        requestRejectedBody: 'Ihr Wunsch für {day} wurde abgelehnt',
+        newRequest: 'Neuer Wunsch',
+        newRequestBody: 'Jemand hat einen Wunsch eingereicht, der auf Ihre Genehmigung wartet.',
+        newRequestsBody: '{count} neue Wünsche warten auf Ihre Genehmigung.'
+      },
+
+      payments: {
+        mockProvider: 'Testanbieter (Entwicklung)',
+        mockNote: 'Die Zahlung wird sofort ohne echte Belastung bestätigt. Nur für Entwicklung und Demos.',
+        unknownPlan: 'Unbekannter Tarif',
+        serverProvider: 'Abrechnung über Server ({name})',
+        notConfigured: 'Die Abrechnung ist in dieser Umgebung nicht eingerichtet',
+        requestFailed: 'Die Abrechnungsanfrage ist fehlgeschlagen ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} ILS / Monat', priceAmount: '{amount} ILS',
+        updateFailed: 'Aktualisierung fehlgeschlagen', cancelFailed: 'Kündigung fehlgeschlagen',
+        title: 'Ihr Abonnement', status: 'Status', plan: 'Tarif', validUntil: 'Gültig bis',
+        activeStaff: 'Aktives Team', of: '{count} von {max}', unlimited: '{count} (unbegrenzt)',
+        plans: 'Tarife', choose: 'Auswählen', currentPlan: 'Aktueller Tarif',
+        tooSmall: 'Zu klein für {count} Mitarbeiter', cancel: 'Abonnement kündigen',
+        cancelConfirm: 'Abonnement kündigen? Der Zugang endet mit dem bezahlten Zeitraum.',
+        planUpdated: 'Tarif aktualisiert', canceled: 'Abonnement gekündigt',
+        ownerOnly: 'Nur der Kontoinhaber kann das Abonnement ändern.',
+        perMonth: 'pro Monat',
+        statusTrial: 'Testphase', statusActive: 'Aktiv', statusPastDue: 'Zahlung fehlgeschlagen',
+        statusCanceled: 'Gekündigt', statusExpired: 'Abgelaufen'
+      },
+
+      auth: {
+        wait: 'Einen Moment…',
+        notifyEnabled: 'Benachrichtigungen sind aktiv',
+        notifyBody: 'Wir informieren Sie über Änderungen am Dienstplan.',
+        signIn: 'Anmelden', signUp: 'Firmenkonto erstellen',
+        email: 'E-Mail', password: 'Passwort', name: 'Ihr Name', companyName: 'Firmenname',
+        passwordHint: 'Mindestens 6 Zeichen',
+        enter: 'Anmelden', create: 'Konto erstellen', signingIn: 'Anmelden…', creating: 'Wird erstellt…',
+        trialNote: '{days} Tage kostenlos. Keine Zahlungsdaten nötig.',
+        signOut: 'Abmelden', blocked: 'Zugang gesperrt',
+        blockedOwner: 'Wenden Sie sich an den Support, um das Abonnement zu aktivieren.',
+        blockedMember: 'Bitten Sie den Kontoinhaber, das Abonnement zu verlängern.',
+        enableNotifications: 'Benachrichtigungen aktivieren',
+        failedSignIn: 'Anmeldung fehlgeschlagen', failedSignUp: 'Registrierung fehlgeschlagen'
+      },
+
+      users: {
+        nameColumn: 'Name', emailColumn: 'E-Mail', createFailed: 'Benutzer konnte nicht erstellt werden',
+        title: 'Benutzer',
+        hint: 'Jede Person kann einen eigenen Zugang bekommen. Sie sieht nur ihre eigenen Schichten und reicht eigene Wünsche ein – ' +
+          'den vollständigen Plan sieht sie nicht und ändern kann sie nichts. Führungskräfte sehen und bearbeiten alles. ' +
+          'Verknüpfen Sie einen Benutzer mit einer Mitarbeiterkarte, damit er seine Schichten sieht.',
+        add: 'Benutzer hinzufügen', createUser: 'Benutzer anlegen',
+        role: 'Rolle', staffCard: 'Mitarbeiterkarte', none: 'Keine', noLink: 'Keine Verknüpfung',
+        initialPassword: 'Erstes Passwort', activeColumn: 'Aktiv',
+        created: 'Benutzer für {email} angelegt', updated: 'Gespeichert', updateFailed: 'Aktualisierung fehlgeschlagen'
+      },
+
+      access: {
+        noCompany: 'Keine Firma gefunden',
+        trialEnded: 'Die Testphase ist beendet. Aktivieren Sie ein Abonnement, um fortzufahren.',
+        trial: 'Testphase – noch {days} Tage.',
+        expired: 'Das Abonnement ist abgelaufen. Verlängern Sie es, um fortzufahren.',
+        pastDueBlocked: 'Die Zahlung ist nicht eingegangen und der Zugang ist gesperrt. Bitte aktualisieren Sie die Zahlungsdaten.',
+        pastDue: 'Die letzte Zahlung ist fehlgeschlagen. Der Zugang wird in {days} Tagen gesperrt.',
+        expiredKept: 'Das Abonnement ist abgelaufen und wurde nicht verlängert. Mit der Wahl eines Tarifs ist der Zugang sofort wieder da, Ihre Daten bleiben erhalten.',
+        canceled: 'Das Abonnement wurde gekündigt. Sie können jederzeit verlängern – Ihre Daten bleiben erhalten.',
+        inactive: 'Das Abonnement ist nicht aktiv.',
+        overLimit: 'Der Tarif {plan} deckt bis zu {max} Mitarbeiter ab. Sie haben {count} – nötig ist der Tarif {suggested} ({range}, {price}).'
+      },
+
+      plans: {
+        starter: 'Klein', growth: 'Mittel', business: 'Groß',
+        upTo: 'Bis zu {count} Mitarbeiter',
+        between: '{from} bis {to} Mitarbeiter',
+        from: 'Ab {count} Mitarbeitern'
+      },
+
+      roles: { owner: 'Inhaber', manager: 'Führungskraft', employee: 'Mitarbeiter' },
+
+      employee: {
+        prevWeek: '◀ Vorherige Woche', nextWeek: 'Nächste Woche ▶',
+        loadFailed: 'Die Daten konnten nicht geladen werden: {message}',
+        saveFailed: 'Speichern fehlgeschlagen', reasonSaveFailed: 'Der Grund konnte nicht gespeichert werden',
+        myShifts: 'Meine Schichten', myRequests: 'Meine Wünsche',
+        notPublished: 'Der Plan für diese Woche ist noch nicht veröffentlicht.',
+        noShifts: 'Sie haben diese Woche keine Schichten.',
+        totalWeek: '{count} Schichten diese Woche.',
+        publishedLocked: 'Der Plan ist veröffentlicht – Wünsche für diese Woche können nicht mehr geändert werden.',
+        notLinked: 'Ihr Benutzer ist noch nicht mit einer Mitarbeiterkarte verknüpft. Bitte wenden Sie sich an Ihre Führungskraft.',
+        noShiftsToday: 'An diesem Tag keine Schichten', holidayNoWork: 'Feiertag – keine Arbeit'
+      },
+
+      chat: {
+        title: 'Fragen zu diesem Plan',
+        hint: 'Fragen Sie zur angezeigten Woche – zum Beispiel „Wer arbeitet Dienstagabend?“, ' +
+          '„Warum ist Mitarbeiter 3 am Donnerstag nicht eingeteilt?“ oder „Wer kann Mitarbeiter 5 am Mittwoch vertreten?“',
+        placeholder: 'Frage zum Dienstplan…', send: 'Senden'
+      },
+
+      excel: {
+        availabilityNone: 'Nichts mehr übrig – diese Woche lassen sich keine weiteren Schichten vergeben',
+        availabilityLeft: '{verb} {shifts} noch zu vergeben',
+        spare: 'Restkontingent', required: 'Benötigt',
+        valid: 'In Ordnung', checksTitle: 'Prüfungen des Plans',
+        personalText: 'Text für WhatsApp',
+        byBranch: 'Nach Filiale', byEmployee: 'Nach Mitarbeiter', availability: 'Verfügbarkeit',
+        checks: 'Prüfungen', personal: 'Mein Plan',
+        title: 'Dienstplan – Woche {from} bis {to}',
+        viewBranch: 'Nach Filiale', viewEmployee: 'Nach Mitarbeiter',
+        sabbathEnds: 'Schabbat-Ende {time}',
+        day: 'Tag', date: 'Datum', branch: 'Filiale', shift: 'Schicht', hours: 'Zeiten',
+        staff: 'Mitarbeiter', assigned: 'Eingeteilt', quota: 'Kontingent', left: 'Restkontingent',
+        canAssign: 'Einteilbar', freeDays: 'Freie Tage', totalShifts: 'Schichten gesamt',
+        severity: 'Schweregrad', type: 'Typ', detail: 'Details',
+        missing: '— fehlt —', closed: 'Geschlossen', notAssigned: 'Nicht eingeteilt',
+        personalTitle: 'Persönlicher Plan – {name}', totalWeek: '{count} Schichten diese Woche',
+        noIssues: 'Keine Doppelbelegungen, Lücken oder verletzten Wünsche'
+      },
+
+      errors: {
+        invalidTime: 'Ungültige Zeit – verwenden Sie das 24-Stunden-Format, zum Beispiel 09:30',
+        emptyShiftName: 'Der Name der Schicht darf nicht leer sein',
+        lastShift: 'Mindestens eine Schicht muss bleiben',
+        notSaved: 'Speichern fehlgeschlagen', copied: 'In die Zwischenablage kopiert',
+        viewOnlyBlocked: 'Nur Ansicht – Bearbeiten ist deaktiviert. Sie können es oben auf dem Bildschirm ausschalten.',
+        duplicatePerson: 'Dieselbe Person kann nicht zweimal in einer Schicht stehen',
+        printBlocked: 'Drucken ist hier gesperrt – nutzen Sie „Als Text kopieren“ oder den Excel-Export',
+        chooseEmployee: 'Wählen Sie eine Person für den persönlichen Export'
+      },
+
+      common: {
+        moveUp: 'Nach oben', moveDown: 'Nach unten', timePlaceholder: 'hh:mm',
+        save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', close: 'Schließen',
+        yes: 'Ja', no: 'Nein', all: 'Alle', and: 'und', more: 'und {count} weitere'
+      }
+    }
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/i18n/pt.js ===== */
+/* Português */
+(function (root) {
+  'use strict';
+
+  root.I18n.register({
+    code: 'pt',
+    name: 'Português',
+    dir: 'ltr',
+    locale: 'pt-PT',
+    weekStart: 1,
+    currency: { code: 'ILS', symbol: '₪', position: 'after' },
+    dict: {
+      app: {
+        title: 'Planeador de turnos',
+        subtitle: 'Planeamento semanal por filial, com deteção de sobreposições e falhas',
+        language: 'Idioma'
+      },
+
+      days: {
+        0: 'Domingo', 1: 'Segunda-feira', 2: 'Terça-feira', 3: 'Quarta-feira',
+        4: 'Quinta-feira', 5: 'Sexta-feira', 6: 'Sábado'
+      },
+      daysShort: { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' },
+
+      shifts: { morning: 'Manhã', middle: 'Tarde', evening: 'Fim do dia', night: 'Noite' },
+
+      seed: {
+        branchCenter: 'Filial centro', branchNorth: 'Filial norte', branchSouth: 'Filial sul',
+        employee: 'Colaborador {n}',
+        noteFloater: 'Cobre todas as filiais', noteStudent: 'Estudante – sem turnos de manhã'
+      },
+
+      colors: {
+        0: 'Âmbar', 1: 'Verde', 2: 'Azul', 3: 'Roxo',
+        4: 'Rosa', 5: 'Turquesa', 6: 'Cinzento', 7: 'Castanho'
+      },
+
+      tabs: {
+        schedule: 'Horário', constraints: 'Pedidos', employees: 'Equipa',
+        branches: 'Filiais', users: 'Utilizadores', billing: 'Subscrição', settings: 'Definições'
+      },
+
+      toolbar: {
+        prevWeek: 'Semana anterior', nextWeek: 'Semana seguinte', thisWeek: 'Esta semana',
+        week: 'Semana {from} – {to}', currentWeek: 'Semana atual',
+        generate: 'Gerar horário', clear: 'Limpar horário',
+        keepManual: 'Manter as atribuições manuais',
+        copyText: 'Copiar como texto', excel: 'Excel', csv: 'CSV', print: 'Imprimir',
+        moreTools: 'Mais ferramentas', closeTools: 'Fechar ferramentas',
+        viewOnly: 'Apenas leitura', exitViewOnly: 'Sair de apenas leitura',
+        shabbatEnd: 'Fim do Shabbat',
+        byBranch: 'Por filial', byEmployee: 'Por colaborador',
+        personalExport: 'Exportação pessoal (só os turnos dele):',
+        choosePerson: 'Escolhe uma pessoa…',
+        holidays: 'Feriados (todas as filiais fechadas):'
+      },
+
+      schedule: {
+        branch: 'Filial', shift: 'Turno', employee: 'Colaborador', totalShifts: 'Total de turnos',
+        empty: '— vazio —', add: '+ adicionar', addPerson: '+ adicionar pessoa', notAssigned: '— por atribuir —',
+        closed: 'Fechado neste dia', noBranches: 'Não há filiais ativas. Abre o separador Filiais.',
+        required: 'Necessários: {count}', people: '{count} pessoas',
+        holidayClosed: 'Todas as filiais fechadas', dayOff: 'Folga', holiday: 'Feriado',
+        missingSabbath: 'Falta a hora de fim do Shabbat'
+      },
+
+      status: {
+        synced: 'Sincronizado entre dispositivos', syncedAt: 'Sincronizado entre dispositivos · atualizado às {time}',
+        localOnly: 'Guardado apenas neste dispositivo', readOnly: 'Apenas leitura – sem permissão de edição',
+        remoteUpdate: 'Atualização recebida de outro dispositivo ({time})',
+        localCopy: 'Esta é uma cópia local – os dados ficam apenas neste navegador e não sincronizam. ' +
+          'Para trabalhar em dois computadores usa a versão alojada. Para transferir os dados: exporta o JSON nas Definições e importa-o lá.',
+        viewOnlyBanner: 'Apenas leitura – o horário é mostrado para revisão e a edição está desativada. ' +
+          'A exportação, a impressão e a mudança de semana continuam a funcionar.'
+      },
+
+      levels: { error: 'Erro', warning: 'Aviso', info: 'Nota' },
+
+      marks: {
+        dayOff: 'folga', blocked: 'bloqueado', prefers: 'prefere',
+        notInBranch: 'não é desta filial', notInShift: 'não faz este turno',
+        alreadyAssigned: 'já atribuído', inactive: 'inativo'
+      },
+
+      issueTypes: {
+        'duplicate-shift': 'Sobreposição',
+        'duplicate-employee-slot': 'Sobreposição',
+        'double-booked': 'Dois turnos no mesmo dia',
+        understaffed: 'Falta pessoal',
+        'constraint-off': 'Pedido não cumprido',
+        'constraint-blocked': 'Pedido não cumprido',
+        'branch-mismatch': 'Filial errada',
+        'shift-mismatch': 'Tipo de turno errado',
+        'over-max': 'Acima do limite',
+        rest: 'Descanso curto',
+        'no-shifts': 'Sem turnos',
+        'missing-shabbat-end': 'Falta a hora de fim do Shabbat',
+        'inactive-slot': 'Turno não aberto',
+        'pending-constraints': 'Pedidos pendentes',
+        'extra-days-off': 'Folgas a mais',
+        'below-target': 'Abaixo do objetivo'
+      },
+
+      toast: {
+        generated: 'Horário gerado – {shifts} por preencher',
+        generatedFull: 'Horário gerado – todos os turnos estão preenchidos',
+        clearWeekConfirm: 'Limpar todas as atribuições desta semana? Os pedidos são mantidos.',
+        cleared: 'Horário limpo',
+        copied: 'Horário copiado para a área de transferência',
+        personalCopied: 'Horário pessoal copiado para a área de transferência',
+        viewOnlyOn: 'Apenas leitura ativado – a edição está desativada',
+        viewOnlyOff: 'Apenas leitura desativado – já podes editar',
+        copyPrompt: 'Copia o texto:',
+        holidayCleared: '{day} volta a ser dia de trabalho',
+        holidayPrompt: 'Nome do feriado de {day} (as filiais fecham e o dia conta como folga para todos):',
+        holidayDefault: 'Feriado',
+        holidayHasAssignments: 'Nesse dia já há {count} pessoas atribuídas. Marcar como feriado e limpar as atribuições?',
+        holidayMarked: '{day} marcado como feriado – as filiais estão fechadas',
+        clearConstraintsConfirm: 'Apagar todos os pedidos desta semana?',
+        constraintsCleared: 'Pedidos apagados',
+        noPreviousConstraints: 'Não há pedidos na semana anterior',
+        constraintsCopied: 'Pedidos copiados da semana anterior',
+        requestApproved: 'Pedido aprovado', requestRejected: 'Pedido recusado',
+        updateFailed: 'Não foi possível atualizar',
+        deleteShiftConfirm: 'Eliminar o turno «{name}»?\n\n{usage}',
+        deleteShiftUsed: 'Está configurado em {count} dias de filial e todas as suas atribuições serão eliminadas.',
+        deleteShiftUnused: 'Não é usado por nenhuma filial.',
+        shiftDeleted: 'Turno eliminado{removed}',
+        shiftRemovedCount: ' ({count} atribuições removidas)',
+        shiftAdded: 'Turno adicionado. Configura-o em Filiais para que apareça no horário.',
+        newShift: 'Turno {n}',
+        applyHoursConfirm: 'Aplicar os horários predefinidos às {count} filiais, de domingo a quinta-feira?\n\n' +
+          'Os dias abertos e o número de pessoas mantêm-se. Sexta-feira e a noite de sábado não mudam.',
+        hoursUpdated: 'Horas atualizadas em {count} turnos',
+        hoursAlready: 'Todos os turnos já usam estas horas',
+        imported: 'Dados importados',
+        importedCloud: 'Dados importados e enviados para a nuvem ({count} semanas)',
+        importFailed: 'Ficheiro inválido: {message}',
+        resetConfirm: 'Repor todos os dados (equipa, filiais, horários e pedidos) nos valores predefinidos?',
+        reset: 'Dados repostos'
+      },
+
+      ui: {
+        until: 'até {time}', sheet: 'Folha {n}',
+        fileSaved: 'Ficheiro guardado', fileFailed: 'Não foi possível guardar o ficheiro: {message}',
+        unknownError: 'erro desconhecido', downloadUnavailable: 'Não é possível transferir ficheiros aqui',
+        loadFailed: 'Falha ao carregar os dados; foram carregados os valores predefinidos',
+        saveFailed: 'Falha ao guardar os dados',
+        iconLetters: 'TU',
+        dayHeading: '{day} ({date})',
+        missingStaff: 'falta pessoal',
+        holidayClosedLine: '{name} – todas as filiais fechadas',
+        spareLine: '— {verb} {shifts} por atribuir —',
+        unknownBranch: 'Filial desconhecida', unknownEmployee: 'Pessoa desconhecida',
+        weekLabel: 'Semana {from} – {to}', constraintsWeek: 'Pedidos · {label}',
+        holidayAllClosed: 'Todas as filiais fechadas – folga para todos',
+        holidayNoRequests: 'Feriado – não são precisos pedidos',
+        branchClosedToday: 'Fechado neste dia',
+        noActiveBranches: 'Não há filiais ativas.',
+        noActiveBranchesTab: 'Não há filiais ativas. Abre o separador Filiais.',
+        allClosedOn: 'Todas as filiais estão fechadas em {day}.',
+        branchesClosed: 'Filiais fechadas',
+        noHours: 'Sem horário',
+        outOf: '{done} de {total}',
+        cloudSaved: 'Os dados são guardados na nuvem e atualizam-se em todos os computadores abertos nesta ligação',
+        deviceSaved: 'Os dados são guardados apenas neste navegador',
+        thinking: 'A pensar…',
+        noAnswer: '(não foi recebida resposta)',
+        chatBlocked: 'Não tens permissão para fazer perguntas nesta página.',
+        chatRateLimited: 'Demasiadas perguntas seguidas – tenta de novo daqui a um instante.',
+        chatFailed: 'Não consegui responder agora',
+        chatSystem: 'Estás a ajudar um responsável a gerir um horário de turnos. Responde em {language}, de forma breve e objetiva, ' +
+          'baseando-te apenas nos dados abaixo. Se faltar informação, di-lo em vez de adivinhar.',
+        chatDataStart: '=== dados da semana ===',
+        chatDataEnd: '=== fim dos dados ===',
+        chatQuestion: 'Pergunta: ',
+        summaryShabbat: 'Fim do Shabbat: {time}',
+        summaryHolidays: 'Feriados fechados: {days}', summaryNoHolidays: 'Esta semana não há feriados.',
+        summaryRules: 'Regras de planeamento:',
+        ruleOnePerDayOn: 'Cada pessoa faz no máximo um turno por dia.',
+        ruleOnePerDayOff: 'Uma pessoa pode fazer vários turnos por dia.',
+        ruleRestOn: 'Sem turno de manhã depois de um turno de fim do dia na véspera.',
+        ruleRestOff: 'Sem descanso obrigatório entre um turno de fim do dia e um de manhã.',
+        summaryBranches: 'Filiais:', summaryEmployees: 'Equipa:',
+        summaryCurrent: 'Horário atual:', summaryAvailability: 'Disponibilidade restante:',
+        summaryIssues: 'Alertas do horário:', summaryNoIssues: 'Sem alertas – o horário está correto.',
+        closedAllWeek: 'fechado toda a semana', allBranches: 'todas as filiais',
+        peopleCount: '{count} pessoas',
+        empBranches: 'filiais', empShifts: 'turnos', empMax: 'máximo {count} por semana',
+        empAskedOff: 'pediu folga', empBlocked: 'bloqueou', empNote: 'nota',
+        empAssignedOf: '{name}: atribuídos {total} de uma quota de {max}',
+        empFreeDays: 'dias livres: {days}', none: 'nenhum',
+        fileName: 'horario', personalFileName: 'horario-{name}',
+        greeting: 'Olá {name}, este é o teu horário:',
+        shortTitle: 'Turnos'
+      },
+
+      alerts: {
+        slotLabel: '{day} · {branch} · turno de {shift}',
+        deletedEmployee: '(pessoa eliminada: {id})',
+        deletedBranch: '(filial eliminada)',
+        errorsOne: 'Um erro', errorsOther: '{count} erros',
+        warningsOne: 'Um aviso', warningsOther: '{count} avisos',
+        infosOne: 'Uma nota', infosOther: '{count} notas',
+        allGood: '✔ O horário está correto – sem sobreposições, falhas ou pedidos não cumpridos',
+        showAll: 'Ver os {count} alertas', showLess: 'Ocultar os alertas',
+        duplicate: 'Sobreposição: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
+        duplicateSelf: 'Sobreposição: {name} está atribuído duas vezes ao mesmo turno – {label}.',
+        doubleBooked: 'Sobreposição: {name} tem {count} turnos em {day}{where} ({detail}).',
+        sameBranch: ' na mesma filial', differentBranches: ' em filiais diferentes',
+        understaffed: 'Falta pessoal: {label} – {assigned} de {need} atribuídos.',
+        reasonBusy: '{names} já estão noutro turno nesse dia',
+        reasonMaxed: '{names} atingiram o limite semanal de turnos',
+        reasonResting: '{names} precisam de descanso entre um turno de fim do dia e um de manhã',
+        reasonNone: 'Ninguém está configurado ao mesmo tempo para esta filial e este turno, ou todos o bloquearam.',
+        reasonFree: 'Há pessoas livres ({names}) – tenta gerar o horário outra vez.',
+        reasonPrefix: 'Motivo: ',
+        suggestTwoPerDay: ' Podes permitir dois turnos por dia por pessoa nas Definições.',
+        suggestRaiseMax: ' Podes aumentar o limite semanal na ficha do colaborador.',
+        constraintOff: 'Pedido não cumprido: {name} pediu folga em {day} mas está atribuído ao turno {shift} em {branch}.',
+        constraintBlocked: 'Pedido não cumprido: {name} bloqueou o turno {shift} em {day} mas está atribuído a ele em {branch}.',
+        branchMismatch: '{name} está atribuído a {branch} em {day} apesar de essa filial não constar da sua ficha.',
+        shiftMismatch: '{name} está atribuído ao turno {shift} em {day} apesar de esse tipo de turno não constar da sua ficha.',
+        overMax: 'Acima do limite: {name} tem {total} turnos (máximo {max}).',
+        noShifts: '{name} não tem turnos esta semana.',
+        rest: 'Descanso curto: {name} acaba um turno de fim do dia em {previous} e começa um de manhã em {day}.',
+        holidayAssignment: 'Atribuição em feriado: {day} ({name}) está marcado como fechado, mas há atribuições: {names}.',
+        inactiveSlot: 'Atribuição a um turno que não está aberto: {day} · {branch} · {shift} ({names}).',
+        missingSabbath: 'Não há hora de fim do Shabbat para esta semana – não é possível calcular o início dos turnos de sábado à noite.',
+        pendingOne: 'Há um pedido à espera de aprovação: {name} ({day}). Enquanto não for aprovado, não afeta o horário.',
+        pendingOther: 'Há {count} pedidos à espera de aprovação: {names}. Enquanto não forem aprovados, não afetam o horário.',
+        extraDaysOff: '{name} pediu {count} folgas ({days}) – a regra permite uma folga por semana.',
+        belowTarget: '{name} pediu folga em {day} e tem {total} de {expected} turnos possíveis – ainda lhe restam dias livres.'
+      },
+
+      availability: {
+        title: 'O que ainda está disponível',
+        none: 'Não há disponibilidade – {reason}',
+        reasonMaxed: 'todos atingiram o limite semanal de turnos.',
+        reasonNoDays: 'quem ainda tem quota não tem nenhum dia livre com as suas filiais abertas.',
+        totalOne: '{verb} mais um turno por atribuir, entre {people}:',
+        totalOther: '{verb} mais {count} turnos por atribuir, entre {people}:',
+        peopleOne: 'uma pessoa', peopleOther: '{count} pessoas',
+        left: '{verb} {shifts} de quota · livre em {days}',
+        leftNoDays: '{verb} {shifts} de quota, mas não há nenhum dia livre esta semana',
+        full: 'quota totalmente usada ({assigned} de {max})',
+        noEmployees: 'Não há pessoal ativo.',
+        shiftsOne: 'um turno', shiftsOther: '{count} turnos',
+        remains: 'resta', remainPlural: 'restam'
+      },
+
+      constraints: {
+        title: 'Pedidos de {week}',
+        clear: 'Limpar esta semana', copyPrevious: 'Copiar da semana anterior',
+        legend: 'Toca num turno para alternar: {free} → {preferred} → {blocked}. «Folga» bloqueia o dia inteiro.',
+        free: 'Disponível', preferred: 'Prefere', blocked: 'Não pode', dayOff: 'Folga',
+        pendingTitle: 'Pedidos à espera da tua aprovação ({count})',
+        pendingHint: 'Um pedido não aprovado não afeta o horário.',
+        approve: 'Aprovar', reject: 'Recusar',
+        approved: 'Aprovado', rejected: 'Recusado', pending: 'À espera de aprovação',
+        requestLabel: 'Pedido: {detail}', requestRejected: 'Pedido recusado',
+        reason: 'Motivo (opcional)',
+        reasonPlaceholder: 'p. ex. casamento, exame, consulta médica',
+        reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
+        managerNote: 'Nota do responsável: {text}',
+        needsApproval: 'Cada pedido passa pelo teu responsável e só afeta o horário depois de aprovado.',
+        noChange: 'Sem alterações'
+      },
+
+      employees: {
+        title: 'Equipa', add: '+ Adicionar pessoa', active: 'Ativo',
+        branchesLabel: 'Filiais (sem seleção = todas)',
+        shiftTypes: 'Tipos de turno que pode fazer',
+        maxShifts: 'Máximo de turnos por semana', note: 'Nota',
+        deleteConfirm: 'Eliminar {name}? As suas atribuições serão retiradas de todas as semanas.',
+        inactive: '(inativo)', newName: 'Pessoa nova'
+      },
+
+      branches: {
+        title: 'Filiais', add: '+ Adicionar filial', active: 'Ativa', newName: 'Filial nova',
+        hint: 'Cada filial tem os seus dias, horas e número de pessoas por turno. ' +
+          'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como sobreposição.',
+        peopleLabel: 'Pessoas', closed: 'Fechado', day: 'Dia',
+        copyFrom: 'Copiar dias e horas de outra filial', chooseBranch: 'Escolhe uma filial…',
+        copyConfirm: 'Copiar os dias e as horas de {from} para {to}?',
+        copied: 'Dias e horas copiados',
+        deleteConfirm: 'Eliminar {name}? As suas atribuições serão retiradas de todas as semanas.',
+        autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
+      },
+
+      settings: {
+        rules: 'Regras de planeamento',
+        onePerDay: 'Cada pessoa faz no máximo um turno por dia',
+        rest: 'Sem turno de manhã depois de um turno de fim do dia na véspera',
+        oneDayOff: 'O dia marcado como folga nos Pedidos é a única folga da semana',
+        shiftTypes: 'Tipos de turno',
+        addShift: '+ Adicionar turno', applyHours: 'Aplicar as horas a todas as filiais (seg–sex)',
+        shiftsHint: 'Define quantos turnos tem o teu negócio, como se chamam, as horas, a cor e a ordem. ' +
+          'As horas aqui são as predefinidas; cada filial pode alterá-las. ' +
+          'O botão atualiza as filiais existentes sem mexer nos dias abertos nem no número de pessoas.',
+        shiftNamePlaceholder: 'Nome do turno',
+        sabbathTitle: 'Sábado à noite',
+        sabbathDefault: 'Hora predefinida de fim do Shabbat para uma semana nova:',
+        sabbathHint: 'Em cada semana podes ajustar a hora real no topo do separador Horário. ' +
+          'Os turnos de sábado à noite começam meia hora depois.',
+        backup: 'Cópia de segurança',
+        exportJson: 'Exportar todos os dados (JSON)', importJson: 'Importar dados',
+        reset: 'Repor as predefinições',
+        backupHint: 'Os dados são guardados automaticamente neste navegador. Para os mover entre computadores, exporta um ficheiro JSON.',
+        languageTitle: 'Idioma', languageHint: 'Muda toda a interface. Fica guardado neste dispositivo.'
+      },
+
+      server: {
+        credentialsRequired: 'São necessários o e-mail e a palavra-passe',
+        passwordTooShort: 'A palavra-passe tem de ter pelo menos 6 caracteres',
+        emailTaken: 'Este e-mail já está registado',
+        companyRequired: 'É necessário um nome de empresa',
+        badCredentials: 'E-mail ou palavra-passe incorretos',
+        userInactive: 'Este utilizador não está ativo. Contacta o responsável da empresa.',
+        signInRequired: 'Inicia sessão',
+        noPermission: 'Não tens permissão para fazer isso',
+        notLinked: 'Este utilizador não está ligado a nenhuma ficha de colaborador',
+        weekPublished: 'O horário desta semana está publicado, por isso os pedidos já não podem ser alterados',
+        weekPublishedShort: 'O horário desta semana já está publicado',
+        noRequest: 'Não há nenhum pedido para esse dia',
+        badDecision: 'Decisão inválida',
+        requestNotFound: 'Pedido não encontrado',
+        weekMissing: 'Essa semana não existe',
+        userNotFound: 'Utilizador não encontrado',
+        cannotChangeOwner: 'O proprietário da conta não pode ser alterado'
+      },
+
+      notify: {
+        published: 'Horário publicado',
+        publishedBody: 'O horário da nova semana está pronto. Já podes ver os teus turnos.',
+        requestApproved: 'O teu pedido foi aprovado',
+        requestApprovedBody: 'O teu pedido para {day} foi aprovado.',
+        requestRejected: 'O teu pedido foi recusado',
+        requestRejectedBody: 'O teu pedido para {day} foi recusado',
+        newRequest: 'Novo pedido',
+        newRequestBody: 'Alguém enviou um pedido à espera da tua aprovação.',
+        newRequestsBody: 'Há {count} novos pedidos à espera da tua aprovação.'
+      },
+
+      payments: {
+        mockProvider: 'Fornecedor de teste (desenvolvimento)',
+        mockNote: 'O pagamento é aprovado de imediato sem cobrança real. Apenas para desenvolvimento e demonstrações.',
+        unknownPlan: 'Plano desconhecido',
+        serverProvider: 'Faturação pelo servidor ({name})',
+        notConfigured: 'A faturação não está configurada neste ambiente',
+        requestFailed: 'O pedido de faturação falhou ({status})'
+      },
+
+      billing: {
+        priceMonthly: '{amount} ILS / mês', priceAmount: '{amount} ILS',
+        updateFailed: 'Não foi possível atualizar', cancelFailed: 'Não foi possível cancelar',
+        title: 'A tua subscrição', status: 'Estado', plan: 'Plano', validUntil: 'Válida até',
+        activeStaff: 'Pessoal ativo', of: '{count} de {max}', unlimited: '{count} (sem limite)',
+        plans: 'Planos', choose: 'Escolher', currentPlan: 'Plano atual',
+        tooSmall: 'Pequeno demais para {count} colaboradores', cancel: 'Cancelar subscrição',
+        cancelConfirm: 'Cancelar a subscrição? O acesso termina no fim do período pago.',
+        planUpdated: 'Plano atualizado', canceled: 'Subscrição cancelada',
+        ownerOnly: 'Só o proprietário da conta pode alterar a subscrição.',
+        perMonth: 'por mês',
+        statusTrial: 'Experiência', statusActive: 'Ativa', statusPastDue: 'Pagamento falhou',
+        statusCanceled: 'Cancelada', statusExpired: 'Expirada'
+      },
+
+      auth: {
+        wait: 'Um momento…',
+        notifyEnabled: 'Notificações ativadas',
+        notifyBody: 'Vamos avisar-te sobre as alterações ao horário.',
+        signIn: 'Entrar', signUp: 'Criar conta de empresa',
+        email: 'E-mail', password: 'Palavra-passe', name: 'O teu nome', companyName: 'Nome da empresa',
+        passwordHint: 'Pelo menos 6 caracteres',
+        enter: 'Entrar', create: 'Criar conta', signingIn: 'A entrar…', creating: 'A criar…',
+        trialNote: '{days} dias grátis. Não é preciso método de pagamento.',
+        signOut: 'Sair', blocked: 'Acesso bloqueado',
+        blockedOwner: 'Contacta o suporte para ativar a subscrição.',
+        blockedMember: 'Pede ao proprietário da conta para renovar a subscrição.',
+        enableNotifications: 'Ativar notificações',
+        failedSignIn: 'Não foi possível entrar', failedSignUp: 'Não foi possível criar a conta'
+      },
+
+      users: {
+        nameColumn: 'Nome', emailColumn: 'E-mail', createFailed: 'Não foi possível criar o utilizador',
+        title: 'Utilizadores',
+        hint: 'Cada pessoa pode ter o seu próprio acesso. Vê apenas os seus turnos e envia os seus pedidos – ' +
+          'não vê o horário completo nem pode alterar nada. Os responsáveis veem e editam tudo. ' +
+          'Liga um utilizador a uma ficha de colaborador para que veja os seus turnos.',
+        add: 'Adicionar utilizador', createUser: 'Criar utilizador',
+        role: 'Função', staffCard: 'Ficha de colaborador', none: 'Nenhuma', noLink: 'Sem ligação',
+        initialPassword: 'Palavra-passe inicial', activeColumn: 'Ativo',
+        created: 'Utilizador criado para {email}', updated: 'Guardado', updateFailed: 'Não foi possível atualizar'
+      },
+
+      access: {
+        noCompany: 'Empresa não encontrada',
+        trialEnded: 'O período de experiência terminou. Ativa uma subscrição para continuar.',
+        trial: 'Experiência – faltam {days} dias.',
+        expired: 'A subscrição expirou. Renova-a para continuar.',
+        pastDueBlocked: 'O pagamento não foi recebido e o acesso está bloqueado. Atualiza o método de pagamento.',
+        pastDue: 'O último pagamento não passou. O acesso será bloqueado dentro de {days} dias.',
+        expiredKept: 'A subscrição expirou e não foi renovada. Escolher um plano devolve o acesso de imediato, e os teus dados estão guardados.',
+        canceled: 'A subscrição foi cancelada. Podes renovar quando quiseres – os teus dados estão guardados.',
+        inactive: 'A subscrição não está ativa.',
+        overLimit: 'O plano {plan} cobre até {max} colaboradores. Tens {count} – é preciso o plano {suggested} ({range}, {price}).'
+      },
+
+      plans: {
+        starter: 'Pequeno', growth: 'Médio', business: 'Grande',
+        upTo: 'Até {count} colaboradores',
+        between: 'De {from} a {to} colaboradores',
+        from: '{count} colaboradores ou mais'
+      },
+
+      roles: { owner: 'Proprietário', manager: 'Responsável', employee: 'Colaborador' },
+
+      employee: {
+        prevWeek: '◀ Semana anterior', nextWeek: 'Semana seguinte ▶',
+        loadFailed: 'Não foi possível carregar os dados: {message}',
+        saveFailed: 'Não foi possível guardar', reasonSaveFailed: 'Não foi possível guardar o motivo',
+        myShifts: 'Os meus turnos', myRequests: 'Os meus pedidos',
+        notPublished: 'O horário desta semana ainda não foi publicado.',
+        noShifts: 'Não tens turnos esta semana.',
+        totalWeek: '{count} turnos esta semana.',
+        publishedLocked: 'O horário está publicado – os pedidos desta semana já não podem ser alterados.',
+        notLinked: 'O teu utilizador ainda não está ligado a uma ficha de colaborador. Fala com o teu responsável.',
+        noShiftsToday: 'Não há turnos neste dia', holidayNoWork: 'Feriado – não se trabalha'
+      },
+
+      chat: {
+        title: 'Perguntas sobre este horário',
+        hint: 'Pergunta sobre a semana no ecrã – por exemplo «quem trabalha na terça ao fim do dia?», ' +
+          '«porque é que Colaborador 3 não está na quinta?» ou «quem pode substituir Colaborador 5 na quarta?»',
+        placeholder: 'Pergunta sobre o horário…', send: 'Enviar'
+      },
+
+      excel: {
+        availabilityNone: 'Não resta nada – esta semana não é possível atribuir mais turnos',
+        availabilityLeft: '{verb} {shifts} por atribuir',
+        spare: 'Quota restante', required: 'Necessários',
+        valid: 'Correto', checksTitle: 'Verificações do horário',
+        personalText: 'Texto para WhatsApp',
+        byBranch: 'Por filial', byEmployee: 'Por colaborador', availability: 'Disponibilidade',
+        checks: 'Verificações', personal: 'O meu horário',
+        title: 'Horário de trabalho – semana de {from} a {to}',
+        viewBranch: 'Por filial', viewEmployee: 'Por colaborador',
+        sabbathEnds: 'Fim do Shabbat {time}',
+        day: 'Dia', date: 'Data', branch: 'Filial', shift: 'Turno', hours: 'Horas',
+        staff: 'Colaborador', assigned: 'Atribuídos', quota: 'Quota', left: 'Quota restante',
+        canAssign: 'Pode ser atribuído', freeDays: 'Dias livres', totalShifts: 'Total de turnos',
+        severity: 'Gravidade', type: 'Tipo', detail: 'Detalhe',
+        missing: '— em falta —', closed: 'Fechado', notAssigned: 'Por atribuir',
+        personalTitle: 'Horário pessoal – {name}', totalWeek: '{count} turnos esta semana',
+        noIssues: 'Sem sobreposições, falhas ou pedidos não cumpridos'
+      },
+
+      errors: {
+        invalidTime: 'Hora inválida – usa o formato de 24 horas, por exemplo 09:30',
+        emptyShiftName: 'O nome do turno não pode estar vazio',
+        lastShift: 'Tem de ficar pelo menos um turno',
+        notSaved: 'Não foi possível guardar', copied: 'Copiado para a área de transferência',
+        viewOnlyBlocked: 'Apenas leitura – a edição está desativada. Podes desligá-la no topo do ecrã.',
+        duplicatePerson: 'A mesma pessoa não pode aparecer duas vezes no mesmo turno',
+        printBlocked: 'A impressão está bloqueada aqui – usa «Copiar como texto» ou a exportação para Excel',
+        chooseEmployee: 'Escolhe uma pessoa para a exportação pessoal'
+      },
+
+      common: {
+        moveUp: 'Subir', moveDown: 'Descer', timePlaceholder: 'hh:mm',
+        save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Fechar',
+        yes: 'Sim', no: 'Não', all: 'Tudo', and: 'e', more: 'e mais {count}'
       }
     }
   });

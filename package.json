@@ -7,7 +7,9 @@
     "test": "node tests/run-tests.js",
     "start": "npx http-server . -p 8080 -o",
     "build": "node build-artifact.js",
-    "test:sync": "node tests/sync-browser-test.mjs"
+    "test:sync": "node tests/sync-browser-test.mjs",
+    "test:tenancy": "node tests/tenancy-tests.js",
+    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js"
   },
   "license": "MIT"
 }

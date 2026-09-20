@@ -235,6 +235,7 @@
       delete week.constraints[key];
     } else {
       var record = clone(constraint);
+      record.note = String(record.note || '').slice(0, 300);
       // בקשה של עובד תמיד ממתינה לאישור מנהל, גם אם אושרה בעבר ושונתה
       record.status = 'pending';
       record.requestedAt = this.now().toISOString();
@@ -244,6 +245,32 @@
     }
     week.updatedAt = this.now().toISOString();
 
+    this._save();
+    this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
+    return Promise.resolve(clone(week));
+  };
+
+  /* עדכון הסיבה שהעובד צירף לבקשה. אינו משנה את מה שהתבקש, ולכן
+     אינו מחזיר בקשה שאושרה למצב המתנה. */
+  MockBackend.prototype.saveOwnNote = function (weekKey, dayIdx, note) {
+    var session;
+    try { session = this._require('constraints.editOwn'); } catch (err) { return Promise.reject(err); }
+    if (!session.user.employeeId) {
+      return Promise.reject(this._fail('no_employee_link', 'המשתמש אינו מקושר לכרטיס עובד'));
+    }
+
+    var data = this._companyData(session.company.id);
+    var week = data.weeks[weekKey];
+    var key = session.user.employeeId + '|' + dayIdx;
+    if (!week || !week.constraints || !week.constraints[key]) {
+      return Promise.reject(this._fail('not_found', 'אין בקשה ליום הזה'));
+    }
+    if (week.published && session.user.role === 'employee') {
+      return Promise.reject(this._fail('week_published', 'הסידור לשבוע הזה כבר פורסם'));
+    }
+
+    week.constraints[key].note = String(note || '').slice(0, 300);
+    week.updatedAt = this.now().toISOString();
     this._save();
     this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
     return Promise.resolve(clone(week));

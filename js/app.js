@@ -568,10 +568,14 @@
         var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
         if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
         var cellTag = '';
+        var reason = record && record.note ? ' · ' + record.note : '';
         if (status === Store.CONSTRAINT_STATUS.PENDING) {
-          cellTag = '<div class="c-status pending">בקשה: ' + esc(describeConstraint(record)) + '</div>';
+          cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">בקשה: ' +
+            esc(describeConstraint(record)) + esc(reason) + '</div>';
         } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
           cellTag = '<div class="c-status rejected">בקשה נדחתה</div>';
+        } else if (record && record.note) {
+          cellTag = '<div class="c-status approved">' + esc(record.note) + '</div>';
         }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {

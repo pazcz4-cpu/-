@@ -54,6 +54,19 @@
       if (event.target.closest('#user-signout')) {
         event.preventDefault();
         self.signOut();
+        return;
+      }
+      if (event.target.closest('#user-notify')) {
+        event.preventDefault();
+        var Notify = root.ShiftNotify;
+        if (!Notify) return;
+        Notify.request().then(function (permission) {
+          var session = self.backend.session();
+          if (session) self.renderUserBar(session);
+          if (permission === 'granted') {
+            Notify.show({ title: 'ההתראות הופעלו', body: 'נודיע לך על עדכונים בסידור.', tag: 'welcome' });
+          }
+        });
       }
     });
   };
@@ -133,11 +146,17 @@
       notice = '<span class="user-notice ' + (session.access.reason === 'past-due' ? 'warn' : '') + '">' +
         esc(session.access.text) + '</span>';
     }
+    var Notify = root.ShiftNotify;
+    var notifyButton = '';
+    if (Notify && Notify.supported() && !(Notify.enabled() && Notify.permission() === 'granted')) {
+      notifyButton = '<button id="user-notify" class="btn ghost small">🔔 הפעלת התראות</button>';
+    }
+
     bar.innerHTML =
       '<span class="user-company">' + esc(session.company.name) + '</span>' +
       '<span class="user-name">' + esc(session.user.name) +
       ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
-      notice +
+      notice + notifyButton +
       '<button id="user-signout" class="btn ghost small">יציאה</button>';
     bar.classList.remove('hidden');
   };

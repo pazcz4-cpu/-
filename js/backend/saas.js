@@ -108,11 +108,69 @@
 
   var started = false;
 
+  /* משווה שבוע לפני ואחרי, ומחזיר את ההתראות שראוי להציג לתפקיד הזה */
+  function notificationsFor(role, employeeId, before, after) {
+    var out = [];
+    var Store = root.ShiftStore;
+    var Data = root.ShiftData;
+    var beforeConstraints = (before && before.constraints) || {};
+    var afterConstraints = (after && after.constraints) || {};
+
+    if (role === 'employee') {
+      if (after && after.published && !(before && before.published)) {
+        out.push({ tag: 'published', title: 'הסידור פורסם',
+          body: 'הסידור לשבוע החדש זמין. אפשר לראות את המשמרות שלך.' });
+      }
+      Object.keys(afterConstraints).forEach(function (key) {
+        if (key.split('|')[0] !== employeeId) return;
+        var now = afterConstraints[key];
+        var was = beforeConstraints[key];
+        var dayName = (Data.DAYS[Number(key.split('|')[1])] || {}).name || '';
+        if (Store.constraintStatus(now) === Store.constraintStatus(was)) return;
+        if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.APPROVED) {
+          out.push({ tag: 'decision-' + key, title: 'הבקשה שלך אושרה',
+            body: 'הבקשה ליום ' + dayName + ' אושרה.' });
+        } else if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.REJECTED) {
+          out.push({ tag: 'decision-' + key, title: 'הבקשה שלך נדחתה',
+            body: 'הבקשה ליום ' + dayName + ' נדחתה' +
+              (now.managerNote ? ': ' + now.managerNote : '.') });
+        }
+      });
+      return out;
+    }
+
+    /* מנהל – בקשות חדשות שממתינות לו */
+    var fresh = [];
+    Object.keys(afterConstraints).forEach(function (key) {
+      var now = afterConstraints[key];
+      if (Store.constraintStatus(now) !== Store.CONSTRAINT_STATUS.PENDING) return;
+      var was = beforeConstraints[key];
+      if (was && Store.constraintStatus(was) === Store.CONSTRAINT_STATUS.PENDING &&
+        JSON.stringify(was) === JSON.stringify(now)) return;
+      fresh.push(key);
+    });
+    if (fresh.length) {
+      out.push({ tag: 'pending', title: 'בקשת אילוץ חדשה',
+        body: fresh.length === 1 ? 'עובד/ת הגיש/ה בקשה שממתינה לאישורך.'
+          : fresh.length + ' בקשות חדשות ממתינות לאישורך.' });
+    }
+    return out;
+  }
+
   function enterApp(backend, session) {
     if (started) { root.location.reload(); return Promise.resolve(); }
     started = true;
 
     document.body.setAttribute('data-role', session.user.role);
+
+    var Notify = root.ShiftNotify;
+    if (Notify) { Notify.register('sw.js'); }
+
+    function announce(before, after) {
+      if (!Notify) return;
+      notificationsFor(session.user.role, session.user.employeeId, before, after)
+        .forEach(function (item) { Notify.show(item); });
+    }
 
     /* עובד מקבל מסך משלו ולא את מערכת הניהול */
     if (session.user.role === 'employee') {
@@ -120,7 +178,9 @@
       document.getElementById('employee-root').classList.remove('hidden');
       var employeeUI = new root.ShiftEmployeeUI.EmployeeUI({ backend: backend, session: session });
       backend.subscribe(function (change) {
-        if (change.type === 'week' && change.weekKey === employeeUI.weekKey) { employeeUI.load(); }
+        if (change.type !== 'week' || change.weekKey !== employeeUI.weekKey) return;
+        announce(employeeUI.week, change.week);
+        employeeUI.load();
       });
       return employeeUI.start().then(function () { return session; });
     }
@@ -140,6 +200,8 @@
             employees: change.config.employees
           });
         } else if (change.type === 'week') {
+          var current = root.ShiftApp.getState().weeks[change.weekKey];
+          announce(current, change.week);
           root.ShiftApp.applyRemoteWeek(change.weekKey, change.week);
         }
       });
@@ -165,7 +227,7 @@
     });
   }
 
-  var API = { boot: boot, backendSource: backendSource };
+  var API = { boot: boot, backendSource: backendSource, notificationsFor: notificationsFor };
   root.ShiftSaas = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

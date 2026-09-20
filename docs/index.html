@@ -811,6 +811,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .req-badge.rejected { background: var(--err-bg); color: var(--err); border: 1px solid var(--err-line); }
 .req-note { font-size: 12.5px; color: var(--muted); margin: 0; padding: 0 12px 10px; }
 
+/* סיבה שהעובד מצרף לבקשה */
+.req-reason { padding: 0 12px 10px; }
+.req-reason label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.req-reason .text-input { font-size: 15px; }
+.c-status.approved { background: var(--ok-bg); color: var(--ok); }
+
 </style>
 </head>
 <body>
@@ -3534,10 +3540,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         var dayShifts = Store.activeShiftsForDay(state, day.idx, week());
         if (!dayShifts.length) { html += '<td class="closed">סגור</td>'; return; }
         var cellTag = '';
+        var reason = record && record.note ? ' · ' + record.note : '';
         if (status === Store.CONSTRAINT_STATUS.PENDING) {
-          cellTag = '<div class="c-status pending">בקשה: ' + esc(describeConstraint(record)) + '</div>';
+          cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">בקשה: ' +
+            esc(describeConstraint(record)) + esc(reason) + '</div>';
         } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
           cellTag = '<div class="c-status rejected">בקשה נדחתה</div>';
+        } else if (record && record.note) {
+          cellTag = '<div class="c-status approved">' + esc(record.note) + '</div>';
         }
         html += '<td>';
         dayShifts.forEach(function (shiftId) {

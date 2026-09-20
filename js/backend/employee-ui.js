@@ -50,6 +50,12 @@
 
   EmployeeUI.prototype._bind = function () {
     var self = this;
+    this.root.addEventListener('change', function (event) {
+      var input = event.target.closest('[data-note-day]');
+      if (!input) return;
+      self._saveNote(Number(input.dataset.noteDay), input.value.trim());
+    });
+
     this.root.addEventListener('click', function (event) {
       var nav = event.target.closest('[data-week-step]');
       if (nav) {
@@ -111,12 +117,40 @@
       });
   };
 
+  EmployeeUI.prototype._saveNote = function (dayIdx, note) {
+    var self = this;
+    var record = this._record(dayIdx);
+    if (!record) return;                       // אין בקשה – אין מה לצרף אליה
+    if (String(record.note || '') === String(note || '')) return;
+
+    this.backend.saveOwnNote(this.weekKey, dayIdx, note).then(function (week) {
+      self.week = week;
+      self.state.weeks[self.weekKey] = week;
+      self._flash('הסיבה נשמרה');
+    }, function (err) {
+      self._flash((err && err.message) || 'שמירת הסיבה נכשלה');
+      self.render();
+    });
+  };
+
+  /* ההודעה נשמרת עד לציור הבא, כדי שרענון שמגיע מיד אחרי שמירה
+     לא ימחק אותה לפני שהמשתמש הספיק לראות. */
   EmployeeUI.prototype._flash = function (message) {
+    this._pendingFlash = message;
+    this._showFlash();
+  };
+
+  EmployeeUI.prototype._showFlash = function () {
+    var self = this;
     var node = this.root.querySelector('.employee-flash');
-    if (!node) return;
-    node.textContent = message;
+    if (!node || !this._pendingFlash) return;
+    node.textContent = this._pendingFlash;
     node.classList.remove('hidden');
-    setTimeout(function () { node.classList.add('hidden'); }, 3500);
+    clearTimeout(this._flashTimer);
+    this._flashTimer = setTimeout(function () {
+      self._pendingFlash = null;
+      if (node.parentNode) node.classList.add('hidden');
+    }, 3500);
   };
 
   /* המשמרות שהעובד שובץ אליהן השבוע */
@@ -237,6 +271,15 @@
           (constraint.off ? '✓ חופש' : 'חופש') + '</button>';
         html += '</div>';
         var record = self._record(day.idx);
+        if (record && !self.week.published) {
+          html += '<div class="req-reason">' +
+            '<label>סיבה (לא חובה)' +
+            '<input type="text" class="text-input" maxlength="300" data-note-day="' + day.idx + '"' +
+            ' placeholder="למשל: חתונה, בחינה, תור לרופא" value="' + esc(record.note || '') + '">' +
+            '</label></div>';
+        } else if (record && record.note) {
+          html += '<p class="req-note">הסיבה שציינת: ' + esc(record.note) + '</p>';
+        }
         if (record && record.managerNote) {
           html += '<p class="req-note">הערת מנהל/ת: ' + esc(record.managerNote) + '</p>';
         }
@@ -246,6 +289,7 @@
     html += '</div></div>';
 
     this.root.innerHTML = html;
+    this._showFlash();
   };
 
   var API = { EmployeeUI: EmployeeUI };

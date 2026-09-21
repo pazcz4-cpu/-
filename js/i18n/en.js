@@ -132,6 +132,8 @@
       },
 
       status: {
+        demoTitle: 'Demo mode',
+        demoBody: 'Data is saved in this browser only and does not move between devices.',
         synced: 'Synced across devices', syncedAt: 'Synced across devices · updated {time}',
         localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
         remoteUpdate: 'Update received from another device ({time})',
@@ -377,6 +379,7 @@
       },
 
       server: {
+        confirmEmail: 'Check your email and confirm the address, then sign in',
         credentialsRequired: 'Email and password are required',
         passwordTooShort: 'The password must be at least 6 characters',
         emailTaken: 'That email address is already registered',

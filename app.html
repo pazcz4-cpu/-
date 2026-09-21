@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<p id="demo-banner" class="demo-banner hidden">
+  <b data-i18n="status.demoTitle">מצב הדגמה</b>
+  <span data-i18n="status.demoBody">הנתונים נשמרים רק בדפדפן הזה ואינם עוברים בין מכשירים.</span>
+</p>
 <div id="auth-gate" class="auth-gate"></div>
 
 <div id="app-root" class="hidden">
@@ -267,6 +271,8 @@
 <script src="js/validate.js"></script>
 <script src="js/backend/model.js"></script>
 <script src="js/backend/mock.js"></script>
+<script src="js/backend/supabase.js"></script>
+<script src="config.js"></script>
 <script src="js/backend/notify.js"></script>
 <script src="js/backend/auth-ui.js"></script>
 <script src="js/backend/employee-ui.js"></script>
@@ -276,9 +282,31 @@
 <script src="js/app.js"></script>
 <script src="js/backend/saas.js"></script>
 <script>
-  /* בשלב הזה השרת מדומה ורץ בדפדפן. בהמשך יוחלף בשרת אמיתי. */
-  var backend = new window.ShiftMockBackend.MockBackend({ storage: window.localStorage });
-  window.ShiftSaas.boot({ backend: backend });
+  /* בוחרים שרת לפי ההגדרות שב-config.js:
+     הוגדרו כתובת ומפתח Supabase → שרת אמיתי, חשבונות אמיתיים, נתונים בענן.
+     לא הוגדרו                    → שרת מדומה בדפדפן, להדגמה ולפיתוח בלבד. */
+  (function () {
+    var config = window.SHIFT_CONFIG || {};
+    var backend;
+
+    if (config.supabaseUrl && config.supabaseAnonKey) {
+      backend = new window.ShiftSupabase.SupabaseBackend({
+        url: config.supabaseUrl,
+        anonKey: config.supabaseAnonKey,
+        adminEndpoint: config.adminEndpoint || '/api/create-user',
+        storage: window.localStorage
+      });
+    } else {
+      backend = new window.ShiftMockBackend.MockBackend({ storage: window.localStorage });
+      var banner = document.getElementById('demo-banner');
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    /* נחשף לצורך בדיקות ולאבחון מהקונסולה. אין כאן הרשאה נוספת:
+       כל פעולה עוברת ממילא דרך השרת עם האסימון של המשתמש. */
+    window.__backend = backend;
+    window.ShiftSaas.boot({ backend: backend });
+  })();
 </script>
 </body>
 </html>

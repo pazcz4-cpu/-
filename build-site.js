@@ -146,6 +146,10 @@ page('landing.html', 'index.html', { manifest: '/app/manifest.webmanifest' });
 page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest' });
 page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest' });
 
+/* הגדרות החיבור לשרת. נטען יחסית לעמוד, כדי שגם פתיחה מקומית
+   של app.html תמצא אותו. */
+fs.copyFileSync(path.join(root, 'config.js'), path.join(out, 'app', 'config.js'));
+
 /* ===== קבצים לשורש ===== */
 write('robots.txt', 'User-agent: *\nAllow: /\nDisallow: /tool/\n');
 write('.nojekyll', '');

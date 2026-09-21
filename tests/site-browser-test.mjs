@@ -80,6 +80,20 @@ try {
     navigator.serviceWorker.getRegistration().then(r => (r ? r.scope : null)));
   check('Service Worker נרשם על כל האתר', sw, BASE + '/');
 
+  console.log('\n== בחירת שרת ==');
+  await page.goto(BASE + '/app/');
+  await page.waitForTimeout(600);
+  const configured = await page.evaluate(() => {
+    const c = window.SHIFT_CONFIG || {};
+    return !!(c.supabaseUrl && c.supabaseAnonKey);
+  });
+  check('config.js נטען', await page.evaluate(() => !!window.SHIFT_CONFIG), true);
+  check('מתאם Supabase זמין', await page.evaluate(() => !!window.ShiftSupabase), true);
+  /* כל עוד לא הוגדר שרת, חייבת להופיע אזהרה שהנתונים מקומיים */
+  check('שורת מצב ההדגמה תואמת להגדרות',
+    await page.locator('#demo-banner').isVisible(), !configured);
+  check('מסך ההתחברות מוצג', await page.locator('#auth-gate').isVisible(), true);
+
   console.log('\n== נכסים משותפים ==');
   for (const asset of ['/css/styles.css', '/css/landing.css', '/js/app.js', '/js/i18n/ar.js', '/sw.js']) {
     check(asset, (await page.request.get(BASE + asset)).status(), 200);

@@ -108,7 +108,12 @@
       onSignedIn: function (session) { return enterApp(backend, session); },
       onSignedOut: function () { root.location.reload(); }
     });
-    return authRef.start();
+    /* שרת אמיתי צריך לשחזר את ההתחברות מהאסימון השמור לפני שמסך
+       הכניסה מצויר, אחרת משתמש מחובר יראה לרגע מסך התחברות.
+       לשרת המדומה אין restore, והוא ממשיך מיד. */
+    var ready = backend.restore ? backend.restore() : Promise.resolve(null);
+    return ready.then(function () { return authRef.start(); },
+      function () { return authRef.start(); });
   }
 
   var started = false;

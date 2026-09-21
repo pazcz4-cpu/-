@@ -65,6 +65,8 @@
       },
 
       status: {
+        demoTitle: 'Demomodus',
+        demoBody: 'Die Daten liegen nur in diesem Browser und wandern nicht zwischen Geräten.',
         synced: 'Zwischen Geräten synchronisiert', syncedAt: 'Zwischen Geräten synchronisiert · aktualisiert um {time}',
         localOnly: 'Nur auf diesem Gerät gespeichert', readOnly: 'Nur Ansicht – keine Bearbeitungsrechte',
         remoteUpdate: 'Aktualisierung von einem anderen Gerät erhalten ({time})',
@@ -311,6 +313,7 @@
       },
 
       server: {
+        confirmEmail: 'Prüfen Sie Ihre E-Mail, bestätigen Sie die Adresse und melden Sie sich dann an',
         credentialsRequired: 'E-Mail und Passwort sind erforderlich',
         passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen haben',
         emailTaken: 'Diese E-Mail-Adresse ist bereits registriert',

@@ -65,6 +65,8 @@
       },
 
       status: {
+        demoTitle: 'Mode démonstration',
+        demoBody: 'Les données sont enregistrées uniquement dans ce navigateur et ne passent pas d’un appareil à l’autre.',
         synced: 'Synchronisé entre les appareils', syncedAt: 'Synchronisé entre les appareils · mis à jour à {time}',
         localOnly: 'Enregistré sur cet appareil uniquement', readOnly: 'Lecture seule – aucun droit de modification',
         remoteUpdate: 'Mise à jour reçue d’un autre appareil ({time})',
@@ -311,6 +313,7 @@
       },
 
       server: {
+        confirmEmail: 'Vérifiez votre e-mail et confirmez l’adresse, puis connectez-vous',
         credentialsRequired: 'L’e-mail et le mot de passe sont obligatoires',
         passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
         emailTaken: 'Cette adresse e-mail est déjà enregistrée',

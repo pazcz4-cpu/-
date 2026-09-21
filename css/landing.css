@@ -169,6 +169,9 @@
 .lp-cta .lp-btn-primary { background: var(--header-ink); color: var(--brand-dark); }
 
 /* ===== כותרת תחתונה ===== */
+#footer-contact a { color: inherit; }
+#footer-contact a:hover { text-decoration: none; }
+
 .lp-footer {
   border-top: 1px solid var(--line); padding: 26px 0; color: var(--muted); font-size: 14px;
 }

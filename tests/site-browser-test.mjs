@@ -76,6 +76,14 @@ try {
     await en.close();
   }
 
+  console.log('\n== כתובת יצירת קשר ==');
+  {
+    const mailto = page.locator('#footer-contact a');
+    check('כתובת תמיכה בדף המכירה', await mailto.getAttribute('href'),
+      'mailto:support@setshifts.com');
+    check('והיא מוצגת ללקוח', await mailto.textContent(), 'support@setshifts.com');
+  }
+
   console.log('\n== דומיין, גוגל ושיתופים ==');
   const DOMAIN = 'https://setshifts.com';
   check('קישור קנוני לדומיין',

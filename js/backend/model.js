@@ -60,6 +60,10 @@
     EXPIRED: 'expired'
   };
 
+  /* כתובת התמיכה. מקום אחד, כדי שדף המכירה והמערכת לא יציגו
+     לעולם שתי כתובות שונות. */
+  var SUPPORT_EMAIL = 'support@setshifts.com';
+
   var TRIAL_DAYS = 14;
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
   /* חלון להמתנה לאישור החיוב הראשון מספק התשלומים */
@@ -286,6 +290,7 @@
 
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
+    SUPPORT_EMAIL: SUPPORT_EMAIL,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,

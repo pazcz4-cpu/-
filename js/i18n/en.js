@@ -557,6 +557,7 @@
       },
 
       common: {
+        emailUs: 'Email us',
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
         yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'

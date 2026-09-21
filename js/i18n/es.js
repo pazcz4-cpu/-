@@ -488,6 +488,7 @@
       },
 
       common: {
+        emailUs: 'Escríbenos',
         moveUp: 'Subir', moveDown: 'Bajar', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Cerrar',
         yes: 'Sí', no: 'No', all: 'Todo', and: 'y', more: 'y {count} más'

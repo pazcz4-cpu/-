@@ -10,6 +10,7 @@ var Store = require('../js/store.js');
 var Scheduler = require('../js/scheduler.js');
 var Validate = require('../js/validate.js');
 var Xlsx = require('../js/xlsx.js');
+var Model = require('../js/backend/model.js');
 
 var passed = 0, failed = 0;
 
@@ -944,6 +945,24 @@ test('שם גיליון ארוך או עם תווים אסורים מנוקה', 
   assert(match, 'נמצא שם גיליון');
   assert(match[1].length <= 31, 'שם הגיליון קוצר ל-31 תווים');
   assert(!/[:\\\/?*\[\]]/.test(match[1]), 'הוסרו תווים אסורים: ' + match[1]);
+});
+
+console.log('\n== כתובת התמיכה ==');
+
+test('כתובת התמיכה מוגדרת במקום אחד ותקינה', function () {
+  assert(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(Model.SUPPORT_EMAIL),
+    'כתובת תמיכה לא תקינה: ' + Model.SUPPORT_EMAIL);
+  assert(Model.SUPPORT_EMAIL.indexOf('setshifts.com') !== -1,
+    'כתובת התמיכה אינה על הדומיין של המוצר: ' + Model.SUPPORT_EMAIL);
+});
+
+test('לכל שפה יש נוסח לפנייה לתמיכה', function () {
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    var text = I18n.t('common.emailUs');
+    assert(text && text !== 'common.emailUs', lang.code + ': חסר תרגום');
+  });
+  I18n.use('he');
 });
 
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

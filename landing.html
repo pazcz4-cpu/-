@@ -206,6 +206,7 @@
   <div class="landing-wrap lp-footer-inner">
     <span id="footer-brand"></span>
     <span class="lp-nav-spacer"></span>
+    <span id="footer-contact"></span>
     <span data-i18n="landing.footerTagline"></span>
   </div>
 </footer>
@@ -272,6 +273,13 @@
     if (note) note.textContent = t('landing.heroNote', { days: Model.TRIAL_DAYS });
     var faq6 = document.getElementById('faq6-answer');
     if (faq6) faq6.textContent = t('landing.faq6A', { days: Model.TRIAL_DAYS });
+    /* כתובת ליצירת קשר. קונה שמתלבט רוצה לדעת שיש למי לפנות
+       לפני שהוא מוסר כרטיס אשראי. */
+    var contact = document.getElementById('footer-contact');
+    if (contact) {
+      contact.innerHTML = esc(t('common.emailUs')) + ' <a href="mailto:' +
+        esc(Model.SUPPORT_EMAIL) + '">' + esc(Model.SUPPORT_EMAIL) + '</a>';
+    }
     var footer = document.getElementById('footer-brand');
     if (footer) {
       footer.textContent = '© ' + new Date().getFullYear() + ' ' +

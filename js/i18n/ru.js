@@ -488,6 +488,7 @@
       },
 
       common: {
+        emailUs: 'Напишите нам',
         moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
         save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', close: 'Закрыть',
         yes: 'Да', no: 'Нет', all: 'Все', and: 'и', more: 'и ещё {count}'

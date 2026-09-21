@@ -488,6 +488,7 @@
       },
 
       common: {
+        emailUs: 'راسلنا',
         moveUp: 'رفع', moveDown: 'خفض', timePlaceholder: 'سس:دد',
         save: 'حفظ', cancel: 'إلغاء', delete: 'حذف', close: 'إغلاق',
         yes: 'نعم', no: 'لا', all: 'الكل', and: 'و', more: 'و{count} آخرين'

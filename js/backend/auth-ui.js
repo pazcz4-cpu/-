@@ -84,6 +84,11 @@
     });
   };
 
+  function supportLink() {
+    var address = Model.SUPPORT_EMAIL;
+    return '<a href="mailto:' + esc(address) + '">' + esc(address) + '</a>';
+  }
+
   AuthUI.prototype._error = function (message) {
     var node = this.gate.querySelector('.auth-error');
     if (!node) return;
@@ -219,7 +224,10 @@
           '<h2>' + t('auth.blocked') + '</h2>' +
           '<p>' + esc(session.access.text) + '</p>' +
           (Model.can(session.user.role, 'billing.manage')
-            ? '<p class="auth-hint">' + t('auth.blockedOwner') + '</p>'
+            ? '<p class="auth-hint">' + t('auth.blockedOwner') + '</p>' +
+              /* ההודעה מבקשת לפנות לתמיכה, ולכן חייבת גם לומר לאן.
+                 זה המסך שבו לקוח חסום מחליט אם להילחם או לוותר. */
+              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>'
             : '<p class="auth-hint">' + t('auth.blockedMember') + '</p>') +
         '</div>' +
         '<button id="auth-signout-blocked" class="btn ghost">' + t('auth.signOut') + '</button>' +

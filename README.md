@@ -285,6 +285,8 @@ tools/serve.js      שרת סטטי מקומי לבדיקות
 api/create-user.js  יצירת משתמש בשרת (דורש מפתח ניהול)
 api/billing/webhook.js     קליטת אירועי חיוב מספק התשלומים
 api/billing/_providers.js  מתאם לכל ספק תשלומים
+api/billing/cron.js        מנוע החיוב היומי: חיוב ראשון, חידוש וניסיונות חוזרים
+api/billing/checkout.js    פתיחת מנוי · payment-method.js · cancel.js · resume.js
 supabase/schema.sql טבלאות, כללי בידוד ופונקציות
 js/backend/supabase.js  מתאם לשרת האמיתי
 js/i18n/core.js     מנוע התרגום: רישום שפות, מפתחות, כיוון כתיבה ומטבע
@@ -298,6 +300,7 @@ tests/run-tests.js  בדיקות אוטומטיות
 tests/sync-browser-test.mjs  בדיקת הסנכרון בדפדפן
 tests/i18n-tests.js  בדיקת שלמות מילוני השפות
 tests/supabase-tests.js  בדיקת המתאם לשרת האמיתי
+tests/billing-cron-tests.js  בדיקת מנוע החיוב האוטומטי
 tests/site-browser-test.mjs  בדיקת האתר הבנוי וה-PWA
 tests/language-browser-test.mjs  בדיקת החלפת השפה בדפדפן
 ```
@@ -310,6 +313,7 @@ npm run test:sync  # בדיקת הסנכרון בין מחשבים בדפדפן,
 npm run test:i18n  # שלמות מילוני השפות: מפתחות, תבניות והגדרות
 npm run test:supabase  # מתאם השרת האמיתי, מול שרת Supabase מדומה
 npm run test:webhook   # קליטת אירועי חיוב: חתימה, כפילות ומעבר לתשלום
+npm run test:cron      # מנוע החיוב: חיוב כפול, ביטול, כישלון וימי חסד
 npm run test:trial     # מסלול הניסיון עם כרטיס מראש, בדפדפן
 npm run test:site  # האתר הבנוי: שלוש הכתובות, האייקונים וההתקנה בטלפון
 npm run test:lang  # החלפת שפה בדפדפן: עברית/אנגלית/ערבית, כיוון כתיבה ושמירת הבחירה

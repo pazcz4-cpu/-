@@ -320,6 +320,14 @@
           restRule: 'braucht Ruhe zwischen Abend- und Frühschicht'
         }
       },
+      preview: {
+        open: 'Mitarbeiteransicht',
+        title: 'Wessen Bildschirm möchten Sie sehen?',
+        hint: 'Nur ansehen. Nichts davon wird in seinem Namen gespeichert.',
+        banner: 'Sie sehen den Bildschirm von {name}',
+        exit: 'Zurück zur Verwaltung',
+        noEmployees: 'Noch keine aktiven Mitarbeiter.'
+      },
       support: {
         title: 'Support',
         promise: 'Sagen Sie uns, was nicht funktioniert oder was Ihnen fehlt. Ein Mensch antwortet innerhalb von {hours} Stunden.',

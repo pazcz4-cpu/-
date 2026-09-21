@@ -398,6 +398,14 @@
           restRule: 'needs rest between an evening and a morning shift'
         }
       },
+      preview: {
+        open: 'Employee view',
+        title: 'Whose screen do you want to see?',
+        hint: 'Read only. Nothing you do here is saved as that person.',
+        banner: 'You are viewing the screen of {name}',
+        exit: 'Back to management',
+        noEmployees: 'No active staff yet.'
+      },
       support: {
         title: 'Support',
         promise: 'Tell us what broke or what you need. A person replies within {hours} hours.',

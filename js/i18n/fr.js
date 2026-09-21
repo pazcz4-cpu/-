@@ -320,6 +320,14 @@
           restRule: 'a besoin de repos entre soirée et matin'
         }
       },
+      preview: {
+        open: 'Vue employé',
+        title: 'Quel écran voulez-vous voir ?',
+        hint: 'Lecture seule. Rien de ce que vous faites ici n’est enregistré en son nom.',
+        banner: 'Vous consultez l’écran de {name}',
+        exit: 'Retour à la gestion',
+        noEmployees: 'Aucun employé actif pour l’instant.'
+      },
       support: {
         title: 'Assistance',
         promise: 'Dites-nous ce qui ne va pas ou ce qu’il vous manque. Une personne répond sous {hours} heures.',

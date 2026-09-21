@@ -320,6 +320,14 @@
           restRule: 'precisa de descanso entre a tarde e a manhã'
         }
       },
+      preview: {
+        open: 'Vista do colaborador',
+        title: 'Que ecrã queres ver?',
+        hint: 'Apenas leitura. Nada do que fizeres aqui fica guardado em nome dele.',
+        banner: 'Estás a ver o ecrã de {name}',
+        exit: 'Voltar à gestão',
+        noEmployees: 'Ainda não há colaboradores ativos.'
+      },
       support: {
         title: 'Apoio',
         promise: 'Diz-nos o que avariou ou o que te falta. Uma pessoa responde em {hours} horas.',

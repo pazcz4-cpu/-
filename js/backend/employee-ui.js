@@ -20,6 +20,11 @@
   function EmployeeUI(options) {
     this.backend = options.backend;
     this.session = options.session;
+    /* תצוגה מקדימה: מנהל רואה את המסך של עובד מסוים, בלי להתחזות
+       לו. הכתיבה חסומה כאן ולא רק בשרת – בקשת חופש שהמנהל "הגיש"
+       בטעות בשם העובד היא בדיוק סוג התקלה שהורסת אמון. */
+    this.preview = !!options.preview;
+    this.previewEmployeeId = options.employeeId || null;
     this.root = document.getElementById('employee-root');
     this.weekKey = Store.currentWeekKey();
     this.state = null;
@@ -57,6 +62,18 @@
 
   EmployeeUI.prototype._bind = function () {
     var self = this;
+
+    /* בתצוגה מקדימה מחוברת רק הניווט בין שבועות. כל השאר נצפה. */
+    if (this.preview) {
+      this.root.addEventListener('click', function (event) {
+        var nav = event.target.closest('[data-week-step]');
+        if (!nav) return;
+        self.weekKey = Store.shiftWeekKey(self.weekKey, Number(nav.dataset.weekStep));
+        self.load();
+      });
+      return;
+    }
+
     this.root.addEventListener('change', function (event) {
       var input = event.target.closest('[data-note-day]');
       if (!input) return;
@@ -75,7 +92,9 @@
     });
   };
 
-  EmployeeUI.prototype._employeeId = function () { return this.session.user.employeeId; };
+  EmployeeUI.prototype._employeeId = function () {
+    return this.previewEmployeeId || this.session.user.employeeId;
+  };
 
   /* הרשומה כפי שנשמרה – העובד רואה גם בקשה שממתינה או שנדחתה */
   EmployeeUI.prototype._record = function (dayIdx) {
@@ -188,7 +207,14 @@
     var start = Store.dateOfDay(this.weekKey, 0);
     var end = Store.dateOfDay(this.weekKey, 6);
 
-    var html = '<div class="employee-screen">';
+    var html = '<div class="employee-screen' + (this.preview ? ' is-preview' : '') + '">';
+    if (this.preview) {
+      /* הכרזה שאי אפשר לפספס: זה מסך של מישהו אחר */
+      html += '<div class="preview-bar">' +
+        '<span>' + esc(t('preview.banner', { name: (employee && employee.name) || '' })) + '</span>' +
+        '<button type="button" id="preview-exit" class="btn ghost small">' +
+        esc(t('preview.exit')) + '</button></div>';
+    }
     html += '<div class="employee-weeknav">' +
       '<button class="btn ghost" data-week-step="-1">' + t('employee.prevWeek') + '</button>' +
       '<strong>' + Store.formatDate(start) + ' – ' + Store.formatDate(end) + '</strong>' +

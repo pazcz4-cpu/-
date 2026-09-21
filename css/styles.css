@@ -768,6 +768,23 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .why-blocked summary { cursor: pointer; color: var(--muted); }
 .why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
 
+/* ===== תצוגת עובד ===== */
+.preview-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--warn-bg); color: var(--warn);
+  border: 1px solid var(--warn-line); border-radius: 10px;
+  padding: 9px 13px; margin-bottom: 14px; font-size: 13.5px; font-weight: 600;
+}
+.preview-bar span { flex: 1; }
+.preview-list { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+.preview-pick {
+  text-align: start; font: inherit; font-size: 14.5px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 13px; cursor: pointer;
+}
+.preview-pick:hover { border-color: var(--muted); }
+
 /* ===== קריאות שירות ===== */
 .support-channels { gap: 10px; flex-wrap: wrap; }
 .support-form { display: flex; flex-direction: column; gap: 10px; max-width: 620px; }

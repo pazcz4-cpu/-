@@ -194,11 +194,18 @@
     var langSelect = '<select id="user-language" class="user-lang" aria-label="' +
       esc(t('app.language')) + '"></select>';
 
+    /* "מה העובד יראה" – שאלה שמנהל שואל לפני כל פרסום סידור */
+    var previewButton = '';
+    if (Model.can(session.user.role, 'schedule.edit')) {
+      previewButton = '<button id="user-preview" class="btn ghost small">' +
+        esc(t('preview.open')) + '</button>';
+    }
+
     bar.innerHTML =
       '<span class="user-company">' + esc(session.company.name) + '</span>' +
       '<span class="user-name">' + esc(session.user.name) +
       ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
-      notice + langSelect + notifyButton +
+      notice + langSelect + previewButton + notifyButton +
       '<button id="user-signout" class="btn ghost small">' + t('auth.signOut') + '</button>';
     bar.classList.remove('hidden');
     if (root.I18nDom) { root.I18nDom.fillPicker(bar.querySelector('#user-language')); }

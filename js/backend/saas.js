@@ -182,6 +182,31 @@
         .forEach(function (item) { Notify.show(item); });
     }
 
+    /* תצוגה מקדימה: המנהל רואה את המסך של עובד מסוים ויוצא ממנו.
+       הסשן לא משתנה – רק מה שמצויר על המסך. */
+    var previewUI = null;
+    function exitPreview() {
+      if (!previewUI) return;
+      previewUI = null;
+      document.getElementById('employee-root').classList.add('hidden');
+      document.getElementById('employee-root').innerHTML = '';
+      document.getElementById('manager-root').classList.remove('hidden');
+    }
+    function startPreview(employeeId) {
+      if (!root.ShiftEmployeeUI) return Promise.resolve(null);
+      document.getElementById('manager-root').classList.add('hidden');
+      var employeeRoot = document.getElementById('employee-root');
+      employeeRoot.classList.remove('hidden');
+      previewUI = new root.ShiftEmployeeUI.EmployeeUI({
+        backend: backend, session: session, preview: true, employeeId: employeeId
+      });
+      employeeRoot.addEventListener('click', function (event) {
+        if (event.target.closest('#preview-exit')) exitPreview();
+      });
+      return previewUI.start();
+    }
+    root.ShiftPreview = { start: startPreview, exit: exitPreview };
+
     /* עובד מקבל מסך משלו ולא את מערכת הניהול */
     if (session.user.role === 'employee') {
       document.getElementById('manager-root').classList.add('hidden');
@@ -235,6 +260,10 @@
       }
       /* התמיכה פתוחה לכל מי שנכנס למערכת, ולא רק למנהלים:
          גם עובד נתקל בתקלות, ודיווח שעובר דרך המנהל לא מגיע. */
+      if (root.ShiftPreviewUI) {
+        root.ShiftPreviewUI.init({ getEmployees: getEmployees });
+      }
+
       if (root.ShiftSupportUI) {
         root.ShiftSupportUI.init({ backend: backend, session: session });
       }

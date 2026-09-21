@@ -320,6 +320,14 @@
           restRule: 'necesita descanso entre tarde y mañana'
         }
       },
+      preview: {
+        open: 'Vista de empleado',
+        title: '¿Qué pantalla quieres ver?',
+        hint: 'Solo lectura. Nada de lo que hagas aquí se guarda como esa persona.',
+        banner: 'Estás viendo la pantalla de {name}',
+        exit: 'Volver a gestión',
+        noEmployees: 'Todavía no hay personal activo.'
+      },
       support: {
         title: 'Soporte',
         promise: 'Cuéntanos qué falla o qué necesitas. Una persona responde en {hours} horas.',

@@ -35,6 +35,32 @@ create table if not exists public.company_users (
 
 create index if not exists company_users_company_idx on public.company_users (company_id);
 
+-- פרטי המנוי אצל ספק התשלומים. נכתבים אך ורק בידי השרת, בתגובה
+-- ל-webhook מהספק – לעולם לא בידי הדפדפן.
+alter table public.companies
+  add column if not exists billing_provider        text,
+  add column if not exists billing_customer_id     text,
+  add column if not exists billing_subscription_id text,
+  add column if not exists cancel_at_period_end    boolean not null default false,
+  add column if not exists current_period_end      timestamptz;
+
+create index if not exists companies_subscription_idx
+  on public.companies (billing_subscription_id);
+
+-- יומן אירועי החיוב. ספקי תשלומים שולחים את אותו אירוע יותר מפעם
+-- אחת, ולכן כל אירוע נרשם לפי המזהה שלו ומעובד פעם אחת בלבד.
+create table if not exists public.billing_events (
+  id          text primary key,      -- מזהה האירוע אצל הספק
+  provider    text not null,
+  company_id  uuid references public.companies(id) on delete set null,
+  type        text not null,
+  payload     jsonb,
+  received_at timestamptz not null default now()
+);
+
+-- בלי מדיניות כלל: רק service_role, שעוקף RLS, נוגע בטבלה הזו.
+alter table public.billing_events enable row level security;
+
 -- ההגדרות המשותפות של החברה: עובדים, סניפים, סוגי משמרות וכללי שיבוץ
 create table if not exists public.company_configs (
   company_id uuid primary key references public.companies(id) on delete cascade,
@@ -113,11 +139,16 @@ alter table public.company_users   enable row level security;
 alter table public.company_configs enable row level security;
 alter table public.company_weeks   enable row level security;
 
--- חברות: רואים רק את החברה שלך. את המנוי משנים דרך השרת בלבד.
+-- חברות: רואים רק את החברה שלך.
 drop policy if exists companies_select on public.companies;
 create policy companies_select on public.companies
   for select using (id = public.current_company_id());
 
+-- הבעלים רשאי לשנות את שם החברה, וזה הכל. מצב המנוי, התוכנית
+-- ותאריך התוקף אינם ניתנים לשינוי מהדפדפן – אחרת כל לקוח היה יכול
+-- להעניק לעצמו מנוי חינם בפקודה אחת. את העמודות האלה כותב רק
+-- השרת, בתגובה לאישור מספק התשלומים.
+-- RLS מגביל שורות; הגבלת עמודות נעשית ב-GRANT, ולכן שניהם יחד.
 drop policy if exists companies_update on public.companies;
 create policy companies_update on public.companies
   for update using (id = public.current_company_id() and public.current_role_name() = 'owner')
@@ -357,10 +388,23 @@ grant execute on function public.current_role_name()                            
 grant execute on function public.current_employee_id()                           to authenticated;
 grant execute on function public.is_manager()                                    to authenticated;
 
-grant select, insert, update, delete on public.companies       to authenticated;
-grant select, insert, update, delete on public.company_users   to authenticated;
+-- חברות: קריאה בלבד, ושינוי השם בלבד. פתיחת חברה נעשית דרך
+-- create_company, ומחיקה אינה מתאפשרת מהדפדפן.
+revoke all on public.companies from authenticated;
+grant select on public.companies to authenticated;
+grant update (name) on public.companies to authenticated;
+
+-- משתמשים: קריאה ועדכון. יצירה נעשית בשרת (api/create-user.js),
+-- כי היא דורשת מפתח ניהול.
+revoke all on public.company_users from authenticated;
+grant select on public.company_users to authenticated;
+grant update (name, role, employee_id, active) on public.company_users to authenticated;
+
 grant select, insert, update, delete on public.company_configs to authenticated;
 grant select, insert, update, delete on public.company_weeks   to authenticated;
+
+-- אף אחד מלבד השרת אינו רואה את יומן החיובים
+revoke all on public.billing_events from authenticated, anon;
 
 -- ===== עדכונים חיים (אופציונלי) =====
 -- מפעיל שידור שינויים בזמן אמת. הבידוד נשמר: Supabase מכבד את

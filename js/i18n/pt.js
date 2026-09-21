@@ -346,6 +346,7 @@
       },
 
       payments: {
+        notConnected: 'A faturação ainda não está ligada. Contacta o suporte.',
         mockProvider: 'Fornecedor de teste (desenvolvimento)',
         mockNote: 'O pagamento é aprovado de imediato sem cobrança real. Apenas para desenvolvimento e demonstrações.',
         unknownPlan: 'Plano desconhecido',

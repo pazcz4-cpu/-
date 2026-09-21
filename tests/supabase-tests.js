@@ -90,7 +90,8 @@ function filters(query) {
 FakeSupabase.prototype.fetch = function (url, options) {
   var self = this;
   var opts = options || {};
-  var parsed = new URL(url);
+  /* נתיב יחסי = נקודת קצה של השרת שלנו (Vercel), ולא של Supabase */
+  var parsed = new URL(url, 'https://app.example.com');
   var path = parsed.pathname;
   var query = parsed.search.slice(1);
   var body = opts.body ? JSON.parse(opts.body) : null;
@@ -110,6 +111,14 @@ FakeSupabase.prototype.fetch = function (url, options) {
     var failure = this.failNext;
     this.failNext = null;
     return reply(failure.status, failure.body);
+  }
+
+  /* השרת שלנו. serverRoutes מאפשר לבדיקה להחליט מה הוא מחזיר;
+     בלעדיו התשובה היא 404, בדיוק כמו נקודת קצה שלא נפרסה. */
+  if (path.indexOf('/api/') === 0) {
+    var route = this.serverRoutes && this.serverRoutes[path];
+    if (!route) return reply(404, { message: 'not found' });
+    return reply(route.status || 200, route.body);
   }
 
   /* ---- התחברות ---- */
@@ -557,14 +566,80 @@ run('בעלים אינו ניתן לשינוי', function () {
   });
 });
 
-run('שינוי תוכנית מתעדכן גם במצב ההתחברות שבזיכרון', function () {
+run('שינוי תוכנית עובר דרך השרת ולא נכתב מהדפדפן', function () {
   return signedIn().then(function (ctx) {
-    return ctx.backend.setSubscription({ plan: 'growth', status: 'active' })
-      .then(function (company) {
-        assertEqual(company.plan, 'growth', 'התוכנית לא השתנתה');
-        assertEqual(ctx.backend.session().company.plan, 'growth',
-          'מצב ההתחברות בזיכרון לא התעדכן');
+    /* השרת מאשר, ורק אחר כך המצב מתעדכן */
+    ctx.server.serverRoutes = { '/api/billing/change-plan': { status: 200, body: { ok: true } } };
+    ctx.server.calls.length = 0;
+    return ctx.backend.setSubscription({ plan: 'growth' }).then(function () {
+      var toServer = ctx.server.calls.filter(function (c) {
+        return c.path === '/api/billing/change-plan';
       });
+      assertEqual(toServer.length, 1, 'הבקשה לא נשלחה לשרת');
+      assertEqual(toServer[0].body.plan, 'growth', 'התוכנית לא נשלחה');
+
+      /* הנקודה המרכזית: אסור שהדפדפן יכתוב את מצב המנוי בעצמו */
+      var directWrite = ctx.server.calls.filter(function (c) {
+        return c.method === 'PATCH' && c.path.indexOf('companies') !== -1;
+      });
+      assertEqual(directWrite.length, 0,
+        'הדפדפן כתב ישירות לטבלת החברות – כך לקוח יכול להעניק לעצמו מנוי');
+    });
+  });
+});
+
+run('מצב המנוי נטען מחדש מהשרת אחרי אישור', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = { '/api/billing/change-plan': { status: 200, body: { ok: true } } };
+    /* "הספק אישר" – השרת עדכן את השורה */
+    ctx.server.companies[ctx.session.company.id].plan = 'growth';
+    ctx.server.companies[ctx.session.company.id].status = 'active';
+    return ctx.backend.setSubscription({ plan: 'growth' }).then(function (company) {
+      assertEqual(company.plan, 'growth', 'התוכנית לא נטענה מחדש');
+      assertEqual(ctx.backend.session().company.status, 'active',
+        'מצב ההתחברות בזיכרון לא התעדכן');
+    });
+  });
+});
+
+run('כשהחיוב לא חובר מתקבלת הודעה ברורה ולא שגיאה סתומה', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = {};   // נקודת הקצה לא נפרסה
+    return ctx.backend.setSubscription({ plan: 'growth' })
+      .then(function () { throw new Error('שינוי התוכנית הצליח בלי שרת חיוב'); }, function (err) {
+        assertEqual(err.code, 'not_configured', 'קוד שגיאה לא נכון');
+        assertEqual(err.message, I18n.t('payments.notConnected'), 'ההודעה אינה מתורגמת');
+      });
+  });
+});
+
+run('ביטול מנוי פונה לנקודת הקצה של הביטול', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = { '/api/billing/cancel': { status: 200, body: { ok: true } } };
+    return ctx.backend.setSubscription({ status: 'canceled' }).then(function () {
+      var cancel = ctx.server.calls.filter(function (c) { return c.path === '/api/billing/cancel'; });
+      assertEqual(cancel.length, 1, 'בקשת הביטול לא נשלחה');
+    });
+  });
+});
+
+run('יצירת משתמש נשלחת לשרת ולא ל-Supabase ישירות', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = {
+      '/api/create-user': { status: 200, body: { id: 'u-9', email: 'e@e.co', role: 'employee' } }
+    };
+    ctx.server.calls.length = 0;
+    return ctx.backend.createUser({
+      email: 'E@E.co', password: 'secret123', name: 'עובד', role: 'employee'
+    }).then(function (user) {
+      assertEqual(user.id, 'u-9', 'המשתמש לא הוחזר');
+      var admin = ctx.server.calls.filter(function (c) {
+        return c.path.indexOf('/auth/v1/admin') !== -1;
+      });
+      assertEqual(admin.length, 0, 'הדפדפן פנה ל-API הניהולי של Supabase');
+      var toServer = ctx.server.calls.filter(function (c) { return c.path === '/api/create-user'; });
+      assertEqual(toServer[0].body.email, 'e@e.co', 'האימייל לא עבר נרמול');
+    });
   });
 });
 

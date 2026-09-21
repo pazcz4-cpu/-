@@ -97,6 +97,9 @@
     /* נקודת הקצה שיוצרת משתמשים. רצה בשרת, כי יצירת משתמש דורשת
        מפתח שאסור שיגיע לדפדפן. */
     this.adminEndpoint = opts.adminEndpoint || '/api/create-user';
+    /* שינוי מנוי עובר דרך השרת ומשם לספק התשלומים. הדפדפן אינו
+       רשאי לכתוב את מצב המנוי – ראו supabase/schema.sql. */
+    this.billingEndpoint = opts.billingEndpoint || '/api/billing';
     this.storage = createStorage(opts.storage);
     this.fetchImpl = opts.fetch || (typeof fetch === 'function' ? fetch.bind(root) : null);
     this.pollMs = opts.pollMs || 10000;
@@ -464,38 +467,48 @@
       });
   };
 
-  /* יצירת משתמש דורשת מפתח ניהול, ולכן עוברת דרך השרת */
-  SupabaseBackend.prototype.createUser = function (input) {
+  /* קריאה לשרת שלנו (ולא ל-Supabase), עם האסימון של המשתמש.
+     משמש לפעולות שדורשות הרשאה שאסור שתגיע לדפדפן. */
+  SupabaseBackend.prototype._server = function (endpoint, payload) {
     var self = this;
     if (!this.tokens) {
       return Promise.reject(fail('not_signed_in', t('server.signInRequired')));
     }
     var run = this._expired() ? this._refresh() : Promise.resolve();
     return run.then(function () {
-      return self.fetchImpl(self.adminEndpoint, {
+      return self.fetchImpl(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + self.tokens.access_token
         },
-        body: JSON.stringify({
-          email: String(input.email || '').trim().toLowerCase(),
-          password: String(input.password || ''),
-          name: String(input.name || '').trim(),
-          role: input.role === 'manager' ? 'manager' : 'employee',
-          employeeId: input.employeeId || null
-        })
+        body: JSON.stringify(payload || {})
       });
     }).then(function (response) {
       return response.text().then(function (text) {
         var body = null;
         if (text) { try { body = JSON.parse(text); } catch (err) { body = { message: text }; } }
+        if (response.status === 404 || response.status === 501) {
+          /* נקודת הקצה לא נפרסה – עדיף להגיד את זה במפורש */
+          throw fail('not_configured', t('payments.notConnected'));
+        }
         if (!response.ok) throw describe(response.status, body);
         return body;
       });
     }, function (err) {
       if (err && err.code) throw err;
       throw fail('network', (err && err.message) || 'network error');
+    });
+  };
+
+  /* יצירת משתמש דורשת מפתח ניהול, ולכן עוברת דרך השרת */
+  SupabaseBackend.prototype.createUser = function (input) {
+    return this._server(this.adminEndpoint, {
+      email: String(input.email || '').trim().toLowerCase(),
+      password: String(input.password || ''),
+      name: String(input.name || '').trim(),
+      role: input.role === 'manager' ? 'manager' : 'employee',
+      employeeId: input.employeeId || null
     });
   };
 
@@ -525,25 +538,24 @@
 
   /* ===== מנוי ===== */
 
+  /* שינוי מנוי אינו כתיבה לבסיס הנתונים אלא בקשה לשרת, שפונה
+     משם לספק התשלומים. מצב המנוי חוזר רק אחרי שהספק אישר – כך
+     שלקוח אינו יכול להעניק לעצמו מנוי. */
   SupabaseBackend.prototype.setSubscription = function (patch) {
     var self = this;
-    var companyId;
-    try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
-    var body = {};
-    if (patch.plan && Model.PLANS[patch.plan]) body.plan = patch.plan;
-    if (patch.status) body.status = patch.status;
-    if (patch.validUntil) body.valid_until = patch.validUntil;
+    try { this._companyId(); } catch (err) { return Promise.reject(err); }
 
-    return this._rest('/companies?id=eq.' + companyId, { method: 'PATCH', body: body })
-      .then(function (rows) {
-        var row = rows && rows[0];
-        if (!row) throw fail('forbidden', t('server.noPermission'));
-        var company = {
-          id: row.id, name: row.name, plan: row.plan, status: row.status,
-          validUntil: row.valid_until, createdAt: row.created_at
-        };
-        if (self._session) self._session.company = company;
-        return company;
+    var action = patch && patch.status === 'canceled' ? 'cancel' : 'change-plan';
+    return this._server(this.billingEndpoint + '/' + action, { plan: patch.plan })
+      .then(function (result) {
+        /* הספק עשוי להחזיר כתובת תשלום. אם כן – שולחים לשם. */
+        if (result && result.checkoutUrl) {
+          root.location.href = result.checkoutUrl;
+          return self._session ? self._session.company : null;
+        }
+        return self._loadSession().then(function (session) {
+          return session ? session.company : null;
+        });
       });
   };
 

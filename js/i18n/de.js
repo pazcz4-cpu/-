@@ -346,6 +346,7 @@
       },
 
       payments: {
+        notConnected: 'Die Abrechnung ist noch nicht angebunden. Wenden Sie sich an den Support.',
         mockProvider: 'Testanbieter (Entwicklung)',
         mockNote: 'Die Zahlung wird sofort ohne echte Belastung bestätigt. Nur für Entwicklung und Demos.',
         unknownPlan: 'Unbekannter Tarif',

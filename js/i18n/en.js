@@ -412,6 +412,7 @@
       },
 
       payments: {
+        notConnected: 'Billing is not connected yet. Contact support.',
         mockProvider: 'Test provider (development)',
         mockNote: 'Payment is approved immediately with no real charge. For development and demos only.',
         unknownPlan: 'Unknown plan',

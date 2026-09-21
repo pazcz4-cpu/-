@@ -173,10 +173,9 @@
 
 * { box-sizing: border-box; }
 
-html { direction: rtl; }
-
+/* כיוון הכתיבה מגיע מתכונת dir של המסמך, שנקבעת לפי השפה הפעילה.
+   אסור לקבע אותו כאן – אחרת אנגלית וספרדית ייראו מימין לשמאל. */
 body {
-  direction: rtl;
   margin: 0;
   font-family: "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
   background: var(--bg);

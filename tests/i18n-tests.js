@@ -37,6 +37,13 @@ function params(text) {
   return (text.match(/\{\w+\}/g) || []).sort().join(',');
 }
 
+/* מקטעים שמותר לתרגם חלקית. דף המכירה ארוך, והנפילה לאנגלית בו היא
+   התנהגות מכוונת – שפה בלי תרגום שיווקי תציג את הנוסח האנגלי. */
+var OPTIONAL_SECTIONS = ['landing'];
+function optional(key) {
+  return OPTIONAL_SECTIONS.indexOf(key.split('.')[0]) !== -1;
+}
+
 var languages = I18n.list();
 I18n.use('en');
 var base = flatten(I18n.active().dict);
@@ -59,7 +66,9 @@ languages.forEach(function (lang) {
   var dict = flatten(I18n.active().dict);
 
   test(lang.code + ': כל מפתחות הבסיס קיימים', function () {
-    var missing = baseKeys.filter(function (key) { return dict[key] === undefined; });
+    var missing = baseKeys.filter(function (key) {
+      return dict[key] === undefined && !optional(key);
+    });
     assert(!missing.length, 'חסרים ' + missing.length + ' מפתחות: ' + missing.slice(0, 8).join(', '));
   });
 
@@ -81,6 +90,15 @@ languages.forEach(function (lang) {
   test(lang.code + ': אין ערכים ריקים', function () {
     var empty = Object.keys(dict).filter(function (key) { return !String(dict[key]).trim(); });
     assert(!empty.length, 'ערכים ריקים: ' + empty.slice(0, 5).join(', '));
+  });
+
+  test(lang.code + ': דף המכירה מתורגם במלואו או נופל לאנגלית', function () {
+    var landingKeys = baseKeys.filter(optional);
+    var have = landingKeys.filter(function (key) { return dict[key] !== undefined; }).length;
+    /* אין כאן כישלון – רק דרישה שלא יהיה תרגום חלקי שמערבב שפות */
+    assert(have === 0 || have === landingKeys.length,
+      'תרגום חלקי של דף המכירה: ' + have + ' מתוך ' + landingKeys.length +
+      '. או לתרגם הכל, או להשאיר את המקטע ריק ולתת לו ליפול לאנגלית.');
   });
 
   test(lang.code + ': הגדרות השפה תקינות', function () {

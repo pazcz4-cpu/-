@@ -36,6 +36,72 @@
         4: 'Pink', 5: 'Teal', 6: 'Grey', 7: 'Brown'
       },
 
+      landing: {
+        signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
+        heroBadge: 'Built for chains with more than one branch',
+        heroTitle: 'Every shift covered. No double bookings.',
+        heroSubtitle: 'Build a week of shifts across all your branches in one click. ' +
+          'The system honours every time-off request, spots double bookings and gaps before your staff do, ' +
+          'and tells you exactly why a shift could not be filled.',
+        heroNote: 'No credit card. Works on a computer, and installs on a phone like an app.',
+        heroSecondary: 'See how it works',
+
+        problemsTitle: 'The three things that go wrong every week',
+        problem1Title: 'The same shift, two people',
+        problem1Body: 'A branch ends up double-staffed while another runs short. ' +
+          'You only find out when someone shows up and has nothing to do.',
+        problem2Title: 'Requests get lost',
+        problem2Body: 'A day-off request arrives by message, gets forgotten, and the schedule breaks a promise you made.',
+        problem3Title: 'Gaps you cannot explain',
+        problem3Body: 'A shift stays empty and nobody knows whether it is really impossible or just an oversight.',
+
+        featuresTitle: 'What the system does',
+        featuresSubtitle: 'Not a spreadsheet with colours. A scheduler that knows your rules.',
+        feature1Title: 'Automatic scheduling',
+        feature1Body: 'One click fills the whole week across every branch, balancing the load fairly and respecting each person’s weekly limit.',
+        feature2Title: 'Double-booking detection',
+        feature2Body: 'Every double booking, gap and broken request is flagged the moment it appears – with the reason and a suggested fix.',
+        feature3Title: 'Requests with approval',
+        feature3Body: 'Staff send their own requests with an optional reason. Nothing affects the schedule until you approve it.',
+        feature4Title: 'Your shifts, your hours',
+        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per branch.',
+        feature5Title: 'Excel and WhatsApp',
+        feature5Body: 'Export the whole week, or send each person only their own shifts – as a personal sheet or ready-to-paste text.',
+        feature6Title: 'Live on every device',
+        feature6Body: 'Manager edits on a computer, staff see their shifts on their phone. Everyone sees the same schedule, instantly.',
+
+        howTitle: 'Up and running in an afternoon',
+        how1Title: 'Add branches and staff',
+        how1Body: 'Opening days, hours and headcount per shift – each branch set up its own way.',
+        how2Title: 'Collect the requests',
+        how2Body: 'Staff log in and send time-off requests. You approve or decline, and see everything in one place.',
+        how3Title: 'Build and publish',
+        how3Body: 'One click builds the week. Review the alerts, fix what matters, publish – and everyone sees their shifts.',
+
+        pricingTitle: 'Simple pricing, by team size',
+        pricingSubtitle: 'Unlimited branches on every plan. Cancel any time.',
+        pricingCta: 'Start free',
+        pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan – no payment details needed.',
+        planPopular: 'Most popular',
+
+        faqTitle: 'Questions',
+        faq1Q: 'Do I need to install anything?',
+        faq1A: 'No. The system runs in the browser. On a phone you can add it to the home screen and it opens like an app, full screen.',
+        faq2Q: 'Can my staff see each other’s shifts?',
+        faq2A: 'No. Each person sees only their own shifts and their own requests. Only managers see the full schedule.',
+        faq3Q: 'What if a shift cannot be filled?',
+        faq3A: 'The system tells you exactly why – who is at their weekly limit, who already works that day, who needs rest between shifts – and what to change.',
+        faq4Q: 'Is my data safe if I stop paying?',
+        faq4A: 'Yes. Your data is kept. Choosing a plan again restores access immediately, with everything where you left it.',
+        faq5Q: 'Which languages are supported?',
+        faq5A: 'Hebrew, English, Spanish, French, German, Portuguese, Russian and Arabic – including right-to-left layouts. Each person picks their own.',
+
+        ctaTitle: 'Try it on next week’s schedule',
+        ctaBody: 'Set up your branches, build one week, and see the difference. It takes an afternoon.',
+        footerRights: 'All rights reserved.',
+        footerTagline: 'Shift scheduling for chains.'
+      },
+
       tabs: {
         schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
         branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'

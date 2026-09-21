@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-i18n="app.title">סידור משמרות</title>
+<meta name="description" data-i18n-content="landing.heroSubtitle" content="בונים שבוע שלם של משמרות בכל הסניפים בלחיצה אחת.">
+<meta name="theme-color" content="#23499f">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing">
+
+<nav class="lp-nav">
+  <div class="landing-wrap lp-nav-inner">
+    <a class="lp-brand" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <span data-i18n="app.title">סידור משמרות</span>
+    </a>
+    <div class="lp-nav-spacer"></div>
+    <select id="landing-language" class="lp-lang" aria-label="Language"></select>
+    <a class="lp-btn lp-btn-ghost" href="app/" data-i18n="landing.signIn">התחברות</a>
+    <a class="lp-btn lp-btn-primary" href="app/?signup=1" data-i18n="landing.start">התחלה חינם</a>
+  </div>
+</nav>
+
+<!-- ===== גיבור ===== -->
+<header class="lp-hero">
+  <div class="landing-wrap lp-hero-grid">
+    <div>
+      <span class="lp-badge" data-i18n="landing.heroBadge">נבנה לרשתות עם יותר מסניף אחד</span>
+      <h1 data-i18n="landing.heroTitle">כל משמרת מאוישת. בלי כפל משמרות.</h1>
+      <p class="lp-lead" data-i18n="landing.heroSubtitle">בונים שבוע שלם של משמרות בכל הסניפים בלחיצה אחת.</p>
+      <div class="lp-hero-actions">
+        <a class="lp-btn lp-btn-primary lp-btn-lg" href="app/?signup=1" id="hero-cta" data-i18n="landing.start">התחלה חינם</a>
+        <a class="lp-btn lp-btn-ghost lp-btn-lg" href="#how" data-i18n="landing.heroSecondary">איך זה עובד</a>
+      </div>
+      <p class="lp-hero-note" data-i18n="landing.heroNote">בלי כרטיס אשראי.</p>
+    </div>
+
+    <!-- הדגמה של לוח הסידור, מצוירת ב-CSS כדי שלא יידרשו תמונות -->
+    <div class="lp-shot" aria-hidden="true">
+      <div class="lp-shot-head">
+        <span class="lp-shot-dot"></span><span class="lp-shot-dot"></span><span class="lp-shot-dot"></span>
+        <span class="lp-shot-title" data-i18n="excel.byBranch">לפי סניף</span>
+      </div>
+      <div class="lp-grid-demo">
+        <span class="lp-c0"></span><span class="lp-c1"></span><span class="lp-c2"></span><span class="lp-c0"></span>
+        <span class="lp-c1"></span><span class="lp-empty"></span><span class="lp-c2"></span>
+        <span class="lp-c1"></span><span class="lp-c2"></span><span class="lp-c0"></span><span class="lp-c3"></span>
+        <span class="lp-c2"></span><span class="lp-c0"></span><span class="lp-empty"></span>
+        <span class="lp-c2"></span><span class="lp-c3"></span><span class="lp-c1"></span><span class="lp-c2"></span>
+        <span class="lp-c0"></span><span class="lp-c1"></span><span class="lp-c3"></span>
+      </div>
+      <div class="lp-shot-alert" data-i18n="alerts.allGood">✔ הסידור תקין</div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== הבעיה ===== -->
+<section class="lp-section lp-section-alt">
+  <div class="landing-wrap">
+    <h2 class="lp-center" data-i18n="landing.problemsTitle">שלושת הדברים שמשתבשים כל שבוע</h2>
+    <div class="lp-cards">
+      <div class="lp-card">
+        <span class="lp-card-icon">⚠️</span>
+        <h3 data-i18n="landing.problem1Title">אותה משמרת, שני אנשים</h3>
+        <p data-i18n="landing.problem1Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">📩</span>
+        <h3 data-i18n="landing.problem2Title">אילוצים שהולכים לאיבוד</h3>
+        <p data-i18n="landing.problem2Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">❓</span>
+        <h3 data-i18n="landing.problem3Title">חוסרים בלי הסבר</h3>
+        <p data-i18n="landing.problem3Body"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== יכולות ===== -->
+<section class="lp-section" id="features">
+  <div class="landing-wrap">
+    <div class="lp-center">
+      <h2 data-i18n="landing.featuresTitle">מה המערכת עושה</h2>
+      <p class="lp-section-sub" data-i18n="landing.featuresSubtitle"></p>
+    </div>
+    <div class="lp-cards">
+      <div class="lp-card">
+        <span class="lp-card-icon">✨</span>
+        <h3 data-i18n="landing.feature1Title"></h3>
+        <p data-i18n="landing.feature1Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">🔍</span>
+        <h3 data-i18n="landing.feature2Title"></h3>
+        <p data-i18n="landing.feature2Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">✅</span>
+        <h3 data-i18n="landing.feature3Title"></h3>
+        <p data-i18n="landing.feature3Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">🕗</span>
+        <h3 data-i18n="landing.feature4Title"></h3>
+        <p data-i18n="landing.feature4Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">📤</span>
+        <h3 data-i18n="landing.feature5Title"></h3>
+        <p data-i18n="landing.feature5Body"></p>
+      </div>
+      <div class="lp-card">
+        <span class="lp-card-icon">📱</span>
+        <h3 data-i18n="landing.feature6Title"></h3>
+        <p data-i18n="landing.feature6Body"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== איך מתחילים ===== -->
+<section class="lp-section lp-section-alt" id="how">
+  <div class="landing-wrap">
+    <h2 class="lp-center" data-i18n="landing.howTitle">עולים לאוויר בתוך אחר צהריים</h2>
+    <div class="lp-steps">
+      <div class="lp-step">
+        <h3 data-i18n="landing.how1Title"></h3>
+        <p data-i18n="landing.how1Body"></p>
+      </div>
+      <div class="lp-step">
+        <h3 data-i18n="landing.how2Title"></h3>
+        <p data-i18n="landing.how2Body"></p>
+      </div>
+      <div class="lp-step">
+        <h3 data-i18n="landing.how3Title"></h3>
+        <p data-i18n="landing.how3Body"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== תוכניות ===== -->
+<section class="lp-section" id="pricing">
+  <div class="landing-wrap">
+    <div class="lp-center">
+      <h2 data-i18n="landing.pricingTitle">מחיר פשוט, לפי גודל הצוות</h2>
+      <p class="lp-section-sub" data-i18n="landing.pricingSubtitle"></p>
+    </div>
+    <!-- התוכניות נבנות מ-model.js, כדי שהמחיר בדף המכירה והמחיר במערכת
+         יהיו תמיד אותו מספר -->
+    <div class="lp-plans" id="landing-plans"></div>
+    <p class="lp-pricing-note" id="pricing-note"></p>
+  </div>
+</section>
+
+<!-- ===== שאלות ===== -->
+<section class="lp-section lp-section-alt">
+  <div class="landing-wrap">
+    <h2 class="lp-center" data-i18n="landing.faqTitle">שאלות</h2>
+    <div class="lp-faq">
+      <details>
+        <summary data-i18n="landing.faq1Q"></summary>
+        <p data-i18n="landing.faq1A"></p>
+      </details>
+      <details>
+        <summary data-i18n="landing.faq2Q"></summary>
+        <p data-i18n="landing.faq2A"></p>
+      </details>
+      <details>
+        <summary data-i18n="landing.faq3Q"></summary>
+        <p data-i18n="landing.faq3A"></p>
+      </details>
+      <details>
+        <summary data-i18n="landing.faq4Q"></summary>
+        <p data-i18n="landing.faq4A"></p>
+      </details>
+      <details>
+        <summary data-i18n="landing.faq5Q"></summary>
+        <p data-i18n="landing.faq5A"></p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== סיום ===== -->
+<div class="landing-wrap">
+  <div class="lp-cta">
+    <h2 data-i18n="landing.ctaTitle">נסה את זה על הסידור של השבוע הבא</h2>
+    <p data-i18n="landing.ctaBody"></p>
+    <a class="lp-btn lp-btn-primary lp-btn-lg" href="app/?signup=1" data-i18n="landing.start">התחלה חינם</a>
+  </div>
+</div>
+
+<footer class="lp-footer">
+  <div class="landing-wrap lp-footer-inner">
+    <span id="footer-brand"></span>
+    <span class="lp-nav-spacer"></span>
+    <span data-i18n="landing.footerTagline"></span>
+  </div>
+</footer>
+
+<script src="js/i18n/core.js"></script>
+<script src="js/i18n/en.js"></script>
+<script src="js/i18n/he.js"></script>
+<script src="js/i18n/es.js"></script>
+<script src="js/i18n/fr.js"></script>
+<script src="js/i18n/ar.js"></script>
+<script src="js/i18n/ru.js"></script>
+<script src="js/i18n/de.js"></script>
+<script src="js/i18n/pt.js"></script>
+<script src="js/i18n/dom.js"></script>
+<script src="js/backend/model.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Model = window.ShiftModel;
+  var I18n = window.I18n;
+
+  function t(key, params) { return I18n.t(key, params); }
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* תיאור המטא של העמוד מתורגם גם הוא, למנועי חיפוש ולשיתופים */
+  function applyMeta() {
+    var meta = document.querySelector('meta[data-i18n-content]');
+    if (meta) meta.setAttribute('content', t(meta.getAttribute('data-i18n-content')));
+  }
+
+  function renderPlans() {
+    var host = document.getElementById('landing-plans');
+    if (!host || !Model) return;
+    var featured = 'growth';   // התוכנית האמצעית היא זו שרוב העסקים בוחרים
+    host.innerHTML = Model.PLAN_ORDER.map(function (id) {
+      var plan = Model.PLANS[id];
+      var isFeatured = id === featured;
+      return '<div class="lp-plan' + (isFeatured ? ' lp-plan-featured' : '') + '">' +
+        (isFeatured ? '<span class="lp-plan-tag">' + esc(t('landing.planPopular')) + '</span>' : '') +
+        '<div class="lp-plan-name">' + esc(plan.name) + '</div>' +
+        '<div class="lp-plan-range">' + esc(plan.range) + '</div>' +
+        '<div class="lp-plan-price">' + esc(t('billing.priceAmount', { amount: plan.priceMonthly })) + '</div>' +
+        '<div class="lp-plan-per">' + esc(t('billing.perMonth')) + '</div>' +
+        '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
+        '" href="app/?signup=1&plan=' + esc(plan.id) + '">' + esc(t('landing.pricingCta')) + '</a>' +
+        '</div>';
+    }).join('');
+
+    var note = document.getElementById('pricing-note');
+    if (note) note.textContent = t('landing.pricingNote', { days: Model.TRIAL_DAYS });
+  }
+
+  function renderDynamic() {
+    applyMeta();
+    renderPlans();
+    var cta = document.getElementById('hero-cta');
+    if (cta) cta.textContent = t('landing.startLong', { days: Model.TRIAL_DAYS });
+    var footer = document.getElementById('footer-brand');
+    if (footer) {
+      footer.textContent = '© ' + new Date().getFullYear() + ' ' +
+        t('app.title') + ' · ' + t('landing.footerRights');
+    }
+  }
+
+  window.I18nDom.init();
+  I18n.onChange(renderDynamic);
+  renderDynamic();
+
+  var picker = document.getElementById('landing-language');
+  window.I18nDom.fillPicker(picker);
+  picker.addEventListener('change', function () {
+    window.I18nDom.setLanguage(picker.value);
+    window.I18nDom.fillPicker(picker);
+  });
+})();
+</script>
+</body>
+</html>

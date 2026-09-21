@@ -21,6 +21,11 @@ function check(label, actual, expected) {
   if (!ok) failures.push(label + ': ' + JSON.stringify(actual) + ' ≠ ' + expected);
 }
 
+async function computedDir(page, selector) {
+  return page.locator(selector).first().evaluate(
+    (node) => getComputedStyle(node).direction);
+}
+
 async function open(url, locale) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 }, locale });
   const page = await ctx.newPage();
@@ -46,6 +51,8 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   await page.selectOption('#language-select', 'en');
   await page.waitForTimeout(400);
   check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'ltr');
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'ltr');
+  check('כיוון בפועל של הטבלה', await computedDir(page, '#schedule-branch table'), 'ltr');
   check('שפת המסמך', await page.getAttribute('html', 'lang'), 'en');
   check('לשונית הסידור', await page.locator('.tab[data-tab="schedule"]').textContent(), 'Schedule');
   check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'Branch');
@@ -59,6 +66,7 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   await page.selectOption('#language-select', 'ar');
   await page.waitForTimeout(400);
   check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'rtl');
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'rtl');
   check('לשונית הסידור', await page.locator('.tab[data-tab="schedule"]').textContent(), 'الجدول');
   await page.click('.tab[data-tab="schedule"]');
   check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'الفرع');
@@ -69,6 +77,7 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   await page.waitForTimeout(300);
   await page.click('.tab[data-tab="schedule"]');
   check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'ltr');
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'ltr');
 
   console.log('\n== הבחירה נשמרת בין טעינות ==');
   await page.reload();
@@ -101,6 +110,7 @@ console.log('\n== המערכת המסחרית: מסך הכניסה באנגלי�
   await page.waitForTimeout(900);
 
   check('האפליקציה נפתחה', await page.locator('#manager-root').isVisible(), true);
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'ltr');
   check('לשונית המנוי', await page.locator('.tab[data-tab="billing"]').textContent(), 'Subscription');
   check('בורר שפה בשורת המשתמש', await page.locator('#user-language').isVisible(), true);
 
@@ -108,6 +118,7 @@ console.log('\n== המערכת המסחרית: מסך הכניסה באנגלי�
   await page.selectOption('#user-language', 'he');
   await page.waitForTimeout(500);
   check('כיוון המסמך', await page.getAttribute('html', 'dir'), 'rtl');
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'rtl');
   check('לשונית המנוי', await page.locator('.tab[data-tab="billing"]').textContent(), 'מנוי');
   await page.click('.tab[data-tab="billing"]');
   await page.waitForTimeout(300);

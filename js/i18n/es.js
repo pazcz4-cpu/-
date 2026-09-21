@@ -11,8 +11,8 @@
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Planificador de turnos',
-        subtitle: 'Planificación semanal para cada sucursal, con detección de solapamientos y huecos',
+        title: 'SetShifts',
+        subtitle: 'Programación automática para cada sucursal: disponibilidad, solicitudes, puestos y tus reglas',
         language: 'Idioma'
       },
 
@@ -309,6 +309,7 @@
         exportJson: 'Exportar todos los datos (JSON)', importJson: 'Importar datos',
         reset: 'Restablecer valores por defecto',
         backupHint: 'Los datos se guardan automáticamente en este navegador. Para moverlos entre ordenadores, exporta un archivo JSON.',
+        backupHintCloud: 'Los datos se guardan en la nube y se sincronizan en todos los dispositivos. La exportación JSON es para tu propia copia de seguridad.',
         languageTitle: 'Idioma', languageHint: 'Cambia toda la interfaz. Se guarda en este dispositivo.'
       },
 

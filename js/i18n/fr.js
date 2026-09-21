@@ -11,8 +11,8 @@
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Planificateur de services',
-        subtitle: 'Planning hebdomadaire par succursale, avec détection des doublons et des manques',
+        title: 'SetShifts',
+        subtitle: 'Planification automatique pour chaque site : disponibilités, demandes, postes et vos règles',
         language: 'Langue'
       },
 
@@ -309,6 +309,7 @@
         exportJson: 'Exporter toutes les données (JSON)', importJson: 'Importer des données',
         reset: 'Réinitialiser aux valeurs par défaut',
         backupHint: 'Les données sont enregistrées automatiquement dans ce navigateur. Pour les transférer entre ordinateurs, exportez un fichier JSON.',
+        backupHintCloud: 'Les données sont enregistrées dans le cloud et synchronisées sur tous les appareils. L’export JSON sert à votre propre sauvegarde.',
         languageTitle: 'Langue', languageHint: 'Change toute l’interface. Enregistré sur cet appareil.'
       },
 

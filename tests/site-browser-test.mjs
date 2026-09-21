@@ -44,7 +44,8 @@ try {
   console.log('\n== דף המכירה ==');
   await page.goto(BASE + '/');
   await page.waitForTimeout(500);
-  check('כותרת ראשית', await page.locator('h1').textContent(), /משמרת/);
+  check('כותרת ראשית מוכרת את התוצאה, לא את התכונה',
+    await page.locator('h1').textContent(), /בלחיצה אחת/);
   check('שלוש תוכניות', await page.locator('.lp-plan').count(), 3);
   check('המחיר מגיע מהמודל', await page.locator('.lp-plan-price').first().textContent(), /199/);
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
@@ -62,7 +63,7 @@ try {
       await enPage.getAttribute('html', 'lang'), 'he');
     check('והכיוון מימין לשמאל',
       await enPage.locator('body').evaluate((n) => getComputedStyle(n).direction), 'rtl');
-    check('והכותרת בעברית', await enPage.locator('h1').first().textContent(), /משמרת/);
+    check('והכותרת בעברית', await enPage.locator('h1').first().textContent(), /בלחיצה אחת/);
 
     /* בחירה מפורשת של המשתמש עדיין גוברת ונשמרת */
     await enPage.selectOption('#landing-language', 'en');
@@ -120,7 +121,7 @@ try {
   await page.goto(BASE + '/app/');
   await page.waitForTimeout(500);
   const manifest = await (await page.request.get(BASE + '/app/manifest.webmanifest')).json();
-  check('שם קצר לאייקון', manifest.short_name, 'Shifts');
+  check('שם קצר לאייקון', manifest.short_name, 'SetShifts');
   check('נפתח כאפליקציה', manifest.display, 'standalone');
   check('נפתח בכתובת המערכת', manifest.start_url, '/app/');
   check('שלושה אייקונים', manifest.icons.length, 3);
@@ -166,6 +167,14 @@ try {
   check('שורת מצב ההדגמה תואמת להגדרות',
     await page.locator('#demo-banner').isVisible(), !configured);
   check('מסך ההתחברות מוצג', await page.locator('#auth-gate').isVisible(), true);
+
+  /* המשפט הזה הוא הבטחה ללקוח. במערכת מחוברת הוא חייב לומר ענן
+     וסנכרון, ולא "בדפדפן של המחשב הזה" – שקר שהורג אמינות. */
+  const hint = await page.locator('#backup-hint').getAttribute('data-i18n');
+  check('הטקסט על שמירת הנתונים תואם לשרת בפועל',
+    hint, configured ? 'settings.backupHintCloud' : 'settings.backupHint');
+  await page.click('.tab[data-tab="settings"]').catch(() => {});
+  await page.waitForTimeout(200);
 
   console.log('\n== נכסים משותפים ==');
   for (const asset of ['/css/styles.css', '/css/landing.css', '/js/app.js', '/js/i18n/ar.js', '/sw.js']) {

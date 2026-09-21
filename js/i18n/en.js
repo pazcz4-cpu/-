@@ -12,8 +12,8 @@
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Shift Scheduler',
-        subtitle: 'Weekly staffing for every branch, with double-booking and gap detection',
+        title: 'SetShifts',
+        subtitle: 'Automatic scheduling for every location — from availability, requests, roles and your rules',
         language: 'Language'
       },
 
@@ -41,11 +41,9 @@
         faq6Q: 'When exactly am I charged?',
         faq6A: 'You open the subscription with a credit card, but nothing is charged for the first {days} days. The first charge happens automatically when the trial ends, and monthly after that — until you cancel. Cancelling during the trial costs nothing, and access stays until the trial ends.',
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
-        heroBadge: 'Built for chains with more than one branch',
-        heroTitle: 'Every shift covered. No double bookings.',
-        heroSubtitle: 'Build a week of shifts across all your branches in one click. ' +
-          'The system honours every time-off request, spots double bookings and gaps before your staff do, ' +
-          'and tells you exactly why a shift could not be filled.',
+        heroBadge: 'Automatic scheduling for multi-location businesses',
+        heroTitle: 'Your entire operation, scheduled in one click.',
+        heroSubtitle: 'SetShifts builds the schedule for every location by itself — from your staff\'s availability, the requests they submit, hour limits, roles and your own rules. You approve it. You don\'t build it.',
         heroNote: '{days} days free. Cancel any time before the trial ends and you are not charged at all.',
         heroSecondary: 'See how it works',
 
@@ -378,6 +376,7 @@
         exportJson: 'Export all data (JSON)', importJson: 'Import data',
         reset: 'Reset to defaults',
         backupHint: 'Data is saved automatically in this browser. To move between computers, export a JSON file.',
+        backupHintCloud: 'Data is saved in the cloud and syncs across every device. The JSON export is for your own backup.',
         languageTitle: 'Language', languageHint: 'Changes the whole interface. Saved for this device.'
       },
 

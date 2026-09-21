@@ -228,7 +228,7 @@
       <label class="btn ghost file-btn">⬆ <span data-i18n="settings.importJson">ייבוא נתונים</span><input type="file" id="import-json" accept="application/json" hidden></label>
       <button id="reset-all" class="btn danger" data-i18n="settings.reset">איפוס להגדרות ברירת מחדל</button>
     </div>
-    <p class="hint" data-i18n="settings.backupHint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה.</p>
+    <p class="hint" id="backup-hint" data-i18n="settings.backupHint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה.</p>
     <h2 data-i18n="settings.languageTitle">שפה</h2>
     <div class="settings-block row">
       <label class="check"><span data-i18n="app.language">שפה</span>
@@ -300,6 +300,18 @@
       backend = new window.ShiftMockBackend.MockBackend({ storage: window.localStorage });
       var banner = document.getElementById('demo-banner');
       if (banner) banner.classList.remove('hidden');
+    }
+
+    /* מסך ההגדרות אומר ללקוח איפה הנתונים שלו יושבים. המשפט הזה
+       חייב להיות נכון: הבטחה על ענן במצב הדגמה מאבדת נתונים,
+       והבטחה על דפדפן במערכת מחוברת מאבדת לקוחות. */
+    var hint = document.getElementById('backup-hint');
+    if (hint) {
+      hint.setAttribute('data-i18n',
+        config.supabaseUrl && config.supabaseAnonKey
+          ? 'settings.backupHintCloud'
+          : 'settings.backupHint');
+      if (window.I18nDom) window.I18nDom.apply();
     }
 
     /* נחשף לצורך בדיקות ולאבחון מהקונסולה. אין כאן הרשאה נוספת:

@@ -94,16 +94,16 @@ function manifest(options) {
 }
 
 write('app/manifest.webmanifest', manifest({
-  name: 'Shift Scheduler',
-  shortName: 'Shifts',
-  description: 'Weekly shift scheduling for chains with more than one branch.',
+  name: 'SetShifts',
+  shortName: 'SetShifts',
+  description: 'Automatic shift scheduling for businesses with more than one location.',
   startUrl: '/app/'
 }));
 
 write('tool/manifest.webmanifest', manifest({
-  name: 'Shift Scheduler',
-  shortName: 'Shifts',
-  description: 'Weekly shift scheduling.',
+  name: 'SetShifts',
+  shortName: 'SetShifts',
+  description: 'Weekly shift scheduling, on this device.',
   startUrl: '/tool/'
 }));
 
@@ -146,7 +146,7 @@ function headExtras(options) {
     '<meta name="mobile-web-app-capable" content="yes">',
     '<meta name="apple-mobile-web-app-capable" content="yes">',
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
-    '<meta name="apple-mobile-web-app-title" content="Shifts">',
+    '<meta name="apple-mobile-web-app-title" content="SetShifts">',
     '<meta name="format-detection" content="telephone=no">'
   ].concat(options.canonical ? ['<link rel="canonical" href="' + SITE_URL + options.canonical + '">'] : [])
     /* המערכת והכלי אינם עמודי תוכן, ואין סיבה שיופיעו בחיפוש */
@@ -161,7 +161,7 @@ function headExtras(options) {
 function socialTags(meta) {
   return [
     '<meta property="og:type" content="website">',
-    '<meta property="og:site_name" content="Shift Scheduler">',
+    '<meta property="og:site_name" content="SetShifts">',
     '<meta property="og:url" content="' + SITE_URL + '/">',
     '<meta property="og:locale" content="he_IL">',
     '<meta property="og:title" content="' + escapeAttr(meta.title) + '">',

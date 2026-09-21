@@ -11,8 +11,8 @@
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Schichtplaner',
-        subtitle: 'Wochenplanung für jede Filiale, mit Erkennung von Doppelbelegungen und Lücken',
+        title: 'SetShifts',
+        subtitle: 'Automatische Planung für jeden Standort – nach Verfügbarkeit, Wünschen, Rollen und Ihren Regeln',
         language: 'Sprache'
       },
 
@@ -309,6 +309,7 @@
         exportJson: 'Alle Daten exportieren (JSON)', importJson: 'Daten importieren',
         reset: 'Auf Standardwerte zurücksetzen',
         backupHint: 'Die Daten werden automatisch in diesem Browser gespeichert. Zum Übertragen zwischen Rechnern exportieren Sie eine JSON-Datei.',
+        backupHintCloud: 'Die Daten werden in der Cloud gespeichert und auf allen Geräten synchronisiert. Der JSON-Export dient Ihrer eigenen Sicherung.',
         languageTitle: 'Sprache', languageHint: 'Ändert die gesamte Oberfläche. Wird auf diesem Gerät gespeichert.'
       },
 

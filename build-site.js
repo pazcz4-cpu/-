@@ -14,6 +14,11 @@ const icons = require('./tools/icons.js');
 const root = __dirname;
 const out = path.join(root, 'site');
 
+/* הכתובת הקבועה של האתר. משמשת לקישור הקנוני, לתצוגה המקדימה
+   ברשתות ולמפת האתר. אפשר לדרוס דרך PUBLIC_BASE_URL – למשל
+   בסביבת בדיקות – ואז כל הקישורים מצביעים לשם. */
+const SITE_URL = (process.env.PUBLIC_BASE_URL || 'https://setshifts.com').replace(/\/+$/, '');
+
 function rm(target) { fs.rmSync(target, { recursive: true, force: true }); }
 function mkdir(target) { fs.mkdirSync(target, { recursive: true }); }
 function read(file) { return fs.readFileSync(path.join(root, file), 'utf8'); }
@@ -108,6 +113,19 @@ function toAbsolutePaths(html) {
     });
 }
 
+/* כותרת ותיאור דף המכירה, לשימוש חוזר בתגיות השיתוף.
+   נשלפים מהקובץ עצמו כדי שלא יהיו שני מקומות לעדכן. */
+function metaOf(html) {
+  const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [, ''])[1].trim();
+  const description = (html.match(/<meta name="description"[^>]*content="([^"]*)"/) || [, ''])[1];
+  return { title: title, description: description };
+}
+
+function escapeAttr(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /* תגיות שכל עמוד צריך: אייקון, manifest ומצב אפליקציה באייפון */
 function headExtras(options) {
   return [
@@ -120,7 +138,32 @@ function headExtras(options) {
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
     '<meta name="apple-mobile-web-app-title" content="Shifts">',
     '<meta name="format-detection" content="telephone=no">'
-  ].join('\n');
+  ].concat(options.canonical ? ['<link rel="canonical" href="' + SITE_URL + options.canonical + '">'] : [])
+    /* המערכת והכלי אינם עמודי תוכן, ואין סיבה שיופיעו בחיפוש */
+    .concat(options.noindex ? ['<meta name="robots" content="noindex, follow">'] : [])
+    .concat(options.social ? socialTags(options.social) : [])
+    .join('\n');
+}
+
+/* תצוגה מקדימה בוואטסאפ, בפייסבוק ובטוויטר.
+   הטקסט כאן סטטי בעברית: סורקים אינם מריצים את מחליף השפות,
+   והשוק הראשון הוא ישראל. */
+function socialTags(meta) {
+  return [
+    '<meta property="og:type" content="website">',
+    '<meta property="og:site_name" content="Shift Scheduler">',
+    '<meta property="og:url" content="' + SITE_URL + '/">',
+    '<meta property="og:locale" content="he_IL">',
+    '<meta property="og:title" content="' + escapeAttr(meta.title) + '">',
+    '<meta property="og:description" content="' + escapeAttr(meta.description) + '">',
+    '<meta property="og:image" content="' + SITE_URL + '/icons/icon-512.png">',
+    '<meta property="og:image:width" content="512">',
+    '<meta property="og:image:height" content="512">',
+    '<meta name="twitter:card" content="summary">',
+    '<meta name="twitter:title" content="' + escapeAttr(meta.title) + '">',
+    '<meta name="twitter:description" content="' + escapeAttr(meta.description) + '">',
+    '<meta name="twitter:image" content="' + SITE_URL + '/icons/icon-512.png">'
+  ];
 }
 
 /* רישום ה-Service Worker. נעשה כאן ולא בקוד האפליקציה, כי רק
@@ -142,16 +185,29 @@ function page(source, target, options) {
 }
 
 /* דף המכירה: מפנה ל-icons/ יחסית, וזה תקין כי הוא יושב בשורש */
-page('landing.html', 'index.html', { manifest: '/app/manifest.webmanifest' });
-page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest' });
-page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest' });
+page('landing.html', 'index.html', {
+  manifest: '/app/manifest.webmanifest',
+  canonical: '/',
+  social: metaOf(read('landing.html'))
+});
+page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest', noindex: true });
+page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', noindex: true });
 
 /* הגדרות החיבור לשרת. נטען יחסית לעמוד, כדי שגם פתיחה מקומית
    של app.html תמצא אותו. */
 fs.copyFileSync(path.join(root, 'config.js'), path.join(out, 'app', 'config.js'));
 
 /* ===== קבצים לשורש ===== */
-write('robots.txt', 'User-agent: *\nAllow: /\nDisallow: /tool/\n');
+write('robots.txt',
+  'User-agent: *\nAllow: /\nDisallow: /tool/\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
+
+/* דף המכירה מגיש את כל השפות מאותה כתובת, ולכן יש בדיוק כתובת
+   אחת למנועי החיפוש */
+write('sitemap.xml',
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+  '  <url><loc>' + SITE_URL + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n' +
+  '</urlset>\n');
 write('.nojekyll', '');
 
 const total = (function size(dir) {

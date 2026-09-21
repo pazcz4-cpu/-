@@ -50,6 +50,35 @@ try {
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
   check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
 
+  console.log('\n== דומיין, גוגל ושיתופים ==');
+  const DOMAIN = 'https://setshifts.com';
+  check('קישור קנוני לדומיין',
+    await page.getAttribute('link[rel="canonical"]', 'href'), DOMAIN + '/');
+  check('כותרת לשיתוף',
+    (await page.getAttribute('meta[property="og:title"]', 'content') || '').length > 3, true);
+  check('תיאור לשיתוף',
+    (await page.getAttribute('meta[property="og:description"]', 'content') || '').length > 20, true);
+  check('תמונה לשיתוף',
+    await page.getAttribute('meta[property="og:image"]', 'content'), DOMAIN + '/icons/icon-512.png');
+  check('התמונה לשיתוף קיימת באתר',
+    (await page.request.get(BASE + '/icons/icon-512.png')).status(), 200);
+  check('דף המכירה פתוח למנועי חיפוש',
+    await page.locator('meta[name="robots"]').count(), 0);
+
+  const robots = await (await page.request.get(BASE + '/robots.txt')).text();
+  check('robots.txt מפנה למפת האתר', robots, new RegExp('Sitemap: ' + DOMAIN + '/sitemap.xml'));
+  const sitemap = await (await page.request.get(BASE + '/sitemap.xml')).text();
+  check('מפת האתר מכילה את דף המכירה', sitemap, new RegExp('<loc>' + DOMAIN + '/</loc>'));
+
+  /* המערכת והכלי אינם עמודי תוכן – אסור שיופיעו בתוצאות חיפוש */
+  for (const [label, url] of [['המערכת', '/app/'], ['הכלי המקומי', '/tool/']]) {
+    await page.goto(BASE + url);
+    check(label + ' מסומן noindex',
+      await page.getAttribute('meta[name="robots"]', 'content'), /noindex/);
+  }
+  await page.goto(BASE + '/');
+  await page.waitForTimeout(300);
+
   console.log('\n== התקנה בטלפון (PWA) ==');
   const manifestHref = await page.getAttribute('link[rel="manifest"]', 'href');
   check('הדף מצהיר על manifest', manifestHref, '/app/manifest.webmanifest');

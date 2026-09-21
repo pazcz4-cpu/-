@@ -18,6 +18,7 @@
     "test:lang": "node tests/language-browser-test.mjs",
     "test:i18n": "node tests/i18n-tests.js",
     "build:site": "node build-site.js",
+    "build:preview": "node build-landing-artifact.js",
     "serve": "node build-site.js && node tools/serve.js",
     "test:site": "node build-site.js && node tests/site-browser-test.mjs",
     "test:supabase": "node tests/supabase-tests.js",

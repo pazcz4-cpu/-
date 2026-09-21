@@ -11,6 +11,8 @@ var Scheduler = require('../js/scheduler.js');
 var Validate = require('../js/validate.js');
 var Xlsx = require('../js/xlsx.js');
 var Model = require('../js/backend/model.js');
+var fs = require('fs');
+var path = require('path');
 
 var passed = 0, failed = 0;
 
@@ -945,6 +947,32 @@ test('שם גיליון ארוך או עם תווים אסורים מנוקה', 
   assert(match, 'נמצא שם גיליון');
   assert(match[1].length <= 31, 'שם הגיליון קוצר ל-31 תווים');
   assert(!/[:\\\/?*\[\]]/.test(match[1]), 'הוסרו תווים אסורים: ' + match[1]);
+});
+
+console.log('\n== סכימת בסיס הנתונים ==');
+
+/* שורת הערה שכל תוכנה סימנים — למשל מסגרת של "=" — מתהפכת
+   בעורכים שמציגים מימין לשמאל, שני המקפים הולכים לאיבוד,
+   וההרצה נכשלת בשורה הראשונה. זה קרה לנו באמת. */
+test('אין בסכימה שורת הערה שמתהפכת בעורך מימין לשמאל', function () {
+  var schema = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+  var fragile = [];
+  schema.split('\n').forEach(function (line, index) {
+    var trimmed = line.trim();
+    if (!trimmed || trimmed === '--') return;
+    if (/^--\s*[^\w\u0590-\u05FF]+$/.test(trimmed)) {
+      fragile.push((index + 1) + ': ' + trimmed);
+    }
+  });
+  assert(fragile.length === 0, 'שורות שבריריות:\n      ' + fragile.join('\n      '));
+});
+
+test('הסכימה נפתחת בשורה באנגלית', function () {
+  var schema = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+  var first = schema.split('\n')[0];
+  assert(/^-- [A-Za-z]/.test(first), 'השורה הראשונה אינה מתחילה בתווית לטינית: ' + first);
 });
 
 console.log('\n== כתובת התמיכה ==');

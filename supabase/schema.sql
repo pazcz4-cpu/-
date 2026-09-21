@@ -1,5 +1,9 @@
--- ============================================================
---  סידור משמרות – סכימת בסיס הנתונים ל-Supabase
+-- SetShifts: database schema for Supabase
+--
+--  הערה על צורת הקובץ: כל שורת הערה מתחילה ב-"--" ומיד אחריו
+--  תווית באנגלית. שורת הערה שכולה סימנים (למשל שורת מסגרת של
+--  "=") מתהפכת בעורכים שמציגים מימין לשמאל, ואז שני המקפים
+--  שהופכים אותה להערה הולכים לאיבוד וההרצה נכשלת בשורה הראשונה.
 --
 --  להרצה פעם אחת: Supabase → SQL Editor → הדבקה → Run.
 --  אפשר להריץ שוב; כל היצירות מוגנות ב-if not exists / or replace.
@@ -7,9 +11,8 @@
 --  העיקרון: הבידוד בין חברות נאכף בבסיס הנתונים עצמו (RLS), ולא
 --  בקוד שרץ בדפדפן. גם אם מישהו יקרא לשרת ישירות, הוא לא יוכל
 --  לראות או לשנות נתונים של חברה אחרת.
--- ============================================================
 
--- ===== טבלאות =====
+-- TABLES: טבלאות
 
 create table if not exists public.companies (
   id          uuid primary key default gen_random_uuid(),
@@ -81,7 +84,7 @@ create table if not exists public.company_weeks (
 
 create index if not exists company_weeks_updated_idx on public.company_weeks (company_id, updated_at desc);
 
--- ===== פונקציות עזר לזהות המשתמש =====
+-- IDENTITY: פונקציות עזר לזהות המשתמש
 -- security definer כדי שהן יוכלו לקרוא את company_users בלי להיתקע
 -- בכללי ההרשאה של הטבלה עצמה (אחרת נוצרת לולאה).
 
@@ -132,7 +135,7 @@ as $$
   select coalesce(public.current_role_name() in ('owner', 'manager'), false)
 $$;
 
--- ===== הפעלת בידוד =====
+-- RLS: הפעלת בידוד
 
 alter table public.companies       enable row level security;
 alter table public.company_users   enable row level security;
@@ -185,7 +188,7 @@ create policy company_weeks_write on public.company_weeks
   for all using (company_id = public.current_company_id() and public.is_manager())
   with check (company_id = public.current_company_id() and public.is_manager());
 
--- ===== פתיחת חשבון לחברה =====
+-- SIGNUP: פתיחת חשבון לחברה
 -- נקרא מיד אחרי ההרשמה. יוצר את החברה ומגדיר את מי שנרשם כבעלים.
 create or replace function public.create_company(p_name text, p_user_name text, p_trial_days int default 14)
 returns public.companies
@@ -224,7 +227,7 @@ begin
 end;
 $$;
 
--- ===== אילוץ של עובד =====
+-- CONSTRAINTS: אילוץ של עובד
 -- עובד אינו רשאי לכתוב לשורת השבוע ישירות, ולכן העריכה עוברת כאן:
 -- הפונקציה כותבת רק את המפתח שלו, ותמיד מסמנת את הבקשה כממתינה.
 create or replace function public.save_own_constraint(
@@ -378,7 +381,7 @@ begin
 end;
 $$;
 
--- ===== הרשאות קריאה לפונקציות =====
+-- GRANTS: הרשאות קריאה לפונקציות
 grant execute on function public.create_company(text, text, int)                 to authenticated;
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
@@ -406,9 +409,7 @@ grant select, insert, update, delete on public.company_weeks   to authenticated;
 -- אף אחד מלבד השרת אינו רואה את יומן החיובים
 revoke all on public.billing_events from authenticated, anon;
 
--- ============================================================
---  קריאות שירות
--- ------------------------------------------------------------
+-- SUPPORT: קריאות שירות
 --  לקוח מדווח על תקלה או מבקש פיתוח. הטבלה נועדה שגם הלקוח יראה
 --  את מה שפתח ואת הסטטוס שלו, ולא רק אנחנו.
 --
@@ -416,7 +417,6 @@ revoke all on public.billing_events from authenticated, anon;
 --   · הלקוח כותב subject/body/kind בלבד. status ו-reply שייכים
 --     לנו, ונאכפים בהרשאת עמודה – RLS אינו יודע להגביל עמודות.
 --   · קריאה של חברה אחת אינה נראית לחברה אחרת, כמו כל השאר.
--- ============================================================
 create table if not exists public.support_tickets (
   id           uuid primary key default gen_random_uuid(),
   company_id   uuid not null references public.companies(id) on delete cascade,
@@ -454,7 +454,7 @@ revoke all on public.support_tickets from authenticated, anon;
 grant select on public.support_tickets to authenticated;
 grant insert (company_id, created_by, kind, subject, body) on public.support_tickets to authenticated;
 
--- ===== עדכונים חיים (אופציונלי) =====
+-- REALTIME: עדכונים חיים (אופציונלי)
 -- מפעיל שידור שינויים בזמן אמת. הבידוד נשמר: Supabase מכבד את
 -- כללי ה-RLS גם בשידור.
 do $$

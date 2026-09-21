@@ -147,7 +147,12 @@
     if (value && !Store.byId(state.employees, value)) {
       html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
     }
-    return html + '</select>';
+    html += '</select>';
+    if (value) {
+      html += '<button type="button" class="why-btn" data-why="' + esc(value) +
+        '" title="' + esc(t('why.button')) + '" aria-label="' + esc(t('why.button')) + '">?</button>';
+    }
+    return html;
   }
 
   function renderMobileSchedule(marks) {
@@ -312,6 +317,11 @@
         html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
       }
       html += '</select>';
+      /* הכפתור מופיע רק על משבצת מאוישת – על ריקה אין מה להסביר */
+      if (value) {
+        html += '<button type="button" class="why-btn" data-why="' + esc(value) +
+          '" title="' + esc(t('why.button')) + '" aria-label="' + esc(t('why.button')) + '">?</button>';
+      }
     }
     return html + '</td>';
   }
@@ -1391,6 +1401,37 @@
     $('#print').addEventListener('click', function () {
       if (!Platform.print()) { toast(t('errors.printBlocked')); }
     });
+
+    /* "למה שובץ ככה" – השאלה הראשונה שמנהל שואל על סידור אוטומטי,
+       וזו שקובעת אם הוא יסמוך עליו או יבנה הכול מחדש ביד. */
+    function bindWhy(selector, cellSelector) {
+      var container = document.querySelector(selector);
+      if (!container) return;
+      container.addEventListener('click', function (event) {
+        var button = event.target.closest('.why-btn');
+        if (!button || !window.ShiftWhyUI) return;
+        var cell = button.closest(cellSelector);
+        if (!cell) return;
+        window.ShiftWhyUI.show({
+          state: state,
+          week: week(),
+          slot: {
+            dayIdx: Number(cell.dataset.day),
+            branchId: cell.dataset.branch,
+            shiftId: cell.dataset.shift
+          },
+          employeeId: button.dataset.why,
+          trigger: button,
+          context: {
+            dayName: function (idx) { return (Data.DAYS[idx] || {}).name || ''; },
+            branchName: branchNameOf,
+            shiftName: shiftLabel
+          }
+        });
+      });
+    }
+    bindWhy('#schedule-branch', 'td');
+    bindWhy('#schedule-mobile', '.m-shift');
 
     $('#schedule-branch').addEventListener('change', function (event) {
       var select = event.target.closest('.emp-select');

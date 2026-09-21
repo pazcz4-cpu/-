@@ -51,6 +51,24 @@ try {
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
   check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
 
+  console.log('\n== "למה דווקא הוא" בדף המכירה ==');
+  check('יש סקשן ייעודי', await page.locator('#why').isVisible(), true);
+  check('והוא מופיע לפני מקטע הבעיות', await page.evaluate(() => {
+    const why = document.querySelector('#why');
+    const features = document.querySelector('#features');
+    return !!(why && features &&
+      (why.compareDocumentPosition(features) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0);
+  }), true);
+  check('ההדגמה מציגה הסבר מלא',
+    await page.locator('.lp-why-facts li').count(), 3);
+  const verdict = await page.locator('.lp-why-verdict').textContent();
+  check('ושורת ההכרעה מתורגמת ולא ריקה',
+    verdict.trim().length > 20 && verdict.indexOf('landing.') === -1, true);
+  check('הכותרת הראשית מזכירה AI',
+    await page.locator('.lp-badge').first().textContent(), /AI/);
+  check('ומשפט הפתיחה מבטיח הסבר לכל שיבוץ',
+    await page.locator('.lp-lead').first().textContent(), /מסביר למה/);
+
   console.log('\n== שפת ברירת המחדל ==');
   /* דפדפן באנגלית נפוץ מאוד אצל משתמשים ישראלים, ואינו מעיד על
      העדפה. האתר חייב להיפתח בעברית גם בשבילו. */

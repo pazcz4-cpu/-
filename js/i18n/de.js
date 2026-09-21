@@ -12,7 +12,7 @@
     dict: {
       app: {
         title: 'SetShifts',
-        subtitle: 'Automatische Planung für jeden Standort – nach Verfügbarkeit, Wünschen, Rollen und Ihren Regeln',
+        subtitle: 'KI-Planung für jeden Standort – nach Verfügbarkeit, Wünschen, Rollen und Ihren Regeln',
         language: 'Sprache'
       },
 
@@ -291,6 +291,35 @@
         autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
       },
 
+      why: {
+        button: 'Warum diese Person?',
+        title: 'Warum {name}?',
+        onlyOption: 'Niemand sonst konnte diese Schicht übernehmen.',
+        fairest: 'Von den {count} möglichen Personen war das nach den bisherigen Schichten die fairste Wahl.',
+        alsoPossible: 'Hätten sie ebenfalls übernehmen können: {names}.',
+        whoCould: 'Wer nicht konnte ({count})',
+        fact: {
+          requested: 'Hat diese Schicht an diesem Tag gewünscht',
+          available: 'Kein Urlaubswunsch für diesen Tag',
+          qualified: 'Für diese Schicht eingearbeitet',
+          assignedBranch: 'Diesem Standort zugeordnet',
+          anyBranch: 'Arbeitet an allen Standorten',
+          quota: '{used} von {target} Schichten diese Woche',
+          rest: 'Ruhezeit zwischen Abend- und Frühschicht ist eingehalten',
+          continuity: 'Diese Woche schon {count}-mal an diesem Standort'
+        },
+        blocked: {
+          inactive: 'ist nicht aktiv',
+          notQualified: 'ist für diese Schicht nicht eingearbeitet',
+          otherBranch: 'arbeitet an einem anderen Standort',
+          requestedOff: 'hat den Tag frei beantragt',
+          blockedShift: 'möchte diese Schicht nicht',
+          atLimit: 'hat das Wochenlimit von {max} erreicht',
+          busySameDay: 'arbeitet an diesem Tag bereits',
+          busySameShift: 'ist bereits in dieser Schicht',
+          restRule: 'braucht Ruhe zwischen Abend- und Frühschicht'
+        }
+      },
       support: {
         title: 'Support',
         promise: 'Sagen Sie uns, was nicht funktioniert oder was Ihnen fehlt. Ein Mensch antwortet innerhalb von {hours} Stunden.',

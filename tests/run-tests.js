@@ -10,6 +10,7 @@ var Store = require('../js/store.js');
 var Scheduler = require('../js/scheduler.js');
 var Validate = require('../js/validate.js');
 var Xlsx = require('../js/xlsx.js');
+var Explain = require('../js/explain.js');
 var Model = require('../js/backend/model.js');
 var fs = require('fs');
 var path = require('path');
@@ -947,6 +948,142 @@ test('שם גיליון ארוך או עם תווים אסורים מנוקה', 
   assert(match, 'נמצא שם גיליון');
   assert(match[1].length <= 31, 'שם הגיליון קוצר ל-31 תווים');
   assert(!/[:\\\/?*\[\]]/.test(match[1]), 'הוסרו תווים אסורים: ' + match[1]);
+});
+
+console.log('\n== למה שובץ ככה ==');
+
+/* ההסבר חייב להיגזר מאותם תנאים שהמנוע החליט לפיהם. בדיקה שמסתפקת
+   ב"יש טקסט" מאשרת סיפור יפה; כאן נבדק שהעובדות נכונות. */
+function everyAssignment(state, weekData, visit) {
+  Object.keys(weekData.assignments || {}).forEach(function (key) {
+    var slot = Explain.parseSlotKey(key);
+    (weekData.assignments[key] || []).forEach(function (empId) { visit(slot, empId); });
+  });
+}
+
+test('לכל שיבוץ בסידור יש הסבר', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  var checked = 0;
+  everyAssignment(state, weekData, function (slot, empId) {
+    var why = Explain.forAssignment(state, weekData, slot, empId);
+    assert(why, 'אין הסבר לשיבוץ ' + empId + ' ביום ' + slot.dayIdx);
+    assert(why.facts.length >= 3, 'הסבר דל מדי: ' + JSON.stringify(why.facts));
+    checked++;
+  });
+  assert(checked > 20, 'נבדקו מעט מדי שיבוצים: ' + checked);
+});
+
+test('ההסבר טוען רק עובדות נכונות על העובד', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  everyAssignment(state, weekData, function (slot, empId) {
+    var emp = Store.byId(state.employees, empId);
+    var why = Explain.forAssignment(state, weekData, slot, empId);
+    why.facts.forEach(function (fact) {
+      if (fact.code === 'qualified') {
+        assert(emp.shifts.indexOf(slot.shiftId) !== -1,
+          'נטען שהעובד מוסמך למשמרת שאינה ברשימה שלו');
+      }
+      if (fact.code === 'assignedBranch') {
+        assert(emp.branches && emp.branches.length,
+          'נטען שהעובד משויך לסניף, אבל הוא מחליף כללי');
+        assert(emp.branches.indexOf(slot.branchId) !== -1,
+          'נטען שהעובד משויך לסניף הזה, והוא אינו');
+      }
+      if (fact.code === 'anyBranch') {
+        assert(!emp.branches || !emp.branches.length,
+          'נטען שהעובד מחליף כללי, אבל הוא משויך לסניפים');
+      }
+      if (fact.code === 'requested') {
+        var constraint = Store.getConstraint(weekData, empId, slot.dayIdx);
+        assert(constraint.preferred && constraint.preferred[slot.shiftId],
+          'נטען שהעובד ביקש את המשמרת, והוא לא');
+      }
+      if (fact.code === 'quota') {
+        assert(fact.params.used <= (emp.maxShifts || 99),
+          'המכסה בהסבר חורגת מהמכסה של העובד');
+      }
+    });
+  });
+});
+
+test('חלופה שנפסלה – הסיבה נבדקת מול הנתונים', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  var seen = {};
+  everyAssignment(state, weekData, function (slot, empId) {
+    var why = Explain.forAssignment(state, weekData, slot, empId);
+    why.alternatives.blocked.forEach(function (item) {
+      seen[item.reason.code] = (seen[item.reason.code] || 0) + 1;
+      var other = Store.byId(state.employees, item.id);
+      if (item.reason.code === 'notQualified') {
+        assert(other.shifts.indexOf(slot.shiftId) === -1,
+          'נטען שאינו מוסמך, והוא כן');
+      }
+      if (item.reason.code === 'otherBranch') {
+        assert(other.branches.length && other.branches.indexOf(slot.branchId) === -1,
+          'נטען שהוא שייך לסניף אחר, והוא כן מורשה כאן');
+      }
+      if (item.reason.code === 'requestedOff') {
+        assert(Store.getConstraint(weekData, other.id, slot.dayIdx).off,
+          'נטען שביקש חופש, ולא ביקש');
+      }
+      if (item.reason.code === 'atLimit') {
+        assert(Store.employeeWeekCount(state, weekData, other.id) >= other.maxShifts,
+          'נטען שהגיע למכסה, ולא הגיע');
+      }
+    });
+  });
+  /* אם אף חלופה לא נפסלה מעולם, הבדיקה לא בדקה כלום */
+  assert(Object.keys(seen).length >= 2,
+    'לא נמצאו מספיק סוגי פסילה: ' + JSON.stringify(seen));
+});
+
+test('עובד שאינו משובץ שם אינו מקבל הסבר', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  var slot = Explain.parseSlotKey(Object.keys(weekData.assignments)[0]);
+  var assigned = Store.getAssigned(weekData, slot.dayIdx, slot.branchId, slot.shiftId);
+  var outsider = state.employees.filter(function (emp) {
+    return assigned.indexOf(emp.id) === -1;
+  })[0];
+  assertEqual(Explain.forAssignment(state, weekData, slot, outsider.id), null,
+    'התקבל הסבר לעובד שאינו משובץ');
+});
+
+test('ההסבר נכון גם אחרי שינוי ידני של המנהל', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+
+  /* מוצאים משמרת ועובד שמותר לשבץ אליה, ומשבצים ביד */
+  var slot = null, picked = null;
+  Store.weekDemands(state, weekData).some(function (demand) {
+    var assigned = Store.getAssigned(weekData, demand.dayIdx, demand.branchId, demand.shiftId);
+    return state.employees.some(function (emp) {
+      if (assigned.indexOf(emp.id) !== -1) return false;
+      if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
+      if (emp.branches.length && emp.branches.indexOf(demand.branchId) === -1) return false;
+      slot = demand; picked = emp;
+      return true;
+    });
+  });
+  assert(picked, 'לא נמצא עובד לשיבוץ ידני');
+
+  var current = Store.getAssigned(weekData, slot.dayIdx, slot.branchId, slot.shiftId);
+  Store.setAssigned(weekData, slot.dayIdx, slot.branchId, slot.shiftId,
+    current.concat([picked.id]));
+
+  var why = Explain.forAssignment(state, weekData, slot, picked.id);
+  assert(why, 'אין הסבר לשיבוץ ידני');
+  assertEqual(why.employee.id, picked.id, 'ההסבר מתייחס לעובד אחר');
+  assert(why.facts.some(function (f) { return f.code === 'qualified'; }),
+    'ההסבר אינו כולל את ההסמכה למשמרת');
 });
 
 console.log('\n== סכימת בסיס הנתונים ==');

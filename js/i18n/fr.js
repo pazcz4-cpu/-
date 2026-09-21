@@ -12,7 +12,7 @@
     dict: {
       app: {
         title: 'SetShifts',
-        subtitle: 'Planification automatique pour chaque site : disponibilités, demandes, postes et vos règles',
+        subtitle: 'Planification par IA pour chaque site : disponibilités, demandes, postes et vos règles',
         language: 'Langue'
       },
 
@@ -291,6 +291,35 @@
         autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
       },
 
+      why: {
+        button: 'Pourquoi cette personne ?',
+        title: 'Pourquoi {name} ?',
+        onlyOption: 'Personne d’autre ne pouvait prendre ce créneau.',
+        fairest: 'Sur les {count} personnes possibles, c’était le choix le plus équitable selon les heures déjà faites.',
+        alsoPossible: 'Auraient aussi pu le prendre : {names}.',
+        whoCould: 'Qui ne pouvait pas ({count})',
+        fact: {
+          requested: 'A demandé ce créneau ce jour-là',
+          available: 'Aucune demande de congé ce jour-là',
+          qualified: 'Formé pour ce créneau',
+          assignedBranch: 'Affecté à ce site',
+          anyBranch: 'Travaille sur tous les sites',
+          quota: '{used} créneaux sur {target} cette semaine',
+          rest: 'Le repos entre soirée et matin est respecté',
+          continuity: 'Déjà {count} fois sur ce site cette semaine'
+        },
+        blocked: {
+          inactive: 'n’est pas actif',
+          notQualified: 'n’est pas formé pour ce créneau',
+          otherBranch: 'travaille sur un autre site',
+          requestedOff: 'a demandé ce jour de congé',
+          blockedShift: 'a demandé à ne pas faire ce créneau',
+          atLimit: 'a atteint la limite hebdomadaire de {max}',
+          busySameDay: 'travaille déjà ce jour-là',
+          busySameShift: 'est déjà sur ce créneau',
+          restRule: 'a besoin de repos entre soirée et matin'
+        }
+      },
       support: {
         title: 'Assistance',
         promise: 'Dites-nous ce qui ne va pas ou ce qu’il vous manque. Une personne répond sous {hours} heures.',

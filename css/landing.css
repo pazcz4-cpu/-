@@ -179,7 +179,28 @@
 .lp-footer-inner .lp-nav-spacer { flex: 1; }
 
 /* ===== מסכים צרים ===== */
+/* ===== "למה דווקא הוא" ===== */
+.lp-why-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 46px; align-items: center; }
+.lp-why h2 { font-size: clamp(24px, 3.4vw, 34px); margin: 14px 0 12px; text-wrap: balance; }
+.lp-why-points { margin: 18px 0 0; padding-inline-start: 20px; line-height: 1.8; color: var(--muted); }
+.lp-why-points li { margin-bottom: 8px; }
+
+.lp-why-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow-lg); padding: 22px 24px;
+}
+.lp-why-slot { margin: 0 0 2px; font-size: 12.5px; color: var(--muted); }
+.lp-why-title { margin: 0 0 14px; font-size: 20px; }
+.lp-why-facts { margin: 0 0 14px; padding-inline-start: 18px; line-height: 1.85; font-size: 14.5px; }
+.lp-why-facts li::marker { color: var(--ok); }
+.lp-why-verdict {
+  margin: 0; padding: 10px 13px; border-radius: 9px; font-size: 13.5px;
+  background: var(--info-bg); color: var(--info);
+}
+
 @media (max-width: 900px) {
+  .lp-why-grid { grid-template-columns: 1fr; gap: 30px; }
+
   .lp-hero-grid { grid-template-columns: 1fr; gap: 34px; }
   .lp-cards, .lp-steps, .lp-plans { grid-template-columns: 1fr; }
   .lp-hero { padding: 40px 0 34px; }

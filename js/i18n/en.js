@@ -13,7 +13,7 @@
     dict: {
       app: {
         title: 'SetShifts',
-        subtitle: 'Automatic scheduling for every location — from availability, requests, roles and your rules',
+        subtitle: 'AI scheduling for every location — from availability, requests, roles and your rules',
         language: 'Language'
       },
 
@@ -41,11 +41,22 @@
         faq6Q: 'When exactly am I charged?',
         faq6A: 'You open the subscription with a credit card, but nothing is charged for the first {days} days. The first charge happens automatically when the trial ends, and monthly after that — until you cancel. Cancelling during the trial costs nothing, and access stays until the trial ends.',
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
-        heroBadge: 'Automatic scheduling for multi-location businesses',
+        heroBadge: 'AI employee scheduling for multi-location businesses',
         heroTitle: 'Your entire operation, scheduled in one click.',
-        heroSubtitle: 'SetShifts builds the schedule for every location by itself — from your staff\'s availability, the requests they submit, hour limits, roles and your own rules. You approve it. You don\'t build it.',
+        heroSubtitle: 'SetShifts AI builds the schedule for every location by itself — from your staff\'s availability, the requests they submit, hour limits, roles and your own rules. And for every assignment it tells you why that person. You approve it. You don\'t build it.',
         heroNote: '{days} days free. Cancel any time before the trial ends and you are not charged at all.',
         heroSecondary: 'See how it works',
+        whyTitle: 'Why that person?',
+        whySubtitle: 'The first question any manager asks about a schedule built automatically — and the one that decides whether they trust it or rebuild it by hand.',
+        whyBody: 'Click the question mark next to any assignment and SetShifts answers: who asked for the shift, who is trained for it, who has already filled their quota, and who else could have taken it. No black box to take on faith.',
+        whyPoint1: 'The explanation is derived from the schedule on screen, so it stays true after you change something by hand.',
+        whyPoint2: 'You see not only who was picked but who was ruled out and why — which turns an argument with an employee into a thirty-second conversation.',
+        whyDemoSlot: 'Tuesday · Central · Evening',
+        whyDemoTitle: 'Why Daniel?',
+        whyDemoFact1: 'Asked for this shift on this day',
+        whyDemoFact2: 'Trained for this shift · assigned to this location',
+        whyDemoFact3: '3 of 5 shifts this week',
+        whyDemoVerdict: 'Of the 2 people who could take it, this was the fairest choice.',
 
         problemsTitle: 'The three things that go wrong every week',
         problem1Title: 'The same shift, two people',
@@ -358,6 +369,35 @@
         autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
       },
 
+      why: {
+        button: 'Why this person?',
+        title: 'Why {name}?',
+        onlyOption: 'Nobody else could take this shift.',
+        fairest: 'Of the {count} people who could take it, this was the fairest choice by hours so far.',
+        alsoPossible: 'These could also have taken it: {names}.',
+        whoCould: 'Who could not take it ({count})',
+        fact: {
+          requested: 'Asked for this shift on this day',
+          available: 'No time-off request for this day',
+          qualified: 'Trained for this shift',
+          assignedBranch: 'Assigned to this location',
+          anyBranch: 'Works at any location',
+          quota: '{used} of {target} shifts this week',
+          rest: 'Rest between an evening and a morning shift is kept',
+          continuity: 'Already at this location {count} times this week'
+        },
+        blocked: {
+          inactive: 'not active',
+          notQualified: 'not trained for this shift',
+          otherBranch: 'works at another location',
+          requestedOff: 'asked for the day off',
+          blockedShift: 'asked not to work this shift',
+          atLimit: 'reached the weekly limit of {max}',
+          busySameDay: 'already working that day',
+          busySameShift: 'already on this shift',
+          restRule: 'needs rest between an evening and a morning shift'
+        }
+      },
       support: {
         title: 'Support',
         promise: 'Tell us what broke or what you need. A person replies within {hours} hours.',

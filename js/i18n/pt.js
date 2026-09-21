@@ -12,7 +12,7 @@
     dict: {
       app: {
         title: 'SetShifts',
-        subtitle: 'Planeamento automático para cada loja — por disponibilidade, pedidos, funções e as tuas regras',
+        subtitle: 'Planeamento com IA para cada loja — por disponibilidade, pedidos, funções e as tuas regras',
         language: 'Idioma'
       },
 
@@ -291,6 +291,35 @@
         autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
       },
 
+      why: {
+        button: 'Porquê esta pessoa?',
+        title: 'Porquê {name}?',
+        onlyOption: 'Mais ninguém podia ficar com este turno.',
+        fairest: 'Das {count} pessoas possíveis, foi a escolha mais justa pelas horas já feitas.',
+        alsoPossible: 'Também podiam ficar com ele: {names}.',
+        whoCould: 'Quem não podia ({count})',
+        fact: {
+          requested: 'Pediu este turno nesse dia',
+          available: 'Sem pedido de folga para esse dia',
+          qualified: 'Preparado para este turno',
+          assignedBranch: 'Afeto a esta loja',
+          anyBranch: 'Trabalha em qualquer loja',
+          quota: '{used} de {target} turnos esta semana',
+          rest: 'O descanso entre a tarde e a manhã é respeitado',
+          continuity: 'Já nesta loja {count} vezes esta semana'
+        },
+        blocked: {
+          inactive: 'não está ativo',
+          notQualified: 'não está preparado para este turno',
+          otherBranch: 'trabalha noutra loja',
+          requestedOff: 'pediu folga nesse dia',
+          blockedShift: 'pediu para não fazer este turno',
+          atLimit: 'atingiu o limite semanal de {max}',
+          busySameDay: 'já trabalha nesse dia',
+          busySameShift: 'já está neste turno',
+          restRule: 'precisa de descanso entre a tarde e a manhã'
+        }
+      },
       support: {
         title: 'Apoio',
         promise: 'Diz-nos o que avariou ou o que te falta. Uma pessoa responde em {hours} horas.',

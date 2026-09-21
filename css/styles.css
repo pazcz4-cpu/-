@@ -727,6 +727,47 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .auth-hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; text-align: center; }
 
+/* ===== "למה שובץ ככה" ===== */
+.why-btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  border-radius: 999px; width: 20px; height: 20px; line-height: 1;
+  font-size: 12px; font-weight: 700; cursor: pointer; padding: 0;
+  margin-block-start: 3px; margin-inline-start: 2px;
+}
+.why-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+.why-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  padding-block-start: calc(16px + env(safe-area-inset-top, 0px));
+  padding-block-end: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.why-card {
+  position: relative; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow-lg); padding: 20px 22px;
+  width: min(460px, 100%); max-height: 100%; overflow-y: auto;
+}
+.why-close {
+  position: absolute; inset-block-start: 10px; inset-inline-end: 12px;
+  border: none; background: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; line-height: 1; padding: 4px;
+}
+.why-slot { margin: 0 0 2px; font-size: 12.5px; color: var(--muted); }
+.why-title { margin: 0 0 12px; font-size: 18px; padding-inline-end: 24px; }
+.why-facts { margin: 0 0 12px; padding-inline-start: 18px; font-size: 14px; line-height: 1.75; }
+.why-facts li::marker { color: var(--ok); }
+.why-verdict {
+  margin: 0; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
+  background: var(--info-bg); color: var(--info);
+}
+.why-verdict.why-only { background: var(--ok-bg); color: var(--ok); }
+.why-blocked { margin-block-start: 12px; font-size: 13.5px; }
+.why-blocked summary { cursor: pointer; color: var(--muted); }
+.why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
+
 /* ===== קריאות שירות ===== */
 .support-channels { gap: 10px; flex-wrap: wrap; }
 .support-form { display: flex; flex-direction: column; gap: 10px; max-width: 620px; }

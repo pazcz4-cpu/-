@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'Поддержка',
         schedule: 'График', constraints: 'Заявки', employees: 'Сотрудники',
         branches: 'Филиалы', users: 'Пользователи', billing: 'Подписка', settings: 'Настройки'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'По исходу субботы', autoSabbathLabel: 'Исход субботы +30 мин'
       },
 
+      support: {
+        title: 'Поддержка',
+        promise: 'Расскажите, что сломалось или чего не хватает. Человек ответит в течение {hours} часов.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Создать обращение',
+        kindLabel: 'Тип', subjectLabel: 'Тема', bodyLabel: 'Что произошло?',
+        send: 'Отправить',
+        sent: 'Получено. Человек ответит в течение {hours} часов.',
+        sendFailed: 'Не удалось отправить обращение. Попробуйте ещё раз.',
+        loadFailed: 'Не удалось загрузить ваши обращения.',
+        listTitle: 'Мои обращения',
+        empty: 'Обращений пока нет.',
+        replyLabel: 'Наш ответ:',
+        errorSubject: 'Укажите тему обращения.',
+        errorBody: 'Опишите, что произошло.',
+        errorSubjectLong: 'Тема длиннее {max} символов.',
+        errorBodyLong: 'Описание длиннее {max} символов.',
+        kind: { bug: 'Что-то не работает', feature: 'Запрос функции', question: 'Вопрос' },
+        status: { open: 'Открыто', in_progress: 'В работе', answered: 'Отвечено', closed: 'Закрыто' }
+      },
       settings: {
         rules: 'Правила составления графика',
         onePerDay: 'Сотрудник работает не более одной смены в день',

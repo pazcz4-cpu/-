@@ -280,6 +280,36 @@ FakeSupabase.prototype.fetch = function (url, options) {
     }
   }
 
+  if (table === 'support_tickets') {
+    if (method === 'GET') {
+      return reply(200, (this.tickets || [])
+        .filter(function (row) {
+          return !where.company_id || row.company_id === where.company_id;
+        })
+        .slice().reverse());
+    }
+    if (method === 'POST') {
+      /* כמו בשרת האמיתי: הרשאת העמודה אינה מאפשרת לדפדפן לכתוב
+         status או reply, ולכן ניסיון כזה נדחה ולא מתעלמים ממנו. */
+      var incoming = body[0];
+      var forbidden = ['status', 'reply', 'id', 'created_at'].filter(function (key) {
+        return Object.prototype.hasOwnProperty.call(incoming, key);
+      });
+      if (forbidden.length) {
+        return reply(403, { message: 'permission denied for column ' + forbidden[0] });
+      }
+      if (!this.tickets) this.tickets = [];
+      var row = {
+        id: this.id('ticket'), company_id: incoming.company_id,
+        created_by: incoming.created_by, kind: incoming.kind,
+        subject: incoming.subject, body: incoming.body,
+        status: 'open', reply: null, created_at: new Date().toISOString()
+      };
+      this.tickets.push(row);
+      return reply(200, [row]);
+    }
+  }
+
   if (table === 'company_weeks') {
     if (method === 'GET') {
       return reply(200, Object.keys(this.weeks)
@@ -866,6 +896,87 @@ run('עובד שהושבת אינו מקבל חברה חדשה אלא נשאר �
   }, function (err) {
     assertEqual(err.code, 'user_disabled', 'קוד שגיאה לא נכון');
     assertEqual(Object.keys(server.companies).length, 1, 'עובד מושבת פתח חברה חדשה');
+  });
+});
+
+/* ===== קריאות שירות ===== */
+console.log('\n== קריאות שירות ==');
+
+function withCompany(server, email) {
+  var backend = makeBackend(server, memoryStorage());
+  return backend.signUpCompany({
+    email: email, password: 'secret123', name: 'מנהל', companyName: email.split('@')[0]
+  }).then(function () { return backend; });
+}
+
+run('קריאה נפתחת וחוזרת עם סטטוס פתוח', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a@cafe.test').then(function (backend) {
+    return backend.createTicket({ kind: 'bug', subject: 'הסידור לא נשמר', body: 'תיאור' })
+      .then(function (ticket) {
+        assertEqual(ticket.status, 'open', 'סטטוס התחלתי לא נכון');
+        assertEqual(ticket.subject, 'הסידור לא נשמר', 'הנושא לא נשמר');
+        assertEqual(ticket.reply, null, 'התשובה אינה ריקה');
+        return backend.listTickets();
+      }).then(function (list) {
+        assertEqual(list.length, 1, 'הקריאה לא הופיעה ברשימה');
+      });
+  });
+});
+
+run('הדפדפן אינו שולח status או reply', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a@cafe.test').then(function (backend) {
+    /* ניסיון מפורש להשתיל סטטוס ותשובה, כאילו לקוח משנה את הקוד */
+    return backend.createTicket({
+      kind: 'bug', subject: 'נושא', body: 'תיאור',
+      status: 'answered', reply: 'סידרתי לעצמי', id: 'שלי'
+    }).then(function (ticket) {
+      var posts = server.calls.filter(function (c) {
+        return c.path === '/rest/v1/support_tickets' && c.method === 'POST';
+      });
+      assertEqual(posts.length, 1, 'מספר הבקשות אינו 1');
+      var sent = posts[0].body[0];
+      assertEqual(Object.prototype.hasOwnProperty.call(sent, 'status'), false,
+        'status נשלח לשרת');
+      assertEqual(Object.prototype.hasOwnProperty.call(sent, 'reply'), false,
+        'reply נשלח לשרת');
+      assertEqual(ticket.status, 'open', 'הסטטוס נקבע על ידי הלקוח');
+      assertEqual(ticket.reply, null, 'התשובה נקבעה על ידי הלקוח');
+    });
+  });
+});
+
+run('קריאה ריקה נעצרת עוד לפני פנייה לשרת', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a@cafe.test').then(function (backend) {
+    var before = server.calls.length;
+    return backend.createTicket({ kind: 'bug', subject: '   ', body: 'תיאור' })
+      .then(function () { throw new Error('קריאה בלי נושא התקבלה'); },
+        function (err) {
+          assertEqual(err.code, 'invalid_input', 'קוד שגיאה לא נכון');
+          assertEqual(server.calls.length, before, 'נשלחה בקשה לשרת למרות הקלט הפסול');
+        });
+  });
+});
+
+run('קריאות של חברה אחת אינן נראות לאחרת', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a@cafe.test').then(function (first) {
+    return first.createTicket({ kind: 'bug', subject: 'סוד של חברה א', body: 'תיאור' })
+      .then(function () { return withCompany(server, 'b@pizza.test'); })
+      .then(function (second) {
+        return second.listTickets().then(function (list) {
+          assertEqual(list.length, 0, 'חברה ב ראתה קריאות של חברה א');
+          /* והסינון נעשה בשאילתה עצמה, ולא רק בתצוגה */
+          var gets = server.calls.filter(function (c) {
+            return c.path === '/rest/v1/support_tickets' && c.method === 'GET';
+          });
+          var last = gets[gets.length - 1];
+          assert(last.query.indexOf('company_id=eq.') !== -1,
+            'השאילתה אינה מסננת לפי חברה: ' + last.query);
+        });
+      });
   });
 });
 

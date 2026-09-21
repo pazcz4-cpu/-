@@ -406,6 +406,54 @@ grant select, insert, update, delete on public.company_weeks   to authenticated;
 -- אף אחד מלבד השרת אינו רואה את יומן החיובים
 revoke all on public.billing_events from authenticated, anon;
 
+-- ============================================================
+--  קריאות שירות
+-- ------------------------------------------------------------
+--  לקוח מדווח על תקלה או מבקש פיתוח. הטבלה נועדה שגם הלקוח יראה
+--  את מה שפתח ואת הסטטוס שלו, ולא רק אנחנו.
+--
+--  שתי הפרדות חשובות:
+--   · הלקוח כותב subject/body/kind בלבד. status ו-reply שייכים
+--     לנו, ונאכפים בהרשאת עמודה – RLS אינו יודע להגביל עמודות.
+--   · קריאה של חברה אחת אינה נראית לחברה אחרת, כמו כל השאר.
+-- ============================================================
+create table if not exists public.support_tickets (
+  id           uuid primary key default gen_random_uuid(),
+  company_id   uuid not null references public.companies(id) on delete cascade,
+  created_by   uuid not null references auth.users(id) on delete cascade,
+  kind         text not null default 'bug'
+                 check (kind in ('bug', 'feature', 'question')),
+  subject      text not null check (length(trim(subject)) between 1 and 200),
+  body         text not null check (length(trim(body)) between 1 and 5000),
+  status       text not null default 'open'
+                 check (status in ('open', 'in_progress', 'answered', 'closed')),
+  reply        text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists support_tickets_company_idx
+  on public.support_tickets (company_id, created_at desc);
+
+alter table public.support_tickets enable row level security;
+
+drop policy if exists support_tickets_select on public.support_tickets;
+create policy support_tickets_select on public.support_tickets
+  for select using (company_id = public.current_company_id());
+
+-- כל מי ששייך לחברה רשאי לפתוח קריאה. גם עובד נתקל בתקלות,
+-- ולשלוח אותו דרך המנהל פירושו שלא נשמע עליהן.
+drop policy if exists support_tickets_insert on public.support_tickets;
+create policy support_tickets_insert on public.support_tickets
+  for insert with check (
+    company_id = public.current_company_id() and created_by = auth.uid());
+
+-- אין עדכון ואין מחיקה מהדפדפן: קריאה שנפתחה נשארת ברשומה.
+
+revoke all on public.support_tickets from authenticated, anon;
+grant select on public.support_tickets to authenticated;
+grant insert (company_id, created_by, kind, subject, body) on public.support_tickets to authenticated;
+
 -- ===== עדכונים חיים (אופציונלי) =====
 -- מפעיל שידור שינויים בזמן אמת. הבידוד נשמר: Supabase מכבד את
 -- כללי ה-RLS גם בשידור.
@@ -414,6 +462,7 @@ begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     alter publication supabase_realtime add table public.company_weeks;
     alter publication supabase_realtime add table public.company_configs;
+    alter publication supabase_realtime add table public.support_tickets;
   end if;
 exception
   when duplicate_object then null;   -- כבר נוסף בהרצה קודמת

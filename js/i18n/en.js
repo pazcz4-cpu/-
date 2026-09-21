@@ -104,6 +104,7 @@
       },
 
       tabs: {
+        support: 'Support',
         schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
         branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'
       },
@@ -357,6 +358,26 @@
         autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
       },
 
+      support: {
+        title: 'Support',
+        promise: 'Tell us what broke or what you need. A person replies within {hours} hours.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Open a ticket',
+        kindLabel: 'Type', subjectLabel: 'Subject', bodyLabel: 'What happened?',
+        send: 'Send',
+        sent: 'Received. A person will reply within {hours} hours.',
+        sendFailed: 'The ticket could not be sent. Please try again.',
+        loadFailed: 'Your tickets could not be loaded.',
+        listTitle: 'Your tickets',
+        empty: 'No tickets yet.',
+        replyLabel: 'Our reply:',
+        errorSubject: 'Please write a subject.',
+        errorBody: 'Please describe what happened.',
+        errorSubjectLong: 'The subject is longer than {max} characters.',
+        errorBodyLong: 'The description is longer than {max} characters.',
+        kind: { bug: 'Something is broken', feature: 'Feature request', question: 'Question' },
+        status: { open: 'Open', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' }
+      },
       settings: {
         rules: 'Scheduling rules',
         onePerDay: 'A person works at most one shift per day',

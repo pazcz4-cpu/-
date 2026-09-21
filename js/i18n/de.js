@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'Support',
         schedule: 'Dienstplan', constraints: 'Wünsche', employees: 'Team',
         branches: 'Filialen', users: 'Benutzer', billing: 'Abonnement', settings: 'Einstellungen'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
       },
 
+      support: {
+        title: 'Support',
+        promise: 'Sagen Sie uns, was nicht funktioniert oder was Ihnen fehlt. Ein Mensch antwortet innerhalb von {hours} Stunden.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Ticket eröffnen',
+        kindLabel: 'Art', subjectLabel: 'Betreff', bodyLabel: 'Was ist passiert?',
+        send: 'Senden',
+        sent: 'Eingegangen. Ein Mensch antwortet innerhalb von {hours} Stunden.',
+        sendFailed: 'Das Ticket konnte nicht gesendet werden. Bitte erneut versuchen.',
+        loadFailed: 'Ihre Tickets konnten nicht geladen werden.',
+        listTitle: 'Meine Tickets',
+        empty: 'Noch keine Tickets.',
+        replyLabel: 'Unsere Antwort:',
+        errorSubject: 'Bitte einen Betreff angeben.',
+        errorBody: 'Bitte beschreiben, was passiert ist.',
+        errorSubjectLong: 'Der Betreff ist länger als {max} Zeichen.',
+        errorBodyLong: 'Die Beschreibung ist länger als {max} Zeichen.',
+        kind: { bug: 'Etwas funktioniert nicht', feature: 'Funktionswunsch', question: 'Frage' },
+        status: { open: 'Offen', in_progress: 'In Bearbeitung', answered: 'Beantwortet', closed: 'Geschlossen' }
+      },
       settings: {
         rules: 'Planungsregeln',
         onePerDay: 'Eine Person arbeitet höchstens eine Schicht pro Tag',

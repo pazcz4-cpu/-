@@ -233,6 +233,12 @@
           }
         });
       }
+      /* התמיכה פתוחה לכל מי שנכנס למערכת, ולא רק למנהלים:
+         גם עובד נתקל בתקלות, ודיווח שעובר דרך המנהל לא מגיע. */
+      if (root.ShiftSupportUI) {
+        root.ShiftSupportUI.init({ backend: backend, session: session });
+      }
+
       return session;
     });
   }

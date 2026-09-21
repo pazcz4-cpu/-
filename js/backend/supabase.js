@@ -509,6 +509,45 @@
       });
   };
 
+  /* ===== קריאות שירות ===== */
+
+  function mapTicket(row) {
+    return {
+      id: row.id, kind: row.kind, subject: row.subject, body: row.body,
+      status: row.status, reply: row.reply || null, createdAt: row.created_at
+    };
+  }
+
+  function normalizeTicket(input) { return Model.normalizeTicket(input); }
+
+
+  SupabaseBackend.prototype.listTickets = function () {
+    var companyId;
+    try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
+    return this._rest('/support_tickets?company_id=eq.' + companyId +
+      '&select=id,kind,subject,body,status,reply,created_at&order=created_at.desc')
+      .then(function (rows) { return (rows || []).map(mapTicket); });
+  };
+
+  SupabaseBackend.prototype.createTicket = function (input) {
+    var session = this.session();
+    if (!session) return Promise.reject(fail('not_signed_in', t('server.signInRequired')));
+    var ticket = normalizeTicket(input);
+    if (ticket.error) return Promise.reject(ticket.error);
+    /* status ו-reply אינם נשלחים בכוונה: הם שלנו, והשרת חוסם
+       אותם גם בהרשאת עמודה. */
+    return this._rest('/support_tickets', {
+      method: 'POST',
+      body: [{
+        company_id: session.company.id,
+        created_by: session.user.id,
+        kind: ticket.kind,
+        subject: ticket.subject,
+        body: ticket.body
+      }]
+    }).then(function (rows) { return mapTicket((rows || [])[0] || {}); });
+  };
+
   /* קריאה לשרת שלנו (ולא ל-Supabase), עם האסימון של המשתמש.
      משמש לפעולות שדורשות הרשאה שאסור שתגיע לדפדפן. */
   SupabaseBackend.prototype._server = function (endpoint, payload) {

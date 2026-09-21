@@ -15,6 +15,7 @@
     "test:approval": "node tests/approval-browser-test.mjs",
     "test:reason": "node tests/reason-notify-test.mjs",
     "test:shifts": "node tests/shifts-browser-test.mjs",
+    "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",
     "test:lang": "node tests/language-browser-test.mjs",
     "test:i18n": "node tests/i18n-tests.js",

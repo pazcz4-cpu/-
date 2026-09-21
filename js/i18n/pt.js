@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'Apoio',
         schedule: 'Horário', constraints: 'Pedidos', employees: 'Equipa',
         branches: 'Filiais', users: 'Utilizadores', billing: 'Subscrição', settings: 'Definições'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
       },
 
+      support: {
+        title: 'Apoio',
+        promise: 'Diz-nos o que avariou ou o que te falta. Uma pessoa responde em {hours} horas.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Abrir pedido',
+        kindLabel: 'Tipo', subjectLabel: 'Assunto', bodyLabel: 'O que aconteceu?',
+        send: 'Enviar',
+        sent: 'Recebido. Uma pessoa responde em {hours} horas.',
+        sendFailed: 'Não foi possível enviar o pedido. Tenta novamente.',
+        loadFailed: 'Não foi possível carregar os teus pedidos.',
+        listTitle: 'Os meus pedidos',
+        empty: 'Ainda não há pedidos.',
+        replyLabel: 'A nossa resposta:',
+        errorSubject: 'Escreve um assunto.',
+        errorBody: 'Descreve o que aconteceu.',
+        errorSubjectLong: 'O assunto tem mais de {max} caracteres.',
+        errorBodyLong: 'A descrição tem mais de {max} caracteres.',
+        kind: { bug: 'Algo não funciona', feature: 'Pedido de funcionalidade', question: 'Pergunta' },
+        status: { open: 'Aberto', in_progress: 'Em curso', answered: 'Respondido', closed: 'Fechado' }
+      },
       settings: {
         rules: 'Regras de planeamento',
         onePerDay: 'Cada pessoa faz no máximo um turno por dia',

@@ -103,6 +103,7 @@
       },
 
       tabs: {
+        support: 'תמיכה',
         schedule: 'סידור שבועי', constraints: 'אילוצים', employees: 'עובדים',
         branches: 'סניפים', users: 'משתמשים', billing: 'מנוי', settings: 'הגדרות'
       },
@@ -356,6 +357,26 @@
         autoSabbath: 'לפי צאת שבת', autoSabbathLabel: 'מצאת שבת +30 דק׳'
       },
 
+      support: {
+        title: 'תמיכה',
+        promise: 'ספרו לנו מה נשבר או מה חסר לכם. אדם עונה תוך {hours} שעות.',
+        whatsapp: 'וואטסאפ',
+        newTitle: 'פתיחת קריאה',
+        kindLabel: 'סוג הפנייה', subjectLabel: 'נושא', bodyLabel: 'מה קרה?',
+        send: 'שליחה',
+        sent: 'הקריאה התקבלה. אדם יחזור אליכם תוך {hours} שעות.',
+        sendFailed: 'לא הצלחנו לשלוח את הקריאה. נסו שוב.',
+        loadFailed: 'לא הצלחנו לטעון את הקריאות שלכם.',
+        listTitle: 'הקריאות שלי',
+        empty: 'עדיין לא נפתחו קריאות.',
+        replyLabel: 'התשובה שלנו:',
+        errorSubject: 'צריך לכתוב נושא לקריאה.',
+        errorBody: 'צריך לתאר מה קרה.',
+        errorSubjectLong: 'הנושא ארוך מ-{max} תווים.',
+        errorBodyLong: 'התיאור ארוך מ-{max} תווים.',
+        kind: { bug: 'משהו לא עובד', feature: 'בקשת פיתוח', question: 'שאלה' },
+        status: { open: 'נפתחה', in_progress: 'בטיפול', answered: 'נענתה', closed: 'נסגרה' }
+      },
       settings: {
         rules: 'כללי שיבוץ',
         onePerDay: 'עובד משובץ למשמרת אחת ביום לכל היותר',

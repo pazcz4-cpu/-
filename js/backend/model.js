@@ -64,6 +64,57 @@
      לעולם שתי כתובות שונות. */
   var SUPPORT_EMAIL = 'support@setshifts.com';
 
+  /* זמן המענה האנושי שאנחנו מתחייבים אליו. מספר אחד, כדי שההבטחה
+     בדף המכירה, במסך התמיכה ובמענה האוטומטי בוואטסאפ תהיה זהה. */
+  var SUPPORT_REPLY_HOURS = 48;
+
+  /* מספר הוואטסאפ העסקי, בפורמט בינלאומי ובלי סימנים: 9725xxxxxxxx.
+     כל עוד הוא ריק, הכפתור אינו מוצג בשום מקום – קישור שבור לערוץ
+     תמיכה גרוע מאין ערוץ. */
+  var WHATSAPP_NUMBER = '';
+
+  /* ===== קריאות שירות =====
+     הבדיקות כאן חוזרות על הבדיקות שבסכימה. זו כפילות מכוונת:
+     בדפדפן כדי שהלקוח יקבל הודעה מובנת לפני ששולחים, ובבסיס
+     הנתונים כי על הדפדפן אי אפשר לסמוך. */
+  var TICKET_KINDS = ['bug', 'feature', 'question'];
+  var TICKET_STATUSES = ['open', 'in_progress', 'answered', 'closed'];
+  var TICKET_LIMITS = { subject: 200, body: 5000 };
+
+  function ticketError(code, key, fallback, params) {
+    var error = new Error(translate(key, fallback, params));
+    error.code = code;
+    return error;
+  }
+
+  /* מחזיר { kind, subject, body } או { error }. */
+  function normalizeTicket(input) {
+    var data = input || {};
+    var kind = String(data.kind || 'bug');
+    if (TICKET_KINDS.indexOf(kind) === -1) kind = 'bug';
+
+    var subject = String(data.subject == null ? '' : data.subject).trim();
+    var body = String(data.body == null ? '' : data.body).trim();
+
+    if (!subject) {
+      return { error: ticketError('invalid_input', 'support.errorSubject',
+        'צריך לכתוב נושא לקריאה.') };
+    }
+    if (!body) {
+      return { error: ticketError('invalid_input', 'support.errorBody',
+        'צריך לתאר מה קרה.') };
+    }
+    if (subject.length > TICKET_LIMITS.subject) {
+      return { error: ticketError('invalid_input', 'support.errorSubjectLong',
+        'הנושא ארוך מדי.', { max: TICKET_LIMITS.subject }) };
+    }
+    if (body.length > TICKET_LIMITS.body) {
+      return { error: ticketError('invalid_input', 'support.errorBodyLong',
+        'התיאור ארוך מדי.', { max: TICKET_LIMITS.body }) };
+    }
+    return { kind: kind, subject: subject, body: body };
+  }
+
   var TRIAL_DAYS = 14;
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
   /* חלון להמתנה לאישור החיוב הראשון מספק התשלומים */
@@ -291,6 +342,9 @@
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
     SUPPORT_EMAIL: SUPPORT_EMAIL,
+    SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS, WHATSAPP_NUMBER: WHATSAPP_NUMBER,
+    TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
+    TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,

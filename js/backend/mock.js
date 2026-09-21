@@ -403,6 +403,47 @@
   };
 
   /* ===== עדכונים חיים ===== */
+  /* ===== קריאות שירות ===== */
+
+  MockBackend.prototype.listTickets = function () {
+    var session;
+    try { session = this._require(); } catch (err) { return Promise.reject(err); }
+    var companyId = session.company.id;
+    var all = this.db.tickets || {};
+    var out = Object.keys(all).map(function (id) { return all[id]; })
+      .filter(function (ticket) { return ticket.companyId === companyId; })
+      .sort(function (a, b) { return b.createdAt < a.createdAt ? -1 : 1; })
+      .map(function (ticket) {
+        return {
+          id: ticket.id, kind: ticket.kind, subject: ticket.subject,
+          body: ticket.body, status: ticket.status, reply: ticket.reply || null,
+          createdAt: ticket.createdAt
+        };
+      });
+    return Promise.resolve(out);
+  };
+
+  MockBackend.prototype.createTicket = function (input) {
+    var session;
+    try { session = this._require(); } catch (err) { return Promise.reject(err); }
+    var ticket = Model.normalizeTicket(input);
+    if (ticket.error) return Promise.reject(ticket.error);
+
+    if (!this.db.tickets) this.db.tickets = {};
+    var id = 'ticket-' + (Object.keys(this.db.tickets).length + 1) + '-' + Date.now();
+    var row = {
+      id: id, companyId: session.company.id, createdBy: session.user.id,
+      kind: ticket.kind, subject: ticket.subject, body: ticket.body,
+      status: 'open', reply: null, createdAt: new Date().toISOString()
+    };
+    this.db.tickets[id] = row;
+    this._save();
+    return Promise.resolve({
+      id: row.id, kind: row.kind, subject: row.subject, body: row.body,
+      status: row.status, reply: null, createdAt: row.createdAt
+    });
+  };
+
   MockBackend.prototype.subscribe = function (handler) {
     var session = this.session();
     if (!session) return function () {};

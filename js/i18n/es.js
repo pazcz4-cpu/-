@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'Soporte',
         schedule: 'Horario', constraints: 'Solicitudes', employees: 'Personal',
         branches: 'Sucursales', users: 'Usuarios', billing: 'Suscripción', settings: 'Ajustes'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
       },
 
+      support: {
+        title: 'Soporte',
+        promise: 'Cuéntanos qué falla o qué necesitas. Una persona responde en {hours} horas.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Abrir un ticket',
+        kindLabel: 'Tipo', subjectLabel: 'Asunto', bodyLabel: '¿Qué ha pasado?',
+        send: 'Enviar',
+        sent: 'Recibido. Una persona responderá en {hours} horas.',
+        sendFailed: 'No se pudo enviar el ticket. Inténtalo de nuevo.',
+        loadFailed: 'No se pudieron cargar tus tickets.',
+        listTitle: 'Tus tickets',
+        empty: 'Aún no hay tickets.',
+        replyLabel: 'Nuestra respuesta:',
+        errorSubject: 'Escribe un asunto.',
+        errorBody: 'Describe qué ha pasado.',
+        errorSubjectLong: 'El asunto supera los {max} caracteres.',
+        errorBodyLong: 'La descripción supera los {max} caracteres.',
+        kind: { bug: 'Algo no funciona', feature: 'Petición de función', question: 'Pregunta' },
+        status: { open: 'Abierto', in_progress: 'En curso', answered: 'Respondido', closed: 'Cerrado' }
+      },
       settings: {
         rules: 'Reglas de planificación',
         onePerDay: 'Cada persona trabaja como máximo un turno al día',

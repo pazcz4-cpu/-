@@ -33,6 +33,7 @@
     <button class="tab" data-tab="branches" data-i18n="tabs.branches">סניפים</button>
     <button class="tab hidden" data-tab="users" data-i18n="tabs.users">משתמשים</button>
     <button class="tab hidden" data-tab="billing" data-i18n="tabs.billing">מנוי</button>
+    <button class="tab hidden" data-tab="support" data-i18n="tabs.support">תמיכה</button>
     <button class="tab" data-tab="settings" data-i18n="tabs.settings">הגדרות</button>
   </nav>
 </header>
@@ -191,6 +192,32 @@
     <div id="billing-panel"></div>
   </section>
 
+  <!-- ===== תמיכה וקריאות שירות ===== -->
+  <section class="panel" id="tab-support">
+    <h2 data-i18n="support.title">תמיכה</h2>
+    <p class="hint" id="support-promise"></p>
+
+    <div class="settings-block row support-channels">
+      <a id="support-whatsapp" class="btn ghost hidden" target="_blank" rel="noopener"></a>
+      <a id="support-mail" class="btn ghost"></a>
+    </div>
+
+    <h2 data-i18n="support.newTitle">פתיחת קריאה</h2>
+    <form id="support-form" class="settings-block support-form">
+      <label><span data-i18n="support.kindLabel">סוג הפנייה</span>
+        <select id="support-kind" name="kind" class="text-input"></select></label>
+      <label><span data-i18n="support.subjectLabel">נושא</span>
+        <input type="text" name="subject" class="text-input" maxlength="200" required></label>
+      <label><span data-i18n="support.bodyLabel">מה קרה?</span>
+        <textarea name="body" class="text-input" rows="5" maxlength="5000" required></textarea></label>
+      <button type="submit" class="btn primary" data-i18n="support.send">שליחה</button>
+    </form>
+    <p id="support-message" class="hidden"></p>
+
+    <h2 data-i18n="support.listTitle">הקריאות שלי</h2>
+    <div id="support-list"></div>
+  </section>
+
   <!-- ===== הגדרות ===== -->
   <section class="panel" id="tab-settings">
     <h2 data-i18n="settings.rules">כללי שיבוץ</h2>
@@ -279,6 +306,7 @@
 <script src="js/backend/users-ui.js"></script>
 <script src="js/backend/billing.js"></script>
 <script src="js/backend/billing-ui.js"></script>
+<script src="js/backend/support-ui.js"></script>
 <script src="js/app.js"></script>
 <script src="js/backend/saas.js"></script>
 <script>

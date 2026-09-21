@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'الدعم',
         schedule: 'الجدول', constraints: 'الطلبات', employees: 'الموظفون',
         branches: 'الفروع', users: 'المستخدمون', billing: 'الاشتراك', settings: 'الإعدادات'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'حسب خروج السبت', autoSabbathLabel: 'خروج السبت +30 دقيقة'
       },
 
+      support: {
+        title: 'الدعم',
+        promise: 'أخبرنا بما تعطّل أو بما تحتاجه. يردّ عليك شخص خلال {hours} ساعة.',
+        whatsapp: 'واتساب',
+        newTitle: 'فتح طلب',
+        kindLabel: 'النوع', subjectLabel: 'الموضوع', bodyLabel: 'ماذا حدث؟',
+        send: 'إرسال',
+        sent: 'تم الاستلام. سيردّ عليك شخص خلال {hours} ساعة.',
+        sendFailed: 'تعذّر إرسال الطلب. حاول مرة أخرى.',
+        loadFailed: 'تعذّر تحميل طلباتك.',
+        listTitle: 'طلباتي',
+        empty: 'لا توجد طلبات بعد.',
+        replyLabel: 'ردّنا:',
+        errorSubject: 'اكتب موضوعًا للطلب.',
+        errorBody: 'صِف ما حدث.',
+        errorSubjectLong: 'الموضوع أطول من {max} حرفًا.',
+        errorBodyLong: 'الوصف أطول من {max} حرفًا.',
+        kind: { bug: 'شيء لا يعمل', feature: 'طلب ميزة', question: 'سؤال' },
+        status: { open: 'مفتوح', in_progress: 'قيد المعالجة', answered: 'تمت الإجابة', closed: 'مغلق' }
+      },
       settings: {
         rules: 'قواعد الجدولة',
         onePerDay: 'يعمل الموظف مناوبة واحدة في اليوم كحد أقصى',

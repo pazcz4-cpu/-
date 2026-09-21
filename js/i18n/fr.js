@@ -36,6 +36,7 @@
       },
 
       tabs: {
+        support: 'Assistance',
         schedule: 'Planning', constraints: 'Demandes', employees: 'Personnel',
         branches: 'Succursales', users: 'Utilisateurs', billing: 'Abonnement', settings: 'Réglages'
       },
@@ -290,6 +291,26 @@
         autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
       },
 
+      support: {
+        title: 'Assistance',
+        promise: 'Dites-nous ce qui ne va pas ou ce qu’il vous manque. Une personne répond sous {hours} heures.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Ouvrir un ticket',
+        kindLabel: 'Type', subjectLabel: 'Objet', bodyLabel: 'Que s’est-il passé ?',
+        send: 'Envoyer',
+        sent: 'Bien reçu. Une personne vous répondra sous {hours} heures.',
+        sendFailed: 'Le ticket n’a pas pu être envoyé. Réessayez.',
+        loadFailed: 'Vos tickets n’ont pas pu être chargés.',
+        listTitle: 'Vos tickets',
+        empty: 'Aucun ticket pour le moment.',
+        replyLabel: 'Notre réponse :',
+        errorSubject: 'Indiquez un objet.',
+        errorBody: 'Décrivez ce qui s’est passé.',
+        errorSubjectLong: 'L’objet dépasse {max} caractères.',
+        errorBodyLong: 'La description dépasse {max} caractères.',
+        kind: { bug: 'Quelque chose ne marche pas', feature: 'Demande de fonctionnalité', question: 'Question' },
+        status: { open: 'Ouvert', in_progress: 'En cours', answered: 'Répondu', closed: 'Fermé' }
+      },
       settings: {
         rules: 'Règles de planification',
         onePerDay: 'Une personne travaille au plus un service par jour',

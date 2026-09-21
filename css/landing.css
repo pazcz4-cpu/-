@@ -169,7 +169,7 @@
 .lp-cta .lp-btn-primary { background: var(--header-ink); color: var(--brand-dark); }
 
 /* ===== כותרת תחתונה ===== */
-#footer-contact a { color: inherit; }
+#footer-contact a, #footer-whatsapp { color: inherit; }
 #footer-contact a:hover { text-decoration: none; }
 
 .lp-footer {

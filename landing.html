@@ -207,6 +207,7 @@
     <span id="footer-brand"></span>
     <span class="lp-nav-spacer"></span>
     <span id="footer-contact"></span>
+    <a id="footer-whatsapp" class="hidden" target="_blank" rel="noopener"></a>
     <span data-i18n="landing.footerTagline"></span>
   </div>
 </footer>
@@ -279,6 +280,18 @@
     if (contact) {
       contact.innerHTML = esc(t('common.emailUs')) + ' <a href="mailto:' +
         esc(Model.SUPPORT_EMAIL) + '">' + esc(Model.SUPPORT_EMAIL) + '</a>';
+    }
+    /* וואטסאפ מופיע רק כשיש מספר. קישור שבור לערוץ תמיכה
+       גרוע מאין ערוץ בכלל. */
+    var whatsapp = document.getElementById('footer-whatsapp');
+    if (whatsapp) {
+      if (Model.WHATSAPP_NUMBER) {
+        whatsapp.href = 'https://wa.me/' + Model.WHATSAPP_NUMBER;
+        whatsapp.textContent = t('support.whatsapp');
+        whatsapp.classList.remove('hidden');
+      } else {
+        whatsapp.classList.add('hidden');
+      }
     }
     var footer = document.getElementById('footer-brand');
     if (footer) {

@@ -83,6 +83,14 @@ try {
     check('כתובת תמיכה בדף המכירה', await mailto.getAttribute('href'),
       'mailto:support@setshifts.com');
     check('והיא מוצגת ללקוח', await mailto.textContent(), 'support@setshifts.com');
+    /* כפתור וואטסאפ מופיע רק כשיש מספר – קישור שבור גרוע מאין קישור */
+    const hasNumber = await page.evaluate(() => !!window.ShiftModel.WHATSAPP_NUMBER);
+    check('וואטסאפ מוצג רק כשיש מספר',
+      await page.locator('#footer-whatsapp').isVisible(), hasNumber);
+    if (hasNumber) {
+      check('והקישור תקין',
+        await page.locator('#footer-whatsapp').getAttribute('href'), /^https:\/\/wa\.me\/\d{8,}$/);
+    }
   }
 
   console.log('\n== דומיין, גוגל ושיתופים ==');

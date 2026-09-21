@@ -219,19 +219,29 @@ Supabase שולח מייל אימות לכל נרשם, ועד שלא לוחצי�
 > ולא לדפדפן – רק למשתני הסביבה של Vercel.
 > המפתח `anon` לעומת זאת מיועד לדפדפן ואינו סודי.
 
-### 5א. הקובץ `config.js`
+### 5א. החיבור ל-Supabase ✅ הושלם
 
-ערוך את `config.js` בשורש הפרויקט והכנס את שני הערכים הראשונים:
+הכתובת והמפתח של הפרויקט כבר בקוד, ב-`build-site.js`:
 
 ```js
-window.SHIFT_CONFIG = {
-  supabaseUrl: 'https://xxxxxxxx.supabase.co',
-  supabaseAnonKey: 'eyJhbGciOi...',
-  adminEndpoint: '/api/create-user'
-};
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://...supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_...';
 ```
 
-שמור, ודחוף את השינוי ל-GitHub. Vercel יפרסם מחדש לבד.
+הם נכתבים ל-`site/app/config.js` בכל פריסה, ולא לקובץ שבמאגר.
+ההפרדה הזו מכוונת: `config.js` שבמאגר נשאר ריק, ולכן פתיחה מקומית
+של `app.html` והרצת הבדיקות ממשיכות במצב הדגמה ולעולם אינן נוגעות
+בנתונים של לקוחות אמיתיים.
+
+> **המפתח הזה אינו סודי.** הוא מיועד לרוץ בדפדפן של כל לקוח, ו-
+> Supabase עצמה מגדירה אותו כ"בטוח לשיתוף פומבי". מה שמגן על
+> הנתונים הוא כללי ההרשאה שב-`supabase/schema.sql`, שנאכפים בבסיס
+> הנתונים עצמו.
+>
+> **להחלפת מפתח** אין צורך לגעת בקוד: מגדירים `SUPABASE_URL` ו-
+> `SUPABASE_ANON_KEY` כמשתני סביבה ב-Vercel, והם גוברים.
+
+---
 
 ### 5ב. משתני הסביבה ב-Vercel
 

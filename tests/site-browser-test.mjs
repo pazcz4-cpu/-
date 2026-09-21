@@ -144,6 +144,16 @@ try {
   });
   check('config.js נטען', await page.evaluate(() => !!window.SHIFT_CONFIG), true);
   check('מתאם Supabase זמין', await page.evaluate(() => !!window.ShiftSupabase), true);
+  /* האתר הבנוי חייב להצביע לשרת אמיתי. קובץ ההגדרות שבמאגר נשאר
+     ריק בכוונה, כדי שבדיקות ופתיחה מקומית לא ייגעו בנתוני אמת. */
+  check('האתר הבנוי מחובר ל-Supabase',
+    await page.evaluate(() => window.SHIFT_CONFIG.supabaseUrl), /^https:\/\/.+\.supabase\.co$/);
+  check('ויש לו מפתח דפדפן',
+    await page.evaluate(() => (window.SHIFT_CONFIG.supabaseAnonKey || '').length > 20), true);
+  check('הדפדפן אינו מקבל מפתח סודי',
+    await page.evaluate(() => JSON.stringify(window.SHIFT_CONFIG)), /^(?!.*sb_secret)(?!.*service_role).*$/);
+  check('השרת שנבחר הוא Supabase ולא המדומה',
+    await page.evaluate(() => !!(window.__backend && window.__backend.anonKey)), true);
   /* כל עוד לא הוגדר שרת, חייבת להופיע אזהרה שהנתונים מקומיים */
   check('שורת מצב ההדגמה תואמת להגדרות',
     await page.locator('#demo-banner').isVisible(), !configured);

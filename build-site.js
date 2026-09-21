@@ -19,6 +19,16 @@ const out = path.join(root, 'site');
    בסביבת בדיקות – ואז כל הקישורים מצביעים לשם. */
 const SITE_URL = (process.env.PUBLIC_BASE_URL || 'https://setshifts.com').replace(/\/+$/, '');
 
+/* החיבור ל-Supabase של האתר החי.
+   הערכים נכנסים רק לאתר הבנוי, ולא ל-config.js שבמאגר – כך פתיחה
+   מקומית של app.html והבדיקות ממשיכות לרוץ במצב הדגמה, בלי לגעת
+   בנתונים אמיתיים. אפשר לדרוס דרך משתני סביבה ב-Vercel, וכך
+   להחליף מפתח בלי commit. */
+const SUPABASE_URL = process.env.SUPABASE_URL ||
+  'https://bdoqoppgwavutjzljcrt.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
+  'sb_publishable_ZYYKx9bJbmUSTsaFWGfnCA_bIyaATfS';
+
 function rm(target) { fs.rmSync(target, { recursive: true, force: true }); }
 function mkdir(target) { fs.mkdirSync(target, { recursive: true }); }
 function read(file) { return fs.readFileSync(path.join(root, file), 'utf8'); }
@@ -193,9 +203,17 @@ page('landing.html', 'index.html', {
 page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest', noindex: true });
 page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', noindex: true });
 
-/* הגדרות החיבור לשרת. נטען יחסית לעמוד, כדי שגם פתיחה מקומית
-   של app.html תמצא אותו. */
-fs.copyFileSync(path.join(root, 'config.js'), path.join(out, 'app', 'config.js'));
+/* הגדרות החיבור לשרת, נכתבות מחדש לכל פריסה.
+   המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
+   שפותח את האתר. הבידוד בין חברות נאכף ב-supabase/schema.sql,
+   ולא כאן. */
+write('app/config.js',
+  '/* נוצר אוטומטית על ידי build-site.js – אין לערוך ידנית. */\n' +
+  'window.SHIFT_CONFIG = ' + JSON.stringify({
+    supabaseUrl: SUPABASE_URL,
+    supabaseAnonKey: SUPABASE_ANON_KEY,
+    adminEndpoint: '/api/create-user'
+  }, null, 2) + ';\n');
 
 /* ===== קבצים לשורש ===== */
 write('robots.txt',

@@ -243,7 +243,10 @@
         '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
         '<small>' + t('auth.passwordHint') + '</small></label>' +
         '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +
-        '<p class="auth-hint">' + t('auth.trialNote', { days: Model.TRIAL_DAYS }) + '</p>' +
+        '<p class="auth-hint">' + esc(t('auth.trialNote', {
+          days: Model.TRIAL_DAYS,
+          date: Model.formatDate(Model.addDays(new Date(), Model.TRIAL_DAYS))
+        })) + '</p>' +
         '</form>';
     }
 

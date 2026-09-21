@@ -37,13 +37,16 @@
       },
 
       landing: {
+        planTrialLine: '{days} days free, then',
+        faq6Q: 'When exactly am I charged?',
+        faq6A: 'You open the subscription with a credit card, but nothing is charged for the first {days} days. The first charge happens automatically when the trial ends, and monthly after that — until you cancel. Cancelling during the trial costs nothing, and access stays until the trial ends.',
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
         heroBadge: 'Built for chains with more than one branch',
         heroTitle: 'Every shift covered. No double bookings.',
         heroSubtitle: 'Build a week of shifts across all your branches in one click. ' +
           'The system honours every time-off request, spots double bookings and gaps before your staff do, ' +
           'and tells you exactly why a shift could not be filled.',
-        heroNote: 'No credit card. Works on a computer, and installs on a phone like an app.',
+        heroNote: '{days} days free. Cancel any time before the trial ends and you are not charged at all.',
         heroSecondary: 'See how it works',
 
         problemsTitle: 'The three things that go wrong every week',
@@ -81,7 +84,7 @@
         pricingTitle: 'Simple pricing, by team size',
         pricingSubtitle: 'Unlimited branches on every plan. Cancel any time.',
         pricingCta: 'Start free',
-        pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan – no payment details needed.',
+        pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan — the first charge comes only when the trial ends, and cancelling before then costs nothing.',
         planPopular: 'Most popular',
 
         faqTitle: 'Questions',
@@ -422,6 +425,18 @@
       },
 
       billing: {
+        firstCharge: 'First charge',
+        nextCharge: 'Next charge',
+        paymentMethod: 'Payment method',
+        cardOnFile: 'Saved',
+        noCard: 'Not added',
+        addCard: 'Add a payment method',
+        noCardWarning: 'No payment method yet. Without one, access ends on {date}.',
+        trialNotice: 'You are not charged for the first {days} days. The first charge is on {date} for {price}, and monthly after that — until you cancel.',
+        cancelBeforeCharge: 'Cancel before the charge',
+        cancelTrialConfirm: 'Cancel the subscription? You will not be charged, and access stays until the trial ends.',
+        resume: 'Resume subscription',
+        resumed: 'Subscription resumed',
         priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
         updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',
@@ -444,7 +459,7 @@
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
         enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',
-        trialNote: '{days} days free. No payment details needed.',
+        trialNote: '{days} days free. The first charge is on {date}; cancel before then and you pay nothing.',
         signOut: 'Sign out', blocked: 'Access blocked',
         blockedOwner: 'Contact support to activate the subscription.',
         blockedMember: 'Ask the account owner to renew the subscription.',
@@ -465,9 +480,13 @@
       },
 
       access: {
+        trialWithCard: 'Trial – {days} days left. First charge on {date}, {price}.',
+        trialNoCard: 'Trial – {days} days left. Add a payment method to keep access after {date}.',
+        trialEndedNoCard: 'The trial has ended. Add a payment method to continue.',
+        trialCanceled: 'Cancelled – you will not be charged. Access stays until {date}.',
+        canceledAtPeriodEnd: 'Cancelled. Access stays until {date}, and there will be no further charges.',
+        charging: 'The trial has ended and the first charge is being processed.',
         noCompany: 'No company found',
-        trialEnded: 'The trial has ended. Activate a subscription to continue.',
-        trial: 'Trial – {days} days left.',
         expired: 'The subscription has expired. Renew to continue.',
         pastDueBlocked: 'Payment was not received and access is blocked. Please update the payment method.',
         pastDue: 'The last payment did not go through. Access will be blocked in {days} days.',

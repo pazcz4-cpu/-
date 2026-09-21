@@ -62,6 +62,8 @@
 
   var TRIAL_DAYS = 14;
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
+  /* חלון להמתנה לאישור החיוב הראשון מספק התשלומים */
+  var CHARGE_GRACE_DAYS = 2;
 
   /* התוכניות נקבעות לפי מספר העובדים בלבד. אין הגבלת סניפים.
      maxEmployees ערך 0 = ללא הגבלה. */
@@ -138,18 +140,56 @@
       : null;
 
     if (company.status === SUBSCRIPTION.TRIAL) {
+      var card = hasPaymentMethod(company);
+      var endsOn = formatDate(validUntil);
+
+      /* ביטול בתוך תקופת הניסיון: הגישה נשמרת עד הסוף, ולא יהיה חיוב */
+      if (company.cancelAtPeriodEnd) {
+        if (expired) {
+          return { allowed: false, reason: 'canceled', daysLeft: 0,
+            text: translate('access.canceled', 'המנוי בוטל.') };
+        }
+        return { allowed: true, reason: 'trial-canceled', daysLeft: daysLeft,
+          text: translate('access.trialCanceled', 'המנוי בוטל ולא יבוצע חיוב.',
+            { date: endsOn }) };
+      }
+
       if (expired) {
+        if (!card) {
+          return { allowed: false, reason: 'trial-ended', daysLeft: 0,
+            text: translate('access.trialEndedNoCard', 'תקופת הניסיון הסתיימה.') };
+        }
+        /* יש כרטיס: הספק אמור לחייב בדיוק עכשיו. אישור החיוב מגיע
+           ב-webhook, ולפעמים באיחור של שעות – ולכן חלון חסד קצר,
+           כדי שלא ננעל לקוח משלם בגלל עיכוב טכני. */
+        var sinceEnd = Math.floor((today - validUntil) / (24 * 60 * 60 * 1000));
+        if (sinceEnd <= CHARGE_GRACE_DAYS) {
+          return { allowed: true, reason: 'charging', daysLeft: 0,
+            text: translate('access.charging', 'החיוב הראשון בעיבוד.') };
+        }
         return { allowed: false, reason: 'trial-ended', daysLeft: 0,
-          text: translate('access.trialEnded', 'תקופת הניסיון הסתיימה.') };
+          text: translate('access.trialEndedNoCard', 'תקופת הניסיון הסתיימה.') };
+      }
+
+      if (!card) {
+        return { allowed: true, reason: 'trial-no-card', daysLeft: daysLeft,
+          text: translate('access.trialNoCard', 'תקופת ניסיון.',
+            { days: daysLeft, date: endsOn }) };
       }
       return { allowed: true, reason: 'trial', daysLeft: daysLeft,
-        text: translate('access.trial', 'תקופת ניסיון', { days: daysLeft }) };
+        text: translate('access.trialWithCard', 'תקופת ניסיון.',
+          { days: daysLeft, date: endsOn, price: priceLabel(company) }) };
     }
 
     if (company.status === SUBSCRIPTION.ACTIVE) {
       if (expired) {
         return { allowed: false, reason: 'expired', daysLeft: 0,
           text: translate('access.expired', 'המנוי פג.') };
+      }
+      if (company.cancelAtPeriodEnd) {
+        return { allowed: true, reason: 'active-canceled', daysLeft: daysLeft,
+          text: translate('access.canceledAtPeriodEnd', 'המנוי בוטל.',
+            { date: formatDate(validUntil) }) };
       }
       return { allowed: true, reason: 'active', daysLeft: daysLeft, text: '' };
     }
@@ -201,6 +241,33 @@
     return out;
   }
 
+  /* תאריך קצר בשפה הפעילה. נדרש כדי להגיד ללקוח מתי בדיוק
+     יתבצע החיוב הראשון – "עוד 14 ימים" אינו מספיק ברור. */
+  function formatDate(value) {
+    if (!value) return '';
+    var date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    var locale = root.I18n && root.I18n.active ? root.I18n.active().locale : undefined;
+    try {
+      return date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (err) {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+
+  /* האם יש כרטיס שמור אצל ספק התשלומים. בלעדיו אין מה לחייב
+     בתום תקופת הניסיון. */
+  function hasPaymentMethod(company) {
+    return !!(company && company.billingSubscriptionId);
+  }
+
+  /* מחיר התוכנית כפי שהוא מוצג ללקוח */
+  function priceLabel(company) {
+    var plan = planOf(company);
+    return translate('billing.priceMonthly', plan.priceMonthly + '₪',
+      { amount: plan.priceMonthly });
+  }
+
   function newTrialCompany(name, now) {
     var today = now ? new Date(now) : new Date();
     return {
@@ -208,13 +275,20 @@
       plan: DEFAULT_PLAN,
       status: SUBSCRIPTION.TRIAL,
       validUntil: addDays(today, TRIAL_DAYS).toISOString(),
-      createdAt: today.toISOString()
+      createdAt: today.toISOString(),
+      /* מתמלאים כשהלקוח מזין כרטיס בעמוד התשלום של הספק */
+      billingProvider: null,
+      billingCustomerId: null,
+      billingSubscriptionId: null,
+      cancelAtPeriodEnd: false
     };
   }
 
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
+    CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
+    hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,

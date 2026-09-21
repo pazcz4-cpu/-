@@ -392,6 +392,12 @@
     if (patch.plan && Model.PLANS[patch.plan]) company.plan = patch.plan;
     if (patch.status) company.status = patch.status;
     if (patch.validUntil) company.validUntil = patch.validUntil;
+    /* פרטי הכרטיס אצל הספק. בשרת אמיתי אלה נכתבים רק בתגובה
+       ל-webhook; כאן זה מדומה, לצורך הדגמה ובדיקות. */
+    if ('billingProvider' in patch) company.billingProvider = patch.billingProvider;
+    if ('billingCustomerId' in patch) company.billingCustomerId = patch.billingCustomerId;
+    if ('billingSubscriptionId' in patch) company.billingSubscriptionId = patch.billingSubscriptionId;
+    if ('cancelAtPeriodEnd' in patch) company.cancelAtPeriodEnd = !!patch.cancelAtPeriodEnd;
     this._save();
     return Promise.resolve(clone(company));
   };

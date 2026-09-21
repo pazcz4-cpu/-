@@ -283,6 +283,8 @@ vercel.json         הגדרות האירוח
 tools/icons.js      מחולל אייקוני האפליקציה
 tools/serve.js      שרת סטטי מקומי לבדיקות
 api/create-user.js  יצירת משתמש בשרת (דורש מפתח ניהול)
+api/billing/webhook.js     קליטת אירועי חיוב מספק התשלומים
+api/billing/_providers.js  מתאם לכל ספק תשלומים
 supabase/schema.sql טבלאות, כללי בידוד ופונקציות
 js/backend/supabase.js  מתאם לשרת האמיתי
 js/i18n/core.js     מנוע התרגום: רישום שפות, מפתחות, כיוון כתיבה ומטבע
@@ -307,6 +309,8 @@ npm test           # 78 בדיקות לוגיקה (node)
 npm run test:sync  # בדיקת הסנכרון בין מחשבים בדפדפן, מול שרת ענן מדומה
 npm run test:i18n  # שלמות מילוני השפות: מפתחות, תבניות והגדרות
 npm run test:supabase  # מתאם השרת האמיתי, מול שרת Supabase מדומה
+npm run test:webhook   # קליטת אירועי חיוב: חתימה, כפילות ומעבר לתשלום
+npm run test:trial     # מסלול הניסיון עם כרטיס מראש, בדפדפן
 npm run test:site  # האתר הבנוי: שלוש הכתובות, האייקונים וההתקנה בטלפון
 npm run test:lang  # החלפת שפה בדפדפן: עברית/אנגלית/ערבית, כיוון כתיבה ושמירת הבחירה
 ```

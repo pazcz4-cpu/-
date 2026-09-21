@@ -37,7 +37,7 @@
         <a class="lp-btn lp-btn-primary lp-btn-lg" href="app/?signup=1" id="hero-cta" data-i18n="landing.start">התחלה חינם</a>
         <a class="lp-btn lp-btn-ghost lp-btn-lg" href="#how" data-i18n="landing.heroSecondary">איך זה עובד</a>
       </div>
-      <p class="lp-hero-note" data-i18n="landing.heroNote">בלי כרטיס אשראי.</p>
+      <p class="lp-hero-note" id="hero-note"></p>
     </div>
 
     <!-- הדגמה של לוח הסידור, מצוירת ב-CSS כדי שלא יידרשו תמונות -->
@@ -185,6 +185,10 @@
         <summary data-i18n="landing.faq5Q"></summary>
         <p data-i18n="landing.faq5A"></p>
       </details>
+      <details open>
+        <summary data-i18n="landing.faq6Q"></summary>
+        <p id="faq6-answer"></p>
+      </details>
     </div>
   </div>
 </section>
@@ -247,6 +251,7 @@
         (isFeatured ? '<span class="lp-plan-tag">' + esc(t('landing.planPopular')) + '</span>' : '') +
         '<div class="lp-plan-name">' + esc(plan.name) + '</div>' +
         '<div class="lp-plan-range">' + esc(plan.range) + '</div>' +
+        '<div class="lp-plan-trial">' + esc(t('landing.planTrialLine', { days: Model.TRIAL_DAYS })) + '</div>' +
         '<div class="lp-plan-price">' + esc(t('billing.priceAmount', { amount: plan.priceMonthly })) + '</div>' +
         '<div class="lp-plan-per">' + esc(t('billing.perMonth')) + '</div>' +
         '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
@@ -263,6 +268,10 @@
     renderPlans();
     var cta = document.getElementById('hero-cta');
     if (cta) cta.textContent = t('landing.startLong', { days: Model.TRIAL_DAYS });
+    var note = document.getElementById('hero-note');
+    if (note) note.textContent = t('landing.heroNote', { days: Model.TRIAL_DAYS });
+    var faq6 = document.getElementById('faq6-answer');
+    if (faq6) faq6.textContent = t('landing.faq6A', { days: Model.TRIAL_DAYS });
     var footer = document.getElementById('footer-brand');
     if (footer) {
       footer.textContent = '© ' + new Date().getFullYear() + ' ' +

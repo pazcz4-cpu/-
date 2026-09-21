@@ -9,7 +9,7 @@
     "build": "node build-artifact.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
-    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/supabase-tests.js",
+    "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js",
     "test:saas": "node tests/saas-browser-test.mjs && node tests/roles-browser-test.mjs",
     "test:billing": "node tests/billing-browser-test.mjs",
     "test:approval": "node tests/approval-browser-test.mjs",
@@ -20,7 +20,9 @@
     "build:site": "node build-site.js",
     "serve": "node build-site.js && node tools/serve.js",
     "test:site": "node build-site.js && node tests/site-browser-test.mjs",
-    "test:supabase": "node tests/supabase-tests.js"
+    "test:supabase": "node tests/supabase-tests.js",
+    "test:webhook": "node tests/billing-webhook-tests.js",
+    "test:trial": "node tests/trial-browser-test.mjs"
   },
   "license": "MIT"
 }

@@ -43,26 +43,58 @@
     if (!state) { container.innerHTML = ''; return; }
 
     var provider = ctx.billing.describe();
+    var company = state.company;
+    var onTrial = company.status === Model.SUBSCRIPTION.TRIAL;
+    var hasCard = Model.hasPaymentMethod(company);
+    var price = t('billing.priceMonthly', { amount: state.plan.priceMonthly });
     var html = '';
+
+    /* בתקופת ניסיון הדבר החשוב ביותר על המסך הוא מתי יתבצע החיוב
+       הראשון וכמה הוא. זה מופיע ראשון, לפני כל שאר הפרטים. */
+    if (onTrial && !company.cancelAtPeriodEnd) {
+      html += '<p class="billing-trial' + (hasCard ? '' : ' warn') + '">' +
+        esc(hasCard
+          ? t('billing.trialNotice', {
+              days: Model.TRIAL_DAYS, date: formatDate(company.validUntil), price: price })
+          : t('billing.noCardWarning', { date: formatDate(company.validUntil) })) +
+        '</p>';
+    }
 
     /* מצב נוכחי */
     html += '<div class="settings-block billing-current">';
     html += '<div class="billing-row"><span>' + t('billing.status') + '</span><b class="status-' +
-      esc(state.company.status) + '">' + esc(statusText(state.company.status)) + '</b></div>';
+      esc(company.status) + '">' + esc(statusText(company.status)) + '</b></div>';
     html += '<div class="billing-row"><span>' + t('billing.plan') + '</span><b>' + esc(state.plan.name) +
-      ' · ' + esc(state.plan.range) + ' · ' + esc(t('billing.priceMonthly', { amount: state.plan.priceMonthly })) + '</b></div>';
-    html += '<div class="billing-row"><span>' + t('billing.validUntil') + '</span><b>' +
-      formatDate(state.company.validUntil) + '</b></div>';
+      ' · ' + esc(state.plan.range) + ' · ' + esc(price) + '</b></div>';
+
+    /* בניסיון זה "החיוב הראשון"; אחר כך "החיוב הבא". מנוי שבוטל
+       לא יחויב שוב, ולכן מוצג התוקף בלבד. */
+    var chargeLabel = company.cancelAtPeriodEnd
+      ? t('billing.validUntil')
+      : (onTrial ? t('billing.firstCharge') : t('billing.nextCharge'));
+    html += '<div class="billing-row"><span>' + chargeLabel + '</span><b>' +
+      formatDate(company.validUntil) +
+      (company.cancelAtPeriodEnd ? '' : ' · ' + esc(price)) + '</b></div>';
+
+    html += '<div class="billing-row"><span>' + t('billing.paymentMethod') + '</span><b>' +
+      (hasCard ? t('billing.cardOnFile') : t('billing.noCard')) + '</b></div>';
+
     html += '<div class="billing-row"><span>' + t('billing.activeStaff') + '</span><b>' +
       esc(state.plan.maxEmployees
         ? t('billing.of', { count: employees, max: state.plan.maxEmployees })
         : t('billing.unlimited', { count: employees })) + '</b></div>';
-    if (state.access.text) {
+    /* כשהודעת הניסיון כבר מוצגת למעלה, אותו מידע פעמיים רק מסיח */
+    var noticeShown = onTrial && !company.cancelAtPeriodEnd;
+    if (state.access.text && !noticeShown) {
       html += '<p class="billing-note ' + (state.access.allowed ? '' : 'error') + '">' +
         esc(state.access.text) + '</p>';
     }
     if (state.overLimit) {
       html += '<p class="billing-note error">' + esc(state.problems.join(' ')) + '</p>';
+    }
+    if (!hasCard && state.canManage) {
+      html += '<div class="row"><button id="billing-add-card" class="btn primary">' +
+        t('billing.addCard') + '</button></div>';
     }
     html += '</div>';
 
@@ -98,6 +130,18 @@
         t('billing.cancel') + '</button></div>';
     }
 
+    /* בתקופת ניסיון הביטול הוא "לפני שאחויב", לא "ויתור על מה ששילמתי" */
+    if (onTrial && hasCard && !company.cancelAtPeriodEnd) {
+      html += '<div class="settings-block row"><button id="billing-cancel-trial" class="btn ghost">' +
+        t('billing.cancelBeforeCharge') + '</button></div>';
+    }
+
+    /* חזרה מביטול, כל עוד התקופה לא הסתיימה */
+    if (company.cancelAtPeriodEnd) {
+      html += '<div class="settings-block row"><button id="billing-resume" class="btn primary">' +
+        t('billing.resume') + '</button></div>';
+    }
+
     html += '<p id="billing-message" class="users-message hidden"></p>';
     container.innerHTML = html;
   }
@@ -131,13 +175,35 @@
         });
         return;
       }
-      if (event.target.closest('#billing-cancel')) {
-        if (!root.confirm(t('billing.cancelConfirm'))) return;
+      /* הוספת אמצעי תשלום – פותח את עמוד התשלום של הספק */
+      if (event.target.closest('#billing-add-card')) {
+        say('');
+        ctx.billing.addPaymentMethod().then(function (result) {
+          if (result && result.redirectUrl) { root.location.href = result.redirectUrl; return; }
+          render();
+        }, function (err) { say((err && err.message) || t('billing.updateFailed'), true); });
+        return;
+      }
+
+      var cancelTrial = event.target.closest('#billing-cancel-trial');
+      if (event.target.closest('#billing-cancel') || cancelTrial) {
+        /* הניסוח שונה: בניסיון מדגישים שלא יהיה חיוב בכלל */
+        if (!root.confirm(t(cancelTrial ? 'billing.cancelTrialConfirm' : 'billing.cancelConfirm'))) return;
         ctx.billing.cancel().then(function () {
           render();
           say(t('billing.canceled'));
           if (ctx.onChange) ctx.onChange();
         }, function (err) { say((err && err.message) || t('billing.cancelFailed'), true); });
+        return;
+      }
+
+      if (event.target.closest('#billing-resume')) {
+        say('');
+        ctx.billing.resume().then(function () {
+          render();
+          say(t('billing.resumed'));
+          if (ctx.onChange) ctx.onChange();
+        }, function (err) { say((err && err.message) || t('billing.updateFailed'), true); });
       }
     });
 

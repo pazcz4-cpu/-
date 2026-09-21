@@ -545,8 +545,9 @@
     var self = this;
     try { this._companyId(); } catch (err) { return Promise.reject(err); }
 
-    var action = patch && patch.status === 'canceled' ? 'cancel' : 'change-plan';
-    return this._server(this.billingEndpoint + '/' + action, { plan: patch.plan })
+    /* הפעולה נקבעת בשכבת החיוב, ולא מנוחשת מתוך הנתונים */
+    var action = (patch && patch.action) || 'checkout';
+    return this._server(this.billingEndpoint + '/' + action, { plan: patch && patch.plan })
       .then(function (result) {
         /* הספק עשוי להחזיר כתובת תשלום. אם כן – שולחים לשם. */
         if (result && result.checkoutUrl) {

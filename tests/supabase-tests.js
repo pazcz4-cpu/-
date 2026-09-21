@@ -569,11 +569,11 @@ run('בעלים אינו ניתן לשינוי', function () {
 run('שינוי תוכנית עובר דרך השרת ולא נכתב מהדפדפן', function () {
   return signedIn().then(function (ctx) {
     /* השרת מאשר, ורק אחר כך המצב מתעדכן */
-    ctx.server.serverRoutes = { '/api/billing/change-plan': { status: 200, body: { ok: true } } };
+    ctx.server.serverRoutes = { '/api/billing/checkout': { status: 200, body: { ok: true } } };
     ctx.server.calls.length = 0;
-    return ctx.backend.setSubscription({ plan: 'growth' }).then(function () {
+    return ctx.backend.setSubscription({ action: 'checkout', plan: 'growth' }).then(function () {
       var toServer = ctx.server.calls.filter(function (c) {
-        return c.path === '/api/billing/change-plan';
+        return c.path === '/api/billing/checkout';
       });
       assertEqual(toServer.length, 1, 'הבקשה לא נשלחה לשרת');
       assertEqual(toServer[0].body.plan, 'growth', 'התוכנית לא נשלחה');
@@ -590,11 +590,11 @@ run('שינוי תוכנית עובר דרך השרת ולא נכתב מהדפד
 
 run('מצב המנוי נטען מחדש מהשרת אחרי אישור', function () {
   return signedIn().then(function (ctx) {
-    ctx.server.serverRoutes = { '/api/billing/change-plan': { status: 200, body: { ok: true } } };
+    ctx.server.serverRoutes = { '/api/billing/checkout': { status: 200, body: { ok: true } } };
     /* "הספק אישר" – השרת עדכן את השורה */
     ctx.server.companies[ctx.session.company.id].plan = 'growth';
     ctx.server.companies[ctx.session.company.id].status = 'active';
-    return ctx.backend.setSubscription({ plan: 'growth' }).then(function (company) {
+    return ctx.backend.setSubscription({ action: 'checkout', plan: 'growth' }).then(function (company) {
       assertEqual(company.plan, 'growth', 'התוכנית לא נטענה מחדש');
       assertEqual(ctx.backend.session().company.status, 'active',
         'מצב ההתחברות בזיכרון לא התעדכן');
@@ -605,7 +605,7 @@ run('מצב המנוי נטען מחדש מהשרת אחרי אישור', functi
 run('כשהחיוב לא חובר מתקבלת הודעה ברורה ולא שגיאה סתומה', function () {
   return signedIn().then(function (ctx) {
     ctx.server.serverRoutes = {};   // נקודת הקצה לא נפרסה
-    return ctx.backend.setSubscription({ plan: 'growth' })
+    return ctx.backend.setSubscription({ action: 'checkout', plan: 'growth' })
       .then(function () { throw new Error('שינוי התוכנית הצליח בלי שרת חיוב'); }, function (err) {
         assertEqual(err.code, 'not_configured', 'קוד שגיאה לא נכון');
         assertEqual(err.message, I18n.t('payments.notConnected'), 'ההודעה אינה מתורגמת');
@@ -616,9 +616,23 @@ run('כשהחיוב לא חובר מתקבלת הודעה ברורה ולא שג
 run('ביטול מנוי פונה לנקודת הקצה של הביטול', function () {
   return signedIn().then(function (ctx) {
     ctx.server.serverRoutes = { '/api/billing/cancel': { status: 200, body: { ok: true } } };
-    return ctx.backend.setSubscription({ status: 'canceled' }).then(function () {
+    return ctx.backend.setSubscription({ action: 'cancel' }).then(function () {
       var cancel = ctx.server.calls.filter(function (c) { return c.path === '/api/billing/cancel'; });
       assertEqual(cancel.length, 1, 'בקשת הביטול לא נשלחה');
+    });
+  });
+});
+
+run('הוספת אמצעי תשלום פונה לנקודת הקצה שלה', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = {
+      '/api/billing/payment-method': { status: 200, body: { checkoutUrl: null } }
+    };
+    return ctx.backend.setSubscription({ action: 'payment-method' }).then(function () {
+      var call = ctx.server.calls.filter(function (c) {
+        return c.path === '/api/billing/payment-method';
+      });
+      assertEqual(call.length, 1, 'הבקשה לא נשלחה');
     });
   });
 });

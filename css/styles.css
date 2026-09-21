@@ -883,3 +883,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   border-bottom: 1px solid var(--warn-line);
 }
 .demo-banner b { margin-inline-end: 6px; }
+
+/* הודעת תקופת הניסיון בלשונית המנוי – הדבר הראשון שרואים שם */
+.billing-trial {
+  margin: 0 0 14px; padding: 12px 15px; border-radius: 11px; font-size: 14px;
+  background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line);
+}
+.billing-trial.warn {
+  background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
+}

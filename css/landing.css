@@ -184,3 +184,10 @@
   .lp-brand span { display: none; }
   .lp-hero-actions .lp-btn { flex: 1; }
 }
+
+/* שורת תקופת הניסיון בכרטיס התוכנית */
+.lp-plan-trial {
+  font-size: 13px; font-weight: 600; color: var(--ok);
+  background: var(--ok-bg); border: 1px solid var(--ok-line);
+  border-radius: 999px; padding: 3px 10px; display: inline-block; margin-bottom: 8px;
+}

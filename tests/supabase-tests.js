@@ -128,10 +128,22 @@ FakeSupabase.prototype.fetch = function (url, options) {
     });
     if (exists) return reply(422, { msg: 'User already registered' });
     var newId = this.id('user');
-    this.users[newId] = { id: newId, email: body.email, password: body.password };
+    this.users[newId] = {
+      id: newId, email: body.email, password: body.password,
+      user_metadata: body.data || {}
+    };
+    /* כשאימות מייל דלוק, Supabase מחזיר משתמש בלי אסימון: אי אפשר
+       להמשיך עד שלוחצים על הקישור בתיבה. */
+    if (this.confirmEmail) return reply(200, { id: newId, email: body.email });
     return reply(200, {
       access_token: makeToken(newId), refresh_token: 'r-' + newId, expires_in: 3600
     });
+  }
+
+  if (path === '/auth/v1/user') {
+    var me = this.users[this._userFromAuth(headers)];
+    if (!me) return reply(401, { message: 'invalid token' });
+    return reply(200, { id: me.id, email: me.email, user_metadata: me.user_metadata || {} });
   }
 
   if (path === '/auth/v1/token') {
@@ -154,6 +166,10 @@ FakeSupabase.prototype.fetch = function (url, options) {
   /* ---- פונקציות ---- */
   if (path === '/rest/v1/rpc/create_company') {
     var caller = this._userFromAuth(headers);
+    /* כמו בפונקציה האמיתית: משתמש ששייך כבר לחברה אינו פותח עוד אחת */
+    if (this.companyUsers[caller]) {
+      return reply(400, { code: '23505', message: 'user already belongs to a company' });
+    }
     var companyId = this.id('co');
     this.companies[companyId] = {
       id: companyId, name: body.p_name, plan: 'starter', status: 'trial',
@@ -742,6 +758,114 @@ run('פעולה בלי התחברות נדחית בלי לפנות לשרת', fu
   }, function (err) {
     assertEqual(err.code, 'not_signed_in', 'קוד שגיאה לא נכון');
     assertEqual(server.calls.length, 0, 'נשלחה בקשה לשרת בלי התחברות');
+  });
+});
+
+/* ===== הרשמה כשאימות מייל דלוק =====
+   זה המצב האמיתי בייצור: מוכרים לעסקים במנוי חודשי, וכתובת מייל
+   תקפה היא תנאי לחשבוניות ולהתראות כישלון חיוב. ההרשמה נחתכת אז
+   לשניים – טופס, ואחריו כניסה מהקישור שבמייל – ואסור שהחברה
+   תיפול בין הכיסאות. */
+console.log('\n== הרשמה עם אימות מייל ==');
+
+run('הרשמה אינה מסתיימת עד שהמייל מאושר', function () {
+  var server = new FakeSupabase();
+  server.confirmEmail = true;
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'dana@cafe.test', password: 'secret123',
+    name: 'דנה', companyName: 'קפה מרכז'
+  }).then(function () {
+    throw new Error('ההרשמה הסתיימה למרות שהמייל לא אושר');
+  }, function (err) {
+    assertEqual(err.code, 'confirm_email', 'קוד שגיאה לא נכון');
+    assertEqual(Object.keys(server.companies).length, 0, 'נוצרה חברה לפני אישור המייל');
+  });
+});
+
+run('שם החברה נשמר על משתמש האימות ולא רק בדפדפן', function () {
+  var server = new FakeSupabase();
+  server.confirmEmail = true;
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'dana@cafe.test', password: 'secret123',
+    name: 'דנה', companyName: 'קפה מרכז'
+  }).catch(function () {
+    var user = server.users[Object.keys(server.users)[0]];
+    assertEqual(user.user_metadata.company_name, 'קפה מרכז', 'שם החברה לא נשמר');
+    assertEqual(user.user_metadata.name, 'דנה', 'שם המשתמש לא נשמר');
+  });
+});
+
+run('הכניסה הראשונה אחרי אישור המייל מקימה את החברה', function () {
+  var server = new FakeSupabase();
+  server.confirmEmail = true;
+  /* מכשיר אחד נרשם... */
+  var first = makeBackend(server);
+  return first.signUpCompany({
+    email: 'dana@cafe.test', password: 'secret123',
+    name: 'דנה', companyName: 'קפה מרכז'
+  }).catch(function () {
+    /* ...והלקוח חוזר ממכשיר אחר לגמרי, בלי שום זיכרון מקומי */
+    var other = makeBackend(server, memoryStorage());
+    return other.signIn({ email: 'dana@cafe.test', password: 'secret123' })
+      .then(function (session) {
+        assert(session, 'לא נוצרה התחברות');
+        assertEqual(session.company.name, 'קפה מרכז', 'שם החברה לא נכון');
+        assertEqual(session.user.role, 'owner', 'המשתמש אינו הבעלים');
+        assertEqual(session.company.status, 'trial', 'החברה לא נפתחה בתקופת ניסיון');
+        assertEqual(Object.keys(server.companies).length, 1, 'מספר החברות אינו 1');
+      });
+  });
+});
+
+run('כניסה שנייה אינה פותחת חברה נוספת', function () {
+  var server = new FakeSupabase();
+  server.confirmEmail = true;
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'dana@cafe.test', password: 'secret123',
+    name: 'דנה', companyName: 'קפה מרכז'
+  }).catch(function () {
+    return makeBackend(server, memoryStorage())
+      .signIn({ email: 'dana@cafe.test', password: 'secret123' });
+  }).then(function () {
+    return makeBackend(server, memoryStorage())
+      .signIn({ email: 'dana@cafe.test', password: 'secret123' });
+  }).then(function (session) {
+    assertEqual(session.company.name, 'קפה מרכז', 'ההתחברות השנייה נכשלה');
+    assertEqual(Object.keys(server.companies).length, 1, 'נפתחה חברה שנייה');
+    var creates = server.calls.filter(function (c) {
+      return c.path === '/rest/v1/rpc/create_company';
+    });
+    assertEqual(creates.length, 1, 'create_company נקראה יותר מפעם אחת');
+  });
+});
+
+run('עובד שהושבת אינו מקבל חברה חדשה אלא נשאר בחוץ', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'owner@cafe.test', password: 'secret123',
+    name: 'בעלים', companyName: 'קפה מרכז'
+  }).then(function () {
+    /* עובד קיים של החברה, שהושבת */
+    server.users['user-emp'] = {
+      id: 'user-emp', email: 'emp@cafe.test', password: 'secret123',
+      user_metadata: { name: 'עובד', company_name: 'ניסיון לעקוף' }
+    };
+    var companyId = Object.keys(server.companies)[0];
+    server.companyUsers['user-emp'] = {
+      id: 'user-emp', company_id: companyId, email: 'emp@cafe.test',
+      name: 'עובד', role: 'employee', employee_id: 'e1', active: false
+    };
+    return makeBackend(server, memoryStorage())
+      .signIn({ email: 'emp@cafe.test', password: 'secret123' });
+  }).then(function () {
+    throw new Error('עובד מושבת הצליח להיכנס');
+  }, function (err) {
+    assertEqual(err.code, 'user_disabled', 'קוד שגיאה לא נכון');
+    assertEqual(Object.keys(server.companies).length, 1, 'עובד מושבת פתח חברה חדשה');
   });
 });
 

@@ -91,6 +91,16 @@
     node.classList.toggle('hidden', !message);
   };
 
+  /* הודעה חיובית, להבדיל משגיאה. נשמרת על האובייקט כדי שתשרוד
+     ציור מחדש של המסך – למשל מעבר מלשונית ההרשמה לזו של הכניסה. */
+  AuthUI.prototype._notice = function (message) {
+    this.notice = message || '';
+    var node = this.gate.querySelector('.auth-notice');
+    if (!node) return;
+    node.textContent = this.notice;
+    node.classList.toggle('hidden', !this.notice);
+  };
+
   AuthUI.prototype._setBusy = function (busy, label) {
     this.busy = busy;
     var button = this.gate.querySelector('button[type="submit"]');
@@ -103,6 +113,7 @@
   AuthUI.prototype._signIn = function (form) {
     var self = this;
     this._error('');
+    this._notice('');
     this._setBusy(true, t('auth.signingIn'));
     this.backend.signIn({
       email: form.email.value, password: form.password.value
@@ -118,6 +129,7 @@
   AuthUI.prototype._signUp = function (form) {
     var self = this;
     this._error('');
+    this._notice('');
     this._setBusy(true, t('auth.creating'));
     this.backend.signUpCompany({
       companyName: form.companyName.value,
@@ -129,6 +141,15 @@
       self._enter(session);
     }, function (err) {
       self._setBusy(false);
+      /* ההרשמה הצליחה – היא פשוט לא נגמרת כאן. אסור להציג את זה
+         כשגיאה אדומה: לקוח שיחשוב שנכשל ינסה להירשם שוב, ואז
+         יקבל "המשתמש כבר קיים" ויתייאש. */
+      if (err && err.code === 'confirm_email') {
+        self.mode = 'signin';
+        self.notice = err.message || t('server.confirmEmail');
+        self.showGate();
+        return;
+      }
       self._error((err && err.message) || t('auth.failedSignUp'));
     });
   };
@@ -228,6 +249,7 @@
       '</div>';
 
     html += '<p class="auth-error hidden"></p>';
+    html += '<p class="auth-notice hidden"></p>';
 
     if (signin) {
       html += '<form id="signin-form" class="auth-form">' +
@@ -252,6 +274,7 @@
 
     html += '</div>';
     this.gate.innerHTML = html;
+    if (this.notice) { this._notice(this.notice); }
     if (root.I18nDom) { root.I18nDom.fillPicker(this.gate.querySelector('#auth-language')); }
   };
 

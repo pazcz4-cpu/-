@@ -107,6 +107,8 @@
 
     this.tokens = this.storage.get(TOKEN_KEY);
     this._session = null;
+    /* למה אין התחברות: no-profile | inactive | no-company | null */
+    this._sessionMiss = null;
     this.listeners = [];
     this.pollTimer = null;
     this._seen = {};
@@ -232,12 +234,17 @@
       '&select=id,email,name,role,employee_id,active,company_id')
       .then(function (rows) {
         var profile = rows && rows[0];
-        if (!profile || !profile.active) { self._session = null; return null; }
+        /* שתי סיבות שונות לחלוטין לכך שאין התחברות, ואסור לבלבל
+           ביניהן: משתמש שטרם שויך לחברה צריך שניצור לו אותה,
+           ואילו עובד שהושבת צריך להישאר בחוץ. */
+        if (!profile) { self._session = null; self._sessionMiss = 'no-profile'; return null; }
+        if (!profile.active) { self._session = null; self._sessionMiss = 'inactive'; return null; }
+        self._sessionMiss = null;
         return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
           '&select=id,name,plan,status,valid_until,created_at')
           .then(function (companies) {
             var row = companies && companies[0];
-            if (!row) { self._session = null; return null; }
+            if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
             var company = {
               id: row.id, name: row.name, plan: row.plan, status: row.status,
               validUntil: row.valid_until, createdAt: row.created_at
@@ -255,12 +262,36 @@
       });
   };
 
+  /* משלים הרשמה שנקטעה באמצע בגלל אישור המייל.
+     נקרא רק כשאין פרופיל כלל – לא על עובד שהושבת – ורק אם שם
+     החברה נשמר על משתמש האימות בזמן ההרשמה. מחזיר התחברות אם
+     הושלמה, ו-null אם אין מה להשלים. */
+  SupabaseBackend.prototype._completeSignUp = function () {
+    var self = this;
+    if (this._sessionMiss !== 'no-profile') return Promise.resolve(null);
+
+    return this._request('/auth/v1/user', { method: 'GET' }).then(function (user) {
+      var meta = (user && user.user_metadata) || {};
+      var companyName = String(meta.company_name || '').trim();
+      if (!companyName) return null;
+      return self._rpc('create_company', {
+        p_name: companyName,
+        p_user_name: String(meta.name || '').trim(),
+        p_trial_days: Model.TRIAL_DAYS
+      }).then(function () { return self._loadSession(); });
+    }, function () {
+      /* אם לא הצלחנו לקרוא את המשתמש, נופלים חזרה להתנהגות הרגילה */
+      return null;
+    });
+  };
+
   /* נקרא פעם אחת בעליית העמוד, לפני שמסך ההתחברות מצויר */
   SupabaseBackend.prototype.restore = function () {
     var self = this;
     if (!this.tokens) return Promise.resolve(null);
     var run = this._expired() ? this._refresh() : Promise.resolve();
     return run.then(function () { return self._loadSession(); })
+      .then(function (session) { return session || self._completeSignUp(); })
       .catch(function () { self._clearTokens(); return null; });
   };
 
@@ -282,9 +313,17 @@
       return Promise.reject(fail('invalid_input', t('server.companyRequired')));
     }
 
+    /* שם החברה נשמר על משתמש האימות ולא רק כאן, כי כשאימות מייל
+       דלוק ההרשמה אינה מסתיימת עכשיו: הלקוח יוצא לתיבת המייל,
+       לוחץ על הקישור, ועשוי לחזור ממכשיר אחר לגמרי. מה שנשמר
+       בדפדפן הזה לא יהיה שם. מהמטא-דאטה נקים את החברה בכניסה
+       הראשונה שתצליח. */
     return this._raw('/auth/v1/signup', {
       method: 'POST', token: null,
-      body: { email: email, password: password, data: { name: input.name || '' } }
+      body: {
+        email: email, password: password,
+        data: { name: input.name || '', company_name: companyName }
+      }
     }).then(function (data) {
       if (!data || !data.access_token) {
         /* הפרויקט מוגדר לאמת אימייל לפני כניסה – אין עדיין אסימון */
@@ -313,6 +352,9 @@
     }).then(function (data) {
       self._storeTokens(data);
       return self._loadSession();
+    }).then(function (session) {
+      if (session) return session;
+      return self._completeSignUp();
     }).then(function (session) {
       if (!session) {
         self._clearTokens();

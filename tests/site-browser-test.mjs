@@ -50,6 +50,32 @@ try {
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
   check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
 
+  console.log('\n== שפת ברירת המחדל ==');
+  /* דפדפן באנגלית נפוץ מאוד אצל משתמשים ישראלים, ואינו מעיד על
+     העדפה. האתר חייב להיפתח בעברית גם בשבילו. */
+  {
+    const en = await browser.newContext({ locale: 'en-US', viewport: { width: 1280, height: 900 } });
+    const enPage = await en.newPage();
+    await enPage.goto(BASE + '/');
+    await enPage.waitForTimeout(500);
+    check('דפדפן אנגלי נפתח בעברית',
+      await enPage.getAttribute('html', 'lang'), 'he');
+    check('והכיוון מימין לשמאל',
+      await enPage.locator('body').evaluate((n) => getComputedStyle(n).direction), 'rtl');
+    check('והכותרת בעברית', await enPage.locator('h1').first().textContent(), /משמרת/);
+
+    /* בחירה מפורשת של המשתמש עדיין גוברת ונשמרת */
+    await enPage.selectOption('#landing-language', 'en');
+    await enPage.waitForTimeout(300);
+    check('בחירה מפורשת עדיין עובדת',
+      await enPage.getAttribute('html', 'lang'), 'en');
+    await enPage.reload();
+    await enPage.waitForTimeout(500);
+    check('והיא נזכרת אחרי רענון',
+      await enPage.getAttribute('html', 'lang'), 'en');
+    await en.close();
+  }
+
   console.log('\n== דומיין, גוגל ושיתופים ==');
   const DOMAIN = 'https://setshifts.com';
   check('קישור קנוני לדומיין',

@@ -95,11 +95,19 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   await ctx.close();
 }
 
-console.log('\n== המערכת המסחרית: מסך הכניסה באנגלית ==');
+/* דפדפן באנגלית נפוץ מאוד אצל משתמשים ישראלים ואינו מעיד על העדפה,
+   ולכן המערכת נפתחת בעברית גם בשבילו. בחירה מפורשת גוברת. */
+console.log('\n== המערכת המסחרית: נפתחת בעברית גם בדפדפן אנגלי ==');
 {
   const { ctx, page, errors } = await open(APP, 'en-US');
-  check('כותרת מסך הכניסה', await page.locator('.auth-tab').first().textContent(), 'Sign in');
+  check('מסך הכניסה בעברית', await page.locator('.auth-tab').first().textContent(), 'התחברות');
+  check('כיוון בפועל של הגוף', await computedDir(page, 'body'), 'rtl');
   check('בורר שפה במסך הכניסה', await page.locator('#auth-language').isVisible(), true);
+
+  console.log('\n== החלפה לאנגלית מתוך מסך הכניסה ==');
+  await page.selectOption('#auth-language', 'en');
+  await page.waitForTimeout(400);
+  check('כותרת מסך הכניסה', await page.locator('.auth-tab').first().textContent(), 'Sign in');
 
   await page.click('.auth-tab[data-auth-mode="signup"]');
   await page.fill('input[name="companyName"]', 'Global Coffee');

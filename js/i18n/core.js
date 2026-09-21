@@ -7,8 +7,26 @@
 
   var languages = {};   // code -> { code, name, dir, locale, weekStart, currency, dict }
   var current = null;
-  var fallback = 'en';
   var listeners = [];
+
+  /* שני דברים שונים שקל לבלבל ביניהם:
+
+     fallback   – לאן נופל *מפתח בודד* שחסר בתרגום. זה נשאר אנגלית,
+                  כי אנגלית היא המילון המלא ביותר ותמיד מובנת יותר
+                  מהצגת המפתח עצמו.
+
+     defaultLang – באיזו שפה *נפתח האתר* למי שעוד לא בחר שפה.
+                  עברית, כי השוק הראשון הוא ישראל, ודפדפן באנגלית
+                  הוא דבר נפוץ מאוד אצל משתמשים ישראלים ואינו מעיד
+                  על העדפה.
+
+     autoDetect  – האם ללכת לפי הגדרות הדפדפן במקום ברירת המחדל.
+                  כבוי כרגע. כשתהיה מכירה מחוץ לישראל מדליקים אותו
+                  כאן, או קוראים ל-setDefault, ושום דבר אחר לא
+                  משתנה. */
+  var fallback = 'en';
+  var defaultLang = 'he';
+  var autoDetect = false;
 
   function register(definition) {
     var code = definition.code;
@@ -50,8 +68,8 @@
 
   function active() { return definition(code()); }
 
-  /* זיהוי לפי הגדרות הדפדפן, עם נפילה לאנגלית */
-  function detect() {
+  /* השפה שהדפדפן מבקש, אם יש לנו אותה. null אם אין התאמה. */
+  function browserLanguage() {
     var candidates = [];
     var nav = root.navigator;
     if (nav) {
@@ -64,7 +82,36 @@
       var base = tag.split('-')[0];
       if (has(base)) return base;
     }
-    return has(fallback) ? fallback : Object.keys(languages)[0];
+    return null;
+  }
+
+  /* ברירת המחדל עצמה, עם רשת ביטחון אם המילון שלה לא נטען */
+  function fallbackLanguage() {
+    if (has(defaultLang)) return defaultLang;
+    if (has(fallback)) return fallback;
+    return Object.keys(languages)[0];
+  }
+
+  /* השפה שבה נפתחים. זו הפונקציה שקוראים לה בעליית העמוד. */
+  function initial() {
+    if (autoDetect) {
+      var found = browserLanguage();
+      if (found) return found;
+    }
+    return fallbackLanguage();
+  }
+
+  /* נשמר בשם הישן כדי שקוד קיים ימשיך לעבוד */
+  function detect() { return initial(); }
+
+  /* שינוי ברירת המחדל. setDefault('en', { autoDetect: true }) מחזיר
+     את ההתנהגות של זיהוי לפי הדפדפן, לקראת מכירה בחו"ל. */
+  function setDefault(code, options) {
+    if (code) defaultLang = code;
+    if (options && typeof options.autoDetect === 'boolean') {
+      autoDetect = options.autoDetect;
+    }
+    return { defaultLanguage: defaultLang, autoDetect: autoDetect };
   }
 
   function lookup(dict, key) {
@@ -119,7 +166,8 @@
 
   var API = {
     register: register, list: list, has: has, use: use, code: code, active: active,
-    detect: detect, onChange: onChange, t: t, plural: plural,
+    detect: detect, initial: initial, setDefault: setDefault,
+    browserLanguage: browserLanguage, onChange: onChange, t: t, plural: plural,
     dir: dir, isRtl: isRtl, weekStart: weekStart, currency: currency, formatMoney: formatMoney,
     interpolate: interpolate
   };

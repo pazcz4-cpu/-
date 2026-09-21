@@ -127,5 +127,63 @@ test('החלפת תבניות עובדת בכל שפה', function () {
   });
 });
 
+console.log('\n== שפת ברירת המחדל ==');
+
+/* מדמים דפדפן. ב-Node navigator הוא מאפיין לקריאה בלבד, ולכן
+   מחליפים אותו דרך defineProperty ומחזירים את המקורי בסוף. */
+function withBrowserLanguages(list, fn) {
+  var root = typeof window !== 'undefined' ? window : globalThis;
+  var before = Object.getOwnPropertyDescriptor(root, 'navigator');
+  Object.defineProperty(root, 'navigator', {
+    value: { languages: list, language: list[0] },
+    configurable: true, writable: true
+  });
+  try { fn(); } finally {
+    if (before) { Object.defineProperty(root, 'navigator', before); }
+    else { delete root.navigator; }
+  }
+}
+
+test('האתר נפתח בעברית', function () {
+  assert(I18n.initial() === 'he', 'ברירת המחדל אינה עברית: ' + I18n.initial());
+});
+
+test('דפדפן באנגלית עדיין מקבל עברית', function () {
+  withBrowserLanguages(['en-US', 'en'], function () {
+    assert(I18n.initial() === 'he', 'דפדפן אנגלי גרר אנגלית: ' + I18n.initial());
+  });
+});
+
+test('גם דפדפן בשפה אחרת מקבל את ברירת המחדל', function () {
+  withBrowserLanguages(['fr-FR'], function () {
+    assert(I18n.initial() === 'he', 'זיהוי הדפדפן פעל למרות שהוא כבוי');
+  });
+});
+
+test('מפתח חסר עדיין נופל לאנגלית ולא לעברית', function () {
+  /* מקטע landing קיים רק באנגלית ובעברית, ולכן בספרדית הוא נופל.
+     חשוב שייפול לאנגלית: עברית למי שביקש ספרדית אינה קריאה. */
+  I18n.use('es');
+  var missing = I18n.t('landing.heroTitle');
+  I18n.use('en');
+  var english = I18n.t('landing.heroTitle');
+  I18n.use('he');
+  var hebrew = I18n.t('landing.heroTitle');
+  assert(missing === english, 'מפתח חסר לא נפל לאנגלית: ' + missing);
+  assert(missing !== hebrew, 'מפתח חסר נפל לעברית: ' + missing);
+});
+
+test('אפשר להחזיר זיהוי לפי הדפדפן לקראת חו"ל', function () {
+  I18n.setDefault('en', { autoDetect: true });
+  withBrowserLanguages(['fr-FR'], function () {
+    assert(I18n.initial() === 'fr', 'זיהוי הדפדפן לא חזר: ' + I18n.initial());
+  });
+  withBrowserLanguages(['ja-JP'], function () {
+    assert(I18n.initial() === 'en', 'שפה שאיננו תומכים בה לא נפלה לברירת המחדל');
+  });
+  I18n.setDefault('he', { autoDetect: false });   // החזרה למצב האמיתי
+  assert(I18n.initial() === 'he', 'לא חזרנו לעברית אחרי הבדיקה');
+});
+
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

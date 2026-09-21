@@ -63,7 +63,7 @@ document.body.className = 'landing';
 `;
 
 /* רץ אחרי הסקריפט של הדף: מנטרל את הקישורים לאפליקציה גם בתוכניות,
-   שנבנות מחדש בכל החלפת שפה, ופותח בעברית כשעוד לא נבחרה שפה. */
+   שנבנות מחדש בכל החלפת שפה. */
 const after = `
 (function () {
   'use strict';
@@ -73,12 +73,6 @@ const after = `
   }
   window.I18n.onChange(fixLinks);   /* נרשם אחרי הציור, ולכן רץ אחריו */
   fixLinks();
-
-  if (!window.I18nDom.stored()) {
-    window.I18n.use('he');
-    window.I18nDom.fillPicker(document.getElementById('landing-language'));
-    fixLinks();
-  }
 })();
 `;
 

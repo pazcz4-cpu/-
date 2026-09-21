@@ -84,7 +84,8 @@
 
   /* נקרא פעם אחת בעליית העמוד, לפני שהאפליקציה מציירת משהו */
   function init() {
-    I18n.use(stored() || I18n.detect());
+    /* העדפה שהמשתמש בחר בעצמו גוברת תמיד על ברירת המחדל */
+    I18n.use(stored() || I18n.initial());
     I18n.onChange(applyDocument);
     applyDocument();
     return I18n.code();

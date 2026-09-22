@@ -614,6 +614,8 @@
         signIn: 'Iniciar sesión', signUp: 'Crear cuenta de empresa',
         email: 'Correo', password: 'Contraseña', name: 'Tu nombre', companyName: 'Nombre de la empresa',
         passwordHint: 'Al menos 6 caracteres',
+        showPassword: 'Mostrar la contraseña',
+        hidePassword: 'Ocultar la contraseña',
         enter: 'Entrar', create: 'Crear cuenta', signingIn: 'Entrando…', creating: 'Creando…',
         trialNote: '{days} días gratis, sin tarjeta. Para seguir después del {date} añades un método de pago en la pantalla de suscripción.',
         signOut: 'Salir', blocked: 'Acceso bloqueado',

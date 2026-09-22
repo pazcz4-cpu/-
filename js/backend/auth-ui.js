@@ -17,6 +17,68 @@
       : '<h1 class="auth-title">' + t('app.title') + '</h1>';
   }
 
+  /* ===== עין להצגת הסיסמה =====
+     סיסמה מוקלדת בעיוורון היא הסיבה הנפוצה ביותר ל"סיסמה שגויה"
+     שאינה שגויה – במיוחד בטלפון, ובמיוחד בסיסמה שהמשתמש בדיוק
+     המציא ועוד לא זוכר. העין פותרת את זה בלי להחליש שום דבר:
+     היא מחליפה את type בלבד, והערך עצמו לא נוגע בשום מקום.
+
+     שתי דרכים מתחלפות ב-CSS ולא ב-JavaScript, כדי שקורא מסך
+     יקבל מצב אחד ברור דרך aria-pressed. */
+  var EYE_OPEN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
+    '<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+    'stroke-linejoin="round" d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/>' +
+    '<circle cx="12" cy="12" r="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+  var EYE_SHUT = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
+    '<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+    'stroke-linejoin="round" d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/>' +
+    '<circle cx="12" cy="12" r="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+    '<path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 20 20 4"/></svg>';
+
+  function addPasswordToggles(scope) {
+    if (!scope) return;
+    var fields = scope.querySelectorAll('input[type="password"]');
+    Array.prototype.forEach.call(fields, function (input) {
+      if (input.parentNode && input.parentNode.classList.contains('pw-field')) return;
+      var wrap = document.createElement('span');
+      wrap.className = 'pw-field';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+
+      var button = document.createElement('button');
+      button.type = 'button';           // אחרת הוא שולח את הטופס
+      button.className = 'pw-toggle';
+      button.setAttribute('data-pw-toggle', '');
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', t('auth.showPassword'));
+      button.setAttribute('title', t('auth.showPassword'));
+      /* tabindex=-1: מי שמנווט במקלדת רוצה להגיע מהסיסמה לכפתור
+         השליחה, ולא לעצור בדרך על כפתור תצוגה. */
+      button.tabIndex = -1;
+      button.innerHTML = EYE_OPEN;
+      wrap.appendChild(button);
+    });
+  }
+
+  function togglePassword(button) {
+    var input = button.parentNode.querySelector('input');
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    button.setAttribute('aria-pressed', show ? 'true' : 'false');
+    var label = t(show ? 'auth.hidePassword' : 'auth.showPassword');
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    button.innerHTML = show ? EYE_SHUT : EYE_OPEN;
+    /* הסמן חוזר לסוף הטקסט: החלפת type מאבדת את מיקומו בחלק
+       מהדפדפנים, והמשתמש מגלה שהוא ממשיך להקליד באמצע. */
+    try {
+      var end = input.value.length;
+      input.focus();
+      input.setSelectionRange(end, end);
+    } catch (err) { /* type=text אינו תומך בזה בכל דפדפן */ }
+  }
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -57,6 +119,9 @@
     var self = this;
 
     this.gate.addEventListener('click', function (event) {
+      var eye = event.target.closest('[data-pw-toggle]');
+      if (eye) { event.preventDefault(); togglePassword(eye); return; }
+
       var tab = event.target.closest('[data-auth-mode]');
       if (tab) {
         event.preventDefault();
@@ -84,6 +149,14 @@
       root.I18nDom.setLanguage(event.target.value);
       self.showGate();
     });
+
+    /* סיסמה שנחשפה חוזרת להסתרה בשליחה. אחרת היא נשארת על המסך
+       גם אחרי שהמשתמש סיים, ועל טלפון זה המסך שמישהו מציץ בו. */
+    this.gate.addEventListener('submit', function () {
+      Array.prototype.forEach.call(
+        self.gate.querySelectorAll('[data-pw-toggle][aria-pressed="true"]'),
+        function (button) { togglePassword(button); });
+    }, true);
 
     this.gate.addEventListener('submit', function (event) {
       event.preventDefault();
@@ -265,6 +338,7 @@
       '</form>';
     html += '</div>';
     this.gate.innerHTML = html;
+    addPasswordToggles(this.gate);
     return Promise.resolve(null);
   };
 
@@ -417,6 +491,7 @@
 
     html += '</div>';
     this.gate.innerHTML = html;
+    addPasswordToggles(this.gate);
     if (this.notice) { this._notice(this.notice); }
     if (root.I18nDom) { root.I18nDom.fillPicker(this.gate.querySelector('#auth-language')); }
   };

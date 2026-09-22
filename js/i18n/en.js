@@ -620,6 +620,8 @@
         signIn: 'Sign in', signUp: 'Create a business account',
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
+        showPassword: 'Show password',
+        hidePassword: 'Hide password',
         enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',
         trialNote: '{days} days free, no credit card. To continue after {date} you add a payment method on the subscription screen.',
         signOut: 'Sign out', blocked: 'Access blocked',

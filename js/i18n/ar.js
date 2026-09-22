@@ -614,6 +614,8 @@
         signIn: 'تسجيل الدخول', signUp: 'فتح حساب للشركة',
         email: 'البريد الإلكتروني', password: 'كلمة المرور', name: 'اسمك', companyName: 'اسم الشركة',
         passwordHint: '6 أحرف على الأقل',
+        showPassword: 'إظهار كلمة المرور',
+        hidePassword: 'إخفاء كلمة المرور',
         enter: 'دخول', create: 'فتح حساب', signingIn: 'جارٍ الدخول…', creating: 'جارٍ الإنشاء…',
         trialNote: '{days} يومًا مجانًا وبدون بطاقة. للاستمرار بعد {date} تضيف وسيلة دفع في شاشة الاشتراك.',
         signOut: 'خروج', blocked: 'الوصول محجوب',

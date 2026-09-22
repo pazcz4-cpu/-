@@ -614,6 +614,8 @@
         signIn: 'Anmelden', signUp: 'Firmenkonto erstellen',
         email: 'E-Mail', password: 'Passwort', name: 'Ihr Name', companyName: 'Firmenname',
         passwordHint: 'Mindestens 6 Zeichen',
+        showPassword: 'Passwort anzeigen',
+        hidePassword: 'Passwort ausblenden',
         enter: 'Anmelden', create: 'Konto erstellen', signingIn: 'Anmelden…', creating: 'Wird erstellt…',
         trialNote: '{days} Tage kostenlos, ohne Kreditkarte. Um nach dem {date} weiterzumachen, fügen Sie im Abo-Bildschirm eine Zahlungsart hinzu.',
         signOut: 'Abmelden', blocked: 'Zugang gesperrt',

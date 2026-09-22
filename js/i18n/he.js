@@ -619,6 +619,8 @@
         signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
         email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
         passwordHint: 'לפחות 6 תווים',
+        showPassword: 'הצגת הסיסמה',
+        hidePassword: 'הסתרת הסיסמה',
         enter: 'כניסה', create: 'פתיחת חשבון', signingIn: 'מתחבר…', creating: 'פותח חשבון…',
         trialNote: '{days} ימים ללא חיוב ובלי כרטיס אשראי. כדי להמשיך אחרי {date} מוסיפים אמצעי תשלום במסך המנוי.',
         signOut: 'יציאה', blocked: 'הגישה חסומה',

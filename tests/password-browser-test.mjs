@@ -177,6 +177,61 @@ try {
   await forgot.waitForTimeout(1200);
   check('והחדשה עובדת', await forgot.locator('#manager-root').isVisible(), true);
 
+  console.log('\n== העין: הצגת הסיסמה שהוקלדה ==');
+  /* סיסמה מוקלדת בעיוורון היא הסיבה הנפוצה ביותר ל"סיסמה שגויה"
+     שאינה שגויה – במיוחד בטלפון, ובמיוחד בסיסמה חדשה. */
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(700);
+
+  const pwInput = '#signin-form input[name="password"]';
+  const eye = '#signin-form .pw-toggle';
+  await page.fill(pwInput, 'secret123');
+  check('הסיסמה מוסתרת כברירת מחדל', await page.getAttribute(pwInput, 'type'), 'password');
+  check('יש כפתור עין', await page.locator(eye).count(), 1);
+  check('והוא אומר מה הוא עושה', await page.getAttribute(eye, 'aria-label'), /הצגת/);
+
+  await page.locator(eye).click();
+  await page.waitForTimeout(200);
+  check('לחיצה חושפת את הסיסמה', await page.getAttribute(pwInput, 'type'), 'text');
+  check('והערך עצמו לא השתנה', await page.inputValue(pwInput), 'secret123');
+  check('המצב מדווח לקורא מסך', await page.getAttribute(eye, 'aria-pressed'), 'true');
+  check('והתווית מתהפכת', await page.getAttribute(eye, 'aria-label'), /הסתרת/);
+
+  await page.locator(eye).click();
+  await page.waitForTimeout(200);
+  check('לחיצה שנייה מסתירה חזרה', await page.getAttribute(pwInput, 'type'), 'password');
+
+  /* כפתור בתוך טופס שאינו type=button שולח אותו. זו טעות קלאסית,
+     וכאן היא הייתה מנסה להתחבר בכל לחיצה על העין. */
+  check('העין אינה שולחת את הטופס', await page.getAttribute(eye, 'type'), 'button');
+
+  console.log('\n== סיסמה חשופה חוזרת להסתרה בשליחה ==');
+  await page.fill('#signin-form input[name="email"]', 'nobody@eye.test');
+  await page.fill(pwInput, 'secret123');
+  await page.locator(eye).click();
+  await page.waitForTimeout(150);
+  check('נחשפה לפני השליחה', await page.getAttribute(pwInput, 'type'), 'text');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(700);
+  check('ואחרי השליחה היא מוסתרת שוב',
+    await page.getAttribute(pwInput, 'type'), 'password');
+
+  console.log('\n== גם בשני שדות הסיסמה של קביעת סיסמה ==');
+  await page.evaluate(() => window.__backend.followLink('boss@pw.test', 'recovery'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  check('מסך קביעת הסיסמה מוצג', await page.locator('#password-form').isVisible(), true);
+  check('לשני השדות יש עין',
+    await page.locator('#password-form .pw-toggle').count(), 2);
+  /* השני הוא שדה האימות, וגם הוא צריך להיחשף – שם בדיוק נופלים
+     על תו אחד שונה. */
+  await page.fill('#password-form input[name="confirm"]', 'secret456');
+  await page.locator('#password-form .pw-toggle').nth(1).click();
+  await page.waitForTimeout(200);
+  check('גם שדה האימות נחשף',
+    await page.getAttribute('#password-form input[name="confirm"]', 'type'), 'text');
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

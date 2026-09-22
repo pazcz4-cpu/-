@@ -614,6 +614,8 @@
         signIn: 'Connexion', signUp: 'Créer un compte entreprise',
         email: 'E-mail', password: 'Mot de passe', name: 'Votre nom', companyName: 'Nom de l’entreprise',
         passwordHint: 'Au moins 6 caractères',
+        showPassword: 'Afficher le mot de passe',
+        hidePassword: 'Masquer le mot de passe',
         enter: 'Se connecter', create: 'Créer le compte', signingIn: 'Connexion…', creating: 'Création…',
         trialNote: '{days} jours gratuits, sans carte bancaire. Pour continuer après le {date}, ajoutez un moyen de paiement sur l’écran d’abonnement.',
         signOut: 'Déconnexion', blocked: 'Accès bloqué',

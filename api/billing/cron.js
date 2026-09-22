@@ -19,6 +19,8 @@
 */
 'use strict';
 
+const { projectUrl } = require('../_supabase.js');
+
 const providers = require('./_providers.js');
 
 const MONTH_DAYS = 30;
@@ -44,7 +46,7 @@ function periodKey(companyId, periodStart) {
 
 async function db(path, options) {
   const opts = options || {};
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const url = projectUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const response = await fetch(url + '/rest/v1' + path, {
     method: opts.method || 'GET',

@@ -28,7 +28,13 @@ const SITE_URL = (process.env.PUBLIC_BASE_URL || 'https://setshifts.com').replac
    הפרויקט עצמו: ביום שמעבירים אזור או מכבים פרויקט ישן, בנייה
    בלי משתני סביבה הייתה מפנה לקוחות לבסיס נתונים מת בלי להגיד
    מילה. בלי הערכים האלה האתר נבנה במצב הדגמה מוצהר, עם באנר. */
-const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+/* המסך של Supabase מציג את הכתובת כ-API URL, עם /rest/v1/ בסוף.
+   זו הכתובת שמועתקת בפועל, והיא שוברת כל בקשה בהודעה סתומה. */
+const SUPABASE_URL = (process.env.SUPABASE_URL || '')
+  .trim()
+  .replace(/\/+$/, '')
+  .replace(/\/(rest|auth|storage|realtime|functions)\/v\d+$/i, '')
+  .replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 /* ===== הפרטים של העמודים המשפטיים =====

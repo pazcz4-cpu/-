@@ -1269,6 +1269,46 @@ run('ביטול הזמנה עובר בשרת, כי מחיקה דורשת מפת�
   });
 });
 
+console.log('\n== כתובת הפרויקט ==');
+
+/* המסך של Supabase מציג את הכתובת עם /rest/v1/ בסוף, וזו הכתובת
+   שמועתקת בפועל. התוצאה הייתה "Invalid path specified in request
+   URL" בכל בקשה – הודעה שלא אומרת דבר למי שרק הגדיר משתנה סביבה. */
+run('כתובת שהועתקה מהמסך עם /rest/v1/ עדיין עובדת', function () {
+  var server = new FakeSupabase();
+  var backend = new Supabase.SupabaseBackend({
+    url: 'https://example.supabase.co/rest/v1/',
+    anonKey: 'anon-key',
+    storage: memoryStorage(),
+    fetch: function (url, options) { return server.fetch(url, options); }
+  });
+  assertEqual(backend.url, 'https://example.supabase.co', 'הסיומת לא נוקתה');
+  return backend.signUpCompany({
+    email: 'url@link.test', password: 'secret123', name: 'פז', companyName: 'כתובות'
+  }).then(function (session) {
+    assertEqual(session.company.name, 'כתובות', 'ההרשמה נכשלה');
+    var bad = server.calls.filter(function (c) {
+      return /\/(rest|auth)\/v1\/.*\/(rest|auth)\/v1\//.test(c.path) ||
+        c.path.indexOf('/rest/v1/auth/') === 0;
+    });
+    assertEqual(bad.length, 0, 'נבנה נתיב כפול: ' + JSON.stringify(bad));
+  });
+});
+
+run('גם /auth/v1 ולוכסן בסוף מנוקים', function () {
+  function urlOf(value) {
+    return new Supabase.SupabaseBackend({
+      url: value, anonKey: 'anon-key', storage: memoryStorage(),
+      fetch: function () { return Promise.resolve(null); }
+    }).url;
+  }
+  assertEqual(urlOf('https://a.supabase.co/auth/v1'), 'https://a.supabase.co', 'auth/v1');
+  assertEqual(urlOf('https://a.supabase.co///'), 'https://a.supabase.co', 'לוכסנים');
+  assertEqual(urlOf('  https://a.supabase.co  '), 'https://a.supabase.co', 'רווחים');
+  /* מה שאינו סיומת של Supabase נשאר – יש מי שמריץ מאחורי דומיין משלו */
+  assertEqual(urlOf('https://api.setshifts.com/sb'), 'https://api.setshifts.com/sb', 'נתיב משלו');
+});
+
 chain.then(function () {
   console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed ? 1 : 0);

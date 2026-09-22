@@ -8,6 +8,8 @@
 */
 'use strict';
 
+const { projectUrl } = require('./_supabase.js');
+
 const ROLES = ['manager', 'employee'];
 
 function send(res, status, body) {
@@ -36,7 +38,7 @@ async function callSupabase(url, path, key, options) {
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { return send(res, 405, { message: 'Method not allowed' }); }
 
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const url = projectUrl();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
     return send(res, 500, { message: 'Server is not configured' });

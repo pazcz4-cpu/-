@@ -16,6 +16,8 @@
 */
 'use strict';
 
+const { projectUrl } = require('../_supabase.js');
+
 const providers = require('./_providers.js');
 
 function send(res, status, body) {
@@ -26,7 +28,7 @@ function send(res, status, body) {
 
 async function db(path, options) {
   const opts = options || {};
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const url = projectUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const response = await fetch(url + '/rest/v1' + path, {
     method: opts.method || 'GET',

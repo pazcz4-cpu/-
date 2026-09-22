@@ -5,6 +5,8 @@
    לא מגוף הבקשה. אחרת כל אחד יכול לשלוח "אני הבעלים של חברה X". */
 'use strict';
 
+const { projectUrl } = require('../_supabase.js');
+
 function send(res, status, body) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -13,7 +15,7 @@ function send(res, status, body) {
 
 async function db(path, options) {
   const opts = options || {};
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const url = projectUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const response = await fetch(url + '/rest/v1' + path, {
     method: opts.method || 'GET',
@@ -38,7 +40,7 @@ async function requireOwner(req) {
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!token) return { error: 401, message: 'not signed in' };
 
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const url = projectUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const me = await fetch(url + '/auth/v1/user', {
     headers: { apikey: key, Authorization: 'Bearer ' + token }

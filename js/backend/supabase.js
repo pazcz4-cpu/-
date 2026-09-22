@@ -97,12 +97,27 @@
     };
   }
 
+  /* משאיר רק את מקור הפרויקט: בלי לוכסן בסוף, ובלי הסיומות
+     שהמסך של Supabase מציג (/rest/v1, /auth/v1, /storage/v1). */
+  function normalizeUrl(value) {
+    return String(value || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth|storage|realtime|functions)\/v\d+$/i, '')
+      .replace(/\/+$/, '');
+  }
+
   function SupabaseBackend(options) {
     var opts = options || {};
     if (!opts.url || !opts.anonKey) {
       throw new Error('SupabaseBackend: נדרשים url ו-anonKey');
     }
-    this.url = String(opts.url).replace(/\/+$/, '');
+    /* המסך של Supabase מציג את הכתובת כ-API URL, כלומר עם
+       /rest/v1/ בסוף, וזו הכתובת שמועתקת בפועל. הקוד מוסיף את
+       /rest/v1 ואת /auth/v1 בעצמו, ולכן הדבקה כזו מייצרת
+       "Invalid path specified in request URL" בכל בקשה – שגיאה
+       שאומרת כלום למי שרק הגדיר משתנה סביבה. מנקים אותה כאן. */
+    this.url = normalizeUrl(opts.url);
     this.anonKey = opts.anonKey;
     /* נקודת הקצה שיוצרת משתמשים. רצה בשרת, כי יצירת משתמש דורשת
        מפתח שאסור שיגיע לדפדפן. */

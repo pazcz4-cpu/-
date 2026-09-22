@@ -24,7 +24,17 @@
   display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px;
   color: inherit; text-decoration: none;
 }
-.lp-brand img { width: 30px; height: 30px; border-radius: 8px; display: block; }
+/* הלוגו המלא, לא אייקון עם שם לידו: זה הרושם הראשון של המוצר.
+   הגרסה לרקע כהה נטענת גם היא ונבחרת כאן, כי מצב כהה יכול
+   להשתנות בזמן שהעמוד פתוח. */
+.lp-logo { display: block; width: auto; height: 30px; }
+.lp-logo-light { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lp-logo-dark { display: none; }
+  :root:not([data-theme="light"]) .lp-logo-light { display: block; }
+}
+:root[data-theme="dark"] .lp-logo-dark { display: none; }
+:root[data-theme="dark"] .lp-logo-light { display: block; }
 .lp-nav-spacer { flex: 1; }
 .lp-lang {
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
@@ -208,7 +218,8 @@
 }
 @media (max-width: 560px) {
   .lp-nav-inner { min-height: 56px; gap: 8px; }
-  .lp-brand span { display: none; }
+  /* במסך צר נשאר הלוגו בלבד, בגובה קטן יותר */
+  .lp-logo { height: 24px; }
   .lp-hero-actions .lp-btn { flex: 1; }
   /* בעברית שמות הכפתורים ארוכים יותר, והסרגל העליון גלש מהמסך בטלפון */
   .lp-nav .lp-btn { padding: 9px 12px; font-size: 14px; }

@@ -170,10 +170,23 @@ try {
     (await page.getAttribute('meta[property="og:title"]', 'content') || '').length > 3, true);
   check('תיאור לשיתוף',
     (await page.getAttribute('meta[property="og:description"]', 'content') || '').length > 20, true);
+  /* תמונת השיתוף היא הנעילה המלאה ולא אייקון ריבועי: בוואטסאפ
+     ובסלאק ריבוע קטן נראה כמו קישור שבור. */
   check('תמונה לשיתוף',
-    await page.getAttribute('meta[property="og:image"]', 'content'), DOMAIN + '/icons/icon-512.png');
+    await page.getAttribute('meta[property="og:image"]', 'content'), DOMAIN + '/icons/social.png');
   check('התמונה לשיתוף קיימת באתר',
-    (await page.request.get(BASE + '/icons/icon-512.png')).status(), 200);
+    (await page.request.get(BASE + '/icons/social.png')).status(), 200);
+  check('ובמידות שהרשתות מצפות להן',
+    await page.getAttribute('meta[property="og:image:width"]', 'content'), '1200');
+
+  console.log('\n== הלוגו ==');
+  for (const file of ['logo.png', 'logo-light.png', 'logo-lockup.png',
+    'logo-lockup-light.png', 'logo-mark.png', 'logo-mark-white.png']) {
+    check('/brand/' + file, (await page.request.get(BASE + '/brand/' + file)).status(), 200);
+  }
+  /* קובץ המקור אינו נדרש באתר החי – ממנו נגזרו כל השאר */
+  check('קובץ המקור אינו מפורסם',
+    (await page.request.get(BASE + '/brand/logo-source.png')).status(), 404);
   check('דף המכירה פתוח למנועי חיפוש',
     await page.locator('meta[name="robots"]').count(), 0);
 

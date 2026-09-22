@@ -54,10 +54,17 @@ try {
 
   console.log('\n== הזהות במסך ==');
   check('הכותרת היא שם המוצר', await page.locator('.brand h1').textContent(), 'SetShifts');
-  check('הסמל מצויר ואינו אימוג\'י', await page.evaluate(() => {
-    const mark = document.querySelector('.brand svg.logo');
-    return !!mark && mark.getBoundingClientRect().width > 20;
+  /* הלוגו האמיתי, ולא אימוג'י ולא ציור מקומי: הוא נטען מקובץ,
+     נראה על המסך, והדפדפן באמת הצליח לפענח אותו. */
+  check('הלוגו מוצג ונטען בפועל', await page.evaluate(() => {
+    const mark = document.querySelector('.brand .brand-img');
+    return !!mark && mark.complete && mark.naturalWidth > 0 &&
+      mark.getBoundingClientRect().width > 20;
   }), true);
+  check('והוא מגיע מקובץ הלוגו', await page.evaluate(() => {
+    const mark = document.querySelector('.brand .brand-img');
+    return mark ? mark.getAttribute('src') : '';
+  }), /brand\/logo-mark/);
   check('אין אייקון כפול באף כפתור', await page.evaluate(() => {
     const doubled = /([\u2190-\u2BFF\u2600-\u27BF])\s*\1/;
     return Array.from(document.querySelectorAll('button'))

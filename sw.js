@@ -3,7 +3,7 @@
 /* מספר הגרסה נועד להישרף: העלאתו מוחקת את המטמון הישן אצל כל
    מי שכבר פתח את האפליקציה. מעלים אותו בכל פעם שקובץ שנשמר
    במטמון משנה משמעות – למשל כשמחליפים פרויקט Supabase. */
-var CACHE = 'shift-scheduler-v2';
+var CACHE = 'shift-scheduler-v3';
 
 self.addEventListener('install', function (event) {
   self.skipWaiting();

@@ -1,52 +1,80 @@
-/* הסמל של SetShifts במקום אחד.
+/* הלוגו של SetShifts במקום אחד.
 
-   הסמל מצויר ב-SVG ולא מגיע מקובץ תמונה, כדי שהוא יהיה נכון גם
-   בפתיחה מקומית וגם באתר, וכדי שהוא יישאר חד בכל גודל. הוא חוזר
-   על עצמו בשלושה מסכים (המערכת, הכלי המקומי ומסך הכניסה), ולכן
-   הוא יושב כאן – בקובץ אחד – ולא משולש ב-HTML. */
+   הקבצים עצמם יושבים ב-brand/ ונוצרים כולם מקובץ מקור יחיד
+   (tools/logo.js). כאן רק מחליטים איזו גרסה להציג ואיך למצוא
+   אותה – והסיבה שזה קובץ ולא שלוש שורות HTML היא שהלוגו חוזר
+   בחמישה מסכים, ולוגו שמועתק חמש פעמים מתעדכן בארבע מהן.
+
+   הנתיב נגזר מהמיקום של הקובץ הזה עצמו, ולא נכתב קשיח: המערכת
+   מוגשת מ-/app/ באתר החי אבל נפתחת מהשורש בפתיחה מקומית, ונתיב
+   קבוע היה נכון רק באחד מהשניים. */
 (function (root) {
   'use strict';
 
-  /* מזהה הדרגתי לכל עותק: שני SVG עם אותו id של gradient על אותו
-     עמוד הם מסמך לא תקין, והדפדפן מצייר אז את אחד מהם בלי צבע. */
-  var seq = 0;
-
-  var CELLS = [
-    [11, 20, 5, '#f5a623'], [18, 20, 5, '#2ea662'],
-    [25, 20, 5, '#d7dfef'], [32, 20, 5, '#f5a623'],
-    [11, 26.5, 5, '#2ea662'], [18, 26.5, 5, '#d7dfef'],
-    [25, 26.5, 5, '#4a8df0'], [32, 26.5, 5, '#2ea662'],
-    [11, 33, 3.5, '#d7dfef'], [18, 33, 3.5, '#4a8df0'],
-    [25, 33, 3.5, '#f5a623'], [32, 33, 3.5, '#d7dfef']
-  ];
-
-  function markSvg() {
-    var id = 'ss-mark-' + (++seq);
-    var cells = CELLS.map(function (cell) {
-      return '<rect x="' + cell[0] + '" y="' + cell[1] + '" width="5.5" height="' +
-        cell[2] + '" rx="1.4" fill="' + cell[3] + '"/>';
-    }).join('');
-
-    return '<svg class="logo" viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false">' +
-      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0" stop-color="#23499f"/><stop offset="1" stop-color="#2f5fe0"/>' +
-      '</linearGradient></defs>' +
-      '<rect width="48" height="48" rx="11" fill="url(#' + id + ')"/>' +
-      '<rect x="9" y="12" width="30" height="26" rx="3.5" fill="#ffffff" opacity=".96"/>' +
-      '<rect x="9" y="12" width="30" height="5.5" rx="2.5" fill="#1b3678"/>' +
-      cells + '</svg>';
+  /* הכתובת נגזרת מהכתובת המוחלטת של הקובץ הזה, ולא ממה שכתוב
+     בתגית: ב-HTML כתוב פעם "js/brand.js" ופעם "/js/brand.js",
+     ופענוח ידני של השניים הוא בדיוק המקום שבו נופלים. הדפדפן
+     כבר פתר את זה בשבילנו ב-script.src. */
+  function base() {
+    var doc = root.document;
+    if (!doc) return '';
+    var script = doc.currentScript ||
+      doc.querySelector('script[src$="js/brand.js"], script[src$="/brand.js"]');
+    if (!script) return '';
+    var href = script.src || script.getAttribute('src') || '';
+    return href.replace(/js\/brand\.js(\?.*)?$/, '');
   }
 
-  /* ממלא כל מקום ב-HTML שסומן כמיועד לסמל */
+  /* נקבע עכשיו, בזמן שהקובץ נטען – ולא בקריאה הראשונה. אחר כך
+     document.currentScript כבר מצביע על הקובץ שקרא לנו, ולא
+     עלינו, וזה מייצר כתובת שאינה קיימת. */
+  var prefix = base();
+  function url(file) { return prefix + 'brand/' + file; }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* הסמל לבדו, לכותרות שבהן השם כבר כתוב לידו בטקסט.
+     variant='white' לרקע צבעוני: הלובה התחתונה של הסמל היא
+     כחול־לילה, ועל כותרת כחולה היא נראית כמו כתם. */
+  function markImg(alt, variant) {
+    var file = variant === 'white' ? 'logo-mark-white.png' : 'logo-mark.png';
+    return '<img class="brand-img" src="' + esc(url(file)) +
+      '" alt="' + esc(alt || '') + '" decoding="async">';
+  }
+
+  /* הלוגו המלא: סמל ושם. לשימוש במקום שאין בו כותרת טקסט.
+
+     שתי הגרסאות נטענות תמיד ונבחרות ב-CSS ולא ב-JavaScript: מצב
+     כהה יכול להשתנות בזמן שהעמוד פתוח, ותמונה שנבחרה פעם אחת
+     בטעינה הייתה נשארת שגויה עד לרענון. */
+  function lockupImg(alt) {
+    return '<img class="brand-img brand-img-dark" src="' + esc(url('logo-lockup.png')) +
+      '" alt="' + esc(alt || 'SetShifts') + '" decoding="async">' +
+      '<img class="brand-img brand-img-light" src="' + esc(url('logo-lockup-light.png')) +
+      '" alt="" aria-hidden="true" decoding="async">';
+  }
+
+  /* ממלא כל מקום ב-HTML שסומן כמיועד ללוגו.
+     data-brand-mark → הסמל, data-brand-lockup → הלוגו המלא. */
   function render(scope) {
-    var nodes = (scope || document).querySelectorAll('[data-brand-mark]');
-    Array.prototype.forEach.call(nodes, function (node) {
-      if (node.querySelector('svg')) return;   // כבר צויר
-      node.innerHTML = markSvg();
+    var where = scope || root.document;
+    if (!where) return;
+    Array.prototype.forEach.call(where.querySelectorAll('[data-brand-mark]'), function (node) {
+      if (node.querySelector('img')) return;              // כבר צויר
+      node.innerHTML = markImg(node.getAttribute('data-brand-alt') || '',
+        node.getAttribute('data-brand-mark'));
+    });
+    Array.prototype.forEach.call(where.querySelectorAll('[data-brand-lockup]'), function (node) {
+      if (node.querySelector('img')) return;
+      node.innerHTML = lockupImg(node.getAttribute('data-brand-alt') || 'SetShifts');
     });
   }
 
-  var API = { markSvg: markSvg, render: render };
+  var API = { markImg: markImg, lockupImg: lockupImg, url: url, render: render };
   root.ShiftBrand = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -110,6 +110,8 @@ mkdir(out);
 /* ===== נכסים משותפים ===== */
 copyDir('css', 'css');
 copyDir('js', 'js', (name) => name.endsWith('.js'));
+/* הלוגו. קובץ המקור אינו נדרש באתר החי – ממנו נגזרו כל השאר. */
+copyDir('brand', 'brand', (name) => name.endsWith('.png') && name !== 'logo-source.png');
 
 /* ===== אייקונים ===== */
 const ICONS = [
@@ -124,6 +126,9 @@ const ICONS = [
 ICONS.forEach((icon) => {
   write(path.join('icons', icon.file), icons.drawIcon(icon.size, icon));
 });
+/* תמונת השיתוף: מה שמופיע כשמדביקים קישור לאתר. ריבוע של אייקון
+   נראה שם אבוד, ולכן זו הנעילה המלאה ביחס שהרשתות מצפות לו. */
+write(path.join('icons', 'social.png'), icons.drawSocial(1200, 630));
 
 /* ===== manifest לכל אפליקציה ===== */
 function manifest(options) {
@@ -172,7 +177,7 @@ fs.copyFileSync(path.join(root, 'sw.js'), path.join(out, 'sw.js'));
 function toAbsolutePaths(html) {
   return html
     .replace(/(src|href)="(?!https?:|\/|#|data:|mailto:)([^"]+)"/g, (match, attr, value) => {
-      if (/^(css|js|icons)\//.test(value)) return attr + '="/' + value + '"';
+      if (/^(css|js|icons|brand)\//.test(value)) return attr + '="/' + value + '"';
       return match;
     });
 }
@@ -220,13 +225,15 @@ function socialTags(meta) {
     '<meta property="og:locale" content="he_IL">',
     '<meta property="og:title" content="' + escapeAttr(meta.title) + '">',
     '<meta property="og:description" content="' + escapeAttr(meta.description) + '">',
-    '<meta property="og:image" content="' + SITE_URL + '/icons/icon-512.png">',
+    '<meta property="og:image" content="' + SITE_URL + '/icons/social.png">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
     '<meta property="og:image:width" content="512">',
     '<meta property="og:image:height" content="512">',
     '<meta name="twitter:card" content="summary">',
     '<meta name="twitter:title" content="' + escapeAttr(meta.title) + '">',
     '<meta name="twitter:description" content="' + escapeAttr(meta.description) + '">',
-    '<meta name="twitter:image" content="' + SITE_URL + '/icons/icon-512.png">'
+    '<meta name="twitter:image" content="' + SITE_URL + '/icons/social.png">'
   ];
 }
 

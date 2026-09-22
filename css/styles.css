@@ -191,9 +191,25 @@ body {
   box-shadow: var(--shadow);
 }
 .brand { display: flex; align-items: center; gap: 12px; }
-/* סמל SetShifts: לוח משמרות מצומצם, באותם צבעים של אייקון האפליקציה */
-svg.logo { width: 34px; height: 34px; display: block; flex: 0 0 auto; }
+
+/* ===== הלוגו =====
+   שתי הגרסאות נטענות, ו-CSS בוחר ביניהן: מצב כהה יכול להשתנות
+   בזמן שהעמוד פתוח, ובחירה שנעשית פעם אחת ב-JavaScript הייתה
+   נשארת שגויה עד לרענון. */
+.brand-img { display: block; height: auto; }
+.brand-img-light { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-img-dark { display: none; }
+  :root:not([data-theme="light"]) .brand-img-light { display: block; }
+}
+:root[data-theme="dark"] .brand-img-dark { display: none; }
+:root[data-theme="dark"] .brand-img-light { display: block; }
+
+/* הסמל בכותרת: השם כבר כתוב לידו, ולכן כאן רק הסמל.
+   הכותרת כהה בשתי ערכות הנושא, ולכן היא מציגה תמיד את הגרסה
+   הבהירה – ולסמל אין בכלל גרסה כזו, כי הוא נקרא על שתיהן. */
 .brand-mark { display: flex; flex: 0 0 auto; }
+.brand-mark .brand-img { width: 40px; height: 40px; }
 .app-header h1 { margin: 0; font-size: 20px; }
 .sub { margin: 2px 0 10px; font-size: 13px; opacity: .88; }
 
@@ -636,7 +652,7 @@ body { -webkit-tap-highlight-color: transparent; }
 
   .app-header h1 { font-size: 16px; }
   .sub { display: none; }
-  svg.logo { width: 27px; height: 27px; }
+  .brand-mark .brand-img { width: 30px; height: 30px; }
 
   /* לשוניות ניתנות לגלילה במקום לרדת שורה */
   .tabs {
@@ -757,7 +773,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   border: 1px solid var(--line); border-radius: 16px; padding: 24px;
   box-shadow: var(--shadow);
 }
-.auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+/* הלוגו המלא נושא כאן גם את השם, ולכן הוא יושב מעל המשפט ולא
+   לצידו: שניהם בשורה אחת דוחסים את שניהם. */
+.auth-brand { display: block; margin-bottom: 18px; }
 .auth-title { margin: 0; font-size: 20px; }
 .auth-section { margin: 0 0 6px; font-size: 17px; }
 .auth-sub { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
@@ -1138,6 +1156,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .confirm-line { margin: 0 0 10px; font-size: 14px; line-height: 1.7; color: var(--muted); }
 .confirm-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
 .confirm-card.tone-danger .btn.primary { background: var(--err); border-color: var(--err); }
+
+/* הלוגו במסך הכניסה: המסך הראשון שלקוח חדש רואה */
+.auth-logo { display: block; margin-bottom: 4px; }
+.auth-logo .brand-img { width: 190px; max-width: 70%; }
 
 /* ===== מצב ההזמנה בטבלת המשתמשים =====
    השורה אומרת קודם מה המצב ורק אחר כך מציעה פעולה, כדי שמנהל

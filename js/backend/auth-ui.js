@@ -9,6 +9,14 @@
     try { return root.I18n.t(key, params); } catch (err) { return key; }
   }
 
+  /* מסך הכניסה הוא המסך הראשון שלקוח חדש רואה, ולכן הוא נושא את
+     הלוגו המלא ולא את הסמל לבד עם השם ככותרת טקסט. */
+  function brandLockup() {
+    return root.ShiftBrand
+      ? '<span class="auth-logo">' + root.ShiftBrand.lockupImg('SetShifts') + '</span>'
+      : '<h1 class="auth-title">' + t('app.title') + '</h1>';
+  }
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -238,11 +246,9 @@
     var userBar = document.getElementById('user-bar');
     if (userBar) userBar.classList.add('hidden');
 
-    var mark = root.ShiftBrand ? root.ShiftBrand.markSvg() : '';
     var html = '<div class="auth-card">';
-    html += '<div class="auth-brand">' + mark + '<div>' +
-      '<h1 class="auth-title">' + t('app.title') + '</h1>' +
-      '<p class="auth-sub">' + t('app.subtitle') + '</p></div></div>';
+    html += '<div class="auth-brand">' + brandLockup() +
+      '<p class="auth-sub">' + t('app.subtitle') + '</p></div>';
     html += '<h2 class="auth-section">' + t('auth.newPasswordTitle') + '</h2>';
     html += '<p class="auth-hint">' +
       t(kind === 'invite' ? 'auth.invitePasswordHint' : 'auth.resetPasswordHint') + '</p>';
@@ -357,10 +363,8 @@
     var reset = this.mode === 'reset';
     var signin = this.mode === 'signin' || reset;
     var html = '<div class="auth-card">';
-    var mark = root.ShiftBrand ? root.ShiftBrand.markSvg() : '';
-    html += '<div class="auth-brand">' + mark + '<div>' +
-      '<h1 class="auth-title">' + t('app.title') + '</h1>' +
-      '<p class="auth-sub">' + t('app.subtitle') + '</p></div></div>';
+    html += '<div class="auth-brand">' + brandLockup() +
+      '<p class="auth-sub">' + t('app.subtitle') + '</p></div>';
 
     /* בורר שפה כבר במסך הכניסה – לפני שיש חשבון או העדפה שמורה */
     html += '<div class="auth-lang"><label>' + t('app.language') +

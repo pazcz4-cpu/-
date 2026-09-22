@@ -25,6 +25,7 @@
     "test:employees": "node tests/employees-browser-test.mjs",
     "test:invite": "node tests/invite-browser-test.mjs",
     "test:limit": "node tests/constraint-limit-browser-test.mjs",
+    "brand": "node tools/logo.js",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",
     "test:lang": "node tests/language-browser-test.mjs",

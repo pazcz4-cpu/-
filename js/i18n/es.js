@@ -470,6 +470,10 @@
       },
 
       server: {
+        emailRequired: 'Se necesita una dirección de correo',
+        linkExpired: 'Ese enlace ya no es válido. Pide uno nuevo.',
+        rateLimited: 'Demasiados correos a la vez. Inténtalo en un minuto.',
+        invitePending: 'Esta cuenta fue invitada y todavía no tiene contraseña. Abre el enlace del correo de invitación o pide uno nuevo con «He olvidado la contraseña».',
         confirmEmail: 'Revisa tu correo y confirma la dirección, y luego inicia sesión',
         credentialsRequired: 'Hacen falta el correo y la contraseña',
         passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
@@ -540,6 +544,22 @@
       },
 
       auth: {
+        forgot: 'He olvidado la contraseña',
+        sending: 'Enviando…',
+        resetHint: 'Te enviaremos por correo un enlace para poner una contraseña nueva.',
+        resetSend: 'Enviar el enlace',
+        resetSent: 'Si esa dirección está registrada, le hemos enviado un enlace para poner una contraseña nueva. Revisa también el correo no deseado.',
+        resetFailed: 'No se pudo enviar el enlace',
+        backToSignIn: 'Volver a iniciar sesión',
+        newPasswordTitle: 'Elige una contraseña',
+        resetPasswordHint: 'Elige una contraseña nueva y entras al momento.',
+        invitePasswordHint: 'Te han invitado a SetShifts. Elige una contraseña y ya estás dentro.',
+        newPassword: 'Contraseña nueva',
+        newPasswordConfirm: 'Confirma la contraseña',
+        passwordsDiffer: 'Las dos contraseñas no coinciden',
+        savePassword: 'Guardar y entrar',
+        passwordSaved: 'Contraseña guardada. Ya puedes iniciar sesión.',
+        passwordFailed: 'No se pudo guardar la contraseña',
         wait: 'Un momento…',
         notifyEnabled: 'Notificaciones activadas',
         notifyBody: 'Te avisaremos de los cambios en el horario.',
@@ -561,9 +581,19 @@
         hint: 'Cada persona puede tener su propio acceso. Solo ve sus turnos y envía sus solicitudes: ' +
           'no ve el horario completo ni puede cambiar nada. Los responsables lo ven y lo editan todo. ' +
           'Vincula un usuario a una ficha de empleado para que vea sus turnos.',
-        add: 'Añadir usuario', createUser: 'Crear usuario',
+        add: 'Invitar a alguien',
+        sendInvite: 'Enviar la invitación',
+        inviteHint: 'Recibe un enlace por correo y elige su propia contraseña. Ninguna contraseña pasa por ti y no hay nada que mandar por WhatsApp.',
+        accessColumn: 'Acceso',
+        resendInvite: 'Enviar enlace',
+        resendSent: 'Enviado a {email} un enlace para poner una contraseña',
+        resendFailed: 'No se pudo enviar el enlace',
+        invited: 'Invitación enviada a {email}.',
+        cardCreated: 'Se creó una ficha para {name} y se vinculó al usuario.',
+        cardLinked: 'Usuario vinculado a la ficha existente de {name}.',
+        createUser: 'Enviar la invitación',
         role: 'Rol', staffCard: 'Ficha de empleado', none: 'Ninguna', noLink: 'Sin vincular',
-        initialPassword: 'Contraseña inicial', activeColumn: 'Activo',
+        activeColumn: 'Activo',
         created: 'Usuario creado para {email}', updated: 'Guardado', updateFailed: 'No se pudo actualizar'
       },
 

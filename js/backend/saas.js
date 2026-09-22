@@ -258,7 +258,12 @@
       var getEmployees = function () { return root.ShiftApp.getState().employees; };
 
       if (root.ShiftUsersUI) {
-        root.ShiftUsersUI.init({ backend: backend, session: session, getEmployees: getEmployees });
+        /* הזמנת עובד פותחת לו כרטיס אם אין לו, כי בלי כרטיס הוא
+           נכנס למערכת ולא רואה בה כלום. */
+        root.ShiftUsersUI.init({
+          backend: backend, session: session, getEmployees: getEmployees,
+          addEmployee: function (name) { return root.ShiftApp.addEmployee(name); }
+        });
       }
 
       if (root.ShiftBillingUI && root.ShiftBilling) {

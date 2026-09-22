@@ -470,6 +470,10 @@
       },
 
       server: {
+        emailRequired: 'Eine E-Mail-Adresse ist erforderlich',
+        linkExpired: 'Dieser Link ist nicht mehr gültig. Fordern Sie einen neuen an.',
+        rateLimited: 'Zu viele E-Mails auf einmal. Versuchen Sie es in einer Minute.',
+        invitePending: 'Dieses Konto wurde eingeladen und hat noch kein Passwort. Öffnen Sie den Link aus der Einladungs-E-Mail oder fordern Sie über „Passwort vergessen“ einen neuen an.',
         confirmEmail: 'Prüfen Sie Ihre E-Mail, bestätigen Sie die Adresse und melden Sie sich dann an',
         credentialsRequired: 'E-Mail und Passwort sind erforderlich',
         passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen haben',
@@ -540,6 +544,22 @@
       },
 
       auth: {
+        forgot: 'Passwort vergessen',
+        sending: 'Senden…',
+        resetHint: 'Wir schicken Ihnen per E-Mail einen Link für ein neues Passwort.',
+        resetSend: 'Link senden',
+        resetSent: 'Wenn diese Adresse registriert ist, haben wir ihr einen Link für ein neues Passwort geschickt. Sehen Sie auch im Spam nach.',
+        resetFailed: 'Der Link konnte nicht gesendet werden',
+        backToSignIn: 'Zurück zur Anmeldung',
+        newPasswordTitle: 'Passwort wählen',
+        resetPasswordHint: 'Wählen Sie ein neues Passwort – wir melden Sie sofort an.',
+        invitePasswordHint: 'Sie wurden zu SetShifts eingeladen. Wählen Sie ein Passwort, und Sie sind drin.',
+        newPassword: 'Neues Passwort',
+        newPasswordConfirm: 'Passwort bestätigen',
+        passwordsDiffer: 'Die beiden Passwörter stimmen nicht überein',
+        savePassword: 'Speichern und anmelden',
+        passwordSaved: 'Passwort gespeichert. Sie können sich anmelden.',
+        passwordFailed: 'Das Passwort konnte nicht gespeichert werden',
         wait: 'Einen Moment…',
         notifyEnabled: 'Benachrichtigungen sind aktiv',
         notifyBody: 'Wir informieren Sie über Änderungen am Dienstplan.',
@@ -561,9 +581,19 @@
         hint: 'Jede Person kann einen eigenen Zugang bekommen. Sie sieht nur ihre eigenen Schichten und reicht eigene Wünsche ein – ' +
           'den vollständigen Plan sieht sie nicht und ändern kann sie nichts. Führungskräfte sehen und bearbeiten alles. ' +
           'Verknüpfen Sie einen Benutzer mit einer Mitarbeiterkarte, damit er seine Schichten sieht.',
-        add: 'Benutzer hinzufügen', createUser: 'Benutzer anlegen',
+        add: 'Person einladen',
+        sendInvite: 'Einladung senden',
+        inviteHint: 'Die Person bekommt einen Link per E-Mail und wählt ihr Passwort selbst. Kein Passwort läuft über Sie, und es gibt nichts per WhatsApp zu verschicken.',
+        accessColumn: 'Zugang',
+        resendInvite: 'Link senden',
+        resendSent: 'An {email} wurde ein Link zum Setzen eines Passworts gesendet',
+        resendFailed: 'Der Link konnte nicht gesendet werden',
+        invited: 'Einladung an {email} gesendet.',
+        cardCreated: 'Eine Personalkarte für {name} wurde angelegt und der Zugang damit verknüpft.',
+        cardLinked: 'Zugang mit der vorhandenen Karte von {name} verknüpft.',
+        createUser: 'Einladung senden',
         role: 'Rolle', staffCard: 'Mitarbeiterkarte', none: 'Keine', noLink: 'Keine Verknüpfung',
-        initialPassword: 'Erstes Passwort', activeColumn: 'Aktiv',
+        activeColumn: 'Aktiv',
         created: 'Benutzer für {email} angelegt', updated: 'Gespeichert', updateFailed: 'Aktualisierung fehlgeschlagen'
       },
 

@@ -470,6 +470,10 @@
       },
 
       server: {
+        emailRequired: 'É necessário um endereço de email',
+        linkExpired: 'Esse link já não é válido. Pede um novo.',
+        rateLimited: 'Demasiados emails de uma vez. Tenta dentro de um minuto.',
+        invitePending: 'Esta conta foi convidada e ainda não tem palavra-passe. Abre o link do email de convite, ou pede um novo em «Esqueci a palavra-passe».',
         confirmEmail: 'Verifica o teu e-mail e confirma o endereço, e depois inicia sessão',
         credentialsRequired: 'São necessários o e-mail e a palavra-passe',
         passwordTooShort: 'A palavra-passe tem de ter pelo menos 6 caracteres',
@@ -540,6 +544,22 @@
       },
 
       auth: {
+        forgot: 'Esqueci a palavra-passe',
+        sending: 'A enviar…',
+        resetHint: 'Enviamos-te por email um link para definir uma palavra-passe nova.',
+        resetSend: 'Enviar o link',
+        resetSent: 'Se esse endereço estiver registado, enviámos-lhe um link para definir uma palavra-passe nova. Vê também o spam.',
+        resetFailed: 'Não foi possível enviar o link',
+        backToSignIn: 'Voltar a entrar',
+        newPasswordTitle: 'Escolhe uma palavra-passe',
+        resetPasswordHint: 'Escolhe uma palavra-passe nova e entras logo.',
+        invitePasswordHint: 'Foste convidado para o SetShifts. Escolhe uma palavra-passe e já estás dentro.',
+        newPassword: 'Nova palavra-passe',
+        newPasswordConfirm: 'Confirma a palavra-passe',
+        passwordsDiffer: 'As duas palavras-passe não coincidem',
+        savePassword: 'Guardar e entrar',
+        passwordSaved: 'Palavra-passe guardada. Já podes entrar.',
+        passwordFailed: 'Não foi possível guardar a palavra-passe',
         wait: 'Um momento…',
         notifyEnabled: 'Notificações ativadas',
         notifyBody: 'Vamos avisar-te sobre as alterações ao horário.',
@@ -561,9 +581,19 @@
         hint: 'Cada pessoa pode ter o seu próprio acesso. Vê apenas os seus turnos e envia os seus pedidos – ' +
           'não vê o horário completo nem pode alterar nada. Os responsáveis veem e editam tudo. ' +
           'Liga um utilizador a uma ficha de colaborador para que veja os seus turnos.',
-        add: 'Adicionar utilizador', createUser: 'Criar utilizador',
+        add: 'Convidar alguém',
+        sendInvite: 'Enviar o convite',
+        inviteHint: 'Recebe um link por email e escolhe a própria palavra-passe. Nenhuma palavra-passe passa por ti e não há nada para enviar por WhatsApp.',
+        accessColumn: 'Acesso',
+        resendInvite: 'Enviar link',
+        resendSent: 'Enviado a {email} um link para definir palavra-passe',
+        resendFailed: 'Não foi possível enviar o link',
+        invited: 'Convite enviado para {email}.',
+        cardCreated: 'Criado um cartão de pessoal para {name} e o utilizador foi ligado a ele.',
+        cardLinked: 'Utilizador ligado ao cartão existente de {name}.',
+        createUser: 'Enviar o convite',
         role: 'Função', staffCard: 'Ficha de colaborador', none: 'Nenhuma', noLink: 'Sem ligação',
-        initialPassword: 'Palavra-passe inicial', activeColumn: 'Ativo',
+        activeColumn: 'Ativo',
         created: 'Utilizador criado para {email}', updated: 'Guardado', updateFailed: 'Não foi possível atualizar'
       },
 

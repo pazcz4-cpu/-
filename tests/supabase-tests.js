@@ -56,6 +56,7 @@ function FakeSupabase() {
   this.calls = [];         // תיעוד כל הבקשות, לבדיקות
   this.nextId = 1;
   this.failNext = null;
+  this.recoverCalls = [];
 }
 
 FakeSupabase.prototype.id = function (prefix) {
@@ -140,7 +141,7 @@ FakeSupabase.prototype.fetch = function (url, options) {
     });
   }
 
-  if (path === '/auth/v1/user') {
+  if (path === '/auth/v1/user' && (opts.method || 'GET') === 'GET') {
     var me = this.users[this._userFromAuth(headers)];
     if (!me) return reply(401, { message: 'invalid token' });
     return reply(200, { id: me.id, email: me.email, user_metadata: me.user_metadata || {} });
@@ -162,6 +163,22 @@ FakeSupabase.prototype.fetch = function (url, options) {
   }
 
   if (path === '/auth/v1/logout') return reply(204);
+
+  /* שליחת קישור לאיפוס סיסמה. Supabase עונה 200 גם לכתובת שאינה
+     קיימת, בכוונה, ולכן גם השרת המדומה. */
+  if (path === '/auth/v1/recover') {
+    this.recoverCalls.push({ email: body.email, redirectTo: parsed.searchParams.get('redirect_to') });
+    if (this.rateLimit) return reply(429, { message: 'email rate limit exceeded' });
+    return reply(200, {});
+  }
+
+  /* עדכון המשתמש המחובר – כאן: קביעת סיסמה חדשה */
+  if (path === '/auth/v1/user' && (opts.method || 'GET') === 'PUT') {
+    var target = this.users[this._userFromAuth(headers)];
+    if (!target) return reply(401, { message: 'invalid token' });
+    if (body.password) target.password = body.password;
+    return reply(200, { id: target.id, email: target.email });
+  }
 
   /* ---- פונקציות ---- */
   if (path === '/rest/v1/rpc/create_company') {
@@ -977,6 +994,105 @@ run('קריאות של חברה אחת אינן נראות לאחרת', function
             'השאילתה אינה מסננת לפי חברה: ' + last.query);
         });
       });
+  });
+});
+
+console.log('\n== קישורים מהדואר ואיפוס סיסמה ==');
+
+/* המתאם קורא את האסימונים מה-fragment של הכתובת. בלי זה, לקוח
+   שלחץ על קישור בדואר מגיע למסך התחברות ריק ובטוח שהקישור שבור.
+   ב-Node אין location, ולכן הבדיקות מציבות אותו זמנית. */
+function withLocation(hash, fn) {
+  var saved = { location: globalThis.location, history: globalThis.history };
+  globalThis.location = { hash: hash, pathname: '/app/', search: '',
+    origin: 'https://setshifts.com' };
+  globalThis.replacedUrls = [];
+  globalThis.history = {
+    replaceState: function (a, b, url) { globalThis.replacedUrls.push(url); }
+  };
+  try { return fn(); }
+  finally { globalThis.location = saved.location; globalThis.history = saved.history; }
+}
+
+run('קישור איפוס סיסמה נקרא מהכתובת ומבקש לקבוע סיסמה', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  var userId;
+  return backend.signUpCompany({
+    email: 'boss@link.test', password: 'secret123', name: 'פז', companyName: 'קישורים'
+  }).then(function (session) {
+    userId = session.user.id;
+    backend._clearTokens();
+    var token = makeToken(userId);
+    var hash = '#access_token=' + token + '&refresh_token=r-' + userId +
+      '&expires_in=3600&type=recovery';
+    withLocation(hash, function () {
+      assertEqual(backend.adoptUrlTokens(), 'recovery', 'סוג הקישור לא זוהה');
+      assertEqual(backend.pendingAuthAction(), 'recovery', 'המסך לא יידע לבקש סיסמה');
+      assert(backend.tokens && backend.tokens.access_token === token,
+        'האסימון מהקישור לא נשמר');
+      /* האסימון לא נשאר בכתובת: רענון היה מנסה להשתמש בו שוב,
+         והוא היה נשמר בהיסטוריית הדפדפן. */
+      assertEqual(globalThis.replacedUrls[0], '/app/', 'הכתובת לא נוקתה מהאסימון');
+    });
+  }).then(function () {
+    return backend.setPassword('afterreset1');
+  }).then(function (session) {
+    assert(session, 'קביעת הסיסמה לא החזירה התחברות');
+    assertEqual(backend.pendingAuthAction(), null, 'המסך ימשיך לבקש סיסמה שוב ושוב');
+    assertEqual(server.users[userId].password, 'afterreset1', 'הסיסמה לא הוחלפה בשרת');
+  });
+});
+
+run('קישור שפג נשמר כשגיאה להצגה ואינו מפיל את הכניסה', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  withLocation('#error=access_denied&error_description=Email+link+is+invalid+or+has+expired',
+    function () {
+      assertEqual(backend.adoptUrlTokens(), null, 'קישור שגוי נחשב בטעות לתקין');
+      assertEqual(backend.takeLinkError(), 'Email link is invalid or has expired',
+        'ההודעה מהשרת לא נשמרה להצגה');
+      assertEqual(backend.takeLinkError(), '', 'ההודעה מוצגת פעמיים');
+    });
+  return Promise.resolve();
+});
+
+run('בקשת איפוס אינה מגלה אם הכתובת קיימת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.requestPasswordReset('nobody@link.test').then(function (ok) {
+    assertEqual(ok, true, 'כתובת לא קיימת החזירה תשובה אחרת');
+    assertEqual(server.recoverCalls.length, 1, 'הבקשה לא נשלחה לשרת');
+    assertEqual(server.recoverCalls[0].email, 'nobody@link.test', 'הכתובת לא נורמלה');
+  });
+});
+
+run('חסימת קצב היא השגיאה היחידה שמוצגת ללקוח', function () {
+  var server = new FakeSupabase();
+  server.rateLimit = true;
+  var backend = makeBackend(server);
+  return backend.requestPasswordReset('boss@link.test').then(function () {
+    throw new Error('חסימת קצב לא הוצגה כשגיאה');
+  }, function (err) {
+    assertEqual(err.code, 'rate_limited', 'קוד השגיאה אינו חסימת קצב: ' + err.code);
+  });
+});
+
+run('הזמנת משתמש נשלחת בלי סיסמה', function () {
+  var server = new FakeSupabase();
+  server.serverRoutes = {
+    '/api/create-user': { status: 200, body: { id: 'u2', email: 'new@link.test', invited: true } }
+  };
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'boss2@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
+  }).then(function () {
+    return backend.createUser({ email: 'New@Link.test', name: 'חדש', role: 'employee' });
+  }).then(function (user) {
+    assertEqual(user.invited, true, 'התשובה אינה מציינת שנשלחה הזמנה');
+    var call = server.calls.filter(function (c) { return c.path === '/api/create-user'; })[0];
+    assert(!('password' in call.body), 'סיסמה נשלחה לשרת למרות שהמשתמש קובע אותה בעצמו');
+    assertEqual(call.body.email, 'new@link.test', 'האימייל לא נורמל');
   });
 });
 

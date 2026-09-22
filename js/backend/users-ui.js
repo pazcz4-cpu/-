@@ -28,7 +28,8 @@
         '<th>' + t('users.emailColumn') + '</th>' +
         '<th>' + t('users.role') + '</th>' +
         '<th>' + t('users.staffCard') + '</th>' +
-        '<th>' + t('users.activeColumn') + '</th></tr></thead><tbody>';
+        '<th>' + t('users.activeColumn') + '</th>' +
+        '<th>' + t('users.accessColumn') + '</th></tr></thead><tbody>';
 
       users.forEach(function (user) {
         var isOwner = user.role === 'owner';
@@ -49,6 +50,11 @@
           }).join('') + '</select>') + '</td>';
         html += '<td>' + (isOwner ? '✔' :
           '<input type="checkbox" data-field="active"' + (user.active ? ' checked' : '') + '>') + '</td>';
+        /* קישור לקביעת סיסמה, לכל מי שלא קיבל או שאיבד אותו. המנהל
+           אינו צריך לדעת סיסמאות של אף אחד כדי לעזור. */
+        html += '<td>' + (isOwner ? '—' :
+          '<button class="btn ghost small" data-action="resend" data-email="' +
+          esc(user.email) + '">' + esc(t('users.resendInvite')) + '</button>') + '</td>';
         html += '</tr>';
       });
 
@@ -66,6 +72,20 @@
       message.textContent = text || '';
       message.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
     }
+
+    list.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-action="resend"]');
+      if (!button) return;
+      say('');
+      button.disabled = true;
+      ctx.backend.requestPasswordReset(button.dataset.email).then(function () {
+        button.disabled = false;
+        say(t('users.resendSent', { email: button.dataset.email }));
+      }, function (err) {
+        button.disabled = false;
+        say((err && err.message) || t('users.resendFailed'), true);
+      });
+    });
 
     list.addEventListener('change', function (event) {
       var row = event.target.closest('tr[data-user]');
@@ -89,20 +109,54 @@
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       say('');
+      var name = String(form.name.value || '').trim();
+      var role = form.role.value;
+      var link = resolveStaffCard(form.employeeId.value, name, role);
+
       ctx.backend.createUser({
-        name: form.name.value,
+        name: name,
         email: form.email.value,
-        password: form.password.value,
-        role: form.role.value,
-        employeeId: form.employeeId.value || null
+        role: role,
+        employeeId: link.employeeId
       }).then(function (user) {
         form.reset();
-        say(t('users.created', { email: user.email }));
+        refreshEmployeeOptions();
+        var message = user.invited === false
+          ? t('users.created', { email: user.email })
+          : t('users.invited', { email: user.email });
+        if (link.createdName) {
+          message += ' ' + t('users.cardCreated', { name: link.createdName });
+        } else if (link.matchedName) {
+          message += ' ' + t('users.cardLinked', { name: link.matchedName });
+        }
+        say(message);
         render();
       }, function (err) {
         say((err && err.message) || t('users.createFailed'), true);
       });
     });
+  }
+
+  function sameName(a, b) {
+    return String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') ===
+      String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  /* עובד שאין לו כרטיס אינו רואה משמרות ואינו יכול להגיש אילוצים,
+     ולכן הזמנה בלי כרטיס היא הזמנה שלא עובדת. אם המנהל לא בחר
+     כרטיס: מחפשים כרטיס באותו שם, ואם אין – פותחים אחד. */
+  function resolveStaffCard(chosen, name, role) {
+    if (chosen) return { employeeId: chosen };
+    if (role !== 'employee' || !name) return { employeeId: null };
+
+    var employees = ctx.getEmployees() || [];
+    var match = employees.filter(function (emp) { return sameName(emp.name, name); })[0];
+    if (match) return { employeeId: match.id, matchedName: match.name };
+
+    if (!ctx.addEmployee) return { employeeId: null };
+    var created = ctx.addEmployee(name);
+    if (!created) return { employeeId: null };   // מגבלת התוכנית חסמה
+    return { employeeId: created.id, createdName: created.name };
   }
 
   function refreshEmployeeOptions() {

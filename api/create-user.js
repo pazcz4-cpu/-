@@ -48,10 +48,15 @@ module.exports = async function handler(req, res) {
 
   let input = req.body;
   if (typeof input === 'string') { try { input = JSON.parse(input); } catch (err) { input = null; } }
-  if (!input || !input.email || !input.password) {
-    return send(res, 400, { message: 'Email and password are required' });
+  if (!input || !input.email) {
+    return send(res, 400, { message: 'An email address is required' });
   }
-  if (String(input.password).length < 6) {
+  /* סיסמה אינה נדרשת: ברירת המחדל היא הזמנה בדואר, והמשתמש קובע
+     סיסמה בעצמו. סיסמה מפורשת נתמכת כמסלול חילופי – למשל כשאין
+     שירות דואר מוגדר – ואז היא חייבת להיות תקינה. */
+  const withPassword = input.password !== undefined && input.password !== null &&
+    String(input.password) !== '';
+  if (withPassword && String(input.password).length < 6) {
     return send(res, 400, { message: 'The password must be at least 6 characters' });
   }
 
@@ -72,17 +77,32 @@ module.exports = async function handler(req, res) {
 
   const role = ROLES.includes(input.role) ? input.role : 'employee';
 
-  /* יצירת המשתמש. email_confirm מוגדר כדי שהעובד יוכל להתחבר מיד
-     עם הסיסמה הראשונית שהמנהל נתן לו. */
-  const created = await callSupabase(url, '/auth/v1/admin/users', serviceKey, {
-    method: 'POST',
-    body: {
-      email: String(input.email).trim().toLowerCase(),
-      password: String(input.password),
-      email_confirm: true,
-      user_metadata: { name: input.name || '' }
-    }
-  });
+  const email = String(input.email).trim().toLowerCase();
+
+  /* ההזמנה יוצרת את המשתמש ושולחת לו קישור לקביעת סיסמה. כך אף
+     סיסמה אינה עוברת דרך המנהל, דרך הדפדפן שלו או דרך וואטסאפ.
+     redirect_to מחזיר את המוזמן לאותה כתובת שממנה הוזמן, כדי
+     שהקישור יעבוד גם בסביבת בדיקה וגם בדומיין האמיתי. */
+  const redirect = typeof input.redirectTo === 'string' && /^https?:\/\//.test(input.redirectTo)
+    ? input.redirectTo
+    : '';
+
+  const created = withPassword
+    ? await callSupabase(url, '/auth/v1/admin/users', serviceKey, {
+      method: 'POST',
+      body: {
+        email: email,
+        password: String(input.password),
+        email_confirm: true,
+        user_metadata: { name: input.name || '' }
+      }
+    })
+    : await callSupabase(url, '/auth/v1/invite' +
+      (redirect ? '?redirect_to=' + encodeURIComponent(redirect) : ''), serviceKey, {
+      method: 'POST',
+      body: { email: email, data: { name: input.name || '' } }
+    });
+
   if (!created.ok || !created.body || !created.body.id) {
     const message = (created.body && (created.body.msg || created.body.message)) || 'Could not create the user';
     return send(res, created.status === 422 ? 409 : created.status || 500, { message });
@@ -91,8 +111,8 @@ module.exports = async function handler(req, res) {
   const row = {
     id: created.body.id,
     company_id: caller.company_id,
-    email: String(input.email).trim().toLowerCase(),
-    name: String(input.name || '').trim() || String(input.email).trim().toLowerCase(),
+    email: email,
+    name: String(input.name || '').trim() || email,
     role: role,
     employee_id: input.employeeId || null,
     active: true
@@ -114,6 +134,8 @@ module.exports = async function handler(req, res) {
   const saved = (linked.body && linked.body[0]) || row;
   return send(res, 200, {
     id: saved.id, email: saved.email, name: saved.name,
-    role: saved.role, employeeId: saved.employee_id, active: saved.active
+    role: saved.role, employeeId: saved.employee_id, active: saved.active,
+    /* המסך אומר למנהל מה בעצם קרה: נשלחה הזמנה, או נקבעה סיסמה */
+    invited: !withPassword
   });
 };

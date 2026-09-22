@@ -193,6 +193,7 @@ body {
 .brand { display: flex; align-items: center; gap: 12px; }
 /* סמל SetShifts: לוח משמרות מצומצם, באותם צבעים של אייקון האפליקציה */
 svg.logo { width: 34px; height: 34px; display: block; flex: 0 0 auto; }
+.brand-mark { display: flex; flex: 0 0 auto; }
 .app-header h1 { margin: 0; font-size: 20px; }
 .sub { margin: 2px 0 10px; font-size: 13px; opacity: .88; }
 
@@ -720,6 +721,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 .auth-title { margin: 0; font-size: 20px; }
+.auth-section { margin: 0 0 6px; font-size: 17px; }
 .auth-sub { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
 .auth-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .auth-tab {

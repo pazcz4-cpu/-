@@ -470,6 +470,10 @@
       },
 
       server: {
+        emailRequired: 'Une adresse e-mail est requise',
+        linkExpired: 'Ce lien n’est plus valide. Demandez-en un nouveau.',
+        rateLimited: 'Trop d’e-mails d’un coup. Réessayez dans une minute.',
+        invitePending: 'Ce compte a été invité et n’a pas encore de mot de passe. Ouvrez le lien de l’e-mail d’invitation, ou demandez-en un nouveau via « Mot de passe oublié ».',
         confirmEmail: 'Vérifiez votre e-mail et confirmez l’adresse, puis connectez-vous',
         credentialsRequired: 'L’e-mail et le mot de passe sont obligatoires',
         passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
@@ -540,6 +544,22 @@
       },
 
       auth: {
+        forgot: 'Mot de passe oublié',
+        sending: 'Envoi…',
+        resetHint: 'Nous vous envoyons par e-mail un lien pour définir un nouveau mot de passe.',
+        resetSend: 'Envoyer le lien',
+        resetSent: 'Si cette adresse est enregistrée, nous lui avons envoyé un lien pour définir un nouveau mot de passe. Vérifiez aussi les indésirables.',
+        resetFailed: 'Impossible d’envoyer le lien',
+        backToSignIn: 'Retour à la connexion',
+        newPasswordTitle: 'Choisissez un mot de passe',
+        resetPasswordHint: 'Choisissez un nouveau mot de passe et vous entrez aussitôt.',
+        invitePasswordHint: 'Vous avez été invité sur SetShifts. Choisissez un mot de passe et c’est parti.',
+        newPassword: 'Nouveau mot de passe',
+        newPasswordConfirm: 'Confirmez le mot de passe',
+        passwordsDiffer: 'Les deux mots de passe ne correspondent pas',
+        savePassword: 'Enregistrer et entrer',
+        passwordSaved: 'Mot de passe enregistré. Vous pouvez vous connecter.',
+        passwordFailed: 'Impossible d’enregistrer le mot de passe',
         wait: 'Un instant…',
         notifyEnabled: 'Notifications activées',
         notifyBody: 'Nous vous préviendrons des mises à jour du planning.',
@@ -561,9 +581,19 @@
         hint: 'Chaque personne peut avoir son propre accès. Elle ne voit que ses services et envoie ses propres demandes – ' +
           'elle ne voit pas le planning complet et ne peut rien modifier. Les responsables voient et modifient tout. ' +
           'Liez un utilisateur à une fiche d’employé pour qu’il voie ses services.',
-        add: 'Ajouter un utilisateur', createUser: 'Créer l’utilisateur',
+        add: 'Inviter quelqu’un',
+        sendInvite: 'Envoyer l’invitation',
+        inviteHint: 'La personne reçoit un lien par e-mail et choisit son mot de passe. Aucun mot de passe ne passe par vous, et il n’y a rien à envoyer par WhatsApp.',
+        accessColumn: 'Accès',
+        resendInvite: 'Envoyer un lien',
+        resendSent: 'Lien de création de mot de passe envoyé à {email}',
+        resendFailed: 'Impossible d’envoyer le lien',
+        invited: 'Invitation envoyée à {email}.',
+        cardCreated: 'Une fiche a été créée pour {name} et l’utilisateur y est rattaché.',
+        cardLinked: 'Utilisateur rattaché à la fiche existante de {name}.',
+        createUser: 'Envoyer l’invitation',
         role: 'Rôle', staffCard: 'Fiche d’employé', none: 'Aucune', noLink: 'Aucun lien',
-        initialPassword: 'Mot de passe initial', activeColumn: 'Actif',
+        activeColumn: 'Actif',
         created: 'Utilisateur créé pour {email}', updated: 'Enregistré', updateFailed: 'Échec de la mise à jour'
       },
 

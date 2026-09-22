@@ -44,7 +44,6 @@ const empOptions = await mgr.locator('#invite-form select[name="employeeId"] opt
 console.log('   כרטיסי עובד בבורר:', empOptions.length - 1);
 await mgr.fill('#invite-form input[name="name"]', 'דני');
 await mgr.fill('#invite-form input[name="email"]', 'dani@x.co.il');
-await mgr.fill('#invite-form input[name="password"]', 'secret123');
 await mgr.selectOption('#invite-form select[name="employeeId"]', empOptions[1].v);
 await mgr.click('#invite-form button[type="submit"]');
 await mgr.waitForTimeout(800);
@@ -68,11 +67,15 @@ await emp.goto(APP);
 await emp.waitForTimeout(500);
 // יציאה והתחברות כעובד
 await emp.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+/* העובד הוזמן ואין לו סיסמה. הוא פותח את הקישור מהמייל, קובע
+   סיסמה, ונכנס – בלי שאיש העביר לו סיסמה בדרך. */
+await emp.evaluate(() => window.__backend.followLink('dani@x.co.il', 'invite'));
 await emp.reload();
-await emp.waitForTimeout(500);
-await emp.fill('input[name="email"]', 'dani@x.co.il');
-await emp.fill('input[name="password"]', 'secret123');
-await emp.click('#signin-form button[type="submit"]');
+await emp.waitForTimeout(600);
+console.log('3.5 מסך קביעת הסיסמה מוצג:', await emp.locator('#password-form').isVisible());
+await emp.fill('#password-form input[name="password"]', 'secret123');
+await emp.fill('#password-form input[name="confirm"]', 'secret123');
+await emp.click('#password-form button[type="submit"]');
 await emp.waitForTimeout(1400);
 
 console.log('4. מסך העובד מוצג:', await emp.locator('#employee-root').isVisible(),

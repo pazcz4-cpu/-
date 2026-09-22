@@ -23,6 +23,15 @@ page.on('pageerror', e => errors.push('PAGE: ' + e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
 page.on('dialog', async d => { await d.accept(); });
 
+/* עובד מוזמן קובע סיסמה בעצמו מהקישור שבמייל. כאן אין מייל,
+   ולכן הבדיקה מדמה את הלחיצה על הקישור. */
+async function acceptInvite(email, password) {
+  await page.evaluate(async (args) => {
+    window.__backend.followLink(args.email, 'invite');
+    await window.__backend.setPassword(args.password);
+  }, { email: email, password: password });
+}
+
 async function signIn(email, password) {
   await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await page.reload();
@@ -49,11 +58,11 @@ const opts = await page.locator('#invite-form select[name="employeeId"] option')
   .evaluateAll(o => o.map(x => ({ v: x.value, t: x.textContent })).filter(x => x.v));
 await page.fill('#invite-form input[name="name"]', 'רונית');
 await page.fill('#invite-form input[name="email"]', 'ronit@ap.co.il');
-await page.fill('#invite-form input[name="password"]', 'secret123');
 await page.selectOption('#invite-form select[name="employeeId"]', opts[0].v);
 await page.click('#invite-form button[type="submit"]');
 await page.waitForTimeout(900);
 console.log('1. העובדת הוזמנה וקושרה לכרטיס', opts[0].t);
+await acceptInvite('ronit@ap.co.il', 'secret123');
 
 // --- העובדת מבקשת יום חופש ---
 await signIn('ronit@ap.co.il', 'secret123');

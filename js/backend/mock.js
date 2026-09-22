@@ -18,6 +18,9 @@
 
   var STORE_KEY = 'maiphone-mock-server-v1';
   var SESSION_KEY = 'maiphone-mock-session-v1';
+  /* קישור מהדואר שממתין לטיפול. בשרת האמיתי הוא יושב ב-URL ולכן
+     שורד את הניווט; כאן הוא נשמר כדי שיישרוד רענון באותו אופן. */
+  var PENDING_KEY = 'maiphone-mock-pending-v1';
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
   function newId(prefix) {
@@ -134,12 +137,88 @@
 
   MockBackend.prototype.signIn = function (input) {
     var user = this._findUserByEmail(normalizeEmail(input.email));
+    /* משתמש שהוזמן וטרם קבע סיסמה: אין לו סיסמה שאפשר לנחש,
+       וההודעה מפנה אותו לקישור במקום להאשים אותו בטעות. */
+    if (user && !user.password) {
+      return Promise.reject(this._fail('invite_pending', t('server.invitePending')));
+    }
     if (!user || user.password !== String(input.password)) {
       return Promise.reject(this._fail('bad_credentials', t('server.badCredentials')));
     }
     if (!user.active) {
       return Promise.reject(this._fail('user_disabled', t('server.userInactive')));
     }
+    return this._startSession(user.id);
+  };
+
+  /* ===== איפוס סיסמה והזמנות =====
+
+     בשרת האמיתי הקישור מגיע בדואר ומחזיר את הלקוח לאפליקציה עם
+     אסימון. כאן אין דואר, ולכן הבקשה נרשמת, ו-followLink מדמה את
+     הלחיצה על הקישור – כך שאפשר לבדוק את המסכים מקצה לקצה. */
+  MockBackend.prototype.requestPasswordReset = function (email) {
+    var address = normalizeEmail(email);
+    if (!address) {
+      return Promise.reject(this._fail('invalid_input', t('server.emailRequired')));
+    }
+    var user = this._findUserByEmail(address);
+    /* התשובה זהה גם כשהכתובת אינה קיימת: אחרת המסך הזה מגלה
+       למי שמנסה מי רשום למערכת. */
+    if (user) {
+      this.db.resets = this.db.resets || {};
+      this.db.resets[address] = { at: this.now().toISOString(), userId: user.id };
+      this._save();
+    }
+    return Promise.resolve(true);
+  };
+
+  /* מדמה לחיצה על הקישור שנשלח בדואר */
+  MockBackend.prototype.followLink = function (email, type) {
+    var user = this._findUserByEmail(normalizeEmail(email));
+    if (!user) return false;
+    this.storage.set(PENDING_KEY, { type: type || 'recovery', userId: user.id });
+    return true;
+  };
+
+  MockBackend.prototype._pending = function () {
+    return this.storage.get(PENDING_KEY) || null;
+  };
+
+  MockBackend.prototype.adoptUrlTokens = function () {
+    var pending = this._pending();
+    return pending ? pending.type : null;
+  };
+
+  MockBackend.prototype.pendingAuthAction = function () {
+    var pending = this._pending();
+    return pending ? pending.type : null;
+  };
+
+  MockBackend.prototype.clearPendingAuthAction = function () {
+    this.storage.remove(PENDING_KEY);
+  };
+
+  MockBackend.prototype.restore = function () {
+    return Promise.resolve(this.session());
+  };
+
+  MockBackend.prototype.takeLinkError = function () { return ''; };
+
+  MockBackend.prototype.setPassword = function (password) {
+    var next = String(password || '');
+    if (next.length < 6) {
+      return Promise.reject(this._fail('weak_password', t('server.passwordTooShort')));
+    }
+    var pending = this._pending();
+    var session = this.session();
+    var userId = (pending && pending.userId) || (session && session.user.id);
+    var user = userId && this.db.users[userId];
+    if (!user) {
+      return Promise.reject(this._fail('link_expired', t('server.linkExpired')));
+    }
+    user.password = next;
+    this._save();
+    this.clearPendingAuthAction();
     return this._startSession(user.id);
   };
 
@@ -345,10 +424,13 @@
     var session;
     try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
     var email = normalizeEmail(input.email);
-    if (!email || !input.password) {
-      return Promise.reject(this._fail('invalid_input', t('server.credentialsRequired')));
+    if (!email) {
+      return Promise.reject(this._fail('invalid_input', t('server.emailRequired')));
     }
-    if (String(input.password).length < 6) {
+    /* ברירת המחדל היא הזמנה: המשתמש נוצר בלי סיסמה ומקבל קישור.
+       סיסמה מפורשת נתמכת כמסלול חילופי. */
+    var password = input.password ? String(input.password) : '';
+    if (password && password.length < 6) {
       return Promise.reject(this._fail('weak_password', t('server.passwordTooShort')));
     }
     if (this._findUserByEmail(email)) {
@@ -357,7 +439,7 @@
     var role = input.role === 'manager' ? 'manager' : 'employee';  // owner אינו ניתן להענקה
     var userId = newId('user');
     this.db.users[userId] = {
-      id: userId, email: email, password: String(input.password),
+      id: userId, email: email, password: password,
       name: String(input.name || '').trim() || email,
       companyId: session.company.id, role: role,
       employeeId: input.employeeId || null, active: true,
@@ -366,7 +448,8 @@
     this._save();
     var created = this.db.users[userId];
     return Promise.resolve({ id: created.id, email: created.email, name: created.name,
-      role: created.role, employeeId: created.employeeId, active: created.active });
+      role: created.role, employeeId: created.employeeId, active: created.active,
+      invited: !password });
   };
 
   MockBackend.prototype.updateUser = function (userId, patch) {

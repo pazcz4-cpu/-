@@ -887,6 +887,31 @@
     renderPublish();
   }
 
+  /* הוספת כרטיס עובד. מחזיר את הכרטיס, או null אם מגבלת התוכנית
+     חוסמת – ואז ההודעה ללקוח כבר הוצגה.
+
+     קיים גם כפונקציה בשם, ולא רק בתוך המאזין של הכפתור, כי הזמנת
+     עובד למערכת צריכה ליצור לו כרטיס באותה הדרך בדיוק. */
+  function addEmployee(name) {
+    if (source.planLimit) {
+      var active = state.employees.filter(function (emp) { return emp.active; }).length;
+      var check = source.planLimit(active + 1);
+      if (!check.ok) {
+        toast(check.problems.join(' '));
+        if (source.onPlanBlocked) source.onPlanBlocked(check);
+        return null;
+      }
+    }
+    var employee = {
+      id: Store.newId('emp'), name: String(name || '').trim() || t('employees.newName'),
+      active: true, branches: [], shifts: Store.shiftIds(state).slice(),
+      maxShifts: 6, note: ''
+    };
+    state.employees.push(employee);
+    persist('config');
+    return employee;
+  }
+
   /* ========== רינדור כולל ========== */
   function render() {
     renderWeekHeader();
@@ -1632,21 +1657,7 @@
   function bindEmployeesTab() {
     $('#add-employee').addEventListener('click', function () {
       if (blocked()) return;
-      // מגבלת התוכנית נבדקת לפני ההוספה, אם הוגדרה
-      if (source.planLimit) {
-        var active = state.employees.filter(function (emp) { return emp.active; }).length;
-        var check = source.planLimit(active + 1);
-        if (!check.ok) {
-          toast(check.problems.join(' '));
-          if (source.onPlanBlocked) source.onPlanBlocked(check);
-          return;
-        }
-      }
-      state.employees.push({
-        id: Store.newId('emp'), name: t('employees.newName'), active: true,
-        branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: ''
-      });
-      persist('config');
+      if (!addEmployee(t('employees.newName'))) return;
       render();
     });
 
@@ -2348,6 +2359,7 @@
 
   /* שפת הממשק נקבעת לפני כל ציור, כדי שהמסך הראשון כבר יהיה בשפה הנכונה */
   if (window.I18nDom) { window.I18nDom.init(); }
+  if (window.ShiftBrand) { window.ShiftBrand.render(); }
   setupAppMeta();
 
   // מעבר בין תצוגת נייד למחשב (סיבוב המכשיר, שינוי גודל חלון)
@@ -2419,6 +2431,7 @@
   window.ShiftApp = {
     start: start,
     render: render,
+    addEmployee: addEmployee,
     getState: function () { return state; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,

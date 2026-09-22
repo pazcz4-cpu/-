@@ -476,6 +476,10 @@
       },
 
       server: {
+        emailRequired: 'An email address is required',
+        linkExpired: 'That link is no longer valid. Ask for a new one.',
+        rateLimited: 'Too many emails at once. Try again in a minute.',
+        invitePending: 'This account was invited and has no password yet. Open the link from the invitation email, or ask for a new one with “Forgot password”.',
         confirmEmail: 'Check your email and confirm the address, then sign in',
         credentialsRequired: 'Email and password are required',
         passwordTooShort: 'The password must be at least 6 characters',
@@ -546,6 +550,22 @@
       },
 
       auth: {
+        forgot: 'Forgot password',
+        sending: 'Sending…',
+        resetHint: 'We will email you a link to set a new password.',
+        resetSend: 'Send the link',
+        resetSent: 'If that address is registered, we sent it a link to set a new password. Check the spam folder too.',
+        resetFailed: 'Could not send the link',
+        backToSignIn: 'Back to sign in',
+        newPasswordTitle: 'Choose a password',
+        resetPasswordHint: 'Pick a new password and we will sign you straight in.',
+        invitePasswordHint: 'You have been invited to SetShifts. Pick a password and you are in.',
+        newPassword: 'New password',
+        newPasswordConfirm: 'Confirm the password',
+        passwordsDiffer: 'The two passwords do not match',
+        savePassword: 'Save and sign in',
+        passwordSaved: 'Password saved. You can sign in now.',
+        passwordFailed: 'Could not save the password',
         wait: 'One moment…',
         notifyEnabled: 'Notifications are on',
         notifyBody: 'We will let you know about schedule updates.',
@@ -567,9 +587,19 @@
         hint: 'Every person can have their own login. They see only their own shifts and submit their own requests – ' +
           'they cannot see the full schedule or change anything. Managers see and edit everything. ' +
           'Link a user to a staff card so they can see their shifts.',
-        add: 'Add a user', createUser: 'Create user',
+        add: 'Invite a user',
+        sendInvite: 'Send the invitation',
+        inviteHint: 'They get a link by email and choose their own password. No password passes through you, and there is nothing to send over WhatsApp.',
+        accessColumn: 'Access',
+        resendInvite: 'Send a link',
+        resendSent: 'Sent {email} a link to set a password',
+        resendFailed: 'Could not send the link',
+        invited: 'Invitation sent to {email}.',
+        cardCreated: 'Opened a staff card for {name} and linked the user to it.',
+        cardLinked: 'Linked the user to the existing card for {name}.',
+        createUser: 'Send the invitation',
         role: 'Role', staffCard: 'Staff card', none: 'None', noLink: 'No link',
-        initialPassword: 'Initial password', activeColumn: 'Active',
+        activeColumn: 'Active',
         created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
       },
 

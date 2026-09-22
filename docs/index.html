@@ -200,6 +200,7 @@ body {
 .brand { display: flex; align-items: center; gap: 12px; }
 /* סמל SetShifts: לוח משמרות מצומצם, באותם צבעים של אייקון האפליקציה */
 svg.logo { width: 34px; height: 34px; display: block; flex: 0 0 auto; }
+.brand-mark { display: flex; flex: 0 0 auto; }
 .app-header h1 { margin: 0; font-size: 20px; }
 .sub { margin: 2px 0 10px; font-size: 13px; opacity: .88; }
 
@@ -727,6 +728,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 .auth-title { margin: 0; font-size: 20px; }
+.auth-section { margin: 0 0 6px; font-size: 17px; }
 .auth-sub { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
 .auth-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .auth-tab {
@@ -1035,28 +1037,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 <body>
 <header class="app-header no-print">
   <div class="brand">
-    <svg class="logo" viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="ss-mark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#23499f"/><stop offset="1" stop-color="#2f5fe0"/>
-        </linearGradient>
-      </defs>
-      <rect width="48" height="48" rx="11" fill="url(#ss-mark)"/>
-      <rect x="9" y="12" width="30" height="26" rx="3.5" fill="#ffffff" opacity=".96"/>
-      <rect x="9" y="12" width="30" height="5.5" rx="2.5" fill="#1b3678"/>
-      <rect x="11" y="20" width="5.5" height="5" rx="1.4" fill="#f5a623"/>
-      <rect x="18" y="20" width="5.5" height="5" rx="1.4" fill="#2ea662"/>
-      <rect x="25" y="20" width="5.5" height="5" rx="1.4" fill="#d7dfef"/>
-      <rect x="32" y="20" width="5.5" height="5" rx="1.4" fill="#f5a623"/>
-      <rect x="11" y="26.5" width="5.5" height="5" rx="1.4" fill="#2ea662"/>
-      <rect x="18" y="26.5" width="5.5" height="5" rx="1.4" fill="#d7dfef"/>
-      <rect x="25" y="26.5" width="5.5" height="5" rx="1.4" fill="#4a8df0"/>
-      <rect x="32" y="26.5" width="5.5" height="5" rx="1.4" fill="#2ea662"/>
-      <rect x="11" y="33" width="5.5" height="3.5" rx="1.4" fill="#d7dfef"/>
-      <rect x="18" y="33" width="5.5" height="3.5" rx="1.4" fill="#4a8df0"/>
-      <rect x="25" y="33" width="5.5" height="3.5" rx="1.4" fill="#f5a623"/>
-      <rect x="32" y="33" width="5.5" height="3.5" rx="1.4" fill="#d7dfef"/>
-    </svg>
+    <span class="brand-mark" data-brand-mark></span>
     <div>
       <h1 data-i18n="app.title">SetShifts</h1>
       <p class="sub" data-i18n="app.subtitle">שיבוץ AI לכל הסניפים — לפי זמינות, אילוצים, תפקידים וכללי העסק</p>
@@ -1926,6 +1907,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'An email address is required',
+        linkExpired: 'That link is no longer valid. Ask for a new one.',
+        rateLimited: 'Too many emails at once. Try again in a minute.',
+        invitePending: 'This account was invited and has no password yet. Open the link from the invitation email, or ask for a new one with “Forgot password”.',
         confirmEmail: 'Check your email and confirm the address, then sign in',
         credentialsRequired: 'Email and password are required',
         passwordTooShort: 'The password must be at least 6 characters',
@@ -1996,6 +1981,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'Forgot password',
+        sending: 'Sending…',
+        resetHint: 'We will email you a link to set a new password.',
+        resetSend: 'Send the link',
+        resetSent: 'If that address is registered, we sent it a link to set a new password. Check the spam folder too.',
+        resetFailed: 'Could not send the link',
+        backToSignIn: 'Back to sign in',
+        newPasswordTitle: 'Choose a password',
+        resetPasswordHint: 'Pick a new password and we will sign you straight in.',
+        invitePasswordHint: 'You have been invited to SetShifts. Pick a password and you are in.',
+        newPassword: 'New password',
+        newPasswordConfirm: 'Confirm the password',
+        passwordsDiffer: 'The two passwords do not match',
+        savePassword: 'Save and sign in',
+        passwordSaved: 'Password saved. You can sign in now.',
+        passwordFailed: 'Could not save the password',
         wait: 'One moment…',
         notifyEnabled: 'Notifications are on',
         notifyBody: 'We will let you know about schedule updates.',
@@ -2017,9 +2018,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'Every person can have their own login. They see only their own shifts and submit their own requests – ' +
           'they cannot see the full schedule or change anything. Managers see and edit everything. ' +
           'Link a user to a staff card so they can see their shifts.',
-        add: 'Add a user', createUser: 'Create user',
+        add: 'Invite a user',
+        sendInvite: 'Send the invitation',
+        inviteHint: 'They get a link by email and choose their own password. No password passes through you, and there is nothing to send over WhatsApp.',
+        accessColumn: 'Access',
+        resendInvite: 'Send a link',
+        resendSent: 'Sent {email} a link to set a password',
+        resendFailed: 'Could not send the link',
+        invited: 'Invitation sent to {email}.',
+        cardCreated: 'Opened a staff card for {name} and linked the user to it.',
+        cardLinked: 'Linked the user to the existing card for {name}.',
+        createUser: 'Send the invitation',
         role: 'Role', staffCard: 'Staff card', none: 'None', noLink: 'No link',
-        initialPassword: 'Initial password', activeColumn: 'Active',
+        activeColumn: 'Active',
         created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
       },
 
@@ -2593,6 +2604,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'נדרשת כתובת אימייל',
+        linkExpired: 'הקישור אינו בתוקף. בקשו קישור חדש.',
+        rateLimited: 'נשלחו יותר מדי מיילים ברגע אחד. נסו שוב בעוד דקה.',
+        invitePending: 'החשבון הזה הוזמן וטרם נקבעה לו סיסמה. פתחו את הקישור שנשלח במייל, או בקשו קישור חדש דרך "שכחתי סיסמה".',
         confirmEmail: 'בדקו את תיבת המייל ואשרו את הכתובת, ואז התחברו',
         credentialsRequired: 'נדרשים אימייל וסיסמה',
         passwordTooShort: 'הסיסמה חייבת להכיל לפחות 6 תווים',
@@ -2663,6 +2678,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'שכחתי סיסמה',
+        sending: 'שולח…',
+        resetHint: 'נשלח אליכם קישור לקביעת סיסמה חדשה.',
+        resetSend: 'שליחת קישור',
+        resetSent: 'אם הכתובת רשומה במערכת, נשלח אליה קישור לקביעת סיסמה חדשה. כדאי לבדוק גם בדואר הזבל.',
+        resetFailed: 'שליחת הקישור נכשלה',
+        backToSignIn: 'חזרה להתחברות',
+        newPasswordTitle: 'בחירת סיסמה',
+        resetPasswordHint: 'בחרו סיסמה חדשה, ואנחנו מכניסים אותכם מיד.',
+        invitePasswordHint: 'הוזמנתם ל-SetShifts. בחרו סיסמה, ואתם בפנים.',
+        newPassword: 'סיסמה חדשה',
+        newPasswordConfirm: 'אישור הסיסמה',
+        passwordsDiffer: 'שתי הסיסמאות אינן זהות',
+        savePassword: 'שמירה וכניסה',
+        passwordSaved: 'הסיסמה נשמרה. אפשר להתחבר.',
+        passwordFailed: 'שמירת הסיסמה נכשלה',
         wait: 'רגע…',
         notifyEnabled: 'ההתראות הופעלו',
         notifyBody: 'נודיע לך על עדכונים בסידור.',
@@ -2684,9 +2715,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'כל עובד יכול לקבל כניסה משלו. עובד רואה רק את המשמרות שלו ומזין את האילוצים שלו – ' +
           'הוא אינו רואה את הסידור המלא ואינו יכול לערוך דבר. מנהל רואה ועורך הכל. ' +
           'כדי שעובד יראה את המשמרות שלו יש לקשר את המשתמש לכרטיס העובד.',
-        add: 'הוספת משתמש', createUser: 'יצירת משתמש',
+        add: 'הזמנת משתמש',
+        sendInvite: 'שליחת הזמנה',
+        inviteHint: 'המשתמש מקבל קישור במייל וקובע סיסמה בעצמו. אף סיסמה לא עוברת דרכך, ואין מה להעביר בוואטסאפ.',
+        accessColumn: 'גישה',
+        resendInvite: 'שליחת קישור',
+        resendSent: 'נשלח קישור לקביעת סיסמה אל {email}',
+        resendFailed: 'שליחת הקישור נכשלה',
+        invited: 'נשלחה הזמנה אל {email}.',
+        cardCreated: 'נפתח כרטיס עובד בשם {name} והמשתמש קושר אליו.',
+        cardLinked: 'המשתמש קושר לכרטיס הקיים של {name}.',
+        createUser: 'שליחת הזמנה',
         role: 'תפקיד', staffCard: 'כרטיס עובד', none: 'ללא', noLink: 'ללא קישור',
-        initialPassword: 'סיסמה ראשונית', activeColumn: 'פעיל',
+        activeColumn: 'פעיל',
         created: 'נוצר משתמש עבור {email}', updated: 'העדכון נשמר', updateFailed: 'העדכון נכשל'
       },
 
@@ -3255,6 +3296,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'Se necesita una dirección de correo',
+        linkExpired: 'Ese enlace ya no es válido. Pide uno nuevo.',
+        rateLimited: 'Demasiados correos a la vez. Inténtalo en un minuto.',
+        invitePending: 'Esta cuenta fue invitada y todavía no tiene contraseña. Abre el enlace del correo de invitación o pide uno nuevo con «He olvidado la contraseña».',
         confirmEmail: 'Revisa tu correo y confirma la dirección, y luego inicia sesión',
         credentialsRequired: 'Hacen falta el correo y la contraseña',
         passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
@@ -3325,6 +3370,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'He olvidado la contraseña',
+        sending: 'Enviando…',
+        resetHint: 'Te enviaremos por correo un enlace para poner una contraseña nueva.',
+        resetSend: 'Enviar el enlace',
+        resetSent: 'Si esa dirección está registrada, le hemos enviado un enlace para poner una contraseña nueva. Revisa también el correo no deseado.',
+        resetFailed: 'No se pudo enviar el enlace',
+        backToSignIn: 'Volver a iniciar sesión',
+        newPasswordTitle: 'Elige una contraseña',
+        resetPasswordHint: 'Elige una contraseña nueva y entras al momento.',
+        invitePasswordHint: 'Te han invitado a SetShifts. Elige una contraseña y ya estás dentro.',
+        newPassword: 'Contraseña nueva',
+        newPasswordConfirm: 'Confirma la contraseña',
+        passwordsDiffer: 'Las dos contraseñas no coinciden',
+        savePassword: 'Guardar y entrar',
+        passwordSaved: 'Contraseña guardada. Ya puedes iniciar sesión.',
+        passwordFailed: 'No se pudo guardar la contraseña',
         wait: 'Un momento…',
         notifyEnabled: 'Notificaciones activadas',
         notifyBody: 'Te avisaremos de los cambios en el horario.',
@@ -3346,9 +3407,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'Cada persona puede tener su propio acceso. Solo ve sus turnos y envía sus solicitudes: ' +
           'no ve el horario completo ni puede cambiar nada. Los responsables lo ven y lo editan todo. ' +
           'Vincula un usuario a una ficha de empleado para que vea sus turnos.',
-        add: 'Añadir usuario', createUser: 'Crear usuario',
+        add: 'Invitar a alguien',
+        sendInvite: 'Enviar la invitación',
+        inviteHint: 'Recibe un enlace por correo y elige su propia contraseña. Ninguna contraseña pasa por ti y no hay nada que mandar por WhatsApp.',
+        accessColumn: 'Acceso',
+        resendInvite: 'Enviar enlace',
+        resendSent: 'Enviado a {email} un enlace para poner una contraseña',
+        resendFailed: 'No se pudo enviar el enlace',
+        invited: 'Invitación enviada a {email}.',
+        cardCreated: 'Se creó una ficha para {name} y se vinculó al usuario.',
+        cardLinked: 'Usuario vinculado a la ficha existente de {name}.',
+        createUser: 'Enviar la invitación',
         role: 'Rol', staffCard: 'Ficha de empleado', none: 'Ninguna', noLink: 'Sin vincular',
-        initialPassword: 'Contraseña inicial', activeColumn: 'Activo',
+        activeColumn: 'Activo',
         created: 'Usuario creado para {email}', updated: 'Guardado', updateFailed: 'No se pudo actualizar'
       },
 
@@ -3917,6 +3988,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'Une adresse e-mail est requise',
+        linkExpired: 'Ce lien n’est plus valide. Demandez-en un nouveau.',
+        rateLimited: 'Trop d’e-mails d’un coup. Réessayez dans une minute.',
+        invitePending: 'Ce compte a été invité et n’a pas encore de mot de passe. Ouvrez le lien de l’e-mail d’invitation, ou demandez-en un nouveau via « Mot de passe oublié ».',
         confirmEmail: 'Vérifiez votre e-mail et confirmez l’adresse, puis connectez-vous',
         credentialsRequired: 'L’e-mail et le mot de passe sont obligatoires',
         passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
@@ -3987,6 +4062,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'Mot de passe oublié',
+        sending: 'Envoi…',
+        resetHint: 'Nous vous envoyons par e-mail un lien pour définir un nouveau mot de passe.',
+        resetSend: 'Envoyer le lien',
+        resetSent: 'Si cette adresse est enregistrée, nous lui avons envoyé un lien pour définir un nouveau mot de passe. Vérifiez aussi les indésirables.',
+        resetFailed: 'Impossible d’envoyer le lien',
+        backToSignIn: 'Retour à la connexion',
+        newPasswordTitle: 'Choisissez un mot de passe',
+        resetPasswordHint: 'Choisissez un nouveau mot de passe et vous entrez aussitôt.',
+        invitePasswordHint: 'Vous avez été invité sur SetShifts. Choisissez un mot de passe et c’est parti.',
+        newPassword: 'Nouveau mot de passe',
+        newPasswordConfirm: 'Confirmez le mot de passe',
+        passwordsDiffer: 'Les deux mots de passe ne correspondent pas',
+        savePassword: 'Enregistrer et entrer',
+        passwordSaved: 'Mot de passe enregistré. Vous pouvez vous connecter.',
+        passwordFailed: 'Impossible d’enregistrer le mot de passe',
         wait: 'Un instant…',
         notifyEnabled: 'Notifications activées',
         notifyBody: 'Nous vous préviendrons des mises à jour du planning.',
@@ -4008,9 +4099,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'Chaque personne peut avoir son propre accès. Elle ne voit que ses services et envoie ses propres demandes – ' +
           'elle ne voit pas le planning complet et ne peut rien modifier. Les responsables voient et modifient tout. ' +
           'Liez un utilisateur à une fiche d’employé pour qu’il voie ses services.',
-        add: 'Ajouter un utilisateur', createUser: 'Créer l’utilisateur',
+        add: 'Inviter quelqu’un',
+        sendInvite: 'Envoyer l’invitation',
+        inviteHint: 'La personne reçoit un lien par e-mail et choisit son mot de passe. Aucun mot de passe ne passe par vous, et il n’y a rien à envoyer par WhatsApp.',
+        accessColumn: 'Accès',
+        resendInvite: 'Envoyer un lien',
+        resendSent: 'Lien de création de mot de passe envoyé à {email}',
+        resendFailed: 'Impossible d’envoyer le lien',
+        invited: 'Invitation envoyée à {email}.',
+        cardCreated: 'Une fiche a été créée pour {name} et l’utilisateur y est rattaché.',
+        cardLinked: 'Utilisateur rattaché à la fiche existante de {name}.',
+        createUser: 'Envoyer l’invitation',
         role: 'Rôle', staffCard: 'Fiche d’employé', none: 'Aucune', noLink: 'Aucun lien',
-        initialPassword: 'Mot de passe initial', activeColumn: 'Actif',
+        activeColumn: 'Actif',
         created: 'Utilisateur créé pour {email}', updated: 'Enregistré', updateFailed: 'Échec de la mise à jour'
       },
 
@@ -4579,6 +4680,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'مطلوب عنوان بريد إلكتروني',
+        linkExpired: 'هذا الرابط لم يعد صالحًا. اطلب رابطًا جديدًا.',
+        rateLimited: 'أُرسلت رسائل كثيرة في وقت واحد. حاول بعد دقيقة.',
+        invitePending: 'تمت دعوة هذا الحساب ولا كلمة مرور له بعد. افتح الرابط من رسالة الدعوة، أو اطلب رابطًا جديدًا عبر «نسيت كلمة المرور».',
         confirmEmail: 'تحقق من بريدك وأكّد العنوان، ثم سجّل الدخول',
         credentialsRequired: 'البريد الإلكتروني وكلمة المرور مطلوبان',
         passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
@@ -4649,6 +4754,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'نسيت كلمة المرور',
+        sending: 'جارٍ الإرسال…',
+        resetHint: 'سنرسل إليك بالبريد رابطًا لتعيين كلمة مرور جديدة.',
+        resetSend: 'إرسال الرابط',
+        resetSent: 'إن كان هذا العنوان مسجّلًا، فقد أرسلنا إليه رابطًا لتعيين كلمة مرور جديدة. تحقّق من البريد غير المرغوب أيضًا.',
+        resetFailed: 'تعذّر إرسال الرابط',
+        backToSignIn: 'العودة إلى تسجيل الدخول',
+        newPasswordTitle: 'اختر كلمة مرور',
+        resetPasswordHint: 'اختر كلمة مرور جديدة وسندخلك فورًا.',
+        invitePasswordHint: 'تلقّيت دعوة إلى SetShifts. اختر كلمة مرور وستدخل.',
+        newPassword: 'كلمة مرور جديدة',
+        newPasswordConfirm: 'تأكيد كلمة المرور',
+        passwordsDiffer: 'كلمتا المرور غير متطابقتين',
+        savePassword: 'حفظ ودخول',
+        passwordSaved: 'حُفظت كلمة المرور. يمكنك تسجيل الدخول.',
+        passwordFailed: 'تعذّر حفظ كلمة المرور',
         wait: 'لحظة…',
         notifyEnabled: 'تم تفعيل الإشعارات',
         notifyBody: 'سنبلغك بتحديثات الجدول.',
@@ -4670,9 +4791,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'يمكن لكل موظف الحصول على دخول خاص به. يرى مناوباته فقط ويقدّم طلباته – ' +
           'لا يرى الجدول الكامل ولا يستطيع تعديل شيء. المدير يرى ويعدّل كل شيء. ' +
           'اربط المستخدم ببطاقة موظف لكي يرى مناوباته.',
-        add: 'إضافة مستخدم', createUser: 'إنشاء مستخدم',
+        add: 'دعوة مستخدم',
+        sendInvite: 'إرسال الدعوة',
+        inviteHint: 'يستلم رابطًا بالبريد ويختار كلمة مروره بنفسه. لا تمرّ أي كلمة مرور من خلالك، ولا شيء لإرساله عبر واتساب.',
+        accessColumn: 'الوصول',
+        resendInvite: 'إرسال رابط',
+        resendSent: 'أُرسل إلى {email} رابط لتعيين كلمة مرور',
+        resendFailed: 'تعذّر إرسال الرابط',
+        invited: 'أُرسلت الدعوة إلى {email}.',
+        cardCreated: 'أُنشئت بطاقة موظف باسم {name} ورُبط المستخدم بها.',
+        cardLinked: 'رُبط المستخدم ببطاقة {name} الموجودة.',
+        createUser: 'إرسال الدعوة',
         role: 'الدور', staffCard: 'بطاقة موظف', none: 'بدون', noLink: 'بدون ربط',
-        initialPassword: 'كلمة مرور أولية', activeColumn: 'نشط',
+        activeColumn: 'نشط',
         created: 'تم إنشاء مستخدم لـ{email}', updated: 'تم الحفظ', updateFailed: 'فشل التحديث'
       },
 
@@ -5241,6 +5372,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'Нужен адрес эл. почты',
+        linkExpired: 'Эта ссылка больше не действует. Запросите новую.',
+        rateLimited: 'Слишком много писем сразу. Повторите через минуту.',
+        invitePending: 'Этот аккаунт приглашён и ещё без пароля. Откройте ссылку из письма-приглашения или запросите новую через «Забыли пароль».',
         confirmEmail: 'Проверьте почту, подтвердите адрес, а затем войдите',
         credentialsRequired: 'Нужны электронная почта и пароль',
         passwordTooShort: 'Пароль должен содержать не менее 6 символов',
@@ -5311,6 +5446,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'Забыли пароль',
+        sending: 'Отправка…',
+        resetHint: 'Мы отправим вам письмо со ссылкой для нового пароля.',
+        resetSend: 'Отправить ссылку',
+        resetSent: 'Если этот адрес зарегистрирован, мы отправили на него ссылку для нового пароля. Проверьте и папку «Спам».',
+        resetFailed: 'Не удалось отправить ссылку',
+        backToSignIn: 'Назад ко входу',
+        newPasswordTitle: 'Выберите пароль',
+        resetPasswordHint: 'Выберите новый пароль — и мы сразу вас впустим.',
+        invitePasswordHint: 'Вас пригласили в SetShifts. Выберите пароль, и вы внутри.',
+        newPassword: 'Новый пароль',
+        newPasswordConfirm: 'Подтвердите пароль',
+        passwordsDiffer: 'Пароли не совпадают',
+        savePassword: 'Сохранить и войти',
+        passwordSaved: 'Пароль сохранён. Можно входить.',
+        passwordFailed: 'Не удалось сохранить пароль',
         wait: 'Минуту…',
         notifyEnabled: 'Уведомления включены',
         notifyBody: 'Мы сообщим вам об изменениях в графике.',
@@ -5332,9 +5483,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'У каждого сотрудника может быть свой вход. Он видит только свои смены и подаёт свои заявки — ' +
           'полный график ему недоступен, и менять он ничего не может. Руководитель видит и меняет всё. ' +
           'Свяжите пользователя с карточкой сотрудника, чтобы он видел свои смены.',
-        add: 'Добавить пользователя', createUser: 'Создать пользователя',
+        add: 'Пригласить пользователя',
+        sendInvite: 'Отправить приглашение',
+        inviteHint: 'Человек получит ссылку на почту и сам выберет пароль. Ни один пароль не проходит через вас, и нечего пересылать в мессенджере.',
+        accessColumn: 'Доступ',
+        resendInvite: 'Отправить ссылку',
+        resendSent: 'На {email} отправлена ссылка для установки пароля',
+        resendFailed: 'Не удалось отправить ссылку',
+        invited: 'Приглашение отправлено на {email}.',
+        cardCreated: 'Создана карточка сотрудника «{name}», пользователь привязан к ней.',
+        cardLinked: 'Пользователь привязан к существующей карточке «{name}».',
+        createUser: 'Отправить приглашение',
         role: 'Роль', staffCard: 'Карточка сотрудника', none: 'Нет', noLink: 'Без связи',
-        initialPassword: 'Начальный пароль', activeColumn: 'Активен',
+        activeColumn: 'Активен',
         created: 'Пользователь создан для {email}', updated: 'Сохранено', updateFailed: 'Не удалось обновить'
       },
 
@@ -5903,6 +6064,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'Eine E-Mail-Adresse ist erforderlich',
+        linkExpired: 'Dieser Link ist nicht mehr gültig. Fordern Sie einen neuen an.',
+        rateLimited: 'Zu viele E-Mails auf einmal. Versuchen Sie es in einer Minute.',
+        invitePending: 'Dieses Konto wurde eingeladen und hat noch kein Passwort. Öffnen Sie den Link aus der Einladungs-E-Mail oder fordern Sie über „Passwort vergessen“ einen neuen an.',
         confirmEmail: 'Prüfen Sie Ihre E-Mail, bestätigen Sie die Adresse und melden Sie sich dann an',
         credentialsRequired: 'E-Mail und Passwort sind erforderlich',
         passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen haben',
@@ -5973,6 +6138,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'Passwort vergessen',
+        sending: 'Senden…',
+        resetHint: 'Wir schicken Ihnen per E-Mail einen Link für ein neues Passwort.',
+        resetSend: 'Link senden',
+        resetSent: 'Wenn diese Adresse registriert ist, haben wir ihr einen Link für ein neues Passwort geschickt. Sehen Sie auch im Spam nach.',
+        resetFailed: 'Der Link konnte nicht gesendet werden',
+        backToSignIn: 'Zurück zur Anmeldung',
+        newPasswordTitle: 'Passwort wählen',
+        resetPasswordHint: 'Wählen Sie ein neues Passwort – wir melden Sie sofort an.',
+        invitePasswordHint: 'Sie wurden zu SetShifts eingeladen. Wählen Sie ein Passwort, und Sie sind drin.',
+        newPassword: 'Neues Passwort',
+        newPasswordConfirm: 'Passwort bestätigen',
+        passwordsDiffer: 'Die beiden Passwörter stimmen nicht überein',
+        savePassword: 'Speichern und anmelden',
+        passwordSaved: 'Passwort gespeichert. Sie können sich anmelden.',
+        passwordFailed: 'Das Passwort konnte nicht gespeichert werden',
         wait: 'Einen Moment…',
         notifyEnabled: 'Benachrichtigungen sind aktiv',
         notifyBody: 'Wir informieren Sie über Änderungen am Dienstplan.',
@@ -5994,9 +6175,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'Jede Person kann einen eigenen Zugang bekommen. Sie sieht nur ihre eigenen Schichten und reicht eigene Wünsche ein – ' +
           'den vollständigen Plan sieht sie nicht und ändern kann sie nichts. Führungskräfte sehen und bearbeiten alles. ' +
           'Verknüpfen Sie einen Benutzer mit einer Mitarbeiterkarte, damit er seine Schichten sieht.',
-        add: 'Benutzer hinzufügen', createUser: 'Benutzer anlegen',
+        add: 'Person einladen',
+        sendInvite: 'Einladung senden',
+        inviteHint: 'Die Person bekommt einen Link per E-Mail und wählt ihr Passwort selbst. Kein Passwort läuft über Sie, und es gibt nichts per WhatsApp zu verschicken.',
+        accessColumn: 'Zugang',
+        resendInvite: 'Link senden',
+        resendSent: 'An {email} wurde ein Link zum Setzen eines Passworts gesendet',
+        resendFailed: 'Der Link konnte nicht gesendet werden',
+        invited: 'Einladung an {email} gesendet.',
+        cardCreated: 'Eine Personalkarte für {name} wurde angelegt und der Zugang damit verknüpft.',
+        cardLinked: 'Zugang mit der vorhandenen Karte von {name} verknüpft.',
+        createUser: 'Einladung senden',
         role: 'Rolle', staffCard: 'Mitarbeiterkarte', none: 'Keine', noLink: 'Keine Verknüpfung',
-        initialPassword: 'Erstes Passwort', activeColumn: 'Aktiv',
+        activeColumn: 'Aktiv',
         created: 'Benutzer für {email} angelegt', updated: 'Gespeichert', updateFailed: 'Aktualisierung fehlgeschlagen'
       },
 
@@ -6565,6 +6756,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       server: {
+        emailRequired: 'É necessário um endereço de email',
+        linkExpired: 'Esse link já não é válido. Pede um novo.',
+        rateLimited: 'Demasiados emails de uma vez. Tenta dentro de um minuto.',
+        invitePending: 'Esta conta foi convidada e ainda não tem palavra-passe. Abre o link do email de convite, ou pede um novo em «Esqueci a palavra-passe».',
         confirmEmail: 'Verifica o teu e-mail e confirma o endereço, e depois inicia sessão',
         credentialsRequired: 'São necessários o e-mail e a palavra-passe',
         passwordTooShort: 'A palavra-passe tem de ter pelo menos 6 caracteres',
@@ -6635,6 +6830,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       auth: {
+        forgot: 'Esqueci a palavra-passe',
+        sending: 'A enviar…',
+        resetHint: 'Enviamos-te por email um link para definir uma palavra-passe nova.',
+        resetSend: 'Enviar o link',
+        resetSent: 'Se esse endereço estiver registado, enviámos-lhe um link para definir uma palavra-passe nova. Vê também o spam.',
+        resetFailed: 'Não foi possível enviar o link',
+        backToSignIn: 'Voltar a entrar',
+        newPasswordTitle: 'Escolhe uma palavra-passe',
+        resetPasswordHint: 'Escolhe uma palavra-passe nova e entras logo.',
+        invitePasswordHint: 'Foste convidado para o SetShifts. Escolhe uma palavra-passe e já estás dentro.',
+        newPassword: 'Nova palavra-passe',
+        newPasswordConfirm: 'Confirma a palavra-passe',
+        passwordsDiffer: 'As duas palavras-passe não coincidem',
+        savePassword: 'Guardar e entrar',
+        passwordSaved: 'Palavra-passe guardada. Já podes entrar.',
+        passwordFailed: 'Não foi possível guardar a palavra-passe',
         wait: 'Um momento…',
         notifyEnabled: 'Notificações ativadas',
         notifyBody: 'Vamos avisar-te sobre as alterações ao horário.',
@@ -6656,9 +6867,19 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         hint: 'Cada pessoa pode ter o seu próprio acesso. Vê apenas os seus turnos e envia os seus pedidos – ' +
           'não vê o horário completo nem pode alterar nada. Os responsáveis veem e editam tudo. ' +
           'Liga um utilizador a uma ficha de colaborador para que veja os seus turnos.',
-        add: 'Adicionar utilizador', createUser: 'Criar utilizador',
+        add: 'Convidar alguém',
+        sendInvite: 'Enviar o convite',
+        inviteHint: 'Recebe um link por email e escolhe a própria palavra-passe. Nenhuma palavra-passe passa por ti e não há nada para enviar por WhatsApp.',
+        accessColumn: 'Acesso',
+        resendInvite: 'Enviar link',
+        resendSent: 'Enviado a {email} um link para definir palavra-passe',
+        resendFailed: 'Não foi possível enviar o link',
+        invited: 'Convite enviado para {email}.',
+        cardCreated: 'Criado um cartão de pessoal para {name} e o utilizador foi ligado a ele.',
+        cardLinked: 'Utilizador ligado ao cartão existente de {name}.',
+        createUser: 'Enviar o convite',
         role: 'Função', staffCard: 'Ficha de colaborador', none: 'Nenhuma', noLink: 'Sem ligação',
-        initialPassword: 'Palavra-passe inicial', activeColumn: 'Ativo',
+        activeColumn: 'Ativo',
         created: 'Utilizador criado para {email}', updated: 'Guardado', updateFailed: 'Não foi possível atualizar'
       },
 
@@ -6856,6 +7077,61 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   };
 
   root.I18nDom = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/brand.js ===== */
+/* הסמל של SetShifts במקום אחד.
+
+   הסמל מצויר ב-SVG ולא מגיע מקובץ תמונה, כדי שהוא יהיה נכון גם
+   בפתיחה מקומית וגם באתר, וכדי שהוא יישאר חד בכל גודל. הוא חוזר
+   על עצמו בשלושה מסכים (המערכת, הכלי המקומי ומסך הכניסה), ולכן
+   הוא יושב כאן – בקובץ אחד – ולא משולש ב-HTML. */
+(function (root) {
+  'use strict';
+
+  /* מזהה הדרגתי לכל עותק: שני SVG עם אותו id של gradient על אותו
+     עמוד הם מסמך לא תקין, והדפדפן מצייר אז את אחד מהם בלי צבע. */
+  var seq = 0;
+
+  var CELLS = [
+    [11, 20, 5, '#f5a623'], [18, 20, 5, '#2ea662'],
+    [25, 20, 5, '#d7dfef'], [32, 20, 5, '#f5a623'],
+    [11, 26.5, 5, '#2ea662'], [18, 26.5, 5, '#d7dfef'],
+    [25, 26.5, 5, '#4a8df0'], [32, 26.5, 5, '#2ea662'],
+    [11, 33, 3.5, '#d7dfef'], [18, 33, 3.5, '#4a8df0'],
+    [25, 33, 3.5, '#f5a623'], [32, 33, 3.5, '#d7dfef']
+  ];
+
+  function markSvg() {
+    var id = 'ss-mark-' + (++seq);
+    var cells = CELLS.map(function (cell) {
+      return '<rect x="' + cell[0] + '" y="' + cell[1] + '" width="5.5" height="' +
+        cell[2] + '" rx="1.4" fill="' + cell[3] + '"/>';
+    }).join('');
+
+    return '<svg class="logo" viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#23499f"/><stop offset="1" stop-color="#2f5fe0"/>' +
+      '</linearGradient></defs>' +
+      '<rect width="48" height="48" rx="11" fill="url(#' + id + ')"/>' +
+      '<rect x="9" y="12" width="30" height="26" rx="3.5" fill="#ffffff" opacity=".96"/>' +
+      '<rect x="9" y="12" width="30" height="5.5" rx="2.5" fill="#1b3678"/>' +
+      cells + '</svg>';
+  }
+
+  /* ממלא כל מקום ב-HTML שסומן כמיועד לסמל */
+  function render(scope) {
+    var nodes = (scope || document).querySelectorAll('[data-brand-mark]');
+    Array.prototype.forEach.call(nodes, function (node) {
+      if (node.querySelector('svg')) return;   // כבר צויר
+      node.innerHTML = markSvg();
+    });
+  }
+
+  var API = { markSvg: markSvg, render: render };
+  root.ShiftBrand = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -10422,6 +10698,31 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     renderPublish();
   }
 
+  /* הוספת כרטיס עובד. מחזיר את הכרטיס, או null אם מגבלת התוכנית
+     חוסמת – ואז ההודעה ללקוח כבר הוצגה.
+
+     קיים גם כפונקציה בשם, ולא רק בתוך המאזין של הכפתור, כי הזמנת
+     עובד למערכת צריכה ליצור לו כרטיס באותה הדרך בדיוק. */
+  function addEmployee(name) {
+    if (source.planLimit) {
+      var active = state.employees.filter(function (emp) { return emp.active; }).length;
+      var check = source.planLimit(active + 1);
+      if (!check.ok) {
+        toast(check.problems.join(' '));
+        if (source.onPlanBlocked) source.onPlanBlocked(check);
+        return null;
+      }
+    }
+    var employee = {
+      id: Store.newId('emp'), name: String(name || '').trim() || t('employees.newName'),
+      active: true, branches: [], shifts: Store.shiftIds(state).slice(),
+      maxShifts: 6, note: ''
+    };
+    state.employees.push(employee);
+    persist('config');
+    return employee;
+  }
+
   /* ========== רינדור כולל ========== */
   function render() {
     renderWeekHeader();
@@ -11167,21 +11468,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   function bindEmployeesTab() {
     $('#add-employee').addEventListener('click', function () {
       if (blocked()) return;
-      // מגבלת התוכנית נבדקת לפני ההוספה, אם הוגדרה
-      if (source.planLimit) {
-        var active = state.employees.filter(function (emp) { return emp.active; }).length;
-        var check = source.planLimit(active + 1);
-        if (!check.ok) {
-          toast(check.problems.join(' '));
-          if (source.onPlanBlocked) source.onPlanBlocked(check);
-          return;
-        }
-      }
-      state.employees.push({
-        id: Store.newId('emp'), name: t('employees.newName'), active: true,
-        branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: ''
-      });
-      persist('config');
+      if (!addEmployee(t('employees.newName'))) return;
       render();
     });
 
@@ -11883,6 +12170,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   /* שפת הממשק נקבעת לפני כל ציור, כדי שהמסך הראשון כבר יהיה בשפה הנכונה */
   if (window.I18nDom) { window.I18nDom.init(); }
+  if (window.ShiftBrand) { window.ShiftBrand.render(); }
   setupAppMeta();
 
   // מעבר בין תצוגת נייד למחשב (סיבוב המכשיר, שינוי גודל חלון)
@@ -11954,6 +12242,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   window.ShiftApp = {
     start: start,
     render: render,
+    addEmployee: addEmployee,
     getState: function () { return state; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,

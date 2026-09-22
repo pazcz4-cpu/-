@@ -20,6 +20,7 @@
     "test:why": "node tests/why-browser-test.mjs",
     "test:save": "node tests/save-state-browser-test.mjs",
     "test:publish": "node tests/publish-browser-test.mjs",
+    "test:password": "node tests/password-browser-test.mjs",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",
     "test:lang": "node tests/language-browser-test.mjs",

@@ -26,12 +26,22 @@
   }
 
   AuthUI.prototype.start = function () {
-    var self = this;
     this._bind();
     this.watchLanguage();
+
+    /* לקוח שהגיע מקישור בדואר (איפוס סיסמה או הזמנה) צריך לקבוע
+       סיסמה לפני הכל. מסך התחברות רגיל כאן הוא קישור שבור מבחינתו. */
+    var pending = this.backend.pendingAuthAction && this.backend.pendingAuthAction();
+    if (pending) { this.showPasswordSetup(pending); return Promise.resolve(null); }
+
+    /* קישור שפג או שנלחץ פעמיים – מוצג במסך ההתחברות, כדי שהלקוח
+       יבין שצריך לבקש קישור חדש ולא שהמערכת שכחה אותו. */
+    var linkError = this.backend.takeLinkError && this.backend.takeLinkError();
+
     var session = this.backend.session();
-    if (session) { return this._enter(session); }
+    if (session && !linkError) { return this._enter(session); }
     this.showGate();
+    if (linkError) { this._error(linkError); }
     return Promise.resolve(null);
   };
 
@@ -41,11 +51,23 @@
     this.gate.addEventListener('click', function (event) {
       var tab = event.target.closest('[data-auth-mode]');
       if (tab) {
+        event.preventDefault();
         self.mode = tab.dataset.authMode;
         self.showGate();
         return;
       }
       if (event.target.closest('#auth-signout-blocked')) { self.signOut(); }
+      if (event.target.closest('#auth-forgot')) {
+        event.preventDefault();
+        self.mode = 'reset';
+        self.notice = '';
+        self.showGate();
+      }
+      if (event.target.closest('#auth-cancel-setup')) {
+        event.preventDefault();
+        if (self.backend.clearPendingAuthAction) self.backend.clearPendingAuthAction();
+        self.signOut();
+      }
     });
 
     /* החלפת שפה במסך הכניסה מציירת אותו מחדש בשפה החדשה */
@@ -61,6 +83,8 @@
       var form = event.target;
       if (form.id === 'signin-form') { self._signIn(form); }
       else if (form.id === 'signup-form') { self._signUp(form); }
+      else if (form.id === 'reset-form') { self._requestReset(form); }
+      else if (form.id === 'password-form') { self._setPassword(form); }
     });
 
     document.addEventListener('click', function (event) {
@@ -159,6 +183,81 @@
     });
   };
 
+  /* הבקשה לאיפוס אינה מגלה אם הכתובת קיימת, ולכן ההודעה זהה בכל
+     מקרה. זה מסך פתוח לכל האינטרנט. */
+  AuthUI.prototype._requestReset = function (form) {
+    var self = this;
+    this._error('');
+    this._notice('');
+    this._setBusy(true, t('auth.sending'));
+    this.backend.requestPasswordReset(form.email.value).then(function () {
+      self._setBusy(false);
+      self.mode = 'signin';
+      self.notice = t('auth.resetSent');
+      self.showGate();
+    }, function (err) {
+      self._setBusy(false);
+      self._error((err && err.message) || t('auth.resetFailed'));
+    });
+  };
+
+  AuthUI.prototype._setPassword = function (form) {
+    var self = this;
+    this._error('');
+    if (form.password.value !== form.confirm.value) {
+      this._error(t('auth.passwordsDiffer'));
+      return;
+    }
+    this._setBusy(true, t('auth.wait'));
+    this.backend.setPassword(form.password.value).then(function (session) {
+      self._setBusy(false);
+      if (!session) {
+        /* הסיסמה נשמרה, אבל אין פרופיל להיכנס אליו. עדיף להחזיר
+           למסך התחברות מאשר להשאיר מסך לבן. */
+        self.mode = 'signin';
+        self.notice = t('auth.passwordSaved');
+        self.showGate();
+        return;
+      }
+      self._enter(session);
+    }, function (err) {
+      self._setBusy(false);
+      self._error((err && err.message) || t('auth.passwordFailed'));
+    });
+  };
+
+  /* מסך "בחרו סיסמה" – גם לאיפוס וגם להזמנה. שניהם מגיעים מקישור
+     בדואר, וההבדל היחיד הוא מה שכתוב למעלה. */
+  AuthUI.prototype.showPasswordSetup = function (kind) {
+    this.appRoot.classList.add('hidden');
+    this.gate.classList.remove('hidden');
+    var userBar = document.getElementById('user-bar');
+    if (userBar) userBar.classList.add('hidden');
+
+    var mark = root.ShiftBrand ? root.ShiftBrand.markSvg() : '';
+    var html = '<div class="auth-card">';
+    html += '<div class="auth-brand">' + mark + '<div>' +
+      '<h1 class="auth-title">' + t('app.title') + '</h1>' +
+      '<p class="auth-sub">' + t('app.subtitle') + '</p></div></div>';
+    html += '<h2 class="auth-section">' + t('auth.newPasswordTitle') + '</h2>';
+    html += '<p class="auth-hint">' +
+      t(kind === 'invite' ? 'auth.invitePasswordHint' : 'auth.resetPasswordHint') + '</p>';
+    html += '<p class="auth-error hidden"></p>';
+    html += '<p class="auth-notice hidden"></p>';
+    html += '<form id="password-form" class="auth-form">' +
+      '<label>' + t('auth.newPassword') +
+      '<input type="password" name="password" class="text-input" autocomplete="new-password" required minlength="6">' +
+      '<small>' + t('auth.passwordHint') + '</small></label>' +
+      '<label>' + t('auth.newPasswordConfirm') +
+      '<input type="password" name="confirm" class="text-input" autocomplete="new-password" required minlength="6"></label>' +
+      '<button type="submit" class="btn primary">' + t('auth.savePassword') + '</button>' +
+      '<p class="auth-hint"><a href="#" id="auth-cancel-setup">' + t('auth.backToSignIn') + '</a></p>' +
+      '</form>';
+    html += '</div>';
+    this.gate.innerHTML = html;
+    return Promise.resolve(null);
+  };
+
   AuthUI.prototype.signOut = function () {
     var self = this;
     return this.backend.signOut().then(function () {
@@ -251,9 +350,11 @@
     var userBar = document.getElementById('user-bar');
     if (userBar) userBar.classList.add('hidden');
 
-    var signin = this.mode === 'signin';
+    var reset = this.mode === 'reset';
+    var signin = this.mode === 'signin' || reset;
     var html = '<div class="auth-card">';
-    html += '<div class="auth-brand"><span class="logo">📱</span><div>' +
+    var mark = root.ShiftBrand ? root.ShiftBrand.markSvg() : '';
+    html += '<div class="auth-brand">' + mark + '<div>' +
       '<h1 class="auth-title">' + t('app.title') + '</h1>' +
       '<p class="auth-sub">' + t('app.subtitle') + '</p></div></div>';
 
@@ -269,11 +370,21 @@
     html += '<p class="auth-error hidden"></p>';
     html += '<p class="auth-notice hidden"></p>';
 
-    if (signin) {
+    if (reset) {
+      /* מסך נפרד ולא רק שדה נוסף: מי שאיבד סיסמה לא צריך לראות
+         שדה סיסמה שהוא לא יכול למלא. */
+      html += '<form id="reset-form" class="auth-form">' +
+        '<p class="auth-hint">' + t('auth.resetHint') + '</p>' +
+        '<label>' + t('auth.email') + '<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
+        '<button type="submit" class="btn primary">' + t('auth.resetSend') + '</button>' +
+        '<p class="auth-hint"><a href="#" data-auth-mode="signin">' + t('auth.backToSignIn') + '</a></p>' +
+        '</form>';
+    } else if (signin) {
       html += '<form id="signin-form" class="auth-form">' +
         '<label>' + t('auth.email') + '<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
         '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="current-password" required></label>' +
         '<button type="submit" class="btn primary">' + t('auth.enter') + '</button>' +
+        '<p class="auth-hint"><a href="#" id="auth-forgot">' + t('auth.forgot') + '</a></p>' +
         '</form>';
     } else {
       html += '<form id="signup-form" class="auth-form">' +

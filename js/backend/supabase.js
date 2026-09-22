@@ -55,6 +55,16 @@
     if (lower.indexOf('company name') !== -1) {
       return fail('invalid_input', t('server.companyRequired'));
     }
+    /* חסימת קצב של שליחת מיילים. זו התשובה היחידה שבה כדאי לומר
+       ללקוח "נסו בעוד רגע" במקום להציג כשל כללי. */
+    if (status === 429 || lower.indexOf('rate limit') !== -1 ||
+        lower.indexOf('too many requests') !== -1) {
+      return fail('rate_limited', t('server.rateLimited'));
+    }
+    if (lower.indexOf('expired') !== -1 || lower.indexOf('invalid token') !== -1 ||
+        lower.indexOf('already been used') !== -1) {
+      return fail('link_expired', t('server.linkExpired'));
+    }
     if (status === 401 || lower.indexOf('not signed in') !== -1) {
       return fail('not_signed_in', t('server.signInRequired'));
     }
@@ -286,8 +296,119 @@
   };
 
   /* נקרא פעם אחת בעליית העמוד, לפני שמסך ההתחברות מצויר */
+  /* ===== קישורים שמגיעים מהמייל =====
+
+     אישור כתובת, איפוס סיסמה והזמנה מגיעים כקישור שמחזיר את הלקוח
+     לאפליקציה עם האסימונים ב-fragment של הכתובת (#access_token=...).
+     בלי לקרוא אותם כאן, לקוח שלחץ על קישור בדואר מגיע למסך התחברות
+     ריק – ומבחינתו הקישור לא עבד. */
+  function parseFragment(hash) {
+    var out = {};
+    String(hash || '').replace(/^#/, '').split('&').forEach(function (pair) {
+      if (!pair) return;
+      var eq = pair.indexOf('=');
+      var key = eq === -1 ? pair : pair.slice(0, eq);
+      var value = eq === -1 ? '' : pair.slice(eq + 1);
+      try { out[decodeURIComponent(key)] = decodeURIComponent(value.replace(/\+/g, ' ')); }
+      catch (err) { out[key] = value; }
+    });
+    return out;
+  }
+
+  /* recovery והזמנה דורשות מסך "בחרו סיסמה" לפני הכניסה עצמה */
+  var PASSWORD_TYPES = { recovery: true, invite: true };
+
+  SupabaseBackend.prototype.adoptUrlTokens = function () {
+    if (!root.location) return null;
+    var params = parseFragment(root.location.hash);
+    var hadSomething = !!(params.access_token || params.error_description || params.error);
+
+    if (params.access_token) {
+      this._storeTokens({
+        access_token: params.access_token,
+        refresh_token: params.refresh_token,
+        expires_in: Number(params.expires_in) || 3600
+      });
+      this._pendingAuth = PASSWORD_TYPES[params.type] ? params.type : null;
+    } else if (params.error_description || params.error) {
+      /* קישור שפג או שנלחץ פעמיים. ההודעה של השרת מדויקת יותר
+         מכל ניחוש שלנו, ולכן היא זו שתוצג. */
+      this._linkError = params.error_description || params.error;
+    }
+
+    /* הכתובת מנוקה כדי שרענון לא ינסה להשתמש באסימון שכבר נצרך,
+       וכדי שהאסימון לא יישאר בהיסטוריה של הדפדפן. */
+    if (hadSomething && root.history && root.history.replaceState) {
+      try {
+        root.history.replaceState(null, '',
+          root.location.pathname + root.location.search);
+      } catch (err) { /* דפדפן שאינו מרשה – לא קריטי */ }
+    }
+    return this._pendingAuth || null;
+  };
+
+  /* 'recovery' | 'invite' | null – מה המסך צריך לבקש לפני הכניסה */
+  SupabaseBackend.prototype.pendingAuthAction = function () {
+    return this._pendingAuth || null;
+  };
+
+  SupabaseBackend.prototype.clearPendingAuthAction = function () {
+    this._pendingAuth = null;
+  };
+
+  /* שגיאה שהגיעה מקישור בדואר (פג תוקף, נלחץ פעמיים), אם הייתה */
+  SupabaseBackend.prototype.takeLinkError = function () {
+    var message = this._linkError || '';
+    this._linkError = null;
+    return message;
+  };
+
+  SupabaseBackend.prototype._redirectTo = function () {
+    if (!root.location) return null;
+    return root.location.origin + root.location.pathname;
+  };
+
+  /* הבקשה אינה מגלה אם הכתובת קיימת: תשובה שונה לכתובת שקיימת
+     הופכת את המסך הזה לכלי לגילוי מי רשום למערכת. */
+  SupabaseBackend.prototype.requestPasswordReset = function (email) {
+    var address = String(email || '').trim().toLowerCase();
+    if (!address) {
+      return Promise.reject(fail('invalid_input', t('server.emailRequired')));
+    }
+    var redirect = this._redirectTo();
+    return this._raw('/auth/v1/recover' +
+      (redirect ? '?redirect_to=' + encodeURIComponent(redirect) : ''), {
+      method: 'POST', token: null, body: { email: address }
+    }).then(function () { return true; }, function (err) {
+      /* חסימת קצב היא התשובה היחידה שכדאי להציג – היא אומרת
+         ללקוח "נסה בעוד דקה" ולא "הכתובת לא קיימת". */
+      if (err && (err.code === 'rate_limited' || err.status === 429)) throw err;
+      return true;
+    });
+  };
+
+  SupabaseBackend.prototype.setPassword = function (password) {
+    var self = this;
+    var next = String(password || '');
+    if (next.length < 6) {
+      return Promise.reject(fail('weak_password', t('server.passwordTooShort')));
+    }
+    if (!this.tokens) {
+      return Promise.reject(fail('link_expired', t('server.linkExpired')));
+    }
+    return this._request('/auth/v1/user', {
+      method: 'PUT', body: { password: next }
+    }).then(function () {
+      self.clearPendingAuthAction();
+      return self._loadSession();
+    }).then(function (session) {
+      return session || self._completeSignUp();
+    });
+  };
+
   SupabaseBackend.prototype.restore = function () {
     var self = this;
+    this.adoptUrlTokens();
     if (!this.tokens) return Promise.resolve(null);
     var run = this._expired() ? this._refresh() : Promise.resolve();
     return run.then(function () { return self._loadSession(); })
@@ -587,13 +708,16 @@
   };
 
   /* יצירת משתמש דורשת מפתח ניהול, ולכן עוברת דרך השרת */
+  /* המשתמש מקבל קישור בדואר וקובע סיסמה בעצמו. מנהל שקובע סיסמה
+     ראשונית חייב להעביר אותה בערוץ כלשהו – ובפועל זה וואטסאפ – והיא
+     נשארת שם לנצח. */
   SupabaseBackend.prototype.createUser = function (input) {
     return this._server(this.adminEndpoint, {
       email: String(input.email || '').trim().toLowerCase(),
-      password: String(input.password || ''),
       name: String(input.name || '').trim(),
       role: input.role === 'manager' ? 'manager' : 'employee',
-      employeeId: input.employeeId || null
+      employeeId: input.employeeId || null,
+      redirectTo: this._redirectTo()
     });
   };
 

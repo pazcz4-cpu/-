@@ -95,7 +95,7 @@
         pricingTitle: 'Preço simples, pelo tamanho da equipa',
         pricingSubtitle: 'Lojas ilimitadas em todos os planos. Cancela quando quiseres.',
         pricingCta: 'Começar grátis',
-        pricingNote: 'Preços em ILS, por mês, IVA não incluído. {days} dias grátis em todos os planos, sem cartão — só adicionas um método de pagamento para continuar quando a experiência terminar.',
+        pricingNote: 'Preços em ILS, por mês, IVA de 18% incluído. {days} dias grátis em todos os planos, sem cartão — só adicionas um método de pagamento para continuar quando a experiência terminar.',
         planPopular: 'O mais escolhido',
         faqTitle: 'Perguntas',
         faq1Q: 'É preciso instalar alguma coisa?',

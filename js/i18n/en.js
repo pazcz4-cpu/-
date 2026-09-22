@@ -99,7 +99,7 @@
         pricingTitle: 'Simple pricing, by team size',
         pricingSubtitle: 'Unlimited locations on every plan. Cancel any time.',
         pricingCta: 'Start free',
-        pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan, no credit card — you add a payment method only to continue after the trial ends.',
+        pricingNote: 'All prices in ILS, per month, including 18% VAT. {days} days free on every plan, no credit card — you add a payment method only to continue after the trial ends.',
         planPopular: 'Most popular',
 
         faqTitle: 'Questions',

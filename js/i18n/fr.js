@@ -95,7 +95,7 @@
         pricingTitle: 'Un tarif simple, selon la taille de l’équipe',
         pricingSubtitle: 'Sites illimités sur toutes les formules. Résiliable à tout moment.',
         pricingCta: 'Commencer gratuitement',
-        pricingNote: 'Tarifs en ILS, par mois, hors TVA. {days} jours gratuits sur toutes les formules, sans carte : vous ajoutez un moyen de paiement seulement pour continuer à la fin de l’essai.',
+        pricingNote: 'Tarifs en ILS, par mois, TVA de 18% incluse. {days} jours gratuits sur toutes les formules, sans carte : vous ajoutez un moyen de paiement seulement pour continuer à la fin de l’essai.',
         planPopular: 'Le plus choisi',
         faqTitle: 'Questions',
         faq1Q: 'Faut-il installer quelque chose ?',

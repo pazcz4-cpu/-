@@ -255,6 +255,34 @@ test('סכימה אינה צוברת שארית עשרונית', function () {
   assertEqual(Money.sum(many), 10, 'הסכום צבר שארית');
 });
 
+test('מה שכתוב בדף המכירה הוא מה שהחישוב מניח', function () {
+  /* הדף אמר "לא כולל מע״מ" בזמן שהקוד גבה 199 והתייחס אליהם
+     ככוללים. סתירה כזו אינה מתגלה בשום מסך – היא מתגלה ברואה
+     חשבון. שתי העובדות נבדקות כאן יחד, בשמונה השפות. */
+  var fs = require('fs');
+  var path = require('path');
+  var dir = path.join(__dirname, '..', 'js', 'i18n');
+  var langs = fs.readdirSync(dir).filter(function (file) {
+    return /\.js$/.test(file) && file !== 'core.js' && file !== 'dom.js';
+  });
+
+  assertEqual(Money.pricesIncludeVat(), true, 'החישוב מניח שהמחיר אינו כולל מע"מ');
+  assertEqual(Money.vatRate(), 18, 'שיעור המע"מ אינו 18');
+
+  var NOT_INCLUDED = ['לא כולל מע', 'not included', 'غير شاملة', 'zzgl',
+    'no incluido', 'hors TVA', 'não incluído', 'без НДС'];
+  langs.forEach(function (file) {
+    var text = fs.readFileSync(path.join(dir, file), 'utf8');
+    var note = (text.match(/pricingNote: '((?:[^'\\]|\\.)*)'/) || [])[1] || '';
+    assert(note, 'אין שורת מחירים ב-' + file);
+    NOT_INCLUDED.forEach(function (phrase) {
+      assert(note.indexOf(phrase) === -1,
+        file + ' עדיין אומר שהמחיר אינו כולל מע"מ: ' + phrase);
+    });
+    assert(note.indexOf('18') !== -1, file + ' אינו נוקב בשיעור המע"מ');
+  });
+});
+
 console.log('\n== המספרים ==');
 
 function sampleWorld() {

@@ -95,7 +95,7 @@
         pricingTitle: 'Einfacher Preis, nach Teamgröße',
         pricingSubtitle: 'Unbegrenzte Standorte in jedem Tarif. Jederzeit kündbar.',
         pricingCta: 'Gratis starten',
-        pricingNote: 'Alle Preise in ILS, pro Monat, zzgl. MwSt. {days} Tage gratis in jedem Tarif, ohne Kreditkarte – eine Zahlungsart fügen Sie nur hinzu, um nach der Testphase weiterzumachen.',
+        pricingNote: 'Alle Preise in ILS, pro Monat, inkl. 18% MwSt. {days} Tage gratis in jedem Tarif, ohne Kreditkarte – eine Zahlungsart fügen Sie nur hinzu, um nach der Testphase weiterzumachen.',
         planPopular: 'Am beliebtesten',
         faqTitle: 'Fragen',
         faq1Q: 'Muss ich etwas installieren?',

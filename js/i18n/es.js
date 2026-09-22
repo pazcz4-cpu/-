@@ -95,7 +95,7 @@
         pricingTitle: 'Precio simple, según el tamaño del equipo',
         pricingSubtitle: 'Sucursales ilimitadas en todos los planes. Cancela cuando quieras.',
         pricingCta: 'Empezar gratis',
-        pricingNote: 'Precios en ILS, al mes, IVA no incluido. {days} días gratis en todos los planes, sin tarjeta: añades un método de pago solo para seguir cuando termine la prueba.',
+        pricingNote: 'Precios en ILS, al mes, IVA del 18% incluido. {days} días gratis en todos los planes, sin tarjeta: añades un método de pago solo para seguir cuando termine la prueba.',
         planPopular: 'El más elegido',
         faqTitle: 'Preguntas',
         faq1Q: '¿Hay que instalar algo?',

@@ -58,16 +58,49 @@
     return current;
   }
 
+  /* מצב השמירה האמיתי, ולא הבטחה שנכתבה פעם אחת בקוד. מסך ההגדרות
+     מבטיח ענן, ולכן מסך הסידור חייב לדווח על אותה מציאות בדיוק –
+     ושתי הודעות סותרות על אותו מסך מורידות אמון מיד. */
+  var save = { status: 'idle', at: null, pending: 0, failed: false };
+
+  function trackSave(promise) {
+    if (save.pending === 0) save.failed = false;
+    save.pending++;
+    save.status = 'saving';
+    renderSaveState();
+
+    function done(failed) {
+      save.pending--;
+      if (failed) save.failed = true;
+      if (save.pending > 0) return;
+      if (save.failed) {
+        save.status = 'error';
+      } else {
+        save.status = 'saved';
+        save.at = new Date();
+      }
+      renderSaveState();
+    }
+
+    return Promise.resolve(promise).then(function (value) {
+      done(false);
+      return value;
+    }, function (err) {
+      done(true);
+      throw err;
+    });
+  }
+
   function persist(scope) {
     var failed = function (err) {
       toast(t('errors.notSaved') + (err && err.message ? ': ' + err.message : ''));
     };
     if (scope === 'config' || scope === 'all') {
-      source.saveConfig(state, scope).catch(failed);
+      trackSave(source.saveConfig(state, scope)).catch(failed);
       Platform.pushConfig();
     }
     if (scope !== 'config') {
-      source.saveWeek(state, weekKey).catch(failed);
+      trackSave(source.saveWeek(state, weekKey)).catch(failed);
       Platform.pushWeek(weekKey);
     }
   }
@@ -873,6 +906,7 @@
     renderEmployees();
     renderBranches();
     renderSettings();
+    renderSaveState();
     applyViewOnly();
   }
 
@@ -2101,31 +2135,64 @@
     return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
   }
 
-  function renderSyncState(status) {
-    syncStatus = status || syncStatus;
+  /* לאן הנתונים באמת הולכים. מצב ההדגמה משתמש בשרת מדומה שיושב
+     בדפדפן, ולכן "יש שרת" אינו אותו דבר כמו "יש ענן". */
+  function storageIsCloud() {
+    if (source.storage) return source.storage === 'cloud';
+    return Platform.syncState === 'live';
+  }
+
+  function renderSaveState() {
     var node = $('#sync-state');
     if (!node) return;
-    var labels = {
-      live: t('status.synced'),
-      local: t('status.localOnly'),
-      readonly: t('status.readOnly')
-    };
-    var text = labels[syncStatus] || labels.local;
-    if (syncStatus === 'live' && Platform.lastSyncedAt) {
-      text = t('status.syncedAt', { time: timeLabel(Platform.lastSyncedAt) });
+    var cloud = storageIsCloud();
+    var text, cls, hint;
+
+    if (syncStatus === 'readonly') {
+      text = t('status.readOnly');
+      cls = 'readonly';
+      hint = t('status.readOnly');
+    } else if (save.status === 'saving') {
+      text = t('status.saving');
+      cls = 'saving';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    } else if (save.status === 'error') {
+      text = t('status.saveFailed');
+      cls = 'error';
+      hint = t('status.saveFailedHint');
+    } else if (save.status === 'saved' && save.at) {
+      text = t(cloud ? 'status.savedCloudAt' : 'status.savedDeviceAt',
+        { time: timeLabel(save.at) });
+      cls = cloud ? 'live' : 'local';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    } else {
+      text = t(cloud ? 'status.savedCloud' : 'status.localOnly');
+      cls = cloud ? 'live' : 'local';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
     }
+
     node.textContent = text;
-    node.className = 'sync-state ' + syncStatus;
-    node.title = t(syncStatus === 'live' ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    node.className = 'sync-state ' + cls;
+    node.title = hint;
+    /* הטקסט נבנה כאן ולא מתרגום סטטי, אחרת החלפת שפה תחזיר אותו לברירת המחדל */
+    node.removeAttribute('data-i18n');
 
     // עותק מקומי של הקובץ לעולם לא יסתנכרן – כדאי שזה יהיה ברור
     var notice = $('#local-notice');
     var isLocalFile = location.protocol === 'file:';
-    notice.classList.toggle('hidden', !(isLocalFile && syncStatus !== 'live'));
+    if (notice) notice.classList.toggle('hidden', !(isLocalFile && !cloud));
+  }
+
+  function renderSyncState(status) {
+    syncStatus = status || syncStatus;
+    renderSaveState();
   }
 
   function onSynced(date, fromRemote) {
-    renderSyncState('live');
+    syncStatus = 'live';
+    save.status = 'saved';
+    save.at = date || new Date();
+    renderSaveState();
     if (fromRemote) { toast(t('status.remoteUpdate', { time: timeLabel(date) })); }
   }
 

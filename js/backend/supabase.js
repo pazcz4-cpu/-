@@ -380,6 +380,10 @@
   };
 
   /* סינכרוני בכוונה – האפליקציה קוראת לזה בתוך הרינדור */
+  /* הנתונים יושבים בשרת אמיתי ומסתנכרנים בין מכשירים. המסך מסתמך
+     על הסימון הזה כדי להבטיח ענן רק כשזה נכון. */
+  SupabaseBackend.prototype.isCloud = true;
+
   SupabaseBackend.prototype.session = function () {
     if (!this._session) return null;
     /* מצב המנוי נגזר מהתאריך, ולכן מחושב מחדש בכל קריאה */

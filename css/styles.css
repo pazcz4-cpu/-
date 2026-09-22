@@ -243,6 +243,9 @@ h2 { font-size: 17px; margin: 18px 0 10px; }
 .sync-state::before { content: "●"; color: var(--muted); font-size: 10px; }
 .sync-state.live::before { color: var(--ok); }
 .sync-state.local::before { color: var(--badge-warn); }
+.sync-state.saving::before { color: var(--brand); }
+.sync-state.error::before { color: var(--err); }
+.sync-state.error { color: var(--err); }
 
 .view-switch { display: flex; gap: 6px; margin: 10px 0; }
 .chip {

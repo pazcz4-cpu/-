@@ -140,8 +140,13 @@
       status: {
         demoTitle: 'Mode démonstration',
         demoBody: 'Les données sont enregistrées uniquement dans ce navigateur et ne passent pas d’un appareil à l’autre.',
-        synced: 'Synchronisé entre les appareils', syncedAt: 'Synchronisé entre les appareils · mis à jour à {time}',
         localOnly: 'Enregistré sur cet appareil uniquement', readOnly: 'Lecture seule – aucun droit de modification',
+        saving: 'Enregistrement…',
+        savedCloud: 'Toutes les modifications sont enregistrées dans le cloud',
+        savedCloudAt: 'Toutes les modifications sont enregistrées dans le cloud · {time}',
+        savedDeviceAt: 'Enregistré sur cet appareil · {time}',
+        saveFailed: 'Enregistrement impossible pour le moment',
+        saveFailedHint: 'La dernière modification n’a pas été enregistrée. Vérifiez la connexion : la prochaine modification réessaiera.',
         remoteUpdate: 'Mise à jour reçue d’un autre appareil ({time})',
         localCopy: 'Ceci est une copie locale : les données sont stockées uniquement dans ce navigateur et ne se synchronisent pas. ' +
           'Pour travailler depuis deux ordinateurs, utilisez la version hébergée. Pour transférer les données : exportez le JSON dans les Réglages, puis importez-le là-bas.',

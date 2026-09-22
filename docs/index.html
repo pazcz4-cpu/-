@@ -180,10 +180,9 @@
 
 * { box-sizing: border-box; }
 
-html { direction: rtl; }
-
+/* כיוון הכתיבה מגיע מתכונת dir של המסמך, שנקבעת לפי השפה הפעילה.
+   אסור לקבע אותו כאן – אחרת אנגלית וספרדית ייראו מימין לשמאל. */
 body {
-  direction: rtl;
   margin: 0;
   font-family: "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
   background: var(--bg);
@@ -251,6 +250,9 @@ h2 { font-size: 17px; margin: 18px 0 10px; }
 .sync-state::before { content: "●"; color: var(--muted); font-size: 10px; }
 .sync-state.live::before { color: var(--ok); }
 .sync-state.local::before { color: var(--badge-warn); }
+.sync-state.saving::before { color: var(--brand); }
+.sync-state.error::before { color: var(--err); }
+.sync-state.error { color: var(--err); }
 
 .view-switch { display: flex; gap: 6px; margin: 10px 0; }
 .chip {
@@ -728,7 +730,120 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   margin: 0 0 12px; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
   background: var(--err-bg); color: var(--err); border: 1px solid var(--err-line);
 }
+/* הודעה חיובית במסך הכניסה – "נשלח מייל אישור" אינו כישלון */
+.auth-notice {
+  margin: 0 0 12px; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
+  background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line);
+}
 .auth-hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; text-align: center; }
+
+/* ===== "למה שובץ ככה" ===== */
+.why-btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  border-radius: 999px; width: 20px; height: 20px; line-height: 1;
+  font-size: 12px; font-weight: 700; cursor: pointer; padding: 0;
+  margin-block-start: 3px; margin-inline-start: 2px;
+}
+.why-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+.why-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  padding-block-start: calc(16px + env(safe-area-inset-top, 0px));
+  padding-block-end: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.why-card {
+  position: relative; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow-lg); padding: 20px 22px;
+  width: min(460px, 100%); max-height: 100%; overflow-y: auto;
+}
+.why-close {
+  position: absolute; inset-block-start: 10px; inset-inline-end: 12px;
+  border: none; background: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; line-height: 1; padding: 4px;
+}
+.why-slot { margin: 0 0 2px; font-size: 12.5px; color: var(--muted); }
+.why-title { margin: 0 0 12px; font-size: 18px; padding-inline-end: 24px; }
+.why-facts { margin: 0 0 12px; padding-inline-start: 18px; font-size: 14px; line-height: 1.75; }
+.why-facts li::marker { color: var(--ok); }
+.why-verdict {
+  margin: 0; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
+  background: var(--info-bg); color: var(--info);
+}
+.why-verdict.why-only { background: var(--ok-bg); color: var(--ok); }
+.why-blocked { margin-block-start: 12px; font-size: 13.5px; }
+.why-blocked summary { cursor: pointer; color: var(--muted); }
+.why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
+
+/* ===== מועד סגירת ההגשות ===== */
+.deadline-strip {
+  border-radius: 10px; padding: 10px 13px; margin-bottom: 12px;
+  font-size: 13.5px; font-weight: 600;
+  background: var(--info-bg); color: var(--info); border: 1px solid transparent;
+}
+.deadline-strip.is-soon {
+  background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
+}
+.deadline-strip.is-closed {
+  background: var(--err-bg); color: var(--err); border-color: var(--err-line);
+}
+.deadline-row { flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.deadline-row .check { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+/* ===== תצוגת עובד ===== */
+.preview-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--warn-bg); color: var(--warn);
+  border: 1px solid var(--warn-line); border-radius: 10px;
+  padding: 9px 13px; margin-bottom: 14px; font-size: 13.5px; font-weight: 600;
+}
+.preview-bar span { flex: 1; }
+.preview-list { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+.preview-pick {
+  text-align: start; font: inherit; font-size: 14.5px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 13px; cursor: pointer;
+}
+.preview-pick:hover { border-color: var(--muted); }
+
+/* ===== קריאות שירות ===== */
+.support-channels { gap: 10px; flex-wrap: wrap; }
+.support-form { display: flex; flex-direction: column; gap: 10px; max-width: 620px; }
+.support-form label { display: flex; flex-direction: column; gap: 5px;
+  font-size: 13.5px; color: var(--muted); }
+.support-form textarea { font: inherit; resize: vertical; min-height: 96px; }
+.support-form .btn { align-self: flex-start; }
+
+.ticket {
+  border: 1px solid var(--line); border-radius: 11px; background: var(--surface);
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.ticket-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ticket-spacer { flex: 1; }
+.ticket-kind {
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px;
+}
+.ticket-subject { font-weight: 600; }
+.ticket-date { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ticket-status {
+  font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px;
+  border: 1px solid transparent;
+}
+/* הסטטוס נקרא במבט, כי זו השאלה היחידה שהלקוח בא לשאול */
+.ticket-open      { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+.ticket-in_progress { background: var(--info-bg, var(--warn-bg)); color: var(--info, var(--warn)); }
+.ticket-answered  { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+.ticket-closed    { background: var(--surface); color: var(--muted); border-color: var(--line); }
+.ticket-body { margin: 8px 0 0; white-space: pre-wrap; }
+.ticket-reply {
+  margin: 10px 0 0; padding-inline-start: 10px;
+  border-inline-start: 3px solid var(--ok-line); white-space: pre-wrap;
+}
 .auth-blocked { text-align: center; padding: 8px 0 18px; }
 .auth-blocked h2 { font-size: 17px; margin: 0 0 8px; color: var(--err); }
 .auth-blocked p { font-size: 14px; color: var(--ink); margin: 0 0 6px; }
@@ -884,6 +999,23 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .auth-lang { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
 .auth-lang select { margin-inline-start: 6px; }
 
+/* שורת אזהרה כשהמערכת רצה בלי שרת אמיתי */
+.demo-banner {
+  margin: 0; padding: 9px 16px; text-align: center; font-size: 13.5px;
+  background: var(--warn-bg); color: var(--warn);
+  border-bottom: 1px solid var(--warn-line);
+}
+.demo-banner b { margin-inline-end: 6px; }
+
+/* הודעת תקופת הניסיון בלשונית המנוי – הדבר הראשון שרואים שם */
+.billing-trial {
+  margin: 0 0 14px; padding: 12px 15px; border-radius: 11px; font-size: 14px;
+  background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-line);
+}
+.billing-trial.warn {
+  background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
+}
+
 </style>
 </head>
 <body>
@@ -1032,6 +1164,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       <label class="check"><input type="checkbox" id="opt-one-day-off"> <span data-i18n="settings.oneDayOff">יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</span></label>
     </div>
 
+    <h2 data-i18n="settings.deadlineTitle">מועד סגירת הגשות</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-deadline">
+        <span data-i18n="settings.deadlineEnable">לסגור את הגשת האילוצים במועד קבוע</span></label>
+      <div class="row deadline-row">
+        <label class="check"><span data-i18n="settings.deadlineDay">יום</span>
+          <select id="deadline-day" class="text-input"></select></label>
+        <label class="check"><span data-i18n="settings.deadlineTime">שעה</span>
+          <input type="text" id="deadline-time" class="time-input" inputmode="numeric" maxlength="5"
+            data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד"></label>
+        <label class="check"><span data-i18n="settings.deadlineRemind">תזכורת לפני</span>
+          <select id="deadline-remind" class="text-input"></select></label>
+      </div>
+      <p class="hint" id="deadline-preview" style="margin:0"></p>
+      <p class="hint" style="margin:0" data-i18n="settings.deadlineHint">
+        אחרי המועד הזה עובדים אינם יכולים להגיש או לשנות אילוצים לשבוע הבא. מנהל יכול לתקן תמיד.
+      </p>
+    </div>
+
     <h2 data-i18n="settings.shiftTypes">סוגי המשמרות בעסק</h2>
     <div class="settings-block">
       <div id="default-hours" class="shift-grid"></div>
@@ -1083,8 +1234,26 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   var languages = {};   // code -> { code, name, dir, locale, weekStart, currency, dict }
   var current = null;
-  var fallback = 'en';
   var listeners = [];
+
+  /* שני דברים שונים שקל לבלבל ביניהם:
+
+     fallback   – לאן נופל *מפתח בודד* שחסר בתרגום. זה נשאר אנגלית,
+                  כי אנגלית היא המילון המלא ביותר ותמיד מובנת יותר
+                  מהצגת המפתח עצמו.
+
+     defaultLang – באיזו שפה *נפתח האתר* למי שעוד לא בחר שפה.
+                  עברית, כי השוק הראשון הוא ישראל, ודפדפן באנגלית
+                  הוא דבר נפוץ מאוד אצל משתמשים ישראלים ואינו מעיד
+                  על העדפה.
+
+     autoDetect  – האם ללכת לפי הגדרות הדפדפן במקום ברירת המחדל.
+                  כבוי כרגע. כשתהיה מכירה מחוץ לישראל מדליקים אותו
+                  כאן, או קוראים ל-setDefault, ושום דבר אחר לא
+                  משתנה. */
+  var fallback = 'en';
+  var defaultLang = 'he';
+  var autoDetect = false;
 
   function register(definition) {
     var code = definition.code;
@@ -1126,8 +1295,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   function active() { return definition(code()); }
 
-  /* זיהוי לפי הגדרות הדפדפן, עם נפילה לאנגלית */
-  function detect() {
+  /* השפה שהדפדפן מבקש, אם יש לנו אותה. null אם אין התאמה. */
+  function browserLanguage() {
     var candidates = [];
     var nav = root.navigator;
     if (nav) {
@@ -1140,7 +1309,36 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       var base = tag.split('-')[0];
       if (has(base)) return base;
     }
-    return has(fallback) ? fallback : Object.keys(languages)[0];
+    return null;
+  }
+
+  /* ברירת המחדל עצמה, עם רשת ביטחון אם המילון שלה לא נטען */
+  function fallbackLanguage() {
+    if (has(defaultLang)) return defaultLang;
+    if (has(fallback)) return fallback;
+    return Object.keys(languages)[0];
+  }
+
+  /* השפה שבה נפתחים. זו הפונקציה שקוראים לה בעליית העמוד. */
+  function initial() {
+    if (autoDetect) {
+      var found = browserLanguage();
+      if (found) return found;
+    }
+    return fallbackLanguage();
+  }
+
+  /* נשמר בשם הישן כדי שקוד קיים ימשיך לעבוד */
+  function detect() { return initial(); }
+
+  /* שינוי ברירת המחדל. setDefault('en', { autoDetect: true }) מחזיר
+     את ההתנהגות של זיהוי לפי הדפדפן, לקראת מכירה בחו"ל. */
+  function setDefault(code, options) {
+    if (code) defaultLang = code;
+    if (options && typeof options.autoDetect === 'boolean') {
+      autoDetect = options.autoDetect;
+    }
+    return { defaultLanguage: defaultLang, autoDetect: autoDetect };
   }
 
   function lookup(dict, key) {
@@ -1195,7 +1393,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   var API = {
     register: register, list: list, has: has, use: use, code: code, active: active,
-    detect: detect, onChange: onChange, t: t, plural: plural,
+    detect: detect, initial: initial, setDefault: setDefault,
+    browserLanguage: browserLanguage, onChange: onChange, t: t, plural: plural,
     dir: dir, isRtl: isRtl, weekStart: weekStart, currency: currency, formatMoney: formatMoney,
     interpolate: interpolate
   };
@@ -1228,8 +1427,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Shift Scheduler',
-        subtitle: 'Weekly staffing for every branch, with double-booking and gap detection',
+        title: 'SetShifts',
+        subtitle: 'AI scheduling for every location — from availability, requests, roles and your rules',
         language: 'Language'
       },
 
@@ -1252,7 +1451,86 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Pink', 5: 'Teal', 6: 'Grey', 7: 'Brown'
       },
 
+      landing: {
+        planTrialLine: '{days} days free, then',
+        faq6Q: 'When exactly am I charged?',
+        faq6A: 'You open the subscription with a credit card, but nothing is charged for the first {days} days. The first charge happens automatically when the trial ends, and monthly after that — until you cancel. Cancelling during the trial costs nothing, and access stays until the trial ends.',
+        signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
+        heroBadge: 'AI employee scheduling for multi-location businesses',
+        heroTitle: 'Your entire operation, scheduled in one click.',
+        heroSubtitle: 'SetShifts AI builds the schedule for every location by itself — from your staff\'s availability, the requests they submit, hour limits, roles and your own rules. And for every assignment it tells you why that person. You approve it. You don\'t build it.',
+        heroNote: '{days} days free. Cancel any time before the trial ends and you are not charged at all.',
+        heroSecondary: 'See how it works',
+        whyTitle: 'Why that person?',
+        whySubtitle: 'The first question any manager asks about a schedule built automatically — and the one that decides whether they trust it or rebuild it by hand.',
+        whyBody: 'Click the question mark next to any assignment and SetShifts answers: who asked for the shift, who is trained for it, who has already filled their quota, and who else could have taken it. No black box to take on faith.',
+        whyPoint1: 'The explanation is derived from the schedule on screen, so it stays true after you change something by hand.',
+        whyPoint2: 'You see not only who was picked but who was ruled out and why — which turns an argument with an employee into a thirty-second conversation.',
+        whyDemoSlot: 'Tuesday · Central · Evening',
+        whyDemoTitle: 'Why Daniel?',
+        whyDemoFact1: 'Asked for this shift on this day',
+        whyDemoFact2: 'Trained for this shift · assigned to this location',
+        whyDemoFact3: '3 of 5 shifts this week',
+        whyDemoVerdict: 'Of the 2 people who could take it, this was the fairest choice.',
+
+        problemsTitle: 'The three things that go wrong every week',
+        problem1Title: 'The same shift, two people',
+        problem1Body: 'A branch ends up double-staffed while another runs short. ' +
+          'You only find out when someone shows up and has nothing to do.',
+        problem2Title: 'Requests get lost',
+        problem2Body: 'A day-off request arrives by message, gets forgotten, and the schedule breaks a promise you made.',
+        problem3Title: 'Gaps you cannot explain',
+        problem3Body: 'A shift stays empty and nobody knows whether it is really impossible or just an oversight.',
+
+        featuresTitle: 'What the system does',
+        featuresSubtitle: 'Not a spreadsheet with colours. A scheduler that knows your rules.',
+        feature1Title: 'Automatic scheduling',
+        feature1Body: 'One click fills the whole week across every branch, balancing the load fairly and respecting each person’s weekly limit.',
+        feature2Title: 'Double-booking detection',
+        feature2Body: 'Every double booking, gap and broken request is flagged the moment it appears – with the reason and a suggested fix.',
+        feature3Title: 'Requests with approval',
+        feature3Body: 'Staff send their own requests with an optional reason. Nothing affects the schedule until you approve it.',
+        feature4Title: 'Your shifts, your hours',
+        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per branch.',
+        feature5Title: 'Excel and WhatsApp',
+        feature5Body: 'Export the whole week, or send each person only their own shifts – as a personal sheet or ready-to-paste text.',
+        feature6Title: 'Live on every device',
+        feature6Body: 'Manager edits on a computer, staff see their shifts on their phone. Everyone sees the same schedule, instantly.',
+
+        howTitle: 'Up and running in an afternoon',
+        how1Title: 'Add branches and staff',
+        how1Body: 'Opening days, hours and headcount per shift – each branch set up its own way.',
+        how2Title: 'Collect the requests',
+        how2Body: 'Staff log in and send time-off requests. You approve or decline, and see everything in one place.',
+        how3Title: 'Build and publish',
+        how3Body: 'One click builds the week. Review the alerts, fix what matters, publish – and everyone sees their shifts.',
+
+        pricingTitle: 'Simple pricing, by team size',
+        pricingSubtitle: 'Unlimited branches on every plan. Cancel any time.',
+        pricingCta: 'Start free',
+        pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan — the first charge comes only when the trial ends, and cancelling before then costs nothing.',
+        planPopular: 'Most popular',
+
+        faqTitle: 'Questions',
+        faq1Q: 'Do I need to install anything?',
+        faq1A: 'No. The system runs in the browser. On a phone you can add it to the home screen and it opens like an app, full screen.',
+        faq2Q: 'Can my staff see each other’s shifts?',
+        faq2A: 'No. Each person sees only their own shifts and their own requests. Only managers see the full schedule.',
+        faq3Q: 'What if a shift cannot be filled?',
+        faq3A: 'The system tells you exactly why – who is at their weekly limit, who already works that day, who needs rest between shifts – and what to change.',
+        faq4Q: 'Is my data safe if I stop paying?',
+        faq4A: 'Yes. Your data is kept. Choosing a plan again restores access immediately, with everything where you left it.',
+        faq5Q: 'Which languages are supported?',
+        faq5A: 'Hebrew, English, Spanish, French, German, Portuguese, Russian and Arabic – including right-to-left layouts. Each person picks their own.',
+
+        ctaTitle: 'Try it on next week’s schedule',
+        ctaBody: 'Set up your branches, build one week, and see the difference. It takes an afternoon.',
+        footerRights: 'All rights reserved.',
+        footerTagline: 'Shift scheduling for chains.'
+      },
+
       tabs: {
+        support: 'Support',
         schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
         branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'
       },
@@ -1282,8 +1560,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Synced across devices', syncedAt: 'Synced across devices · updated {time}',
+        demoTitle: 'Demo mode',
+        demoBody: 'Data is saved in this browser only and does not move between devices.',
         localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
+        saving: 'Saving…',
+        savedCloud: 'All changes saved to the cloud',
+        savedCloudAt: 'All changes saved to the cloud · {time}',
+        savedDeviceAt: 'Saved on this device · {time}',
+        saveFailed: 'Cannot save right now',
+        saveFailedHint: 'The last change was not saved. Check your connection – the next change will try again.',
         remoteUpdate: 'Update received from another device ({time})',
         localCopy: 'This is a local copy – data is stored in this browser only and does not sync. ' +
           'To work from two computers use the hosted version. To move data: export JSON in Settings, then import it there.',
@@ -1504,6 +1789,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
       },
 
+      why: {
+        button: 'Why this person?',
+        title: 'Why {name}?',
+        onlyOption: 'Nobody else could take this shift.',
+        fairest: 'Of the {count} people who could take it, this was the fairest choice by hours so far.',
+        alsoPossible: 'These could also have taken it: {names}.',
+        whoCould: 'Who could not take it ({count})',
+        fact: {
+          requested: 'Asked for this shift on this day',
+          available: 'No time-off request for this day',
+          qualified: 'Trained for this shift',
+          assignedBranch: 'Assigned to this location',
+          anyBranch: 'Works at any location',
+          quota: 'Before this shift {before}, after it {after} of a quota of {max}',
+          capacity: 'This week only {target} of those shifts are actually open to them',
+          rest: 'Rest between an evening and a morning shift is kept',
+          continuity: 'Already at this location {count} times this week'
+        },
+        blocked: {
+          inactive: 'not active',
+          notQualified: 'not trained for this shift',
+          otherBranch: 'works at another location',
+          requestedOff: 'asked for the day off',
+          blockedShift: 'asked not to work this shift',
+          atLimit: 'reached the weekly limit of {max}',
+          busySameDay: 'already working that day',
+          busySameShift: 'already on this shift',
+          restRule: 'needs rest between an evening and a morning shift'
+        }
+      },
+      preview: {
+        open: 'Employee view',
+        title: 'Whose screen do you want to see?',
+        hint: 'Read only. Nothing you do here is saved as that person.',
+        banner: 'You are viewing the screen of {name}',
+        exit: 'Back to management',
+        noEmployees: 'No active staff yet.'
+      },
+      support: {
+        title: 'Support',
+        promise: 'Tell us what broke or what you need. A person replies within {hours} hours.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Open a ticket',
+        kindLabel: 'Type', subjectLabel: 'Subject', bodyLabel: 'What happened?',
+        send: 'Send',
+        sent: 'Received. A person will reply within {hours} hours.',
+        sendFailed: 'The ticket could not be sent. Please try again.',
+        loadFailed: 'Your tickets could not be loaded.',
+        listTitle: 'Your tickets',
+        empty: 'No tickets yet.',
+        replyLabel: 'Our reply:',
+        errorSubject: 'Please write a subject.',
+        errorBody: 'Please describe what happened.',
+        errorSubjectLong: 'The subject is longer than {max} characters.',
+        errorBodyLong: 'The description is longer than {max} characters.',
+        kind: { bug: 'Something is broken', feature: 'Feature request', question: 'Question' },
+        status: { open: 'Open', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' }
+      },
       settings: {
         rules: 'Scheduling rules',
         onePerDay: 'A person works at most one shift per day',
@@ -1522,11 +1865,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Backup and restore',
         exportJson: 'Export all data (JSON)', importJson: 'Import data',
         reset: 'Reset to defaults',
+        deadlineTitle: 'Request deadline',
+        deadlineEnable: 'Close time-off requests at a fixed time',
+        deadlineDay: 'Day',
+        deadlineTime: 'Time',
+        deadlineRemind: 'Remind before',
+        deadlineHours: '{hours} hours',
+        deadlinePreview: 'Requests for the week of {week} close on {day}, {date} at {time}.',
+        deadlineHint: 'After this time staff cannot submit or change requests for that week. A manager always can.',
         backupHint: 'Data is saved automatically in this browser. To move between computers, export a JSON file.',
+        backupHintCloud: 'Data is saved in the cloud and syncs across every device. The JSON export is for your own backup.',
         languageTitle: 'Language', languageHint: 'Changes the whole interface. Saved for this device.'
       },
 
       server: {
+        confirmEmail: 'Check your email and confirm the address, then sign in',
         credentialsRequired: 'Email and password are required',
         passwordTooShort: 'The password must be at least 6 characters',
         emailTaken: 'That email address is already registered',
@@ -1559,6 +1912,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'Billing is not connected yet. Contact support.',
         mockProvider: 'Test provider (development)',
         mockNote: 'Payment is approved immediately with no real charge. For development and demos only.',
         unknownPlan: 'Unknown plan',
@@ -1568,6 +1922,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'First charge',
+        nextCharge: 'Next charge',
+        paymentMethod: 'Payment method',
+        cardOnFile: 'Saved',
+        noCard: 'Not added',
+        addCard: 'Add a payment method',
+        noCardWarning: 'No payment method yet. Without one, access ends on {date}.',
+        trialNotice: 'You are not charged for the first {days} days. The first charge is on {date} for {price}, and monthly after that — until you cancel.',
+        cancelBeforeCharge: 'Cancel before the charge',
+        cancelTrialConfirm: 'Cancel the subscription? You will not be charged, and access stays until the trial ends.',
+        resume: 'Resume subscription',
+        resumed: 'Subscription resumed',
         priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
         updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',
@@ -1590,7 +1956,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
         enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',
-        trialNote: '{days} days free. No payment details needed.',
+        trialNote: '{days} days free. The first charge is on {date}; cancel before then and you pay nothing.',
         signOut: 'Sign out', blocked: 'Access blocked',
         blockedOwner: 'Contact support to activate the subscription.',
         blockedMember: 'Ask the account owner to renew the subscription.',
@@ -1611,9 +1977,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Trial – {days} days left. First charge on {date}, {price}.',
+        trialNoCard: 'Trial – {days} days left. Add a payment method to keep access after {date}.',
+        trialEndedNoCard: 'The trial has ended. Add a payment method to continue.',
+        trialCanceled: 'Cancelled – you will not be charged. Access stays until {date}.',
+        canceledAtPeriodEnd: 'Cancelled. Access stays until {date}, and there will be no further charges.',
+        charging: 'The trial has ended and the first charge is being processed.',
         noCompany: 'No company found',
-        trialEnded: 'The trial has ended. Activate a subscription to continue.',
-        trial: 'Trial – {days} days left.',
         expired: 'The subscription has expired. Renew to continue.',
         pastDueBlocked: 'Payment was not received and access is blocked. Please update the payment method.',
         pastDue: 'The last payment did not go through. Access will be blocked in {days} days.',
@@ -1640,6 +2010,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'The schedule for this week has not been published yet.',
         noShifts: 'You have no shifts this week.',
         totalWeek: '{count} shifts this week.',
+        deadlineOpen: 'Requests for this week close on {day}, {date} at {time}.',
+        deadlineHours: 'Requests close in {hours} hours. After that you cannot change them.',
+        deadlineClosed: 'Requests for this week are closed. Talk to your manager if something changed.',
+        deadlineLocked: 'Requests for this week are closed.',
         publishedLocked: 'The schedule is published – requests for this week can no longer be changed.',
         notLinked: 'Your user is not linked to a staff card yet. Please contact your manager.',
         noShiftsToday: 'No shifts on this day', holidayNoWork: 'Holiday – no work'
@@ -1684,6 +2058,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Email us',
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
         yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'
@@ -1707,8 +2082,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'סידור משמרות',
-        subtitle: 'שיבוץ שבועי לכל סניף, בדיקת כפל משמרות ואילוצי עובדים',
+        title: 'SetShifts',
+        subtitle: 'שיבוץ AI לכל הסניפים — לפי זמינות, אילוצים, תפקידים וכללי העסק',
         language: 'שפה'
       },
 
@@ -1731,7 +2106,86 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'ורוד', 5: 'טורקיז', 6: 'אפור', 7: 'חום'
       },
 
+      landing: {
+        planTrialLine: '{days} ימים ללא חיוב, אחר כך',
+        faq6Q: 'מתי בדיוק אני מחויב?',
+        faq6A: 'פותחים מנוי עם כרטיס אשראי, אבל ב-{days} הימים הראשונים אין חיוב בכלל. החיוב הראשון מתבצע אוטומטית בתום התקופה, ומשם כל חודש — עד שמבטלים. ביטול בתוך תקופת הניסיון אינו עולה דבר, והגישה נשמרת עד סוף התקופה.',
+        signIn: 'התחברות', start: 'התחלה חינם', startLong: 'התחלה חינם – {days} ימים',
+        heroBadge: 'AI לשיבוץ עובדים ברשתות רב-סניפיות',
+        heroTitle: 'סידור העבודה של כל העסק. בלחיצה אחת.',
+        heroSubtitle: 'ה-AI של SetShifts בונה לבד את הסידור לכל הסניפים — לפי זמינות העובדים, האילוצים שהגישו, מכסות השעות, התפקידים וכללי העסק שלכם. ועל כל שיבוץ הוא מסביר למה דווקא האדם הזה. אתם מאשרים, לא בונים.',
+        heroNote: '{days} ימי ניסיון ללא חיוב. ביטול בכל רגע לפני תום התקופה — ולא תחויבו בכלל.',
+        heroSecondary: 'איך זה עובד',
+        whyTitle: 'למה דווקא הוא?',
+        whySubtitle: 'השאלה הראשונה שמנהל שואל על סידור שנבנה אוטומטית — וזו שקובעת אם הוא יסמוך עליו או יבנה הכול מחדש ביד.',
+        whyBody: 'לוחצים על סימן שאלה ליד כל שיבוץ, ו-SetShifts עונה: מי ביקש את המשמרת, מי מוסמך אליה, מי כבר מילא את המכסה, ומי עוד היה יכול לקחת אותה. אין כאן קופסה שחורה שצריך להאמין לה.',
+        whyPoint1: 'ההסבר נגזר מהסידור שעל המסך, ולכן הוא נכון גם אחרי ששינית משהו ביד.',
+        whyPoint2: 'רואים לא רק מי שובץ אלא גם מי נפסל ולמה — זה מה שהופך ויכוח עם עובד לשיחה של שלושים שניות.',
+        whyDemoSlot: 'שלישי · סניף מרכז · ערב',
+        whyDemoTitle: 'למה דניאל?',
+        whyDemoFact1: 'ביקש את המשמרת הזו ביום הזה',
+        whyDemoFact2: 'מוסמך למשמרת הזו · משויך לסניף הזה',
+        whyDemoFact3: '3 מתוך 5 משמרות השבוע',
+        whyDemoVerdict: 'מתוך 2 שיכלו לקחת אותה, זו הייתה הבחירה ההוגנת ביותר.',
+
+        problemsTitle: 'שלושת הדברים שמשתבשים כל שבוע',
+        problem1Title: 'אותה משמרת, שני אנשים',
+        problem1Body: 'בסניף אחד יש עודף עובדים ובאחר חסר. ' +
+          'מגלים את זה רק כשמישהו מגיע ואין לו מה לעשות.',
+        problem2Title: 'אילוצים שהולכים לאיבוד',
+        problem2Body: 'בקשה ליום חופש מגיעה בהודעה, נשכחת, והסידור שובר הבטחה שנתת.',
+        problem3Title: 'חוסרים בלי הסבר',
+        problem3Body: 'משמרת נשארת ריקה ואף אחד לא יודע אם באמת אי אפשר למלא אותה או שפשוט פספסו.',
+
+        featuresTitle: 'מה המערכת עושה',
+        featuresSubtitle: 'לא אקסל צבעוני. מנוע שיבוץ שמכיר את הכללים שלך.',
+        feature1Title: 'שיבוץ אוטומטי',
+        feature1Body: 'לחיצה אחת ממלאת שבוע שלם בכל הסניפים, מחלקת את העומס בהוגנות ומכבדת את המכסה של כל עובד.',
+        feature2Title: 'זיהוי כפל משמרות',
+        feature2Body: 'כל כפל משמרת, חוסר והפרת אילוץ מסומנים ברגע שהם נוצרים – עם הסיבה ועם פתרון מוצע.',
+        feature3Title: 'אילוצים באישור מנהל',
+        feature3Body: 'העובדים מגישים בקשות בעצמם, עם סיבה אופציונלית. שום בקשה לא משפיעה על הסידור עד שאישרת אותה.',
+        feature4Title: 'המשמרות שלך, השעות שלך',
+        feature4Body: 'בוקר, אמצע, ערב, לילה – מגדירים כמה משמרות שהעסק צריך, עם שעות וצבעים משלך לכל סניף.',
+        feature5Title: 'אקסל ווואטסאפ',
+        feature5Body: 'מייצאים את כל השבוע, או שולחים לכל עובד רק את המשמרות שלו – בגיליון אישי או כטקסט מוכן להדבקה.',
+        feature6Title: 'חי בכל מכשיר',
+        feature6Body: 'המנהל עורך במחשב, העובדים רואים את המשמרות בטלפון. כולם רואים את אותו סידור, מיד.',
+
+        howTitle: 'עולים לאוויר בתוך אחר צהריים',
+        how1Title: 'מוסיפים סניפים ועובדים',
+        how1Body: 'ימי פתיחה, שעות וכמות עובדים בכל משמרת – כל סניף מוגדר בדרך שלו.',
+        how2Title: 'אוספים את האילוצים',
+        how2Body: 'העובדים מתחברים ומגישים בקשות. אתה מאשר או דוחה, ורואה הכל במקום אחד.',
+        how3Title: 'בונים ומפרסמים',
+        how3Body: 'לחיצה אחת בונה את השבוע. עוברים על ההתראות, מתקנים מה שחשוב, מפרסמים – וכולם רואים את המשמרות שלהם.',
+
+        pricingTitle: 'מחיר פשוט, לפי גודל הצוות',
+        pricingSubtitle: 'סניפים ללא הגבלה בכל התוכניות. אפשר לבטל בכל רגע.',
+        pricingCta: 'התחלה חינם',
+        pricingNote: 'כל המחירים בשקלים, לחודש, לא כולל מע״מ. {days} ימי ניסיון ללא חיוב בכל תוכנית — החיוב הראשון רק בתום התקופה, וביטול לפני כן לא יחויב.',
+        planPopular: 'הכי נבחרת',
+
+        faqTitle: 'שאלות',
+        faq1Q: 'צריך להתקין משהו?',
+        faq1A: 'לא. המערכת רצה בדפדפן. בטלפון אפשר להוסיף אותה למסך הבית והיא נפתחת כמו אפליקציה, במסך מלא.',
+        faq2Q: 'העובדים רואים את המשמרות אחד של השני?',
+        faq2A: 'לא. כל עובד רואה רק את המשמרות שלו ואת האילוצים שלו. רק מנהלים רואים את הסידור המלא.',
+        faq3Q: 'ומה אם משמרת לא מצליחה להתאייש?',
+        faq3A: 'המערכת אומרת בדיוק למה – מי הגיע למכסה השבועית, מי כבר עובד באותו יום, מי חייב מנוחה בין משמרות – ומה כדאי לשנות.',
+        faq4Q: 'הנתונים שלי בטוחים אם אפסיק לשלם?',
+        faq4A: 'כן. הנתונים נשמרים. בחירת תוכנית מחדש מחזירה את הגישה מיד, עם הכל במקום שבו הפסקת.',
+        faq5Q: 'אילו שפות נתמכות?',
+        faq5A: 'עברית, אנגלית, ספרדית, צרפתית, גרמנית, פורטוגזית, רוסית וערבית – כולל כתיבה מימין לשמאל. כל אחד בוחר לעצמו.',
+
+        ctaTitle: 'נסה את זה על הסידור של השבוע הבא',
+        ctaBody: 'מגדירים את הסניפים, בונים שבוע אחד, ורואים את ההבדל. זה לוקח אחר צהריים.',
+        footerRights: 'כל הזכויות שמורות.',
+        footerTagline: 'סידור משמרות לרשתות.'
+      },
+
       tabs: {
+        support: 'תמיכה',
         schedule: 'סידור שבועי', constraints: 'אילוצים', employees: 'עובדים',
         branches: 'סניפים', users: 'משתמשים', billing: 'מנוי', settings: 'הגדרות'
       },
@@ -1761,8 +2215,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'מסונכרן בין המכשירים', syncedAt: 'מסונכרן בין המכשירים · עודכן {time}',
+        demoTitle: 'מצב הדגמה',
+        demoBody: 'הנתונים נשמרים בדפדפן הזה בלבד ואינם עוברים בין מכשירים.',
         localOnly: 'נשמר במכשיר הזה בלבד', readOnly: 'צפייה בלבד – אין הרשאת עריכה',
+        saving: 'שומר…',
+        savedCloud: 'כל השינויים נשמרו בענן',
+        savedCloudAt: 'כל השינויים נשמרו בענן · {time}',
+        savedDeviceAt: 'נשמר במכשיר הזה · {time}',
+        saveFailed: 'לא ניתן לשמור כרגע',
+        saveFailedHint: 'השינוי האחרון לא נשמר. בדקו את החיבור לאינטרנט – השינוי הבא ינסה שוב.',
         remoteUpdate: 'התקבל עדכון ממחשב אחר ({time})',
         localCopy: 'זהו עותק מקומי של הקובץ – הנתונים נשמרים בדפדפן של המחשב הזה בלבד ואינם מסתנכרנים. ' +
           'לעבודה משני מחשבים יש להשתמש בגרסה המתארחת. להעברת הנתונים: ייצוא JSON בלשונית ההגדרות, וייבוא בגרסה המתארחת.',
@@ -1983,6 +2444,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'לפי צאת שבת', autoSabbathLabel: 'מצאת שבת +30 דק׳'
       },
 
+      why: {
+        button: 'למה דווקא הוא?',
+        title: 'למה {name}?',
+        onlyOption: 'אף אחד אחר לא היה יכול לקחת את המשמרת הזו.',
+        fairest: 'מתוך {count} שיכלו לקחת אותה, זו הייתה הבחירה ההוגנת ביותר לפי השעות עד כה.',
+        alsoPossible: 'יכלו לקחת אותה גם: {names}.',
+        whoCould: 'מי לא היה יכול ({count})',
+        fact: {
+          requested: 'ביקש את המשמרת הזו ביום הזה',
+          available: 'לא הוגשה בקשת חופש ליום הזה',
+          qualified: 'מוסמך למשמרת הזו',
+          assignedBranch: 'משויך לסניף הזה',
+          anyBranch: 'עובד בכל הסניפים',
+          quota: 'לפני השיבוץ {before} משמרות, אחריו {after} מתוך מכסה של {max}',
+          capacity: 'השבוע הוא פנוי ל־{target} משמרות בלבד מתוך המכסה',
+          rest: 'המנוחה בין ערב לבוקר נשמרת',
+          continuity: 'כבר בסניף הזה {count} פעמים השבוע'
+        },
+        blocked: {
+          inactive: 'אינו פעיל',
+          notQualified: 'אינו מוסמך למשמרת הזו',
+          otherBranch: 'עובד בסניף אחר',
+          requestedOff: 'ביקש חופש ביום הזה',
+          blockedShift: 'ביקש לא לעבוד במשמרת הזו',
+          atLimit: 'הגיע למכסה השבועית ({max})',
+          busySameDay: 'כבר עובד באותו יום',
+          busySameShift: 'כבר במשמרת הזו',
+          restRule: 'זקוק למנוחה בין ערב לבוקר'
+        }
+      },
+      preview: {
+        open: 'תצוגת עובד',
+        title: 'את המסך של מי לראות?',
+        hint: 'צפייה בלבד. שום דבר כאן לא נשמר בשם העובד.',
+        banner: 'אתם צופים במסך של {name}',
+        exit: 'חזרה לניהול',
+        noEmployees: 'אין עדיין עובדים פעילים.'
+      },
+      support: {
+        title: 'תמיכה',
+        promise: 'ספרו לנו מה נשבר או מה חסר לכם. אדם עונה תוך {hours} שעות.',
+        whatsapp: 'וואטסאפ',
+        newTitle: 'פתיחת קריאה',
+        kindLabel: 'סוג הפנייה', subjectLabel: 'נושא', bodyLabel: 'מה קרה?',
+        send: 'שליחה',
+        sent: 'הקריאה התקבלה. אדם יחזור אליכם תוך {hours} שעות.',
+        sendFailed: 'לא הצלחנו לשלוח את הקריאה. נסו שוב.',
+        loadFailed: 'לא הצלחנו לטעון את הקריאות שלכם.',
+        listTitle: 'הקריאות שלי',
+        empty: 'עדיין לא נפתחו קריאות.',
+        replyLabel: 'התשובה שלנו:',
+        errorSubject: 'צריך לכתוב נושא לקריאה.',
+        errorBody: 'צריך לתאר מה קרה.',
+        errorSubjectLong: 'הנושא ארוך מ-{max} תווים.',
+        errorBodyLong: 'התיאור ארוך מ-{max} תווים.',
+        kind: { bug: 'משהו לא עובד', feature: 'בקשת פיתוח', question: 'שאלה' },
+        status: { open: 'נפתחה', in_progress: 'בטיפול', answered: 'נענתה', closed: 'נסגרה' }
+      },
       settings: {
         rules: 'כללי שיבוץ',
         onePerDay: 'עובד משובץ למשמרת אחת ביום לכל היותר',
@@ -2001,11 +2520,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'גיבוי ושחזור',
         exportJson: '⬇ ייצוא כל הנתונים (JSON)', importJson: '⬆ ייבוא נתונים',
         reset: 'איפוס להגדרות ברירת מחדל',
+        deadlineTitle: 'מועד סגירת הגשות',
+        deadlineEnable: 'לסגור את הגשת האילוצים במועד קבוע',
+        deadlineDay: 'יום',
+        deadlineTime: 'שעה',
+        deadlineRemind: 'תזכורת לפני',
+        deadlineHours: '{hours} שעות',
+        deadlinePreview: 'ההגשות לשבוע של {week} נסגרות ביום {day}, {date} בשעה {time}.',
+        deadlineHint: 'אחרי המועד הזה עובדים אינם יכולים להגיש או לשנות אילוצים לאותו שבוע. מנהל יכול תמיד.',
         backupHint: 'הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה. לשיתוף בין מחשבים – ייצאו קובץ JSON.',
+        backupHintCloud: 'הנתונים נשמרים בענן ומסתנכרנים בין כל המכשירים. ייצוא JSON נועד לגיבוי משלכם.',
         languageTitle: 'שפה', languageHint: 'משנה את כל הממשק. נשמר למכשיר הזה.'
       },
 
       server: {
+        confirmEmail: 'בדקו את תיבת המייל ואשרו את הכתובת, ואז התחברו',
         credentialsRequired: 'נדרשים אימייל וסיסמה',
         passwordTooShort: 'הסיסמה חייבת להכיל לפחות 6 תווים',
         emailTaken: 'כתובת האימייל כבר רשומה',
@@ -2038,6 +2567,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'החיוב עדיין לא חובר. פנו לתמיכה.',
         mockProvider: 'ספק מדומה (פיתוח)',
         mockNote: 'התשלום מאושר מיד ללא חיוב אמיתי. משמש לפיתוח ולהדגמה בלבד.',
         unknownPlan: 'תוכנית לא מוכרת',
@@ -2047,6 +2577,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'חיוב ראשון',
+        nextCharge: 'החיוב הבא',
+        paymentMethod: 'אמצעי תשלום',
+        cardOnFile: 'שמור',
+        noCard: 'לא הוזן',
+        addCard: 'הוספת אמצעי תשלום',
+        noCardWarning: 'עדיין לא הוזן אמצעי תשלום. בלעדיו הגישה תיחסם ב-{date}.',
+        trialNotice: 'לא תחויבו במשך {days} הימים הראשונים. החיוב הראשון ב-{date} על סך {price}, ומשם כל חודש — עד שתבטלו.',
+        cancelBeforeCharge: 'ביטול לפני החיוב',
+        cancelTrialConfirm: 'לבטל את המנוי? לא תחויבו, והגישה תישמר עד סוף תקופת הניסיון.',
+        resume: 'חידוש המנוי',
+        resumed: 'המנוי חודש',
         priceMonthly: '{amount}₪ לחודש', priceAmount: '{amount}₪',
         updateFailed: 'העדכון נכשל', cancelFailed: 'הביטול נכשל',
         title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',
@@ -2069,7 +2611,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
         passwordHint: 'לפחות 6 תווים',
         enter: 'כניסה', create: 'פתיחת חשבון', signingIn: 'מתחבר…', creating: 'פותח חשבון…',
-        trialNote: '{days} ימי ניסיון ללא תשלום. לא נדרש אמצעי תשלום.',
+        trialNote: '{days} ימים ללא חיוב. החיוב הראשון ב-{date}, וביטול לפני כן לא יחויב כלל.',
         signOut: 'יציאה', blocked: 'הגישה חסומה',
         blockedOwner: 'להפעלת המנוי יש לפנות לתמיכה.',
         blockedMember: 'יש לפנות לבעל החשבון בחברה כדי לחדש את המנוי.',
@@ -2090,9 +2632,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'תקופת ניסיון – נותרו {days} ימים. החיוב הראשון ב-{date}, {price}.',
+        trialNoCard: 'תקופת ניסיון – נותרו {days} ימים. הוסיפו אמצעי תשלום כדי שהמנוי יימשך אחרי {date}.',
+        trialEndedNoCard: 'תקופת הניסיון הסתיימה. הוסיפו אמצעי תשלום כדי להמשיך.',
+        trialCanceled: 'המנוי בוטל ולא תחויבו. הגישה נשמרת עד {date}.',
+        canceledAtPeriodEnd: 'המנוי בוטל. הגישה נשמרת עד {date}, ולא יבוצעו חיובים נוספים.',
+        charging: 'תקופת הניסיון הסתיימה והחיוב הראשון בעיבוד.',
         noCompany: 'לא נמצאה חברה',
-        trialEnded: 'תקופת הניסיון הסתיימה. יש להפעיל מנוי כדי להמשיך.',
-        trial: 'תקופת ניסיון – נותרו {days} ימים.',
         expired: 'המנוי פג. יש לחדש כדי להמשיך.',
         pastDueBlocked: 'התשלום לא התקבל והגישה נחסמה. יש לעדכן אמצעי תשלום.',
         pastDue: 'התשלום האחרון לא עבר. הגישה תיחסם בעוד {days} ימים.',
@@ -2119,6 +2665,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
         noShifts: 'אין לך משמרות בשבוע הזה.',
         totalWeek: 'סה״כ {count} משמרות השבוע.',
+        deadlineOpen: 'ההגשות לשבוע הזה נסגרות ביום {day}, {date} בשעה {time}.',
+        deadlineHours: 'ההגשות נסגרות בעוד {hours} שעות. אחר כך אי אפשר לשנות.',
+        deadlineClosed: 'ההגשות לשבוע הזה נסגרו. אם משהו השתנה — דברו עם המנהל.',
+        deadlineLocked: 'ההגשות לשבוע הזה נסגרו.',
         publishedLocked: 'הסידור פורסם – לא ניתן עוד לשנות אילוצים לשבוע הזה.',
         notLinked: 'המשתמש שלך עדיין לא קושר לכרטיס עובד. פנה/י למנהל/ת.',
         noShiftsToday: 'אין משמרות ביום הזה', holidayNoWork: 'יום חג – אין עבודה'
@@ -2163,6 +2713,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'כתבו לנו',
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
         save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
         yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
@@ -2186,8 +2737,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Planificador de turnos',
-        subtitle: 'Planificación semanal para cada sucursal, con detección de solapamientos y huecos',
+        title: 'SetShifts',
+        subtitle: 'Programación con IA para cada sucursal: disponibilidad, solicitudes, puestos y tus reglas',
         language: 'Idioma'
       },
 
@@ -2210,7 +2761,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Rosa', 5: 'Turquesa', 6: 'Gris', 7: 'Marrón'
       },
 
+      landing: {
+        planTrialLine: '{days} días gratis, después',
+        faq6Q: '¿Cuándo se me cobra exactamente?',
+        faq6A: 'Abres la suscripción con una tarjeta, pero no se cobra nada durante los primeros {days} días. El primer cobro se hace automáticamente al terminar la prueba, y después cada mes, hasta que canceles. Cancelar durante la prueba no cuesta nada, y el acceso sigue hasta que termina.',
+        signIn: 'Entrar',
+        start: 'Empezar gratis',
+        startLong: 'Empezar gratis – {days} días',
+        heroBadge: 'Planificación con IA para negocios con varias sucursales',
+        heroTitle: 'Todo tu negocio, planificado en un clic.',
+        heroSubtitle: 'La IA de SetShifts crea sola el cuadrante de cada sucursal: según la disponibilidad del equipo, las solicitudes que envían, los límites de horas, los puestos y tus propias reglas. Y de cada asignación te dice por qué esa persona. Tú apruebas; no construyes.',
+        heroNote: '{days} días gratis. Cancela antes de que termine la prueba y no se te cobra nada.',
+        heroSecondary: 'Cómo funciona',
+        whyTitle: '¿Por qué esa persona?',
+        whySubtitle: 'La primera pregunta que hace cualquier responsable ante un cuadrante automático, y la que decide si confía en él o lo rehace a mano.',
+        whyBody: 'Pulsa el signo de interrogación junto a cualquier asignación y SetShifts responde: quién pidió ese turno, quién está formado para él, quién ya cubrió su cuota y quién más podría haberlo tomado. Sin cajas negras que haya que creerse.',
+        whyPoint1: 'La explicación se deduce del cuadrante que tienes en pantalla, así que sigue siendo cierta después de cambiar algo a mano.',
+        whyPoint2: 'Ves no solo a quién se eligió, sino a quién se descartó y por qué, y eso convierte una discusión con un empleado en una conversación de treinta segundos.',
+        whyDemoSlot: 'Martes · Centro · Tarde',
+        whyDemoTitle: '¿Por qué Daniel?',
+        whyDemoFact1: 'Pidió este turno ese día',
+        whyDemoFact2: 'Formado para este turno · asignado a esta sucursal',
+        whyDemoFact3: '3 de 5 turnos esta semana',
+        whyDemoVerdict: 'De las 2 personas que podían cubrirlo, era la elección más justa.',
+        problemsTitle: 'Las tres cosas que fallan cada semana',
+        problem1Title: 'El mismo turno, dos personas',
+        problem1Body: 'Una sucursal acaba con gente de sobra mientras otra va corta. Te enteras cuando alguien llega y no tiene qué hacer.',
+        problem2Title: 'Las solicitudes se pierden',
+        problem2Body: 'Una petición de día libre llega por mensaje, se olvida, y el cuadrante rompe una promesa que hiciste.',
+        problem3Title: 'Huecos que no sabes explicar',
+        problem3Body: 'Un turno se queda vacío y nadie sabe si es realmente imposible o solo un descuido.',
+        featuresTitle: 'Qué hace el sistema',
+        featuresSubtitle: 'No es una hoja de cálculo con colores. Es un planificador que conoce tus reglas.',
+        feature1Title: 'Planificación automática',
+        feature1Body: 'Un clic llena la semana entera en todas las sucursales, reparte la carga con justicia y respeta el límite semanal de cada persona.',
+        feature2Title: 'Detección de solapamientos',
+        feature2Body: 'Cada solapamiento, hueco y solicitud incumplida se señala en cuanto aparece, con el motivo y una solución propuesta.',
+        feature3Title: 'Solicitudes con aprobación',
+        feature3Body: 'El equipo envía sus solicitudes, con un motivo opcional. Nada afecta al cuadrante hasta que lo apruebas.',
+        feature4Title: 'Tus turnos, tus horas',
+        feature4Body: 'Mañana, mediodía, tarde, noche: define tantos turnos como necesite tu negocio, con tus horas y colores por sucursal.',
+        feature5Title: 'Excel y WhatsApp',
+        feature5Body: 'Exporta la semana entera, o envía a cada persona solo sus turnos, como hoja personal o texto listo para pegar.',
+        feature6Title: 'En todos los dispositivos',
+        feature6Body: 'El responsable edita en el ordenador, el equipo ve sus turnos en el móvil. Todos ven el mismo cuadrante, al instante.',
+        howTitle: 'En marcha en una tarde',
+        how1Title: 'Añade sucursales y personal',
+        how1Body: 'Días de apertura, horarios y personas por turno: cada sucursal a su manera.',
+        how2Title: 'Recoge las solicitudes',
+        how2Body: 'El equipo entra y pide sus días libres. Tú apruebas o rechazas, y lo ves todo en un sitio.',
+        how3Title: 'Crea y publica',
+        how3Body: 'Un clic construye la semana. Revisa los avisos, corrige lo importante, publica, y cada uno ve sus turnos.',
+        pricingTitle: 'Precio simple, según el tamaño del equipo',
+        pricingSubtitle: 'Sucursales ilimitadas en todos los planes. Cancela cuando quieras.',
+        pricingCta: 'Empezar gratis',
+        pricingNote: 'Precios en ILS, al mes, IVA no incluido. {days} días gratis en todos los planes: el primer cobro llega solo al terminar la prueba, y cancelar antes no cuesta nada.',
+        planPopular: 'El más elegido',
+        faqTitle: 'Preguntas',
+        faq1Q: '¿Hay que instalar algo?',
+        faq1A: 'No. El sistema funciona en el navegador. En el móvil puedes añadirlo a la pantalla de inicio y se abre como una app, a pantalla completa.',
+        faq2Q: '¿Mi equipo ve los turnos de los demás?',
+        faq2A: 'No. Cada persona ve solo sus turnos y sus solicitudes. Únicamente los responsables ven el cuadrante completo.',
+        faq3Q: '¿Y si un turno no se puede cubrir?',
+        faq3A: 'El sistema te dice exactamente por qué: quién llegó a su límite semanal, quién ya trabaja ese día, quién necesita descanso entre turnos, y qué cambiar.',
+        faq4Q: '¿Mis datos están a salvo si dejo de pagar?',
+        faq4A: 'Sí. Tus datos se conservan. Al elegir un plan de nuevo recuperas el acceso al instante, con todo donde lo dejaste.',
+        faq5Q: '¿Qué idiomas admite?',
+        faq5A: 'Hebreo, inglés, español, francés, alemán, portugués, ruso y árabe, incluidos los idiomas que se leen de derecha a izquierda. Cada persona elige el suyo.',
+        ctaTitle: 'Pruébalo con el cuadrante de la semana que viene',
+        ctaBody: 'Configura tus sucursales, crea una semana y nota la diferencia. Es cuestión de una tarde.',
+        footerRights: 'Todos los derechos reservados.',
+        footerTagline: 'Planificación de turnos para cadenas.'
+      },
       tabs: {
+        support: 'Soporte',
         schedule: 'Horario', constraints: 'Solicitudes', employees: 'Personal',
         branches: 'Sucursales', users: 'Usuarios', billing: 'Suscripción', settings: 'Ajustes'
       },
@@ -2240,8 +2864,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Sincronizado entre dispositivos', syncedAt: 'Sincronizado entre dispositivos · actualizado {time}',
+        demoTitle: 'Modo demostración',
+        demoBody: 'Los datos se guardan solo en este navegador y no pasan entre dispositivos.',
         localOnly: 'Guardado solo en este dispositivo', readOnly: 'Solo lectura: sin permiso de edición',
+        saving: 'Guardando…',
+        savedCloud: 'Todos los cambios guardados en la nube',
+        savedCloudAt: 'Todos los cambios guardados en la nube · {time}',
+        savedDeviceAt: 'Guardado en este dispositivo · {time}',
+        saveFailed: 'No se puede guardar ahora',
+        saveFailedHint: 'El último cambio no se guardó. Revisa la conexión: el próximo cambio volverá a intentarlo.',
         remoteUpdate: 'Actualización recibida de otro dispositivo ({time})',
         localCopy: 'Esta es una copia local: los datos se guardan solo en este navegador y no se sincronizan. ' +
           'Para trabajar desde dos ordenadores usa la versión alojada. Para mover los datos: exporta el JSON en Ajustes e impórtalo allí.',
@@ -2463,6 +3094,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
       },
 
+      why: {
+        button: '¿Por qué esta persona?',
+        title: '¿Por qué {name}?',
+        onlyOption: 'Nadie más podía cubrir este turno.',
+        fairest: 'De las {count} personas disponibles, era la elección más justa según las horas acumuladas.',
+        alsoPossible: 'También podían cubrirlo: {names}.',
+        whoCould: 'Quién no podía ({count})',
+        fact: {
+          requested: 'Pidió este turno ese día',
+          available: 'Sin solicitud de día libre',
+          qualified: 'Formado para este turno',
+          assignedBranch: 'Asignado a esta sucursal',
+          anyBranch: 'Trabaja en cualquier sucursal',
+          quota: 'Antes de este turno {before}, después {after} de una cuota de {max}',
+          capacity: 'Esta semana solo {target} de esos turnos están realmente disponibles para esta persona',
+          rest: 'Se respeta el descanso entre tarde y mañana',
+          continuity: 'Ya en esta sucursal {count} veces esta semana'
+        },
+        blocked: {
+          inactive: 'no está activo',
+          notQualified: 'no está formado para este turno',
+          otherBranch: 'trabaja en otra sucursal',
+          requestedOff: 'pidió el día libre',
+          blockedShift: 'pidió no trabajar en este turno',
+          atLimit: 'alcanzó el límite semanal de {max}',
+          busySameDay: 'ya trabaja ese día',
+          busySameShift: 'ya está en este turno',
+          restRule: 'necesita descanso entre tarde y mañana'
+        }
+      },
+      preview: {
+        open: 'Vista de empleado',
+        title: '¿Qué pantalla quieres ver?',
+        hint: 'Solo lectura. Nada de lo que hagas aquí se guarda como esa persona.',
+        banner: 'Estás viendo la pantalla de {name}',
+        exit: 'Volver a gestión',
+        noEmployees: 'Todavía no hay personal activo.'
+      },
+      support: {
+        title: 'Soporte',
+        promise: 'Cuéntanos qué falla o qué necesitas. Una persona responde en {hours} horas.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Abrir un ticket',
+        kindLabel: 'Tipo', subjectLabel: 'Asunto', bodyLabel: '¿Qué ha pasado?',
+        send: 'Enviar',
+        sent: 'Recibido. Una persona responderá en {hours} horas.',
+        sendFailed: 'No se pudo enviar el ticket. Inténtalo de nuevo.',
+        loadFailed: 'No se pudieron cargar tus tickets.',
+        listTitle: 'Tus tickets',
+        empty: 'Aún no hay tickets.',
+        replyLabel: 'Nuestra respuesta:',
+        errorSubject: 'Escribe un asunto.',
+        errorBody: 'Describe qué ha pasado.',
+        errorSubjectLong: 'El asunto supera los {max} caracteres.',
+        errorBodyLong: 'La descripción supera los {max} caracteres.',
+        kind: { bug: 'Algo no funciona', feature: 'Petición de función', question: 'Pregunta' },
+        status: { open: 'Abierto', in_progress: 'En curso', answered: 'Respondido', closed: 'Cerrado' }
+      },
       settings: {
         rules: 'Reglas de planificación',
         onePerDay: 'Cada persona trabaja como máximo un turno al día',
@@ -2481,11 +3170,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Copia de seguridad',
         exportJson: 'Exportar todos los datos (JSON)', importJson: 'Importar datos',
         reset: 'Restablecer valores por defecto',
+        deadlineTitle: 'Cierre de solicitudes',
+        deadlineEnable: 'Cerrar las solicitudes a una hora fija',
+        deadlineDay: 'Día',
+        deadlineTime: 'Hora',
+        deadlineRemind: 'Avisar antes',
+        deadlineHours: '{hours} horas',
+        deadlinePreview: 'Las solicitudes para la semana del {week} cierran el {day} {date} a las {time}.',
+        deadlineHint: 'Después de esa hora el personal no puede enviar ni cambiar solicitudes de esa semana. Un responsable siempre puede.',
         backupHint: 'Los datos se guardan automáticamente en este navegador. Para moverlos entre ordenadores, exporta un archivo JSON.',
+        backupHintCloud: 'Los datos se guardan en la nube y se sincronizan en todos los dispositivos. La exportación JSON es para tu propia copia de seguridad.',
         languageTitle: 'Idioma', languageHint: 'Cambia toda la interfaz. Se guarda en este dispositivo.'
       },
 
       server: {
+        confirmEmail: 'Revisa tu correo y confirma la dirección, y luego inicia sesión',
         credentialsRequired: 'Hacen falta el correo y la contraseña',
         passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
         emailTaken: 'Ese correo ya está registrado',
@@ -2518,6 +3217,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'El cobro aún no está conectado. Contacta con soporte.',
         mockProvider: 'Proveedor de prueba (desarrollo)',
         mockNote: 'El pago se aprueba al instante sin cargo real. Solo para desarrollo y demostraciones.',
         unknownPlan: 'Plan desconocido',
@@ -2527,6 +3227,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'Primer cobro',
+        nextCharge: 'Próximo cobro',
+        paymentMethod: 'Método de pago',
+        cardOnFile: 'Guardado',
+        noCard: 'No añadido',
+        addCard: 'Añadir método de pago',
+        noCardWarning: 'Aún no hay método de pago. Sin él, el acceso termina el {date}.',
+        trialNotice: 'No se te cobra durante los primeros {days} días. El primer cobro es el {date} por {price}, y después cada mes, hasta que canceles.',
+        cancelBeforeCharge: 'Cancelar antes del cobro',
+        cancelTrialConfirm: '¿Cancelar la suscripción? No se te cobrará y el acceso se mantiene hasta el final de la prueba.',
+        resume: 'Reanudar la suscripción',
+        resumed: 'Suscripción reanudada',
         priceMonthly: '{amount} ILS / mes', priceAmount: '{amount} ILS',
         updateFailed: 'No se pudo actualizar', cancelFailed: 'No se pudo cancelar',
         title: 'Tu suscripción', status: 'Estado', plan: 'Plan', validUntil: 'Válida hasta',
@@ -2549,7 +3261,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'Correo', password: 'Contraseña', name: 'Tu nombre', companyName: 'Nombre de la empresa',
         passwordHint: 'Al menos 6 caracteres',
         enter: 'Entrar', create: 'Crear cuenta', signingIn: 'Entrando…', creating: 'Creando…',
-        trialNote: '{days} días gratis. No hace falta método de pago.',
+        trialNote: '{days} días gratis. El primer cobro es el {date}; cancela antes y no pagas nada.',
         signOut: 'Salir', blocked: 'Acceso bloqueado',
         blockedOwner: 'Contacta con soporte para activar la suscripción.',
         blockedMember: 'Pide al propietario de la cuenta que renueve la suscripción.',
@@ -2570,9 +3282,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Prueba: quedan {days} días. Primer cobro el {date}, {price}.',
+        trialNoCard: 'Prueba: quedan {days} días. Añade un método de pago para seguir después del {date}.',
+        trialEndedNoCard: 'La prueba ha terminado. Añade un método de pago para continuar.',
+        trialCanceled: 'Cancelado: no se te cobrará. El acceso se mantiene hasta el {date}.',
+        canceledAtPeriodEnd: 'Cancelado. El acceso se mantiene hasta el {date} y no habrá más cobros.',
+        charging: 'La prueba ha terminado y el primer cobro se está procesando.',
         noCompany: 'No se ha encontrado la empresa',
-        trialEnded: 'La prueba ha terminado. Activa una suscripción para continuar.',
-        trial: 'Prueba: quedan {days} días.',
         expired: 'La suscripción ha caducado. Renuévala para continuar.',
         pastDueBlocked: 'No se ha recibido el pago y el acceso está bloqueado. Actualiza el método de pago.',
         pastDue: 'El último pago no se ha completado. El acceso se bloqueará en {days} días.',
@@ -2599,6 +3315,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'El horario de esta semana todavía no se ha publicado.',
         noShifts: 'No tienes turnos esta semana.',
         totalWeek: '{count} turnos esta semana.',
+        deadlineOpen: 'Las solicitudes de esta semana cierran el {day} {date} a las {time}.',
+        deadlineHours: 'Las solicitudes cierran en {hours} horas. Después no podrás cambiarlas.',
+        deadlineClosed: 'Las solicitudes de esta semana están cerradas. Si algo cambió, habla con tu responsable.',
+        deadlineLocked: 'Las solicitudes de esta semana están cerradas.',
         publishedLocked: 'El horario está publicado: ya no se pueden cambiar las solicitudes de esta semana.',
         notLinked: 'Tu usuario aún no está vinculado a una ficha de empleado. Habla con tu responsable.',
         noShiftsToday: 'No hay turnos este día', holidayNoWork: 'Festivo: no se trabaja'
@@ -2643,6 +3363,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Escríbenos',
         moveUp: 'Subir', moveDown: 'Bajar', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Cerrar',
         yes: 'Sí', no: 'No', all: 'Todo', and: 'y', more: 'y {count} más'
@@ -2666,8 +3387,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Planificateur de services',
-        subtitle: 'Planning hebdomadaire par succursale, avec détection des doublons et des manques',
+        title: 'SetShifts',
+        subtitle: 'Planification par IA pour chaque site : disponibilités, demandes, postes et vos règles',
         language: 'Langue'
       },
 
@@ -2690,7 +3411,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Rose', 5: 'Turquoise', 6: 'Gris', 7: 'Marron'
       },
 
+      landing: {
+        planTrialLine: '{days} jours gratuits, puis',
+        faq6Q: 'Quand suis-je débité exactement ?',
+        faq6A: 'Vous ouvrez l’abonnement avec une carte, mais rien n’est débité pendant les {days} premiers jours. Le premier prélèvement se fait automatiquement à la fin de l’essai, puis chaque mois, jusqu’à résiliation. Résilier pendant l’essai ne coûte rien, et l’accès reste ouvert jusqu’à sa fin.',
+        signIn: 'Connexion',
+        start: 'Commencer gratuitement',
+        startLong: 'Commencer gratuitement – {days} jours',
+        heroBadge: 'Planification par IA pour les entreprises multi-sites',
+        heroTitle: 'Toute votre activité, planifiée en un clic.',
+        heroSubtitle: 'L’IA de SetShifts construit seule le planning de chaque site : d’après les disponibilités de vos équipes, les demandes qu’elles déposent, les limites d’heures, les postes et vos propres règles. Et pour chaque affectation, elle vous dit pourquoi cette personne. Vous validez, vous ne construisez pas.',
+        heroNote: '{days} jours gratuits. Résiliez avant la fin de l’essai et vous n’êtes pas débité du tout.',
+        heroSecondary: 'Comment ça marche',
+        whyTitle: 'Pourquoi cette personne ?',
+        whySubtitle: 'La première question que pose tout responsable devant un planning automatique, et celle qui décide s’il lui fait confiance ou s’il refait tout à la main.',
+        whyBody: 'Cliquez sur le point d’interrogation à côté d’une affectation et SetShifts répond : qui a demandé ce créneau, qui est formé pour lui, qui a déjà atteint son quota, et qui d’autre aurait pu le prendre. Aucune boîte noire à croire sur parole.',
+        whyPoint1: 'L’explication est déduite du planning affiché : elle reste donc vraie après une modification manuelle.',
+        whyPoint2: 'Vous voyez non seulement qui a été retenu, mais qui a été écarté et pourquoi — ce qui transforme une discussion avec un employé en conversation de trente secondes.',
+        whyDemoSlot: 'Mardi · Centre · Soirée',
+        whyDemoTitle: 'Pourquoi Daniel ?',
+        whyDemoFact1: 'A demandé ce créneau ce jour-là',
+        whyDemoFact2: 'Formé pour ce créneau · affecté à ce site',
+        whyDemoFact3: '3 créneaux sur 5 cette semaine',
+        whyDemoVerdict: 'Sur les 2 personnes possibles, c’était le choix le plus équitable.',
+        problemsTitle: 'Les trois choses qui dérapent chaque semaine',
+        problem1Title: 'Le même créneau, deux personnes',
+        problem1Body: 'Un site se retrouve en surnombre pendant qu’un autre manque de monde. Vous le découvrez quand quelqu’un arrive et n’a rien à faire.',
+        problem2Title: 'Les demandes se perdent',
+        problem2Body: 'Une demande de congé arrive par message, elle est oubliée, et le planning rompt une promesse que vous aviez faite.',
+        problem3Title: 'Des trous inexpliqués',
+        problem3Body: 'Un créneau reste vide et personne ne sait si c’est vraiment impossible ou simplement un oubli.',
+        featuresTitle: 'Ce que fait le système',
+        featuresSubtitle: 'Pas un tableur en couleurs. Un planificateur qui connaît vos règles.',
+        feature1Title: 'Planification automatique',
+        feature1Body: 'Un clic remplit la semaine entière sur tous les sites, répartit la charge équitablement et respecte la limite hebdomadaire de chacun.',
+        feature2Title: 'Détection des doublons',
+        feature2Body: 'Chaque doublon, trou et demande non respectée est signalé dès son apparition, avec la raison et une correction proposée.',
+        feature3Title: 'Demandes soumises à validation',
+        feature3Body: 'Les équipes déposent leurs demandes, avec un motif facultatif. Rien n’affecte le planning tant que vous n’avez pas validé.',
+        feature4Title: 'Vos créneaux, vos horaires',
+        feature4Body: 'Matin, midi, soirée, nuit : définissez autant de créneaux que votre activité l’exige, avec vos horaires et vos couleurs par site.',
+        feature5Title: 'Excel et WhatsApp',
+        feature5Body: 'Exportez la semaine entière, ou envoyez à chacun uniquement ses créneaux — en feuille personnelle ou en texte prêt à coller.',
+        feature6Title: 'Sur tous les appareils',
+        feature6Body: 'Le responsable modifie sur ordinateur, les équipes consultent leurs créneaux sur leur téléphone. Tout le monde voit le même planning, immédiatement.',
+        howTitle: 'Opérationnel en une après-midi',
+        how1Title: 'Ajoutez sites et équipes',
+        how1Body: 'Jours d’ouverture, horaires et effectif par créneau : chaque site à sa manière.',
+        how2Title: 'Recueillez les demandes',
+        how2Body: 'Les équipes se connectent et déposent leurs demandes de congé. Vous validez ou refusez, et vous voyez tout au même endroit.',
+        how3Title: 'Construisez et publiez',
+        how3Body: 'Un clic construit la semaine. Parcourez les alertes, corrigez l’essentiel, publiez — et chacun voit ses créneaux.',
+        pricingTitle: 'Un tarif simple, selon la taille de l’équipe',
+        pricingSubtitle: 'Sites illimités sur toutes les formules. Résiliable à tout moment.',
+        pricingCta: 'Commencer gratuitement',
+        pricingNote: 'Tarifs en ILS, par mois, hors TVA. {days} jours gratuits sur toutes les formules : le premier prélèvement n’arrive qu’à la fin de l’essai, et résilier avant ne coûte rien.',
+        planPopular: 'Le plus choisi',
+        faqTitle: 'Questions',
+        faq1Q: 'Faut-il installer quelque chose ?',
+        faq1A: 'Non. Le système fonctionne dans le navigateur. Sur téléphone, vous pouvez l’ajouter à l’écran d’accueil : il s’ouvre comme une application, en plein écran.',
+        faq2Q: 'Mes équipes voient-elles les créneaux des autres ?',
+        faq2A: 'Non. Chacun ne voit que ses propres créneaux et ses propres demandes. Seuls les responsables voient le planning complet.',
+        faq3Q: 'Et si un créneau ne peut pas être couvert ?',
+        faq3A: 'Le système vous dit exactement pourquoi : qui a atteint sa limite hebdomadaire, qui travaille déjà ce jour-là, qui a besoin de repos entre deux créneaux — et quoi changer.',
+        faq4Q: 'Mes données sont-elles conservées si j’arrête de payer ?',
+        faq4A: 'Oui. Vos données sont conservées. En choisissant à nouveau une formule, l’accès revient immédiatement, tout est là où vous l’aviez laissé.',
+        faq5Q: 'Quelles langues sont prises en charge ?',
+        faq5A: 'Hébreu, anglais, espagnol, français, allemand, portugais, russe et arabe — y compris les langues qui se lisent de droite à gauche. Chacun choisit la sienne.',
+        ctaTitle: 'Essayez-le sur le planning de la semaine prochaine',
+        ctaBody: 'Configurez vos sites, construisez une semaine et voyez la différence. Une après-midi suffit.',
+        footerRights: 'Tous droits réservés.',
+        footerTagline: 'Planification des équipes pour les réseaux.'
+      },
       tabs: {
+        support: 'Assistance',
         schedule: 'Planning', constraints: 'Demandes', employees: 'Personnel',
         branches: 'Succursales', users: 'Utilisateurs', billing: 'Abonnement', settings: 'Réglages'
       },
@@ -2720,8 +3514,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Synchronisé entre les appareils', syncedAt: 'Synchronisé entre les appareils · mis à jour à {time}',
+        demoTitle: 'Mode démonstration',
+        demoBody: 'Les données sont enregistrées uniquement dans ce navigateur et ne passent pas d’un appareil à l’autre.',
         localOnly: 'Enregistré sur cet appareil uniquement', readOnly: 'Lecture seule – aucun droit de modification',
+        saving: 'Enregistrement…',
+        savedCloud: 'Toutes les modifications sont enregistrées dans le cloud',
+        savedCloudAt: 'Toutes les modifications sont enregistrées dans le cloud · {time}',
+        savedDeviceAt: 'Enregistré sur cet appareil · {time}',
+        saveFailed: 'Enregistrement impossible pour le moment',
+        saveFailedHint: 'La dernière modification n’a pas été enregistrée. Vérifiez la connexion : la prochaine modification réessaiera.',
         remoteUpdate: 'Mise à jour reçue d’un autre appareil ({time})',
         localCopy: 'Ceci est une copie locale : les données sont stockées uniquement dans ce navigateur et ne se synchronisent pas. ' +
           'Pour travailler depuis deux ordinateurs, utilisez la version hébergée. Pour transférer les données : exportez le JSON dans les Réglages, puis importez-le là-bas.',
@@ -2943,6 +3744,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
       },
 
+      why: {
+        button: 'Pourquoi cette personne ?',
+        title: 'Pourquoi {name} ?',
+        onlyOption: 'Personne d’autre ne pouvait prendre ce créneau.',
+        fairest: 'Sur les {count} personnes possibles, c’était le choix le plus équitable selon les heures déjà faites.',
+        alsoPossible: 'Auraient aussi pu le prendre : {names}.',
+        whoCould: 'Qui ne pouvait pas ({count})',
+        fact: {
+          requested: 'A demandé ce créneau ce jour-là',
+          available: 'Aucune demande de congé ce jour-là',
+          qualified: 'Formé pour ce créneau',
+          assignedBranch: 'Affecté à ce site',
+          anyBranch: 'Travaille sur tous les sites',
+          quota: 'Avant ce créneau {before}, après {after} sur un quota de {max}',
+          capacity: 'Cette semaine, seuls {target} de ces créneaux lui sont réellement ouverts',
+          rest: 'Le repos entre soirée et matin est respecté',
+          continuity: 'Déjà {count} fois sur ce site cette semaine'
+        },
+        blocked: {
+          inactive: 'n’est pas actif',
+          notQualified: 'n’est pas formé pour ce créneau',
+          otherBranch: 'travaille sur un autre site',
+          requestedOff: 'a demandé ce jour de congé',
+          blockedShift: 'a demandé à ne pas faire ce créneau',
+          atLimit: 'a atteint la limite hebdomadaire de {max}',
+          busySameDay: 'travaille déjà ce jour-là',
+          busySameShift: 'est déjà sur ce créneau',
+          restRule: 'a besoin de repos entre soirée et matin'
+        }
+      },
+      preview: {
+        open: 'Vue employé',
+        title: 'Quel écran voulez-vous voir ?',
+        hint: 'Lecture seule. Rien de ce que vous faites ici n’est enregistré en son nom.',
+        banner: 'Vous consultez l’écran de {name}',
+        exit: 'Retour à la gestion',
+        noEmployees: 'Aucun employé actif pour l’instant.'
+      },
+      support: {
+        title: 'Assistance',
+        promise: 'Dites-nous ce qui ne va pas ou ce qu’il vous manque. Une personne répond sous {hours} heures.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Ouvrir un ticket',
+        kindLabel: 'Type', subjectLabel: 'Objet', bodyLabel: 'Que s’est-il passé ?',
+        send: 'Envoyer',
+        sent: 'Bien reçu. Une personne vous répondra sous {hours} heures.',
+        sendFailed: 'Le ticket n’a pas pu être envoyé. Réessayez.',
+        loadFailed: 'Vos tickets n’ont pas pu être chargés.',
+        listTitle: 'Vos tickets',
+        empty: 'Aucun ticket pour le moment.',
+        replyLabel: 'Notre réponse :',
+        errorSubject: 'Indiquez un objet.',
+        errorBody: 'Décrivez ce qui s’est passé.',
+        errorSubjectLong: 'L’objet dépasse {max} caractères.',
+        errorBodyLong: 'La description dépasse {max} caractères.',
+        kind: { bug: 'Quelque chose ne marche pas', feature: 'Demande de fonctionnalité', question: 'Question' },
+        status: { open: 'Ouvert', in_progress: 'En cours', answered: 'Répondu', closed: 'Fermé' }
+      },
       settings: {
         rules: 'Règles de planification',
         onePerDay: 'Une personne travaille au plus un service par jour',
@@ -2961,11 +3820,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Sauvegarde et restauration',
         exportJson: 'Exporter toutes les données (JSON)', importJson: 'Importer des données',
         reset: 'Réinitialiser aux valeurs par défaut',
+        deadlineTitle: 'Clôture des demandes',
+        deadlineEnable: 'Clôturer les demandes à une heure fixe',
+        deadlineDay: 'Jour',
+        deadlineTime: 'Heure',
+        deadlineRemind: 'Rappel avant',
+        deadlineHours: '{hours} heures',
+        deadlinePreview: 'Les demandes pour la semaine du {week} closent le {day} {date} à {time}.',
+        deadlineHint: 'Après cette heure, les employés ne peuvent plus déposer ni modifier de demande pour cette semaine. Un responsable le peut toujours.',
         backupHint: 'Les données sont enregistrées automatiquement dans ce navigateur. Pour les transférer entre ordinateurs, exportez un fichier JSON.',
+        backupHintCloud: 'Les données sont enregistrées dans le cloud et synchronisées sur tous les appareils. L’export JSON sert à votre propre sauvegarde.',
         languageTitle: 'Langue', languageHint: 'Change toute l’interface. Enregistré sur cet appareil.'
       },
 
       server: {
+        confirmEmail: 'Vérifiez votre e-mail et confirmez l’adresse, puis connectez-vous',
         credentialsRequired: 'L’e-mail et le mot de passe sont obligatoires',
         passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
         emailTaken: 'Cette adresse e-mail est déjà enregistrée',
@@ -2998,6 +3867,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'La facturation n’est pas encore connectée. Contactez le support.',
         mockProvider: 'Prestataire de test (développement)',
         mockNote: 'Le paiement est approuvé immédiatement sans débit réel. Pour le développement et les démonstrations uniquement.',
         unknownPlan: 'Formule inconnue',
@@ -3007,6 +3877,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'Premier prélèvement',
+        nextCharge: 'Prochain prélèvement',
+        paymentMethod: 'Moyen de paiement',
+        cardOnFile: 'Enregistré',
+        noCard: 'Non ajouté',
+        addCard: 'Ajouter un moyen de paiement',
+        noCardWarning: 'Aucun moyen de paiement. Sans cela, l’accès prend fin le {date}.',
+        trialNotice: 'Aucun prélèvement pendant les {days} premiers jours. Le premier prélèvement a lieu le {date} pour {price}, puis chaque mois — jusqu’à résiliation.',
+        cancelBeforeCharge: 'Résilier avant le prélèvement',
+        cancelTrialConfirm: 'Résilier l’abonnement ? Aucun prélèvement ne sera effectué, et l’accès reste jusqu’à la fin de l’essai.',
+        resume: 'Reprendre l’abonnement',
+        resumed: 'Abonnement repris',
         priceMonthly: '{amount} ILS / mois', priceAmount: '{amount} ILS',
         updateFailed: 'Échec de la mise à jour', cancelFailed: 'Échec de l’annulation',
         title: 'Votre abonnement', status: 'Statut', plan: 'Formule', validUntil: 'Valable jusqu’au',
@@ -3029,7 +3911,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'E-mail', password: 'Mot de passe', name: 'Votre nom', companyName: 'Nom de l’entreprise',
         passwordHint: 'Au moins 6 caractères',
         enter: 'Se connecter', create: 'Créer le compte', signingIn: 'Connexion…', creating: 'Création…',
-        trialNote: '{days} jours gratuits. Aucun moyen de paiement requis.',
+        trialNote: '{days} jours gratuits. Le premier prélèvement a lieu le {date} ; résiliez avant et vous ne payez rien.',
         signOut: 'Déconnexion', blocked: 'Accès bloqué',
         blockedOwner: 'Contactez le support pour activer l’abonnement.',
         blockedMember: 'Demandez au propriétaire du compte de renouveler l’abonnement.',
@@ -3050,9 +3932,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Essai – {days} jours restants. Premier prélèvement le {date}, {price}.',
+        trialNoCard: 'Essai – {days} jours restants. Ajoutez un moyen de paiement pour continuer après le {date}.',
+        trialEndedNoCard: 'L’essai est terminé. Ajoutez un moyen de paiement pour continuer.',
+        trialCanceled: 'Résilié – aucun prélèvement ne sera effectué. L’accès reste jusqu’au {date}.',
+        canceledAtPeriodEnd: 'Résilié. L’accès reste jusqu’au {date}, et il n’y aura plus de prélèvement.',
+        charging: 'L’essai est terminé et le premier prélèvement est en cours.',
         noCompany: 'Aucune entreprise trouvée',
-        trialEnded: 'La période d’essai est terminée. Activez un abonnement pour continuer.',
-        trial: 'Essai – {days} jours restants.',
         expired: 'L’abonnement a expiré. Renouvelez-le pour continuer.',
         pastDueBlocked: 'Le paiement n’a pas été reçu et l’accès est bloqué. Veuillez mettre à jour le moyen de paiement.',
         pastDue: 'Le dernier paiement n’est pas passé. L’accès sera bloqué dans {days} jours.',
@@ -3079,6 +3965,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'Le planning de cette semaine n’est pas encore publié.',
         noShifts: 'Vous n’avez aucun service cette semaine.',
         totalWeek: '{count} services cette semaine.',
+        deadlineOpen: 'Les demandes de cette semaine closent le {day} {date} à {time}.',
+        deadlineHours: 'Les demandes closent dans {hours} heures. Ensuite, plus de modification possible.',
+        deadlineClosed: 'Les demandes de cette semaine sont closes. Si quelque chose a changé, parlez-en à votre responsable.',
+        deadlineLocked: 'Les demandes de cette semaine sont closes.',
         publishedLocked: 'Le planning est publié – les demandes pour cette semaine ne peuvent plus être modifiées.',
         notLinked: 'Votre utilisateur n’est pas encore lié à une fiche d’employé. Contactez votre responsable.',
         noShiftsToday: 'Aucun service ce jour-là', holidayNoWork: 'Jour férié – pas de travail'
@@ -3123,6 +4013,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Écrivez-nous',
         moveUp: 'Monter', moveDown: 'Descendre', timePlaceholder: 'hh:mm',
         save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', close: 'Fermer',
         yes: 'Oui', no: 'Non', all: 'Tout', and: 'et', more: 'et {count} de plus'
@@ -3146,8 +4037,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'جدول المناوبات',
-        subtitle: 'جدولة أسبوعية لكل فرع، مع كشف الازدواج والنقص في التغطية',
+        title: 'SetShifts',
+        subtitle: 'جدولة بالذكاء الاصطناعي لكل فرع — حسب التوفر والطلبات والأدوار وقواعد عملك',
         language: 'اللغة'
       },
 
@@ -3170,7 +4061,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'وردي', 5: 'فيروزي', 6: 'رمادي', 7: 'بني'
       },
 
+      landing: {
+        planTrialLine: '{days} يومًا مجانًا، بعدها',
+        faq6Q: 'متى يتم الخصم بالضبط؟',
+        faq6A: 'تفتح الاشتراك ببطاقة، لكن لا يُخصم شيء خلال الأيام {days} الأولى. يتم أول خصم تلقائيًا عند انتهاء فترة التجربة، ثم شهريًا حتى تلغي. الإلغاء أثناء التجربة لا يكلّف شيئًا، ويبقى الوصول حتى نهايتها.',
+        signIn: 'تسجيل الدخول',
+        start: 'ابدأ مجانًا',
+        startLong: 'ابدأ مجانًا – {days} يومًا',
+        heroBadge: 'جدولة موظفين بالذكاء الاصطناعي للأعمال متعددة الفروع',
+        heroTitle: 'جدول عملك كله. بنقرة واحدة.',
+        heroSubtitle: 'يبني الذكاء الاصطناعي في SetShifts جدول كل فرع بنفسه — حسب توفر الموظفين، والطلبات التي يقدّمونها، وحدود الساعات، والأدوار، وقواعد عملك. ولكل إسناد يخبرك لماذا هذا الشخص تحديدًا. أنت تعتمد، لا تبني.',
+        heroNote: '{days} يومًا مجانًا. ألغِ قبل انتهاء التجربة ولن يُخصم منك شيء إطلاقًا.',
+        heroSecondary: 'كيف يعمل',
+        whyTitle: 'لماذا هذا الشخص؟',
+        whySubtitle: 'أول سؤال يطرحه أي مدير على جدول أُنشئ تلقائيًا — وهو الذي يحدّد إن كان سيثق به أم سيعيد بناءه يدويًا.',
+        whyBody: 'اضغط على علامة الاستفهام بجانب أي إسناد، فيجيب SetShifts: من طلب هذه الوردية، ومن المؤهل لها، ومن استوفى حصته، ومن غيره كان يمكنه أخذها. لا صندوق أسود يُطلب منك تصديقه.',
+        whyPoint1: 'يُستنتج التفسير من الجدول المعروض على الشاشة، لذا يبقى صحيحًا بعد أي تعديل يدوي.',
+        whyPoint2: 'ترى لا من اختير فحسب، بل من استُبعد ولماذا — وهذا يحوّل جدالًا مع موظف إلى حديث من ثلاثين ثانية.',
+        whyDemoSlot: 'الثلاثاء · المركز · المساء',
+        whyDemoTitle: 'لماذا دانيال؟',
+        whyDemoFact1: 'طلب هذه الوردية في هذا اليوم',
+        whyDemoFact2: 'مؤهل لهذه الوردية · معيّن لهذا الفرع',
+        whyDemoFact3: '3 من 5 ورديات هذا الأسبوع',
+        whyDemoVerdict: 'من بين شخصين كان بإمكانهما أخذها، كان هذا الخيار الأعدل.',
+        problemsTitle: 'ثلاثة أشياء تختل كل أسبوع',
+        problem1Title: 'الوردية نفسها، شخصان',
+        problem1Body: 'فرع يمتلئ بأكثر مما يحتاج بينما آخر ينقصه موظف. تكتشف ذلك حين يصل أحدهم ولا يجد ما يفعله.',
+        problem2Title: 'الطلبات تضيع',
+        problem2Body: 'يصل طلب إجازة برسالة، ثم يُنسى، فيخلّ الجدول بوعد قطعته.',
+        problem3Title: 'فجوات بلا تفسير',
+        problem3Body: 'تبقى وردية فارغة ولا أحد يعرف إن كان ذلك مستحيلًا فعلًا أم مجرد سهو.',
+        featuresTitle: 'ماذا يفعل النظام',
+        featuresSubtitle: 'ليس جدول بيانات ملوّنًا. بل مُجدوِل يعرف قواعدك.',
+        feature1Title: 'جدولة تلقائية',
+        feature1Body: 'نقرة واحدة تملأ الأسبوع كاملًا في كل الفروع، وتوزّع العبء بإنصاف، وتحترم الحد الأسبوعي لكل شخص.',
+        feature2Title: 'كشف الازدواج',
+        feature2Body: 'كل ازدواج وفجوة وطلب غير محترم يُعلَّم فور ظهوره — مع السبب وحل مقترح.',
+        feature3Title: 'طلبات باعتماد المدير',
+        feature3Body: 'يقدّم الموظفون طلباتهم بأنفسهم، مع سبب اختياري. لا شيء يؤثر في الجدول قبل أن تعتمده.',
+        feature4Title: 'ورديّاتك وساعاتك',
+        feature4Body: 'صباح، ظهر، مساء، ليل — عرّف ما يحتاجه عملك من ورديات، بساعاتك وألوانك لكل فرع.',
+        feature5Title: 'إكسل وواتساب',
+        feature5Body: 'صدّر الأسبوع كاملًا، أو أرسل لكل شخص ورديّاته فقط — كورقة خاصة أو كنص جاهز للصق.',
+        feature6Title: 'حيّ على كل جهاز',
+        feature6Body: 'المدير يحرّر على الحاسوب، والموظفون يرون ورديّاتهم على الهاتف. الجميع يرى الجدول نفسه، فورًا.',
+        howTitle: 'جاهز خلال بعد ظهر واحد',
+        how1Title: 'أضف الفروع والموظفين',
+        how1Body: 'أيام العمل والساعات وعدد الأشخاص لكل وردية — كل فرع على طريقته.',
+        how2Title: 'اجمع الطلبات',
+        how2Body: 'يدخل الموظفون ويقدّمون طلبات الإجازة. تعتمد أو ترفض، وترى كل شيء في مكان واحد.',
+        how3Title: 'ابنِ وانشر',
+        how3Body: 'نقرة واحدة تبني الأسبوع. راجع التنبيهات، صحّح المهم، انشر — ويرى كل شخص ورديّاته.',
+        pricingTitle: 'سعر بسيط، حسب حجم الفريق',
+        pricingSubtitle: 'فروع بلا حدود في كل الباقات. ألغِ متى شئت.',
+        pricingCta: 'ابدأ مجانًا',
+        pricingNote: 'الأسعار بالشيكل، شهريًا، غير شاملة الضريبة. {days} يومًا مجانًا في كل باقة — لا يأتي أول خصم إلا بعد انتهاء التجربة، والإلغاء قبلها لا يكلّف شيئًا.',
+        planPopular: 'الأكثر اختيارًا',
+        faqTitle: 'أسئلة',
+        faq1Q: 'هل أحتاج إلى تثبيت شيء؟',
+        faq1A: 'لا. يعمل النظام في المتصفح. على الهاتف يمكنك إضافته إلى الشاشة الرئيسية فيفتح كتطبيق، بملء الشاشة.',
+        faq2Q: 'هل يرى موظفيّ ورديات بعضهم؟',
+        faq2A: 'لا. كل شخص يرى ورديّاته وطلباته فقط. المديرون وحدهم يرون الجدول كاملًا.',
+        faq3Q: 'وماذا لو تعذّر ملء وردية؟',
+        faq3A: 'يخبرك النظام بالسبب بدقة — من بلغ حدّه الأسبوعي، ومن يعمل في ذلك اليوم أصلًا، ومن يحتاج راحة بين ورديتين — وما الذي ينبغي تغييره.',
+        faq4Q: 'هل بياناتي آمنة إن توقفت عن الدفع؟',
+        faq4A: 'نعم. تُحفظ بياناتك. وباختيار باقة من جديد يعود الوصول فورًا، وكل شيء حيث تركته.',
+        faq5Q: 'ما اللغات المدعومة؟',
+        faq5A: 'العبرية والإنجليزية والإسبانية والفرنسية والألمانية والبرتغالية والروسية والعربية — بما في ذلك اللغات التي تُقرأ من اليمين إلى اليسار. كل شخص يختار لغته.',
+        ctaTitle: 'جرّبه على جدول الأسبوع القادم',
+        ctaBody: 'أعدّ فروعك، ابنِ أسبوعًا واحدًا، ولاحظ الفرق. يستغرق ذلك بعد ظهر واحد.',
+        footerRights: 'كل الحقوق محفوظة.',
+        footerTagline: 'جدولة ورديات للسلاسل.'
+      },
       tabs: {
+        support: 'الدعم',
         schedule: 'الجدول', constraints: 'الطلبات', employees: 'الموظفون',
         branches: 'الفروع', users: 'المستخدمون', billing: 'الاشتراك', settings: 'الإعدادات'
       },
@@ -3200,8 +4164,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'متزامن بين الأجهزة', syncedAt: 'متزامن بين الأجهزة · آخر تحديث {time}',
+        demoTitle: 'وضع العرض التجريبي',
+        demoBody: 'البيانات محفوظة في هذا المتصفح فقط ولا تنتقل بين الأجهزة.',
         localOnly: 'محفوظ على هذا الجهاز فقط', readOnly: 'عرض فقط – لا صلاحية للتعديل',
+        saving: 'جارٍ الحفظ…',
+        savedCloud: 'كل التغييرات محفوظة في السحابة',
+        savedCloudAt: 'كل التغييرات محفوظة في السحابة · {time}',
+        savedDeviceAt: 'محفوظ على هذا الجهاز · {time}',
+        saveFailed: 'تعذّر الحفظ الآن',
+        saveFailedHint: 'لم يُحفظ التغيير الأخير. تحقّق من الاتصال – التغيير التالي سيحاول مرة أخرى.',
         remoteUpdate: 'وصل تحديث من جهاز آخر ({time})',
         localCopy: 'هذه نسخة محلية – البيانات محفوظة في هذا المتصفح فقط ولا تتزامن. ' +
           'للعمل من جهازين استخدم النسخة المستضافة. لنقل البيانات: صدّر ملف JSON من الإعدادات ثم استورده هناك.',
@@ -3423,6 +4394,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'حسب خروج السبت', autoSabbathLabel: 'خروج السبت +30 دقيقة'
       },
 
+      why: {
+        button: 'لماذا هذا الشخص؟',
+        title: 'لماذا {name}؟',
+        onlyOption: 'لم يكن بإمكان أي شخص آخر تغطية هذه الوردية.',
+        fairest: 'من بين {count} أشخاص متاحين، كان هذا الخيار الأعدل حسب الساعات حتى الآن.',
+        alsoPossible: 'كان بإمكان هؤلاء أيضًا: {names}.',
+        whoCould: 'من لم يكن بإمكانه ({count})',
+        fact: {
+          requested: 'طلب هذه الوردية في هذا اليوم',
+          available: 'لا يوجد طلب إجازة لهذا اليوم',
+          qualified: 'مؤهل لهذه الوردية',
+          assignedBranch: 'معيّن لهذا الفرع',
+          anyBranch: 'يعمل في جميع الفروع',
+          quota: 'قبل هذه الوردية {before}، وبعدها {after} من حصة قدرها {max}',
+          capacity: 'هذا الأسبوع {target} ورديات فقط من تلك الحصة متاحة له فعلاً',
+          rest: 'تُحترم الراحة بين وردية المساء والصباح',
+          continuity: 'في هذا الفرع {count} مرات هذا الأسبوع'
+        },
+        blocked: {
+          inactive: 'غير نشط',
+          notQualified: 'غير مؤهل لهذه الوردية',
+          otherBranch: 'يعمل في فرع آخر',
+          requestedOff: 'طلب إجازة في هذا اليوم',
+          blockedShift: 'طلب عدم العمل في هذه الوردية',
+          atLimit: 'بلغ الحد الأسبوعي ({max})',
+          busySameDay: 'يعمل بالفعل في ذلك اليوم',
+          busySameShift: 'في هذه الوردية بالفعل',
+          restRule: 'يحتاج راحة بين المساء والصباح'
+        }
+      },
+      preview: {
+        open: 'شاشة الموظف',
+        title: 'شاشة مَن تريد أن ترى؟',
+        hint: 'للعرض فقط. لا يُحفظ أي شيء هنا باسم الموظف.',
+        banner: 'أنت تشاهد شاشة {name}',
+        exit: 'العودة إلى الإدارة',
+        noEmployees: 'لا يوجد موظفون نشطون بعد.'
+      },
+      support: {
+        title: 'الدعم',
+        promise: 'أخبرنا بما تعطّل أو بما تحتاجه. يردّ عليك شخص خلال {hours} ساعة.',
+        whatsapp: 'واتساب',
+        newTitle: 'فتح طلب',
+        kindLabel: 'النوع', subjectLabel: 'الموضوع', bodyLabel: 'ماذا حدث؟',
+        send: 'إرسال',
+        sent: 'تم الاستلام. سيردّ عليك شخص خلال {hours} ساعة.',
+        sendFailed: 'تعذّر إرسال الطلب. حاول مرة أخرى.',
+        loadFailed: 'تعذّر تحميل طلباتك.',
+        listTitle: 'طلباتي',
+        empty: 'لا توجد طلبات بعد.',
+        replyLabel: 'ردّنا:',
+        errorSubject: 'اكتب موضوعًا للطلب.',
+        errorBody: 'صِف ما حدث.',
+        errorSubjectLong: 'الموضوع أطول من {max} حرفًا.',
+        errorBodyLong: 'الوصف أطول من {max} حرفًا.',
+        kind: { bug: 'شيء لا يعمل', feature: 'طلب ميزة', question: 'سؤال' },
+        status: { open: 'مفتوح', in_progress: 'قيد المعالجة', answered: 'تمت الإجابة', closed: 'مغلق' }
+      },
       settings: {
         rules: 'قواعد الجدولة',
         onePerDay: 'يعمل الموظف مناوبة واحدة في اليوم كحد أقصى',
@@ -3441,11 +4470,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'نسخ احتياطي واستعادة',
         exportJson: 'تصدير كل البيانات (JSON)', importJson: 'استيراد البيانات',
         reset: 'إعادة للإعدادات الافتراضية',
+        deadlineTitle: 'موعد إغلاق الطلبات',
+        deadlineEnable: 'إغلاق طلبات الإجازة في موعد ثابت',
+        deadlineDay: 'اليوم',
+        deadlineTime: 'الساعة',
+        deadlineRemind: 'تذكير قبل',
+        deadlineHours: '{hours} ساعات',
+        deadlinePreview: 'تُغلق طلبات أسبوع {week} يوم {day} {date} الساعة {time}.',
+        deadlineHint: 'بعد هذا الموعد لا يستطيع الموظفون تقديم أو تعديل الطلبات لذلك الأسبوع. المدير يستطيع دائمًا.',
         backupHint: 'تُحفظ البيانات تلقائيًا في هذا المتصفح. لنقلها بين الأجهزة، صدّر ملف JSON.',
+        backupHintCloud: 'تُحفظ البيانات في السحابة وتُزامَن عبر جميع الأجهزة. تصدير JSON مخصص لنسخة احتياطية خاصة بك.',
         languageTitle: 'اللغة', languageHint: 'يغيّر الواجهة بالكامل. يُحفظ على هذا الجهاز.'
       },
 
       server: {
+        confirmEmail: 'تحقق من بريدك وأكّد العنوان، ثم سجّل الدخول',
         credentialsRequired: 'البريد الإلكتروني وكلمة المرور مطلوبان',
         passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
         emailTaken: 'هذا البريد الإلكتروني مسجَّل بالفعل',
@@ -3478,6 +4517,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'الفوترة غير موصولة بعد. تواصل مع الدعم.',
         mockProvider: 'مزوّد تجريبي (تطوير)',
         mockNote: 'تتم الموافقة على الدفع فورًا بدون خصم حقيقي. للتطوير والعروض التوضيحية فقط.',
         unknownPlan: 'خطة غير معروفة',
@@ -3487,6 +4527,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'أول خصم',
+        nextCharge: 'الخصم التالي',
+        paymentMethod: 'وسيلة الدفع',
+        cardOnFile: 'محفوظة',
+        noCard: 'غير مضافة',
+        addCard: 'إضافة وسيلة دفع',
+        noCardWarning: 'لم تُضف وسيلة دفع بعد. بدونها ينتهي الوصول في {date}.',
+        trialNotice: 'لا يتم خصم أي مبلغ خلال أول {days} يومًا. أول خصم في {date} بمبلغ {price}، ثم شهريًا – حتى تلغي.',
+        cancelBeforeCharge: 'إلغاء قبل الخصم',
+        cancelTrialConfirm: 'إلغاء الاشتراك؟ لن يتم خصم أي مبلغ، ويبقى الوصول حتى نهاية الفترة التجريبية.',
+        resume: 'استئناف الاشتراك',
+        resumed: 'تم استئناف الاشتراك',
         priceMonthly: '{amount} شيكل / شهر', priceAmount: '{amount} شيكل',
         updateFailed: 'فشل التحديث', cancelFailed: 'فشل الإلغاء',
         title: 'اشتراكك', status: 'الحالة', plan: 'الخطة', validUntil: 'سارٍ حتى',
@@ -3509,7 +4561,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'البريد الإلكتروني', password: 'كلمة المرور', name: 'اسمك', companyName: 'اسم الشركة',
         passwordHint: '6 أحرف على الأقل',
         enter: 'دخول', create: 'فتح حساب', signingIn: 'جارٍ الدخول…', creating: 'جارٍ الإنشاء…',
-        trialNote: '{days} يومًا مجانًا. لا حاجة لوسيلة دفع.',
+        trialNote: '{days} يومًا مجانًا. أول خصم في {date}؛ ألغِ قبل ذلك ولن تدفع شيئًا.',
         signOut: 'خروج', blocked: 'الوصول محجوب',
         blockedOwner: 'تواصل مع الدعم لتفعيل الاشتراك.',
         blockedMember: 'اطلب من مالك الحساب تجديد الاشتراك.',
@@ -3530,9 +4582,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'فترة تجريبية – بقي {days} يومًا. أول خصم في {date}، {price}.',
+        trialNoCard: 'فترة تجريبية – بقي {days} يومًا. أضف وسيلة دفع للاستمرار بعد {date}.',
+        trialEndedNoCard: 'انتهت الفترة التجريبية. أضف وسيلة دفع للمتابعة.',
+        trialCanceled: 'تم الإلغاء – لن يتم خصم أي مبلغ. الوصول يبقى حتى {date}.',
+        canceledAtPeriodEnd: 'تم الإلغاء. الوصول يبقى حتى {date}، ولن تكون هناك خصومات أخرى.',
+        charging: 'انتهت الفترة التجريبية وجارٍ تنفيذ أول خصم.',
         noCompany: 'لم يتم العثور على الشركة',
-        trialEnded: 'انتهت الفترة التجريبية. فعّل اشتراكًا للمتابعة.',
-        trial: 'فترة تجريبية – بقي {days} يومًا.',
         expired: 'انتهى الاشتراك. جدّده للمتابعة.',
         pastDueBlocked: 'لم يصل الدفع وتم حجب الوصول. يرجى تحديث وسيلة الدفع.',
         pastDue: 'لم تتم آخر عملية دفع. سيُحجب الوصول بعد {days} يومًا.',
@@ -3559,6 +4615,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'لم يُنشر جدول هذا الأسبوع بعد.',
         noShifts: 'لا توجد لك مناوبات هذا الأسبوع.',
         totalWeek: '{count} مناوبات هذا الأسبوع.',
+        deadlineOpen: 'تُغلق طلبات هذا الأسبوع يوم {day} {date} الساعة {time}.',
+        deadlineHours: 'تُغلق الطلبات خلال {hours} ساعات. بعدها لا يمكن التغيير.',
+        deadlineClosed: 'أُغلقت طلبات هذا الأسبوع. إذا تغيّر شيء، تحدّث مع مديرك.',
+        deadlineLocked: 'أُغلقت طلبات هذا الأسبوع.',
         publishedLocked: 'تم نشر الجدول – لم يعد بالإمكان تغيير طلبات هذا الأسبوع.',
         notLinked: 'مستخدمك غير مرتبط ببطاقة موظف بعد. تواصل مع المدير.',
         noShiftsToday: 'لا مناوبات في هذا اليوم', holidayNoWork: 'عطلة – لا عمل'
@@ -3603,6 +4663,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'راسلنا',
         moveUp: 'رفع', moveDown: 'خفض', timePlaceholder: 'سس:دد',
         save: 'حفظ', cancel: 'إلغاء', delete: 'حذف', close: 'إغلاق',
         yes: 'نعم', no: 'لا', all: 'الكل', and: 'و', more: 'و{count} آخرين'
@@ -3626,8 +4687,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Планировщик смен',
-        subtitle: 'Недельный график по каждому филиалу, с проверкой накладок и нехватки людей',
+        title: 'SetShifts',
+        subtitle: 'ИИ-расписание для всех филиалов — по доступности, заявкам, ролям и вашим правилам',
         language: 'Язык'
       },
 
@@ -3650,7 +4711,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Розовый', 5: 'Бирюзовый', 6: 'Серый', 7: 'Коричневый'
       },
 
+      landing: {
+        planTrialLine: '{days} дней бесплатно, затем',
+        faq6Q: 'Когда именно списывают деньги?',
+        faq6A: 'Вы оформляете подписку с картой, но первые {days} дней ничего не списывается. Первое списание происходит автоматически в конце пробного периода, дальше — каждый месяц, пока вы не отмените. Отмена во время пробного периода ничего не стоит, а доступ сохраняется до его конца.',
+        signIn: 'Войти',
+        start: 'Начать бесплатно',
+        startLong: 'Начать бесплатно – {days} дней',
+        heroBadge: 'ИИ-составление расписания для сетей с несколькими филиалами',
+        heroTitle: 'Всё ваше расписание — в один клик.',
+        heroSubtitle: 'ИИ SetShifts сам составляет расписание для каждого филиала — по доступности сотрудников, поданным заявкам, лимитам часов, ролям и вашим собственным правилам. И для каждой смены объясняет, почему именно этот человек. Вы утверждаете, а не составляете.',
+        heroNote: '{days} дней бесплатно. Отмените до конца пробного периода — и списания не будет вовсе.',
+        heroSecondary: 'Как это работает',
+        whyTitle: 'Почему именно он?',
+        whySubtitle: 'Первый вопрос, который руководитель задаёт автоматически составленному расписанию, — и тот, что решает, доверится он ему или переделает всё вручную.',
+        whyBody: 'Нажмите на знак вопроса рядом с любой сменой, и SetShifts ответит: кто просил эту смену, кто обучен на неё, кто уже выбрал свою норму и кто ещё мог бы её взять. Никакого чёрного ящика, которому надо верить на слово.',
+        whyPoint1: 'Объяснение выводится из расписания на экране, поэтому остаётся верным и после ручной правки.',
+        whyPoint2: 'Видно не только кого выбрали, но и кого отсеяли и почему — и спор с сотрудником превращается в разговор на тридцать секунд.',
+        whyDemoSlot: 'Вторник · Центр · Вечер',
+        whyDemoTitle: 'Почему Даниэль?',
+        whyDemoFact1: 'Просил эту смену в этот день',
+        whyDemoFact2: 'Обучен этой смене · закреплён за этим филиалом',
+        whyDemoFact3: '3 из 5 смен на этой неделе',
+        whyDemoVerdict: 'Из 2 человек, которые могли её взять, это был самый справедливый выбор.',
+        problemsTitle: 'Три вещи, которые ломаются каждую неделю',
+        problem1Title: 'Одна смена, два человека',
+        problem1Body: 'В одном филиале людей вдвое больше, чем нужно, в другом не хватает. Вы узнаёте об этом, когда кто-то приходит и ему нечего делать.',
+        problem2Title: 'Заявки теряются',
+        problem2Body: 'Просьба о выходном приходит сообщением, забывается — и расписание нарушает обещание, которое вы дали.',
+        problem3Title: 'Дыры без объяснения',
+        problem3Body: 'Смена остаётся пустой, и никто не знает, действительно ли её нельзя закрыть или это просто недосмотр.',
+        featuresTitle: 'Что делает система',
+        featuresSubtitle: 'Не цветная таблица. Планировщик, который знает ваши правила.',
+        feature1Title: 'Автоматическое расписание',
+        feature1Body: 'Один клик заполняет всю неделю по всем филиалам, распределяет нагрузку справедливо и соблюдает недельный лимит каждого.',
+        feature2Title: 'Поиск накладок',
+        feature2Body: 'Каждая накладка, дыра и нарушенная заявка отмечаются сразу — с причиной и предложенным решением.',
+        feature3Title: 'Заявки с подтверждением',
+        feature3Body: 'Сотрудники подают заявки сами, с необязательной причиной. Ничто не влияет на расписание, пока вы не подтвердите.',
+        feature4Title: 'Ваши смены, ваши часы',
+        feature4Body: 'Утро, день, вечер, ночь — задайте столько смен, сколько нужно бизнесу, со своими часами и цветами для каждого филиала.',
+        feature5Title: 'Excel и WhatsApp',
+        feature5Body: 'Выгрузите всю неделю или отправьте каждому только его смены — отдельным листом или готовым для вставки текстом.',
+        feature6Title: 'Живое на любом устройстве',
+        feature6Body: 'Руководитель правит на компьютере, сотрудники видят смены в телефоне. Все видят одно и то же расписание, мгновенно.',
+        howTitle: 'Запуск за один вечер',
+        how1Title: 'Добавьте филиалы и людей',
+        how1Body: 'Рабочие дни, часы и число людей на смену — каждый филиал настраивается по-своему.',
+        how2Title: 'Соберите заявки',
+        how2Body: 'Сотрудники заходят и подают заявки на выходные. Вы подтверждаете или отклоняете и видите всё в одном месте.',
+        how3Title: 'Составьте и опубликуйте',
+        how3Body: 'Один клик строит неделю. Просмотрите предупреждения, поправьте важное, опубликуйте — и каждый увидит свои смены.',
+        pricingTitle: 'Простая цена, по размеру команды',
+        pricingSubtitle: 'Неограниченное число филиалов в любом тарифе. Отмена в любой момент.',
+        pricingCta: 'Начать бесплатно',
+        pricingNote: 'Цены в ILS, в месяц, без НДС. {days} дней бесплатно в каждом тарифе — первое списание только по окончании пробного периода, а отмена до него ничего не стоит.',
+        planPopular: 'Чаще всего выбирают',
+        faqTitle: 'Вопросы',
+        faq1Q: 'Нужно что-то устанавливать?',
+        faq1A: 'Нет. Система работает в браузере. На телефоне её можно добавить на главный экран, и она открывается как приложение, на весь экран.',
+        faq2Q: 'Видят ли сотрудники смены друг друга?',
+        faq2A: 'Нет. Каждый видит только свои смены и свои заявки. Полное расписание видят только руководители.',
+        faq3Q: 'А если смену некем закрыть?',
+        faq3A: 'Система скажет точно почему — кто достиг недельного лимита, кто уже работает в этот день, кому нужен отдых между сменами — и что изменить.',
+        faq4Q: 'Сохранятся ли данные, если я перестану платить?',
+        faq4A: 'Да. Данные сохраняются. Выберите тариф снова — доступ вернётся сразу, и всё будет там же, где вы остановились.',
+        faq5Q: 'Какие языки поддерживаются?',
+        faq5A: 'Иврит, английский, испанский, французский, немецкий, португальский, русский и арабский — включая языки с письмом справа налево. Каждый выбирает свой.',
+        ctaTitle: 'Попробуйте на расписании следующей недели',
+        ctaBody: 'Настройте филиалы, составьте одну неделю и почувствуйте разницу. Это занимает один вечер.',
+        footerRights: 'Все права защищены.',
+        footerTagline: 'Расписание смен для сетей.'
+      },
       tabs: {
+        support: 'Поддержка',
         schedule: 'График', constraints: 'Заявки', employees: 'Сотрудники',
         branches: 'Филиалы', users: 'Пользователи', billing: 'Подписка', settings: 'Настройки'
       },
@@ -3680,8 +4814,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Синхронизировано между устройствами', syncedAt: 'Синхронизировано между устройствами · обновлено в {time}',
+        demoTitle: 'Демонстрационный режим',
+        demoBody: 'Данные хранятся только в этом браузере и не переносятся между устройствами.',
         localOnly: 'Сохранено только на этом устройстве', readOnly: 'Только просмотр — нет прав на изменение',
+        saving: 'Сохранение…',
+        savedCloud: 'Все изменения сохранены в облаке',
+        savedCloudAt: 'Все изменения сохранены в облаке · {time}',
+        savedDeviceAt: 'Сохранено на этом устройстве · {time}',
+        saveFailed: 'Сейчас не удаётся сохранить',
+        saveFailedHint: 'Последнее изменение не сохранено. Проверьте соединение — следующее изменение повторит попытку.',
         remoteUpdate: 'Получено обновление с другого устройства ({time})',
         localCopy: 'Это локальная копия — данные хранятся только в этом браузере и не синхронизируются. ' +
           'Для работы с двух компьютеров используйте размещённую версию. Чтобы перенести данные: экспортируйте JSON в настройках и импортируйте его там.',
@@ -3903,6 +5044,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'По исходу субботы', autoSabbathLabel: 'Исход субботы +30 мин'
       },
 
+      why: {
+        button: 'Почему именно он?',
+        title: 'Почему {name}?',
+        onlyOption: 'Больше никто не мог взять эту смену.',
+        fairest: 'Из {count} человек, которые могли её взять, это был самый справедливый выбор по уже отработанным сменам.',
+        alsoPossible: 'Её могли взять также: {names}.',
+        whoCould: 'Кто не мог ({count})',
+        fact: {
+          requested: 'Просил эту смену в этот день',
+          available: 'Заявки на выходной нет',
+          qualified: 'Обучен этой смене',
+          assignedBranch: 'Закреплён за этим филиалом',
+          anyBranch: 'Работает в любом филиале',
+          quota: 'До этой смены {before}, после неё {after} из квоты {max}',
+          capacity: 'На этой неделе ему реально доступны только {target} смен из квоты',
+          rest: 'Отдых между вечерней и утренней сменой соблюдён',
+          continuity: 'Уже {count} раз в этом филиале на этой неделе'
+        },
+        blocked: {
+          inactive: 'не активен',
+          notQualified: 'не обучен этой смене',
+          otherBranch: 'работает в другом филиале',
+          requestedOff: 'просил выходной',
+          blockedShift: 'просил не ставить на эту смену',
+          atLimit: 'достиг недельного лимита ({max})',
+          busySameDay: 'уже работает в этот день',
+          busySameShift: 'уже на этой смене',
+          restRule: 'нужен отдых между вечерней и утренней сменой'
+        }
+      },
+      preview: {
+        open: 'Экран сотрудника',
+        title: 'Чей экран показать?',
+        hint: 'Только просмотр. Ничего из сделанного здесь не сохраняется от его имени.',
+        banner: 'Вы смотрите экран сотрудника {name}',
+        exit: 'Назад к управлению',
+        noEmployees: 'Активных сотрудников пока нет.'
+      },
+      support: {
+        title: 'Поддержка',
+        promise: 'Расскажите, что сломалось или чего не хватает. Человек ответит в течение {hours} часов.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Создать обращение',
+        kindLabel: 'Тип', subjectLabel: 'Тема', bodyLabel: 'Что произошло?',
+        send: 'Отправить',
+        sent: 'Получено. Человек ответит в течение {hours} часов.',
+        sendFailed: 'Не удалось отправить обращение. Попробуйте ещё раз.',
+        loadFailed: 'Не удалось загрузить ваши обращения.',
+        listTitle: 'Мои обращения',
+        empty: 'Обращений пока нет.',
+        replyLabel: 'Наш ответ:',
+        errorSubject: 'Укажите тему обращения.',
+        errorBody: 'Опишите, что произошло.',
+        errorSubjectLong: 'Тема длиннее {max} символов.',
+        errorBodyLong: 'Описание длиннее {max} символов.',
+        kind: { bug: 'Что-то не работает', feature: 'Запрос функции', question: 'Вопрос' },
+        status: { open: 'Открыто', in_progress: 'В работе', answered: 'Отвечено', closed: 'Закрыто' }
+      },
       settings: {
         rules: 'Правила составления графика',
         onePerDay: 'Сотрудник работает не более одной смены в день',
@@ -3921,11 +5120,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Резервная копия',
         exportJson: 'Экспорт всех данных (JSON)', importJson: 'Импорт данных',
         reset: 'Сбросить к значениям по умолчанию',
+        deadlineTitle: 'Срок подачи заявок',
+        deadlineEnable: 'Закрывать подачу заявок в фиксированное время',
+        deadlineDay: 'День',
+        deadlineTime: 'Время',
+        deadlineRemind: 'Напомнить за',
+        deadlineHours: '{hours} часов',
+        deadlinePreview: 'Заявки на неделю с {week} закрываются в {day}, {date} в {time}.',
+        deadlineHint: 'После этого времени сотрудники не могут подавать и менять заявки на эту неделю. Руководитель может всегда.',
         backupHint: 'Данные сохраняются автоматически в этом браузере. Для переноса между компьютерами экспортируйте файл JSON.',
+        backupHintCloud: 'Данные хранятся в облаке и синхронизируются на всех устройствах. Экспорт JSON — для вашей собственной резервной копии.',
         languageTitle: 'Язык', languageHint: 'Меняет весь интерфейс. Сохраняется на этом устройстве.'
       },
 
       server: {
+        confirmEmail: 'Проверьте почту, подтвердите адрес, а затем войдите',
         credentialsRequired: 'Нужны электронная почта и пароль',
         passwordTooShort: 'Пароль должен содержать не менее 6 символов',
         emailTaken: 'Этот адрес электронной почты уже зарегистрирован',
@@ -3958,6 +5167,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'Оплата ещё не подключена. Обратитесь в поддержку.',
         mockProvider: 'Тестовый провайдер (разработка)',
         mockNote: 'Платёж подтверждается сразу, без реального списания. Только для разработки и демонстраций.',
         unknownPlan: 'Неизвестный тариф',
@@ -3967,6 +5177,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'Первое списание',
+        nextCharge: 'Следующее списание',
+        paymentMethod: 'Способ оплаты',
+        cardOnFile: 'Сохранён',
+        noCard: 'Не добавлен',
+        addCard: 'Добавить способ оплаты',
+        noCardWarning: 'Способ оплаты не добавлен. Без него доступ закончится {date}.',
+        trialNotice: 'Первые {days} дней списаний нет. Первое списание {date} на {price}, далее ежемесячно — пока вы не отмените.',
+        cancelBeforeCharge: 'Отменить до списания',
+        cancelTrialConfirm: 'Отменить подписку? Списания не будет, доступ сохранится до конца пробного периода.',
+        resume: 'Возобновить подписку',
+        resumed: 'Подписка возобновлена',
         priceMonthly: '{amount} ILS / мес.', priceAmount: '{amount} ILS',
         updateFailed: 'Не удалось обновить', cancelFailed: 'Не удалось отменить',
         title: 'Ваша подписка', status: 'Статус', plan: 'Тариф', validUntil: 'Действует до',
@@ -3989,7 +5211,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'Электронная почта', password: 'Пароль', name: 'Ваше имя', companyName: 'Название компании',
         passwordHint: 'Не менее 6 символов',
         enter: 'Войти', create: 'Создать аккаунт', signingIn: 'Вход…', creating: 'Создание…',
-        trialNote: '{days} дней бесплатно. Платёжные данные не нужны.',
+        trialNote: '{days} дней бесплатно. Первое списание {date}; отмените до этого — и не заплатите ничего.',
         signOut: 'Выйти', blocked: 'Доступ закрыт',
         blockedOwner: 'Обратитесь в поддержку, чтобы активировать подписку.',
         blockedMember: 'Попросите владельца аккаунта продлить подписку.',
@@ -4010,9 +5232,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Пробный период — осталось дней: {days}. Первое списание {date}, {price}.',
+        trialNoCard: 'Пробный период — осталось дней: {days}. Добавьте способ оплаты, чтобы сохранить доступ после {date}.',
+        trialEndedNoCard: 'Пробный период закончился. Добавьте способ оплаты, чтобы продолжить.',
+        trialCanceled: 'Отменено — списания не будет. Доступ сохраняется до {date}.',
+        canceledAtPeriodEnd: 'Отменено. Доступ сохраняется до {date}, дальнейших списаний не будет.',
+        charging: 'Пробный период закончился, первое списание обрабатывается.',
         noCompany: 'Компания не найдена',
-        trialEnded: 'Пробный период закончился. Активируйте подписку, чтобы продолжить.',
-        trial: 'Пробный период — осталось дней: {days}.',
         expired: 'Подписка истекла. Продлите её, чтобы продолжить.',
         pastDueBlocked: 'Платёж не получен, доступ закрыт. Обновите способ оплаты.',
         pastDue: 'Последний платёж не прошёл. Доступ будет закрыт через {days} дней.',
@@ -4039,6 +5265,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'График этой недели ещё не опубликован.',
         noShifts: 'На этой неделе у вас нет смен.',
         totalWeek: 'Смен на этой неделе: {count}.',
+        deadlineOpen: 'Заявки на эту неделю закрываются в {day}, {date} в {time}.',
+        deadlineHours: 'Заявки закроются через {hours} часов. После этого изменить нельзя.',
+        deadlineClosed: 'Заявки на эту неделю закрыты. Если что-то изменилось — поговорите с руководителем.',
+        deadlineLocked: 'Заявки на эту неделю закрыты.',
         publishedLocked: 'График опубликован — заявки на эту неделю изменить уже нельзя.',
         notLinked: 'Ваш пользователь ещё не связан с карточкой сотрудника. Обратитесь к руководителю.',
         noShiftsToday: 'В этот день смен нет', holidayNoWork: 'Праздник — работы нет'
@@ -4083,6 +5313,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Напишите нам',
         moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
         save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', close: 'Закрыть',
         yes: 'Да', no: 'Нет', all: 'Все', and: 'и', more: 'и ещё {count}'
@@ -4106,8 +5337,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Schichtplaner',
-        subtitle: 'Wochenplanung für jede Filiale, mit Erkennung von Doppelbelegungen und Lücken',
+        title: 'SetShifts',
+        subtitle: 'KI-Planung für jeden Standort – nach Verfügbarkeit, Wünschen, Rollen und Ihren Regeln',
         language: 'Sprache'
       },
 
@@ -4130,7 +5361,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Rosa', 5: 'Türkis', 6: 'Grau', 7: 'Braun'
       },
 
+      landing: {
+        planTrialLine: '{days} Tage gratis, danach',
+        faq6Q: 'Wann genau werde ich abgebucht?',
+        faq6A: 'Sie schließen das Abo mit Karte ab, aber in den ersten {days} Tagen wird nichts abgebucht. Die erste Abbuchung erfolgt automatisch am Ende der Testphase, danach monatlich – bis Sie kündigen. Eine Kündigung während der Testphase kostet nichts, und der Zugang bleibt bis zu deren Ende bestehen.',
+        signIn: 'Anmelden',
+        start: 'Gratis starten',
+        startLong: 'Gratis starten – {days} Tage',
+        heroBadge: 'KI-Dienstplanung für Unternehmen mit mehreren Standorten',
+        heroTitle: 'Ihr ganzer Betrieb, in einem Klick geplant.',
+        heroSubtitle: 'Die KI von SetShifts erstellt den Dienstplan für jeden Standort selbst – aus der Verfügbarkeit Ihrer Mitarbeitenden, ihren Wünschen, Stundengrenzen, Rollen und Ihren eigenen Regeln. Und zu jeder Zuteilung sagt sie Ihnen, warum diese Person. Sie geben frei, Sie bauen nicht.',
+        heroNote: '{days} Tage gratis. Kündigen Sie vor Ende der Testphase, wird gar nichts abgebucht.',
+        heroSecondary: 'So funktioniert es',
+        whyTitle: 'Warum diese Person?',
+        whySubtitle: 'Die erste Frage, die jede Führungskraft an einen automatisch erstellten Dienstplan stellt – und die darüber entscheidet, ob sie ihm vertraut oder alles von Hand neu baut.',
+        whyBody: 'Klicken Sie auf das Fragezeichen neben einer Zuteilung, und SetShifts antwortet: wer diese Schicht gewünscht hat, wer dafür eingearbeitet ist, wer sein Pensum schon erfüllt hat und wer sie sonst noch hätte übernehmen können. Keine Blackbox, der man glauben muss.',
+        whyPoint1: 'Die Erklärung wird aus dem Plan auf dem Bildschirm abgeleitet und bleibt deshalb auch nach einer Änderung von Hand richtig.',
+        whyPoint2: 'Sie sehen nicht nur, wer gewählt wurde, sondern auch, wer ausgeschlossen wurde und warum – das macht aus einer Diskussion mit einem Mitarbeiter ein Gespräch von dreißig Sekunden.',
+        whyDemoSlot: 'Dienstag · Zentrum · Abend',
+        whyDemoTitle: 'Warum Daniel?',
+        whyDemoFact1: 'Hat diese Schicht an diesem Tag gewünscht',
+        whyDemoFact2: 'Für diese Schicht eingearbeitet · diesem Standort zugeordnet',
+        whyDemoFact3: '3 von 5 Schichten diese Woche',
+        whyDemoVerdict: 'Von den 2 möglichen Personen war das die fairste Wahl.',
+        problemsTitle: 'Die drei Dinge, die jede Woche schiefgehen',
+        problem1Title: 'Dieselbe Schicht, zwei Personen',
+        problem1Body: 'Ein Standort ist doppelt besetzt, während an einem anderen jemand fehlt. Sie merken es, wenn jemand ankommt und nichts zu tun hat.',
+        problem2Title: 'Wünsche gehen verloren',
+        problem2Body: 'Ein Urlaubswunsch kommt per Nachricht, wird vergessen, und der Dienstplan bricht ein Versprechen, das Sie gegeben haben.',
+        problem3Title: 'Lücken ohne Erklärung',
+        problem3Body: 'Eine Schicht bleibt leer, und niemand weiß, ob es wirklich unmöglich ist oder einfach übersehen wurde.',
+        featuresTitle: 'Was das System leistet',
+        featuresSubtitle: 'Keine bunte Tabelle. Eine Planung, die Ihre Regeln kennt.',
+        feature1Title: 'Automatische Planung',
+        feature1Body: 'Ein Klick füllt die ganze Woche an allen Standorten, verteilt die Last fair und hält das Wochenlimit jeder Person ein.',
+        feature2Title: 'Doppelbelegungen erkennen',
+        feature2Body: 'Jede Doppelbelegung, jede Lücke und jeder gebrochene Wunsch wird sofort markiert – mit Grund und Lösungsvorschlag.',
+        feature3Title: 'Wünsche mit Freigabe',
+        feature3Body: 'Mitarbeitende reichen ihre Wünsche selbst ein, mit optionaler Begründung. Nichts wirkt auf den Plan, bevor Sie es freigeben.',
+        feature4Title: 'Ihre Schichten, Ihre Zeiten',
+        feature4Body: 'Früh, Mittag, Abend, Nacht – legen Sie so viele Schichten an, wie Ihr Betrieb braucht, mit eigenen Zeiten und Farben je Standort.',
+        feature5Title: 'Excel und WhatsApp',
+        feature5Body: 'Exportieren Sie die ganze Woche, oder schicken Sie jeder Person nur ihre eigenen Schichten – als persönliche Tabelle oder als fertigen Text.',
+        feature6Title: 'Auf jedem Gerät live',
+        feature6Body: 'Die Leitung bearbeitet am Rechner, die Mitarbeitenden sehen ihre Schichten am Handy. Alle sehen denselben Plan, sofort.',
+        howTitle: 'In einem Nachmittag startklar',
+        how1Title: 'Standorte und Team anlegen',
+        how1Body: 'Öffnungstage, Zeiten und Personenzahl je Schicht – jeder Standort auf seine Weise.',
+        how2Title: 'Wünsche einsammeln',
+        how2Body: 'Die Mitarbeitenden melden sich an und reichen ihre Wünsche ein. Sie geben frei oder lehnen ab und sehen alles an einem Ort.',
+        how3Title: 'Erstellen und veröffentlichen',
+        how3Body: 'Ein Klick baut die Woche. Hinweise durchgehen, das Wichtige korrigieren, veröffentlichen – und jede Person sieht ihre Schichten.',
+        pricingTitle: 'Einfacher Preis, nach Teamgröße',
+        pricingSubtitle: 'Unbegrenzte Standorte in jedem Tarif. Jederzeit kündbar.',
+        pricingCta: 'Gratis starten',
+        pricingNote: 'Alle Preise in ILS, pro Monat, zzgl. MwSt. {days} Tage gratis in jedem Tarif – die erste Abbuchung kommt erst nach Ende der Testphase, und eine Kündigung davor kostet nichts.',
+        planPopular: 'Am beliebtesten',
+        faqTitle: 'Fragen',
+        faq1Q: 'Muss ich etwas installieren?',
+        faq1A: 'Nein. Das System läuft im Browser. Auf dem Handy können Sie es zum Startbildschirm hinzufügen – es öffnet sich wie eine App, im Vollbild.',
+        faq2Q: 'Sehen meine Mitarbeitenden die Schichten der anderen?',
+        faq2A: 'Nein. Jede Person sieht nur ihre eigenen Schichten und Wünsche. Nur die Leitung sieht den ganzen Plan.',
+        faq3Q: 'Was, wenn eine Schicht nicht besetzt werden kann?',
+        faq3A: 'Das System sagt Ihnen genau warum – wer sein Wochenlimit erreicht hat, wer an dem Tag schon arbeitet, wer Ruhe zwischen zwei Schichten braucht – und was zu ändern ist.',
+        faq4Q: 'Sind meine Daten sicher, wenn ich nicht mehr zahle?',
+        faq4A: 'Ja. Ihre Daten bleiben erhalten. Wählen Sie wieder einen Tarif, ist der Zugang sofort da – alles genau dort, wo Sie aufgehört haben.',
+        faq5Q: 'Welche Sprachen werden unterstützt?',
+        faq5A: 'Hebräisch, Englisch, Spanisch, Französisch, Deutsch, Portugiesisch, Russisch und Arabisch – auch Sprachen, die von rechts nach links gelesen werden. Jede Person wählt ihre eigene.',
+        ctaTitle: 'Probieren Sie es am Plan für nächste Woche',
+        ctaBody: 'Standorte einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
+        footerRights: 'Alle Rechte vorbehalten.',
+        footerTagline: 'Dienstplanung für Filialbetriebe.'
+      },
       tabs: {
+        support: 'Support',
         schedule: 'Dienstplan', constraints: 'Wünsche', employees: 'Team',
         branches: 'Filialen', users: 'Benutzer', billing: 'Abonnement', settings: 'Einstellungen'
       },
@@ -4160,8 +5464,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Zwischen Geräten synchronisiert', syncedAt: 'Zwischen Geräten synchronisiert · aktualisiert um {time}',
+        demoTitle: 'Demomodus',
+        demoBody: 'Die Daten liegen nur in diesem Browser und wandern nicht zwischen Geräten.',
         localOnly: 'Nur auf diesem Gerät gespeichert', readOnly: 'Nur Ansicht – keine Bearbeitungsrechte',
+        saving: 'Speichern…',
+        savedCloud: 'Alle Änderungen in der Cloud gespeichert',
+        savedCloudAt: 'Alle Änderungen in der Cloud gespeichert · {time}',
+        savedDeviceAt: 'Auf diesem Gerät gespeichert · {time}',
+        saveFailed: 'Speichern derzeit nicht möglich',
+        saveFailedHint: 'Die letzte Änderung wurde nicht gespeichert. Prüfen Sie die Verbindung – die nächste Änderung versucht es erneut.',
         remoteUpdate: 'Aktualisierung von einem anderen Gerät erhalten ({time})',
         localCopy: 'Dies ist eine lokale Kopie – die Daten liegen nur in diesem Browser und werden nicht synchronisiert. ' +
           'Für die Arbeit an zwei Rechnern nutzen Sie die gehostete Version. Zum Übertragen: JSON in den Einstellungen exportieren und dort importieren.',
@@ -4383,6 +5694,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
       },
 
+      why: {
+        button: 'Warum diese Person?',
+        title: 'Warum {name}?',
+        onlyOption: 'Niemand sonst konnte diese Schicht übernehmen.',
+        fairest: 'Von den {count} möglichen Personen war das nach den bisherigen Schichten die fairste Wahl.',
+        alsoPossible: 'Hätten sie ebenfalls übernehmen können: {names}.',
+        whoCould: 'Wer nicht konnte ({count})',
+        fact: {
+          requested: 'Hat diese Schicht an diesem Tag gewünscht',
+          available: 'Kein Urlaubswunsch für diesen Tag',
+          qualified: 'Für diese Schicht eingearbeitet',
+          assignedBranch: 'Diesem Standort zugeordnet',
+          anyBranch: 'Arbeitet an allen Standorten',
+          quota: 'Vor dieser Schicht {before}, danach {after} von einem Kontingent von {max}',
+          capacity: 'Diese Woche sind ihm nur {target} dieser Schichten tatsächlich zugänglich',
+          rest: 'Ruhezeit zwischen Abend- und Frühschicht ist eingehalten',
+          continuity: 'Diese Woche schon {count}-mal an diesem Standort'
+        },
+        blocked: {
+          inactive: 'ist nicht aktiv',
+          notQualified: 'ist für diese Schicht nicht eingearbeitet',
+          otherBranch: 'arbeitet an einem anderen Standort',
+          requestedOff: 'hat den Tag frei beantragt',
+          blockedShift: 'möchte diese Schicht nicht',
+          atLimit: 'hat das Wochenlimit von {max} erreicht',
+          busySameDay: 'arbeitet an diesem Tag bereits',
+          busySameShift: 'ist bereits in dieser Schicht',
+          restRule: 'braucht Ruhe zwischen Abend- und Frühschicht'
+        }
+      },
+      preview: {
+        open: 'Mitarbeiteransicht',
+        title: 'Wessen Bildschirm möchten Sie sehen?',
+        hint: 'Nur ansehen. Nichts davon wird in seinem Namen gespeichert.',
+        banner: 'Sie sehen den Bildschirm von {name}',
+        exit: 'Zurück zur Verwaltung',
+        noEmployees: 'Noch keine aktiven Mitarbeiter.'
+      },
+      support: {
+        title: 'Support',
+        promise: 'Sagen Sie uns, was nicht funktioniert oder was Ihnen fehlt. Ein Mensch antwortet innerhalb von {hours} Stunden.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Ticket eröffnen',
+        kindLabel: 'Art', subjectLabel: 'Betreff', bodyLabel: 'Was ist passiert?',
+        send: 'Senden',
+        sent: 'Eingegangen. Ein Mensch antwortet innerhalb von {hours} Stunden.',
+        sendFailed: 'Das Ticket konnte nicht gesendet werden. Bitte erneut versuchen.',
+        loadFailed: 'Ihre Tickets konnten nicht geladen werden.',
+        listTitle: 'Meine Tickets',
+        empty: 'Noch keine Tickets.',
+        replyLabel: 'Unsere Antwort:',
+        errorSubject: 'Bitte einen Betreff angeben.',
+        errorBody: 'Bitte beschreiben, was passiert ist.',
+        errorSubjectLong: 'Der Betreff ist länger als {max} Zeichen.',
+        errorBodyLong: 'Die Beschreibung ist länger als {max} Zeichen.',
+        kind: { bug: 'Etwas funktioniert nicht', feature: 'Funktionswunsch', question: 'Frage' },
+        status: { open: 'Offen', in_progress: 'In Bearbeitung', answered: 'Beantwortet', closed: 'Geschlossen' }
+      },
       settings: {
         rules: 'Planungsregeln',
         onePerDay: 'Eine Person arbeitet höchstens eine Schicht pro Tag',
@@ -4401,11 +5770,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Sicherung und Wiederherstellung',
         exportJson: 'Alle Daten exportieren (JSON)', importJson: 'Daten importieren',
         reset: 'Auf Standardwerte zurücksetzen',
+        deadlineTitle: 'Annahmeschluss',
+        deadlineEnable: 'Wunschabgabe zu einem festen Zeitpunkt schließen',
+        deadlineDay: 'Tag',
+        deadlineTime: 'Uhrzeit',
+        deadlineRemind: 'Erinnern vorher',
+        deadlineHours: '{hours} Stunden',
+        deadlinePreview: 'Die Wünsche für die Woche ab {week} schließen am {day}, {date} um {time}.',
+        deadlineHint: 'Danach können Mitarbeitende für diese Woche nichts mehr einreichen oder ändern. Die Leitung kann es immer.',
         backupHint: 'Die Daten werden automatisch in diesem Browser gespeichert. Zum Übertragen zwischen Rechnern exportieren Sie eine JSON-Datei.',
+        backupHintCloud: 'Die Daten werden in der Cloud gespeichert und auf allen Geräten synchronisiert. Der JSON-Export dient Ihrer eigenen Sicherung.',
         languageTitle: 'Sprache', languageHint: 'Ändert die gesamte Oberfläche. Wird auf diesem Gerät gespeichert.'
       },
 
       server: {
+        confirmEmail: 'Prüfen Sie Ihre E-Mail, bestätigen Sie die Adresse und melden Sie sich dann an',
         credentialsRequired: 'E-Mail und Passwort sind erforderlich',
         passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen haben',
         emailTaken: 'Diese E-Mail-Adresse ist bereits registriert',
@@ -4438,6 +5817,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'Die Abrechnung ist noch nicht angebunden. Wenden Sie sich an den Support.',
         mockProvider: 'Testanbieter (Entwicklung)',
         mockNote: 'Die Zahlung wird sofort ohne echte Belastung bestätigt. Nur für Entwicklung und Demos.',
         unknownPlan: 'Unbekannter Tarif',
@@ -4447,6 +5827,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'Erste Abbuchung',
+        nextCharge: 'Nächste Abbuchung',
+        paymentMethod: 'Zahlungsmethode',
+        cardOnFile: 'Hinterlegt',
+        noCard: 'Nicht hinterlegt',
+        addCard: 'Zahlungsmethode hinzufügen',
+        noCardWarning: 'Noch keine Zahlungsmethode. Ohne sie endet der Zugang am {date}.',
+        trialNotice: 'In den ersten {days} Tagen wird nichts abgebucht. Die erste Abbuchung erfolgt am {date} über {price}, danach monatlich – bis Sie kündigen.',
+        cancelBeforeCharge: 'Vor der Abbuchung kündigen',
+        cancelTrialConfirm: 'Abo kündigen? Es wird nichts abgebucht, und der Zugang bleibt bis zum Ende der Testphase.',
+        resume: 'Abo fortsetzen',
+        resumed: 'Abo fortgesetzt',
         priceMonthly: '{amount} ILS / Monat', priceAmount: '{amount} ILS',
         updateFailed: 'Aktualisierung fehlgeschlagen', cancelFailed: 'Kündigung fehlgeschlagen',
         title: 'Ihr Abonnement', status: 'Status', plan: 'Tarif', validUntil: 'Gültig bis',
@@ -4469,7 +5861,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'E-Mail', password: 'Passwort', name: 'Ihr Name', companyName: 'Firmenname',
         passwordHint: 'Mindestens 6 Zeichen',
         enter: 'Anmelden', create: 'Konto erstellen', signingIn: 'Anmelden…', creating: 'Wird erstellt…',
-        trialNote: '{days} Tage kostenlos. Keine Zahlungsdaten nötig.',
+        trialNote: '{days} Tage kostenlos. Die erste Abbuchung erfolgt am {date}; kündigen Sie vorher, zahlen Sie nichts.',
         signOut: 'Abmelden', blocked: 'Zugang gesperrt',
         blockedOwner: 'Wenden Sie sich an den Support, um das Abonnement zu aktivieren.',
         blockedMember: 'Bitten Sie den Kontoinhaber, das Abonnement zu verlängern.',
@@ -4490,9 +5882,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Testphase – noch {days} Tage. Erste Abbuchung am {date}, {price}.',
+        trialNoCard: 'Testphase – noch {days} Tage. Fügen Sie eine Zahlungsmethode hinzu, um nach dem {date} weiterzuarbeiten.',
+        trialEndedNoCard: 'Die Testphase ist beendet. Fügen Sie eine Zahlungsmethode hinzu, um fortzufahren.',
+        trialCanceled: 'Gekündigt – es wird nichts abgebucht. Der Zugang bleibt bis zum {date}.',
+        canceledAtPeriodEnd: 'Gekündigt. Der Zugang bleibt bis zum {date}, weitere Abbuchungen erfolgen nicht.',
+        charging: 'Die Testphase ist beendet und die erste Abbuchung wird verarbeitet.',
         noCompany: 'Keine Firma gefunden',
-        trialEnded: 'Die Testphase ist beendet. Aktivieren Sie ein Abonnement, um fortzufahren.',
-        trial: 'Testphase – noch {days} Tage.',
         expired: 'Das Abonnement ist abgelaufen. Verlängern Sie es, um fortzufahren.',
         pastDueBlocked: 'Die Zahlung ist nicht eingegangen und der Zugang ist gesperrt. Bitte aktualisieren Sie die Zahlungsdaten.',
         pastDue: 'Die letzte Zahlung ist fehlgeschlagen. Der Zugang wird in {days} Tagen gesperrt.',
@@ -4519,6 +5915,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'Der Plan für diese Woche ist noch nicht veröffentlicht.',
         noShifts: 'Sie haben diese Woche keine Schichten.',
         totalWeek: '{count} Schichten diese Woche.',
+        deadlineOpen: 'Die Wünsche für diese Woche schließen am {day}, {date} um {time}.',
+        deadlineHours: 'Die Wünsche schließen in {hours} Stunden. Danach ist keine Änderung mehr möglich.',
+        deadlineClosed: 'Die Wünsche für diese Woche sind geschlossen. Hat sich etwas geändert, sprechen Sie mit der Leitung.',
+        deadlineLocked: 'Die Wünsche für diese Woche sind geschlossen.',
         publishedLocked: 'Der Plan ist veröffentlicht – Wünsche für diese Woche können nicht mehr geändert werden.',
         notLinked: 'Ihr Benutzer ist noch nicht mit einer Mitarbeiterkarte verknüpft. Bitte wenden Sie sich an Ihre Führungskraft.',
         noShiftsToday: 'An diesem Tag keine Schichten', holidayNoWork: 'Feiertag – keine Arbeit'
@@ -4563,6 +5963,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Schreiben Sie uns',
         moveUp: 'Nach oben', moveDown: 'Nach unten', timePlaceholder: 'hh:mm',
         save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', close: 'Schließen',
         yes: 'Ja', no: 'Nein', all: 'Alle', and: 'und', more: 'und {count} weitere'
@@ -4586,8 +5987,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     currency: { code: 'ILS', symbol: '₪', position: 'after' },
     dict: {
       app: {
-        title: 'Planeador de turnos',
-        subtitle: 'Planeamento semanal por filial, com deteção de sobreposições e falhas',
+        title: 'SetShifts',
+        subtitle: 'Planeamento com IA para cada loja — por disponibilidade, pedidos, funções e as tuas regras',
         language: 'Idioma'
       },
 
@@ -4610,7 +6011,80 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         4: 'Rosa', 5: 'Turquesa', 6: 'Cinzento', 7: 'Castanho'
       },
 
+      landing: {
+        planTrialLine: '{days} dias grátis, depois',
+        faq6Q: 'Quando é que sou cobrado, exatamente?',
+        faq6A: 'Abres a subscrição com um cartão, mas nada é cobrado nos primeiros {days} dias. A primeira cobrança é automática no fim do período de experiência, e mensal a partir daí — até cancelares. Cancelar durante a experiência não custa nada, e o acesso mantém-se até ao fim.',
+        signIn: 'Entrar',
+        start: 'Começar grátis',
+        startLong: 'Começar grátis – {days} dias',
+        heroBadge: 'Planeamento com IA para negócios com várias lojas',
+        heroTitle: 'Todo o teu negócio, planeado num clique.',
+        heroSubtitle: 'A IA do SetShifts constrói sozinha o horário de cada loja — a partir da disponibilidade da equipa, dos pedidos que enviam, dos limites de horas, das funções e das tuas próprias regras. E em cada colocação diz-te porquê aquela pessoa. Tu aprovas; não constróis.',
+        heroNote: '{days} dias grátis. Cancela antes do fim da experiência e não és cobrado de todo.',
+        heroSecondary: 'Como funciona',
+        whyTitle: 'Porquê aquela pessoa?',
+        whySubtitle: 'A primeira pergunta que qualquer gestor faz a um horário criado automaticamente — e a que decide se confia nele ou se refaz tudo à mão.',
+        whyBody: 'Carrega no ponto de interrogação ao lado de qualquer colocação e o SetShifts responde: quem pediu aquele turno, quem está preparado para ele, quem já cumpriu a sua quota e quem mais poderia tê-lo feito. Sem caixas negras para acreditar.',
+        whyPoint1: 'A explicação é deduzida do horário que está no ecrã, por isso continua verdadeira depois de mudares algo à mão.',
+        whyPoint2: 'Vês não só quem foi escolhido, mas quem ficou de fora e porquê — e isso transforma uma discussão com um colaborador numa conversa de trinta segundos.',
+        whyDemoSlot: 'Terça · Centro · Tarde',
+        whyDemoTitle: 'Porquê o Daniel?',
+        whyDemoFact1: 'Pediu este turno nesse dia',
+        whyDemoFact2: 'Preparado para este turno · afeto a esta loja',
+        whyDemoFact3: '3 de 5 turnos esta semana',
+        whyDemoVerdict: 'Das 2 pessoas que o podiam fazer, foi a escolha mais justa.',
+        problemsTitle: 'As três coisas que correm mal todas as semanas',
+        problem1Title: 'O mesmo turno, duas pessoas',
+        problem1Body: 'Uma loja fica com gente a mais enquanto outra fica curta. Só dás por isso quando alguém chega e não tem o que fazer.',
+        problem2Title: 'Os pedidos perdem-se',
+        problem2Body: 'Um pedido de folga chega por mensagem, é esquecido, e o horário quebra uma promessa que fizeste.',
+        problem3Title: 'Falhas sem explicação',
+        problem3Body: 'Um turno fica vazio e ninguém sabe se é mesmo impossível ou apenas um descuido.',
+        featuresTitle: 'O que o sistema faz',
+        featuresSubtitle: 'Não é uma folha de cálculo colorida. É um planeador que conhece as tuas regras.',
+        feature1Title: 'Planeamento automático',
+        feature1Body: 'Um clique preenche a semana inteira em todas as lojas, distribui a carga com justiça e respeita o limite semanal de cada pessoa.',
+        feature2Title: 'Deteção de sobreposições',
+        feature2Body: 'Cada sobreposição, falha e pedido não cumprido é assinalado assim que aparece — com o motivo e uma correção sugerida.',
+        feature3Title: 'Pedidos com aprovação',
+        feature3Body: 'A equipa envia os seus pedidos, com um motivo opcional. Nada afeta o horário até tu aprovares.',
+        feature4Title: 'Os teus turnos, os teus horários',
+        feature4Body: 'Manhã, meio-dia, tarde, noite — define tantos turnos quantos o negócio precisar, com horários e cores próprios por loja.',
+        feature5Title: 'Excel e WhatsApp',
+        feature5Body: 'Exporta a semana inteira, ou envia a cada pessoa apenas os turnos dela — em folha pessoal ou em texto pronto a colar.',
+        feature6Title: 'Em todos os dispositivos',
+        feature6Body: 'O gestor edita no computador, a equipa vê os turnos no telemóvel. Todos veem o mesmo horário, de imediato.',
+        howTitle: 'A funcionar numa tarde',
+        how1Title: 'Adiciona lojas e equipa',
+        how1Body: 'Dias de abertura, horários e número de pessoas por turno — cada loja à sua maneira.',
+        how2Title: 'Recolhe os pedidos',
+        how2Body: 'A equipa entra e envia os pedidos de folga. Tu aprovas ou recusas, e vês tudo num só sítio.',
+        how3Title: 'Constrói e publica',
+        how3Body: 'Um clique constrói a semana. Revê os avisos, corrige o que importa, publica — e cada um vê os seus turnos.',
+        pricingTitle: 'Preço simples, pelo tamanho da equipa',
+        pricingSubtitle: 'Lojas ilimitadas em todos os planos. Cancela quando quiseres.',
+        pricingCta: 'Começar grátis',
+        pricingNote: 'Preços em ILS, por mês, IVA não incluído. {days} dias grátis em todos os planos — a primeira cobrança só chega no fim da experiência, e cancelar antes não custa nada.',
+        planPopular: 'O mais escolhido',
+        faqTitle: 'Perguntas',
+        faq1Q: 'É preciso instalar alguma coisa?',
+        faq1A: 'Não. O sistema funciona no navegador. No telemóvel podes adicioná-lo ao ecrã principal e abre como uma app, em ecrã inteiro.',
+        faq2Q: 'A minha equipa vê os turnos uns dos outros?',
+        faq2A: 'Não. Cada pessoa vê apenas os seus turnos e os seus pedidos. Só os gestores veem o horário completo.',
+        faq3Q: 'E se um turno não puder ser preenchido?',
+        faq3A: 'O sistema diz-te exatamente porquê — quem atingiu o limite semanal, quem já trabalha nesse dia, quem precisa de descanso entre turnos — e o que mudar.',
+        faq4Q: 'Os meus dados ficam seguros se deixar de pagar?',
+        faq4A: 'Sim. Os teus dados são guardados. Ao escolheres um plano outra vez, o acesso volta de imediato, com tudo onde o deixaste.',
+        faq5Q: 'Que idiomas são suportados?',
+        faq5A: 'Hebraico, inglês, espanhol, francês, alemão, português, russo e árabe — incluindo idiomas lidos da direita para a esquerda. Cada pessoa escolhe o seu.',
+        ctaTitle: 'Experimenta no horário da próxima semana',
+        ctaBody: 'Configura as lojas, constrói uma semana e vê a diferença. Leva uma tarde.',
+        footerRights: 'Todos os direitos reservados.',
+        footerTagline: 'Planeamento de turnos para cadeias.'
+      },
       tabs: {
+        support: 'Apoio',
         schedule: 'Horário', constraints: 'Pedidos', employees: 'Equipa',
         branches: 'Filiais', users: 'Utilizadores', billing: 'Subscrição', settings: 'Definições'
       },
@@ -4640,8 +6114,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       status: {
-        synced: 'Sincronizado entre dispositivos', syncedAt: 'Sincronizado entre dispositivos · atualizado às {time}',
+        demoTitle: 'Modo demonstração',
+        demoBody: 'Os dados são guardados apenas neste navegador e não passam entre dispositivos.',
         localOnly: 'Guardado apenas neste dispositivo', readOnly: 'Apenas leitura – sem permissão de edição',
+        saving: 'A guardar…',
+        savedCloud: 'Todas as alterações guardadas na nuvem',
+        savedCloudAt: 'Todas as alterações guardadas na nuvem · {time}',
+        savedDeviceAt: 'Guardado neste dispositivo · {time}',
+        saveFailed: 'Não é possível guardar agora',
+        saveFailedHint: 'A última alteração não foi guardada. Verifica a ligação – a próxima alteração tenta de novo.',
         remoteUpdate: 'Atualização recebida de outro dispositivo ({time})',
         localCopy: 'Esta é uma cópia local – os dados ficam apenas neste navegador e não sincronizam. ' +
           'Para trabalhar em dois computadores usa a versão alojada. Para transferir os dados: exporta o JSON nas Definições e importa-o lá.',
@@ -4863,6 +6344,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
       },
 
+      why: {
+        button: 'Porquê esta pessoa?',
+        title: 'Porquê {name}?',
+        onlyOption: 'Mais ninguém podia ficar com este turno.',
+        fairest: 'Das {count} pessoas possíveis, foi a escolha mais justa pelas horas já feitas.',
+        alsoPossible: 'Também podiam ficar com ele: {names}.',
+        whoCould: 'Quem não podia ({count})',
+        fact: {
+          requested: 'Pediu este turno nesse dia',
+          available: 'Sem pedido de folga para esse dia',
+          qualified: 'Preparado para este turno',
+          assignedBranch: 'Afeto a esta loja',
+          anyBranch: 'Trabalha em qualquer loja',
+          quota: 'Antes deste turno {before}, depois {after} de uma quota de {max}',
+          capacity: 'Esta semana só {target} desses turnos estão mesmo disponíveis para a pessoa',
+          rest: 'O descanso entre a tarde e a manhã é respeitado',
+          continuity: 'Já nesta loja {count} vezes esta semana'
+        },
+        blocked: {
+          inactive: 'não está ativo',
+          notQualified: 'não está preparado para este turno',
+          otherBranch: 'trabalha noutra loja',
+          requestedOff: 'pediu folga nesse dia',
+          blockedShift: 'pediu para não fazer este turno',
+          atLimit: 'atingiu o limite semanal de {max}',
+          busySameDay: 'já trabalha nesse dia',
+          busySameShift: 'já está neste turno',
+          restRule: 'precisa de descanso entre a tarde e a manhã'
+        }
+      },
+      preview: {
+        open: 'Vista do colaborador',
+        title: 'Que ecrã queres ver?',
+        hint: 'Apenas leitura. Nada do que fizeres aqui fica guardado em nome dele.',
+        banner: 'Estás a ver o ecrã de {name}',
+        exit: 'Voltar à gestão',
+        noEmployees: 'Ainda não há colaboradores ativos.'
+      },
+      support: {
+        title: 'Apoio',
+        promise: 'Diz-nos o que avariou ou o que te falta. Uma pessoa responde em {hours} horas.',
+        whatsapp: 'WhatsApp',
+        newTitle: 'Abrir pedido',
+        kindLabel: 'Tipo', subjectLabel: 'Assunto', bodyLabel: 'O que aconteceu?',
+        send: 'Enviar',
+        sent: 'Recebido. Uma pessoa responde em {hours} horas.',
+        sendFailed: 'Não foi possível enviar o pedido. Tenta novamente.',
+        loadFailed: 'Não foi possível carregar os teus pedidos.',
+        listTitle: 'Os meus pedidos',
+        empty: 'Ainda não há pedidos.',
+        replyLabel: 'A nossa resposta:',
+        errorSubject: 'Escreve um assunto.',
+        errorBody: 'Descreve o que aconteceu.',
+        errorSubjectLong: 'O assunto tem mais de {max} caracteres.',
+        errorBodyLong: 'A descrição tem mais de {max} caracteres.',
+        kind: { bug: 'Algo não funciona', feature: 'Pedido de funcionalidade', question: 'Pergunta' },
+        status: { open: 'Aberto', in_progress: 'Em curso', answered: 'Respondido', closed: 'Fechado' }
+      },
       settings: {
         rules: 'Regras de planeamento',
         onePerDay: 'Cada pessoa faz no máximo um turno por dia',
@@ -4881,11 +6420,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         backup: 'Cópia de segurança',
         exportJson: 'Exportar todos os dados (JSON)', importJson: 'Importar dados',
         reset: 'Repor as predefinições',
+        deadlineTitle: 'Fecho de pedidos',
+        deadlineEnable: 'Fechar os pedidos numa hora fixa',
+        deadlineDay: 'Dia',
+        deadlineTime: 'Hora',
+        deadlineRemind: 'Avisar antes',
+        deadlineHours: '{hours} horas',
+        deadlinePreview: 'Os pedidos para a semana de {week} fecham em {day}, {date} às {time}.',
+        deadlineHint: 'Depois dessa hora os colaboradores não podem enviar nem alterar pedidos dessa semana. Um gestor pode sempre.',
         backupHint: 'Os dados são guardados automaticamente neste navegador. Para os mover entre computadores, exporta um ficheiro JSON.',
+        backupHintCloud: 'Os dados são guardados na nuvem e sincronizam em todos os dispositivos. A exportação JSON serve para a tua própria cópia de segurança.',
         languageTitle: 'Idioma', languageHint: 'Muda toda a interface. Fica guardado neste dispositivo.'
       },
 
       server: {
+        confirmEmail: 'Verifica o teu e-mail e confirma o endereço, e depois inicia sessão',
         credentialsRequired: 'São necessários o e-mail e a palavra-passe',
         passwordTooShort: 'A palavra-passe tem de ter pelo menos 6 caracteres',
         emailTaken: 'Este e-mail já está registado',
@@ -4918,6 +6467,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       payments: {
+        notConnected: 'A faturação ainda não está ligada. Contacta o suporte.',
         mockProvider: 'Fornecedor de teste (desenvolvimento)',
         mockNote: 'O pagamento é aprovado de imediato sem cobrança real. Apenas para desenvolvimento e demonstrações.',
         unknownPlan: 'Plano desconhecido',
@@ -4927,6 +6477,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       billing: {
+        firstCharge: 'Primeira cobrança',
+        nextCharge: 'Próxima cobrança',
+        paymentMethod: 'Método de pagamento',
+        cardOnFile: 'Guardado',
+        noCard: 'Não adicionado',
+        addCard: 'Adicionar método de pagamento',
+        noCardWarning: 'Ainda não há método de pagamento. Sem ele, o acesso termina a {date}.',
+        trialNotice: 'Não és cobrado nos primeiros {days} dias. A primeira cobrança é a {date} no valor de {price}, e depois todos os meses — até cancelares.',
+        cancelBeforeCharge: 'Cancelar antes da cobrança',
+        cancelTrialConfirm: 'Cancelar a subscrição? Não serás cobrado e o acesso mantém-se até ao fim da experiência.',
+        resume: 'Retomar a subscrição',
+        resumed: 'Subscrição retomada',
         priceMonthly: '{amount} ILS / mês', priceAmount: '{amount} ILS',
         updateFailed: 'Não foi possível atualizar', cancelFailed: 'Não foi possível cancelar',
         title: 'A tua subscrição', status: 'Estado', plan: 'Plano', validUntil: 'Válida até',
@@ -4949,7 +6511,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         email: 'E-mail', password: 'Palavra-passe', name: 'O teu nome', companyName: 'Nome da empresa',
         passwordHint: 'Pelo menos 6 caracteres',
         enter: 'Entrar', create: 'Criar conta', signingIn: 'A entrar…', creating: 'A criar…',
-        trialNote: '{days} dias grátis. Não é preciso método de pagamento.',
+        trialNote: '{days} dias grátis. A primeira cobrança é a {date}; cancela antes e não pagas nada.',
         signOut: 'Sair', blocked: 'Acesso bloqueado',
         blockedOwner: 'Contacta o suporte para ativar a subscrição.',
         blockedMember: 'Pede ao proprietário da conta para renovar a subscrição.',
@@ -4970,9 +6532,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       access: {
+        trialWithCard: 'Experiência – faltam {days} dias. Primeira cobrança a {date}, {price}.',
+        trialNoCard: 'Experiência – faltam {days} dias. Adiciona um método de pagamento para continuares depois de {date}.',
+        trialEndedNoCard: 'A experiência terminou. Adiciona um método de pagamento para continuar.',
+        trialCanceled: 'Cancelado – não serás cobrado. O acesso mantém-se até {date}.',
+        canceledAtPeriodEnd: 'Cancelado. O acesso mantém-se até {date} e não haverá mais cobranças.',
+        charging: 'A experiência terminou e a primeira cobrança está a ser processada.',
         noCompany: 'Empresa não encontrada',
-        trialEnded: 'O período de experiência terminou. Ativa uma subscrição para continuar.',
-        trial: 'Experiência – faltam {days} dias.',
         expired: 'A subscrição expirou. Renova-a para continuar.',
         pastDueBlocked: 'O pagamento não foi recebido e o acesso está bloqueado. Atualiza o método de pagamento.',
         pastDue: 'O último pagamento não passou. O acesso será bloqueado dentro de {days} dias.',
@@ -4999,6 +6565,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         notPublished: 'O horário desta semana ainda não foi publicado.',
         noShifts: 'Não tens turnos esta semana.',
         totalWeek: '{count} turnos esta semana.',
+        deadlineOpen: 'Os pedidos desta semana fecham em {day}, {date} às {time}.',
+        deadlineHours: 'Os pedidos fecham daqui a {hours} horas. Depois não dá para alterar.',
+        deadlineClosed: 'Os pedidos desta semana estão fechados. Se algo mudou, fala com o teu gestor.',
+        deadlineLocked: 'Os pedidos desta semana estão fechados.',
         publishedLocked: 'O horário está publicado – os pedidos desta semana já não podem ser alterados.',
         notLinked: 'O teu utilizador ainda não está ligado a uma ficha de colaborador. Fala com o teu responsável.',
         noShiftsToday: 'Não há turnos neste dia', holidayNoWork: 'Feriado – não se trabalha'
@@ -5043,6 +6613,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       common: {
+        emailUs: 'Escreve-nos',
         moveUp: 'Subir', moveDown: 'Descer', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Fechar',
         yes: 'Sim', no: 'Não', all: 'Tudo', and: 'e', more: 'e mais {count}'
@@ -5139,7 +6710,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   /* נקרא פעם אחת בעליית העמוד, לפני שהאפליקציה מציירת משהו */
   function init() {
-    I18n.use(stored() || I18n.detect());
+    /* העדפה שהמשתמש בחר בעצמו גוברת תמיד על ברירת המחדל */
+    I18n.use(stored() || I18n.initial());
     I18n.onChange(applyDocument);
     applyDocument();
     return I18n.code();
@@ -5892,6 +7464,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
     oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+    /* מועד סגירת ההגשות. dayIdx ו-time מתארים את המועד האחרון
+       להגשת אילוצים לשבוע מסוים, ביום שלפני תחילת אותו שבוע.
+       remindHours הוא כמה שעות לפני כן שולחים תזכורת. */
+    constraintsDeadline: {
+      enabled: false,
+      dayIdx: 4,             // חמישי
+      time: '20:00',
+      remindHours: 24
+    },
     /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
     get shifts() { return defaultShifts(); },
     defaultShabbatEnd: '20:00'
@@ -6279,6 +7860,60 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return days;
   }
 
+  /* ===== מועד סגירת ההגשות =====
+     המנהל קובע יום ושעה. המועד חל על היום הזה *לפני* תחילת השבוע
+     שאליו מגישים – כך שהגשות לשבוע הבא נסגרות בשבוע הנוכחי.
+     הכול מחושב מהתאריך ולא נשמר, כדי שלא יהיה מצב שבו השעון של
+     המערכת והשעון של המשתמש אומרים דברים שונים. */
+  function deadlineSettings(state) {
+    var defaults = (Data.DEFAULT_SETTINGS && Data.DEFAULT_SETTINGS.constraintsDeadline) || {};
+    var value = (state && state.settings && state.settings.constraintsDeadline) || {};
+    return {
+      enabled: !!value.enabled,
+      dayIdx: typeof value.dayIdx === 'number' ? value.dayIdx : (defaults.dayIdx || 0),
+      time: value.time || defaults.time || '20:00',
+      remindHours: typeof value.remindHours === 'number'
+        ? value.remindHours : (defaults.remindHours || 24)
+    };
+  }
+
+  /* מתי בדיוק נסגרות ההגשות לשבוע הזה. null אם לא הוגדר מועד. */
+  function deadlineFor(state, weekKey) {
+    var config = deadlineSettings(state);
+    if (!config.enabled || !weekKey) return null;
+
+    var weekStart = dateOfDay(weekKey, 0);
+    var date = new Date(weekStart);
+    /* אחורה עד היום המבוקש, תמיד לפני תחילת השבוע */
+    do { date.setDate(date.getDate() - 1); } while (date.getDay() !== config.dayIdx);
+
+    var parts = String(config.time).split(':');
+    date.setHours(Number(parts[0]) || 0, Number(parts[1]) || 0, 0, 0);
+    return date;
+  }
+
+  function deadlinePassed(state, weekKey, now) {
+    var at = deadlineFor(state, weekKey);
+    if (!at) return false;
+    return (now || new Date()) > at;
+  }
+
+  /* כמה שעות נותרו. null אם אין מועד, שלילי אם עבר. */
+  function hoursToDeadline(state, weekKey, now) {
+    var at = deadlineFor(state, weekKey);
+    if (!at) return null;
+    return (at - (now || new Date())) / 3600000;
+  }
+
+  /* האם זה הרגע לתזכר: בתוך חלון התזכורת, ולפני שנסגר */
+  function shouldRemind(state, weekKey, now) {
+    var config = deadlineSettings(state);
+    if (!config.enabled) return false;
+    var left = hoursToDeadline(state, weekKey, now);
+    if (left === null) return false;
+    return left > 0 && left <= config.remindHours;
+  }
+
   /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
      ממספר הימים שבהם הוא יכול לעבוד בפועל. */
   function targetShifts(state, week, emp) {
@@ -6532,6 +8167,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   }
 
   var API = {
+    deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
+    deadlinePassed: deadlinePassed, hoursToDeadline: hoursToDeadline,
+    shouldRemind: shouldRemind,
     STORAGE_KEY: STORAGE_KEY,
     clone: clone,
     toKey: toKey,
@@ -7380,6 +9018,338 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 
+/* ===== js/explain.js ===== */
+/* "למה שובץ ככה" – הסבר לכל שיבוץ בסידור.
+
+   שתי החלטות עיצוב שקובעות את הערך של הקובץ הזה:
+
+   1. ההסבר נגזר מהסידור שבפועל, ולא נשמר בזמן ההרצה. לכן הוא נכון
+      גם אחרי שהמנהל שינה משהו ביד – ושיבוץ ידני הוא בדיוק המקרה
+      שבו שואלים "רגע, למה זה ככה?".
+
+   2. ההסבר משתמש באותן פונקציות בדיוק שבהן המנוע משתמש כדי להחליט
+      (Scheduler.canAssign ו-eligibleForSlot). הסבר שנכתב בנפרד
+      מההחלטה הוא סיפור יפה שאפשר לסתור, וזה גרוע מאין הסבר. */
+(function (root) {
+  'use strict';
+
+  var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
+  var Scheduler = root.ShiftScheduler ||
+    (typeof require === 'function' ? require('./scheduler.js') : null);
+
+  function parseSlotKey(key) {
+    var parts = String(key).split('|');
+    if (parts.length < 3) return null;
+    return {
+      dayIdx: Number(parts[0]),
+      branchId: parts.slice(1, -1).join('|'),
+      shiftId: parts[parts.length - 1]
+    };
+  }
+
+  /* בונה הקשר שמשקף את הסידור כפי שהוא עכשיו על המסך */
+  function contextOf(state, week) {
+    var ctx = Scheduler.newContext(state, week);
+    Object.keys(week.assignments || {}).forEach(function (key) {
+      var slot = parseSlotKey(key);
+      if (!slot) return;
+      (week.assignments[key] || []).forEach(function (empId) {
+        if (!ctx.counts.hasOwnProperty(empId)) return;   // עובד שנמחק מאז
+        Scheduler.applyAssignment(ctx, empId, slot);
+      });
+    });
+    return ctx;
+  }
+
+  function approvedConstraint(ctx, empId, dayIdx) {
+    return ctx.constraints[empId + '|' + dayIdx] || null;
+  }
+
+  /* למה העובד הזה *יכול* לעבוד במשמרת הזו – רשימת עובדות בדוקות */
+  function factsFor(state, week, ctx, emp, slot) {
+    var facts = [];
+    var constraint = approvedConstraint(ctx, emp.id, slot.dayIdx);
+
+    if (constraint && constraint.preferred && constraint.preferred[slot.shiftId]) {
+      /* העובדה החזקה ביותר: הוא ביקש בדיוק את המשמרת הזו */
+      facts.push({ code: 'requested' });
+    } else if (!constraint || (!constraint.off && !(constraint.blocked || {})[slot.shiftId])) {
+      facts.push({ code: 'available' });
+    }
+
+    facts.push({ code: 'qualified' });
+
+    if (emp.branches && emp.branches.length) {
+      facts.push({ code: 'assignedBranch' });
+    } else {
+      facts.push({ code: 'anyBranch' });
+    }
+
+    /* המספר שהמנהל רואה בסיכום הסידור הוא המצב *אחרי* השיבוץ, מול
+       המכסה האישית של העובד. הסבר שמציג מספר אחר מזה שבמסך מפיל את
+       האמון בדיוק בפיצ'ר שנועד לבנות אותו, ולכן מוצגים שניהם במפורש. */
+    var before = ctx.counts[emp.id] || 0;
+    var max = Number(emp.maxShifts) || 0;
+    facts.push({ code: 'quota', params: { before: before, after: before + 1, max: max } });
+
+    /* המכסה היא תקרה; הזמינות בפועל בשבוע הזה יכולה להיות נמוכה ממנה
+       (ימי חופש שאושרו, סניפים סגורים). זו עובדה נפרדת ולא "מכסה אחרת". */
+    var weekTarget = Store.targetShifts(state, week, emp) || 0;
+    if (max && weekTarget && weekTarget < max) {
+      facts.push({ code: 'capacity', params: { target: weekTarget, max: max } });
+    }
+
+    if (state.settings && state.settings.restEveningMorning) {
+      facts.push({ code: 'rest' });
+    }
+
+    var branchHits = (ctx.branchHistory[emp.id] || {})[slot.branchId] || 0;
+    if (branchHits > 1) {
+      facts.push({ code: 'continuity', params: { count: branchHits } });
+    }
+
+    return facts;
+  }
+
+  /* למה עובד אחר *לא* יכול – אותם תנאים, בסדר שבו המנוע בודק */
+  function blockedReason(state, week, ctx, emp, slot) {
+    if (!emp.active) return { code: 'inactive' };
+    if (emp.shifts.indexOf(slot.shiftId) === -1) return { code: 'notQualified' };
+    if (!Scheduler.employeeAllowedInBranch(emp, slot.branchId)) return { code: 'otherBranch' };
+
+    var constraint = approvedConstraint(ctx, emp.id, slot.dayIdx);
+    if (constraint) {
+      if (constraint.off) return { code: 'requestedOff' };
+      if (constraint.blocked && constraint.blocked[slot.shiftId]) return { code: 'blockedShift' };
+    }
+
+    var used = ctx.counts[emp.id] || 0;
+    var max = emp.maxShifts || 0;
+    if (max && used >= max) return { code: 'atLimit', params: { max: max } };
+
+    var dayList = (ctx.byDay[emp.id] || [])[slot.dayIdx] || [];
+    if (dayList.length) {
+      if (state.settings && state.settings.onePerDay) return { code: 'busySameDay' };
+      for (var i = 0; i < dayList.length; i++) {
+        if (dayList[i].shiftId === slot.shiftId) return { code: 'busySameShift' };
+      }
+    }
+
+    if (state.settings && state.settings.restEveningMorning) {
+      var neighbours = [];
+      if (slot.shiftId === 'morning' && slot.dayIdx > 0) {
+        neighbours = (ctx.byDay[emp.id] || [])[slot.dayIdx - 1] || [];
+        for (var j = 0; j < neighbours.length; j++) {
+          if (neighbours[j].shiftId === 'evening') return { code: 'restRule' };
+        }
+      }
+      if (slot.shiftId === 'evening' && slot.dayIdx < 6) {
+        neighbours = (ctx.byDay[emp.id] || [])[slot.dayIdx + 1] || [];
+        for (var k = 0; k < neighbours.length; k++) {
+          if (neighbours[k].shiftId === 'morning') return { code: 'restRule' };
+        }
+      }
+    }
+
+    return null;   // יכול היה – הוא חלופה אמיתית
+  }
+
+  /* ההסבר המלא לשיבוץ אחד.
+     מחזיר null אם העובד אינו משובץ שם בפועל. */
+  function forAssignment(state, week, slot, employeeId) {
+    if (!Store || !Scheduler) return null;
+    var emp = Store.byId(state.employees, employeeId);
+    if (!emp) return null;
+
+    var assigned = Store.getAssigned(week, slot.dayIdx, slot.branchId, slot.shiftId);
+    if (assigned.indexOf(employeeId) === -1) return null;
+
+    var ctx = contextOf(state, week);
+
+    /* מוציאים את העובד מהמשמרת הזו, כדי שהשאלה "מי עוד היה יכול"
+       תיענה על אותו מצב עולם שבו המנוע עמד. */
+    Scheduler.removeAssignment(ctx, employeeId, slot.dayIdx, slot.branchId, slot.shiftId);
+
+    var facts = factsFor(state, week, ctx, emp, slot);
+    var free = [];
+    var blocked = [];
+
+    state.employees.forEach(function (other) {
+      if (other.id === employeeId) return;
+      if (assigned.indexOf(other.id) !== -1) return;   // כבר במשמרת הזו
+      var reason = blockedReason(state, week, ctx, other, slot);
+      if (reason) {
+        blocked.push({ id: other.id, name: other.name, reason: reason });
+      } else {
+        var used = ctx.counts[other.id] || 0;
+        free.push({ id: other.id, name: other.name, used: used,
+          target: Store.targetShifts(state, week, other) || 0 });
+      }
+    });
+
+    /* למה דווקא הוא ולא אחד מהפנויים: הוגנות ביחס למכסה האישית,
+       וזה בדיוק מה שהניקוד במנוע מודד. */
+    var used = ctx.counts[employeeId] || 0;
+    var target = Store.targetShifts(state, week, emp) || 1;
+    var mine = used / Math.max(1, target);
+    var fairer = free.filter(function (other) {
+      return (other.used / Math.max(1, other.target)) < mine;
+    });
+
+    return {
+      employee: { id: emp.id, name: emp.name },
+      facts: facts,
+      alternatives: {
+        free: free,
+        blocked: blocked,
+        /* חלופות שהיו "פנויות יותר" ממנו. אם הרשימה ריקה, הוא
+           היה הבחירה ההוגנת ביותר. */
+        fairer: fairer
+      },
+      onlyOption: free.length === 0
+    };
+  }
+
+  var API = {
+    forAssignment: forAssignment,
+    parseSlotKey: parseSlotKey,
+    contextOf: contextOf,
+    blockedReason: blockedReason
+  };
+
+  root.ShiftExplain = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/why-ui.js ===== */
+/* "למה שובץ ככה" – החלון שמציג את ההסבר.
+
+   ההסבר נבנה ב-explain.js מתוך הסידור עצמו. כאן רק מתרגמים אותו
+   לשפה שמנהל קורא, בסדר שהוא היה שואל בו: קודם למה הוא, אחר כך
+   מי עוד היה אפשרי, ורק בסוף מי נפסל ולמה. */
+(function (root) {
+  'use strict';
+
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var host = null;
+  var lastFocus = null;
+
+  function ensureHost() {
+    if (host) return host;
+    host = document.createElement('div');
+    host.id = 'why-overlay';
+    host.className = 'why-overlay hidden';
+    host.setAttribute('role', 'dialog');
+    host.setAttribute('aria-modal', 'true');
+    document.body.appendChild(host);
+
+    host.addEventListener('click', function (event) {
+      if (event.target === host || event.target.closest('[data-why-close]')) close();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && host && !host.classList.contains('hidden')) close();
+    });
+    return host;
+  }
+
+  function close() {
+    if (!host) return;
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (err) { /* לא קריטי */ } }
+    lastFocus = null;
+  }
+
+  function factText(fact) {
+    return t('why.fact.' + fact.code, fact.params || {});
+  }
+
+  function reasonText(reason) {
+    return t('why.blocked.' + reason.code, reason.params || {});
+  }
+
+  /* כותרת המשמרת: "יום שלישי · סניף מרכז · ערב" */
+  function slotTitle(context, slot) {
+    var parts = [];
+    if (context.dayName) parts.push(context.dayName(slot.dayIdx));
+    if (context.branchName) parts.push(context.branchName(slot.branchId));
+    if (context.shiftName) parts.push(context.shiftName(slot.shiftId));
+    return parts.filter(Boolean).join(' · ');
+  }
+
+  function render(why, slot, context) {
+    var node = ensureHost();
+    var html = '<div class="why-card">';
+    html += '<button class="why-close" data-why-close aria-label="' +
+      esc(t('common.close')) + '">✕</button>';
+
+    html += '<p class="why-slot">' + esc(slotTitle(context, slot)) + '</p>';
+    html += '<h2 class="why-title">' +
+      esc(t('why.title', { name: why.employee.name })) + '</h2>';
+
+    html += '<ul class="why-facts">';
+    why.facts.forEach(function (fact) {
+      html += '<li>' + esc(factText(fact)) + '</li>';
+    });
+    html += '</ul>';
+
+    /* השורה שהופכת את זה מרשימת תנאים לתשובה */
+    if (why.onlyOption) {
+      html += '<p class="why-verdict why-only">' + esc(t('why.onlyOption')) + '</p>';
+    } else if (!why.alternatives.fairer.length) {
+      html += '<p class="why-verdict">' +
+        esc(t('why.fairest', { count: why.alternatives.free.length })) + '</p>';
+    } else {
+      html += '<p class="why-verdict">' + esc(t('why.alsoPossible', {
+        names: why.alternatives.fairer.map(function (item) { return item.name; }).join(', ')
+      })) + '</p>';
+    }
+
+    if (why.alternatives.blocked.length) {
+      html += '<details class="why-blocked"><summary>' +
+        esc(t('why.whoCould', { count: why.alternatives.blocked.length })) + '</summary><ul>';
+      why.alternatives.blocked.forEach(function (item) {
+        html += '<li><strong>' + esc(item.name) + '</strong> — ' +
+          esc(reasonText(item.reason)) + '</li>';
+      });
+      html += '</ul></details>';
+    }
+
+    html += '</div>';
+    node.innerHTML = html;
+    node.classList.remove('hidden');
+    var closeButton = node.querySelector('.why-close');
+    if (closeButton) closeButton.focus();
+  }
+
+  /* נקרא מהאפליקציה. context מספק את שמות היום/הסניף/המשמרת,
+     כי הם שייכים לשכבת התצוגה ולא למנוע. */
+  function show(options) {
+    var why = root.ShiftExplain.forAssignment(
+      options.state, options.week, options.slot, options.employeeId);
+    if (!why) return false;
+    lastFocus = options.trigger || null;
+    render(why, options.slot, options.context || {});
+    return true;
+  }
+
+  var API = { show: show, close: close };
+  root.ShiftWhyUI = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
 /* ===== js/app.js ===== */
 /* ממשק המשתמש: תצוגת הסידור, עריכה ידנית, אילוצים, עובדים, סניפים והגדרות */
 (function () {
@@ -7441,16 +9411,49 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return current;
   }
 
+  /* מצב השמירה האמיתי, ולא הבטחה שנכתבה פעם אחת בקוד. מסך ההגדרות
+     מבטיח ענן, ולכן מסך הסידור חייב לדווח על אותה מציאות בדיוק –
+     ושתי הודעות סותרות על אותו מסך מורידות אמון מיד. */
+  var save = { status: 'idle', at: null, pending: 0, failed: false };
+
+  function trackSave(promise) {
+    if (save.pending === 0) save.failed = false;
+    save.pending++;
+    save.status = 'saving';
+    renderSaveState();
+
+    function done(failed) {
+      save.pending--;
+      if (failed) save.failed = true;
+      if (save.pending > 0) return;
+      if (save.failed) {
+        save.status = 'error';
+      } else {
+        save.status = 'saved';
+        save.at = new Date();
+      }
+      renderSaveState();
+    }
+
+    return Promise.resolve(promise).then(function (value) {
+      done(false);
+      return value;
+    }, function (err) {
+      done(true);
+      throw err;
+    });
+  }
+
   function persist(scope) {
     var failed = function (err) {
       toast(t('errors.notSaved') + (err && err.message ? ': ' + err.message : ''));
     };
     if (scope === 'config' || scope === 'all') {
-      source.saveConfig(state, scope).catch(failed);
+      trackSave(source.saveConfig(state, scope)).catch(failed);
       Platform.pushConfig();
     }
     if (scope !== 'config') {
-      source.saveWeek(state, weekKey).catch(failed);
+      trackSave(source.saveWeek(state, weekKey)).catch(failed);
       Platform.pushWeek(weekKey);
     }
   }
@@ -7530,7 +9533,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     if (value && !Store.byId(state.employees, value)) {
       html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
     }
-    return html + '</select>';
+    html += '</select>';
+    if (value) {
+      html += '<button type="button" class="why-btn" data-why="' + esc(value) +
+        '" title="' + esc(t('why.button')) + '" aria-label="' + esc(t('why.button')) + '">?</button>';
+    }
+    return html;
   }
 
   function renderMobileSchedule(marks) {
@@ -7695,6 +9703,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
       }
       html += '</select>';
+      /* הכפתור מופיע רק על משבצת מאוישת – על ריקה אין מה להסביר */
+      if (value) {
+        html += '<button type="button" class="why-btn" data-why="' + esc(value) +
+          '" title="' + esc(t('why.button')) + '" aria-label="' + esc(t('why.button')) + '">?</button>';
+      }
     }
     return html + '</td>';
   }
@@ -8100,12 +10113,57 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     $('#branches-list').innerHTML = html;
   }
 
+  /* ===== מועד סגירת ההגשות =====
+     מוצג כתאריך מלא ולא רק כיום בשבוע, כי "חמישי בשעה 20:00"
+     אינו אומר למנהל לאיזה חמישי הכוונה. */
+  function renderDeadline() {
+    var config = Store.deadlineSettings(state);
+    var toggle = $('#opt-deadline');
+    if (!toggle) return;
+    toggle.checked = config.enabled;
+
+    var daySelect = $('#deadline-day');
+    daySelect.innerHTML = Data.DAYS.map(function (day) {
+      return '<option value="' + day.idx + '"' +
+        (day.idx === config.dayIdx ? ' selected' : '') + '>' + esc(day.name) + '</option>';
+    }).join('');
+
+    $('#deadline-time').value = config.time;
+
+    var remind = $('#deadline-remind');
+    remind.innerHTML = [2, 6, 12, 24, 48, 72].map(function (hours) {
+      return '<option value="' + hours + '"' +
+        (hours === config.remindHours ? ' selected' : '') + '>' +
+        esc(t('settings.deadlineHours', { hours: hours })) + '</option>';
+    }).join('');
+
+    /* שני מצבים נפרדים ננעלים על אותם שדות: ההגדרה כבויה, או
+       שהמסך כולו במצב צפייה. applyViewOnly רץ על אותם אלמנטים,
+       ולכן הכלל המשולב חייב להיקבע במקום אחד. */
+    toggle.disabled = viewOnly;
+    [daySelect, $('#deadline-time'), remind].forEach(function (node) {
+      node.disabled = viewOnly || !config.enabled;
+    });
+
+    var preview = $('#deadline-preview');
+    var at = Store.deadlineFor(state, weekKey);
+    preview.textContent = at
+      ? t('settings.deadlinePreview', {
+          date: Store.formatDate(at),
+          day: (Data.DAYS[at.getDay()] || {}).name || '',
+          time: config.time,
+          week: Store.formatDate(Store.dateOfDay(weekKey, 0))
+        })
+      : '';
+  }
+
   /* ========== הגדרות ========== */
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
+    renderDeadline();
 
     var list = shiftList();
     var html = '';
@@ -8159,6 +10217,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     '#employees-list input', '#employees-list button',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
+    '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
   ];
 
@@ -8175,6 +10234,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         node.disabled = viewOnly;
       });
     });
+
+    /* אחרון, כדי שהנעילה לפי ההגדרה עצמה לא תידרס */
+    renderDeadline();
   }
 
   /* ========== רינדור כולל ========== */
@@ -8197,6 +10259,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     renderEmployees();
     renderBranches();
     renderSettings();
+    renderSaveState();
     applyViewOnly();
   }
 
@@ -8775,6 +10838,37 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       if (!Platform.print()) { toast(t('errors.printBlocked')); }
     });
 
+    /* "למה שובץ ככה" – השאלה הראשונה שמנהל שואל על סידור אוטומטי,
+       וזו שקובעת אם הוא יסמוך עליו או יבנה הכול מחדש ביד. */
+    function bindWhy(selector, cellSelector) {
+      var container = document.querySelector(selector);
+      if (!container) return;
+      container.addEventListener('click', function (event) {
+        var button = event.target.closest('.why-btn');
+        if (!button || !window.ShiftWhyUI) return;
+        var cell = button.closest(cellSelector);
+        if (!cell) return;
+        window.ShiftWhyUI.show({
+          state: state,
+          week: week(),
+          slot: {
+            dayIdx: Number(cell.dataset.day),
+            branchId: cell.dataset.branch,
+            shiftId: cell.dataset.shift
+          },
+          employeeId: button.dataset.why,
+          trigger: button,
+          context: {
+            dayName: function (idx) { return (Data.DAYS[idx] || {}).name || ''; },
+            branchName: branchNameOf,
+            shiftName: shiftLabel
+          }
+        });
+      });
+    }
+    bindWhy('#schedule-branch', 'td');
+    bindWhy('#schedule-mobile', '.m-shift');
+
     $('#schedule-branch').addEventListener('change', function (event) {
       var select = event.target.closest('.emp-select');
       if (!select) return;
@@ -9163,6 +11257,27 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       render();
     });
 
+    function saveDeadline(patch) {
+      var current = Store.deadlineSettings(state);
+      state.settings.constraintsDeadline = Object.assign({}, current, patch);
+      persist('config');
+      render();
+    }
+    $('#opt-deadline').addEventListener('change', function (event) {
+      saveDeadline({ enabled: event.target.checked });
+    });
+    $('#deadline-day').addEventListener('change', function (event) {
+      saveDeadline({ dayIdx: Number(event.target.value) });
+    });
+    $('#deadline-remind').addEventListener('change', function (event) {
+      saveDeadline({ remindHours: Number(event.target.value) });
+    });
+    $('#deadline-time').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) { toast(t('errors.invalidTime')); render(); return; }
+      saveDeadline({ time: normalized });
+    });
+
     $('#default-shabbat').addEventListener('change', function (event) {
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
@@ -9373,31 +11488,64 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
   }
 
-  function renderSyncState(status) {
-    syncStatus = status || syncStatus;
+  /* לאן הנתונים באמת הולכים. מצב ההדגמה משתמש בשרת מדומה שיושב
+     בדפדפן, ולכן "יש שרת" אינו אותו דבר כמו "יש ענן". */
+  function storageIsCloud() {
+    if (source.storage) return source.storage === 'cloud';
+    return Platform.syncState === 'live';
+  }
+
+  function renderSaveState() {
     var node = $('#sync-state');
     if (!node) return;
-    var labels = {
-      live: t('status.synced'),
-      local: t('status.localOnly'),
-      readonly: t('status.readOnly')
-    };
-    var text = labels[syncStatus] || labels.local;
-    if (syncStatus === 'live' && Platform.lastSyncedAt) {
-      text = t('status.syncedAt', { time: timeLabel(Platform.lastSyncedAt) });
+    var cloud = storageIsCloud();
+    var text, cls, hint;
+
+    if (syncStatus === 'readonly') {
+      text = t('status.readOnly');
+      cls = 'readonly';
+      hint = t('status.readOnly');
+    } else if (save.status === 'saving') {
+      text = t('status.saving');
+      cls = 'saving';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    } else if (save.status === 'error') {
+      text = t('status.saveFailed');
+      cls = 'error';
+      hint = t('status.saveFailedHint');
+    } else if (save.status === 'saved' && save.at) {
+      text = t(cloud ? 'status.savedCloudAt' : 'status.savedDeviceAt',
+        { time: timeLabel(save.at) });
+      cls = cloud ? 'live' : 'local';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    } else {
+      text = t(cloud ? 'status.savedCloud' : 'status.localOnly');
+      cls = cloud ? 'live' : 'local';
+      hint = t(cloud ? 'ui.cloudSaved' : 'ui.deviceSaved');
     }
+
     node.textContent = text;
-    node.className = 'sync-state ' + syncStatus;
-    node.title = t(syncStatus === 'live' ? 'ui.cloudSaved' : 'ui.deviceSaved');
+    node.className = 'sync-state ' + cls;
+    node.title = hint;
+    /* הטקסט נבנה כאן ולא מתרגום סטטי, אחרת החלפת שפה תחזיר אותו לברירת המחדל */
+    node.removeAttribute('data-i18n');
 
     // עותק מקומי של הקובץ לעולם לא יסתנכרן – כדאי שזה יהיה ברור
     var notice = $('#local-notice');
     var isLocalFile = location.protocol === 'file:';
-    notice.classList.toggle('hidden', !(isLocalFile && syncStatus !== 'live'));
+    if (notice) notice.classList.toggle('hidden', !(isLocalFile && !cloud));
+  }
+
+  function renderSyncState(status) {
+    syncStatus = status || syncStatus;
+    renderSaveState();
   }
 
   function onSynced(date, fromRemote) {
-    renderSyncState('live');
+    syncStatus = 'live';
+    save.status = 'saved';
+    save.at = date || new Date();
+    renderSaveState();
     if (fromRemote) { toast(t('status.remoteUpdate', { time: timeLabel(date) })); }
   }
 

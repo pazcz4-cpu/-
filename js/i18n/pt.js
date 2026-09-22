@@ -140,8 +140,13 @@
       status: {
         demoTitle: 'Modo demonstração',
         demoBody: 'Os dados são guardados apenas neste navegador e não passam entre dispositivos.',
-        synced: 'Sincronizado entre dispositivos', syncedAt: 'Sincronizado entre dispositivos · atualizado às {time}',
         localOnly: 'Guardado apenas neste dispositivo', readOnly: 'Apenas leitura – sem permissão de edição',
+        saving: 'A guardar…',
+        savedCloud: 'Todas as alterações guardadas na nuvem',
+        savedCloudAt: 'Todas as alterações guardadas na nuvem · {time}',
+        savedDeviceAt: 'Guardado neste dispositivo · {time}',
+        saveFailed: 'Não é possível guardar agora',
+        saveFailedHint: 'A última alteração não foi guardada. Verifica a ligação – a próxima alteração tenta de novo.',
         remoteUpdate: 'Atualização recebida de outro dispositivo ({time})',
         localCopy: 'Esta é uma cópia local – os dados ficam apenas neste navegador e não sincronizam. ' +
           'Para trabalhar em dois computadores usa a versão alojada. Para transferir os dados: exporta o JSON nas Definições e importa-o lá.',

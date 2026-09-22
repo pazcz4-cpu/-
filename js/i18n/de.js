@@ -140,8 +140,13 @@
       status: {
         demoTitle: 'Demomodus',
         demoBody: 'Die Daten liegen nur in diesem Browser und wandern nicht zwischen Geräten.',
-        synced: 'Zwischen Geräten synchronisiert', syncedAt: 'Zwischen Geräten synchronisiert · aktualisiert um {time}',
         localOnly: 'Nur auf diesem Gerät gespeichert', readOnly: 'Nur Ansicht – keine Bearbeitungsrechte',
+        saving: 'Speichern…',
+        savedCloud: 'Alle Änderungen in der Cloud gespeichert',
+        savedCloudAt: 'Alle Änderungen in der Cloud gespeichert · {time}',
+        savedDeviceAt: 'Auf diesem Gerät gespeichert · {time}',
+        saveFailed: 'Speichern derzeit nicht möglich',
+        saveFailedHint: 'Die letzte Änderung wurde nicht gespeichert. Prüfen Sie die Verbindung – die nächste Änderung versucht es erneut.',
         remoteUpdate: 'Aktualisierung von einem anderen Gerät erhalten ({time})',
         localCopy: 'Dies ist eine lokale Kopie – die Daten liegen nur in diesem Browser und werden nicht synchronisiert. ' +
           'Für die Arbeit an zwei Rechnern nutzen Sie die gehostete Version. Zum Übertragen: JSON in den Einstellungen exportieren und dort importieren.',

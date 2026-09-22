@@ -155,6 +155,10 @@
   };
 
   /* מצב ההתחברות הנוכחי, או null */
+  /* שרת מדומה שיושב בדפדפן: יש כאן תפקידים והרשאות, אבל אין ענן.
+     המסך חייב להמשיך לומר "נשמר במכשיר הזה". */
+  MockBackend.prototype.isCloud = false;
+
   MockBackend.prototype.session = function () {
     var stored = this.storage.get(SESSION_KEY);
     if (!stored) return null;

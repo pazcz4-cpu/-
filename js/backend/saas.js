@@ -20,6 +20,9 @@
       mode: 'backend',
       role: role,
       session: session,
+      /* מסך הסידור מדווח למשתמש איפה השינוי שלו נשמר. במצב הדגמה
+         יש שרת מדומה בדפדפן, וזה אינו ענן. */
+      storage: backend.isCloud ? 'cloud' : 'device',
 
       /* מגבלת התוכנית – נבדקת לפני הוספת עובד */
       planLimit: function (employeeCount) {

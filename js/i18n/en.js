@@ -147,8 +147,13 @@
       status: {
         demoTitle: 'Demo mode',
         demoBody: 'Data is saved in this browser only and does not move between devices.',
-        synced: 'Synced across devices', syncedAt: 'Synced across devices · updated {time}',
         localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
+        saving: 'Saving…',
+        savedCloud: 'All changes saved to the cloud',
+        savedCloudAt: 'All changes saved to the cloud · {time}',
+        savedDeviceAt: 'Saved on this device · {time}',
+        saveFailed: 'Cannot save right now',
+        saveFailedHint: 'The last change was not saved. Check your connection – the next change will try again.',
         remoteUpdate: 'Update received from another device ({time})',
         localCopy: 'This is a local copy – data is stored in this browser only and does not sync. ' +
           'To work from two computers use the hosted version. To move data: export JSON in Settings, then import it there.',

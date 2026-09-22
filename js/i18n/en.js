@@ -382,7 +382,8 @@
           qualified: 'Trained for this shift',
           assignedBranch: 'Assigned to this location',
           anyBranch: 'Works at any location',
-          quota: '{used} of {target} shifts this week',
+          quota: 'Before this shift {before}, after it {after} of a quota of {max}',
+          capacity: 'This week only {target} of those shifts are actually open to them',
           rest: 'Rest between an evening and a morning shift is kept',
           continuity: 'Already at this location {count} times this week'
         },

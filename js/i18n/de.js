@@ -376,7 +376,8 @@
           qualified: 'Für diese Schicht eingearbeitet',
           assignedBranch: 'Diesem Standort zugeordnet',
           anyBranch: 'Arbeitet an allen Standorten',
-          quota: '{used} von {target} Schichten diese Woche',
+          quota: 'Vor dieser Schicht {before}, danach {after} von einem Kontingent von {max}',
+          capacity: 'Diese Woche sind ihm nur {target} dieser Schichten tatsächlich zugänglich',
           rest: 'Ruhezeit zwischen Abend- und Frühschicht ist eingehalten',
           continuity: 'Diese Woche schon {count}-mal an diesem Standort'
         },

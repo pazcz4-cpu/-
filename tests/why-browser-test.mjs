@@ -53,8 +53,8 @@ try {
 
   const facts = await page.locator('.why-facts li').allTextContents();
   check('לפחות שלוש עובדות', facts.length >= 3, true);
-  check('אחת מהן היא המכסה השבועית',
-    facts.some((f) => /מתוך \d+ משמרות השבוע/.test(f)), true);
+  check('אחת מהן היא המכסה השבועית, עם לפני ואחרי',
+    facts.some((f) => /לפני השיבוץ \d+ .*אחריו \d+ מתוך מכסה של \d+/.test(f)), true);
   check('אף עובדה אינה מפתח תרגום חסר',
     facts.every((f) => f.indexOf('why.') === -1), true);
 
@@ -97,7 +97,7 @@ try {
     await page.locator('.why-title').textContent(), /^Why .+\?$/);
   const enFacts = await page.locator('.why-facts li').allTextContents();
   check('והעובדות באנגלית',
-    enFacts.some((f) => /\d+ of \d+ shifts this week/.test(f)), true);
+    enFacts.some((f) => /Before this shift \d+, after it \d+ of a quota of \d+/.test(f)), true);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

@@ -376,7 +376,8 @@
           qualified: 'Formado para este turno',
           assignedBranch: 'Asignado a esta sucursal',
           anyBranch: 'Trabaja en cualquier sucursal',
-          quota: '{used} de {target} turnos esta semana',
+          quota: 'Antes de este turno {before}, después {after} de una cuota de {max}',
+          capacity: 'Esta semana solo {target} de esos turnos están realmente disponibles para esta persona',
           rest: 'Se respeta el descanso entre tarde y mañana',
           continuity: 'Ya en esta sucursal {count} veces esta semana'
         },

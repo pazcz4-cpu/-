@@ -64,9 +64,19 @@
       facts.push({ code: 'anyBranch' });
     }
 
-    var used = ctx.counts[emp.id] || 0;
-    var target = Store.targetShifts(state, week, emp) || 0;
-    facts.push({ code: 'quota', params: { used: used, target: target } });
+    /* המספר שהמנהל רואה בסיכום הסידור הוא המצב *אחרי* השיבוץ, מול
+       המכסה האישית של העובד. הסבר שמציג מספר אחר מזה שבמסך מפיל את
+       האמון בדיוק בפיצ'ר שנועד לבנות אותו, ולכן מוצגים שניהם במפורש. */
+    var before = ctx.counts[emp.id] || 0;
+    var max = Number(emp.maxShifts) || 0;
+    facts.push({ code: 'quota', params: { before: before, after: before + 1, max: max } });
+
+    /* המכסה היא תקרה; הזמינות בפועל בשבוע הזה יכולה להיות נמוכה ממנה
+       (ימי חופש שאושרו, סניפים סגורים). זו עובדה נפרדת ולא "מכסה אחרת". */
+    var weekTarget = Store.targetShifts(state, week, emp) || 0;
+    if (max && weekTarget && weekTarget < max) {
+      facts.push({ code: 'capacity', params: { target: weekTarget, max: max } });
+    }
 
     if (state.settings && state.settings.restEveningMorning) {
       facts.push({ code: 'rest' });

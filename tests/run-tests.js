@@ -1091,8 +1091,23 @@ test('ההסבר טוען רק עובדות נכונות על העובד', funct
           'נטען שהעובד ביקש את המשמרת, והוא לא');
       }
       if (fact.code === 'quota') {
-        assert(fact.params.used <= (emp.maxShifts || 99),
+        /* המספר שאחרי השיבוץ הוא בדיוק המספר שמופיע בסיכום הסידור.
+           אי-התאמה כאן היא סתירה גלויה על המסך. */
+        assertEqual(fact.params.after,
+          Store.employeeWeekCount(state, weekData, empId),
+          'המספר בהסבר אינו זהה לזה שבסיכום הסידור');
+        assertEqual(fact.params.before + 1, fact.params.after,
+          'לפני ואחרי אינם עוקבים');
+        assertEqual(fact.params.max, emp.maxShifts || 0,
+          'ההסבר מציג מכסה שאינה המכסה של העובד');
+        assert(fact.params.after <= (emp.maxShifts || 99),
           'המכסה בהסבר חורגת מהמכסה של העובד');
+      }
+      if (fact.code === 'capacity') {
+        assert(fact.params.target < fact.params.max,
+          'הערת הזמינות מוצגת כשאין מה להעיר');
+        assertEqual(fact.params.target, Store.targetShifts(state, weekData, emp),
+          'הזמינות בהערה אינה הזמינות שהמנוע מחשב');
       }
     });
   });

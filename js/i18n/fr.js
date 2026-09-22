@@ -376,7 +376,8 @@
           qualified: 'Formé pour ce créneau',
           assignedBranch: 'Affecté à ce site',
           anyBranch: 'Travaille sur tous les sites',
-          quota: '{used} créneaux sur {target} cette semaine',
+          quota: 'Avant ce créneau {before}, après {after} sur un quota de {max}',
+          capacity: 'Cette semaine, seuls {target} de ces créneaux lui sont réellement ouverts',
           rest: 'Le repos entre soirée et matin est respecté',
           continuity: 'Déjà {count} fois sur ce site cette semaine'
         },

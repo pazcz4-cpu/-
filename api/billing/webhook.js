@@ -107,8 +107,17 @@ module.exports = async function handler(req, res) {
   if (!claim.ok) {
     const duplicate = claim.status === 409 ||
       (claim.body && String(claim.body.code) === '23505');
-    if (duplicate) return send(res, 200, { ok: true, duplicate: true });
-    return send(res, 500, { message: 'Could not record the event' });
+    if (!duplicate) return send(res, 500, { message: 'Could not record the event' });
+
+    /* האירוע כבר נרשם – אבל האם הטיפול בו הושלם? השורה מסומנת
+       בסוף, אחרי שהחברה עודכנה. אם היא אינה מסומנת, הריצה
+       הקודמת מתה באמצע: הכרטיס נרשם אצל הספק ואצלנו לא קרה
+       כלום, והלקוח היה מגיע לתום הניסיון בלי אמצעי תשלום.
+       במקרה כזה ממשיכים – הפעולות למטה בנויות לרוץ פעמיים. */
+    const before = await db('/billing_events?id=eq.' +
+      encodeURIComponent(event.id) + '&select=company_id');
+    const row = before.ok && before.body && before.body[0];
+    if (!row || row.company_id) return send(res, 200, { ok: true, duplicate: true });
   }
 
   /* 4. אימות מול הספק עצמו.
@@ -167,6 +176,11 @@ module.exports = async function handler(req, res) {
         /* לא מסמנים ששולם על סכום שלא ביקשנו. האירוע נשמר, וההפרש
            ייראה ביומן. */
         note = 'amount-mismatch';
+      } else if (company.status === 'active' &&
+                 company.valid_until && company.valid_until > new Date().toISOString()) {
+        /* כבר פעיל ועדיין בתוקף. הארכה נוספת כאן פירושה חודש
+           מתנה על אותו תשלום, ולכן לא נוגעים. */
+        note = 'already-active';
       } else {
         const until = new Date(Date.now() + MONTH_DAYS * 864e5).toISOString();
         patch.status = 'active';
@@ -207,6 +221,8 @@ module.exports = async function handler(req, res) {
   });
 };
 
-/* Vercel מפרק גוף JSON מראש, ואז החתימה נבדקת על בייטים שנבנו
-   מחדש ולא על אלה שנשלחו. כאן קוראים את הגוף בעצמנו. */
+/* מבקשים מ-Vercel לא לפרק את גוף ה-JSON, כדי שהחתימה תיבדק על
+   הבייטים שהתקבלו ולא על בייטים שנבנו מחדש. אם בכל זאת משהו
+   בדרך פירק אותם, האימות יודע לנסות גם את הצורה המסודרת מחדש –
+   וזו בדיוק הצורה שהדוגמה של PayPlus עצמה חותמת עליה. */
 module.exports.config = { api: { bodyParser: false } };

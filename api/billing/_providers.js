@@ -192,17 +192,21 @@ const payplus = {
      לייצר אף אחת משתי החתימות. */
   verify: function (raw, headers, secret) {
     if (!payplusReady()) return false;
-    if (!secret) return false;
+    /* PayPlus חותם על ההודעה החוזרת באותו secret-key שבו מזדהים
+       מול ה-API, ולכן אין סוד שלישי לנהל. BILLING_WEBHOOK_SECRET
+       נשאר כאפשרות, למקרה שיונפק סוד נפרד. */
+    const key = secret || process.env.PAYPLUS_SECRET_KEY;
+    if (!key) return false;
     const head = headers || {};
     const agent = String(head['user-agent'] || head['User-Agent'] || '');
     if (agent.toLowerCase().indexOf('payplus') === -1) return false;
     const sent = head.hash || head['x-payplus-signature'] || '';
     if (!sent) return false;
-    if (safeEqual(sent, hmacBase64(secret, raw))) return true;
+    if (safeEqual(sent, hmacBase64(key, raw))) return true;
     let canonical = null;
     try { canonical = JSON.stringify(JSON.parse(raw)); } catch (err) { return false; }
     if (canonical === raw) return false;
-    return safeEqual(sent, hmacBase64(secret, canonical));
+    return safeEqual(sent, hmacBase64(key, canonical));
   },
 
   /* תרגום ההודעה החוזרת למבנה האחיד.
@@ -223,8 +227,12 @@ const payplus = {
 
     /* מזהה האירוע למניעת עיבוד כפול. המסמך מצביע על transaction_uid
        כמזהה היציב; אם אין עסקה (שמירת כרטיס בלבד) נופלים למזהה
-       בקשת התשלום. */
-    const id = transactionId || requestId;
+       בקשת התשלום, ואם גם הוא חסר – על טביעת אצבע של ההודעה.
+       הודעה זהה תיתן אותו מזהה, וזה כל מה שצריך כאן. אחרת היינו
+       דוחים את ההודעה, והם היו שולחים אותה שוב ושוב. */
+    const id = transactionId || requestId ||
+      crypto.createHash('sha256').update(JSON.stringify(body || {}), 'utf8')
+        .digest('hex').slice(0, 32);
 
     /* שמירת כרטיס: more_info הוא מזהה החברה שלנו. חיוב: more_info
        הוא מפתח תקופה שלנו, בצורת charge:<חברה>:<תאריך>, ואז החברה

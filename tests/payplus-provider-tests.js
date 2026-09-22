@@ -194,11 +194,23 @@ test('הודעה בלי חתימה נדחית', function () {
     'הודעה בלי חתימה התקבלה');
 });
 
-test('בלי סוד אין אימות, וגם אין קבלה', function () {
+test('בלי שום סוד אין אימות, וגם אין קבלה', function () {
+  ready(true);
+  var saved = process.env.PAYPLUS_SECRET_KEY;
+  delete process.env.PAYPLUS_SECRET_KEY;
+  var raw = JSON.stringify({ transaction_uid: 'tx-1' });
+  var result = payplus.verify(raw, { 'user-agent': 'PayPlus', hash: signBase64(raw) }, '');
+  process.env.PAYPLUS_SECRET_KEY = saved;
+  assertEqual(result, false, 'הודעה התקבלה בלי סוד מוגדר');
+});
+
+test('בלי סוד ייעודי נופלים ל-secret-key, כי בו PayPlus חותם', function () {
+  /* כך אין סוד שלישי לנהל, ואין דרך להגדיר אותו לא נכון */
   ready(true);
   var raw = JSON.stringify({ transaction_uid: 'tx-1' });
-  assertEqual(payplus.verify(raw, { 'user-agent': 'PayPlus', hash: signBase64(raw) }, ''),
-    false, 'הודעה התקבלה בלי סוד מוגדר');
+  var hash = crypto.createHmac('sha256', SECRET_KEY).update(raw, 'utf8').digest('base64');
+  assertEqual(payplus.verify(raw, { 'user-agent': 'PayPlus', hash: hash }, ''), true,
+    'חתימה ב-secret-key נדחתה');
 });
 
 test('גוף שסודר מחדש בדרך עדיין מתקבל', function () {
@@ -233,6 +245,17 @@ test('הודעה על חיוב שלנו אינה מנסה לקשר חברה מח
   });
   assertEqual(event.companyId, null, 'מפתח תקופה פורש כמזהה חברה');
   assertEqual(event.moreInfo, 'charge:co-42:2026-10-05', 'more_info לא נשמר');
+});
+
+test('הודעה בלי מזהה מקבלת מזהה יציב משלה, ולא נדחית', function () {
+  /* הודעה שנדחית נשלחת שוב ושוב. עדיף לזהות אותה לפי תוכנה. */
+  var body = { more_info: 'co-1', data: { token: 'tok-1' } };
+  var first = payplus.parse(body).id;
+  var second = payplus.parse(JSON.parse(JSON.stringify(body))).id;
+  assert(!!first, 'לא נוצר מזהה');
+  assertEqual(first, second, 'אותה הודעה קיבלה שני מזהים, ותעובד פעמיים');
+  assert(payplus.parse({ more_info: 'co-2' }).id !== first,
+    'שתי הודעות שונות קיבלו אותו מזהה, והשנייה תיבלע');
 });
 
 test('שדות שיושבים תחת data נקראים גם משם', function () {

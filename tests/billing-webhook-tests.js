@@ -89,7 +89,13 @@ FakeDb.prototype.install = function () {
         self.events[row.id] = row;
         return reply(201, []);
       }
-      if (opts.method === 'PATCH') { return reply(200, []); }
+      var eventId = decodeURIComponent((query.match(/id=eq\.([^&]+)/) || [])[1] || '');
+      var existing = self.events[eventId];
+      if (opts.method === 'PATCH') {
+        if (existing) Object.assign(existing, body);
+        return reply(200, existing ? [existing] : []);
+      }
+      return reply(200, existing ? [existing] : []);
     }
 
     if (path === '/companies') {
@@ -435,6 +441,58 @@ test('עסקה שלא ניתן לאמת אינה משנה את מצב המנוי
       data: { token: 'tok-1' } }).then(function (res) {
       assertEqual(db.companies['co-1'].status, 'trial', 'עסקה שלא אומתה שינתה את המנוי');
       assertEqual(res.payload.note, 'unverified', 'הסיווג שגוי');
+    });
+  });
+});
+
+test('ריצה שמתה באמצע מושלמת כשההודעה נשלחת שוב', function () {
+  /* הספק שולח את אותה הודעה שוב אם לא ענינו. אם הריצה הקודמת
+     הספיקה לרשום את האירוע ולא להצמיד את הכרטיס, הלקוח היה
+     מגיע לתום הניסיון בלי אמצעי תשלום – וזה מה שנבדק כאן. */
+  var db = new FakeDb();
+  db.install();
+  /* אירוע רשום, אך בלי סימון שהטיפול הושלם */
+  db.events['payplus:req-9'] = { id: 'payplus:req-9', company_id: null };
+  return withPayPlus(function () {
+    return payplusPost({
+      page_request_uid: 'req-9', more_info: 'co-1',
+      data: { token: 'tok-late' }
+    }).then(function (res) {
+      assertEqual(res.payload.duplicate, undefined, 'ההודעה נבלעה כאירוע כפול');
+      assertEqual(db.companies['co-1'].billing_subscription_id, 'tok-late',
+        'הכרטיס לא הוצמד גם בניסיון השני');
+    });
+  });
+});
+
+test('אירוע שהטיפול בו הושלם אינו מטופל שוב', function () {
+  var db = new FakeDb();
+  db.install();
+  db.events['payplus:req-8'] = { id: 'payplus:req-8', company_id: 'co-1' };
+  return withPayPlus(function () {
+    return payplusPost({
+      page_request_uid: 'req-8', more_info: 'co-1', data: { token: 'tok-other' }
+    }).then(function (res) {
+      assertEqual(res.payload.duplicate, true, 'אירוע שכבר טופל טופל שוב');
+      assertEqual(db.companies['co-1'].billing_subscription_id, 'sub-1',
+        'הכרטיס הוחלף על סמך אירוע שכבר טופל');
+    });
+  });
+});
+
+test('חיוב מאושר על מנוי שכבר פעיל אינו מחלק חודש מתנה', function () {
+  var db = new FakeDb();
+  db.companies['co-1'].status = 'active';
+  db.companies['co-1'].valid_until = new Date(Date.now() + 20 * 864e5).toISOString();
+  var before = db.companies['co-1'].valid_until;
+  db.install();
+  db.payplusReply = { results: { status: 'success' },
+    data: { status_code: '000', amount: 199, currency_code: 'ILS' } };
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-dup', more_info: 'co-1',
+      data: { token: 'tok-1' } }).then(function (res) {
+      assertEqual(db.companies['co-1'].valid_until, before, 'התוקף הוארך שוב');
+      assertEqual(res.payload.note, 'already-active', 'הסיווג שגוי');
     });
   });
 });

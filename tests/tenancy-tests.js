@@ -509,14 +509,37 @@ test('מדיניות הכרטיס נגזרת ממצב הסליקה, ואינה �
 /* לכל הבטחה שנוגעת לכרטיס יש שני נוסחים, ושניהם חייבים להתקיים
    בכל שפה: נוסח בלי סליקה ונוסח עם. נוסח חסר פירושו שבמצב אחד
    הדף יציג מפתח תרגום במקום משפט. */
+/* השורות שכן מזכירות כרטיס – התשובה בשאלות הנפוצות והמשפט
+   במסך ההרשמה – חייבות שני נוסחים בכל שפה. השאר לא מזכירות
+   אותו, ולכן אסור שיבטיחו לכאן או לכאן. */
+test('שורת המחירים והשורה שמתחת לכפתור אינן מבטיחות דבר על כרטיס', function () {
+  var fs = require('fs');
+  var path = require('path');
+  var dir = path.join(__dirname, '..', 'js', 'i18n');
+  var CARD_WORDS = ['כרטיס אשראי', 'credit card', 'بطاقة', 'Kreditkarte',
+    'tarjeta', 'carte', 'cartão', 'карт'];
+  fs.readdirSync(dir).forEach(function (file) {
+    if (!/\.js$/.test(file) || file === 'core.js' || file === 'dom.js') return;
+    var text = fs.readFileSync(path.join(dir, file), 'utf8');
+    ['pricingNote', 'heroNote'].forEach(function (key) {
+      var value = (text.match(new RegExp(key + ": '((?:[^'\\\\]|\\\\.)*)'")) || [])[1] || '';
+      assert(value, file + ' – חסר ' + key);
+      CARD_WORDS.forEach(function (word) {
+        assert(value.indexOf(word) === -1,
+          file + ' – ' + key + ' מבטיח משהו על כרטיס: ' + word);
+      });
+    });
+  });
+});
+
 test('לכל הבטחת כרטיס יש שני נוסחים, בשמונה השפות', function () {
   var fs = require('fs');
   var path = require('path');
   var dir = path.join(__dirname, '..', 'js', 'i18n');
-  var pairs = [
-    ['landing', 'heroNote'], ['landing', 'pricingNote'],
-    ['landing', 'faq6A'], ['auth', 'trialNote']
-  ];
+  /* רק במקומות שבהם באמת אומרים משהו על הכרטיס. שורת המחירים
+     והשורה שמתחת לכפתור אינן מזכירות אותו כלל – ומה שלא נאמר
+     אינו יכול להיות שקר באף מצב. */
+  var pairs = [['landing', 'faq6A'], ['auth', 'trialNote']];
   var langs = fs.readdirSync(dir).filter(function (file) {
     return /\.js$/.test(file) && file !== 'core.js' && file !== 'dom.js';
   });

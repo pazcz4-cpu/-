@@ -332,13 +332,15 @@
     }).join('');
 
     var note = document.getElementById('pricing-note');
-    if (note) note.textContent = t(key('landing.pricingNote'), { days: Model.TRIAL_DAYS });
+    if (note) note.textContent = t('landing.pricingNote', { days: Model.TRIAL_DAYS });
   }
 
-  /* כל הבטחה שנוגעת לכרטיס אשראי נבחרת לפי מצב הסליקה בפועל,
-     ולא נכתבת קבוע. בלי סליקה: "בלי כרטיס אשראי". עם סליקה:
-     "מזינים כרטיס, החיוב הראשון בתום התקופה". שניהם נכונים
-     במצב שלהם, ואין רגע שבו הדף מבטיח משהו שאינו קורה. */
+  /* שורת המחירים והשורה שמתחת לכפתור אינן מזכירות כרטיס כלל –
+     מה שלא נאמר אינו יכול להיות שקר באף מצב.
+
+     התשובה בשאלות הנפוצות כן מסבירה איך החיוב עובד, כי מי
+     שפותח אותה שואל בדיוק את זה, ולכן היא נבחרת לפי מצב
+     הסליקה בפועל. */
   Model.setBillingLive(window.SHIFT_BILLING_LIVE === true);
 
   function key(name) {
@@ -351,7 +353,7 @@
     var cta = document.getElementById('hero-cta');
     if (cta) cta.textContent = t('landing.startLong', { days: Model.TRIAL_DAYS });
     var note = document.getElementById('hero-note');
-    if (note) note.textContent = t(key('landing.heroNote'), { days: Model.TRIAL_DAYS });
+    if (note) note.textContent = t('landing.heroNote', { days: Model.TRIAL_DAYS });
     var faq6 = document.getElementById('faq6-answer');
     if (faq6) faq6.textContent = t(key('landing.faq6A'), { days: Model.TRIAL_DAYS });
     /* כתובת ליצירת קשר. קונה שמתלבט רוצה לדעת שיש למי לפנות

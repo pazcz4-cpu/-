@@ -43,6 +43,13 @@
     if (!state) { container.innerHTML = ''; return; }
 
     var provider = ctx.billing.describe();
+    /* ספק שאינו חי אינו יכול לקבל כרטיס. כל כפתור תשלום על המסך
+       הזה יוביל לשום מקום, וכל משפט על "אמצעי תשלום" הוא הבטחה
+       שאי אפשר לקיים. במצב הזה המסך מדווח מצב ואינו מבקש דבר.
+
+       המצב נקרא מהמודל ולא מהספק ישירות, כדי ששורת המשתמש
+       והמסך הזה לא יוכלו לומר שני דברים שונים. */
+    var live = Model.isBillingLive();
     var company = state.company;
     var onTrial = company.status === Model.SUBSCRIPTION.TRIAL;
     var hasCard = Model.hasPaymentMethod(company);
@@ -52,11 +59,13 @@
     /* בתקופת ניסיון הדבר החשוב ביותר על המסך הוא מתי יתבצע החיוב
        הראשון וכמה הוא. זה מופיע ראשון, לפני כל שאר הפרטים. */
     if (onTrial && !company.cancelAtPeriodEnd) {
-      html += '<p class="billing-trial' + (hasCard ? '' : ' warn') + '">' +
-        esc(hasCard
-          ? t('billing.trialNotice', {
-              days: Model.TRIAL_DAYS, date: formatDate(company.validUntil), price: price })
-          : t('billing.noCardWarning', { date: formatDate(company.validUntil) })) +
+      html += '<p class="billing-trial' + (hasCard || !live ? '' : ' warn') + '">' +
+        esc(!live
+          ? t('billing.pilotNotice', { date: formatDate(company.validUntil) })
+          : (hasCard
+            ? t('billing.trialNotice', {
+                days: Model.TRIAL_DAYS, date: formatDate(company.validUntil), price: price })
+            : t('billing.noCardWarning', { date: formatDate(company.validUntil) }))) +
         '</p>';
     }
 
@@ -76,8 +85,10 @@
       formatDate(company.validUntil) +
       (company.cancelAtPeriodEnd ? '' : ' · ' + esc(price)) + '</b></div>';
 
-    html += '<div class="billing-row"><span>' + t('billing.paymentMethod') + '</span><b>' +
-      (hasCard ? t('billing.cardOnFile') : t('billing.noCard')) + '</b></div>';
+    if (live || hasCard) {
+      html += '<div class="billing-row"><span>' + t('billing.paymentMethod') + '</span><b>' +
+        (hasCard ? t('billing.cardOnFile') : t('billing.noCard')) + '</b></div>';
+    }
 
     html += '<div class="billing-row"><span>' + t('billing.activeStaff') + '</span><b>' +
       esc(state.plan.maxEmployees
@@ -92,7 +103,7 @@
     if (state.overLimit) {
       html += '<p class="billing-note error">' + esc(state.problems.join(' ')) + '</p>';
     }
-    if (!hasCard && state.canManage) {
+    if (!hasCard && state.canManage && live) {
       html += '<div class="row"><button id="billing-add-card" class="btn primary">' +
         t('billing.addCard') + '</button></div>';
     }
@@ -104,7 +115,8 @@
       return;
     }
 
-    /* בחירת תוכנית */
+    /* ללא סליקה: מציגים את התוכניות כמחירון, בלי כפתור בחירה.
+       הלקוח צריך לדעת מה המחיר; הוא לא צריך כפתור שלא עושה כלום. */
     html += '<h2>' + t('billing.plans') + '</h2>';
     html += '<div class="plan-grid">';
     ctx.billing.plans().forEach(function (plan) {
@@ -117,13 +129,20 @@
       html += '<div class="plan-range">' + esc(plan.range) + '</div>';
       if (current) { html += '<div class="plan-tag">' + t('billing.currentPlan') + '</div>'; }
       else if (!fits) { html += '<div class="plan-tag warn">' + esc(t('billing.tooSmall', { count: employees })) + '</div>'; }
-      else { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
+      else if (live) { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
       html += '</div>';
     });
     html += '</div>';
 
-    html += '<p class="hint">' + esc(provider.name) +
-      (provider.note ? ' — ' + esc(provider.note) : '') + '</p>';
+    /* שם הספק והערה שלו שייכים ללקוח רק כשהוא באמת עומד לשלם
+       דרכו. "ספק מדומה (פיתוח)" על מסך של לקוח משלם הוא בדיוק
+       סוג המשפט שגורם לו לסגור את הלשונית. */
+    if (live) {
+      html += '<p class="hint">' + esc(provider.name) +
+        (provider.note ? ' — ' + esc(provider.note) : '') + '</p>';
+    } else {
+      html += '<p class="billing-note">' + esc(t('billing.pilotHint')) + '</p>';
+    }
 
     if (state.company.status === Model.SUBSCRIPTION.ACTIVE) {
       html += '<div class="settings-block row"><button id="billing-cancel" class="btn danger">' +
@@ -131,7 +150,7 @@
     }
 
     /* בתקופת ניסיון הביטול הוא "לפני שאחויב", לא "ויתור על מה ששילמתי" */
-    if (onTrial && hasCard && !company.cancelAtPeriodEnd) {
+    if (onTrial && hasCard && !company.cancelAtPeriodEnd && live) {
       html += '<div class="settings-block row"><button id="billing-cancel-trial" class="btn ghost">' +
         t('billing.cancelBeforeCharge') + '</button></div>';
     }

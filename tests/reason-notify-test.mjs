@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -40,6 +41,7 @@ await page.fill('input[name="email"]', 'mgr@r.co.il');
 await page.fill('input[name="password"]', 'secret123');
 await page.click('#signup-form button[type="submit"]');
 await page.waitForTimeout(1400);
+await loadSample(page);
 
 await page.click('.tab[data-tab="users"]');
 await page.waitForTimeout(600);
@@ -47,10 +49,17 @@ const opts = await page.locator('#invite-form select[name="employeeId"] option')
   .evaluateAll(o => o.map(x => x.value).filter(Boolean));
 await page.fill('#invite-form input[name="name"]', 'רונית');
 await page.fill('#invite-form input[name="email"]', 'ronit@r.co.il');
-await page.fill('#invite-form input[name="password"]', 'secret123');
 await page.selectOption('#invite-form select[name="employeeId"]', opts[0]);
 await page.click('#invite-form button[type="submit"]');
 await page.waitForTimeout(900);
+
+/* המנהל אינו קובע סיסמה לעובדת; היא מקבלת קישור במייל וקובעת
+   אותה בעצמה. כאן אין מייל, ולכן מדמים את הלחיצה על הקישור. */
+await page.evaluate(async () => {
+  window.__backend.followLink('ronit@r.co.il', 'invite');
+  await window.__backend.setPassword('secret123');
+});
+await page.waitForTimeout(600);
 
 // --- העובדת מבקשת ומוסיפה סיבה ---
 await signIn('ronit@r.co.il', 'secret123');

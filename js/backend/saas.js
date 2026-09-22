@@ -57,7 +57,10 @@
       },
 
       loadState: function () {
-        var state = Store.emptyState();
+        /* עסק אמיתי נפתח ריק. נתוני הדוגמה שייכים לכלי המקומי,
+           ולחשבון חדש הם רק מטלת מחיקה – ועובדים שאינם קיימים
+           שעלולים להישלח בסידור מפורסם. */
+        var state = Store.blankState();
         return backend.loadConfig().then(function (config) {
           if (config) {
             if (config.settings) state.settings = config.settings;
@@ -247,6 +250,13 @@
     document.getElementById('employee-root').classList.add('hidden');
     document.getElementById('manager-root').classList.remove('hidden');
 
+    /* מצב הסליקה נקבע מהספק עצמו, ומשם כל המסכים קוראים אותו.
+       נקבע כאן, לפני הציור הראשון: שורת המשתמש נכתבת כבר בטעינה,
+       וקביעה מאוחרת יותר הייתה משאירה עליה משפט שגוי עד לרענון. */
+    var provider = opts.billingProvider ||
+      (root.ShiftBilling ? new root.ShiftBilling.MockProvider({ backend: backend }) : null);
+    Model.setBillingLive(!!(provider && provider.describe && provider.describe().live === true));
+
     var source = backendSource(backend, session);
 
     return root.ShiftApp.start({ source: source }).then(function () {
@@ -276,8 +286,6 @@
       }
 
       if (root.ShiftBillingUI && root.ShiftBilling) {
-        var provider = opts.billingProvider ||
-          new root.ShiftBilling.MockProvider({ backend: backend });
         var billing = new root.ShiftBilling.BillingService({ backend: backend, provider: provider });
         root.ShiftBillingUI.init({
           billing: billing, session: session, getEmployees: getEmployees,

@@ -5,6 +5,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -51,6 +52,7 @@ await page.fill('input[name="email"]', 'mgr@ap.co.il');
 await page.fill('input[name="password"]', 'secret123');
 await page.click('#signup-form button[type="submit"]');
 await page.waitForTimeout(1400);
+await loadSample(page);
 
 await page.click('.tab[data-tab="users"]');
 await page.waitForTimeout(600);

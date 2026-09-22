@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -51,6 +52,7 @@ try {
   await page.fill('input[name="password"]', 'secret123');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1200);
+  await loadSample(page);
 
   console.log('\n== הזהות במסך ==');
   check('הכותרת היא שם המוצר', await page.locator('.brand h1').textContent(), 'SetShifts');

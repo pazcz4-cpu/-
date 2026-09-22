@@ -225,6 +225,19 @@
     return Math.max(0, plan.maxEmployees - (Number(currentCount) || 0));
   }
 
+  /* ===== האם הסליקה מחוברת =====
+     כל עוד אין ספק תשלומים אמיתי, אסור לבקש מלקוח אמצעי תשלום:
+     אין לאן להזין אותו, וההבטחה שהוא הזין משהו היא שקר. המצב
+     נקבע מהספק עצמו (describe().live) ולא מדגל שמישהו זוכר
+     לעדכן – דגל כזה תמיד נשאר על true יום אחרי שהוא הפסיק
+     להיות נכון. */
+  /* ברירת המחדל היא "לא מחובר", ולא להפך. דגל שמתחיל ב"אפשר
+     לחייב" ומתוקן אחר כך נותן, ברגע שמישהו שוכח לחבר אותו,
+     בדיוק את התוצאה הגרועה: מסך שמבקש כרטיס בלי שיש לאן. */
+  var billingLive = false;
+  function setBillingLive(value) { billingLive = value === true; }
+  function isBillingLive() { return billingLive; }
+
   /* האם לחברה יש גישה למערכת כרגע, ומה הסיבה אם לא. */
   function accessState(company, now) {
     var today = now ? new Date(now) : new Date();
@@ -269,6 +282,13 @@
       }
 
       if (!card) {
+        /* בלי סליקה מחוברת אין מה לבקש מהלקוח. הוא בפיילוט,
+           ונאמר לו בדיוק את זה. */
+        if (!billingLive) {
+          return { allowed: true, reason: 'trial-pilot', daysLeft: daysLeft,
+            text: translate('access.trialPilot', 'תקופת ניסיון.',
+              { days: daysLeft, date: endsOn }) };
+        }
         return { allowed: true, reason: 'trial-no-card', daysLeft: daysLeft,
           text: translate('access.trialNoCard', 'תקופת ניסיון.',
             { days: daysLeft, date: endsOn }) };
@@ -387,6 +407,7 @@
     SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS, WHATSAPP_NUMBER: WHATSAPP_NUMBER,
     TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
     TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
+    setBillingLive: setBillingLive, isBillingLive: isBillingLive,
     INVITE: INVITE, INVITE_TTL_HOURS: INVITE_TTL_HOURS,
     inviteState: inviteState, canCancelInvite: canCancelInvite,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS,

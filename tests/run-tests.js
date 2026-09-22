@@ -1833,6 +1833,120 @@ test('ביטול ייבוא מנקה שיבוצים ואילוצים שנוצר�
   assert(removed.assignments >= 2, 'הניקוי לא דווח');
 });
 
+console.log('\n== פיילוט: אין סליקה, אין בקשת תשלום ==');
+
+/* "ספק מדומה (פיתוח) – התשלום מאושר מיד ללא חיוב אמיתי" על מסך
+   של לקוח משלם הוא בדיוק סוג המשפט שגורם לו לסגור את הלשונית.
+   כל עוד אין ספק חי, המסך מדווח מצב ואינו מבקש דבר. */
+
+test('בלי סליקה, חשבון בניסיון אינו מתבקש להוסיף כרטיס', function () {
+  var company = Model.newTrialCompany('חדשה', new Date('2026-09-01T08:00:00Z'));
+  var when = new Date('2026-09-02T08:00:00Z');
+
+  Model.setBillingLive(true);
+  var live = Model.accessState(company, when);
+  assertEqual(live.reason, 'trial-no-card', 'עם סליקה – מבקשים כרטיס');
+  assert(/אמצעי תשלום/.test(live.text), 'ההודעה עם סליקה אינה מזכירה אמצעי תשלום');
+
+  Model.setBillingLive(false);
+  var pilot = Model.accessState(company, when);
+  assertEqual(pilot.reason, 'trial-pilot', 'בלי סליקה – עדיין מבקשים כרטיס');
+  assert(pilot.allowed, 'פיילוט חסם גישה');
+  assert(!/אמצעי תשלום/.test(pilot.text),
+    'ההודעה בפיילוט עדיין מבקשת אמצעי תשלום: ' + pilot.text);
+  assert(/פיילוט/.test(pilot.text), 'ההודעה אינה אומרת שזה פיילוט: ' + pilot.text);
+
+  Model.setBillingLive(true);   // לא להשאיר מצב גלובלי לבדיקה הבאה
+});
+
+test('חשבון עם כרטיס אינו מושפע ממצב הסליקה', function () {
+  var company = Model.newTrialCompany('עם כרטיס', new Date('2026-09-01T08:00:00Z'));
+  company.billingCustomerId = 'cus-1';
+  company.billingSubscriptionId = 'sub-1';
+  Model.setBillingLive(false);
+  var access = Model.accessState(company, new Date('2026-09-02T08:00:00Z'));
+  assertEqual(access.reason, 'trial', 'מי שכבר שילם קיבל הודעת פיילוט');
+  Model.setBillingLive(true);
+});
+
+test('הספק המדומה מצהיר על עצמו שאינו חי', function () {
+  var Billing = require('../js/backend/billing.js');
+  var mock = new Billing.MockProvider({ backend: null });
+  assertEqual(mock.describe().live, false,
+    'הספק המדומה מצהיר שהוא חי – וזה מה שמדליק את כפתורי התשלום');
+});
+
+test('אין משפט פיתוח בשום שפה במסך שלקוח רואה', function () {
+  /* המשפט עצמו עדיין קיים בתרגום, כי הוא נכון בסביבת פיתוח.
+     מה שנבדק כאן: שיש למולו נוסח פיילוט בכל שפה. */
+  Object.keys(I18n.list()).forEach(function (code) {
+    I18n.use(code);
+    var pilot = I18n.t('billing.pilotNotice', { date: '01/01/2027' });
+    assert(pilot && pilot.indexOf('billing.') === -1,
+      code + ': חסר נוסח פיילוט למסך המנוי');
+    var hint = I18n.t('billing.pilotHint');
+    assert(hint && hint.indexOf('billing.') === -1,
+      code + ': חסר הסבר פיילוט');
+    var access = I18n.t('access.trialPilot', { days: 5, date: '01/01/2027' });
+    assert(access && access.indexOf('access.') === -1,
+      code + ': חסרה הודעת פיילוט בשורת המשתמש');
+  });
+  I18n.use('he');
+});
+
+console.log('\n== חשבון חדש נפתח ריק ==');
+
+/* שמונה "עובד/ת 1..8" בחשבון של לקוח הם לא עזרה אלא מטלה: הוא
+   מייבא שלושים עובדים ומקבל שלושים ושמונה, ועלול לפרסם סידור
+   שמשבץ אנשים שאינם קיימים. */
+
+test('blankState ריק לגמרי, emptyState עדיין מדגים', function () {
+  var blank = Store.blankState();
+  assertEqual(blank.employees.length, 0, 'חשבון חדש נפתח עם עובדים');
+  assertEqual(blank.branches.length, 0, 'חשבון חדש נפתח עם סניפים');
+  assert(blank.settings, 'חשבון חדש נפתח בלי הגדרות');
+
+  /* הכלי המקומי נפתח בלי חשבון ובלי הקשר; מסך ריק שם לא מלמד כלום */
+  assert(Store.emptyState().employees.length > 0,
+    'הכלי המקומי איבד את נתוני הדוגמה');
+});
+
+test('נתוני הדוגמה נטענים לפי בקשה, ורק לחשבון ריק', function () {
+  var state = Store.blankState();
+  var added = Store.loadSampleData(state);
+  assertEqual(added.employees, 8, 'מספר העובדים לדוגמה');
+  assert(added.branches > 0, 'לא נוצרו סניפים');
+  assertEqual(state.employees.length, 8, 'העובדים לא נכנסו למצב');
+
+  /* חשבון שכבר יש בו נתונים אינו נדרס */
+  var again = Store.loadSampleData(state);
+  assertEqual(again.employees, 0, 'הדוגמה נטענה פעמיים');
+  assertEqual(state.employees.length, 8, 'הנתונים הוכפלו');
+});
+
+/* migrate() מילא פעם רשימה ריקה בנתוני הדוגמה, וזה החזיר שמונה
+   עובדים לכל חשבון חדש – בלי קשר ל-blankState. */
+test('מעבר גרסה אינו מחזיר את נתוני הדוגמה לחשבון ריק', function () {
+  var migrated = Store.migrate(Store.blankState());
+  assertEqual(migrated.employees.length, 0, 'מעבר הגרסה שתל עובדים');
+  assertEqual(migrated.branches.length, 0, 'מעבר הגרסה שתל סניפים');
+
+  /* וגם מי שמחק את כולם בכוונה לא מקבל אותם בחזרה בטעינה הבאה */
+  var emptied = Store.emptyState();
+  emptied.employees = [];
+  emptied.branches = [];
+  assertEqual(Store.migrate(emptied).employees.length, 0, 'העובדים שנמחקו חזרו');
+});
+
+test('לסניפים שנטענו יש שבוע מוגדר', function () {
+  var state = Store.blankState();
+  Store.loadSampleData(state);
+  state.branches.forEach(function (branch) {
+    assertEqual(Object.keys(branch.schedule || {}).length, 7,
+      branch.name + ': סניף לדוגמה בלי ימים מוגדרים');
+  });
+});
+
 console.log('\n== תבניות המייל ==');
 
 /* שלוש ההודעות שלקוח מקבל. עד עכשיו הן חיו רק בלוח הבקרה של

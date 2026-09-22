@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -33,6 +34,7 @@ await mgr.fill('input[name="email"]', 'mgr@x.co.il');
 await mgr.fill('input[name="password"]', 'secret123');
 await mgr.click('#signup-form button[type="submit"]');
 await mgr.waitForTimeout(1300);
+await loadSample(mgr);
 
 // לשונית משתמשים מופיעה למנהל
 console.log('1. לשונית משתמשים גלויה למנהל:', await mgr.locator('.tab[data-tab="users"]').isVisible());

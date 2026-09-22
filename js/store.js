@@ -49,6 +49,8 @@
 
   function formatDate(date) { return pad(date.getDate()) + '/' + pad(date.getMonth() + 1); }
 
+  /* מצב פתיחה עם נתוני דוגמה. נכון לכלי המקומי, שנפתח בלי חשבון
+     ובלי הקשר: מסך ריק שם לא מלמד כלום. */
   function emptyState() {
     return {
       version: VERSION,
@@ -57,6 +59,33 @@
       employees: clone(Data.DEFAULT_EMPLOYEES),
       weeks: {}
     };
+  }
+
+  /* מצב פתיחה ריק, לעסק אמיתי שנפתח עכשיו.
+     שמונה "עובד/ת 1..8" בחשבון של לקוח הם לא עזרה אלא מטלה: הוא
+     מייבא שלושים עובדים ומקבל שלושים ושמונה, ועלול לפרסם סידור
+     שמשבץ אנשים שאינם קיימים. */
+  function blankState() {
+    return {
+      version: VERSION,
+      settings: clone(Data.DEFAULT_SETTINGS),
+      branches: [],
+      employees: [],
+      weeks: {}
+    };
+  }
+
+  /* טעינת נתוני הדוגמה לתוך חשבון ריק, לפי בקשה מפורשת.
+     אינה דורסת דבר: אם כבר יש עובדים או סניפים, אין מה להדגים. */
+  function loadSampleData(state) {
+    if (!state) return { branches: 0, employees: 0 };
+    if ((state.employees && state.employees.length) ||
+        (state.branches && state.branches.length)) {
+      return { branches: 0, employees: 0 };
+    }
+    state.branches = Data.defaultBranches(null, shifts(state));
+    state.employees = clone(Data.DEFAULT_EMPLOYEES);
+    return { branches: state.branches.length, employees: state.employees.length };
   }
 
   function emptyWeek() {
@@ -600,8 +629,11 @@
     delete state.settings.dayShifts;
     state.settings.shifts = normalizeShifts(state.settings.shifts, legacyHours);
     delete state.settings.defaultHours;
-    if (!Array.isArray(state.branches) || !state.branches.length) state.branches = base.branches;
-    if (!Array.isArray(state.employees) || !state.employees.length) state.employees = base.employees;
+    /* רשימה ריקה היא רשימה ריקה. פעם היא מולאה כאן בנתוני הדוגמה,
+       וזה החזיר שמונה "עובד/ת" לכל חשבון חדש – ולכל מי שמחק את
+       כולם בכוונה. את הדוגמה טוענים בלחיצה, ב-loadSampleData. */
+    if (!Array.isArray(state.branches)) state.branches = [];
+    if (!Array.isArray(state.employees)) state.employees = [];
     if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
     state.employees.forEach(function (emp) {
       if (!Array.isArray(emp.branches)) emp.branches = [];
@@ -836,7 +868,8 @@
     shiftWeekKey: shiftWeekKey,
     dateOfDay: dateOfDay,
     formatDate: formatDate,
-    emptyState: emptyState,
+    emptyState: emptyState, blankState: blankState,
+    loadSampleData: loadSampleData,
     emptyWeek: emptyWeek,
     getWeek: getWeek,
     slotKey: slotKey,

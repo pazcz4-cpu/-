@@ -504,12 +504,34 @@ test('פתיחת חשבון אינה דורשת כרטיס, ובדיוק זה מ
   assertEqual(company.billingCustomerId, null, 'חשבון חדש נפתח עם אמצעי תשלום');
   assertEqual(company.billingSubscriptionId, null, 'חשבון חדש נפתח עם מנוי אצל הספק');
 
-  /* ולכן ההודעה שהלקוח רואה היא זו של "אין כרטיס", ולא הודעה
-     שמכריזה על חיוב ראשון בתאריך */
-  var access = Model.accessState(company, new Date('2026-09-02T08:00:00Z'));
-  assertEqual(access.reason, 'trial-no-card',
-    'החשבון החדש מדווח על מצב אחר: ' + access.reason);
-  assert(access.allowed, 'חשבון חדש נחסם');
+  /* וההודעה שהלקוח רואה תלויה במצב הסליקה, ולא בטקסט קבוע:
+     · סליקה מחוברת → "הוסיפו אמצעי תשלום"
+     · אין סליקה     → "המערכת בפיילוט, ניצור קשר לפני החיוב"
+     שתיהן נכונות במצב שלהן, ושתיהן לא נכונות במצב השני. */
+  var when = new Date('2026-09-02T08:00:00Z');
+
+  Model.setBillingLive(true);
+  var withBilling = Model.accessState(company, when);
+  assertEqual(withBilling.reason, 'trial-no-card',
+    'עם סליקה, החשבון החדש מדווח על מצב אחר: ' + withBilling.reason);
+  assert(withBilling.allowed, 'חשבון חדש נחסם');
+
+  Model.setBillingLive(false);
+  var pilot = Model.accessState(company, when);
+  assertEqual(pilot.reason, 'trial-pilot',
+    'בלי סליקה, החשבון החדש מדווח על מצב אחר: ' + pilot.reason);
+  assert(pilot.allowed, 'חשבון בפיילוט נחסם');
+  assert(!/אמצעי תשלום/.test(pilot.text),
+    'בפיילוט עדיין מבקשים אמצעי תשלום: ' + pilot.text);
+});
+
+/* ברירת המחדל היא "אין סליקה". דגל שמתחיל ב"אפשר לחייב" נותן,
+   ברגע שמישהו שוכח לחבר אותו, בדיוק את התוצאה הגרועה. */
+test('ברירת המחדל של הסליקה היא לא מחובר', function () {
+  var fresh = require('child_process').execSync(
+    'node -e "process.stdout.write(String(require(\'./js/backend/model.js\').isBillingLive()))"',
+    { cwd: require('path').join(__dirname, '..') }).toString();
+  assertEqual(fresh, 'false', 'המודל נטען עם סליקה מחוברת כברירת מחדל');
 });
 
 test('תקופת ניסיון מעניקה גישה ומסתיימת בזמן', function () {

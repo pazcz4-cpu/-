@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -37,6 +38,7 @@ try {
   await page.fill('input[name="password"]', 'secret123');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1000);
+  await loadSample(page);
 
   console.log('\n== ההגדרה אצל המנהל ==');
   await page.click('.tab[data-tab="settings"]');

@@ -818,6 +818,15 @@
     if (!shown.length) {
       html = '<p class="list-empty">' + esc(t(state.employees.length
         ? 'employees.noMatch' : 'employees.none')) + '</p>';
+      /* חשבון חדש נפתח ריק, ולכן כאן – ורק כאן – מוצעת הדוגמה.
+         מי שרוצה לראות איך זה נראה לפני שהוא מזין שלושים עובדים
+         מקבל עסק מלא בלחיצה, ויכול לנקות אותו באותה לחיצה. */
+      if (!state.employees.length && !state.branches.length && !viewOnly) {
+        html += '<div class="row list-empty-actions">' +
+          '<button id="load-sample" class="btn ghost">' + esc(t('employees.loadSample')) +
+          '</button></div>' +
+          '<p class="hint">' + esc(t('employees.loadSampleHint')) + '</p>';
+      }
     }
     $('#employees-list').innerHTML = html;
 
@@ -1860,7 +1869,20 @@
       render();
     });
 
+    /* הכפתור מצויר מחדש בכל render, ולכן ההאזנה על הרשימה */
     var list = $('#employees-list');
+    list.addEventListener('click', function (event) {
+      if (!event.target.closest('#load-sample')) return;
+      if (blocked()) return;
+      var added = Store.loadSampleData(state);
+      if (!added.employees) return;
+      persist('config');
+      render();
+      toast(t('employees.sampleLoaded', {
+        employees: added.employees, branches: added.branches
+      }));
+    });
+
     list.addEventListener('click', function (event) {
       var card = event.target.closest('.card');
       if (!card) return;

@@ -57,9 +57,33 @@ try {
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1300);
 
-  console.log('\n== לפני שהוזן כרטיס ==');
+  console.log('\n== ברירת המחדל: פיילוט, בלי סליקה ==');
+  /* כל עוד אין ספק תשלומים אמיתי, אסור לבקש מלקוח אמצעי תשלום:
+     אין לאן להזין אותו, ו"ספק מדומה (פיתוח)" על מסך של לקוח
+     משלם הוא בדיוק המשפט שגורם לו לסגור את הלשונית. */
   await page.click('.tab[data-tab="billing"]');
   await page.waitForTimeout(500);
+  const panel = () => page.locator('#billing-panel').innerText();
+  check('נאמר שזה פיילוט ושאין חיוב', await panel(), /פיילוט/);
+  check('אין כפתור הוספת אמצעי תשלום',
+    await page.locator('#billing-add-card').count(), 0);
+  check('אין כפתורי בחירת תוכנית',
+    await page.locator('#billing-panel [data-plan]').count(), 0);
+  check('אין אזהרה על כרטיס חסר',
+    await page.locator('.billing-trial.warn').count(), 0);
+  check('ואין זכר למילה "מדומה" במסך', /מדומה|פיתוח בלבד/.test(await panel()), false);
+  check('המחירים כן מוצגים, כדי שידע למה לצפות', await panel(), /199/);
+  check('גם שורת המשתמש אומרת פיילוט ולא "הוסיפו אמצעי תשלום"',
+    await page.locator('#user-bar').innerText(), /פיילוט/);
+
+  console.log('\n== משחררים את הסליקה: מכאן זו בדיקת מסלול החיוב ==');
+  /* מצב הסליקה נקבע מהספק. כאן מדמים ספק מחובר, כדי לבדוק את
+     כל מחזור החיים שייכנס לתוקף ברגע ש-PayPlus יחובר. */
+  await page.evaluate(() => {
+    window.ShiftModel.setBillingLive(true);
+    window.ShiftBillingUI.render();
+  });
+  await page.waitForTimeout(400);
   check('אמצעי תשלום', await billingRow('אמצעי תשלום'), /לא הוזן/);
   check('אזהרה שאין כרטיס', await page.locator('.billing-trial.warn').isVisible(), true);
   check('כפתור הוספת אמצעי תשלום', await page.locator('#billing-add-card').isVisible(), true);

@@ -35,6 +35,17 @@ console.log('1. לשונית מנוי גלויה לבעלים:', await page.loca
 await page.click('.tab[data-tab="billing"]');
 await page.waitForTimeout(500);
 
+/* ברירת המחדל היא פיילוט: אין ספק סליקה, ולכן אין מה ללחוץ.
+   מסלול החיוב עצמו נבדק כאן על ספק "מחובר", בדיוק כפי שיהיה
+   ברגע ש-PayPlus יחובר. */
+console.log('   במצב פיילוט אין כפתורי בחירת תוכנית:',
+  (await page.locator('#billing-panel [data-plan]').count()) === 0);
+await page.evaluate(() => {
+  window.ShiftModel.setBillingLive(true);
+  window.ShiftBillingUI.render();
+});
+await page.waitForTimeout(300);
+
 const rows = (await page.locator('.billing-row').allInnerTexts()).map(t => t.replace(/\n/g, ': '));
 rows.forEach(r => console.log('   ' + r));
 
@@ -47,9 +58,14 @@ const plans = await page.locator('.plan-card').evaluateAll(cards => cards.map(c 
 console.log('2. תוכניות:', plans.map(p => `${p.name} ${p.price} (${p.range})${p.current ? ' ← נוכחית' : ''}`).join(' | '));
 await page.screenshot({ path: OUT + '/billing.png', fullPage: false });
 
-// מגבלת עובדים: ברירת המחדל 8 עובדים בתוכנית עד 10 => אפשר להוסיף 2
+// מגבלת עובדים: חשבון חדש נפתח ריק, ולכן טוענים את עסק הדוגמה
+// (8 עובדים) ובודקים את המגבלה של התוכנית הקטנה – עד 10.
 await page.click('.tab[data-tab="employees"]');
 await page.waitForTimeout(400);
+console.log('   חשבון חדש נפתח ריק:',
+  (await page.locator('#employees-list .card').count()) === 0);
+await page.click('#load-sample');
+await page.waitForTimeout(600);
 const before = await page.locator('#employees-list .card').count();
 console.log('3. עובדים כרגע:', before);
 for (let i = 0; i < 3; i++) {

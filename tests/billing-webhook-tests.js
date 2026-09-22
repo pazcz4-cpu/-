@@ -45,6 +45,8 @@ function FakeDb() {
   };
   this.events = {};
   this.calls = [];
+  this.payplusCalls = [];
+  this.payplusReply = null;
 }
 
 FakeDb.prototype.install = function () {
@@ -52,6 +54,18 @@ FakeDb.prototype.install = function () {
   globalThis.fetch = function (url, options) {
     var opts = options || {};
     var parsed = new URL(url);
+
+    /* PayPlus עצמו, כשהקוד הולך לאמת עסקה מול ipn-full */
+    if (parsed.hostname.indexOf('payplus') !== -1) {
+      self.payplusCalls.push({ path: parsed.pathname,
+        body: opts.body ? JSON.parse(opts.body) : null });
+      var reply = self.payplusReply || { results: { status: 'success' }, data: {} };
+      return Promise.resolve({
+        ok: true, status: 200,
+        text: function () { return Promise.resolve(JSON.stringify(reply)); }
+      });
+    }
+
     var path = parsed.pathname.replace('/rest/v1', '');
     var query = parsed.search.slice(1);
     var body = opts.body ? JSON.parse(opts.body) : null;
@@ -78,7 +92,7 @@ FakeDb.prototype.install = function () {
       if (opts.method === 'PATCH') { return reply(200, []); }
     }
 
-    if (path === '/companies' && opts.method === 'PATCH') {
+    if (path === '/companies') {
       var where = {};
       query.split('&').forEach(function (pair) {
         var index = pair.indexOf('=');
@@ -96,7 +110,9 @@ FakeDb.prototype.install = function () {
               company.billing_subscription_id !== where.billing_subscription_id) return false;
           return true;
         });
-      matches.forEach(function (company) { Object.assign(company, body); });
+      if (opts.method === 'PATCH') {
+        matches.forEach(function (company) { Object.assign(company, body); });
+      }
       return reply(200, matches);
     }
 
@@ -305,6 +321,148 @@ test('ספק שאינו ממומש אינו מאשר שום דבר', function ()
   }, function (err) {
     process.env.BILLING_PROVIDER = 'mock';
     throw err;
+  });
+});
+
+console.log('\n== PayPlus מקצה לקצה ==');
+
+/* כאן נבדק המסלול האמיתי: חתימה בבסיס 64 בכותרת hash, ואימות
+   העסקה מול PayPlus עצמו לפני שמישהו מסומן כמשלם. */
+
+function payplusPost(body, options) {
+  var opts = options || {};
+  var raw = JSON.stringify(body);
+  var hash = opts.signature !== undefined ? opts.signature
+    : crypto.createHmac('sha256', process.env.BILLING_WEBHOOK_SECRET)
+      .update(raw, 'utf8').digest('base64');
+  var req = {
+    method: 'POST',
+    headers: { 'user-agent': opts.agent || 'PayPlus', hash: hash },
+    body: raw
+  };
+  var res = {
+    statusCode: 0, headers: {}, payload: null,
+    setHeader: function (key, value) { this.headers[key] = value; },
+    end: function (text) { this.payload = text ? JSON.parse(text) : null; }
+  };
+  return Promise.resolve(handler(req, res)).then(function () { return res; });
+}
+
+function withPayPlus(fn) {
+  process.env.BILLING_PROVIDER = 'payplus';
+  process.env.PAYPLUS_READY = 'true';
+  process.env.PAYPLUS_SANDBOX = 'true';
+  process.env.PAYPLUS_API_KEY = 'k';
+  process.env.PAYPLUS_SECRET_KEY = 's';
+  function undo() {
+    process.env.BILLING_PROVIDER = 'mock';
+    delete process.env.PAYPLUS_READY;
+  }
+  return Promise.resolve().then(fn).then(function (v) { undo(); return v; },
+    function (err) { undo(); throw err; });
+}
+
+test('שמירת כרטיס מקשרת את הטוקן ומשאירה את הלקוח בניסיון', function () {
+  var db = new FakeDb();
+  db.install();
+  return withPayPlus(function () {
+    return payplusPost({
+      page_request_uid: 'req-1', more_info: 'co-1',
+      data: { token: 'tok-new', customer_uid: 'cus-7' }
+    }).then(function (res) {
+      assertEqual(res.statusCode, 200, 'ההודעה נדחתה');
+      assertEqual(db.companies['co-1'].billing_subscription_id, 'tok-new',
+        'הטוקן לא נשמר, ואז אין ממה לגבות בתום הניסיון');
+      assertEqual(db.companies['co-1'].billing_customer_id, 'cus-7', 'הלקוח לא נשמר');
+      assertEqual(db.companies['co-1'].status, 'trial',
+        'שמירת כרטיס הפכה את הלקוח למשלם');
+      assertEqual(res.payload.note, 'card-saved', 'הסיווג שגוי');
+    });
+  });
+});
+
+test('חיוב מאושר בסכום הנכון הופך את המנוי לפעיל', function () {
+  var db = new FakeDb();
+  db.install();
+  /* starter = 199 */
+  db.payplusReply = { results: { status: 'success' },
+    data: { status_code: '000', amount: 199, currency_code: 'ILS' } };
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-1', more_info: 'co-1',
+      data: { token: 'tok-1' } }).then(function (res) {
+      assertEqual(db.companies['co-1'].status, 'active', 'המנוי לא הופעל');
+      assert(db.companies['co-1'].valid_until > new Date().toISOString(),
+        'התוקף לא הוארך');
+      assertEqual(res.payload.note, 'charged', 'הסיווג שגוי');
+      assertEqual(db.payplusCalls.length, 1, 'העסקה לא אומתה מול PayPlus');
+    });
+  });
+});
+
+test('חיוב בסכום שלא ביקשנו אינו מסמן ששולם', function () {
+  var db = new FakeDb();
+  db.install();
+  db.payplusReply = { results: { status: 'success' },
+    data: { status_code: '000', amount: 1, currency_code: 'ILS' } };
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-2', more_info: 'co-1',
+      data: { token: 'tok-1' } }).then(function (res) {
+      assertEqual(db.companies['co-1'].status, 'trial', 'סכום שגוי סומן כתשלום');
+      assertEqual(res.payload.note, 'amount-mismatch', 'הפער לא דווח');
+    });
+  });
+});
+
+test('חיוב שנדחה מסמן past_due', function () {
+  var db = new FakeDb();
+  db.install();
+  db.payplusReply = { results: { status: 'success' },
+    data: { status_code: 'declined', amount: 199, currency_code: 'ILS' } };
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-3', more_info: 'co-1',
+      data: { token: 'tok-1' } }).then(function () {
+      assertEqual(db.companies['co-1'].status, 'past_due', 'הכישלון לא סומן');
+    });
+  });
+});
+
+test('עסקה שלא ניתן לאמת אינה משנה את מצב המנוי', function () {
+  var db = new FakeDb();
+  db.install();
+  db.payplusReply = { results: { status: 'error', description: 'unknown transaction' } };
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-4', more_info: 'co-1',
+      data: { token: 'tok-1' } }).then(function (res) {
+      assertEqual(db.companies['co-1'].status, 'trial', 'עסקה שלא אומתה שינתה את המנוי');
+      assertEqual(res.payload.note, 'unverified', 'הסיווג שגוי');
+    });
+  });
+});
+
+test('חתימה בקידוד hex נדחית, גם אם הסוד נכון', function () {
+  var db = new FakeDb();
+  db.install();
+  var raw = JSON.stringify({ transaction_uid: 'tx-5', more_info: 'co-1' });
+  var hex = crypto.createHmac('sha256', process.env.BILLING_WEBHOOK_SECRET)
+    .update(raw, 'utf8').digest('hex');
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-5', more_info: 'co-1' },
+      { signature: hex }).then(function (res) {
+      assertEqual(res.statusCode, 401, 'קידוד שגוי התקבל');
+      assertEqual(db.companies['co-1'].status, 'trial', 'מצב המנוי השתנה');
+    });
+  });
+});
+
+test('הודעה שלא הגיעה מ-PayPlus נדחית', function () {
+  var db = new FakeDb();
+  db.install();
+  return withPayPlus(function () {
+    return payplusPost({ transaction_uid: 'tx-6', more_info: 'co-1' },
+      { agent: 'curl/8.4' }).then(function (res) {
+      assertEqual(res.statusCode, 401, 'שולח לא מזוהה התקבל');
+      assertEqual(db.calls.length, 0, 'בוצעה פנייה לבסיס הנתונים');
+    });
   });
 });
 

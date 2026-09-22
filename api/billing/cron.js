@@ -64,24 +64,72 @@ async function db(path, options) {
   return { ok: response.ok, status: response.status, body };
 }
 
-/* תופסים בלעדיות על חיוב התקופה. true = שלנו, false = כבר נתפס. */
-async function claimPeriod(company, periodStart, type) {
-  const claim = await db('/billing_events', {
+/* תופסים בלעדיות על מזהה אחד. true = שלנו, false = כבר נתפס. */
+async function claim(id, company, type, payload) {
+  const result = await db('/billing_events', {
     method: 'POST',
     prefer: 'return=minimal',
     body: [{
-      id: periodKey(company.id, periodStart),
+      id: id,
       provider: process.env.BILLING_PROVIDER || 'mock',
       company_id: company.id,
       type: type,
-      payload: { plan: company.plan, period_start: periodStart }
+      payload: payload
     }]
   });
-  if (claim.ok) return true;
-  const duplicate = claim.status === 409 ||
-    (claim.body && String(claim.body.code) === '23505');
+  if (result.ok) return true;
+  const duplicate = result.status === 409 ||
+    (result.body && String(result.body.code) === '23505');
   if (duplicate) return false;
-  throw new Error('Could not claim the billing period: ' + claim.status);
+  throw new Error('Could not claim the billing period: ' + result.status);
+}
+
+/* התוצאה נרשמת על התביעה עצמה, כי היא שקובעת אם מותר לנסות שוב.
+     declined  – חברת האשראי אמרה לא. מחר אולי תהיה מסגרת.
+     uncertain – לא קיבלנו תשובה. ייתכן שהכרטיס חויב, ולכן לא
+                 מנסים שוב לבד; זה עולה לדוח ומחכה לאדם. */
+async function recordOutcome(id, outcome, reason) {
+  return db('/billing_events?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH', prefer: 'return=minimal',
+    body: { payload: { outcome: outcome, reason: reason, at: new Date().toISOString() } }
+  });
+}
+
+async function lastAttempt(id) {
+  const row = await db('/billing_events?id=eq.' + encodeURIComponent(id) + '&select=payload');
+  const found = row.ok && row.body && row.body[0];
+  const payload = (found && found.payload) || {};
+  return {
+    outcome: payload.outcome || null,
+    day: payload.at ? String(payload.at).slice(0, 10) : null
+  };
+}
+
+/* מי רשאי לנסות עכשיו.
+   הניסיון הראשון על תקופה נתפס פעם אחת ולתמיד, ולכן שום תקלה
+   ושום ריצה כפולה אינן יכולות לחייב פעמיים. ניסיון חוזר בימי
+   החסד נתפס ליום, ורק אם הכישלון הקודם היה סירוב ברור.
+
+   מחזיר { id } אם מותר לנסות, או null. */
+async function claimAttempt(company, periodStart, type, now) {
+  const periodId = periodKey(company.id, periodStart);
+  const payload = { plan: company.plan, period_start: periodStart };
+
+  if (await claim(periodId, company, type, payload)) {
+    return { id: periodId, periodId: periodId };
+  }
+
+  /* התקופה כבר נתפסה. ניסיון חוזר מותר רק אחרי סירוב ברור,
+     ורק ביום אחר – כרטיס שסורב לפני שעה יסורב גם עכשיו. */
+  const today = now.toISOString().slice(0, 10);
+  const last = await lastAttempt(periodId);
+  if (last.outcome !== 'declined') return null;
+  if (last.day === today) return null;
+
+  const retryId = periodId + ':retry:' + today;
+  const mine = await claim(retryId, company, type + '.retry',
+    Object.assign({ retry_of: periodId }, payload));
+  return mine ? { id: retryId, periodId: periodId } : null;
 }
 
 async function patchCompany(id, patch) {
@@ -97,15 +145,16 @@ async function chargeCompany(provider, company, plans, now) {
   const periodStart = company.valid_until || now.toISOString();
   const first = company.status === 'trial';
 
-  let mine;
+  let attempt;
   try {
-    mine = await claimPeriod(company, periodStart, first ? 'charge.first' : 'charge.renewal');
+    attempt = await claimAttempt(company, periodStart,
+      first ? 'charge.first' : 'charge.renewal', now);
   } catch (err) {
     return { company: company.id, action: 'error', reason: err.message };
   }
-  if (!mine) return { company: company.id, action: 'skipped', reason: 'already-charged' };
+  if (!attempt) return { company: company.id, action: 'skipped', reason: 'already-charged' };
 
-  let result;
+  let result, thrown;
   try {
     result = await provider.charge({
       subscriptionId: company.billing_subscription_id,
@@ -113,11 +162,23 @@ async function chargeCompany(provider, company, plans, now) {
       amount: plan.priceMonthly,
       currency: 'ILS',
       plan: company.plan,
-      /* הספק מקבל את אותו מפתח, כדי שגם הוא לא יחייב פעמיים */
-      idempotencyKey: periodKey(company.id, periodStart)
+      /* הספק מקבל את מפתח התקופה – לא את מפתח הניסיון – כדי
+         שגם הוא יראה ניסיון חוזר כאותה תקופה ולא כחיוב חדש */
+      idempotencyKey: attempt.periodId
     });
+    thrown = null;
   } catch (err) {
-    result = { ok: false, reason: err.message, retryable: true };
+    thrown = (err && err.message) || 'charge threw';
+  }
+
+  /* הספק זרק. זה כמעט תמיד תקלה אצלנו – מפתח חסר, ספק שאינו
+     מוגדר – ולא סירוב של חברת האשראי. לכן לא מסמנים את הלקוח
+     כמי שהתשלום שלו נכשל: הוא ממשיך לעבוד, והתקלה עולה בדוח
+     הריצה כל יום עד שמישהו מתקן אותה. גם לא מנסים שוב לבד, כי
+     איננו יודעים אם הבקשה הספיקה להגיע. */
+  if (thrown) {
+    await recordOutcome(attempt.periodId, 'uncertain', thrown);
+    return { company: company.id, action: 'error', reason: thrown };
   }
 
   if (result && result.ok) {
@@ -135,10 +196,16 @@ async function chargeCompany(provider, company, plans, now) {
 
   /* כישלון: עוברים ל-past_due ומשאירים את התוקף כדי שימי החסד
      ייספרו ממנו. אחרי ימי החסד accessState חוסם את הגישה. */
+  const reason = (result && result.reason) || 'unknown';
+  const declined = !!(result && result.retryable);
+  /* התוצאה נרשמת על שורת התקופה, כי היא שנקראת מחר */
+  await recordOutcome(attempt.periodId, declined ? 'declined' : 'uncertain', reason);
   await patchCompany(company.id, { status: 'past_due' });
   return {
-    company: company.id, action: 'failed',
-    reason: (result && result.reason) || 'unknown'
+    company: company.id, action: 'failed', reason: reason,
+    /* סירוב ברור יינוסה שוב מחר; חוסר ודאות מחכה לאדם, כי ניסיון
+       חוזר על חיוב שאולי עבר הוא חיוב כפול */
+    retry: declined ? 'tomorrow' : 'stopped'
   };
 }
 

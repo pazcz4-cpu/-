@@ -19,6 +19,10 @@
 const { projectUrl } = require('../_supabase.js');
 
 const providers = require('./_providers.js');
+const Model = require('../../js/backend/model.js');
+
+/* אורך תקופת חיוב, זהה לזה שבמנוע החיוב היומי */
+const MONTH_DAYS = 30;
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -107,39 +111,102 @@ module.exports = async function handler(req, res) {
     return send(res, 500, { message: 'Could not record the event' });
   }
 
-  /* 4. עדכון החברה. מאתרים לפי מזהה המנוי אצל הספק. */
-  const patch = { billing_provider: name };
-  if (event.status) patch.status = event.status;
-  if (event.currentPeriodEnd) {
-    patch.valid_until = event.currentPeriodEnd;
-    patch.current_period_end = event.currentPeriodEnd;
-  }
-  if (event.customerId) patch.billing_customer_id = event.customerId;
-  if (typeof event.cancelAtPeriodEnd === 'boolean') {
-    patch.cancel_at_period_end = event.cancelAtPeriodEnd;
-  }
-  if (event.plan) patch.plan = event.plan;
+  /* 4. אימות מול הספק עצמו.
+     ספק שיודע לאמת עסקה (PayPlus, דרך ipn-full) הוא מקור האמת,
+     וההודעה הנכנסת משמשת רק כדי לדעת איזו עסקה לבדוק. הכלל הזה
+     כתוב בתיעוד שלהם במפורש: הפניה מוצלחת אינה הוכחת תשלום.
 
-  let target = '/companies?billing_subscription_id=eq.' + encodeURIComponent(event.subscriptionId);
-
-  /* האירוע הראשון של מנוי חדש: המנוי עדיין לא מקושר לחברה, ולכן
-     מאתרים לפי המזהה שנשלח בפתיחת התשלום ומקשרים עכשיו. */
-  if (event.companyId) {
-    target = '/companies?id=eq.' + encodeURIComponent(event.companyId);
-    patch.billing_subscription_id = event.subscriptionId;
+     ספק בלי יכולת אימות (הספק המדומה) ממשיך להתנהג כקודם. */
+  let verified = null;
+  if (typeof provider.verifyTransaction === 'function') {
+    try {
+      verified = await provider.verifyTransaction(event);
+    } catch (err) {
+      verified = { verified: false, reason: (err && err.message) || 'verify-failed' };
+    }
   }
 
-  const updated = await db(target, { method: 'PATCH', body: patch });
-  if (!updated.ok) return send(res, 500, { message: 'Could not update the subscription' });
-  if (!updated.body || !updated.body.length) {
+  /* 5. איתור החברה.
+     באירוע הראשון של מנוי חדש הטוקן עדיין אינו מקושר, ולכן
+     מאתרים לפי המזהה שנשלח בפתיחת התשלום. */
+  const lookup = event.companyId
+    ? '/companies?id=eq.' + encodeURIComponent(event.companyId) + '&select=*'
+    : '/companies?billing_subscription_id=eq.' +
+      encodeURIComponent(event.subscriptionId) + '&select=*';
+  const found = await db(lookup);
+  if (!found.ok) return send(res, 500, { message: 'Could not read the company' });
+  const company = found.body && found.body[0];
+  if (!company) {
     /* אין חברה כזו. מאשרים בכל זאת, אחרת הספק ינסה לנצח. */
     return send(res, 200, { ok: true, unmatched: true });
   }
 
+  /* 6. קישור אמצעי התשלום. זה בטוח תמיד: טוקן שמור אינו כסף
+     שעבר, והוא מה שמאפשר למנוע החיוב לגבות בתום הניסיון. */
+  const patch = { billing_provider: name };
+  if (event.customerId) patch.billing_customer_id = event.customerId;
+  if (event.companyId || !company.billing_subscription_id) {
+    patch.billing_subscription_id = event.subscriptionId;
+  }
+
+  /* 7. מה שמשנה כסף.
+     אצל ספק מאומת: רק תוצאה שחזרה מהספק, ורק אם הסכום והמטבע
+     תואמים למה שאמורים לגבות. אחרת מקשרים את הכרטיס ולא נוגעים
+     במצב המנוי – עדיף לקוח שנשאר בניסיון יום נוסף על לקוח
+     שסומן כמשלם בלי ששילם. */
+  let note = null;
+  if (verified) {
+    if (!verified.verified) {
+      /* שמירת כרטיס בלי חיוב – אין עסקה לאמת, וזה תקין */
+      note = verified.reason === 'no-transaction' ? 'card-saved' : 'unverified';
+    } else if (verified.outcome === 'approved') {
+      const plan = Model.PLANS[company.plan] || Model.PLANS[Model.DEFAULT_PLAN];
+      const expected = plan.priceMonthly;
+      const currency = String(verified.currency || 'ILS').toUpperCase();
+      if (Number(verified.amount) !== Number(expected) || currency !== 'ILS') {
+        /* לא מסמנים ששולם על סכום שלא ביקשנו. האירוע נשמר, וההפרש
+           ייראה ביומן. */
+        note = 'amount-mismatch';
+      } else {
+        const until = new Date(Date.now() + MONTH_DAYS * 864e5).toISOString();
+        patch.status = 'active';
+        patch.valid_until = until;
+        patch.current_period_end = until;
+        note = 'charged';
+      }
+    } else if (verified.outcome === 'declined') {
+      patch.status = 'past_due';
+      note = 'declined';
+    } else {
+      note = 'status-' + (verified.rawStatus || 'unknown');
+    }
+  } else {
+    /* ספק בלי אימות: מה שכתוב באירוע הוא מה שיש */
+    if (event.status) patch.status = event.status;
+    if (event.currentPeriodEnd) {
+      patch.valid_until = event.currentPeriodEnd;
+      patch.current_period_end = event.currentPeriodEnd;
+    }
+    if (typeof event.cancelAtPeriodEnd === 'boolean') {
+      patch.cancel_at_period_end = event.cancelAtPeriodEnd;
+    }
+    if (event.plan) patch.plan = event.plan;
+  }
+
+  const updated = await db('/companies?id=eq.' + encodeURIComponent(company.id),
+    { method: 'PATCH', body: patch });
+  if (!updated.ok) return send(res, 500, { message: 'Could not update the subscription' });
+
   await db('/billing_events?id=eq.' + encodeURIComponent(event.id), {
     method: 'PATCH', prefer: 'return=minimal',
-    body: { company_id: updated.body[0].id }
+    body: { company_id: company.id }
   });
 
-  return send(res, 200, { ok: true, company: updated.body[0].id, status: patch.status });
+  return send(res, 200, {
+    ok: true, company: company.id, status: patch.status || null, note: note
+  });
 };
+
+/* Vercel מפרק גוף JSON מראש, ואז החתימה נבדקת על בייטים שנבנו
+   מחדש ולא על אלה שנשלחו. כאן קוראים את הגוף בעצמנו. */
+module.exports.config = { api: { bodyParser: false } };

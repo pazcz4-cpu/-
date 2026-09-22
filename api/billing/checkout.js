@@ -11,7 +11,7 @@ const { endpoint } = require('./_shared.js');
 const providers = require('./_providers.js');
 const Model = require('../../js/backend/model.js');
 
-module.exports = endpoint(async function ({ company, body, db }) {
+module.exports = endpoint(async function ({ company, user, body, db }) {
   const planId = body && body.plan;
   if (!planId || !Model.PLANS[planId]) {
     return { status: 400, body: { message: 'Unknown plan' } };
@@ -23,23 +23,28 @@ module.exports = endpoint(async function ({ company, body, db }) {
     return { status: 501, body: { message: 'Billing provider cannot open a checkout: ' + name } };
   }
 
-  /* התוכנית נשמרת מיד; הכרטיס יגיע מההודעה החוזרת של הספק.
-     מצב המנוי והתוקף אינם נוגעים כאן – רק ה-webhook וה-cron
-     משנים אותם. */
-  await db('/companies?id=eq.' + encodeURIComponent(company.id), {
-    method: 'PATCH', body: { plan: planId }
-  });
-
+  const base = process.env.PUBLIC_BASE_URL || '';
   const checkout = await provider.createCheckout({
     companyId: company.id,
     companyName: company.name,
+    email: (user && user.email) || '',
+    language: company.language || 'he',
     plan: planId,
     amount: Model.PLANS[planId].priceMonthly,
     currency: 'ILS',
     /* הכרטיס נשמר עכשיו, החיוב יגיע בתום הניסיון */
     saveCardOnly: company.status === 'trial',
-    returnUrl: (process.env.PUBLIC_BASE_URL || '') + '/app/?billing=done',
-    cancelUrl: (process.env.PUBLIC_BASE_URL || '') + '/app/?billing=canceled'
+    returnUrl: base + '/app/?billing=done',
+    failureUrl: base + '/app/?billing=failed',
+    cancelUrl: base + '/app/?billing=canceled'
+  });
+
+  /* התוכנית נשמרת רק אחרי שדף התשלום נפתח. אחרת ספק שנפל משאיר
+     את הלקוח עם תוכנית שהוא לא הספיק לאשר – ובתקופה הבאה הוא
+     מחויב עליה. מצב המנוי והתוקף אינם נוגעים כאן: רק ה-webhook
+     וה-cron משנים אותם. */
+  await db('/companies?id=eq.' + encodeURIComponent(company.id), {
+    method: 'PATCH', body: { plan: planId }
   });
 
   return { body: { ok: true, checkoutUrl: checkout && checkout.url } };

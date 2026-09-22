@@ -62,11 +62,20 @@ FakeDb.prototype.install = function () {
       });
     }
 
-    if (path === '/billing_events' && opts.method === 'POST') {
-      var row = body[0];
-      if (self.events[row.id]) return reply(409, { code: '23505' });
-      self.events[row.id] = row;
-      return reply(201, []);
+    if (path === '/billing_events') {
+      if (opts.method === 'POST') {
+        var row = body[0];
+        if (self.events[row.id]) return reply(409, { code: '23505' });
+        self.events[row.id] = row;
+        return reply(201, []);
+      }
+      var eventId = decodeURIComponent((query.match(/id=eq\.([^&]+)/) || [])[1] || '');
+      var existing = self.events[eventId];
+      if (opts.method === 'PATCH') {
+        if (existing) Object.assign(existing, body);
+        return reply(200, existing ? [existing] : []);
+      }
+      return reply(200, existing ? [existing] : []);
     }
 
     if (path === '/companies' && (opts.method || 'GET') === 'GET') {
@@ -322,6 +331,87 @@ test('כישלון אצל לקוח אחד אינו עוצר את השאר', func
     assertEqual(db.companies['co-a'].status, 'past_due', 'הכישלון לא סומן');
     db.restore();
   });
+});
+
+console.log('\n== ניסיון חוזר ביום שאחרי ==');
+
+/* הבדיקות למטה מריצות את ה-cron פעמיים על אותה חברה, כשבין
+   הריצות רק הזמן עבר. זה בדיוק המקרה שנשבר קודם: התביעה על
+   התקופה נתפסה ביום הראשון ולא שוחררה לעולם, ולכן ימי החסד
+   ספרו ימים בלי שאיש ניסה לגבות בהם. */
+
+test('סירוב ברור מנסים שוב למחרת, על אותה תקופה', function () {
+  var db = new FakeDb([company({
+    status: 'trial', billing_subscription_id: 'fail-tok', valid_until: daysAgo(1)
+  })]);
+  db.install();
+  return run().then(function (first) {
+    assertEqual(first.payload.summary.failed, 1, 'הניסיון הראשון לא נכשל כצפוי');
+    assertEqual(db.charges.length, 1, 'הניסיון הראשון לא יצא לדרך');
+    assertEqual(first.payload.results[0].retry, 'tomorrow', 'לא סומן שמנסים שוב');
+    /* מריצים שוב "מחר": מזיזים את חותמת הזמן של הניסיון הקודם
+       יום אחורה, בדיוק כפי שהיא תיראה בבסיס הנתונים מחר. */
+    var periodRow = db.events[Object.keys(db.events)[0]];
+    periodRow.payload.at = daysAgo(1);
+    return run();
+  }).then(function (second) {
+    assertEqual(db.charges.length, 2, 'הניסיון החוזר לא יצא לדרך');
+    assertEqual(second.payload.results[0].action, 'failed', 'הניסיון החוזר לא בוצע');
+    db.restore();
+  }, function (err) { db.restore(); throw err; });
+});
+
+test('שתי ריצות באותו יום אינן מייצרות שני ניסיונות חוזרים', function () {
+  var db = new FakeDb([company({
+    status: 'past_due', billing_subscription_id: 'fail-tok', valid_until: daysAgo(2)
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'הניסיון הראשון לא יצא לדרך');
+    return run();
+  }).then(function (second) {
+    assertEqual(db.charges.length, 1, 'נעשה ניסיון שני באותו יום');
+    assertEqual(second.payload.results[0].reason, 'already-charged', 'הסיבה אינה נכונה');
+    db.restore();
+  }, function (err) { db.restore(); throw err; });
+});
+
+test('חיוב שלא קיבל תשובה אינו נוסה שוב לבד', function () {
+  /* ספק שנופל באמצע: איננו יודעים אם הכרטיס חויב. ניסיון חוזר
+     כאן הוא חיוב כפול, ולכן עוצרים ומחכים לאדם. */
+  var providers = require('../api/billing/_providers.js');
+  var db = new FakeDb([company()]);
+  db.install();
+  var saved = providers.mock.charge;
+  providers.mock.charge = function (input) {
+    db.charges.push(input);
+    return Promise.resolve({ ok: false, reason: 'timeout', retryable: false, uncertain: true });
+  };
+  function undo() { providers.mock.charge = saved; db.restore(); }
+  return run().then(function (first) {
+    assertEqual(first.payload.results[0].retry, 'stopped', 'חוסר ודאות סומן כניתן לניסיון חוזר');
+    return run();
+  }).then(function (second) {
+    assertEqual(db.charges.length, 1, 'נעשה ניסיון חוזר על חיוב שתוצאתו אינה ידועה');
+    assertEqual(second.payload.results[0].reason, 'already-charged', 'הסיבה אינה נכונה');
+    undo();
+  }, function (err) { undo(); throw err; });
+});
+
+test('תקלה אצלנו אינה מסמנת את הלקוח כמי שלא שילם', function () {
+  /* ספק שזורק זו כמעט תמיד הגדרה חסרה אצלנו. הלקוח לא עשה כלום
+     רע, ואסור שהמסך שלו ייחסם בגלל משתנה סביבה. */
+  var providers = require('../api/billing/_providers.js');
+  var db = new FakeDb([company()]);
+  db.install();
+  var saved = providers.mock.charge;
+  providers.mock.charge = function () { throw new Error('PAYPLUS_API_KEY is missing'); };
+  function undo() { providers.mock.charge = saved; db.restore(); }
+  return run().then(function (res) {
+    assertEqual(res.payload.results[0].action, 'error', 'התקלה לא דווחה כתקלה');
+    assertEqual(db.companies['co-1'].status, 'trial', 'הלקוח סומן כמי שהתשלום שלו נכשל');
+    undo();
+  }, function (err) { undo(); throw err; });
 });
 
 console.log('\n== ספק שאינו מוכן ==');

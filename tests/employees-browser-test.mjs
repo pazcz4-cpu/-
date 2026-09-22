@@ -84,7 +84,7 @@ try {
   await page.fill('#emp-search', 'שם שלא קיים כלל');
   await page.waitForTimeout(300);
   check('אין התאמה – יש הסבר',
-    (await page.locator('.list-empty').innerText()).trim(), /אין עובד שתואם/);
+    (await page.locator('#employees-list .list-empty').innerText()).trim(), /אין עובד שתואם/);
   await page.fill('#emp-search', '');
   await page.waitForTimeout(300);
   check('ניקוי החיפוש מחזיר את כולם',

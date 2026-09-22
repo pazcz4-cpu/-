@@ -1076,6 +1076,182 @@ test('שם העסק פתוח לכתיבה לבעלים בלבד, והוא העמ
     'כל אחד בחברה יכול לשנות את שם העסק');
 });
 
+/* קובץ שפה עם שגיאת תחביר שובר את כל האפליקציה באותה שפה, ורק
+   בה. אפוסטרוף בתוך מחרוזת צרפתית ("période d'essai") עשה בדיוק
+   את זה. הבדיקה מנסה לפרש את שמונת הקבצים. */
+test('כל שמונת קבצי השפה מתפרשים', function () {
+  ['he', 'en', 'es', 'fr', 'ar', 'ru', 'de', 'pt'].forEach(function (lang) {
+    var file = path.join(__dirname, '..', 'js', 'i18n', lang + '.js');
+    var source = fs.readFileSync(file, 'utf8');
+    try {
+      /* eslint-disable-next-line no-new-func */
+      new Function(source);
+    } catch (err) {
+      assert(false, lang + '.js אינו מתפרש: ' + err.message);
+    }
+  });
+});
+
+console.log('\n== תפקידים ==');
+
+/* "שלושה אנשים במשמרת" אינו מה שעסק צריך. בית קפה צריך מטבח
+   ומלצר; סופר צריך קופאי וסדרן. שני הכללים פתוחים לרווחה:
+   משמרת בלי תפקיד מקבלת כל אחד, ועובד בלי תפקיד מתאים להכל. */
+function withRoles() {
+  var state = Store.blankState();
+  state.settings.roles = [
+    { id: 'kitchen', name: 'מטבח', color: 0 },
+    { id: 'waiter', name: 'מלצר', color: 1 }
+  ];
+  state.branches = [{
+    id: 'br1', name: 'סניף מרכז', active: true,
+    schedule: {
+      0: {
+        morning: { need: 1, from: '08:00', to: '16:00', role: 'kitchen' },
+        middle:  { need: 2, from: '12:00', to: '17:00', role: 'waiter' },
+        evening: { need: 1, from: '15:00', to: '22:00' }
+      }
+    }
+  }];
+  state.employees = [
+    { id: 'e1', name: 'טבח', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['kitchen'] },
+    { id: 'e2', name: 'מלצר', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['waiter'] },
+    { id: 'e3', name: 'גמיש', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['kitchen', 'waiter'] },
+    { id: 'e4', name: 'בלי תפקיד', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: [] }
+  ];
+  return Store.migrate(state);
+}
+
+test('משמרת בלי תפקיד מקבלת כל אחד', function () {
+  var state = withRoles();
+  state.employees.forEach(function (emp) {
+    assert(Store.employeeFitsRole(state, emp, ''), emp.name + ' נפסל ממשמרת בלי תפקיד');
+  });
+});
+
+test('עובד בלי תפקיד מתאים לכל משמרת', function () {
+  var state = withRoles();
+  var open = Store.byId(state.employees, 'e4');
+  assert(Store.employeeFitsRole(state, open, 'kitchen'), 'נפסל ממטבח');
+  assert(Store.employeeFitsRole(state, open, 'waiter'), 'נפסל ממלצרות');
+});
+
+test('עובד מסומן מתאים רק לתפקידים שלו', function () {
+  var state = withRoles();
+  var cook = Store.byId(state.employees, 'e1');
+  assert(Store.employeeFitsRole(state, cook, 'kitchen'), 'טבח נפסל ממטבח');
+  assert(!Store.employeeFitsRole(state, cook, 'waiter'), 'טבח התקבל למלצרות');
+});
+
+test('עובד יכול להחזיק כמה תפקידים', function () {
+  var state = withRoles();
+  var both = Store.byId(state.employees, 'e3');
+  assert(Store.employeeFitsRole(state, both, 'kitchen'), 'נפסל ממטבח');
+  assert(Store.employeeFitsRole(state, both, 'waiter'), 'נפסל ממלצרות');
+});
+
+test('הדרישה יודעת איזה תפקיד היא מחפשת', function () {
+  var state = withRoles();
+  var week = Store.emptyWeek();
+  var demands = Store.weekDemands(state, week).filter(function (d) { return d.dayIdx === 0; });
+  var byShift = {};
+  demands.forEach(function (d) { byShift[d.shiftId] = d; });
+  assertEqual(byShift.morning.role, 'kitchen', 'משמרת הבוקר');
+  assertEqual(byShift.middle.role, 'waiter', 'משמרת האמצע');
+  assertEqual(byShift.evening.role, '', 'משמרת הערב אינה מחפשת תפקיד');
+});
+
+/* הדוגמה של בית הקפה: שתי משמרות באותו בוקר, שעות שונות,
+   תפקידים שונים. כל אחת מוצאת את מי שמתאים לה. */
+test('המנוע משבץ לפי תפקיד', function () {
+  var state = withRoles();
+  var week = Store.emptyWeek();
+  build(state, week);
+
+  var morning = Store.getAssigned(week, 0, 'br1', 'morning');
+  var middle = Store.getAssigned(week, 0, 'br1', 'middle');
+
+  morning.forEach(function (id) {
+    var emp = Store.byId(state.employees, id);
+    assert(Store.employeeFitsRole(state, emp, 'kitchen'),
+      emp.name + ' שובץ למטבח בלי להתאים לו');
+  });
+  middle.forEach(function (id) {
+    var emp = Store.byId(state.employees, id);
+    assert(Store.employeeFitsRole(state, emp, 'waiter'),
+      emp.name + ' שובץ למלצרות בלי להתאים לו');
+  });
+  assert(morning.length > 0, 'משמרת המטבח לא אוישה כלל');
+  assert(middle.length > 0, 'משמרת המלצרות לא אוישה כלל');
+});
+
+test('משמרת שמחפשת תפקיד שאיש אינו מחזיק נשארת ריקה', function () {
+  var state = withRoles();
+  state.settings.roles.push({ id: 'barista', name: 'ברמן', color: 2 });
+  state.branches[0].schedule[1] = { morning: { need: 1, from: '08:00', to: '16:00', role: 'barista' } };
+  /* מבטלים את "מתאים להכל" של העובד הפתוח, כדי שבאמת לא יהיה מי */
+  Store.byId(state.employees, 'e4').roles = ['kitchen'];
+  var week = Store.emptyWeek();
+  build(state, week);
+  assertEqual(Store.getAssigned(week, 1, 'br1', 'morning').length, 0,
+    'שובץ מישהו למשמרת שאיש אינו מתאים לה');
+
+  /* וההתראה אומרת מה חסר, ולא סתם "חסר אדם" */
+  var report = Validate.validate(state, week);
+  var gap = report.issues.filter(function (issue) {
+    return issue.type === 'understaffed' && issue.text.indexOf('ברמן') !== -1;
+  });
+  assert(gap.length > 0, 'ההתראה אינה נוקבת בשם התפקיד החסר');
+  /* וההסבר אומר שהבעיה היא התפקיד, ולא "אין אף אחד פנוי" */
+  assert(gap[0].text.indexOf('מסומן בתפקיד') !== -1 || gap[0].text.indexOf('אין עובד פנוי') !== -1,
+    'ההסבר אינו מפנה לתפקיד: ' + gap[0].text);
+});
+
+test('מחיקת תפקיד מנקה אותו מהעובדים ומהמשמרות', function () {
+  var state = withRoles();
+  var removed = Store.removeRole(state, 'kitchen');
+  assertEqual(removed.employees, 2, 'מספר העובדים שנוקו');
+  assertEqual(removed.slots, 1, 'מספר המשמרות שנוקו');
+  assertEqual(Store.roles(state).length, 1, 'התפקיד לא נמחק מההגדרות');
+  assertEqual(Store.byId(state.employees, 'e1').roles.length, 0, 'נשאר על כרטיס העובד');
+  assert(!state.branches[0].schedule[0].morning.role, 'נשאר על המשמרת');
+});
+
+/* תפקיד שנמחק ידנית מההגדרות אינו משאיר משמרת בלי מועמדים */
+test('הפניה לתפקיד שאינו קיים נחשבת כאילו אין תפקיד', function () {
+  var state = withRoles();
+  state.settings.roles = [];
+  state = Store.migrate(state);
+  assertEqual(Store.slotRole(state, state.branches[0], 0, 'morning'), '',
+    'משמרת נשארה קשורה לתפקיד שנמחק');
+  state.employees.forEach(function (emp) {
+    assertEqual(emp.roles.length, 0, emp.name + ': תפקיד שנמחק נשאר על הכרטיס');
+  });
+});
+
+/* עסק שקיים היום לא ידע שנגענו בו */
+test('עסק בלי תפקידים מתנהג בדיוק כמו קודם', function () {
+  var state = Store.blankState();
+  Store.loadSampleData(state);
+  state = Store.migrate(state);
+  assertEqual(Store.roles(state).length, 0, 'נוצרו תפקידים יש מאין');
+  var week = Store.emptyWeek();
+  build(state, week);
+  var demands = Store.weekDemands(state, week);
+  assert(demands.length > 0, 'אין דרישות');
+  demands.forEach(function (demand) {
+    assertEqual(demand.role, '', 'דרישה קיבלה תפקיד בלי שביקשנו');
+  });
+  var filled = demands.filter(function (demand) {
+    return Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId).length > 0;
+  });
+  assert(filled.length > demands.length / 2, 'השיבוץ נפגע');
+});
+
 console.log('\n== אייקונים ==');
 
 var Icons = require('../js/icons.js');

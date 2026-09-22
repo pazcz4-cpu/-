@@ -319,6 +319,7 @@
         reasonMaxed: '{names} reached their weekly shift limit',
         reasonResting: '{names} need rest between an evening and a morning shift',
         reasonNone: 'No one is set up for both this location and this shift, or everyone blocked it.',
+        reasonNoRole: 'This shift needs a {role}, and nobody available is marked with that role ({count} ruled out by it).',
         reasonFree: 'You can assign {names} here manually – they meet every condition for this shift. Building again will give a different split.',
         reasonPrefix: 'Reason: ',
         suggestTwoPerDay: ' You can allow two shifts per day per person in Settings.',
@@ -443,6 +444,8 @@
           requested: 'Asked for this shift on this day',
           available: 'No time-off request for this day',
           qualified: 'Trained for this shift',
+          hasRole: 'Marked with the {role} role',
+          anyRole: 'Not marked with any role, so fits {role} too',
           assignedBranch: 'Assigned to this location',
           anyBranch: 'Works at any location',
           quota: 'Before this shift {before}, after it {after} of a quota of {max}',
@@ -454,6 +457,7 @@
           inactive: 'not active',
           notQualified: 'not trained for this shift',
           otherBranch: 'works at another location',
+          wrongRole: 'Not marked with the {role} role',
           requestedOff: 'asked for the day off',
           blockedShift: 'asked not to work this shift',
           atLimit: 'reached the weekly limit of {max}',
@@ -575,6 +579,28 @@
         nameRequired: 'A name is required.'
       },
 
+      positions: {
+        title: 'Roles',
+        hint: 'Cashier, stocker, kitchen, server — whatever your business needs. An employee can hold several roles, and a shift can ask for one.',
+        add: 'Add role',
+        newName: 'New role',
+        name: 'Role name',
+        remove: 'Delete role',
+        removeConfirm: 'Delete "{name}"? It will be removed from {employees} employees and {slots} shifts.',
+        removed: 'Role deleted.',
+        none: 'No roles defined yet. Without them every employee fits every shift, which is fine for a simple business.',
+        emptyName: 'A role needs a name.',
+        duplicate: 'A role by that name already exists.',
+        employeeLabel: 'Roles',
+        employeeHint: 'Unmarked means: fits every shift.',
+        employeeAll: 'All roles',
+        slotLabel: 'Role needed',
+        slotAny: 'Anyone',
+        slotHint: 'This shift will only consider employees marked with that role.',
+        count: '{count} roles',
+        fits: '{count} eligible'
+      },
+
       onboarding: {
         skip: 'Skip',
         back: 'Back',
@@ -588,7 +614,7 @@
         businessHint: 'The name your staff see in the system and in the emails they get. You can change it any time.',
         branchesHint: 'Where people are scheduled. One location is enough to start; add more later.',
         shiftsHint: 'The shifts of a normal day and their hours. These are the defaults; each location can differ.',
-        staffHint: 'Import an existing list from a spreadsheet, or start typing. Either one can also wait.',
+        staffHint: 'Import an existing list from a spreadsheet, or start typing. Either one can also wait. Roles (cashier, kitchen, server) are set in Settings, once you know what you need.',
         companyName: 'Business name',
         myName: 'My name',
         branchName: 'Location',
@@ -851,6 +877,9 @@
           emailExists: 'a card already uses {value}',
           emailInvited: 'already invited with {value}',
           duplicateEmailInFile: '{value} appears more than once in the list',
+        },
+        warn: {
+          unknownRole: 'Role not defined in this business, so it was skipped: {value}. The employee was added without it, and therefore fits every shift.'
         },
         error: {
           noName: 'the row has no name',

@@ -1611,3 +1611,41 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
   .wiz-shift { flex-wrap: wrap; }
   .wiz-shift .wiz-shift-name { flex: 1 1 100%; }
 }
+
+/* ===================== תפקידים =====================
+   קופאי, מטבח, מלצר. הם מוצגים רק בעסק שהגדיר אותם – מי שלא
+   צריך אותם לא רואה אותם בשום מסך. */
+.role-grid { display: flex; flex-direction: column; gap: var(--s2); }
+.role-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+  background: var(--surface-sunken); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: var(--s2) var(--s3);
+}
+.role-swatch {
+  flex: 0 0 auto; width: 12px; height: 26px; border-radius: var(--r-sm);
+  background: var(--sh-bg); border-inline-start: 4px solid var(--sh-line);
+}
+.role-row .role-name { flex: 1 1 160px; min-width: 0; }
+.role-count { font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+/* אפס עובדים בתפקיד פירושו שמשמרת שתדרוש אותו לא תאויש לעולם */
+.role-count.empty { color: var(--warn); font-weight: 700; }
+
+/* גלולת תפקיד בכרטיס העובד: נושאת את צבע התפקיד כשהיא דלוקה,
+   כדי שהצבע יהיה אותו צבע בכל מסך. */
+.pill.role-pill.on {
+  background: var(--sh-bg); border-color: var(--sh-line); color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--sh-line);
+}
+
+/* בחירת התפקיד בלוח הסניף */
+.sched-role { display: flex; flex-direction: column; gap: 2px; margin-top: var(--s1); }
+.sched-role > span { font-size: 11px; color: var(--muted); }
+.sched-role select { font-size: var(--t-xs); padding: 3px 6px; }
+
+/* התפקיד בתא הסידור */
+.cell-role {
+  display: inline-block; margin: 2px 0 3px;
+  font-size: 11.5px; font-weight: 700; border-radius: var(--r-sm);
+  padding: 1px 7px; background: var(--sh-bg);
+  border-inline-start: 3px solid var(--sh-line);
+}

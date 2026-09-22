@@ -450,6 +450,13 @@
         (label ? esc(label) : '<span class="missing">' + t('schedule.missingSabbath') + '</span>') +
         (need > 1 ? ' · ' + t('schedule.people', { count: need }) : '') + '</div>';
     }
+    /* התפקיד שהמשמרת מחפשת. בלעדיו המנהל רואה משבצת ריקה ולא
+       יודע שהיא מחכה דווקא למטבח. */
+    var slotRole = Store.slotRole(state, branch, dayIdx, shiftId);
+    if (slotRole) {
+      html += '<div class="cell-role sh sh-' + Store.roleColor(state, slotRole) + '">' +
+        esc(Store.roleName(state, slotRole)) + '</div>';
+    }
     for (var i = 0; i < rows; i++) {
       var value = assigned[i] || '';
       var extra = i >= need ? ' extra' : '';
@@ -836,6 +843,13 @@
     parts.push(emp.shifts.length === all.length
       ? t('employees.allShifts')
       : emp.shifts.map(shiftLabel).join(', '));
+    /* התפקידים בשורת הסיכום המקופלת: מנהל שסורק שלושים כרטיסים
+       מחפש בדיוק את זה, ולא רוצה לפתוח כל אחד. */
+    var mine = Store.employeeRoles(emp);
+    if (mine.length) {
+      parts.push(mine.map(function (id) { return Store.roleName(state, id); })
+        .filter(Boolean).join(', '));
+    }
     parts.push(t('employees.quotaShort', { count: emp.maxShifts }));
     if (!emp.active) parts.push(t('employees.inactiveTag'));
     return parts.join(' · ');
@@ -891,6 +905,21 @@
         html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + esc(shift.name) + '</button>';
       });
       html += '</div></div>';
+      /* התפקידים. מוצגים רק לעסק שהגדיר אותם – מי שלא צריך
+         תפקידים לא צריך לדעת שהם קיימים. */
+      var roleList = Store.roles(state);
+      if (roleList.length) {
+        var mine = Store.employeeRoles(emp);
+        html += '<div class="field"><label class="title">' + t('positions.employeeLabel') + '</label><div class="pills">';
+        roleList.forEach(function (role) {
+          var on = mine.indexOf(role.id) !== -1 ? ' on' : '';
+          html += '<button class="pill role-pill sh sh-' + Store.roleColor(state, role.id) + on +
+            '" data-action="toggle-role" data-role="' + esc(role.id) + '">' + esc(role.name) + '</button>';
+        });
+        html += '</div>' +
+          '<p class="hint' + (mine.length ? ' hidden' : '') + '">' +
+            esc(t('positions.employeeHint')) + '</p></div>';
+      }
       html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
         '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
       /* המייל אינו נדרש לשיבוץ. הוא יושב כאן כי הוא מגיע בייבוא,
@@ -963,6 +992,23 @@
       if (dayIdx === Data.MOTZASH.dayIdx) {
         html += '<label class="check tiny"><input type="checkbox" data-sched="auto"' +
           (isMotzash ? ' checked' : '') + '> ' + t('branches.autoSabbath') + '</label>';
+      }
+      /* איזה תפקיד המשמרת הזו מחפשת. מוצג רק לעסק שהגדיר
+         תפקידים; "כל אחד" הוא ברירת המחדל וגם ההתנהגות הישנה.
+
+         כך נבנית הדוגמה של בית הקפה: שתי משמרות בוקר בלוח הזה,
+         אחת עם "מטבח" מ-08:00 ואחת עם "מלצר" מ-12:00. */
+      var roleList = Store.roles(state);
+      if (roleList.length) {
+        var chosen = config.role || '';
+        html += '<label class="sched-role"><span>' + t('positions.slotLabel') + '</span>' +
+          '<select class="text-input" data-sched="role">' +
+          '<option value="">' + esc(t('positions.slotAny')) + '</option>';
+        roleList.forEach(function (role) {
+          html += '<option value="' + esc(role.id) + '"' +
+            (chosen === role.id ? ' selected' : '') + '>' + esc(role.name) + '</option>';
+        });
+        html += '</select></label>';
       }
     } else {
       html += '<div class="sched-closed">' + t('branches.closed') + '</div>';
@@ -1072,6 +1118,55 @@
   }
 
   /* ========== הגדרות ========== */
+  /* ===================== תפקידים =====================
+
+     "שלושה אנשים במשמרת" אינו מה שעסק באמת צריך. בית קפה צריך
+     מטבח ומלצר, וסופר צריך קופאי וסדרן. כאן מגדירים אותם;
+     בכרטיס העובד מסמנים מי מחזיק מה; ובלוח הסניף בוחרים איזה
+     תפקיד כל משמרת מחפשת.
+
+     שני הכללים פתוחים לרווחה: משמרת בלי תפקיד מקבלת כל אחד,
+     ועובד בלי תפקיד מתאים לכל משמרת. עסק שלא צריך את זה לא
+     יודע שזה קיים. */
+  function renderRoles() {
+    var host = $('#roles-list');
+    if (!host) return;
+    var list = Store.roles(state);
+
+    if (!list.length) {
+      host.innerHTML = '<p class="list-empty">' + esc(t('positions.none')) + '</p>';
+      return;
+    }
+
+    var html = '';
+    list.forEach(function (role) {
+      /* כמה עובדים מסומנים בתפקיד. מספר אפס כאן פירושו שמשמרת
+         שתדרוש אותו לא תאויש לעולם, ועדיף לדעת את זה עכשיו. */
+      var marked = state.employees.filter(function (emp) {
+        return emp.active && Store.employeeRoles(emp).indexOf(role.id) !== -1;
+      }).length;
+
+      html += '<div class="role-row" data-role="' + esc(role.id) + '">';
+      html += '<span class="role-swatch sh sh-' + Store.roleColor(state, role.id) + '"></span>';
+      html += '<input class="text-input role-name" data-field="name" maxlength="30" value="' +
+        esc(role.name) + '" aria-label="' + esc(t('positions.name')) + '">';
+      html += '<div class="shift-colors">';
+      Data.SHIFT_COLORS.forEach(function (color) {
+        html += '<button type="button" class="color-dot sh sh-' + color.id +
+          (Store.roleColor(state, role.id) === color.id ? ' active' : '') +
+          '" data-color="' + color.id + '" title="' + esc(color.name) + '"></button>';
+      });
+      html += '</div>';
+      html += '<span class="role-count' + (marked ? '' : ' empty') + '">' +
+        esc(t('positions.fits', { count: marked })) + '</span>';
+      html += '<button type="button" class="btn icon danger" data-remove="1" aria-label="' +
+        esc(t('positions.remove')) + '" title="' + esc(t('positions.remove')) + '">' +
+        ico('trash') + '</button>';
+      html += '</div>';
+    });
+    host.innerHTML = html;
+  }
+
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
@@ -1079,6 +1174,7 @@
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
     renderDeadline();
     renderLimit();
+    renderRoles();
 
     var list = shiftList();
     var html = '';
@@ -2049,6 +2145,15 @@
         persist('config');
         render();
       }
+      if (action === 'toggle-role') {
+        var roleId = event.target.dataset.role;
+        var roles = Store.employeeRoles(emp).slice();
+        var at = roles.indexOf(roleId);
+        if (at === -1) roles.push(roleId); else roles.splice(at, 1);
+        emp.roles = roles;
+        persist('config');
+        render();
+      }
       if (action === 'toggle-shift') {
         var shiftId = event.target.dataset.shift;
         var pos = emp.shifts.indexOf(shiftId);
@@ -2223,6 +2328,11 @@
           if (input.dataset.sched === 'auto') {
             if (input.checked) { config.auto = 'motzash'; delete config.from; }
             else { delete config.auto; config.from = config.from || '20:30'; }
+          } else if (input.dataset.sched === 'role') {
+            /* "כל אחד" אינו ערך אלא היעדרו: כך משמרת בלי תפקיד
+               נראית בנתונים בדיוק כמו לפני שהתפקידים היו. */
+            if (input.value) { config.role = input.value; }
+            else { delete config.role; }
           } else {
             var normalized = Store.normalizeTimeInput(input.value);
             if (normalized === null) {
@@ -2335,6 +2445,78 @@
           removed: removed.assignments ? t('toast.shiftRemovedCount', { count: removed.assignments }) : ''
         }));
       }
+    });
+
+    /* ===== תפקידים ===== */
+    $('#add-role').addEventListener('click', function () {
+      if (blocked()) return;
+      var list = Store.roles(state);
+      state.settings.roles = list.concat([{
+        id: Store.newId('role'),
+        name: t('positions.newName'),
+        color: list.length % Data.SHIFT_COLORS.length
+      }]);
+      persist('config');
+      render();
+      var added = $('#roles-list .role-row:last-child .role-name');
+      if (added) { added.focus(); added.select(); }
+    });
+
+    $('#roles-list').addEventListener('change', function (event) {
+      var row = event.target.closest('.role-row');
+      if (!row || event.target.dataset.field !== 'name') return;
+      if (blocked()) { render(); return; }
+      var role = Store.roleById(state, row.dataset.role);
+      if (!role) return;
+      var name = event.target.value.trim();
+      if (!name) { toast(t('positions.emptyName')); render(); return; }
+      /* שני תפקידים באותו שם הם בדיוק המקום שבו המנהל מסמן את
+         העובד הלא נכון, ואז לא מבין למה המשמרת לא אוישה. */
+      var taken = Store.roles(state).some(function (other) {
+        return other.id !== role.id && other.name.trim() === name;
+      });
+      if (taken) { toast(t('positions.duplicate')); render(); return; }
+      role.name = name;
+      persist('config');
+      render();
+    });
+
+    $('#roles-list').addEventListener('click', function (event) {
+      var row = event.target.closest('.role-row');
+      if (!row) return;
+      if (blocked()) return;
+      var role = Store.roleById(state, row.dataset.role);
+      if (!role) return;
+
+      var colorButton = event.target.closest('[data-color]');
+      if (colorButton) {
+        role.color = Number(colorButton.dataset.color);
+        persist('config');
+        render();
+        return;
+      }
+
+      if (!event.target.closest('[data-remove]')) return;
+      /* המחיקה נוגעת גם בכרטיסי העובדים וגם בלוחות הסניפים,
+         ולכן האישור אומר בכמה. */
+      var marked = state.employees.filter(function (emp) {
+        return Store.employeeRoles(emp).indexOf(role.id) !== -1;
+      }).length;
+      var slots = 0;
+      state.branches.forEach(function (branch) {
+        Object.keys(branch.schedule || {}).forEach(function (day) {
+          Object.keys(branch.schedule[day] || {}).forEach(function (shiftId) {
+            if (branch.schedule[day][shiftId].role === role.id) slots++;
+          });
+        });
+      });
+      if (!confirm(t('positions.removeConfirm', {
+        name: role.name, employees: marked, slots: slots
+      }))) return;
+      Store.removeRole(state, role.id);
+      persist('config');
+      render();
+      toast(t('positions.removed'));
     });
 
     $('#add-shift').addEventListener('click', function () {

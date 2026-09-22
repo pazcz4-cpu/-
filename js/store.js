@@ -333,6 +333,96 @@
     });
   }
 
+  /* ===================== תפקידים =====================
+
+     עסק אינו צריך רק "שלושה אנשים במשמרת" אלא "קופאי, סדרן
+     ומטבח". בית קפה מגדיר שתי משמרות בוקר – אחת למטבח מ-08:00
+     ואחת לשירות מ-12:00 – וכל אחת מחפשת את התפקיד שלה.
+
+     שני כללים, ושניהם פתוחים לרווחה בכוונה:
+       · משמרת בלי תפקיד – כל אחד מתאים לה.
+       · עובד בלי תפקיד – מתאים לכל משמרת.
+
+     כך כל עסק שקיים היום ממשיך לעבוד בלי שנגענו בו, ומי שלא
+     צריך תפקידים לא יודע שהם קיימים. */
+
+  function roles(state) {
+    var list = (state && state.settings && state.settings.roles) || [];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function roleById(state, roleId) {
+    return byId(roles(state), roleId);
+  }
+
+  function roleName(state, roleId) {
+    var role = roleById(state, roleId);
+    return role ? role.name : '';
+  }
+
+  function roleColor(state, roleId) {
+    var role = roleById(state, roleId);
+    return role && typeof role.color === 'number' ? role.color : 0;
+  }
+
+  /* התפקיד שהמשמרת הזו בסניף הזה מחפשת. ריק = כל אחד.
+     תפקיד שנמחק מההגדרות נחשב כאילו אינו – אחרת משמרת הייתה
+     נשארת לנצח בלי מועמדים, בלי שאיש יבין למה. */
+  function slotRole(state, branch, dayIdx, shiftId) {
+    var config = slotConfig(branch, dayIdx, shiftId);
+    var roleId = config && config.role ? String(config.role) : '';
+    if (!roleId) return '';
+    return roleById(state, roleId) ? roleId : '';
+  }
+
+  function employeeRoles(emp) {
+    var list = (emp && emp.roles) || [];
+    return Array.isArray(list) ? list : [];
+  }
+
+  /* האם העובד מתאים לתפקיד שהמשמרת מחפשת */
+  function employeeFitsRole(state, emp, roleId) {
+    if (!roleId) return true;                 // המשמרת אינה מחפשת תפקיד
+    var list = employeeRoles(emp);
+    if (!list.length) return true;            // העובד לא סומן, ולכן מתאים להכל
+    return list.indexOf(roleId) !== -1;
+  }
+
+  /* מי מתאים למשמרת הזו מבחינת תפקיד בלבד. שאר התנאים – זמינות,
+     סניף, אילוצים – נבדקים במנוע. */
+  function employeesForRole(state, roleId) {
+    return (state.employees || []).filter(function (emp) {
+      return emp.active && employeeFitsRole(state, emp, roleId);
+    });
+  }
+
+  /* הסרת תפקיד מההגדרות: מנקה אותו גם מכרטיסי העובדים וגם
+     מלוחות הסניפים, כדי שלא יישארו הפניות למשהו שאינו קיים. */
+  function removeRole(state, roleId) {
+    var removed = { employees: 0, slots: 0 };
+    state.settings.roles = roles(state).filter(function (role) {
+      return role.id !== roleId;
+    });
+    (state.employees || []).forEach(function (emp) {
+      var list = employeeRoles(emp);
+      if (list.indexOf(roleId) === -1) return;
+      emp.roles = list.filter(function (id) { return id !== roleId; });
+      removed.employees++;
+    });
+    (state.branches || []).forEach(function (branch) {
+      Object.keys(branch.schedule || {}).forEach(function (day) {
+        var dayMap = branch.schedule[day] || {};
+        Object.keys(dayMap).forEach(function (shiftId) {
+          if (dayMap[shiftId] && dayMap[shiftId].role === roleId) {
+            delete dayMap[shiftId].role;
+            removed.slots++;
+          }
+        });
+      });
+    });
+    return removed;
+  }
+
   /* כל הדרישות של השבוע: יום × סניף × משמרת × כמות נדרשת */
   function weekDemands(state, week) {
     var demands = [];
@@ -342,7 +432,13 @@
         if (!branch.active) return;
         shiftIds(state).forEach(function (shiftId) {
           var need = slotNeed(branch, day, shiftId);
-          if (need > 0) { demands.push({ dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need }); }
+          if (need > 0) {
+            demands.push({
+              dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need,
+              /* התפקיד שהמשמרת מחפשת. ריק = כל אחד. */
+              role: slotRole(state, branch, day, shiftId)
+            });
+          }
         });
       });
     }
@@ -363,6 +459,7 @@
         if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
+        if (!employeeFitsRole(state, emp, slotRole(state, branch, dayIdx, shiftId))) return false;
         return true;
       });
     });
@@ -642,9 +739,21 @@
     if (!Array.isArray(state.branches)) state.branches = [];
     if (!Array.isArray(state.employees)) state.employees = [];
     if (!state.weeks || typeof state.weeks !== 'object') state.weeks = {};
+    /* תפקידים הם תוספת. עסק קיים ממשיך בלעדיהם: רשימה ריקה
+       פירושה "אין תפקידים", וזה בדיוק המצב שהיה עד עכשיו. */
+    if (!Array.isArray(state.settings.roles)) state.settings.roles = [];
+    var knownRoles = {};
+    state.settings.roles.forEach(function (role, index) {
+      if (typeof role.color !== 'number') role.color = index % Data.SHIFT_COLORS.length;
+      knownRoles[role.id] = true;
+    });
+
     state.employees.forEach(function (emp) {
       if (!Array.isArray(emp.branches)) emp.branches = [];
       if (!Array.isArray(emp.shifts)) emp.shifts = Data.ALL_SHIFT_IDS.slice();
+      /* תפקיד שנמחק מההגדרות אינו נשאר תלוי על כרטיס העובד */
+      if (!Array.isArray(emp.roles)) emp.roles = [];
+      else emp.roles = emp.roles.filter(function (id) { return knownRoles[id]; });
       if (typeof emp.maxShifts !== 'number') emp.maxShifts = 6;
       /* כתובת מייל אופציונלית על הכרטיס. היא לא נדרשת לשיבוץ,
          אבל היא מה שמבדיל בין שני עובדים עם שם דומה בייבוא. */
@@ -916,6 +1025,15 @@
     normalizeSchedule: normalizeSchedule,
     applyDefaultHours: applyDefaultHours,
     weekDemands: weekDemands,
+    roles: roles,
+    roleById: roleById,
+    roleName: roleName,
+    roleColor: roleColor,
+    slotRole: slotRole,
+    employeeRoles: employeeRoles,
+    employeeFitsRole: employeeFitsRole,
+    employeesForRole: employeesForRole,
+    removeRole: removeRole,
     employeeCanWorkDay: employeeCanWorkDay,
     requestedDaysOff: requestedDaysOff,
     workableDays: workableDays,

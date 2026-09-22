@@ -36,21 +36,32 @@
   }
 
   function slotLabel(state, dayIdx, branchId, shiftId) {
-    return t('alerts.slotLabel', {
+    var label = t('alerts.slotLabel', {
       day: dayName(dayIdx),
       branch: branchName(state, branchId),
       shift: shiftName(shiftId)
     });
+    /* "חסר אדם" ו"חסר מטבח" הן שתי בעיות שונות, ורק השנייה
+       אומרת למנהל את מי להתקשר. */
+    var branch = Store.byId(state.branches, branchId);
+    var roleId = branch ? Store.slotRole(state, branch, dayIdx, shiftId) : '';
+    if (!roleId) return label;
+    return label + ' · ' + Store.roleName(state, roleId);
   }
 
   /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
   function explainShortage(state, week, demand) {
     var eligible = [], busy = [], atMax = [], resting = [], free = [];
 
+    /* כמה נפסלו על התפקיד בלבד. זו סיבה אחרת לגמרי מ"כולם
+       עסוקים", והיא היחידה שהפתרון שלה הוא לסמן עוד עובד. */
+    var wrongRole = 0;
+
     state.employees.forEach(function (emp) {
       if (!emp.active) return;
       if (emp.shifts.indexOf(demand.shiftId) === -1) return;
       if (!Scheduler.employeeAllowedInBranch(emp, demand.branchId)) return;
+      if (!Store.employeeFitsRole(state, emp, demand.role)) { wrongRole++; return; }
       var constraint = Store.getConstraint(week, emp.id, demand.dayIdx);
       if (constraint.off || (constraint.blocked && constraint.blocked[demand.shiftId])) return;
       eligible.push(emp);
@@ -69,7 +80,16 @@
       free.push(emp.name);
     });
 
-    if (!eligible.length) return t('alerts.reasonNone');
+    if (!eligible.length) {
+      /* ההבדל חשוב: "אין אף אחד פנוי" שולח את המנהל לחפש בעיה
+         בזמינות, ואילו כאן הבעיה היא שאיש אינו מסומן בתפקיד. */
+      if (demand.role && wrongRole) {
+        return t('alerts.reasonNoRole', {
+          role: Store.roleName(state, demand.role), count: wrongRole
+        });
+      }
+      return t('alerts.reasonNone');
+    }
     if (free.length) return t('alerts.reasonFree', { names: nameList(free) });
 
     var reasons = [];

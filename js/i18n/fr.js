@@ -313,6 +313,7 @@
         reasonMaxed: '{names} ont atteint leur quota hebdomadaire de services',
         reasonResting: '{names} ont besoin de repos entre un service du soir et un service du matin',
         reasonNone: 'Personne n’est configuré à la fois pour cette succursale et ce service, ou tout le monde l’a bloqué.',
+        reasonNoRole: 'Ce poste demande {role}, et personne de disponible ne porte ce rôle ({count} écartés pour cela).',
         reasonFree: 'Vous pouvez affecter {names} ici manuellement : ils remplissent toutes les conditions de ce service. Reconstruire donnera une autre répartition.',
         reasonPrefix: 'Motif : ',
         suggestTwoPerDay: ' Vous pouvez autoriser deux services par jour et par personne dans les Réglages.',
@@ -437,6 +438,8 @@
           requested: 'A demandé ce créneau ce jour-là',
           available: 'Aucune demande de congé ce jour-là',
           qualified: 'Formé pour ce créneau',
+          hasRole: 'Porte le rôle {role}',
+          anyRole: "Sans rôle marqué, convient donc aussi à {role}",
           assignedBranch: 'Affecté à ce site',
           anyBranch: 'Travaille sur tous les sites',
           quota: 'Avant ce créneau {before}, après {after} sur un quota de {max}',
@@ -448,6 +451,7 @@
           inactive: 'n’est pas actif',
           notQualified: 'n’est pas formé pour ce créneau',
           otherBranch: 'travaille sur un autre site',
+          wrongRole: 'Ne porte pas le rôle {role}',
           requestedOff: 'a demandé ce jour de congé',
           blockedShift: 'a demandé à ne pas faire ce créneau',
           atLimit: 'a atteint la limite hebdomadaire de {max}',
@@ -569,6 +573,28 @@
         nameRequired: 'Un nom est requis.'
       },
 
+      positions: {
+        title: 'Rôles',
+        hint: "Caissier, réassort, cuisine, serveur — ce dont votre entreprise a besoin. Un employé peut en avoir plusieurs, un poste peut en demander un.",
+        add: 'Ajouter un rôle',
+        newName: 'Nouveau rôle',
+        name: 'Nom du rôle',
+        remove: 'Supprimer le rôle',
+        removeConfirm: 'Supprimer « {name} » ? Il sera retiré de {employees} employés et {slots} postes.',
+        removed: 'Rôle supprimé.',
+        none: "Aucun rôle défini. Sans eux, chaque employé convient à chaque poste — ce qui convient à une petite entreprise.",
+        emptyName: 'Un rôle doit avoir un nom.',
+        duplicate: 'Un rôle porte déjà ce nom.',
+        employeeLabel: 'Rôles',
+        employeeHint: 'Non coché : convient à tous les postes.',
+        employeeAll: 'Tous les rôles',
+        slotLabel: 'Rôle requis',
+        slotAny: "N'importe qui",
+        slotHint: 'Ce poste ne retiendra que les employés portant ce rôle.',
+        count: '{count} rôles',
+        fits: '{count} éligibles'
+      },
+
       onboarding: {
         skip: 'Ignorer',
         back: 'Retour',
@@ -582,7 +608,7 @@
         businessHint: "Le nom que vos équipes voient dans le système et dans les e-mails qu'elles reçoivent. Modifiable à tout moment.",
         branchesHint: 'Où les gens sont affectés. Une succursale suffit pour commencer ; ajoutez-en plus tard.',
         shiftsHint: "Les postes d'une journée normale et leurs horaires. Ce sont les valeurs par défaut ; chaque succursale peut différer.",
-        staffHint: 'Importez une liste depuis un tableur, ou commencez à saisir. Les deux peuvent aussi attendre.',
+        staffHint: "Importez une liste depuis un tableur, ou commencez à saisir. Les deux peuvent aussi attendre. Les rôles (caisse, cuisine, salle) se définissent dans les Réglages, quand vous saurez ce qu'il vous faut.",
         companyName: "Nom de l'entreprise",
         myName: 'Mon nom',
         branchName: 'Succursale',
@@ -845,6 +871,9 @@
           emailExists: 'une fiche utilise déjà {value}',
           emailInvited: 'déjà invité avec {value}',
           duplicateEmailInFile: '{value} apparaît plusieurs fois dans la liste',
+        },
+        warn: {
+          unknownRole: "Rôle non défini dans l'entreprise, donc ignoré : {value}. L'employé a été ajouté sans lui, et convient donc à tous les postes."
         },
         error: {
           noName: 'la ligne n’a pas de nom',

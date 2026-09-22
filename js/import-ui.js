@@ -159,6 +159,18 @@
       html += '</ul>';
     }
 
+    /* אזהרות אינן עוצרות את הייבוא, אבל שתיקה עליהן פירושה
+       שהלקוח יגלה אחר כך שחצי מהתפקידים לא נקלטו. */
+    if ((plan.warnings || []).length) {
+      html += '<ul class="import-list import-warn">';
+      plan.warnings.forEach(function (item) {
+        html += '<li>' + esc(t('importData.line', { line: item.line })) + ' ' +
+          esc(t('importData.warn.' + item.code, { value: item.value || '' })) +
+          (item.raw ? ' — ' + esc(item.raw) : '') + '</li>';
+      });
+      html += '</ul>';
+    }
+
     return html;
   }
 

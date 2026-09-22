@@ -58,6 +58,17 @@
 
     facts.push({ code: 'qualified' });
 
+    /* התפקיד, כשהמשמרת מחפשת אחד. זו העובדה שמנהל שואל עליה
+       ראשונה כשהוא רואה מלצר בעמדת מטבח. */
+    var branchForRole = Store.byId(state.branches, slot.branchId);
+    var wantedRole = branchForRole
+      ? Store.slotRole(state, branchForRole, slot.dayIdx, slot.shiftId) : '';
+    if (wantedRole) {
+      facts.push(Store.employeeRoles(emp).length
+        ? { code: 'hasRole', role: Store.roleName(state, wantedRole) }
+        : { code: 'anyRole', role: Store.roleName(state, wantedRole) });
+    }
+
     if (emp.branches && emp.branches.length) {
       facts.push({ code: 'assignedBranch' });
     } else {
@@ -95,6 +106,14 @@
     if (!emp.active) return { code: 'inactive' };
     if (emp.shifts.indexOf(slot.shiftId) === -1) return { code: 'notQualified' };
     if (!Scheduler.employeeAllowedInBranch(emp, slot.branchId)) return { code: 'otherBranch' };
+    /* התפקיד לפני האילוצים: הוא תנאי יסוד, והוא גם הסיבה
+       שהכי קל לתקן – לסמן את העובד. */
+    var branchForRole = Store.byId(state.branches, slot.branchId);
+    var wantedRole = branchForRole
+      ? Store.slotRole(state, branchForRole, slot.dayIdx, slot.shiftId) : '';
+    if (wantedRole && !Store.employeeFitsRole(state, emp, wantedRole)) {
+      return { code: 'wrongRole', role: Store.roleName(state, wantedRole) };
+    }
 
     var constraint = approvedConstraint(ctx, emp.id, slot.dayIdx);
     if (constraint) {

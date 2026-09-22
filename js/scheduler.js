@@ -25,6 +25,9 @@
     if (Store.isHoliday(ctx.week, demand.dayIdx)) return false; // יום חג – אין עבודה
     if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
     if (!employeeAllowedInBranch(emp, demand.branchId)) return false;
+    /* התפקיד שהמשמרת מחפשת. תנאי יסוד ולא ניקוד: קופאי אינו
+       "פחות מתאים" לעמדת מטבח – הוא פשוט לא שם. */
+    if (!Store.employeeFitsRole(ctx.state, emp, demand.role)) return false;
     var constraint = ctx.constraints[emp.id + '|' + demand.dayIdx];
     if (constraint) {
       if (constraint.off) return false;

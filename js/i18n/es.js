@@ -313,6 +313,7 @@
         reasonMaxed: '{names} han llegado a su límite semanal de turnos',
         reasonResting: '{names} necesitan descanso entre un turno de tarde y uno de mañana',
         reasonNone: 'Nadie está configurado a la vez para esta sucursal y este turno, o todos lo han bloqueado.',
+        reasonNoRole: 'Este turno necesita {role}, y nadie disponible tiene ese rol ({count} descartados por eso).',
         reasonFree: 'Puedes asignar aquí a {names} manualmente: cumplen todas las condiciones de este turno. Volver a generar dará otro reparto.',
         reasonPrefix: 'Motivo: ',
         suggestTwoPerDay: ' Puedes permitir dos turnos al día por persona en Ajustes.',
@@ -437,6 +438,8 @@
           requested: 'Pidió este turno ese día',
           available: 'Sin solicitud de día libre',
           qualified: 'Formado para este turno',
+          hasRole: 'Tiene la función {role}',
+          anyRole: 'Sin función marcada, así que también sirve para {role}',
           assignedBranch: 'Asignado a esta sucursal',
           anyBranch: 'Trabaja en cualquier sucursal',
           quota: 'Antes de este turno {before}, después {after} de una cuota de {max}',
@@ -448,6 +451,7 @@
           inactive: 'no está activo',
           notQualified: 'no está formado para este turno',
           otherBranch: 'trabaja en otra sucursal',
+          wrongRole: 'No tiene la función {role}',
           requestedOff: 'pidió el día libre',
           blockedShift: 'pidió no trabajar en este turno',
           atLimit: 'alcanzó el límite semanal de {max}',
@@ -569,6 +573,28 @@
         nameRequired: 'Se requiere un nombre.'
       },
 
+      positions: {
+        title: 'Funciones',
+        hint: 'Cajero, reponedor, cocina, camarero — lo que necesite tu negocio. Un empleado puede tener varias, y un turno puede pedir una.',
+        add: 'Añadir función',
+        newName: 'Nueva función',
+        name: 'Nombre de la función',
+        remove: 'Eliminar función',
+        removeConfirm: '¿Eliminar "{name}"? Se quitará de {employees} empleados y {slots} turnos.',
+        removed: 'Función eliminada.',
+        none: 'Aún no hay funciones. Sin ellas cualquier empleado sirve para cualquier turno, y para un negocio sencillo está bien.',
+        emptyName: 'La función necesita un nombre.',
+        duplicate: 'Ya existe una función con ese nombre.',
+        employeeLabel: 'Funciones',
+        employeeHint: 'Sin marcar: sirve para todos los turnos.',
+        employeeAll: 'Todas las funciones',
+        slotLabel: 'Función requerida',
+        slotAny: 'Cualquiera',
+        slotHint: 'Este turno solo considerará a quien tenga esa función.',
+        count: '{count} funciones',
+        fits: '{count} aptos'
+      },
+
       onboarding: {
         skip: 'Omitir',
         back: 'Atrás',
@@ -582,7 +608,7 @@
         businessHint: 'El nombre que ve tu plantilla en el sistema y en los correos que recibe. Puedes cambiarlo cuando quieras.',
         branchesHint: 'Dónde se asignan los turnos. Con una sucursal basta para empezar; añade más después.',
         shiftsHint: 'Los turnos de un día normal y sus horas. Son los valores por defecto; cada sucursal puede variar.',
-        staffHint: 'Importa una lista desde una hoja de cálculo o empieza a escribir. Ambas opciones pueden esperar.',
+        staffHint: 'Importa una lista desde una hoja de cálculo o empieza a escribir. Ambas opciones pueden esperar. Las funciones (caja, cocina, sala) se definen en Ajustes, cuando sepas qué necesitas.',
         companyName: 'Nombre de la empresa',
         myName: 'Mi nombre',
         branchName: 'Sucursal',
@@ -845,6 +871,9 @@
           emailExists: 'ya hay una ficha con {value}',
           emailInvited: 'ya fue invitado con {value}',
           duplicateEmailInFile: '{value} aparece más de una vez en la lista',
+        },
+        warn: {
+          unknownRole: 'Función no definida en el negocio, así que se omitió: {value}. El empleado se añadió sin ella, por lo que sirve para cualquier turno.'
         },
         error: {
           noName: 'la fila no tiene nombre',

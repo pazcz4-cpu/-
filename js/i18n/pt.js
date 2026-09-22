@@ -313,6 +313,7 @@
         reasonMaxed: '{names} atingiram o limite semanal de turnos',
         reasonResting: '{names} precisam de descanso entre um turno de fim do dia e um de manhã',
         reasonNone: 'Ninguém está configurado ao mesmo tempo para esta filial e este turno, ou todos o bloquearam.',
+        reasonNoRole: 'Este turno precisa de {role}, e ninguém disponível tem essa função ({count} excluídos por isso).',
         reasonFree: 'Podes colocar aqui {names} manualmente – cumprem todas as condições deste turno. Construir de novo dará outra distribuição.',
         reasonPrefix: 'Motivo: ',
         suggestTwoPerDay: ' Podes permitir dois turnos por dia por pessoa nas Definições.',
@@ -437,6 +438,8 @@
           requested: 'Pediu este turno nesse dia',
           available: 'Sem pedido de folga para esse dia',
           qualified: 'Preparado para este turno',
+          hasRole: 'Tem a função {role}',
+          anyRole: 'Sem função marcada, por isso também serve para {role}',
           assignedBranch: 'Afeto a esta loja',
           anyBranch: 'Trabalha em qualquer loja',
           quota: 'Antes deste turno {before}, depois {after} de uma quota de {max}',
@@ -448,6 +451,7 @@
           inactive: 'não está ativo',
           notQualified: 'não está preparado para este turno',
           otherBranch: 'trabalha noutra loja',
+          wrongRole: 'Não tem a função {role}',
           requestedOff: 'pediu folga nesse dia',
           blockedShift: 'pediu para não fazer este turno',
           atLimit: 'atingiu o limite semanal de {max}',
@@ -569,6 +573,28 @@
         nameRequired: 'É necessário um nome.'
       },
 
+      positions: {
+        title: 'Funções',
+        hint: 'Caixa, reposição, cozinha, empregado de mesa — o que o seu negócio precisar. Um colaborador pode ter várias, e um turno pode pedir uma.',
+        add: 'Adicionar função',
+        newName: 'Nova função',
+        name: 'Nome da função',
+        remove: 'Eliminar função',
+        removeConfirm: 'Eliminar "{name}"? Será retirada de {employees} colaboradores e de {slots} turnos.',
+        removed: 'Função eliminada.',
+        none: 'Ainda sem funções. Sem elas qualquer colaborador serve para qualquer turno, o que chega para um negócio simples.',
+        emptyName: 'A função precisa de um nome.',
+        duplicate: 'Já existe uma função com esse nome.',
+        employeeLabel: 'Funções',
+        employeeHint: 'Sem marcar: serve para todos os turnos.',
+        employeeAll: 'Todas as funções',
+        slotLabel: 'Função necessária',
+        slotAny: 'Qualquer um',
+        slotHint: 'Este turno só considera quem tiver essa função.',
+        count: '{count} funções',
+        fits: '{count} elegíveis'
+      },
+
       onboarding: {
         skip: 'Ignorar',
         back: 'Voltar',
@@ -582,7 +608,7 @@
         businessHint: 'O nome que a equipa vê no sistema e nos e-mails que recebe. Pode alterá-lo quando quiser.',
         branchesHint: 'Onde as pessoas são escaladas. Uma filial chega para começar; acrescente mais depois.',
         shiftsHint: 'Os turnos de um dia normal e os seus horários. São os valores por omissão; cada filial pode diferir.',
-        staffHint: 'Importe uma lista de uma folha de cálculo, ou comece a escrever. Qualquer um pode esperar.',
+        staffHint: 'Importe uma lista de uma folha de cálculo, ou comece a escrever. Qualquer um pode esperar. As funções (caixa, cozinha, mesa) definem-se nas Definições, quando souber do que precisa.',
         companyName: 'Nome da empresa',
         myName: 'O meu nome',
         branchName: 'Filial',
@@ -845,6 +871,9 @@
           emailExists: 'já existe uma ficha com {value}',
           emailInvited: 'já convidado com {value}',
           duplicateEmailInFile: '{value} aparece mais de uma vez na lista',
+        },
+        warn: {
+          unknownRole: 'Função não definida na empresa, por isso foi ignorada: {value}. O colaborador foi adicionado sem ela, servindo para qualquer turno.'
         },
         error: {
           noName: 'a linha não tem nome',

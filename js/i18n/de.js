@@ -313,6 +313,7 @@
         reasonMaxed: '{names} haben ihr Wochenlimit an Schichten erreicht',
         reasonResting: '{names} brauchen Ruhezeit zwischen Abend- und Frühschicht',
         reasonNone: 'Niemand ist sowohl für diese Filiale als auch für diese Schicht eingerichtet, oder alle haben sie gesperrt.',
+        reasonNoRole: 'Diese Schicht braucht {role}, und niemand Verfügbares trägt diese Rolle ({count} deshalb ausgeschlossen).',
         reasonFree: 'Sie können {names} hier von Hand einteilen – sie erfüllen alle Bedingungen dieser Schicht. Ein erneuter Aufbau ergibt eine andere Verteilung.',
         reasonPrefix: 'Grund: ',
         suggestTwoPerDay: ' In den Einstellungen können Sie zwei Schichten pro Tag und Person erlauben.',
@@ -437,6 +438,8 @@
           requested: 'Hat diese Schicht an diesem Tag gewünscht',
           available: 'Kein Urlaubswunsch für diesen Tag',
           qualified: 'Für diese Schicht eingearbeitet',
+          hasRole: 'Trägt die Rolle {role}',
+          anyRole: 'Keine Rolle markiert, passt daher auch für {role}',
           assignedBranch: 'Diesem Standort zugeordnet',
           anyBranch: 'Arbeitet an allen Standorten',
           quota: 'Vor dieser Schicht {before}, danach {after} von einem Kontingent von {max}',
@@ -448,6 +451,7 @@
           inactive: 'ist nicht aktiv',
           notQualified: 'ist für diese Schicht nicht eingearbeitet',
           otherBranch: 'arbeitet an einem anderen Standort',
+          wrongRole: 'Trägt die Rolle {role} nicht',
           requestedOff: 'hat den Tag frei beantragt',
           blockedShift: 'möchte diese Schicht nicht',
           atLimit: 'hat das Wochenlimit von {max} erreicht',
@@ -569,6 +573,28 @@
         nameRequired: 'Ein Name ist erforderlich.'
       },
 
+      positions: {
+        title: 'Rollen',
+        hint: 'Kasse, Auffüllen, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, eine Schicht kann eine verlangen.',
+        add: 'Rolle hinzufügen',
+        newName: 'Neue Rolle',
+        name: 'Name der Rolle',
+        remove: 'Rolle löschen',
+        removeConfirm: '„{name}" löschen? Sie wird von {employees} Mitarbeitenden und {slots} Schichten entfernt.',
+        removed: 'Rolle gelöscht.',
+        none: 'Noch keine Rollen. Ohne sie passt jede Person in jede Schicht — für einen einfachen Betrieb völlig in Ordnung.',
+        emptyName: 'Eine Rolle braucht einen Namen.',
+        duplicate: 'Eine Rolle mit diesem Namen gibt es schon.',
+        employeeLabel: 'Rollen',
+        employeeHint: 'Nicht markiert: passt in jede Schicht.',
+        employeeAll: 'Alle Rollen',
+        slotLabel: 'Benötigte Rolle',
+        slotAny: 'Egal wer',
+        slotHint: 'Diese Schicht berücksichtigt nur Personen mit dieser Rolle.',
+        count: '{count} Rollen',
+        fits: '{count} geeignet'
+      },
+
       onboarding: {
         skip: 'Überspringen',
         back: 'Zurück',
@@ -582,7 +608,7 @@
         businessHint: 'Der Name, den Ihre Belegschaft im System und in den E-Mails sieht. Jederzeit änderbar.',
         branchesHint: 'Wohin eingeteilt wird. Eine Filiale genügt zum Start, weitere kommen später dazu.',
         shiftsHint: 'Die Schichten eines normalen Tages und ihre Zeiten. Das sind die Vorgaben; jede Filiale kann abweichen.',
-        staffHint: 'Eine bestehende Liste aus einer Tabelle importieren oder einfach tippen. Beides kann auch warten.',
+        staffHint: 'Eine bestehende Liste aus einer Tabelle importieren oder einfach tippen. Beides kann auch warten. Rollen (Kasse, Küche, Service) legen Sie in den Einstellungen fest, sobald Sie wissen, was Sie brauchen.',
         companyName: 'Name des Betriebs',
         myName: 'Mein Name',
         branchName: 'Filiale',
@@ -845,6 +871,9 @@
           emailExists: 'eine Karte nutzt bereits {value}',
           emailInvited: 'bereits eingeladen mit {value}',
           duplicateEmailInFile: '{value} kommt mehrfach in der Liste vor',
+        },
+        warn: {
+          unknownRole: 'Rolle ist im Betrieb nicht definiert und wurde übersprungen: {value}. Die Person wurde ohne sie angelegt und passt daher in jede Schicht.'
         },
         error: {
           noName: 'die Zeile hat keinen Namen',

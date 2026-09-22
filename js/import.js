@@ -78,6 +78,8 @@
     name: ['name', 'employee', 'staff', 'שם', 'עובד', 'עובדת', 'שם העובד'],
     branches: ['branch', 'branches', 'location', 'locations', 'site', 'סניף', 'סניפים', 'מקום'],
     shifts: ['shift', 'shifts', 'משמרת', 'משמרות'],
+    roles: ['role', 'roles', 'position', 'positions', 'job', 'title',
+      'תפקיד', 'תפקידים', 'עמדה', 'תפקוד'],
     maxShifts: ['max', 'maxshifts', 'quota', 'limit', 'מכסה', 'מקסימום', 'מכסה שבועית'],
     email: ['email', 'mail', 'e-mail', 'address', 'מייל', 'אימייל', 'דואר', 'דוא"ל', 'כתובת מייל'],
     note: ['note', 'notes', 'comment', 'הערה', 'הערות'],
@@ -116,7 +118,9 @@
   /* סדר ברירת המחדל, כשאין שורת כותרות */
   /* המייל בסוף בכוונה: מי שכבר הדביק בסדר הקודם ממשיך לעבוד.
      בקובץ עם שורת כותרות הסדר לא משנה ממילא. */
-  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email'];
+  /* הסדר בקובץ בלי שורת כותרות. התפקידים נוספו בסוף בכוונה:
+     קובץ שנבנה לפני שהם היו קיימים ממשיך להיקרא נכון. */
+  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email', 'roles'];
 
   /* ===== פענוח תא ===== */
 
@@ -156,7 +160,10 @@
   function planEmployees(state, text, options) {
     var opts = options || {};
     var rows = parseTable(text);
-    var plan = { create: [], skip: [], errors: [], newBranches: [], columns: null };
+    /* warnings – מה שראוי לומר אבל אינו עוצר את הייבוא. עד
+       עכשיו הייתה רק הבחנה בין "נכנס" ל"נפסל"; תפקיד שלא זוהה
+       אינו אף אחד משניהם. */
+    var plan = { create: [], skip: [], errors: [], warnings: [], newBranches: [], columns: null };
     if (!rows.length) return plan;
 
     var map = headerMap(rows[0]);
@@ -265,6 +272,24 @@
         missing.push(label);
       });
 
+      /* תפקידים. תפקיד שאינו קיים אינו שגיאה ואינו נוצר לבד:
+         שגיאת כתיב בטור אחד הייתה מייצרת "קופאיי" כתפקיד אמיתי,
+         ומשמרת שמחפשת "קופאי" לא הייתה מוצאת איש. הוא מדווח
+         ככזה שלא זוהה, והעובד נכנס בלעדיו – כלומר מתאים להכל. */
+      var roleIds = [];
+      var unknownRoles = [];
+      splitList(cell(row, 'roles')).forEach(function (label) {
+        var found = Store.roles(state).filter(function (role) {
+          return sameName(role.name, label);
+        })[0];
+        if (found) { if (roleIds.indexOf(found.id) === -1) roleIds.push(found.id); }
+        else { unknownRoles.push(label); }
+      });
+      if (unknownRoles.length) {
+        plan.warnings.push({ line: lineNumber, raw: name, code: 'unknownRole',
+          value: unknownRoles.join(', ') });
+      }
+
       var shiftIds = [];
       var unknownShifts = [];
       splitList(cell(row, 'shifts')).forEach(function (label) {
@@ -286,6 +311,7 @@
         email: email,
         branchNames: missing,
         branchIds: branchIds,
+        roles: roleIds,
         shifts: shiftIds.length ? shiftIds : allShiftIds.slice(),
         maxShifts: max,
         note: cell(row, 'note'),
@@ -335,6 +361,7 @@
       });
 
       employee.branches = ids;
+      employee.roles = (row.roles || []).slice();
       employee.shifts = row.shifts.slice();
       employee.maxShifts = row.maxShifts;
       employee.note = row.note;

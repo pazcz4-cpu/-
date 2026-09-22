@@ -381,6 +381,7 @@
         branchesLabel: 'Filiais (sem seleção = todas)',
         shiftTypes: 'Tipos de turno que pode fazer',
         maxShifts: 'Máximo de turnos por semana', note: 'Nota',
+        email: 'E-mail (opcional)',
         deleteConfirm: 'Eliminar {name}? As suas atribuições serão retiradas de todas as semanas.',
         inactive: '(inativo)', newName: 'Pessoa nova'
       },
@@ -737,9 +738,16 @@
         countSkip: { one: 'uma já existe e vai ser ignorada', other: '{count} já existem e vão ser ignoradas' },
         countErrors: { one: 'uma linha não vai ser importada', other: '{count} linhas não vão ser importadas' },
         confirm: { one: 'Importar uma pessoa', other: 'Importar {count} pessoas' },
+        countBranches: { one: '1 nova filial será criada', other: '{count} novas filiais serão criadas' },
+        countDropped: { one: '1 linha removida', other: '{count} linhas removidas' },
+        uncheckHint: 'Desmarque uma linha para deixá-la de fora.',
+        pickAll: 'Selecionar tudo',
+        undo: 'Desfazer a importação',
+        undone: 'Importação desfeita. {count} fichas removidas.',
+        sampleName: 'Ana Silva',
         open: 'Importar uma lista',
         title: 'Importar pessoal',
-        hint: 'Seleciona a tua lista no Excel, copia e cola aqui – ou escolhe um ficheiro CSV. A primeira coluna é o nome. Depois, se tiveres: locais, tipos de turno e um limite semanal. Um local que ainda não exista será criado.',
+        hint: 'Seleciona a tua lista no Excel, copia e cola aqui – ou escolhe um ficheiro CSV. A primeira coluna é o nome. Depois, se tiveres: locais, tipos de turno e um limite semanal. Um local que ainda não exista será criado. Pode incluir uma coluna de e-mail: evita uma segunda ficha para a mesma pessoa.',
         placeholder: 'Dana Cohen\tLoja central\tManhã;Noite\t5',
         file: 'Escolher um ficheiro CSV',
         sample: 'Inserir um exemplo',
@@ -753,12 +761,16 @@
         blocked: '{count} não foram adicionadas por causa do limite do plano.',
         skip: {
           exists: 'já está no sistema',
-          duplicateInFile: 'aparece mais de uma vez na lista'
+          duplicateInFile: 'aparece mais de uma vez na lista',
+          emailExists: 'já existe uma ficha com {value}',
+          emailInvited: 'já convidado com {value}',
+          duplicateEmailInFile: '{value} aparece mais de uma vez na lista',
         },
         error: {
           noName: 'a linha não tem nome',
           badMax: 'o limite não é um número: {value}',
-          badShift: 'um turno que este negócio não definiu: {value}'
+          badShift: 'um turno que este negócio não definiu: {value}',
+          badEmail: 'endereço de e-mail inválido: {value}'
         }
       },
 

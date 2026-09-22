@@ -1602,6 +1602,163 @@ test('מגבלת תוכנית שחוסמת עובד מדווחת ואינה מפ
   assertEqual(result.blocked, 2, 'החסומים לא דווחו');
 });
 
+console.log('\n== הגנות הייבוא ==');
+
+/* מי שמייבא רשימה מסחרית מייבא אותה פעם אחת בחיים, ושגיאה שם
+   היא שלושים כרטיסים כפולים שצריך למחוק ביד. ההגנות האלה הן מה
+   שמבדיל בין "ייבוא" ל"ייבוא שאפשר ללחוץ עליו". */
+
+function importHooks(state, extra) {
+  return Object.assign({
+    createBranch: function (name) {
+      var branch = { id: Store.newId('br'), name: name, active: true,
+        schedule: Data.defaultSchedule(null, state.settings.shifts) };
+      state.branches.push(branch);
+      return branch;
+    },
+    createEmployee: function (name) {
+      var employee = { id: Store.newId('emp'), name: name, active: true,
+        branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: '', email: '' };
+      state.employees.push(employee);
+      return employee;
+    }
+  }, extra || {});
+}
+
+test('טור מייל מזוהה גם בכותרת עברית וגם באנגלית', function () {
+  assertEqual(Import.headerMap(['שם', 'אימייל']).email, 1, 'כותרת "אימייל" לא זוהתה');
+  assertEqual(Import.headerMap(['Name', 'Email']).email, 1, 'כותרת "Email" לא זוהתה');
+});
+
+test('כתובת מייל שאינה תקינה נעצרת ואינה נכנסת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\tמייל\nדנה\tדנה-בלי-שטרודל');
+  assertEqual(plan.create.length, 0, 'שורה עם מייל שבור נוצרה');
+  assertEqual(plan.errors.length, 1, 'לא דווחה שגיאה');
+  assertEqual(plan.errors[0].code, 'badEmail', 'קוד שגיאה שגוי: ' + plan.errors[0].code);
+  /* כתובות אמיתיות לא נדחות */
+  assert(Import.looksLikeEmail('dana.cohen+work@sub.example.co.il'), 'כתובת תקינה נדחתה');
+});
+
+test('אותו מייל פעמיים ברשימה – השני מדולג', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state,
+    'שם\tמייל\nדנה כהן\tdana@x.co.il\nד. כהן\tDANA@X.CO.IL');
+  assertEqual(plan.create.length, 1, 'נוצרו שני כרטיסים לאותה כתובת');
+  assertEqual(plan.skip.length, 1, 'הכפילות לא דווחה');
+  assertEqual(plan.skip[0].code, 'duplicateEmailInFile', plan.skip[0].code);
+});
+
+test('מייל שכבר יושב על כרטיס קיים מדולג גם כששם שונה', function () {
+  var state = freshState();
+  state.employees[0].email = 'dana@x.co.il';
+  var plan = Import.planEmployees(state, 'שם\tמייל\nשם אחר לגמרי\tDana@X.co.il');
+  assertEqual(plan.create.length, 0, 'נוצר כרטיס כפול לאותה כתובת');
+  assertEqual(plan.skip[0].code, 'emailExists', plan.skip[0].code);
+});
+
+test('מייל שכבר הוזמן למערכת מדולג ומסומן ככזה', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\tמייל\nעובד חדש\tworker@x.co.il',
+    { knownEmails: ['Worker@X.co.il'] });
+  assertEqual(plan.create.length, 0, 'נוצר כרטיס למי שכבר הוזמן');
+  assertEqual(plan.skip[0].code, 'emailInvited', plan.skip[0].code);
+  /* וההבחנה חשובה: "כבר קיים כרטיס" ו"כבר הוזמן" הן שתי פעולות
+     המשך שונות למנהל */
+  assert(plan.skip[0].value === 'worker@x.co.il', 'הכתובת לא הוחזרה להצגה');
+});
+
+test('שורה בלי מייל אינה נחסמת בגלל שורה אחרת בלי מייל', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\tמייל\nאחד\t\nשתיים\t');
+  assertEqual(plan.create.length, 2, 'שורות בלי מייל נחשבו כפילות');
+});
+
+test('המייל נשמר על הכרטיס שנוצר', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\tמייל\nדנה כהן\tDana@X.co.il');
+  var result = Import.applyPlan(state, plan, importHooks(state));
+  assertEqual(result.employees[0].email, 'dana@x.co.il', 'המייל לא נשמר מנורמל');
+});
+
+test('שורה שהמנהל הוריד ממנה את הסימון אינה נוצרת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'אחד\nשתיים\nשלוש');
+  var skipped = plan.create[1].line;
+  var result = Import.applyPlan(state, plan, importHooks(state, {
+    skipLine: function (line) { return line === skipped; }
+  }));
+  assertEqual(result.employees.length, 2, 'מספר הכרטיסים שגוי');
+  assertEqual(result.employees.map(function (e) { return e.name; }).join(','), 'אחד,שלוש',
+    'הורדה של שורה הסירה את השורה הלא נכונה');
+});
+
+test('סניף אינו נפתח כשכל השורות שצריכות אותו הוסרו', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'אחד\tסניף חדש לגמרי\nשתיים\tסניף אחר לגמרי');
+  var drop = plan.create[0].line;
+  var before = state.branches.length;
+  var result = Import.applyPlan(state, plan, importHooks(state, {
+    skipLine: function (line) { return line === drop; }
+  }));
+  assertEqual(result.branches.length, 1, 'נפתח סניף שאף אחד לא צריך');
+  assertEqual(state.branches.length, before + 1, 'מספר הסניפים בפועל שגוי');
+  assertEqual(result.branches[0].name, 'סניף אחר לגמרי', 'נפתח הסניף הלא נכון');
+});
+
+test('ביטול ייבוא מסיר בדיוק את מה שנוצר', function () {
+  var state = freshState();
+  var employeesBefore = state.employees.length;
+  var branchesBefore = state.branches.length;
+  var plan = Import.planEmployees(state, 'דנה כהן\tסניף טרי\nיוסי לוי\tסניף טרי');
+  var result = Import.applyPlan(state, plan, importHooks(state));
+  assertEqual(state.employees.length, employeesBefore + 2, 'הייבוא לא רץ');
+
+  var removed = Store.removeImported(state, result);
+  assertEqual(removed.employees, 2, 'לא הוסרו שני עובדים');
+  assertEqual(removed.branches, 1, 'הסניף שנפתח לא הוסר');
+  assertEqual(state.employees.length, employeesBefore, 'נשארו כרטיסים');
+  assertEqual(state.branches.length, branchesBefore, 'נשארו סניפים');
+});
+
+test('ביטול ייבוא אינו נוגע במה שהיה קודם', function () {
+  var state = freshState();
+  var keptEmployee = state.employees[0];
+  var keptBranch = state.branches[0];
+  keptEmployee.branches = [keptBranch.id];
+  var plan = Import.planEmployees(state, 'עובד מיובא\tסניף מיובא');
+  var result = Import.applyPlan(state, plan, importHooks(state));
+
+  Store.removeImported(state, result);
+  assert(Store.byId(state.employees, keptEmployee.id), 'עובד קיים נמחק');
+  assert(Store.byId(state.branches, keptBranch.id), 'סניף קיים נמחק');
+  assertEqual(keptEmployee.branches.join(','), keptBranch.id,
+    'הקישור של עובד קיים לסניף שלו נפגע');
+});
+
+test('ביטול ייבוא מנקה שיבוצים ואילוצים שנוצרו בעקבותיו', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'עובד מיובא\tסניף מיובא');
+  var result = Import.applyPlan(state, plan, importHooks(state));
+  var emp = result.employees[0];
+  var branch = result.branches[0];
+  var keptEmp = state.employees[0].id;
+
+  var week = { assignments: {}, constraints: {} };
+  week.assignments['0|' + branch.id + '|morning'] = [emp.id];
+  week.assignments['1|br-keep|morning'] = [emp.id, keptEmp];
+  week.constraints[emp.id + '|2'] = { off: true };
+  week.constraints[keptEmp + '|3'] = { off: true };
+  state.weeks['2026-09-20'] = week;
+
+  var removed = Store.removeImported(state, result);
+  assertEqual(Object.keys(week.assignments).length, 1, 'שיבוץ בסניף שנמחק נשאר');
+  assertEqual(week.assignments['1|br-keep|morning'].join(','), keptEmp,
+    'העובד שנמחק נשאר בשיבוץ, או שנמחק גם מי שנשאר');
+  assertEqual(Object.keys(week.constraints).length, 1, 'אילוץ של מי שנמחק נשאר');
+  assert(removed.assignments >= 2, 'הניקוי לא דווח');
+});
+
 console.log('\n== העמודים המשפטיים ==');
 
 /* בעמודים האלה יש עובדות שרק בעל העסק יודע (שם רשום, כתובת, אזור

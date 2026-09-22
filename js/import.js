@@ -79,6 +79,7 @@
     branches: ['branch', 'branches', 'location', 'locations', 'site', 'סניף', 'סניפים', 'מקום'],
     shifts: ['shift', 'shifts', 'משמרת', 'משמרות'],
     maxShifts: ['max', 'maxshifts', 'quota', 'limit', 'מכסה', 'מקסימום', 'מכסה שבועית'],
+    email: ['email', 'mail', 'e-mail', 'address', 'מייל', 'אימייל', 'דואר', 'דוא"ל', 'כתובת מייל'],
     note: ['note', 'notes', 'comment', 'הערה', 'הערות'],
     active: ['active', 'status', 'פעיל', 'סטטוס']
   };
@@ -113,7 +114,9 @@
   }
 
   /* סדר ברירת המחדל, כשאין שורת כותרות */
-  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note'];
+  /* המייל בסוף בכוונה: מי שכבר הדביק בסדר הקודם ממשיך לעבוד.
+     בקובץ עם שורת כותרות הסדר לא משנה ממילא. */
+  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email'];
 
   /* ===== פענוח תא ===== */
 
@@ -135,11 +138,23 @@
       String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
+  function normalizeEmail(value) { return String(value || '').trim().toLowerCase(); }
+
+  /* לא ולידציה מלאה של RFC – היא דוחה כתובות אמיתיות. מספיק
+     לתפוס את מה שקורה בפועל: שם בלי @, רווח באמצע, סיומת חסרה. */
+  function looksLikeEmail(value) {
+    return /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(normalizeEmail(value));
+  }
+
   /* ===== בניית התוכנית ===== */
 
   /* מחזיר תוכנית ייבוא: מה ייווצר, מה ידולג, מה שגוי, ואילו סניפים
      חדשים יידרשו. שום דבר כאן לא משנה את המצב. */
-  function planEmployees(state, text) {
+  /* options.knownEmails – כתובות שכבר יש להן חשבון בחברה. הן
+     מגיעות מהשרת, כי כרטיס עובד ומשתמש הם שני דברים נפרדים, ומי
+     שכבר הוזמן לא צריך כרטיס שני. */
+  function planEmployees(state, text, options) {
+    var opts = options || {};
     var rows = parseTable(text);
     var plan = { create: [], skip: [], errors: [], newBranches: [], columns: null };
     if (!rows.length) return plan;
@@ -171,6 +186,19 @@
 
     var existingNames = state.employees.map(function (emp) { return emp.name; });
     var plannedNames = [];
+    /* כפילות לפי מייל ולא רק לפי שם: "דנה כהן" ו-"דנה כהן " הם
+       אותה עובדת, אבל גם "ד. כהן" ו-"דנה כהן" – והמייל הוא מה
+       שמבדיל ביניהם באמת. */
+    var takenEmails = {};
+    state.employees.forEach(function (emp) {
+      var mail = normalizeEmail(emp.email);
+      if (mail) takenEmails[mail] = 'exists';
+    });
+    (opts.knownEmails || []).forEach(function (mail) {
+      var clean = normalizeEmail(mail);
+      if (clean && !takenEmails[clean]) takenEmails[clean] = 'invited';
+    });
+    var plannedEmails = {};
     var branchNames = state.branches.map(function (branch) { return branch.name; });
     var plannedBranches = [];
 
@@ -189,6 +217,23 @@
       }
       if (plannedNames.some(function (planned) { return sameName(planned, name); })) {
         plan.skip.push({ line: lineNumber, name: name, code: 'duplicateInFile' });
+        return;
+      }
+
+      var email = normalizeEmail(cell(row, 'email'));
+      if (email && !looksLikeEmail(email)) {
+        plan.errors.push({ line: lineNumber, raw: name, code: 'badEmail', value: email });
+        return;
+      }
+      if (email && takenEmails[email]) {
+        plan.skip.push({ line: lineNumber, name: name,
+          code: takenEmails[email] === 'invited' ? 'emailInvited' : 'emailExists',
+          value: email });
+        return;
+      }
+      if (email && plannedEmails[email]) {
+        plan.skip.push({ line: lineNumber, name: name, code: 'duplicateEmailInFile',
+          value: email });
         return;
       }
 
@@ -234,9 +279,11 @@
       }
 
       plannedNames.push(name);
+      if (email) plannedEmails[email] = true;
       plan.create.push({
         line: lineNumber,
         name: name,
+        email: email,
         branchNames: missing,
         branchIds: branchIds,
         shifts: shiftIds.length ? shiftIds : allShiftIds.slice(),
@@ -253,15 +300,28 @@
   /* מחיל תוכנית שאושרה. מחזיר את מה שנוצר בפועל.
      createBranch/createEmployee מגיעים מהאפליקציה, כדי שמגבלת
      התוכנית והשמירה יעברו באותו מסלול כמו הוספה ידנית. */
+  /* hooks.skipLine(line) – שורה שהמנהל הוריד את הסימון ממנה בתצוגה
+     המקדימה. היא נשארת בתוכנית כדי שהמספרים יישארו יציבים, ופשוט
+     אינה נוצרת. */
   function applyPlan(state, plan, hooks) {
     var created = { employees: [], branches: [], blocked: 0 };
+    var skipLine = hooks.skipLine || function () { return false; };
+    var rows = plan.create.filter(function (row) { return !skipLine(row.line); });
+
+    /* סניף נפתח רק אם נשארה שורה שצריכה אותו. אחרת ביטול הסימון
+       על השורה האחרונה בסניף היה מייצר סניף ריק. */
+    var wanted = {};
+    rows.forEach(function (row) {
+      row.branchNames.forEach(function (name) { wanted[normalizeWord(name)] = true; });
+    });
 
     plan.newBranches.forEach(function (item) {
+      if (!wanted[normalizeWord(item.name)]) return;
       var branch = hooks.createBranch(item.name);
       if (branch) created.branches.push(branch);
     });
 
-    plan.create.forEach(function (row) {
+    rows.forEach(function (row) {
       var employee = hooks.createEmployee(row.name);
       if (!employee) { created.blocked++; return; }
 
@@ -278,6 +338,7 @@
       employee.shifts = row.shifts.slice();
       employee.maxShifts = row.maxShifts;
       employee.note = row.note;
+      employee.email = row.email || '';
       employee.active = row.active;
       created.employees.push(employee);
     });
@@ -292,8 +353,10 @@
     var first = (shifts[0] || {}).name || '';
     var second = (shifts[1] || {}).name || first;
     return [
-      [t('users.nameColumn'), t('schedule.branch'), t('schedule.shift'), t('importData.maxColumn')].join('\t'),
-      ['דנה כהן', branch, first + ';' + second, '5'].join('\t')
+      [t('users.nameColumn'), t('schedule.branch'), t('schedule.shift'),
+        t('importData.maxColumn'), t('users.emailColumn')].join('\t'),
+      [t('importData.sampleName'), branch, first + ';' + second, '5',
+        'dana@example.com'].join('\t')
     ].join('\n');
   }
 
@@ -302,6 +365,7 @@
     headerMap: headerMap,
     planEmployees: planEmployees,
     applyPlan: applyPlan,
+    looksLikeEmail: looksLikeEmail,
     sampleText: sampleText,
     detectSeparator: detectSeparator
   };

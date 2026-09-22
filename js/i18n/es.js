@@ -381,6 +381,7 @@
         branchesLabel: 'Sucursales (sin selección = todas)',
         shiftTypes: 'Tipos de turno que puede hacer',
         maxShifts: 'Máximo de turnos por semana', note: 'Nota',
+        email: 'Correo (opcional)',
         deleteConfirm: '¿Eliminar a {name}? Sus asignaciones se quitarán de todas las semanas.',
         inactive: '(inactivo)', newName: 'Persona nueva'
       },
@@ -737,9 +738,16 @@
         countSkip: { one: 'una ya existe y se omitirá', other: '{count} ya existen y se omitirán' },
         countErrors: { one: 'una fila no se importará', other: '{count} filas no se importarán' },
         confirm: { one: 'Importar una persona', other: 'Importar {count} personas' },
+        countBranches: { one: 'se abrirá 1 sucursal nueva', other: 'se abrirán {count} sucursales nuevas' },
+        countDropped: { one: '1 fila quitada', other: '{count} filas quitadas' },
+        uncheckHint: 'Desmarca una fila para dejarla fuera.',
+        pickAll: 'Seleccionar todo',
+        undo: 'Deshacer la importación',
+        undone: 'Importación deshecha. Se eliminaron {count} fichas.',
+        sampleName: 'Ana García',
         open: 'Importar una lista',
         title: 'Importar personal',
-        hint: 'Selecciona tu lista en Excel, cópiala y pégala aquí, o elige un archivo CSV. La primera columna es el nombre. Después, si los tienes: ubicaciones, turnos y un límite semanal. Una ubicación que no exista se creará sola.',
+        hint: 'Selecciona tu lista en Excel, cópiala y pégala aquí, o elige un archivo CSV. La primera columna es el nombre. Después, si los tienes: ubicaciones, turnos y un límite semanal. Una ubicación que no exista se creará sola. Puedes añadir una columna de correo: evita una ficha duplicada de la misma persona.',
         placeholder: 'Dana Cohen\tSede central\tMañana;Tarde\t5',
         file: 'Elegir un archivo CSV',
         sample: 'Poner un ejemplo',
@@ -753,12 +761,16 @@
         blocked: '{count} no se añadieron por el límite del plan.',
         skip: {
           exists: 'ya está en el sistema',
-          duplicateInFile: 'aparece más de una vez en la lista'
+          duplicateInFile: 'aparece más de una vez en la lista',
+          emailExists: 'ya hay una ficha con {value}',
+          emailInvited: 'ya fue invitado con {value}',
+          duplicateEmailInFile: '{value} aparece más de una vez en la lista',
         },
         error: {
           noName: 'la fila no tiene nombre',
           badMax: 'el límite no es un número: {value}',
-          badShift: 'un turno que este negocio no ha definido: {value}'
+          badShift: 'un turno que este negocio no ha definido: {value}',
+          badEmail: 'dirección de correo no válida: {value}'
         }
       },
 

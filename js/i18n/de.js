@@ -381,6 +381,7 @@
         branchesLabel: 'Filialen (keine Auswahl = alle Filialen)',
         shiftTypes: 'Mögliche Schichttypen',
         maxShifts: 'Maximale Schichten pro Woche', note: 'Notiz',
+        email: 'E-Mail (optional)',
         deleteConfirm: '{name} löschen? Die Einteilungen werden aus allen Wochen entfernt.',
         inactive: '(inaktiv)', newName: 'Neue Person'
       },
@@ -737,9 +738,16 @@
         countSkip: { one: 'eine ist schon vorhanden und wird übersprungen', other: '{count} sind schon vorhanden und werden übersprungen' },
         countErrors: { one: 'eine Zeile wird nicht importiert', other: '{count} Zeilen werden nicht importiert' },
         confirm: { one: 'Eine Person importieren', other: '{count} Personen importieren' },
+        countBranches: { one: '1 neue Filiale wird angelegt', other: '{count} neue Filialen werden angelegt' },
+        countDropped: { one: '1 Zeile entfernt', other: '{count} Zeilen entfernt' },
+        uncheckHint: 'Haken entfernen, um eine Zeile auszulassen.',
+        pickAll: 'Alle auswählen',
+        undo: 'Import rückgängig machen',
+        undone: 'Import rückgängig gemacht. {count} Karten entfernt.',
+        sampleName: 'Anna Weber',
         open: 'Liste importieren',
         title: 'Mitarbeitende importieren',
-        hint: 'Markieren Sie Ihre Liste in Excel, kopieren Sie sie und fügen Sie sie hier ein – oder wählen Sie eine CSV-Datei. Die erste Spalte ist der Name. Danach, falls vorhanden: Standorte, Schichtarten und ein Wochenkontingent. Ein Standort, den es noch nicht gibt, wird angelegt.',
+        hint: 'Markieren Sie Ihre Liste in Excel, kopieren Sie sie und fügen Sie sie hier ein – oder wählen Sie eine CSV-Datei. Die erste Spalte ist der Name. Danach, falls vorhanden: Standorte, Schichtarten und ein Wochenkontingent. Ein Standort, den es noch nicht gibt, wird angelegt. Eine E-Mail-Spalte ist möglich – sie verhindert eine zweite Karte für dieselbe Person.',
         placeholder: 'Dana Cohen\tStandort Mitte\tFrüh;Abend\t5',
         file: 'CSV-Datei wählen',
         sample: 'Beispiel einfügen',
@@ -753,12 +761,16 @@
         blocked: '{count} wurden wegen des Tariflimits nicht hinzugefügt.',
         skip: {
           exists: 'schon im System',
-          duplicateInFile: 'kommt in der Liste mehr als einmal vor'
+          duplicateInFile: 'kommt in der Liste mehr als einmal vor',
+          emailExists: 'eine Karte nutzt bereits {value}',
+          emailInvited: 'bereits eingeladen mit {value}',
+          duplicateEmailInFile: '{value} kommt mehrfach in der Liste vor',
         },
         error: {
           noName: 'die Zeile hat keinen Namen',
           badMax: 'das Kontingent ist keine Zahl: {value}',
-          badShift: 'eine Schicht, die dieser Betrieb nicht definiert hat: {value}'
+          badShift: 'eine Schicht, die dieser Betrieb nicht definiert hat: {value}',
+          badEmail: 'keine gültige E-Mail-Adresse: {value}'
         }
       },
 

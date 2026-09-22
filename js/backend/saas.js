@@ -30,6 +30,15 @@
         return Model.withinPlanLimits(current ? current.company : session.company,
           { employees: employeeCount });
       },
+      /* הכתובות של מי שכבר יש לו חשבון בחברה. משמש את הייבוא כדי
+         לא לפתוח כרטיס שני למי שכבר הוזמן. כישלון אינו שובר את
+         הייבוא – הוא רק מוותר על בדיקת הכפילות הזו. */
+      listUserEmails: function () {
+        if (!Model.can(role, 'users.manage')) return Promise.resolve([]);
+        return backend.listUsers().then(function (users) {
+          return (users || []).map(function (user) { return user.email; });
+        }, function () { return []; });
+      },
       decideConstraint: function (weekKey, employeeId, dayIdx, decision) {
         return backend.decideConstraint(weekKey, employeeId, dayIdx, decision, '');
       },

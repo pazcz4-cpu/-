@@ -381,6 +381,7 @@
         branchesLabel: 'Succursales (aucune sélection = toutes)',
         shiftTypes: 'Types de service possibles',
         maxShifts: 'Maximum de services par semaine', note: 'Note',
+        email: 'E-mail (facultatif)',
         deleteConfirm: 'Supprimer {name} ? Ses affectations seront retirées de toutes les semaines.',
         inactive: '(inactif)', newName: 'Nouvelle personne'
       },
@@ -737,9 +738,16 @@
         countSkip: { one: 'une existe déjà et sera ignorée', other: '{count} existent déjà et seront ignorées' },
         countErrors: { one: 'une ligne ne sera pas importée', other: '{count} lignes ne seront pas importées' },
         confirm: { one: 'Importer une personne', other: 'Importer {count} personnes' },
+        countBranches: { one: '1 nouveau site sera créé', other: '{count} nouveaux sites seront créés' },
+        countDropped: { one: '1 ligne retirée', other: '{count} lignes retirées' },
+        uncheckHint: 'Décochez une ligne pour ne pas l’importer.',
+        pickAll: 'Tout sélectionner',
+        undo: 'Annuler l’import',
+        undone: 'Import annulé. {count} fiches supprimées.',
+        sampleName: 'Claire Martin',
         open: 'Importer une liste',
         title: 'Importer le personnel',
-        hint: 'Sélectionnez votre liste dans Excel, copiez-la et collez-la ici – ou choisissez un fichier CSV. La première colonne est le nom. Ensuite, si vous les avez : sites, types de service et une limite hebdomadaire. Un site qui n’existe pas encore sera créé.',
+        hint: 'Sélectionnez votre liste dans Excel, copiez-la et collez-la ici – ou choisissez un fichier CSV. La première colonne est le nom. Ensuite, si vous les avez : sites, types de service et une limite hebdomadaire. Un site qui n’existe pas encore sera créé. Vous pouvez ajouter une colonne e-mail : elle évite une deuxième fiche pour la même personne.',
         placeholder: 'Dana Cohen\tSite central\tMatin;Soir\t5',
         file: 'Choisir un fichier CSV',
         sample: 'Insérer un exemple',
@@ -753,12 +761,16 @@
         blocked: '{count} n’ont pas été ajoutées à cause de la limite de la formule.',
         skip: {
           exists: 'déjà dans le système',
-          duplicateInFile: 'apparaît plus d’une fois dans la liste'
+          duplicateInFile: 'apparaît plus d’une fois dans la liste',
+          emailExists: 'une fiche utilise déjà {value}',
+          emailInvited: 'déjà invité avec {value}',
+          duplicateEmailInFile: '{value} apparaît plusieurs fois dans la liste',
         },
         error: {
           noName: 'la ligne n’a pas de nom',
           badMax: 'la limite n’est pas un nombre : {value}',
-          badShift: 'un service que cette entreprise n’a pas défini : {value}'
+          badShift: 'un service que cette entreprise n’a pas défini : {value}',
+          badEmail: 'adresse e-mail non valide : {value}'
         }
       },
 

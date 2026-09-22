@@ -547,6 +547,9 @@
       if (!Array.isArray(emp.branches)) emp.branches = [];
       if (!Array.isArray(emp.shifts)) emp.shifts = Data.ALL_SHIFT_IDS.slice();
       if (typeof emp.maxShifts !== 'number') emp.maxShifts = 6;
+      /* כתובת מייל אופציונלית על הכרטיס. היא לא נדרשת לשיבוץ,
+         אבל היא מה שמבדיל בין שני עובדים עם שם דומה בייבוא. */
+      if (typeof emp.email !== 'string') emp.email = '';
       if (typeof emp.active !== 'boolean') emp.active = true;
     });
     state.branches.forEach(function (branch) {
@@ -703,6 +706,59 @@
     return prefix + '-' + Math.random().toString(36).slice(2, 8);
   }
 
+  /* ===== ביטול ייבוא =====
+     ייבוא שגוי הוא שלושים כרטיסים שצריך למחוק ביד אחד-אחד, ולכן
+     בפועל הלקוח פשוט לא מייבא. הפונקציה מסירה בדיוק את מה שנוצר
+     בייבוא – לפי מזהים, לא לפי שם – ומנקה אחריה: סניף שנמחק יורד
+     גם מהכרטיסים שנשארו, ושיבוץ שמפנה למי שנמחק נמחק גם הוא,
+     אחרת הסידור מציג "עובד לא ידוע". */
+  function removeImported(state, created) {
+    var empIds = {};
+    var branchIds = {};
+    (created.employees || []).forEach(function (item) { empIds[item.id || item] = true; });
+    (created.branches || []).forEach(function (item) { branchIds[item.id || item] = true; });
+    var removed = { employees: 0, branches: 0, assignments: 0, constraints: 0 };
+
+    state.employees = state.employees.filter(function (emp) {
+      if (!empIds[emp.id]) return true;
+      removed.employees++;
+      return false;
+    });
+    state.branches = state.branches.filter(function (branch) {
+      if (!branchIds[branch.id]) return true;
+      removed.branches++;
+      return false;
+    });
+
+    state.employees.forEach(function (emp) {
+      emp.branches = (emp.branches || []).filter(function (id) { return !branchIds[id]; });
+    });
+
+    Object.keys(state.weeks || {}).forEach(function (weekKey) {
+      var week = state.weeks[weekKey];
+      Object.keys(week.assignments || {}).forEach(function (key) {
+        if (branchIds[key.split('|')[1]]) {
+          delete week.assignments[key];
+          removed.assignments++;
+          return;
+        }
+        var list = week.assignments[key] || [];
+        var kept = list.filter(function (id) { return !empIds[id]; });
+        if (kept.length === list.length) return;
+        removed.assignments += list.length - kept.length;
+        if (kept.length) { week.assignments[key] = kept; }
+        else { delete week.assignments[key]; }
+      });
+      Object.keys(week.constraints || {}).forEach(function (key) {
+        if (!empIds[key.split('|')[0]]) return;
+        delete week.constraints[key];
+        removed.constraints++;
+      });
+    });
+
+    return removed;
+  }
+
   var API = {
     deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
     deadlinePassed: deadlinePassed, hoursToDeadline: hoursToDeadline,
@@ -739,6 +795,7 @@
     shiftColor: shiftColor,
     normalizeShifts: normalizeShifts,
     removeShift: removeShift,
+    removeImported: removeImported,
     activeShiftsForDay: activeShiftsForDay,
     isHoliday: isHoliday,
     holidayName: holidayName,

@@ -29,12 +29,31 @@
   var ctx = null;
   var plan = null;
   var timer = null;
+  /* שורות שהמנהל הוריד מהן את הסימון. לפי מספר שורה ולא לפי
+     אינדקס, כדי שהסימון לא יזוז כשהטקסט משתנה מעליו. */
+  var excluded = {};
+  var knownEmails = [];
 
   function close() {
     if (!host) return;
     host.classList.add('hidden');
     host.innerHTML = '';
     plan = null;
+    excluded = {};
+  }
+
+  function chosen() {
+    return plan ? plan.create.filter(function (row) { return !excluded[row.line]; }) : [];
+  }
+
+  /* סניפים שייפתחו בפועל, אחרי שהורדנו שורות */
+  function chosenBranches() {
+    if (!plan) return [];
+    var wanted = {};
+    chosen().forEach(function (row) {
+      row.branchNames.forEach(function (name) { wanted[name] = true; });
+    });
+    return plan.newBranches.filter(function (item) { return wanted[item.name]; });
   }
 
   function nameOfBranch(state, id) {
@@ -63,8 +82,21 @@
       return '<p class="import-empty">' + esc(t('importData.nothing')) + '</p>';
     }
 
+    var rows = chosen();
+    var branches = chosenBranches();
+    var dropped = plan.create.length - rows.length;
+
+    /* הסיכום סופר את מה שייווצר באמת, אחרי הורדת שורות – כולל
+       הסניפים. "ייווצרו 30 עובדים" בלי להזכיר שנפתחים גם 4
+       סניפים חדשים הוא בדיוק מה שמפתיע אחרי הלחיצה. */
     html += '<p class="import-counts">' +
-      '<b>' + esc(tCount('importData.countCreate', plan.create.length)) + '</b>';
+      '<b>' + esc(tCount('importData.countCreate', rows.length)) + '</b>';
+    if (branches.length) {
+      html += ' · <b>' + esc(tCount('importData.countBranches', branches.length)) + '</b>';
+    }
+    if (dropped) {
+      html += ' · ' + esc(tCount('importData.countDropped', dropped));
+    }
     if (plan.skip.length) {
       html += ' · ' + esc(tCount('importData.countSkip', plan.skip.length));
     }
@@ -74,21 +106,32 @@
     }
     html += '</p>';
 
-    if (plan.newBranches.length) {
+    if (branches.length) {
       html += '<p class="import-note">' + esc(t('importData.newBranches', {
-        names: plan.newBranches.map(function (item) { return item.name; }).join(', ')
+        names: branches.map(function (item) { return item.name; }).join(', ')
       })) + '</p>';
     }
 
     if (plan.create.length) {
+      var hasEmail = plan.create.some(function (row) { return !!row.email; });
+      html += '<p class="import-pick-hint">' + esc(t('importData.uncheckHint')) + '</p>';
       html += '<div class="import-table"><table><thead><tr>' +
+        '<th class="import-pick"><input type="checkbox" id="import-all"' +
+          (rows.length === plan.create.length ? ' checked' : '') +
+          ' aria-label="' + esc(t('importData.pickAll')) + '"></th>' +
         '<th>' + esc(t('users.nameColumn')) + '</th>' +
+        (hasEmail ? '<th>' + esc(t('users.emailColumn')) + '</th>' : '') +
         '<th>' + esc(t('branches.title')) + '</th>' +
         '<th>' + esc(t('schedule.shift')) + '</th>' +
         '<th>' + esc(t('importData.maxColumn')) + '</th>' +
         '</tr></thead><tbody>';
       plan.create.forEach(function (row) {
-        html += '<tr><td>' + esc(row.name) + '</td>' +
+        var off = excluded[row.line];
+        html += '<tr class="' + (off ? 'import-off' : '') + '">' +
+          '<td class="import-pick"><input type="checkbox" data-pick="' + esc(row.line) + '"' +
+            (off ? '' : ' checked') + ' aria-label="' + esc(row.name) + '"></td>' +
+          '<td>' + esc(row.name) + '</td>' +
+          (hasEmail ? '<td dir="ltr">' + esc(row.email || '—') + '</td>' : '') +
           '<td>' + esc(branchLabels(state, row)) + '</td>' +
           '<td>' + esc(shiftLabels(state, row.shifts)) + '</td>' +
           '<td>' + esc(row.maxShifts) + '</td></tr>';
@@ -100,7 +143,8 @@
       html += '<ul class="import-list">';
       plan.skip.forEach(function (item) {
         html += '<li>' + esc(t('importData.line', { line: item.line })) + ' ' +
-          esc(item.name) + ' — ' + esc(t('importData.skip.' + item.code)) + '</li>';
+          esc(item.name) + ' — ' +
+          esc(t('importData.skip.' + item.code, { value: item.value || '' })) + '</li>';
       });
       html += '</ul>';
     }
@@ -120,12 +164,23 @@
 
   function refresh() {
     var text = host.querySelector('#import-text').value;
-    plan = Import.planEmployees(ctx.getState(), text);
+    plan = Import.planEmployees(ctx.getState(), text, { knownEmails: knownEmails });
+    /* שורה שירדה מהתוכנית אינה יכולה להישאר מסומנת כמודרת */
+    var live = {};
+    plan.create.forEach(function (row) { live[row.line] = true; });
+    Object.keys(excluded).forEach(function (line) { if (!live[line]) delete excluded[line]; });
+    paint();
+  }
+
+  /* ציור בלבד, בלי לפרק מחדש את הטקסט: סימון תיבה אינו משנה את
+     מה שהודבק, וניתוח חוזר היה מאפס את מיקום הגלילה בטבלה. */
+  function paint() {
+    var count = chosen().length;
     host.querySelector('#import-preview').innerHTML = previewHtml();
     var confirm = host.querySelector('#import-confirm');
-    confirm.disabled = !plan.create.length;
-    confirm.textContent = plan.create.length
-      ? tCount('importData.confirm', plan.create.length)
+    confirm.disabled = !count;
+    confirm.textContent = count
+      ? tCount('importData.confirm', count)
       : t('importData.confirmEmpty');
   }
 
@@ -135,10 +190,12 @@
   }
 
   function apply() {
-    if (!plan || !plan.create.length) return;
+    if (!plan || !chosen().length) return;
+    var dropped = excluded;
     var result = Import.applyPlan(ctx.getState(), plan, {
       createEmployee: ctx.createEmployee,
-      createBranch: ctx.createBranch
+      createBranch: ctx.createBranch,
+      skipLine: function (line) { return !!dropped[line]; }
     });
     if (ctx.commit) ctx.commit();
 
@@ -150,7 +207,12 @@
       message += ' ' + t('importData.blocked', { count: result.blocked });
     }
     close();
-    if (ctx.toast) ctx.toast(message);
+    if (!ctx.toast) return;
+    /* ביטול מוצע מיד, כי זה הרגע היחיד שבו ברור מה בדיוק נוצר */
+    ctx.toast(message, ctx.undo && result.employees.length ? {
+      label: t('importData.undo'),
+      onClick: function () { ctx.undo(result); }
+    } : null);
   }
 
   function ensureHost() {
@@ -174,6 +236,22 @@
         return;
       }
       if (event.target.closest('#import-confirm')) { apply(); }
+    });
+    host.addEventListener('change', function (event) {
+      var pick = event.target.dataset && event.target.dataset.pick;
+      if (pick) {
+        if (event.target.checked) { delete excluded[pick]; }
+        else { excluded[pick] = true; }
+        paint();
+        return;
+      }
+      if (event.target.id === 'import-all') {
+        excluded = {};
+        if (!event.target.checked) {
+          plan.create.forEach(function (row) { excluded[row.line] = true; });
+        }
+        paint();
+      }
     });
     host.addEventListener('input', function (event) {
       if (event.target.id === 'import-text') schedule();
@@ -224,7 +302,18 @@
         '</div>' +
       '</div>';
     node.classList.remove('hidden');
+    excluded = {};
+    knownEmails = [];
     refresh();
+    if (ctx.loadEmails) {
+      ctx.loadEmails().then(function (list) {
+        knownEmails = list || [];
+        /* המסך עדיין פתוח? רק אז שווה לצייר מחדש */
+        if (host && !host.classList.contains('hidden') && host.querySelector('#import-text')) {
+          refresh();
+        }
+      }, function () { /* בלי הרשימה, הבדיקה היחידה היא לפי השם */ });
+    }
     var text = node.querySelector('#import-text');
     if (text) text.focus();
     return true;

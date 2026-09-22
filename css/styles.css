@@ -410,6 +410,21 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
   max-width: min(92vw, 420px); text-align: center;
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* פעולה בתוך ההודעה – "ביטול הייבוא". היא נראית ככפתור כי היא
+   כפתור, ואינה מתחזה לטקסט. */
+.toast-action {
+  margin-inline-start: 12px; padding: 3px 12px; border-radius: 999px;
+  border: 1px solid currentColor; background: none; color: inherit;
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+}
+.toast-action:hover { background: var(--toast-ink); color: var(--toast-bg); }
+.toast-action:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* ===== בחירת שורות בייבוא ===== */
+.import-pick { width: 34px; text-align: center; }
+.import-pick-hint { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+.import-off > td:not(.import-pick) { opacity: 0.4; text-decoration: line-through; }
 .hidden { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {

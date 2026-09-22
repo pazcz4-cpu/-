@@ -123,12 +123,29 @@
   }
 
   var toastTimer = null;
-  function toast(message) {
+  /* action = { label, onClick } – פעולה שאפשר לבצע מתוך ההודעה,
+     כמו ביטול. הודעה עם פעולה נשארת זמן כפול: מי שצריך לבטל צריך
+     קודם להבין מה קרה, ושתי שניות אינן מספיקות לזה. */
+  function toast(message, action) {
     var node = $('#toast');
-    node.textContent = message;
+    node.textContent = '';
+    node.appendChild(document.createTextNode(message));
+    if (action && action.label && action.onClick) {
+      var button = document.createElement('button');
+      button.className = 'toast-action';
+      button.type = 'button';
+      button.textContent = action.label;
+      button.addEventListener('click', function () {
+        clearTimeout(toastTimer);
+        node.classList.remove('show');
+        action.onClick();
+      });
+      node.appendChild(button);
+    }
     node.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { node.classList.remove('show'); }, 2600);
+    toastTimer = setTimeout(function () { node.classList.remove('show'); },
+      action ? 12000 : 2600);
   }
 
   /* מחלקת הצבע נגזרת מהגדרת המשמרת בעסק, ולא ממזהה קבוע */
@@ -788,6 +805,11 @@
       html += '</div></div>';
       html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
         '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
+      /* המייל אינו נדרש לשיבוץ. הוא יושב כאן כי הוא מגיע בייבוא,
+         והוא מה שמונע כרטיס כפול לאותו עובד בייבוא הבא. */
+      html += '<div class="field"><label class="title">' + t('employees.email') + '</label>' +
+        '<input class="text-input" type="email" dir="ltr" data-field="email" ' +
+        'value="' + esc(emp.email || '') + '"></div>';
       html += '<div class="field"><label class="title">' + t('employees.note') + '</label>' +
         '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
       html += '</div></div>';
@@ -1045,7 +1067,7 @@
     var employee = {
       id: Store.newId('emp'), name: String(name || '').trim() || t('employees.newName'),
       active: true, branches: [], shifts: Store.shiftIds(state).slice(),
-      maxShifts: 6, note: ''
+      maxShifts: 6, note: '', email: ''
     };
     state.employees.push(employee);
     /* כרטיס שנוסף ביד נפתח מיד – בשביל זה לחצו על הכפתור. בייבוא
@@ -1879,6 +1901,7 @@
       if (!emp || !field) return;
       if (field === 'active') emp.active = event.target.checked;
       else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
+      else if (field === 'email') emp.email = String(event.target.value || '').trim().toLowerCase();
       else emp[field] = event.target.value;
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();
@@ -1944,6 +1967,17 @@
           createBranch: function (name) { return addBranch(name, true); },
           /* כתיבה אחת בסוף, אחרי כל הכרטיסים */
           commit: function () { persist('config'); render(); },
+          /* כתובות שכבר יש להן חשבון בחברה. הן יושבות בשרת ולא
+             במצב, ולכן נטענות כשהמסך נפתח. */
+          loadEmails: source.listUserEmails || null,
+          /* ייבוא שגוי הוא שלושים כרטיסים למחיקה ביד. ביטול מסיר
+             בדיוק את מה שנוצר, כולל סניפים ושיבוצים שנגררו. */
+          undo: function (created) {
+            var removed = Store.removeImported(state, created);
+            persist('config');
+            render();
+            toast(t('importData.undone', { count: removed.employees }));
+          },
           toast: toast
         });
       });

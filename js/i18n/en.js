@@ -387,6 +387,7 @@
         branchesLabel: 'Locations (none selected = all locations)',
         shiftTypes: 'Shift types they can work',
         maxShifts: 'Maximum shifts per week', note: 'Note',
+        email: 'Email (optional)',
         deleteConfirm: 'Delete {name}? Their assignments will be removed from every week.',
         inactive: '(inactive)', newName: 'New person'
       },
@@ -743,9 +744,16 @@
         countSkip: { one: 'one already exists and will be skipped', other: '{count} already exist and will be skipped' },
         countErrors: { one: 'one row will not be imported', other: '{count} rows will not be imported' },
         confirm: { one: 'Import one person', other: 'Import {count} people' },
+        countBranches: { one: '1 new branch will open', other: '{count} new branches will open' },
+        countDropped: { one: '1 row removed', other: '{count} rows removed' },
+        uncheckHint: 'Uncheck a row to leave it out.',
+        pickAll: 'Select all',
+        undo: 'Undo the import',
+        undone: 'Import undone. {count} cards removed.',
+        sampleName: 'Dana Cohen',
         open: 'Import a list',
         title: 'Import staff',
-        hint: 'Select your list in Excel, copy it and paste it here – or choose a CSV file. The first column is the name. After it, if you have them: locations, shift types and a weekly limit. A location that does not exist yet will be created.',
+        hint: 'Select your list in Excel, copy it and paste it here – or choose a CSV file. The first column is the name. After it, if you have them: locations, shift types and a weekly limit. A location that does not exist yet will be created. An email column is optional, and it prevents a second card for the same person.',
         placeholder: 'Dana Cohen\tCentral location\tMorning;Evening\t5',
         file: 'Choose a CSV file',
         sample: 'Insert an example',
@@ -759,12 +767,16 @@
         blocked: '{count} were not added because of the plan limit.',
         skip: {
           exists: 'already in the system',
-          duplicateInFile: 'appears more than once in the list'
+          duplicateInFile: 'appears more than once in the list',
+          emailExists: 'a card already uses {value}',
+          emailInvited: 'already invited with {value}',
+          duplicateEmailInFile: '{value} appears more than once in the list',
         },
         error: {
           noName: 'the row has no name',
           badMax: 'the limit is not a number: {value}',
-          badShift: 'a shift this business has not defined: {value}'
+          badShift: 'a shift this business has not defined: {value}',
+          badEmail: 'that is not a valid email address: {value}'
         }
       },
 

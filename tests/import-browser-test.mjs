@@ -167,6 +167,89 @@ try {
   await page.click('.tab[data-tab="employees"]');
   await page.waitForTimeout(200);
 
+  console.log('\n== הורדת שורה מהייבוא ==');
+  const baseCount = await page.evaluate(() => window.ShiftApp.getState().employees.length);
+  const baseBranches = await page.evaluate(() => window.ShiftApp.getState().branches.length);
+  await page.click('#import-employees');
+  await page.waitForTimeout(300);
+  await paste([
+    'שם\tסניף',
+    'אביב רון\tסניף חולון',
+    'גלי שדה\tסניף חולון',
+    'תמר בר\tסניף רעננה'
+  ].join('\n'));
+  check('שלוש שורות מסומנות',
+    await page.locator('.import-table tbody input[data-pick]:checked').count(), 3);
+  check('הסיכום סופר גם סניפים',
+    (await page.locator('.import-counts').innerText()).trim(), /2 סניפים חדשים ייפתחו/);
+
+  await page.uncheck('.import-table tbody tr:nth-child(3) input[data-pick]');
+  await page.waitForTimeout(250);
+  check('הכפתור מתעדכן למה שנשאר',
+    (await page.locator('#import-confirm').innerText()).trim(), 'ייבוא 2 עובדים');
+  check('השורה שהורדה מסומנת חזותית',
+    await page.locator('.import-table tbody tr.import-off').count(), 1);
+  check('והסניף שאיש כבר לא צריך יורד מהסיכום',
+    (await page.locator('.import-counts').innerText()).trim(), /סניף חדש אחד ייפתח/);
+  check('ונאמר כמה שורות הוסרו',
+    (await page.locator('.import-counts').innerText()).trim(), /שורה אחת הוסרה/);
+
+  await page.click('#import-confirm');
+  await page.waitForTimeout(700);
+  const names = await page.evaluate(() =>
+    window.ShiftApp.getState().employees.map((e) => e.name));
+  check('רק המסומנים נוצרו', names.includes('אביב רון') && names.includes('גלי שדה'), true);
+  check('ומי שהורד לא נוצר', names.includes('תמר בר'), false);
+  check('וסניף רעננה לא נפתח', await page.evaluate(
+    () => window.ShiftApp.getState().branches.some((b) => b.name === 'סניף רעננה')), false);
+
+  console.log('\n== ביטול ייבוא ==');
+  check('ההודעה מציעה ביטול', await page.locator('.toast-action').isVisible(), true);
+  await page.click('.toast-action');
+  await page.waitForTimeout(600);
+  check('הכרטיסים הוסרו', await page.evaluate(
+    () => window.ShiftApp.getState().employees.length), baseCount);
+  check('והסניף שנפתח בייבוא הוסר איתם', await page.evaluate(
+    () => window.ShiftApp.getState().branches.length), baseBranches);
+  check('ונאמר שהייבוא בוטל',
+    (await page.locator('#toast').innerText()).trim(), /הייבוא בוטל/);
+  check('גם הרשימה על המסך התעדכנה',
+    await page.locator('#employees-list .card').count(), baseCount);
+
+  console.log('\n== כפילות לפי מייל ==');
+  await page.click('#import-employees');
+  await page.waitForTimeout(300);
+  await paste([
+    'שם\tמייל',
+    'נועם דר\tnoam@x.co.il',
+    'נ. דר\tNOAM@X.CO.IL',
+    'שקד לוי\tלא-מייל'
+  ].join('\n'));
+  check('רק אחד ייווצר',
+    (await page.locator('.import-counts').innerText()).trim(), /עובד אחד ייווצר/);
+  check('הכפילות במייל מוסברת',
+    (await page.locator('.import-list').first().innerText()), /מופיע יותר מפעם אחת/);
+  check('ומייל שבור נעצר',
+    (await page.locator('.import-list.import-bad').innerText()), /כתובת מייל שאינה תקינה/);
+  check('טור המייל מוצג בתצוגה המקדימה',
+    (await page.locator('.import-table tbody').innerText()), /noam@x\.co\.il/);
+  await page.click('#import-confirm');
+  await page.waitForTimeout(700);
+
+  check('המייל נשמר על הכרטיס', await page.evaluate(() =>
+    (window.ShiftApp.getState().employees.filter((e) => e.name === 'נועם דר')[0] || {}).email),
+    'noam@x.co.il');
+
+  await page.click('#import-employees');
+  await page.waitForTimeout(300);
+  await paste('שם\tמייל\nמישהו אחר לגמרי\tnoam@x.co.il');
+  check('מייל שכבר על כרטיס קיים חוסם ייבוא חוזר',
+    (await page.locator('.import-counts').innerText()).trim(), /0 עובדים ייווצרו/);
+  check('והסיבה נאמרת',
+    (await page.locator('.import-list').first().innerText()), /כבר יש כרטיס עם המייל/);
+  await page.click('[data-import-close]');
+  await page.waitForTimeout(300);
+
   console.log('\n== מצב צפייה חוסם ייבוא ==');
   await page.click('.tab[data-tab="schedule"]');
   await page.waitForTimeout(200);

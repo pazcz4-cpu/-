@@ -716,6 +716,7 @@
         loadFailed: 'تعذّر تحميل البيانات: {message}',
         saveFailed: 'فشل الحفظ', reasonSaveFailed: 'تعذّر حفظ السبب',
         myShifts: 'مناوباتي', myRequests: 'طلباتي',
+        requestsLeftShort: 'طلبات متبقية',
         notPublished: 'لم يُنشر جدول هذا الأسبوع بعد.',
         noShifts: 'لا توجد لك مناوبات هذا الأسبوع.',
         totalWeek: '{count} مناوبات هذا الأسبوع.',

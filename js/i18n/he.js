@@ -721,6 +721,7 @@
         loadFailed: 'לא ניתן לטעון את הנתונים: {message}',
         saveFailed: 'השמירה נכשלה', reasonSaveFailed: 'שמירת הסיבה נכשלה',
         myShifts: 'המשמרות שלי', myRequests: 'האילוצים שלי',
+        requestsLeftShort: 'בקשות נותרו',
         notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
         noShifts: 'אין לך משמרות בשבוע הזה.',
         totalWeek: 'סה״כ {count} משמרות השבוע.',

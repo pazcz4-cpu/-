@@ -7,7 +7,7 @@
   --surface-sunken: #fbfcff;
   --input-bg: rgba(255, 255, 255, .78);
   --ink: #1d2733;
-  --muted: #66748a;
+  --muted: #58657c;
   --line: #dfe4ef;
   --brand: #2f5fe0;
   --brand-dark: #23499f;
@@ -43,7 +43,7 @@
   --ok: #1a7048;
   --ok-bg: #e6f5ec;
   --ok-line: #b2dfc4;
-  --badge-warn: #d9941f;
+  --badge-warn: #a0690a;
   --off-day: #48546a;
 
   --header-from: #23499f;
@@ -523,14 +523,27 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .need-row label { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
 
 /* ===== אילוצים ===== */
+/* כפתור מצב: אייקון, שם המשמרת, והמילה של המצב כשנבחר.
+   שלושה סימנים ולא צבע בלבד – מי שאינו מבחין בין ירוק לאדום,
+   ומי שמסתכל בשמש על טלפון, צריכים לדעת מה סומן. */
 .cstate {
-  border: 1px solid var(--line); border-radius: 7px; padding: 3px 7px; font-size: 12px;
+  display: inline-flex; align-items: center; gap: var(--s1);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--s1) var(--s2); font-size: var(--t-xs);
   cursor: pointer; font-family: inherit; margin: 1px; min-width: 42px;
   background: var(--surface); color: var(--muted);
+  transition: background .12s, border-color .12s, color .12s;
+}
+.cstate .ico { opacity: .75; }
+.cstate-state {
+  font-size: 11px; font-weight: 700; opacity: .9;
+  padding-inline-start: var(--s1); border-inline-start: 1px solid currentColor;
 }
 .cstate.pref { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); font-weight: 700; }
-.cstate.block { background: var(--err-bg); border-color: var(--err-line); color: var(--err); font-weight: 700; text-decoration: line-through; }
+.cstate.block { background: var(--err-bg); border-color: var(--err-line); color: var(--err); font-weight: 700; }
+.cstate.block .cstate-name { text-decoration: line-through; }
 .cstate.off-day { background: var(--off-day); border-color: var(--off-day); color: #fff; font-weight: 700; }
+.cstate.pref .ico, .cstate.block .ico, .cstate.off-day .ico { opacity: 1; }
 .day-off-btn { display: block; width: 100%; margin-top: 3px; }
 .legend { border-radius: 6px; padding: 1px 8px; font-size: 12px; margin: 0 2px; }
 .legend.free { background: var(--surface); border: 1px solid var(--line); }
@@ -765,7 +778,10 @@ body { -webkit-tap-highlight-color: transparent; }
 .m-card.holiday { border-color: var(--err-line); }
 .m-constraint .m-card-head { font-size: 14px; padding: 8px 12px; }
 .m-cstates { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
-.m-cstates .cstate { flex: 1 1 auto; min-width: 70px; min-height: 40px; font-size: 13.5px; }
+.m-cstates .cstate {
+  flex: 1 1 auto; min-width: 96px; min-height: 46px; font-size: var(--t-sm);
+  justify-content: center;
+}
 
 /* ===== תצוגה לפי עובד בטלפון: כרטיס לעובד, שבוע שלם בפנים ===== */
 .m-card-head:has(.m-emp-total) { display: flex; align-items: baseline; gap: 10px; }
@@ -823,7 +839,7 @@ body { -webkit-tap-highlight-color: transparent; }
     font-size: 16px; min-height: 42px; padding: 9px 11px;
   }
   .num-input { width: 82px; }
-  .cstate { min-height: 38px; padding: 6px 10px; font-size: 13px; }
+  .cstate { min-height: 46px; padding: var(--s2) var(--s3); font-size: var(--t-sm); }
   .chip, .holiday-chip { min-height: 36px; }
   .check { min-height: 34px; }
   input[type="checkbox"] { width: 20px; height: 20px; }
@@ -1182,16 +1198,43 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px; margin-bottom: 14px; font-size: 15px;
 }
-.employee-title { font-size: 16px; margin: 20px 0 10px; }
-.employee-note { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+/* שלושת המספרים שעובד פותח את המסך בשבילם: כמה משמרות יש לי,
+   כמה בקשות ממתינות, וכמה נשארו. קודם הם היו פזורים בשלושה
+   מקומות, אחד מהם בתחתית המסך. */
+.employee-summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--s2); margin: var(--s4) 0 var(--s5);
+}
+.sum-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s3) var(--s2);
+  box-shadow: var(--e1); text-align: center;
+}
+.sum-tile .ico { color: var(--muted); }
+.sum-tile b {
+  font-size: var(--t-2xl); line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.sum-tile span { font-size: var(--t-xs); color: var(--muted); }
+.sum-tile.strong { border-color: var(--brand); }
+.sum-tile.strong b, .sum-tile.strong .ico { color: var(--brand); }
+.sum-tile.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+.sum-tile.warn b, .sum-tile.warn .ico, .sum-tile.warn span { color: var(--warn); }
+.sum-tile.spent { background: var(--err-bg); border-color: var(--err-line); }
+.sum-tile.spent b, .sum-tile.spent .ico, .sum-tile.spent span { color: var(--err); }
+
+.employee-title { font-size: var(--t-lg); margin: var(--s5) 0 var(--s3); }
+.employee-note { font-size: var(--t-sm); color: var(--muted); margin: 0 0 var(--s3); }
 .employee-flash {
   margin: 0 0 12px; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
   background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line);
 }
 .employee-shifts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .employee-shift {
-  border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
-  border-inline-start-width: 4px; border-inline-start-style: solid;
+  background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s3);
+  border-inline-start-width: 5px; border-inline-start-style: solid;
+  border-inline-start-color: var(--sh-line); box-shadow: var(--e1);
 }
 .employee-shift b { font-size: 15px; }
 .employee-shift span { font-size: 12.5px; color: var(--muted); margin-inline-start: 6px; }
@@ -1424,7 +1467,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 /* המכסה שנותרה לעובד. כשהיא אוזלת היא מפסיקה להיות הערה ונעשית
    מצב — ולכן משנה צבע ולא רק טקסט. */
 .limit-note { font-weight: 500; }
-.limit-note.spent { color: var(--badge-warn); }
+/* טקסט אזהרה בכתום בהיר לא נקרא. --warn הוא הגרסה הכהה שלו,
+   ועליו הניגודיות עוברת AA גם על רקע לבן. */
+.limit-note.spent { color: var(--warn); font-weight: 700; }
 
 /* ===== כותרת האזור האישי =====
    מסך העובד נפתח מקישור במייל, לרוב בטלפון, ולעיתים חודשים

@@ -716,6 +716,7 @@
         loadFailed: 'Impossible de charger les données : {message}',
         saveFailed: 'Échec de l’enregistrement', reasonSaveFailed: 'Impossible d’enregistrer le motif',
         myShifts: 'Mes services', myRequests: 'Mes demandes',
+        requestsLeftShort: 'Demandes restantes',
         notPublished: 'Le planning de cette semaine n’est pas encore publié.',
         noShifts: 'Vous n’avez aucun service cette semaine.',
         totalWeek: '{count} services cette semaine.',

@@ -716,6 +716,7 @@
         loadFailed: 'Не удалось загрузить данные: {message}',
         saveFailed: 'Не удалось сохранить', reasonSaveFailed: 'Не удалось сохранить причину',
         myShifts: 'Мои смены', myRequests: 'Мои заявки',
+        requestsLeftShort: 'Заявок осталось',
         notPublished: 'График этой недели ещё не опубликован.',
         noShifts: 'На этой неделе у вас нет смен.',
         totalWeek: 'Смен на этой неделе: {count}.',

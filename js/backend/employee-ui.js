@@ -10,6 +10,10 @@
 
   /* הלוגו מגיע מ-ShiftBrand כדי שהנתיב ייפתר נכון גם באתר החי
      (המערכת מוגשת מ-/app/) וגם בפתיחה מקומית. */
+  function ico(name, extraClass) {
+    return root.ShiftIcons ? root.ShiftIcons.svg(name, extraClass) : '';
+  }
+
   function brandLockup() {
     return root.ShiftBrand ? root.ShiftBrand.lockupImg('SetShifts') : '';
   }
@@ -217,6 +221,30 @@
   };
 
   /* המשמרות שהעובד שובץ אליהן השבוע */
+  /* ארבעת מצבי האילוץ, כל אחד עם האייקון והמילה שלו. הצבע הוא
+     הסימן השלישי ולא היחיד: מי שאינו מבחין בין ירוק לאדום צריך
+     לדעת מה הוא סימן, וגם מי שמסתכל בשמש על טלפון. */
+  var STATES = {
+    free:  { icon: 'circleEmpty', label: 'constraints.free' },
+    pref:  { icon: 'star',        label: 'constraints.preferred' },
+    block: { icon: 'ban',         label: 'constraints.blocked' },
+    'off-day': { icon: 'home',    label: 'constraints.dayOff' }
+  };
+
+  function stateButton(cls, shiftLabel, attrs, locked) {
+    var state = STATES[cls] || STATES.free;
+    var word = t(state.label);
+    return '<button class="cstate ' + cls + '" ' + attrs +
+      ' aria-pressed="' + (cls === 'free' ? 'false' : 'true') + '"' +
+      ' aria-label="' + esc(shiftLabel + ' – ' + word) + '"' + (locked || '') + '>' +
+      ico(state.icon) +
+      '<span class="cstate-name">' + esc(shiftLabel) + '</span>' +
+      /* המילה מוצגת רק כשנבחר משהו. "זמין" על כל כפתור שלא נגעו
+         בו הוא רעש, וההיעדר שלה הוא בעצמו הסימן. */
+      (cls === 'free' ? '' : '<span class="cstate-state">' + esc(word) + '</span>') +
+      '</button>';
+  }
+
   EmployeeUI.prototype._myShifts = function () {
     var self = this;
     var out = [];
@@ -300,8 +328,38 @@
       return;
     }
 
-    /* המשמרות שלי */
+    /* ===== שלושת המספרים =====
+       מה שעובד פותח את המסך בשבילו: כמה משמרות יש לי, כמה
+       בקשות עוד ממתינות, וכמה בקשות נשארו לי. עד עכשיו הם היו
+       פזורים בשלושה מקומות שונים במסך, אחד מהם בתחתיתו. */
     var shifts = this._myShifts();
+    var pending = 0;
+    var decided = 0;
+    Data.DAYS.forEach(function (day) {
+      var status = Store.constraintStatus(self._record(day.idx));
+      if (status === Store.CONSTRAINT_STATUS.PENDING) pending++;
+      else if (status) decided++;
+    });
+    var cap = Store.constraintLimitSettings(this.state);
+    var left = cap.enabled ? this._left() : null;
+
+    html += '<div class="employee-summary">';
+    html += '<div class="sum-tile' + (this.week.published && shifts.length ? ' strong' : '') + '">' +
+      ico('clock', 'ico-lg') +
+      '<b>' + (this.week.published ? shifts.length : '—') + '</b>' +
+      '<span>' + esc(t('employee.myShifts')) + '</span></div>';
+    html += '<div class="sum-tile' + (pending ? ' warn' : '') + '">' +
+      ico(pending ? 'clock' : 'checkCircle', 'ico-lg') +
+      '<b>' + pending + '</b>' +
+      '<span>' + esc(t('constraints.pending')) + '</span></div>';
+    if (left !== null) {
+      html += '<div class="sum-tile' + (left === 0 ? ' spent' : '') + '">' +
+        ico('star', 'ico-lg') +
+        '<b>' + left + '</b>' +
+        '<span>' + esc(t('employee.requestsLeftShort')) + '</span></div>';
+    }
+    html += '</div>';
+
     html += '<h2 class="employee-title">' + t('employee.myShifts') + '</h2>';
     if (!this.week.published) {
       html += '<p class="employee-note">' + t('employee.notPublished') + '</p>';
@@ -310,7 +368,10 @@
     } else {
       html += '<div class="employee-shifts">';
       shifts.forEach(function (item) {
-        html += '<div class="employee-shift ' + 'shift-' + item.shiftId + '">' +
+        /* צבע לפי סוג המשמרת של העסק, ולא לפי שלושת השמות
+           הישנים – עסק שהגדיר "לילה" קיבל קודם כרטיס בלי צבע. */
+        html += '<div class="employee-shift sh sh-' +
+            Store.shiftColor(self.state, item.shiftId) + '">' +
           '<b>' + esc(item.day) + '</b><span>' + esc(item.date) + '</span>' +
           '<div>' + esc(item.branch) + ' · ' + esc(item.shift) + '</div>' +
           (item.hours ? '<small>' + esc(item.hours) + '</small>' : '') +
@@ -332,10 +393,9 @@
       })) + '<br><b>' + esc(t('constraints.needsApproval')) + '</b></p>';
 
       /* המכסה נאמרת מראש. עובד שמגלה אותה רק כשהוא נחסם חושב
-         שהמערכת תקולה, ולא שיש כלל. */
-      var cap = Store.constraintLimitSettings(this.state);
+         שהמערכת תקולה, ולא שיש כלל. המספר כבר באריח שלמעלה;
+         כאן הניסוח המלא, שאומר גם מה קורה כשהיא נגמרת. */
       if (cap.enabled) {
-        var left = this._left();
         html += '<p class="employee-note limit-note' + (left === 0 ? ' spent' : '') + '">' +
           esc(left === 0
             ? t('employee.limitSpent', { max: cap.max })
@@ -376,12 +436,11 @@
           if (constraint.off) cls = 'off-day';
           else if (constraint.blocked && constraint.blocked[shiftId]) cls = 'block';
           else if (constraint.preferred && constraint.preferred[shiftId]) cls = 'pref';
-          html += '<button class="cstate ' + cls + '" data-day="' + day.idx +
-            '" data-shift="' + shiftId + '"' + locked + '>' + esc(Store.shiftName(self.state, shiftId)) + '</button>';
+          html += stateButton(cls, Store.shiftName(self.state, shiftId),
+            'data-day="' + day.idx + '" data-shift="' + shiftId + '"', locked);
         });
-        html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
-          '" data-day="' + day.idx + '" data-off="1"' + locked + '>' +
-          (constraint.off ? '✓ ' : '') + esc(t('constraints.dayOff')) + '</button>';
+        html += stateButton(constraint.off ? 'off-day' : 'free', t('constraints.dayOff'),
+          'data-day="' + day.idx + '" data-off="1"', locked);
         html += '</div>';
         var record = self._record(day.idx);
         if (record && !self.week.published) {

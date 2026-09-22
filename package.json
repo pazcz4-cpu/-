@@ -29,6 +29,7 @@
     "test:view": "node tests/view-browser-test.mjs",
     "test:toolbar": "node tests/toolbar-browser-test.mjs",
     "test:cells": "node tests/cells-browser-test.mjs",
+    "test:empscreen": "node tests/employee-screen-test.mjs",
     "brand": "node tools/logo.js",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",

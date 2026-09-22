@@ -716,6 +716,7 @@
         loadFailed: 'Die Daten konnten nicht geladen werden: {message}',
         saveFailed: 'Speichern fehlgeschlagen', reasonSaveFailed: 'Der Grund konnte nicht gespeichert werden',
         myShifts: 'Meine Schichten', myRequests: 'Meine Wünsche',
+        requestsLeftShort: 'Anfragen übrig',
         notPublished: 'Der Plan für diese Woche ist noch nicht veröffentlicht.',
         noShifts: 'Sie haben diese Woche keine Schichten.',
         totalWeek: '{count} Schichten diese Woche.',

@@ -716,6 +716,7 @@
         loadFailed: 'Não foi possível carregar os dados: {message}',
         saveFailed: 'Não foi possível guardar', reasonSaveFailed: 'Não foi possível guardar o motivo',
         myShifts: 'Os meus turnos', myRequests: 'Os meus pedidos',
+        requestsLeftShort: 'Pedidos restantes',
         notPublished: 'O horário desta semana ainda não foi publicado.',
         noShifts: 'Não tens turnos esta semana.',
         totalWeek: '{count} turnos esta semana.',

@@ -722,6 +722,7 @@
         loadFailed: 'Could not load the data: {message}',
         saveFailed: 'Saving failed', reasonSaveFailed: 'Could not save the reason',
         myShifts: 'My shifts', myRequests: 'My requests',
+        requestsLeftShort: 'Requests left',
         notPublished: 'The schedule for this week has not been published yet.',
         noShifts: 'You have no shifts this week.',
         totalWeek: '{count} shifts this week.',

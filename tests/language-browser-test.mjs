@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -33,6 +34,8 @@ async function open(url, locale) {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('dialog', async d => { await d.accept(); });
+  /* האשף מכסה את המסך בחשבון חדש; הבדיקה הזו על השפה, לא עליו */
+  await skipWizard(page);
   await page.goto(url);
   await page.waitForTimeout(500);
   return { ctx, page, errors };

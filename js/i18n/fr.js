@@ -634,7 +634,7 @@
         noCard: 'Non ajouté',
         addCard: 'Ajouter un moyen de paiement',
         noCardWarning: 'Aucun moyen de paiement. Sans cela, l’accès prend fin le {date}.',
-        pilotNotice: 'Le service est en phase pilote et ne facture rien. L’accès est ouvert jusqu’au {date}, et nous vous contacterons avant tout prélèvement.',
+        pilotNotice: "Le service est en phase pilote. Rien ne sera facturé sans votre accord. Nous vous contacterons avant la fin de la période d'essai.",
         pilotHint: 'Aucun moyen de paiement n’est requis à ce stade. Les tarifs sont indiqués pour que vous sachiez à quoi vous attendre.',
         trialNotice: 'Aucun prélèvement pendant les {days} premiers jours. Le premier prélèvement a lieu le {date} pour {price}, puis chaque mois — jusqu’à résiliation.',
         cancelBeforeCharge: 'Résilier avant le prélèvement',

@@ -634,7 +634,7 @@
         noCard: 'Não adicionado',
         addCard: 'Adicionar método de pagamento',
         noCardWarning: 'Ainda não há método de pagamento. Sem ele, o acesso termina a {date}.',
-        pilotNotice: 'O serviço está em fase piloto e não efetua cobranças. O acesso está aberto até {date}, e entraremos em contacto antes de qualquer cobrança.',
+        pilotNotice: 'O serviço está em fase piloto. Nada será cobrado sem a sua aprovação. Entraremos em contacto antes de a experiência terminar.',
         pilotHint: 'Não é necessário um método de pagamento nesta fase. Os preços estão aqui para saber o que esperar.',
         trialNotice: 'Não és cobrado nos primeiros {days} dias. A primeira cobrança é a {date} no valor de {price}, e depois todos os meses — até cancelares.',
         cancelBeforeCharge: 'Cancelar antes da cobrança',

@@ -640,7 +640,7 @@
         noCard: 'Not added',
         addCard: 'Add a payment method',
         noCardWarning: 'No payment method yet. Without one, access ends on {date}.',
-        pilotNotice: 'The service is in a pilot period and is not charging. Access is open until {date}, and we will contact you before any charge begins.',
+        pilotNotice: 'The service is in a pilot period. Nothing will be charged without your approval. We will get in touch before the trial ends.',
         pilotHint: 'No payment method is needed at this stage. The prices are here so you know what to expect.',
         trialNotice: 'You are not charged for the first {days} days. The first charge is on {date} for {price}, and monthly after that — until you cancel.',
         cancelBeforeCharge: 'Cancel before the charge',

@@ -634,7 +634,7 @@
         noCard: 'Nicht hinterlegt',
         addCard: 'Zahlungsmethode hinzufügen',
         noCardWarning: 'Noch keine Zahlungsmethode. Ohne sie endet der Zugang am {date}.',
-        pilotNotice: 'Der Dienst befindet sich in einer Pilotphase und rechnet nicht ab. Der Zugang ist bis {date} offen, und wir melden uns, bevor eine Abrechnung beginnt.',
+        pilotNotice: 'Der Dienst befindet sich in einer Pilotphase. Ohne Ihre Zustimmung wird nichts abgebucht. Wir melden uns vor Ende der Testphase.',
         pilotHint: 'In dieser Phase ist kein Zahlungsmittel nötig. Die Preise stehen hier, damit Sie wissen, was Sie erwartet.',
         trialNotice: 'In den ersten {days} Tagen wird nichts abgebucht. Die erste Abbuchung erfolgt am {date} über {price}, danach monatlich – bis Sie kündigen.',
         cancelBeforeCharge: 'Vor der Abbuchung kündigen',

@@ -7,7 +7,7 @@
   background: var(--bg);
 }
 
-.landing-wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; }
+.landing-wrap { max-width: 1100px; margin: 0 auto; padding-inline: var(--s5); }
 
 /* ===== סרגל עליון ===== */
 .lp-nav {
@@ -43,10 +43,10 @@
 
 /* ===== כפתורים ===== */
 .lp-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  border: 1px solid transparent; border-radius: 11px;
-  padding: 11px 20px; font: inherit; font-weight: 600; font-size: 15px;
-  text-decoration: none; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  border: 1px solid transparent; border-radius: var(--r-md);
+  padding: var(--s3) var(--s5); font: inherit; font-weight: 600; font-size: var(--t-base);
+  text-decoration: none; cursor: pointer; white-space: nowrap; min-height: 44px;
   transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
 }
 .lp-btn:hover { transform: translateY(-1px); }
@@ -114,13 +114,16 @@
 
 .lp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .lp-card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-  padding: 22px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--s5); box-shadow: var(--e1);
 }
 .lp-section-alt .lp-card { background: var(--surface-sunken); }
 .lp-card h3 { margin: 0 0 8px; font-size: 17.5px; }
 .lp-card p { margin: 0; color: var(--muted); font-size: 15px; }
-.lp-card-icon { font-size: 24px; line-height: 1; display: block; margin-bottom: 12px; }
+/* האייקון הוא SVG בקו של המערכת, ולא אימוג'י שנראה אחרת בכל
+   מערכת הפעלה. הגודל נגזר מהטקסט, כמו בכל מקום אחר. */
+.lp-card-icon { display: block; margin-bottom: var(--s3); color: var(--brand); }
+.lp-card-icon .ico { width: 26px; height: 26px; }
 
 /* צעדים ממוספרים */
 .lp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; counter-reset: step; }
@@ -160,8 +163,8 @@
 /* ===== שאלות ===== */
 .lp-faq { max-width: 760px; margin: 0 auto; }
 .lp-faq details {
-  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
-  padding: 15px 18px; margin-bottom: 11px;
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+  padding: var(--s4); margin-bottom: var(--s3);
 }
 .lp-section-alt .lp-faq details { background: var(--surface-sunken); }
 .lp-faq summary { font-weight: 600; cursor: pointer; font-size: 16px; }

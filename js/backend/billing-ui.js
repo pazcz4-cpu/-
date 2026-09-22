@@ -61,7 +61,9 @@
     if (onTrial && !company.cancelAtPeriodEnd) {
       html += '<p class="billing-trial' + (hasCard || !live ? '' : ' warn') + '">' +
         esc(!live
-          ? t('billing.pilotNotice', { date: formatDate(company.validUntil) })
+          /* בלי {date}: התאריך כבר מופיע בשורת "החיוב הראשון"
+             שמתחת, ופעמיים זה רעש. */
+          ? t('billing.pilotNotice')
           : (hasCard
             ? t('billing.trialNotice', {
                 days: Model.TRIAL_DAYS, date: formatDate(company.validUntil), price: price })

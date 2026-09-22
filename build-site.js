@@ -113,6 +113,10 @@ copyDir('js', 'js', (name) => name.endsWith('.js'));
 /* הלוגו. קובץ המקור אינו נדרש באתר החי – ממנו נגזרו כל השאר. */
 copyDir('brand', 'brand', (name) => name.endsWith('.png') && name !== 'logo-source.png');
 
+/* נכסי הסרטון. ה-mp4 עצמו אינו במאגר כל עוד הוא לא צולם; אם
+   הוא קיים – הוא נוסע איתם. README אינו חלק מהאתר. */
+copyDir('assets', 'assets', (name) => !name.endsWith('.md'));
+
 /* ===== אייקונים ===== */
 const ICONS = [
   { file: 'icon-32.png', size: 32, square: true },
@@ -129,6 +133,9 @@ ICONS.forEach((icon) => {
 /* תמונת השיתוף: מה שמופיע כשמדביקים קישור לאתר. ריבוע של אייקון
    נראה שם אבוד, ולכן זו הנעילה המלאה ביחס שהרשתות מצפות לו. */
 write(path.join('icons', 'social.png'), icons.drawSocial(1200, 630));
+/* תמונת הפתיחה של הסרטון, נגזרת מהלוגו בכל בנייה – כך היא לא
+   מתיישנת אם הלוגו מתעדכן. */
+write(path.join('assets', 'video', 'poster.png'), icons.drawPoster(1280, 720));
 
 /* ===== manifest לכל אפליקציה ===== */
 function manifest(options) {
@@ -177,9 +184,17 @@ fs.copyFileSync(path.join(root, 'sw.js'), path.join(out, 'sw.js'));
 function toAbsolutePaths(html) {
   return html
     .replace(/(src|href)="(?!https?:|\/|#|data:|mailto:)([^"]+)"/g, (match, attr, value) => {
-      if (/^(css|js|icons|brand)\//.test(value)) return attr + '="/' + value + '"';
+      if (/^(css|js|icons|brand|assets)\//.test(value)) return attr + '="/' + value + '"';
       return match;
     });
+}
+
+/* האם הסרטון קיים. הדף נשלח כבר במצב הנכון, ולכן אין בדיקה
+   מהדפדפן – ואין 404 בקונסול של כל מבקר. */
+function markVideo(html) {
+  const ready = fs.existsSync(path.join(root, 'assets', 'video', 'setshifts-demo-he.mp4'));
+  if (!ready) return html;
+  return html.replace('data-video-ready="0"', 'data-video-ready="1"');
 }
 
 /* כותרת ותיאור דף המכירה, לשימוש חוזר בתגיות השיתוף.
@@ -249,7 +264,7 @@ const SW_REGISTER = `
 </script>`;
 
 function page(source, target, options) {
-  let html = fillLegal(toAbsolutePaths(read(source)));
+  let html = markVideo(fillLegal(toAbsolutePaths(read(source))));
   html = html.replace('</head>', headExtras(options) + '\n</head>');
   html = html.replace('</body>', SW_REGISTER + '\n</body>');
   write(target, html);

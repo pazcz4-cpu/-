@@ -267,3 +267,59 @@
 @media (max-width: 760px) {
   .legal h2 { margin-top: 26px; }
 }
+
+/* ===================== הסרטון בדף הבית ===================== */
+.lp-video-section { background: var(--surface); }
+.lp-video {
+  max-width: 880px; margin: var(--s6) auto 0;
+  border-radius: var(--r-xl); overflow: hidden;
+  box-shadow: var(--e3); background: var(--header-from);
+}
+
+/* תמונת הפתיחה היא כפתור, ולא תמונה עם כפתור מעליה: כך היא
+   מקבלת פוקוס מקלדת, מצב hover ושם לקורא מסך. */
+.lp-video-play {
+  position: relative; display: block; width: 100%;
+  padding: 0; border: 0; background: none; cursor: pointer;
+  aspect-ratio: 16 / 9;
+}
+.lp-video-play.hidden { display: none; }
+.lp-video-play img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lp-video-mark {
+  position: absolute; inset-inline-start: 50%; top: 66%;
+  transform: translate(-50%, -50%);
+  width: 78px; height: 78px; border-radius: var(--r-pill);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand); background: transparent;
+  transition: transform .15s ease;
+}
+[dir="rtl"] .lp-video-mark { transform: translate(50%, -50%); }
+.lp-video-mark .ico { width: 34px; height: 34px; margin-inline-start: 3px; }
+.lp-video-play:hover .lp-video-mark { transform: translate(-50%, -50%) scale(1.07); }
+[dir="rtl"] .lp-video-play:hover .lp-video-mark { transform: translate(50%, -50%) scale(1.07); }
+.lp-video-play:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+/* השם קיים בשביל קורא מסך; על המסך התמונה כבר אומרת הכל */
+.lp-video-label {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+.lp-video-el { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+
+.lp-video-soon {
+  margin: 0; padding: var(--s5) var(--s4); text-align: center;
+  color: var(--header-ink); font-size: var(--t-md);
+}
+.lp-video-soon.hidden { display: none; }
+
+@media (max-width: 720px) {
+  .lp-video { margin-top: var(--s5); border-radius: var(--r-lg); }
+  .lp-video-mark { width: 62px; height: 62px; }
+  .lp-video-mark .ico { width: 27px; height: 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-video-mark { transition: none; }
+  .lp-video-play:hover .lp-video-mark { transform: translate(-50%, -50%); }
+  [dir="rtl"] .lp-video-play:hover .lp-video-mark { transform: translate(50%, -50%); }
+}

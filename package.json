@@ -31,6 +31,7 @@
     "test:cells": "node tests/cells-browser-test.mjs",
     "test:empscreen": "node tests/employee-screen-test.mjs",
     "test:onboarding": "node tests/onboarding-browser-test.mjs",
+    "test:video": "node tests/video-browser-test.mjs",
     "brand": "node tools/logo.js",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",

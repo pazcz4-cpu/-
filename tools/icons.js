@@ -151,6 +151,79 @@ function drawSocial(width, height) {
   return toPng(logo.onBackground(canvas, WHITE));
 }
 
+/* תמונת הפתיחה של הסרטון.
+
+   לא צילום מסך: הוא מתיישן בכל שינוי עיצוב, ומי שרואה אותו לפני
+   שהוא לוחץ כבר ראה את מה שהסרטון בא להראות. במקום זה שטח
+   ממותג נקי – רקע בגרדיאנט של המותג, הלוגו במרכז, ומעליו מעגל
+   בהיר שעליו יושב משולש ה-Play שב-HTML.
+
+   הקובץ נטען לפני הווידאו ובמקומו, ולכן הוא חייב להיות קטן. */
+function drawPoster(width, height) {
+  var source = logo.load();
+  var box = logo.regions(source).all;
+  var target = Math.round(width * 0.34);
+  var scaled = logo.resample(source, box, target,
+    Math.round((box.height / box.width) * target));
+
+  var canvas = { width: width, height: height, data: Buffer.alloc(width * height * 4) };
+
+  /* גרדיאנט אלכסוני בין שני גווני הכחול של הכותרת באפליקציה,
+     כדי שמי שמגיע מדף המכירה למערכת יראה את אותו מותג. */
+  var from = [0x18, 0x21, 0x3a];
+  var to = [0x2f, 0x5f, 0xe0];
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      var mix = (x / width + y / height) / 2;
+      var d = (y * width + x) * 4;
+      canvas.data[d] = Math.round(from[0] + (to[0] - from[0]) * mix);
+      canvas.data[d + 1] = Math.round(from[1] + (to[1] - from[1]) * mix);
+      canvas.data[d + 2] = Math.round(from[2] + (to[2] - from[2]) * mix);
+      canvas.data[d + 3] = 255;
+    }
+  }
+
+  /* הלוגו בגרסה הבהירה – הרקע כהה, והגרסה הכהה הייתה נבלעת בו */
+  var light = logo.forDarkBackground(scaled);
+  var offsetX = Math.round((width - light.width) / 2);
+  var offsetY = Math.round(height * 0.30);
+  for (var ly = 0; ly < light.height; ly++) {
+    for (var lx = 0; lx < light.width; lx++) {
+      var s = (ly * light.width + lx) * 4;
+      var alpha = light.data[s + 3] / 255;
+      if (!alpha) continue;
+      var t = ((ly + offsetY) * width + (lx + offsetX)) * 4;
+      if (t < 0 || t + 3 >= canvas.data.length) continue;
+      for (var c = 0; c < 3; c++) {
+        canvas.data[t + c] = Math.round(canvas.data[t + c] * (1 - alpha) + light.data[s + c] * alpha);
+      }
+    }
+  }
+
+  /* מעגל בהיר למטה-מרכז. משולש ה-Play עצמו נשאר ב-HTML, כדי
+     שיקבל מצב hover ומצב פוקוס – שתמונה לא יכולה לתת. */
+  var cx = width / 2;
+  var cy = Math.round(height * 0.66);
+  var radius = Math.round(height * 0.11);
+  for (var py = 0; py < height; py++) {
+    for (var px = 0; px < width; px++) {
+      var dx = px - cx;
+      var dy = py - cy;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > radius + 1) continue;
+      /* שוליים מרוככים, אחרת המעגל נראה משונן */
+      var edge = Math.max(0, Math.min(1, radius - dist));
+      var i = (py * width + px) * 4;
+      for (var k = 0; k < 3; k++) {
+        canvas.data[i + k] = Math.round(canvas.data[i + k] * (1 - edge * 0.92) + 255 * edge * 0.92);
+      }
+    }
+  }
+
+  return toPng(canvas);
+}
+
 module.exports = {
-  drawIcon: drawIcon, drawSocial: drawSocial, Canvas: Canvas, toPng: toPng
+  drawIcon: drawIcon, drawSocial: drawSocial, drawPoster: drawPoster,
+  Canvas: Canvas, toPng: toPng
 };

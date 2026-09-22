@@ -59,6 +59,40 @@
   </div>
 </header>
 
+<!-- ===== הסרטון =====
+     אחרי אזור הפתיחה, כי מי שהגיע עד כאן כבר יודע מה זה ורוצה
+     לראות. הווידאו עצמו אינו נטען עד שלוחצים או מתקרבים: קובץ
+     של עשרים מגה שנטען עם הדף היה הופך את דף המכירה לאיטי
+     בדיוק בשנייה שבה מחליטים אם להישאר בו. -->
+<section class="lp-section lp-video-section" id="demo">
+  <div class="landing-wrap">
+    <div class="lp-center">
+      <h2 data-i18n="landing.videoTitle">ראו איך בונים סידור שבועי בדקה וחצי</h2>
+      <p class="lp-section-sub" data-i18n="landing.videoBody">מהגדרת הסניפים ועד פרסום המשמרות לעובדים.</p>
+    </div>
+
+    <!-- data-video-ready נקבע בבנייה: 1 אם הקובץ באמת קיים.
+         בדיקה מהדפדפן הייתה מייצרת 404 בקונסול בכל טעינה, וגם
+         מציגה לרגע כפתור Play שמוביל לשום מקום. -->
+    <div class="lp-video" id="lp-video" data-video-ready="0"
+         data-src="/assets/video/setshifts-demo-he.mp4"
+         data-captions="/assets/video/setshifts-demo-he.vtt"
+         data-poster="/assets/video/poster.png">
+      <button type="button" class="lp-video-play hidden" id="lp-video-play"
+              data-i18n-aria-label="landing.videoPlay" aria-label="ניגון הסרטון">
+        <img src="/assets/video/poster.png" alt="" width="1280" height="720" loading="lazy">
+        <span class="lp-video-mark" aria-hidden="true">
+          <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-play"></use></svg>
+        </span>
+        <span class="lp-video-label" data-i18n="landing.videoPlay">ניגון הסרטון</span>
+      </button>
+      <p class="lp-video-soon" id="lp-video-soon" data-i18n="landing.videoSoon">
+        הסרטון בדרך. בינתיים אפשר פשוט להתחיל — 14 ימי ניסיון, בלי כרטיס אשראי.
+      </p>
+    </div>
+  </div>
+</section>
+
 <!-- ===== למה דווקא הוא: ההבדל מול כל מערכת משמרות אחרת ===== -->
 <section class="lp-section lp-why" id="why">
   <div class="landing-wrap lp-why-grid">
@@ -253,6 +287,7 @@
 <script src="js/i18n/de.js"></script>
 <script src="js/i18n/pt.js"></script>
 <script src="js/i18n/dom.js"></script>
+<script src="js/video.js"></script>
 <script src="js/backend/model.js"></script>
 <script>
 (function () {

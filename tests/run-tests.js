@@ -1777,15 +1777,24 @@ function legalPlaceholders() {
   return found;
 }
 
-test('כל מפתח בעמודים המשפטיים מוכר לבנייה', function () {
+function buildBlock(name) {
   var build = fs.readFileSync(path.join(__dirname, '..', 'build-site.js'), 'utf8');
-  var block = build.slice(build.indexOf('const LEGAL = {'));
-  block = block.slice(0, block.indexOf('};'));
-  var known = {};
-  (block.match(/^\s*([A-Z_]+):/gm) || []).forEach(function (line) {
-    known[line.replace(/[^A-Z_]/g, '')] = true;
-  });
+  var block = build.slice(build.indexOf('const ' + name + ' = {'));
+  return block.slice(0, block.indexOf('};'));
+}
 
+function knownLegalKeys() {
+  var known = {};
+  [buildBlock('LEGAL'), buildBlock('LEGAL_ENV')].forEach(function (block) {
+    (block.match(/^\s*([A-Z_]+):/gm) || []).forEach(function (line) {
+      known[line.replace(/[^A-Z_]/g, '')] = true;
+    });
+  });
+  return known;
+}
+
+test('כל מפתח בעמודים המשפטיים מוכר לבנייה', function () {
+  var known = knownLegalKeys();
   var used = legalPlaceholders();
   var names = Object.keys(used);
   assert(names.length >= 5, 'לא נמצאו מפתחות בעמודים המשפטיים: ' + names.length);
@@ -1793,6 +1802,34 @@ test('כל מפתח בעמודים המשפטיים מוכר לבנייה', func
     assert(known[key], key + ' מופיע ב-' + used[key] +
       ' אבל build-site.js אינו יודע למלא אותו');
   });
+});
+
+/* האזהרה בבנייה היא ההוראה היחידה שמי שמגדיר את האתר רואה בזמן
+   אמת. אם היא מדפיסה את שם הסימון בעמוד במקום את שם משתנה
+   הסביבה, היא שולחת אותו להקליד ב-Vercel שם שהבנייה לא מחפשת –
+   והפרטים "מוגדרים" ולא מופיעים. זה כבר קרה. */
+test('האזהרה על פרטים חסרים מדפיסה שמות שאפשר להקליד ב-Vercel', function () {
+  var build = fs.readFileSync(path.join(__dirname, '..', 'build-site.js'), 'utf8');
+  var pairs = {};
+  (buildBlock('LEGAL_ENV').match(/^\s*([A-Z_]+):\s*'([A-Z_]+)'/gm) || []).forEach(function (line) {
+    var parts = line.match(/([A-Z_]+):\s*'([A-Z_]+)'/);
+    pairs[parts[1]] = parts[2];
+  });
+  var keys = Object.keys(pairs);
+  assert(keys.length >= 5, 'לא נמצאה טבלת סימון⇄משתנה סביבה: ' + keys.length);
+
+  /* כל שם שבטבלה באמת נקרא מ-process.env, ולא רק מוצהר */
+  assert(/process\.env\[LEGAL_ENV\[key\]\]/.test(build),
+    'הערכים אינם נקראים לפי הטבלה, ולכן היא עלולה להיות לא נכונה');
+
+  /* והאזהרה מדפיסה את הצד של משתנה הסביבה */
+  var warning = build.slice(build.indexOf('if (legalMissing.length)'));
+  assert(/LEGAL_ENV\[key\]/.test(warning),
+    'האזהרה מדפיסה את שם הסימון ולא את שם משתנה הסביבה');
+
+  /* ולפחות אחד מהם באמת שונה – אחרת הבדיקה הזו מגנה על כלום */
+  assert(keys.some(function (key) { return pairs[key] !== key; }),
+    'אין הבדל בין שם סימון לשם משתנה, והבדיקה מיותרת');
 });
 
 test('שלושת העמודים קיימים בשתי שפות ומקושרים זה לזה', function () {

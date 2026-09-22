@@ -43,21 +43,30 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
    האזור שבו הוקם פרויקט Supabase והדין החל. ניחוש שלנו שם היה
    הצהרה שגויה במסמך מחייב, ולכן הם נכנסים כמשתני סביבה – והבנייה
    צועקת כשהם חסרים במקום להשתיק את הבעיה. */
-const LEGAL = {
-  LEGAL_ENTITY: process.env.LEGAL_ENTITY || '',
+/* שם הסימון בעמוד ⇄ שם משתנה הסביבה. הם אינם תמיד זהים, ולכן
+   הם יושבים כאן יחד: אזהרה שמדפיסה את שם הסימון שולחת את מי
+   שקורא אותה להקליד ב-Vercel שם שהבנייה אינה מחפשת. */
+const LEGAL_ENV = {
+  LEGAL_ENTITY: 'LEGAL_ENTITY',
   /* מספר עוסק מורשה או ח.פ. חובה להציג אותו באתר מסחרי, ולכן
      הוא שדה נפרד ולא חלק מהשם – כדי שלא יישכח בתוכו. */
-  LEGAL_ID: process.env.LEGAL_ID || '',
-  LEGAL_ADDRESS: process.env.LEGAL_ADDRESS || '',
-  DATA_REGION: process.env.DATA_REGION || '',
-  PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER || '',
-  JURISDICTION: process.env.LEGAL_JURISDICTION || '',
-  JURISDICTION_COURT: process.env.LEGAL_COURT || '',
+  LEGAL_ID: 'LEGAL_ID',
+  LEGAL_ADDRESS: 'LEGAL_ADDRESS',
+  DATA_REGION: 'DATA_REGION',
+  PAYMENT_PROVIDER: 'PAYMENT_PROVIDER',
+  JURISDICTION: 'LEGAL_JURISDICTION',
+  JURISDICTION_COURT: 'LEGAL_COURT'
+};
+
+const LEGAL = {
   EFFECTIVE_DATE: process.env.LEGAL_EFFECTIVE_DATE ||
     new Date().toISOString().slice(0, 10),
   SUPPORT_EMAIL: 'support@setshifts.com',
   TRIAL_DAYS: '14'
 };
+Object.keys(LEGAL_ENV).forEach((key) => {
+  LEGAL[key] = (process.env[LEGAL_ENV[key]] || '').trim();
+});
 
 const legalMissing = [];
 
@@ -310,7 +319,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 if (legalMissing.length) {
-  console.log('\n⚠ העמודים המשפטיים חסרים פרטים. הם פורסמו עם סימון גלוי,');
-  console.log('  ומה שחסר הוא: ' + legalMissing.join(', '));
-  console.log('  יש להגדיר אותם כמשתני סביבה ב-Vercel לפני שמפנים לקוח לעמודים.');
+  /* מודפסים שמות משתני הסביבה, ולא שמות הסימונים: זה מה שצריך
+     להקליד ב-Vercel, וזה מה שהקורא של השורה הזו הולך לעשות. */
+  console.log('\n⚠ העמודים המשפטיים חסרים פרטים. הם פורסמו עם סימון גלוי.');
+  console.log('  יש להגדיר ב-Vercel את משתני הסביבה האלה:');
+  legalMissing.forEach((key) => {
+    console.log('    ' + (LEGAL_ENV[key] || key));
+  });
+  console.log('  לפני שמפנים לקוח לעמודים.');
 }

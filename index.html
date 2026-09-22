@@ -28,45 +28,68 @@
   <!-- ===== סידור שבועי ===== -->
   <section class="panel active" id="tab-schedule">
     <div class="toolbar no-print">
-      <div class="week-nav">
-        <button id="prev-week" class="btn ghost icon" data-i18n-title="toolbar.prevWeek" data-i18n-aria="toolbar.prevWeek" title="שבוע קודם" aria-label="שבוע קודם"><svg class="ico ico-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
-        <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
-        <button id="next-week" class="btn ghost icon" data-i18n-title="toolbar.nextWeek" data-i18n-aria="toolbar.nextWeek" title="שבוע הבא" aria-label="שבוע הבא"><svg class="ico ico-next" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
-        <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
-        <span id="sync-state" class="sync-state local" data-i18n="status.localOnly">נשמר במכשיר הזה</span>
+      <!-- שורה ראשית: איפה אני, ומה מצב השמירה והפרסום. שלושת
+           הדברים שמנהל שואל לפני כל פעולה, ותו לא. -->
+      <div class="tb-where">
+        <div class="week-nav">
+          <button id="prev-week" class="btn ghost icon" data-i18n-title="toolbar.prevWeek" data-i18n-aria-label="toolbar.prevWeek" title="שבוע קודם" aria-label="שבוע קודם"><svg class="ico ico-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
+          <button id="next-week" class="btn ghost icon" data-i18n-title="toolbar.nextWeek" data-i18n-aria-label="toolbar.nextWeek" title="שבוע הבא" aria-label="שבוע הבא"><svg class="ico ico-next" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
+        </div>
+        <div class="tb-state">
+          <span id="sync-state" class="sync-state local" data-i18n="status.localOnly">נשמר במכשיר הזה</span>
+          <span id="publish-state" class="publish-state hidden"></span>
+        </div>
       </div>
-      <div class="actions">
+
+      <!-- שתי הפעולות שבשבילן פותחים את המסך. כל השאר בתפריטים. -->
+      <div class="actions tb-do">
         <button id="generate" class="btn primary"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-sparkle"></use></svg><span data-i18n="toolbar.generate">בנה סידור אוטומטי</span></button>
-        <button id="view-only-toggle" class="btn ghost" aria-pressed="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg><span data-i18n="toolbar.viewOnly">מצב צפייה</span></button>
-        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-dots"></use></svg><span data-i18n="toolbar.moreTools">כלים נוספים</span></button>
-      </div>
-    </div>
+        <button id="publish-week" class="btn publish hidden" data-i18n="publish.action">פרסום הסידור</button>
+        <button id="unpublish-week" class="btn ghost small hidden" data-i18n="publish.revert">החזרה לטיוטה</button>
 
-    <div id="more-tools" class="more-tools no-print">
-      <div class="tools-row">
-        <label class="check"><input type="checkbox" id="keep-manual" checked> <span data-i18n="toolbar.keepManual">שמירת שיבוצים ידניים</span></label>
-        <label class="shabbat-field" id="shabbat-field"><span data-i18n="toolbar.shabbatEnd">צאת שבת</span>
-          <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
-        </label>
-      </div>
-      <div class="tools-row actions">
-        <button id="clear-week" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-trash"></use></svg><span data-i18n="toolbar.clear">נקה סידור</span></button>
-        <button id="copy-text" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="toolbar.copyText">העתק כטקסט</span></button>
-        <button id="export-excel" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
-        <button id="export-csv" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.csv">CSV</span></button>
-        <button id="print" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg><span data-i18n="toolbar.print">הדפסה</span></button>
-      </div>
+        <div class="menu" id="menu-export">
+          <button type="button" class="btn ghost menu-btn" id="export-menu"
+                  aria-expanded="false" aria-haspopup="true" aria-controls="export-pop"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.exportMenu">ייצוא</span><svg class="ico ico-down" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <div class="menu-pop hidden" id="export-pop" role="group" data-i18n-aria-label="toolbar.exportMenu" aria-label="ייצוא">
+            <button id="export-excel" class="menu-item"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
+            <button id="export-csv" class="menu-item"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.csv">CSV</span></button>
+            <button id="copy-text" class="menu-item"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="toolbar.copyText">העתק כטקסט</span></button>
+            <button id="print" class="menu-item"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg><span data-i18n="toolbar.print">הדפסה</span></button>
+            <div class="menu-sep"></div>
+            <div class="menu-section">
+              <span class="menu-title" data-i18n="toolbar.personalExport">ייצוא אישי לעובד (רק המשמרות שלו):</span>
+              <select id="personal-employee" class="text-input personal-select"></select>
+              <div class="menu-row">
+                <button id="personal-excel" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
+                <button id="personal-text" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="excel.personalText">טקסט לוואטסאפ</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div class="personal-bar">
-        <span class="personal-label" data-i18n="toolbar.personalExport">ייצוא אישי לעובד (רק המשמרות שלו):</span>
-        <select id="personal-employee" class="text-input personal-select"></select>
-        <button id="personal-excel" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
-        <button id="personal-text" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="excel.personalText">טקסט לוואטסאפ</span></button>
-      </div>
-
-      <div class="holiday-bar">
-        <span class="holiday-label" data-i18n="toolbar.holidays">ימי חג (הסניפים סגורים):</span>
-        <div id="holiday-days" class="holiday-chips"></div>
+        <div class="menu" id="menu-tools">
+          <button type="button" class="btn ghost menu-btn" id="tools-menu"
+                  aria-expanded="false" aria-haspopup="true" aria-controls="tools-pop"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-dots"></use></svg><span data-i18n="toolbar.moreTools">כלים נוספים</span><svg class="ico ico-down" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <div class="menu-pop hidden" id="tools-pop" role="group" data-i18n-aria-label="toolbar.moreTools" aria-label="כלים נוספים">
+            <button id="view-only-toggle" class="menu-item" aria-pressed="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg><span data-i18n="toolbar.viewOnly">מצב צפייה</span></button>
+            <button id="clear-week" class="menu-item danger"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-trash"></use></svg><span data-i18n="toolbar.clear">נקה סידור</span></button>
+            <div class="menu-sep"></div>
+            <div class="menu-section">
+              <span class="menu-title" data-i18n="toolbar.weekSettings">הגדרות השבוע</span>
+              <label class="check"><input type="checkbox" id="keep-manual" checked> <span data-i18n="toolbar.keepManual">שמירת שיבוצים ידניים</span></label>
+              <label class="check shabbat-field" id="shabbat-field"><span data-i18n="toolbar.shabbatEnd">צאת שבת</span>
+                <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+              </label>
+            </div>
+            <div class="menu-sep"></div>
+            <div class="menu-section">
+              <span class="menu-title" data-i18n="toolbar.holidays">ימי חג (הסניפים סגורים):</span>
+              <div id="holiday-days" class="holiday-chips"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

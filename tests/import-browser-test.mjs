@@ -6,6 +6,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { clickTool, openMenuFor } from './_menu.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -253,13 +254,13 @@ try {
   console.log('\n== מצב צפייה חוסם ייבוא ==');
   await page.click('.tab[data-tab="schedule"]');
   await page.waitForTimeout(200);
-  await page.click('#view-only-toggle');
+  await clickTool(page, '#view-only-toggle');
   await page.waitForTimeout(300);
   await page.click('.tab[data-tab="employees"]');
   await page.waitForTimeout(300);
   check('הכפתור נעול', await page.locator('#import-employees').isDisabled(), true);
   await page.click('.tab[data-tab="schedule"]');
-  await page.click('#view-only-toggle');
+  await clickTool(page, '#view-only-toggle');
   await page.waitForTimeout(300);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');

@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
+import { clickTool, openMenuFor } from './_menu.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -167,10 +168,10 @@ try {
     () => window.__backend.loadWeek(window.ShiftApp.weekKey()).then((w) => !!w.published)), false);
 
   console.log('\n== מצב צפייה חוסם פרסום ==');
-  await page.click('#view-only-toggle');
+  await clickTool(page, '#view-only-toggle');
   await page.waitForTimeout(400);
   check('הכפתור נעול', (await stateOf(page)).disabled, true);
-  await page.click('#view-only-toggle');
+  await clickTool(page, '#view-only-toggle');
   await page.waitForTimeout(300);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');

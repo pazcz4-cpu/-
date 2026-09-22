@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSample } from './_sample.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -64,8 +65,9 @@ await page.click('.tab[data-tab="employees"]');
 await page.waitForTimeout(400);
 console.log('   חשבון חדש נפתח ריק:',
   (await page.locator('#employees-list .card').count()) === 0);
-await page.click('#load-sample');
-await page.waitForTimeout(600);
+await loadSample(page);
+await page.click('.tab[data-tab="employees"]');
+await page.waitForTimeout(400);
 const before = await page.locator('#employees-list .card').count();
 console.log('3. עובדים כרגע:', before);
 for (let i = 0; i < 3; i++) {

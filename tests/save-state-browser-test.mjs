@@ -6,6 +6,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { clickTool, openMenuFor } from './_menu.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -104,7 +105,7 @@ try {
       return new Promise((resolve) => setTimeout(() => resolve(original(key, week)), 1500));
     };
   });
-  await cloud.click('#clear-week');
+  await clickTool(cloud, '#clear-week');
   await cloud.waitForTimeout(400);
   const saving = await stateOf(cloud);
   check('מוצג "שומר"', saving.text, /שומר/);
@@ -126,7 +127,7 @@ try {
   check('וההסבר מכוון לחיבור', broken.title, /חיבור/);
 
   await cloud.evaluate(() => { window.__backend.saveWeek = window.__backend._savedWeek; });
-  await cloud.click('#clear-week');
+  await clickTool(cloud, '#clear-week');
   await cloud.waitForTimeout(2600);   /* השמירה המושהית מקודם עדיין בתוקף */
   check('שמירה מוצלחת מנקה את התקלה', (await stateOf(cloud)).text, /נשמרו בענן/);
 } finally {

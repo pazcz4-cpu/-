@@ -45,17 +45,23 @@ try {
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1300);
 
-  console.log('\n== בשורה העליונה מופיע מי מחובר, ולא שם העסק ==');
-  const bar = await page.locator('#user-bar').innerText();
+  console.log('\n== שני השמות בשורה העליונה, זה מעל זה ==');
+  const company = await page.locator('#user-bar .user-company').innerText();
   const user = await page.locator('#user-bar .user-name').innerText();
-  check('שם המשתמש נושא תווית', user, /^מחובר\/ת/);
-  check('ובתוכו השם והתפקיד', user, /מייפון הכיסוי המושלם בעמ · בעלים/);
-  /* המיתוג שמעל השורה הוא SetShifts, ושם העסק של הלקוח שם רק
-     התחרה בו – במיוחד כששמור שם רשם החברות מההרשמה. */
-  check('שם העסק אינו מופיע בשורה', /פ\.ט אינטק סחר/.test(bar), false);
-  check('ואין בה תווית "עסק"', await page.locator('#user-bar .user-company').count(), 0);
-  check('השם הוא כפתור שפותח את החשבון',
-    await page.locator('#user-account').count(), 1);
+  check('שם העסק בשורה העליונה', company, 'פ.ט אינטק סחר');
+  check('ומתחתיו המשתמש והתפקיד', user, /מייפון הכיסוי המושלם בעמ · בעלים/);
+  /* שני שמות באותה שורה נראים כמו שני חשבונות פתוחים. אחד מעל
+     השני נקרא כ"העסק, ובתוכו אני". */
+  check('הם זה מעל זה ולא זה לצד זה', await page.evaluate(() => {
+    const el = document.querySelector('#user-id, #user-account');
+    return getComputedStyle(el).flexDirection;
+  }), 'column');
+  check('והעסק בולט מהמשתמש', await page.evaluate(() => {
+    const weight = (sel) => Number(getComputedStyle(document.querySelector(sel)).fontWeight);
+    return weight('#user-bar .user-company') > weight('#user-bar .user-name');
+  }), true);
+  check('שניהם כפתור אחד שפותח את החשבון',
+    await page.locator('#user-account .user-company').count(), 1);
 
   console.log('\n== המגירה סגורה עד שלוחצים ==');
   check('סגורה', await page.locator('#account-panel').isVisible(), false);
@@ -74,14 +80,16 @@ try {
   check('נאמר שנשמר', await page.locator('#account-message').innerText(), /נשמר/);
   check('השורה העליונה מציגה את השם החדש',
     await page.locator('#user-bar .user-name').innerText(), /פז · בעלים/);
-  check('ושם העסק במגירה לא זז',
-    await page.inputValue('#account-company'), 'פ.ט אינטק סחר');
+  check('ושם העסק לא זז',
+    await page.locator('#user-bar .user-company').innerText(), 'פ.ט אינטק סחר');
 
   console.log('\n== עריכת שם העסק בלבד ==');
   await page.fill('#account-company', 'מייפון');
   await page.click('#account-save-company');
   await page.waitForTimeout(600);
   check('נאמר שנשמר', await page.locator('#account-message').innerText(), /נשמר/);
+  check('שם העסק התחלף בשורה',
+    await page.locator('#user-bar .user-company').innerText(), 'מייפון');
   check('ושם המשתמש לא זז',
     await page.locator('#user-bar .user-name').innerText(), /פז · בעלים/);
 
@@ -89,9 +97,9 @@ try {
   await page.reload();
   await page.waitForTimeout(1300);
   check('אחרי רענון – שם המשתמש', await page.locator('#user-bar .user-name').innerText(), /פז/);
+  check('אחרי רענון – שם העסק', await page.locator('#user-bar .user-company').innerText(), 'מייפון');
   await page.click('#user-account');
   await page.waitForTimeout(400);
-  check('אחרי רענון – שם העסק', await page.inputValue('#account-company'), 'מייפון');
   await page.click('#user-account');
   await page.waitForTimeout(300);
 

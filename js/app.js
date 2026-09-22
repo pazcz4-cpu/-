@@ -906,15 +906,6 @@
     if (!shown.length) {
       html = '<p class="list-empty">' + esc(t(state.employees.length
         ? 'employees.noMatch' : 'employees.none')) + '</p>';
-      /* חשבון חדש נפתח ריק, ולכן כאן – ורק כאן – מוצעת הדוגמה.
-         מי שרוצה לראות איך זה נראה לפני שהוא מזין שלושים עובדים
-         מקבל עסק מלא בלחיצה, ויכול לנקות אותו באותה לחיצה. */
-      if (!state.employees.length && !state.branches.length && !viewOnly) {
-        html += '<div class="row list-empty-actions">' +
-          '<button id="load-sample" class="btn ghost">' + esc(t('employees.loadSample')) +
-          '</button></div>' +
-          '<p class="hint">' + esc(t('employees.loadSampleHint')) + '</p>';
-      }
     }
     $('#employees-list').innerHTML = html;
 
@@ -1151,7 +1142,10 @@
     $('#view-only-banner').classList.toggle('hidden', !viewOnly);
 
     var button = $('#view-only-toggle');
-    button.textContent = (viewOnly ? '🔓 ' : '🔒 ') + t(viewOnly ? 'toolbar.exitViewOnly' : 'toolbar.viewOnly');
+    /* innerHTML ולא textContent: הכפתור נושא אייקון SVG, וכתיבת
+       טקסט הייתה מוחקת אותו ומשאירה מילה בלי סימן. */
+    button.innerHTML = ico(viewOnly ? 'unlock' : 'lock') + '<span>' +
+      esc(t(viewOnly ? 'toolbar.exitViewOnly' : 'toolbar.viewOnly')) + '</span>';
     button.setAttribute('aria-pressed', viewOnly ? 'true' : 'false');
 
     LOCKED_SELECTORS.forEach(function (selector) {
@@ -1653,6 +1647,63 @@
     });
   }
 
+  /* ===== תפריטי הסרגל =====
+
+     "ייצוא" ו"כלים נוספים". עד עכשיו כל הכלים היו פרושים מעל
+     הסידור: שתי שורות כפתורים, שורת ייצוא אישי ושורת ימי חג –
+     והטבלה התחילה באמצע המסך. עכשיו הם יושבים בשני תפריטים,
+     והשורה העליונה נושאת רק את השבוע, מצב השמירה ומצב הפרסום.
+
+     תפריט אחד פתוח בכל רגע; לחיצה בחוץ או Escape סוגרים, והפוקוס
+     חוזר לכפתור שפתח – אחרת מי שמנווט במקלדת נזרק לראש הדף. */
+  function openMenu(menu) {
+    closeMenus(menu);
+    if (!menu) return;
+    menu.classList.add('open');
+    var button = menu.querySelector('.menu-btn');
+    var pop = menu.querySelector('.menu-pop');
+    if (button) button.setAttribute('aria-expanded', 'true');
+    if (pop) pop.classList.remove('hidden');
+  }
+
+  function closeMenus(except, focusButton) {
+    document.querySelectorAll('.menu.open').forEach(function (menu) {
+      if (menu === except) return;
+      menu.classList.remove('open');
+      var button = menu.querySelector('.menu-btn');
+      var pop = menu.querySelector('.menu-pop');
+      if (button) {
+        button.setAttribute('aria-expanded', 'false');
+        if (focusButton) button.focus();
+      }
+      if (pop) pop.classList.add('hidden');
+    });
+  }
+
+  function bindMenus() {
+    document.addEventListener('click', function (event) {
+      var button = event.target.closest('.menu-btn');
+      if (button) {
+        event.preventDefault();
+        var menu = button.closest('.menu');
+        if (menu.classList.contains('open')) { closeMenus(); } else { openMenu(menu); }
+        return;
+      }
+      /* פעולה בתוך התפריט סוגרת אותו; שדה או תיבת סימון אינם
+         פעולה אלא הגדרה, ולכן משאירים את התפריט פתוח. */
+      var item = event.target.closest('.menu-pop .menu-item, .menu-pop .btn');
+      if (item) { window.setTimeout(closeMenus, 0); return; }
+      if (event.target.closest('.menu-pop')) return;
+      closeMenus();
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      if (!document.querySelector('.menu.open')) return;
+      closeMenus(null, true);
+    });
+  }
+
   function bindScheduleTab() {
     function goToWeek(nextKey) { openWeek(nextKey); }
     $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
@@ -1736,12 +1787,7 @@
       toast(t(viewOnly ? 'toast.viewOnlyOn' : 'toast.viewOnlyOff'));
     });
 
-    $('#tools-toggle').addEventListener('click', function () {
-      var panel = $('#more-tools');
-      var open = panel.classList.toggle('open');
-      this.setAttribute('aria-expanded', open ? 'true' : 'false');
-      this.textContent = (open ? '✕ ' : '⋯ ') + t(open ? 'toolbar.closeTools' : 'toolbar.moreTools');
-    });
+    bindMenus();
 
     function bindDayNav(selector) {
       $(selector).addEventListener('click', function (event) {
@@ -1960,20 +2006,7 @@
       render();
     });
 
-    /* הכפתור מצויר מחדש בכל render, ולכן ההאזנה על הרשימה */
     var list = $('#employees-list');
-    list.addEventListener('click', function (event) {
-      if (!event.target.closest('#load-sample')) return;
-      if (blocked()) return;
-      var added = Store.loadSampleData(state);
-      if (!added.employees) return;
-      persist('config');
-      render();
-      toast(t('employees.sampleLoaded', {
-        employees: added.employees, branches: added.branches
-      }));
-    });
-
     list.addEventListener('click', function (event) {
       var card = event.target.closest('.card');
       if (!card) return;
@@ -2892,6 +2925,9 @@
     getState: function () { return state; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,
+    /* שמירת ההגדרות לשרת. חשוף לשימוש חיצוני כי מסלולי הדפדפן
+       בונים עסק מאויש ואז מרעננים; בלי שמירה הוא היה נעלם. */
+    persistConfig: function () { return persist('config'); },
     applyRemoteWeek: applyRemoteWeek,
     openWeek: openWeek,
     currentRole: currentRole,

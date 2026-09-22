@@ -27,6 +27,9 @@
     /* מצב צפייה */
     lock: '<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/>' +
       '<path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+    /* יציאה ממצב צפייה */
+    unlock: '<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/>' +
+      '<path d="M8 10.5V8a4 4 0 0 1 7.5-1.9"/>',
     /* עוד כלים */
     dots: '<circle cx="5.5" cy="12" r="1.1" fill="currentColor" stroke="none"/>' +
       '<circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/>' +

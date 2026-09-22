@@ -1269,6 +1269,42 @@ run('ביטול הזמנה עובר בשרת, כי מחיקה דורשת מפת�
   });
 });
 
+run('כתובת תפוסה מוחזרת כהודעה בעברית בכל נוסח של השרת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  /* שלושת הנוסחים שמגיעים בפועל מ-Supabase. הנוסח הראשון הוא מה
+     שהוא מחזיר על הזמנה לכתובת שכבר רשומה, והוא מכיל מילה באמצע
+     שהפילה התאמה של מחרוזת קבועה. */
+  var wordings = [
+    'A user with this email address has already been registered',
+    'User already registered',
+    'email_exists'
+  ];
+  var checked = 0;
+  return wordings.reduce(function (chainSoFar, message) {
+    return chainSoFar.then(function () {
+      var fresh = new FakeSupabase();
+      fresh.serverRoutes = { '/api/create-user': { status: 409, body: { message: message } } };
+      var api = makeBackend(fresh);
+      return api.signUpCompany({
+        email: 'dup' + (checked++) + '@link.test', password: 'secret123',
+        name: 'פז', companyName: 'כפילויות'
+      }).then(function () {
+        return api.createUser({ email: 'taken@link.test', name: 'חדש', role: 'employee' });
+      }).then(function () {
+        throw new Error('כתובת תפוסה לא נדחתה: ' + message);
+      }, function (err) {
+        assertEqual(err.code, 'email_taken', 'קוד שגוי עבור ' + JSON.stringify(message));
+        assert(!/already|registered|exists/i.test(err.message),
+          'ההודעה נשארה באנגלית עבור ' + JSON.stringify(message) + ': ' + err.message);
+      });
+    });
+  }, Promise.resolve()).then(function () {
+    assertEqual(checked, wordings.length, 'לא נבדקו כל הנוסחים');
+    assert(server.calls.length === 0, 'השרת הראשון לא היה אמור להיקרא');
+  });
+});
+
 console.log('\n== כתובת הפרויקט ==');
 
 /* המסך של Supabase מציג את הכתובת עם /rest/v1/ בסוף, וזו הכתובת

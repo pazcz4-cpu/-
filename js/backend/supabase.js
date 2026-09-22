@@ -33,8 +33,11 @@
     if (lower.indexOf('invalid login') !== -1 || lower.indexOf('invalid credentials') !== -1) {
       return fail('bad_credentials', t('server.badCredentials'));
     }
-    if (lower.indexOf('already registered') !== -1 || lower.indexOf('already exists') !== -1 ||
-        (body && body.code === '23505')) {
+    /* Supabase אומר "has already been registered" – עם מילה
+       באמצע. חיפוש של "already registered" מפספס אותה בדיוק,
+       והלקוח מקבל את הנוסח האנגלי הגולמי במקום הודעה בעברית. */
+    if (/already\s+(been\s+)?registered/.test(lower) || lower.indexOf('already exists') !== -1 ||
+        lower.indexOf('email_exists') !== -1 || (body && body.code === '23505')) {
       return fail('email_taken', t('server.emailTaken'));
     }
     if (lower.indexOf('password') !== -1 && lower.indexOf('6') !== -1) {

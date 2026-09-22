@@ -80,7 +80,9 @@
             return '<option value="' + esc(emp.id) + '"' +
               (user.employeeId === emp.id ? ' selected' : '') + '>' + esc(emp.name) + '</option>';
           }).join('') + '</select>') + '</td>';
-        html += '<td>' + (isOwner ? '✔' :
+        html += '<td>' + (isOwner
+          ? (root.ShiftIcons ? root.ShiftIcons.svg('check') : '\u2714')
+          :
           '<input type="checkbox" data-field="active"' + (user.active ? ' checked' : '') + '>') + '</td>';
         html += '<td>' + (isOwner ? '—' : inviteCell(user)) + '</td>';
         html += '</tr>';

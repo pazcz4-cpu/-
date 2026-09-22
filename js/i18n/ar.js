@@ -295,7 +295,7 @@
         slotLabel: '{day} · {branch} · مناوبة {shift}',
         deletedEmployee: '(موظف محذوف: {id})',
         deletedBranch: '(فرع محذوف)',
-        allGood: '✔ الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
+        allGood: 'الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
         duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
         duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
         doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',

@@ -79,6 +79,12 @@
     } catch (err) { /* type=text אינו תומך בזה בכל דפדפן */ }
   }
 
+  /* אייקון מספריית ה-SVG. נופל לריק אם הספרייה לא נטענה, כדי
+     שמסך הכניסה לא יישבר בגלל קישוט. */
+  function ico(name) {
+    return root.ShiftIcons ? root.ShiftIcons.svg(name) : '';
+  }
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -394,7 +400,7 @@
     if (Notify && Notify.supported() && !(Notify.enabled() && Notify.permission() === 'granted')) {
       /* האייקון שייך לכפתור ולא לתרגום, אחרת הוא מופיע פעמיים
          בשפה אחת וחסר באחרות. */
-      notifyButton = '<button id="user-notify" class="btn ghost small">🔔 ' +
+      notifyButton = '<button id="user-notify" class="btn ghost small">' + ico('bell') +
         t('auth.enableNotifications') + '</button>';
     }
 

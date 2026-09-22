@@ -301,7 +301,7 @@
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
         deletedBranch: '(deleted location)',
-        allGood: '✔ Schedule is valid – no overstaffing, gaps or availability conflicts',
+        allGood: 'Schedule is valid – no overstaffing, gaps or availability conflicts',
         duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
         duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',

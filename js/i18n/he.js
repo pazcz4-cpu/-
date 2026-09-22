@@ -300,7 +300,7 @@
         slotLabel: '{day} · {branch} · משמרת {shift}',
         deletedEmployee: '(עובד שנמחק: {id})',
         deletedBranch: '(סניף שנמחק)',
-        allGood: '✔ הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
+        allGood: 'הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
         duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
         duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
         doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',

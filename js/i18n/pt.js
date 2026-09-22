@@ -295,7 +295,7 @@
         slotLabel: '{day} · {branch} · turno de {shift}',
         deletedEmployee: '(pessoa eliminada: {id})',
         deletedBranch: '(filial eliminada)',
-        allGood: '✔ O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
+        allGood: 'O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
         duplicate: 'Excesso de pessoal: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
         duplicateSelf: 'Atribuição duplicada: {name} está atribuído duas vezes ao mesmo turno – {label}.',
         doubleBooked: 'Turno duplo: {name} tem {count} turnos em {day}{where} ({detail}).',

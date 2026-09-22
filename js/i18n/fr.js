@@ -295,7 +295,7 @@
         slotLabel: '{day} · {branch} · service {shift}',
         deletedEmployee: '(personne supprimée : {id})',
         deletedBranch: '(succursale supprimée)',
-        allGood: '✔ Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
+        allGood: 'Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
         duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
         duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
         doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',

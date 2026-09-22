@@ -1076,6 +1076,86 @@ test('שם העסק פתוח לכתיבה לבעלים בלבד, והוא העמ
     'כל אחד בחברה יכול לשנות את שם העסק');
 });
 
+console.log('\n== אייקונים ==');
+
+var Icons = require('../js/icons.js');
+
+/* אימוג'י אינו אייקון ממשק: הוא נראה אחרת בכל מערכת הפעלה,
+   אינו יורש את צבע הטקסט, ואינו מתיישר על קו הבסיס שלצידו.
+   הבדיקה שומרת שלא יחזור בדלת האחורית לכפתור הבא שמישהו יוסיף. */
+test('אין אימוג\'ים בכפתורים ובכותרות של המסכים', function () {
+  /* טווחי האימוג'י והדינגבטים הנפוצים. ✔ ו-⚠ בתוך משפט בייצוא
+     לאקסל אינם ממשק ולכן אינם נבדקים – רק קבצי המסך. */
+  var EMOJI = /[\u2190-\u21FF\u2300-\u23FF\u25A0-\u27BF\u2B00-\u2BFF\uFE0F]|[\uD83C-\uDBFF][\uDC00-\uDFFF]/;
+  ['app.html', 'index.html', 'landing.html'].forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    /* רק מה שמגיע למסך: הערות וקוד שבתוך <script> אינם ממשק. */
+    var inScript = false;
+    html.split('\n').forEach(function (line, index) {
+      if (line.indexOf('<script') !== -1) inScript = true;
+      if (inScript) {
+        if (line.indexOf('</script>') !== -1) inScript = false;
+        return;
+      }
+      if (line.indexOf('<!--') !== -1) return;
+      var match = line.match(EMOJI);
+      assert(!match, name + ':' + (index + 1) + ' – אימוג\'י במסך: ' + (match && match[0]));
+    });
+  });
+});
+
+test('כל אייקון שמוזכר במסך קיים בספרייה', function () {
+  var known = {};
+  Icons.names().forEach(function (name) { known[name] = true; });
+  var used = {};
+  ['app.html', 'index.html', 'landing.html'].forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    (html.match(/href="#i-([A-Za-z]+)"/g) || []).forEach(function (hit) {
+      var icon = hit.replace('href="#i-', '').replace('"', '');
+      used[icon] = true;
+      assert(known[icon], name + ' מבקש אייקון שאינו קיים: ' + icon);
+    });
+  });
+  assert(Object.keys(used).length >= 8, 'כמעט שום אייקון אינו בשימוש – כנראה נשברה ההחלפה');
+});
+
+test('הספרייה מצוירת בקו אחיד', function () {
+  var sprite = Icons.spriteHtml();
+  var symbols = sprite.split('<symbol').slice(1);
+  assert(symbols.length >= 15, 'הספרייה כמעט ריקה');
+  symbols.forEach(function (symbol) {
+    var id = (symbol.match(/id="(i-[A-Za-z]+)"/) || [])[1];
+    /* אייקון בודד בקו עבה יותר או ברשת אחרת הוא מה שמסגיר
+       ערכה שהורכבה ממקורות שונים. */
+    assert(symbol.indexOf('viewBox="0 0 24 24"') !== -1, id + ': רשת שאינה 24×24');
+    assert(symbol.indexOf('stroke-width="1.8"') !== -1, id + ': עובי קו שונה');
+    assert(symbol.indexOf('stroke="currentColor"') !== -1, id + ': צבע קבוע במקום currentColor');
+  });
+});
+
+/* אייקון מלווה מילה, ואין לו מה להוסיף לקורא מסך מעבר לה */
+test('האייקונים מוסתרים מקורא מסך', function () {
+  assert(Icons.svg('check').indexOf('aria-hidden="true"') !== -1, 'אייקון גלוי לקורא מסך');
+  assert(Icons.svg('check').indexOf('focusable="false"') !== -1, 'אייקון נכנס לסדר הפוקוס');
+  ['app.html', 'index.html'].forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    (html.match(/<svg class="ico[^>]*>/g) || []).forEach(function (tag) {
+      assert(tag.indexOf('aria-hidden="true"') !== -1, name + ': אייקון בלי aria-hidden');
+    });
+  });
+});
+
+/* כפתור שהוא אייקון בלבד חייב שם משלו, אחרת הוא "לחצן" ותו לא */
+test('כפתור בלי מילה נושא שם לקורא מסך', function () {
+  var html = fs.readFileSync(path.join(__dirname, '..', 'app.html'), 'utf8');
+  ['prev-week', 'next-week'].forEach(function (id) {
+    var start = html.indexOf('id="' + id + '"');
+    assert(start !== -1, 'הכפתור ' + id + ' נעלם');
+    var tag = html.slice(html.lastIndexOf('<button', start), html.indexOf('>', start) + 1);
+    assert(tag.indexOf('aria-label') !== -1, id + ': כפתור אייקון בלי aria-label');
+  });
+});
+
 console.log('\n== טיוטה ופרסום ==');
 
 /* בלי פרסום מפורש העובד אינו רואה סידור. לכן "מה מצב הפרסום" הוא
@@ -2220,9 +2300,14 @@ function iconPrefixedKeys() {
   var keys = {};
   ['app.html', 'index.html'].forEach(function (file) {
     var html = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
-    var pattern = /([\u2190-\u2BFF\u2600-\u27BF\uD83C-\uDBFF][\uDC00-\uDFFF]?)\s*<span data-i18n="([^"]+)"/g;
+    /* מאז המעבר לאייקוני SVG הצורה היא </svg> ואז ה-span. */
+    var pattern = /<\/svg>\s*<span data-i18n="([^"]+)"/g;
     var match;
-    while ((match = pattern.exec(html))) { keys[match[2]] = file; }
+    while ((match = pattern.exec(html))) { keys[match[1]] = file; }
+    /* אימוג'י שנשאר בטעות ייתפס גם הוא, כדי שהכלל יחול על שתי
+       הצורות ולא רק על זו החדשה. */
+    var legacy = /([\u2190-\u2BFF\u2600-\u27BF\uD83C-\uDBFF][\uDC00-\uDFFF]?)\s*<span data-i18n="([^"]+)"/g;
+    while ((match = legacy.exec(html))) { keys[match[2]] = file; }
   });
   PREFIXED_IN_JS.forEach(function (key) { keys[key] = 'js'; });
   return keys;

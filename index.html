@@ -29,16 +29,16 @@
   <section class="panel active" id="tab-schedule">
     <div class="toolbar no-print">
       <div class="week-nav">
-        <button id="prev-week" class="btn ghost" data-i18n-title="toolbar.prevWeek" title="שבוע קודם">▶</button>
+        <button id="prev-week" class="btn ghost icon" data-i18n-title="toolbar.prevWeek" data-i18n-aria="toolbar.prevWeek" title="שבוע קודם" aria-label="שבוע קודם"><svg class="ico ico-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
         <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
-        <button id="next-week" class="btn ghost" data-i18n-title="toolbar.nextWeek" title="שבוע הבא">◀</button>
+        <button id="next-week" class="btn ghost icon" data-i18n-title="toolbar.nextWeek" data-i18n-aria="toolbar.nextWeek" title="שבוע הבא" aria-label="שבוע הבא"><svg class="ico ico-next" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
         <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
         <span id="sync-state" class="sync-state local" data-i18n="status.localOnly">נשמר במכשיר הזה</span>
       </div>
       <div class="actions">
-        <button id="generate" class="btn primary">✨ <span data-i18n="toolbar.generate">בנה סידור אוטומטי</span></button>
-        <button id="view-only-toggle" class="btn ghost" aria-pressed="false">🔒 <span data-i18n="toolbar.viewOnly">מצב צפייה</span></button>
-        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false">⋯ <span data-i18n="toolbar.moreTools">כלים נוספים</span></button>
+        <button id="generate" class="btn primary"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-sparkle"></use></svg><span data-i18n="toolbar.generate">בנה סידור אוטומטי</span></button>
+        <button id="view-only-toggle" class="btn ghost" aria-pressed="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg><span data-i18n="toolbar.viewOnly">מצב צפייה</span></button>
+        <button id="tools-toggle" class="btn ghost mobile-only" aria-expanded="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-dots"></use></svg><span data-i18n="toolbar.moreTools">כלים נוספים</span></button>
       </div>
     </div>
 
@@ -50,18 +50,18 @@
         </label>
       </div>
       <div class="tools-row actions">
-        <button id="clear-week" class="btn ghost" data-i18n="toolbar.clear">נקה סידור</button>
-        <button id="copy-text" class="btn ghost">📋 <span data-i18n="toolbar.copyText">העתק כטקסט</span></button>
-        <button id="export-excel" class="btn ghost">⬇ <span data-i18n="toolbar.excel">אקסל</span></button>
-        <button id="export-csv" class="btn ghost">⬇ <span data-i18n="toolbar.csv">CSV</span></button>
-        <button id="print" class="btn ghost">🖨 <span data-i18n="toolbar.print">הדפסה</span></button>
+        <button id="clear-week" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-trash"></use></svg><span data-i18n="toolbar.clear">נקה סידור</span></button>
+        <button id="copy-text" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="toolbar.copyText">העתק כטקסט</span></button>
+        <button id="export-excel" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
+        <button id="export-csv" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.csv">CSV</span></button>
+        <button id="print" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg><span data-i18n="toolbar.print">הדפסה</span></button>
       </div>
 
       <div class="personal-bar">
         <span class="personal-label" data-i18n="toolbar.personalExport">ייצוא אישי לעובד (רק המשמרות שלו):</span>
         <select id="personal-employee" class="text-input personal-select"></select>
-        <button id="personal-excel" class="btn ghost small">⬇ <span data-i18n="toolbar.excel">אקסל</span></button>
-        <button id="personal-text" class="btn ghost small">📋 <span data-i18n="excel.personalText">טקסט לוואטסאפ</span></button>
+        <button id="personal-excel" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="toolbar.excel">אקסל</span></button>
+        <button id="personal-text" class="btn ghost small"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"></use></svg><span data-i18n="excel.personalText">טקסט לוואטסאפ</span></button>
       </div>
 
       <div class="holiday-bar">
@@ -220,8 +220,8 @@
 
     <h2 data-i18n="settings.backup">גיבוי ושחזור</h2>
     <div class="settings-block row">
-      <button id="export-json" class="btn ghost">⬇ <span data-i18n="settings.exportJson">ייצוא כל הנתונים (JSON)</span></button>
-      <label class="btn ghost file-btn">⬆ <span data-i18n="settings.importJson">ייבוא נתונים</span><input type="file" id="import-json" accept="application/json" hidden></label>
+      <button id="export-json" class="btn ghost"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span data-i18n="settings.exportJson">ייצוא כל הנתונים (JSON)</span></button>
+      <label class="btn ghost file-btn"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-upload"></use></svg><span data-i18n="settings.importJson">ייבוא נתונים</span><input type="file" id="import-json" accept="application/json" hidden></label>
       <button id="reset-all" class="btn danger" data-i18n="settings.reset">איפוס להגדרות ברירת מחדל</button>
     </div>
     <p class="hint" data-i18n="settings.backupHint">הנתונים נשמרים אוטומטית בדפדפן של המחשב הזה.</p>
@@ -247,6 +247,7 @@
 <script src="js/i18n/de.js"></script>
 <script src="js/i18n/pt.js"></script>
 <script src="js/i18n/dom.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/brand.js"></script>
 <script src="js/platform.js"></script>
 <script src="js/xlsx.js"></script>

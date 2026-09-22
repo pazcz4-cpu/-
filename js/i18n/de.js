@@ -295,7 +295,7 @@
         slotLabel: '{day} · {branch} · {shift}schicht',
         deletedEmployee: '(gelöschte Person: {id})',
         deletedBranch: '(gelöschte Filiale)',
-        allGood: '✔ Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
+        allGood: 'Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
         duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
         duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
         doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',

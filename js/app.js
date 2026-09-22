@@ -63,6 +63,12 @@
   var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
 
   function $(sel) { return document.querySelector(sel); }
+
+  /* אייקון מספריית ה-SVG. נופל לריק אם הספרייה לא נטענה: קישוט
+     חסר עדיף על מסך שבור. */
+  function ico(name, extraClass) {
+    return window.ShiftIcons ? window.ShiftIcons.svg(name, extraClass) : '';
+  }
   function esc(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -570,7 +576,7 @@
     var html = '<div class="issues-summary">';
 
     if (!report.issues.length) {
-      html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
+      html += '<span class="badge ok">' + ico('check') + t('alerts.allGood') + '</span>';
     }
 
     report.groups.forEach(function (group) {

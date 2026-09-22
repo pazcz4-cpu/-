@@ -105,6 +105,9 @@
         ctaTitle: 'Essayez-le sur le planning de la semaine prochaine',
         ctaBody: 'Configurez vos sites, construisez une semaine et voyez la différence. Une après-midi suffit.',
         footerRights: 'Tous droits réservés.',
+        privacy: 'Confidentialité',
+        terms: 'Conditions',
+        security: 'Sécurité',
         footerTagline: 'Planification des équipes pour les réseaux.'
       },
       tabs: {
@@ -439,6 +442,8 @@
         status: { open: 'Ouvert', in_progress: 'En cours', answered: 'Répondu', closed: 'Fermé' }
       },
       settings: {
+        privacyTitle: 'Confidentialité et suppression des données',
+        dataRights: 'Vos données sont à vous : l’export ci-dessus les réunit dans un seul fichier, à tout moment et sans nous le demander. Pour supprimer le compte et toutes les données, écrivez depuis l’e-mail du titulaire à support@setshifts.com : nous supprimons sous 14 jours et confirmons par écrit. Exportez avant.',
         rules: 'Règles de planification',
         onePerDay: 'Une personne travaille au plus un service par jour',
         rest: 'Pas de service du matin après un service du soir la veille',
@@ -544,6 +549,7 @@
       },
 
       auth: {
+        consent: 'En créant un compte, j’accepte les {terms} et la {privacy}.',
         forgot: 'Mot de passe oublié',
         sending: 'Envoi…',
         resetHint: 'Nous vous envoyons par e-mail un lien pour définir un nouveau mot de passe.',

@@ -242,6 +242,38 @@ try {
   await page.click('.tab[data-tab="settings"]').catch(() => {});
   await page.waitForTimeout(200);
 
+  console.log('\n== העמודים המשפטיים ==');
+
+  /* עסק שמחפש "האם אפשר לסמוך עליהם" מגיע לעמודים האלה, ולכן הם
+     חייבים לעלות, להיות מקושרים מדף המכירה, ולהיכנס למנועי החיפוש. */
+  for (const dir of ['privacy', 'terms', 'security']) {
+    const response = await page.goto(BASE + '/' + dir + '/');
+    check('/' + dir + '/ עולה', response.status(), 200);
+    check('  יש כותרת', (await page.locator('h1:visible').textContent()).trim().length > 2, true);
+    check('  אינו מסומן noindex',
+      await page.locator('meta[name="robots"]').count(), 0);
+    check('  נמצא במפת האתר',
+      sitemap.indexOf('<loc>' + DOMAIN + '/' + dir + '/</loc>') !== -1, true);
+    /* גרסה אחת בלבד גלויה, אחרת שתי שפות רצות אחת על השנייה */
+    check('  גרסה אחת גלויה', await page.locator('article[data-legal]:visible').count(), 1);
+    check('  בורר השפה עובד', await (async () => {
+      await page.click('[data-legal-lang="en"]');
+      await page.waitForTimeout(150);
+      return page.getAttribute('html', 'dir');
+    })(), 'ltr');
+    await page.click('[data-legal-lang="he"]');
+    await page.waitForTimeout(150);
+    check('  וחוזר לעברית', await page.getAttribute('html', 'dir'), 'rtl');
+  }
+
+  console.log('\n== הקישורים מדף המכירה ==');
+  await page.goto(BASE + '/');
+  await page.waitForTimeout(400);
+  for (const dir of ['privacy', 'terms', 'security']) {
+    check('קישור אל /' + dir + '/',
+      await page.locator('.lp-footer a[href$="' + dir + '/"]').count(), 1);
+  }
+
   console.log('\n== נכסים משותפים ==');
   for (const asset of ['/css/styles.css', '/css/landing.css', '/js/app.js', '/js/i18n/ar.js', '/sw.js']) {
     check(asset, (await page.request.get(BASE + asset)).status(), 200);

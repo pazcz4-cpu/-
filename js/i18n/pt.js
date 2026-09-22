@@ -105,6 +105,9 @@
         ctaTitle: 'Experimenta no horário da próxima semana',
         ctaBody: 'Configura as lojas, constrói uma semana e vê a diferença. Leva uma tarde.',
         footerRights: 'Todos os direitos reservados.',
+        privacy: 'Privacidade',
+        terms: 'Termos',
+        security: 'Segurança',
         footerTagline: 'Planeamento de turnos para cadeias.'
       },
       tabs: {
@@ -439,6 +442,8 @@
         status: { open: 'Aberto', in_progress: 'Em curso', answered: 'Respondido', closed: 'Fechado' }
       },
       settings: {
+        privacyTitle: 'Privacidade e eliminação de dados',
+        dataRights: 'Os teus dados são teus: a exportação acima junta tudo num ficheiro, a qualquer momento e sem nos pedires. Para eliminar a conta e todos os dados, envia um pedido do email do titular para support@setshifts.com e eliminamos em 14 dias, com confirmação por escrito. Exporta antes.',
         rules: 'Regras de planeamento',
         onePerDay: 'Cada pessoa faz no máximo um turno por dia',
         rest: 'Sem turno de manhã depois de um turno de fim do dia na véspera',
@@ -544,6 +549,7 @@
       },
 
       auth: {
+        consent: 'Ao criar uma conta aceito os {terms} e a {privacy}.',
         forgot: 'Esqueci a palavra-passe',
         sending: 'A enviar…',
         resetHint: 'Enviamos-te por email um link para definir uma palavra-passe nova.',

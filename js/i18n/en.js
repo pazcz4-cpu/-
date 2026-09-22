@@ -111,6 +111,9 @@
         ctaTitle: 'Try it on next week’s schedule',
         ctaBody: 'Set up your locations, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
+        privacy: 'Privacy',
+        terms: 'Terms',
+        security: 'Security',
         footerTagline: 'Shift scheduling for chains.'
       },
 
@@ -445,6 +448,8 @@
         status: { open: 'Open', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' }
       },
       settings: {
+        privacyTitle: 'Privacy and deleting your data',
+        dataRights: 'Your data is yours: the export above puts all of it in one file, any time, without asking us. To delete the account and all its data, send a request from the account owner\'s email to support@setshifts.com and we delete it within 14 days and confirm in writing. Export first.',
         rules: 'Scheduling rules',
         onePerDay: 'A person works at most one shift per day',
         rest: 'No morning shift after an evening shift the day before',
@@ -550,6 +555,7 @@
       },
 
       auth: {
+        consent: 'By creating an account I agree to the {terms} and the {privacy}.',
         forgot: 'Forgot password',
         sending: 'Sending…',
         resetHint: 'We will email you a link to set a new password.',

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>אבטחה · SetShifts</title>
+<meta name="description" content="איך SetShifts מגנה על הנתונים: בידוד בין חברות, סיסמאות, הרשאות לפי תפקיד – ומה עוד לא קיים.">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="legal-body">
+
+<nav class="lp-nav">
+  <div class="landing-wrap lp-nav-inner">
+    <a class="lp-brand" href="/"><img src="icons/icon-192.png" alt=""><span>SetShifts</span></a>
+    <div class="lp-nav-spacer"></div>
+    <div class="legal-langs" role="group">
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="he" lang="he">עברית</button>
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="en" lang="en">English</button>
+    </div>
+  </div>
+</nav>
+
+<main class="landing-wrap legal">
+
+<article data-legal="he" lang="he" dir="rtl">
+  <h1>אבטחה</h1>
+  <p class="legal-date">עודכן ב־{{EFFECTIVE_DATE}}</p>
+
+  <p>העמוד הזה מתאר איך המערכת מגנה על הנתונים, ומה הגבולות של ההגנה
+  הזו. עמוד אבטחה שמבטיח הכל אינו עמוד אבטחה.</p>
+
+  <h2>בידוד בין חברות</h2>
+  <p>כל חברה רואה את הנתונים של עצמה בלבד. זה לא מסתמך על סינון
+  במסך, אלא נאכף בבסיס הנתונים עצמו: לכל טבלה יש כלל הרשאה שמצמיד
+  כל שורה לחברה, והוא חל על כל בקשה – גם כזו שנשלחה ישירות אל השרת,
+  לא דרך המערכת. קוד שנכתב בעתיד ויפספס תנאי סינון עדיין לא יחזיר
+  נתונים של חברה אחרת.</p>
+  <p>מעבר לכך, עמודות רגישות נשמרות בהרשאת כתיבה נפרדת: מצב המנוי,
+  התוכנית ותאריך התוקף אינם ניתנים לשינוי מהדפדפן בשום צורה – רק
+  השרת כותב אותם, בתגובה לאישור מספק התשלומים. גם סטטוס של קריאת
+  שירות והתשובה עליה נכתבים בצד שלנו בלבד.</p>
+  <p>בידוד בין חברות נבדק בבדיקות אוטומטיות שרצות על כל שינוי בקוד,
+  ובהן ניסיונות גישה מכוונים מחברה אחת לנתוני חברה אחרת.</p>
+
+  <h2>סיסמאות</h2>
+  <ul>
+    <li><strong>אף אחד אצלנו אינו יכול לראות סיסמה.</strong> הסיסמאות
+    נשמרות מגובבות (hashed) בשכבת האימות של Supabase.</li>
+    <li><strong>גם מנהל בחברה אינו קובע סיסמה לעובד.</strong> העובד
+    מקבל קישור בדואר וקובע סיסמה בעצמו. זה לא רק נוח – זה מונע מצב
+    שבו סיסמה של עובד עוברת בוואטסאפ ונשארת שם.</li>
+    <li>קישור הזמנה וקישור איפוס הם חד-פעמיים ופגים. קישור שנצרך
+    כבר אינו עובד, והאסימון נמחק מהכתובת מיד כדי שלא יישאר
+    בהיסטוריית הדפדפן.</li>
+    <li>אורך מינימלי של 6 תווים נאכף בשרת, לא רק במסך.</li>
+  </ul>
+
+  <h2>הרשאות לפי תפקיד</h2>
+  <p>שלושה תפקידים, וההבדל ביניהם נאכף בשרת:</p>
+  <table>
+    <thead><tr><th>תפקיד</th><th>מה מותר</th></tr></thead>
+    <tbody>
+      <tr><td>בעלים</td><td>הכל, כולל המנוי והחיוב</td></tr>
+      <tr><td>מנהל</td><td>סידורים, עובדים, סניפים, הגדרות ומשתמשים – ללא חיוב</td></tr>
+      <tr><td>עובד</td><td>המשמרות שלו והבקשות שלו בלבד. הוא אינו רואה את הסידור המלא, אינו רואה עובדים אחרים, ואינו יכול לערוך דבר</td></tr>
+    </tbody>
+  </table>
+  <p>עובד מעדכן את הבקשות שלו דרך פונקציות מוגדרות בשרת שבודקות שהוא
+  אכן מעדכן את עצמו, ולא דרך כתיבה חופשית לטבלה. גם אם ינסה לשלוח
+  בקשה משלו ישירות לשרת, הוא לא יוכל לשנות בקשה של אדם אחר, לאשר
+  לעצמו בקשה, או להגיש אחרי מועד הסגירה שהמנהל קבע.</p>
+
+  <h2>העברה ואחסון</h2>
+  <ul>
+    <li>כל התעבורה מוצפנת ב-HTTPS.</li>
+    <li>הנתונים מאוחסנים ב-Supabase באזור {{DATA_REGION}}, עם הצפנה
+    באחסון וגיבויים מנוהלים מצד הספק.</li>
+    <li>מפתח הניהול של בסיס הנתונים קיים רק בשרת, כמשתנה סביבה, ואינו
+    מגיע לדפדפן בשום מצב. פעולות שדורשות אותו – למשל הזמנת משתמש
+    חדש – רצות בצד השרת ומאמתות מי הקורא לפני שהן פועלות.</li>
+    <li>פרטי אמצעי תשלום אינם עוברים בשרתים שלנו ואינם נשמרים בהם.</li>
+  </ul>
+
+  <h2>מה איננו עושים</h2>
+  <ul>
+    <li>אין באתר ובמערכת אף קובץ Cookie, אף כלי אנליטיקה ואף פיקסל
+    של צד שלישי.</li>
+    <li>אין מעקב מיקום, אין שעון נוכחות ואין ניטור עובדים.</li>
+    <li>איננו מוכרים נתונים ואיננו משתפים אותם עם מפרסמים.</li>
+  </ul>
+
+  <h2>מה באחריותך</h2>
+  <p>החלק הזה אינו קטן, ולכן הוא כתוב במפורש:</p>
+  <ul>
+    <li>סיסמאות חזקות, ולא כאלה שחוזרות משירותים אחרים.</li>
+    <li>להשבית משתמש שסיים לעבוד – כל זמן שהוא פעיל, הוא נכנס.</li>
+    <li>לתת תפקיד מנהל רק למי שצריך לראות את כל הסידור ואת כל
+    העובדים.</li>
+    <li>לא להזין בשדות החופשיים (הערה על עובד, סיבה לבקשה) מידע
+    רפואי או אישי מעבר לנדרש.</li>
+  </ul>
+
+  <h2>מצאת בעיה?</h2>
+  <p>אנחנו רוצים לשמוע, ואנחנו לא נתייחס לדיווח כאל תקיפה:
+  <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>. נאשר קבלה
+  תוך 48 שעות ונעדכן אותך עד שהעניין נסגר. אם אירוע אבטחה יפגע
+  בנתונים של לקוח, נודיע ללקוחות שנפגעו ישירות ובלי לחכות שישאלו.</p>
+
+  <h2>מה עוד לא קיים</h2>
+  <p>כדי שהתמונה תהיה מלאה: אין עדיין אימות דו-שלבי, אין יומן פעולות
+  (audit log) שנגיש ללקוח, ואין תקן SOC 2 או ISO 27001. אלה דברים
+  שמתוכננים, ולא דברים שיש.</p>
+
+  <p class="legal-foot">שאלה על אבטחה:
+  <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></p>
+</article>
+
+<article data-legal="en" lang="en" dir="ltr" hidden>
+  <h1>Security</h1>
+  <p class="legal-date">Updated {{EFFECTIVE_DATE}}</p>
+
+  <p>This page describes how the system protects your data, and the
+  limits of that protection. A security page that promises everything is
+  not a security page.</p>
+
+  <h2>Isolation between companies</h2>
+  <p>Each company sees only its own data. This does not rely on
+  filtering in the screen; it is enforced by the database itself. Every
+  table carries a permission rule that ties each row to a company, and
+  it applies to every request – including one sent straight to the
+  server rather than through the app. Code written in future that
+  forgets a filter still cannot return another company's data.</p>
+  <p>Beyond that, sensitive columns have separate write permissions:
+  subscription state, plan and valid-until date cannot be changed from
+  the browser in any way – only the server writes them, in response to
+  confirmation from the payment provider. The status of a support
+  ticket and its reply are likewise written only on our side.</p>
+  <p>Isolation between companies is covered by automated tests that run
+  on every code change, including deliberate attempts to read one
+  company's data from another.</p>
+
+  <h2>Passwords</h2>
+  <ul>
+    <li><strong>Nobody here can see a password.</strong> Passwords are
+    stored hashed in Supabase's authentication layer.</li>
+    <li><strong>A manager does not set a password for staff
+    either.</strong> Each person gets a link by email and chooses their
+    own. That is not only convenient – it prevents a staff password
+    being sent over WhatsApp and living there forever.</li>
+    <li>Invitation and reset links are single-use and expire. A link
+    that has been used no longer works, and the token is stripped from
+    the address immediately so it does not sit in browser history.</li>
+    <li>A six-character minimum is enforced on the server, not only in
+    the screen.</li>
+  </ul>
+
+  <h2>Permissions by role</h2>
+  <p>Three roles, and the difference between them is enforced on the
+  server:</p>
+  <table>
+    <thead><tr><th>Role</th><th>What it can do</th></tr></thead>
+    <tbody>
+      <tr><td>Owner</td><td>Everything, including the subscription and billing</td></tr>
+      <tr><td>Manager</td><td>Schedules, staff, locations, settings and users – no billing</td></tr>
+      <tr><td>Staff</td><td>Their own shifts and their own availability, and nothing else. They cannot see the full schedule, cannot see other people, and cannot edit anything</td></tr>
+    </tbody>
+  </table>
+  <p>Staff update their own availability through defined server
+  functions that check they are updating themselves, not by writing
+  freely to a table. Even sending a handcrafted request straight to the
+  server, they cannot change someone else's request, approve their own,
+  or submit after the deadline the manager set.</p>
+
+  <h2>In transit and at rest</h2>
+  <ul>
+    <li>All traffic is encrypted over HTTPS.</li>
+    <li>Data is stored in Supabase in the {{DATA_REGION}} region, with
+    encryption at rest and provider-managed backups.</li>
+    <li>The database admin key exists only on the server, as an
+    environment variable, and never reaches the browser. Operations
+    that need it – inviting a new user, for instance – run server-side
+    and verify who is calling before they act.</li>
+    <li>Payment details do not pass through our servers and are not
+    stored there.</li>
+  </ul>
+
+  <h2>What we do not do</h2>
+  <ul>
+    <li>There is not a single cookie, analytics tool or third-party
+    pixel on the site or in the app.</li>
+    <li>No location tracking, no time clock, no staff monitoring.</li>
+    <li>We do not sell data and do not share it with advertisers.</li>
+  </ul>
+
+  <h2>What is on you</h2>
+  <p>This part is not small, so it is spelled out:</p>
+  <ul>
+    <li>Strong passwords, not ones reused from other services.</li>
+    <li>Deactivate a user who has left – while they are active, they
+    can sign in.</li>
+    <li>Give the manager role only to people who should see the whole
+    schedule and everyone on it.</li>
+    <li>Keep medical or personal details out of the free-text fields (a
+    note on a staff card, a reason for a request) beyond what is
+    needed.</li>
+  </ul>
+
+  <h2>Found a problem?</h2>
+  <p>We want to hear about it, and we will not treat a report as an
+  attack: <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>. We
+  acknowledge within 48 hours and keep you updated until it is closed.
+  If a security incident affects customer data, we tell the affected
+  customers directly, without waiting to be asked.</p>
+
+  <h2>What does not exist yet</h2>
+  <p>So the picture is complete: there is no two-factor authentication
+  yet, no customer-visible audit log, and no SOC 2 or ISO 27001
+  certification. Those are planned, not present.</p>
+
+  <p class="legal-foot">A security question:
+  <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></p>
+</article>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="landing-wrap lp-footer-inner">
+    <span>SetShifts</span>
+    <span class="lp-nav-spacer"></span>
+    <a href="/privacy/">מדיניות פרטיות</a>
+    <a href="/terms/">תנאי שימוש</a>
+    <a href="/security/">אבטחה</a>
+  </div>
+</footer>
+
+<script src="js/legal.js"></script>
+</body>
+</html>

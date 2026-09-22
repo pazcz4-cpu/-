@@ -29,6 +29,40 @@ const SUPABASE_URL = process.env.SUPABASE_URL ||
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
   'sb_publishable_ZYYKx9bJbmUSTsaFWGfnCA_bIyaATfS';
 
+/* ===== הפרטים של העמודים המשפטיים =====
+
+   בעמודים האלה יש עובדות שרק בעל העסק יודע: השם הרשום, הכתובת,
+   האזור שבו הוקם פרויקט Supabase והדין החל. ניחוש שלנו שם היה
+   הצהרה שגויה במסמך מחייב, ולכן הם נכנסים כמשתני סביבה – והבנייה
+   צועקת כשהם חסרים במקום להשתיק את הבעיה. */
+const LEGAL = {
+  LEGAL_ENTITY: process.env.LEGAL_ENTITY || '',
+  LEGAL_ADDRESS: process.env.LEGAL_ADDRESS || '',
+  DATA_REGION: process.env.DATA_REGION || '',
+  PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER || '',
+  JURISDICTION: process.env.LEGAL_JURISDICTION || '',
+  JURISDICTION_COURT: process.env.LEGAL_COURT || '',
+  EFFECTIVE_DATE: process.env.LEGAL_EFFECTIVE_DATE ||
+    new Date().toISOString().slice(0, 10),
+  SUPPORT_EMAIL: 'support@setshifts.com',
+  TRIAL_DAYS: '14'
+};
+
+const legalMissing = [];
+
+function fillLegal(html) {
+  return html.replace(/\{\{([A-Z_]+)\}\}/g, (match, key) => {
+    if (!(key in LEGAL)) return match;
+    if (!LEGAL[key]) {
+      if (legalMissing.indexOf(key) === -1) legalMissing.push(key);
+      /* סימון גלוי, כדי שאי אפשר יהיה לפרסם את העמוד בלי לראות
+         שמשהו חסר בו */
+      return '[' + key + ']';
+    }
+    return LEGAL[key];
+  });
+}
+
 function rm(target) { fs.rmSync(target, { recursive: true, force: true }); }
 function mkdir(target) { fs.mkdirSync(target, { recursive: true }); }
 function read(file) { return fs.readFileSync(path.join(root, file), 'utf8'); }
@@ -188,7 +222,7 @@ const SW_REGISTER = `
 </script>`;
 
 function page(source, target, options) {
-  let html = toAbsolutePaths(read(source));
+  let html = fillLegal(toAbsolutePaths(read(source)));
   html = html.replace('</head>', headExtras(options) + '\n</head>');
   html = html.replace('</body>', SW_REGISTER + '\n</body>');
   write(target, html);
@@ -202,6 +236,17 @@ page('landing.html', 'index.html', {
 });
 page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest', noindex: true });
 page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', noindex: true });
+
+/* העמודים המשפטיים. הם כן נכנסים למנועי החיפוש: עסק שמחפש "האם
+   אפשר לסמוך עליהם" מגיע בדיוק לשם. */
+const LEGAL_PAGES = [
+  { file: 'privacy.html', dir: 'privacy' },
+  { file: 'terms.html', dir: 'terms' },
+  { file: 'security.html', dir: 'security' }
+];
+LEGAL_PAGES.forEach((item) => {
+  page(item.file, item.dir + '/index.html', { canonical: '/' + item.dir + '/' });
+});
 
 /* הגדרות החיבור לשרת, נכתבות מחדש לכל פריסה.
    המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
@@ -225,6 +270,9 @@ write('sitemap.xml',
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
   '  <url><loc>' + SITE_URL + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n' +
+  LEGAL_PAGES.map((item) =>
+    '  <url><loc>' + SITE_URL + '/' + item.dir + '/</loc>' +
+    '<changefreq>yearly</changefreq><priority>0.3</priority></url>\n').join('') +
   '</urlset>\n');
 write('.nojekyll', '');
 
@@ -239,3 +287,12 @@ console.log('נבנה site/ (' + (total / 1024).toFixed(0) + ' KB)');
 console.log('  /       דף המכירה');
 console.log('  /app/   המערכת עם ההתחברות');
 console.log('  /tool/  הכלי המקומי לעסק אחד');
+LEGAL_PAGES.forEach((item) => {
+  console.log(('  /' + item.dir + '/').padEnd(10, ' ') + ' עמוד משפטי');
+});
+
+if (legalMissing.length) {
+  console.log('\n⚠ העמודים המשפטיים חסרים פרטים. הם פורסמו עם סימון גלוי,');
+  console.log('  ומה שחסר הוא: ' + legalMissing.join(', '));
+  console.log('  יש להגדיר אותם כמשתני סביבה ב-Vercel לפני שמפנים לקוח לעמודים.');
+}

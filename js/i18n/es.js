@@ -105,6 +105,9 @@
         ctaTitle: 'Pruébalo con el cuadrante de la semana que viene',
         ctaBody: 'Configura tus sucursales, crea una semana y nota la diferencia. Es cuestión de una tarde.',
         footerRights: 'Todos los derechos reservados.',
+        privacy: 'Privacidad',
+        terms: 'Términos',
+        security: 'Seguridad',
         footerTagline: 'Planificación de turnos para cadenas.'
       },
       tabs: {
@@ -439,6 +442,8 @@
         status: { open: 'Abierto', in_progress: 'En curso', answered: 'Respondido', closed: 'Cerrado' }
       },
       settings: {
+        privacyTitle: 'Privacidad y borrado de datos',
+        dataRights: 'Tus datos son tuyos: la exportación de arriba los pone todos en un archivo, cuando quieras y sin pedírnoslo. Para borrar la cuenta y todos los datos, escribe desde el correo del titular a support@setshifts.com y los borramos en 14 días, con confirmación por escrito. Exporta antes.',
         rules: 'Reglas de planificación',
         onePerDay: 'Cada persona trabaja como máximo un turno al día',
         rest: 'Sin turno de mañana después de un turno de tarde el día anterior',
@@ -544,6 +549,7 @@
       },
 
       auth: {
+        consent: 'Al crear una cuenta acepto los {terms} y la {privacy}.',
         forgot: 'He olvidado la contraseña',
         sending: 'Enviando…',
         resetHint: 'Te enviaremos por correo un enlace para poner una contraseña nueva.',

@@ -1311,6 +1311,63 @@ test('הסכימה נפתחת בשורה באנגלית', function () {
   assert(/^-- [A-Za-z]/.test(first), 'השורה הראשונה אינה מתחילה בתווית לטינית: ' + first);
 });
 
+console.log('\n== העמודים המשפטיים ==');
+
+/* בעמודים האלה יש עובדות שרק בעל העסק יודע (שם רשום, כתובת, אזור
+   האחסון, הדין החל). הן מסומנות כ-{{PLACEHOLDER}} ומוזרקות בבנייה.
+   מפתח שאינו מוכר לבנייה היה נשאר על העמוד כסוגריים – במסמך מחייב. */
+var LEGAL_FILES = ['privacy.html', 'terms.html', 'security.html'];
+
+function legalPlaceholders() {
+  var found = {};
+  LEGAL_FILES.forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    (html.match(/\{\{[A-Z_]+\}\}/g) || []).forEach(function (token) {
+      found[token.slice(2, -2)] = name;
+    });
+  });
+  return found;
+}
+
+test('כל מפתח בעמודים המשפטיים מוכר לבנייה', function () {
+  var build = fs.readFileSync(path.join(__dirname, '..', 'build-site.js'), 'utf8');
+  var block = build.slice(build.indexOf('const LEGAL = {'));
+  block = block.slice(0, block.indexOf('};'));
+  var known = {};
+  (block.match(/^\s*([A-Z_]+):/gm) || []).forEach(function (line) {
+    known[line.replace(/[^A-Z_]/g, '')] = true;
+  });
+
+  var used = legalPlaceholders();
+  var names = Object.keys(used);
+  assert(names.length >= 5, 'לא נמצאו מפתחות בעמודים המשפטיים: ' + names.length);
+  names.forEach(function (key) {
+    assert(known[key], key + ' מופיע ב-' + used[key] +
+      ' אבל build-site.js אינו יודע למלא אותו');
+  });
+});
+
+test('שלושת העמודים קיימים בשתי שפות ומקושרים זה לזה', function () {
+  LEGAL_FILES.forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    assert(html.indexOf('data-legal="he"') !== -1, name + ': חסרה גרסה עברית');
+    assert(html.indexOf('data-legal="en"') !== -1, name + ': חסרה גרסה אנגלית');
+    /* כתובת התמיכה מגיעה ממקום אחד, ולא נכתבת שוב בכל עמוד */
+    assert(html.indexOf('{{SUPPORT_EMAIL}}') !== -1,
+      name + ': כתובת התמיכה נכתבה ידנית ולא דרך המפתח');
+    ['/privacy/', '/terms/', '/security/'].forEach(function (href) {
+      assert(html.indexOf(href) !== -1, name + ': אין קישור אל ' + href);
+    });
+  });
+});
+
+test('עמוד האבטחה אומר גם מה עוד לא קיים', function () {
+  var html = fs.readFileSync(path.join(__dirname, '..', 'security.html'), 'utf8');
+  /* עמוד אבטחה שמבטיח הכל אינו עמוד אבטחה */
+  assert(html.indexOf('אימות דו-שלבי') !== -1 && html.indexOf('SOC 2') !== -1,
+    'העמוד מבטיח בלי לציין את הגבולות');
+});
+
 console.log('\n== כתובת התמיכה ==');
 
 test('כתובת התמיכה מוגדרת במקום אחד ותקינה', function () {

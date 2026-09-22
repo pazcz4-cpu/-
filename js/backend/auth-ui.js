@@ -108,6 +108,10 @@
     });
   };
 
+  function legalLink(href, label) {
+    return '<a href="' + href + '" target="_blank" rel="noopener">' + esc(label) + '</a>';
+  }
+
   function supportLink() {
     var address = Model.SUPPORT_EMAIL;
     return '<a href="mailto:' + esc(address) + '">' + esc(address) + '</a>';
@@ -394,6 +398,12 @@
         '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
         '<small>' + t('auth.passwordHint') + '</small></label>' +
         '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +
+        /* הסכמה לתנאים במסך שבו היא נדרשת, עם קישורים שנפתחים
+           בלשונית אחרת כדי לא לאבד את הטופס שמולא */
+        '<p class="auth-hint">' + t('auth.consent', {
+          terms: legalLink('/terms/', t('landing.terms')),
+          privacy: legalLink('/privacy/', t('landing.privacy'))
+        }) + '</p>' +
         '<p class="auth-hint">' + esc(t('auth.trialNote', {
           days: Model.TRIAL_DAYS,
           date: Model.formatDate(Model.addDays(new Date(), Model.TRIAL_DAYS))

@@ -105,6 +105,9 @@
         ctaTitle: 'Probieren Sie es am Plan für nächste Woche',
         ctaBody: 'Standorte einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
         footerRights: 'Alle Rechte vorbehalten.',
+        privacy: 'Datenschutz',
+        terms: 'Nutzungsbedingungen',
+        security: 'Sicherheit',
         footerTagline: 'Dienstplanung für Filialbetriebe.'
       },
       tabs: {
@@ -439,6 +442,8 @@
         status: { open: 'Offen', in_progress: 'In Bearbeitung', answered: 'Beantwortet', closed: 'Geschlossen' }
       },
       settings: {
+        privacyTitle: 'Datenschutz und Löschung',
+        dataRights: 'Ihre Daten gehören Ihnen: der Export oben legt alle in eine Datei, jederzeit und ohne Anfrage bei uns. Zum Löschen des Kontos und aller Daten genügt eine Anfrage von der E-Mail-Adresse des Kontoinhabers an support@setshifts.com – wir löschen innerhalb von 14 Tagen und bestätigen schriftlich. Vorher exportieren.',
         rules: 'Planungsregeln',
         onePerDay: 'Eine Person arbeitet höchstens eine Schicht pro Tag',
         rest: 'Keine Frühschicht nach einer Abendschicht am Vortag',
@@ -544,6 +549,7 @@
       },
 
       auth: {
+        consent: 'Mit dem Anlegen eines Kontos stimme ich den {terms} und der {privacy} zu.',
         forgot: 'Passwort vergessen',
         sending: 'Senden…',
         resetHint: 'Wir schicken Ihnen per E-Mail einen Link für ein neues Passwort.',

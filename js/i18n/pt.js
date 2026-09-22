@@ -684,6 +684,38 @@
         chooseEmployee: 'Escolhe uma pessoa para a exportação pessoal'
       },
 
+      importData: {
+        done: { one: 'Importada uma pessoa.', other: 'Importadas {count} pessoas.' },
+        branches: { one: 'Também foi criado um local novo.', other: 'Também foram criados {count} locais novos.' },
+        countCreate: { one: 'Vai ser criada uma pessoa', other: 'Vão ser criadas {count} pessoas' },
+        countSkip: { one: 'uma já existe e vai ser ignorada', other: '{count} já existem e vão ser ignoradas' },
+        countErrors: { one: 'uma linha não vai ser importada', other: '{count} linhas não vão ser importadas' },
+        confirm: { one: 'Importar uma pessoa', other: 'Importar {count} pessoas' },
+        open: 'Importar uma lista',
+        title: 'Importar pessoal',
+        hint: 'Seleciona a tua lista no Excel, copia e cola aqui – ou escolhe um ficheiro CSV. A primeira coluna é o nome. Depois, se tiveres: locais, tipos de turno e um limite semanal. Um local que ainda não exista será criado.',
+        placeholder: 'Dana Cohen\tLoja central\tManhã;Noite\t5',
+        file: 'Escolher um ficheiro CSV',
+        sample: 'Inserir um exemplo',
+        maxColumn: 'Limite',
+        line: 'Linha {line}:',
+        allShifts: 'Todos os turnos',
+        allBranches: 'Todos os locais',
+        newBranches: 'Também vão ser criados estes locais: {names}. Define os dias e horas depois de importar.',
+        nothing: 'Não há nada a importar deste texto.',
+        confirmEmpty: 'Importar',
+        blocked: '{count} não foram adicionadas por causa do limite do plano.',
+        skip: {
+          exists: 'já está no sistema',
+          duplicateInFile: 'aparece mais de uma vez na lista'
+        },
+        error: {
+          noName: 'a linha não tem nome',
+          badMax: 'o limite não é um número: {value}',
+          badShift: 'um turno que este negócio não definiu: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Escreve-nos',
         moveUp: 'Subir', moveDown: 'Descer', timePlaceholder: 'hh:mm',

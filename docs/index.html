@@ -1032,6 +1032,30 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
 }
 
+/* ===== ייבוא רשימת עובדים =====
+   התצוגה המקדימה היא העיקר כאן, ולכן היא מקבלת את רוב הגובה. */
+.import-card { max-width: 720px; }
+.import-hint { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+.import-text {
+  width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px; line-height: 1.6; resize: vertical; white-space: pre;
+}
+.import-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.import-confirm-row { margin-bottom: 0; }
+.import-preview { max-height: 46vh; overflow-y: auto; }
+.import-counts { margin: 6px 0; font-size: 14px; }
+.import-note { margin: 4px 0 10px; font-size: 13px; color: var(--warn); }
+.import-empty { margin: 10px 0; color: var(--muted); font-size: 14px; }
+.import-bad { color: var(--err); }
+.import-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
+.import-table table { min-width: 0; }
+.import-table th, .import-table td { font-size: 13px; text-align: start; }
+.import-list { margin: 10px 0 0; padding-inline-start: 20px; font-size: 13px; line-height: 1.7; }
+
+@media (max-width: 760px) {
+  .import-preview { max-height: 40vh; }
+}
+
 </style>
 </head>
 <body>
@@ -1155,6 +1179,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     <div class="toolbar no-print">
       <h2 data-i18n="employees.title">עובדים מוגדרים</h2>
       <button id="add-employee" class="btn primary" data-i18n="employees.add">+ הוסף עובד</button>
+      <button id="import-employees" class="btn ghost" data-i18n="importData.open">ייבוא מרשימה</button>
     </div>
     <div id="employees-list" class="cards"></div>
   </section>
@@ -2121,6 +2146,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         chooseEmployee: 'Choose a person for the personal export'
       },
 
+      importData: {
+        done: { one: 'One person imported.', other: '{count} people imported.' },
+        branches: { one: 'One new location was created too.', other: '{count} new locations were created too.' },
+        countCreate: { one: 'One person will be created', other: '{count} people will be created' },
+        countSkip: { one: 'one already exists and will be skipped', other: '{count} already exist and will be skipped' },
+        countErrors: { one: 'one row will not be imported', other: '{count} rows will not be imported' },
+        confirm: { one: 'Import one person', other: 'Import {count} people' },
+        open: 'Import a list',
+        title: 'Import staff',
+        hint: 'Select your list in Excel, copy it and paste it here – or choose a CSV file. The first column is the name. After it, if you have them: locations, shift types and a weekly limit. A location that does not exist yet will be created.',
+        placeholder: 'Dana Cohen\tCentral location\tMorning;Evening\t5',
+        file: 'Choose a CSV file',
+        sample: 'Insert an example',
+        maxColumn: 'Limit',
+        line: 'Row {line}:',
+        allShifts: 'All shifts',
+        allBranches: 'All locations',
+        newBranches: 'These locations will also be created: {names}. Set their days and hours after the import.',
+        nothing: 'There is nothing to import from this text.',
+        confirmEmpty: 'Import',
+        blocked: '{count} were not added because of the plan limit.',
+        skip: {
+          exists: 'already in the system',
+          duplicateInFile: 'appears more than once in the list'
+        },
+        error: {
+          noName: 'the row has no name',
+          badMax: 'the limit is not a number: {value}',
+          badShift: 'a shift this business has not defined: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Email us',
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
@@ -2824,6 +2881,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         chooseEmployee: 'בחרו עובד לייצוא אישי'
       },
 
+      importData: {
+        done: { one: 'יובא עובד אחד.', other: 'יובאו {count} עובדים.' },
+        branches: { one: 'נפתח גם סניף חדש אחד.', other: 'נפתחו גם {count} סניפים חדשים.' },
+        countCreate: { one: 'עובד אחד ייווצר', other: '{count} עובדים ייווצרו' },
+        countSkip: { one: 'אחד קיים כבר וידולג', other: '{count} קיימים כבר וידולגו' },
+        countErrors: { one: 'שורה אחת לא תיובא', other: '{count} שורות לא יובאו' },
+        confirm: { one: 'ייבוא עובד אחד', other: 'ייבוא {count} עובדים' },
+        open: 'ייבוא מרשימה',
+        title: 'ייבוא עובדים',
+        hint: 'סמנו את הרשימה באקסל, העתיקו והדביקו כאן – או בחרו קובץ CSV. הטור הראשון הוא השם. אחריו, אם יש: סניפים, משמרות ומכסה שבועית. סניף שאינו קיים ייפתח בדרך.',
+        placeholder: 'דנה כהן\tסניף מרכז\tבוקר;ערב\t5',
+        file: 'בחירת קובץ CSV',
+        sample: 'הכנסת דוגמה',
+        maxColumn: 'מכסה',
+        line: 'שורה {line}:',
+        allShifts: 'כל המשמרות',
+        allBranches: 'כל הסניפים',
+        newBranches: 'ייפתחו גם סניפים חדשים: {names}. אחרי הייבוא כדאי להגדיר להם ימים ושעות.',
+        nothing: 'אין מה לייבא מהטקסט הזה.',
+        confirmEmpty: 'ייבוא',
+        blocked: '{count} לא נוספו בגלל מגבלת התוכנית.',
+        skip: {
+          exists: 'כבר קיים במערכת',
+          duplicateInFile: 'מופיע יותר מפעם אחת ברשימה'
+        },
+        error: {
+          noName: 'אין שם בשורה',
+          badMax: 'המכסה אינה מספר: {value}',
+          badShift: 'משמרת שאינה מוגדרת בעסק: {value}'
+        }
+      },
+
       common: {
         emailUs: 'כתבו לנו',
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
@@ -3520,6 +3609,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         duplicatePerson: 'La misma persona no puede aparecer dos veces en un turno',
         printBlocked: 'Aquí no se puede imprimir: usa «Copiar como texto» o la exportación a Excel',
         chooseEmployee: 'Elige una persona para la exportación personal'
+      },
+
+      importData: {
+        done: { one: 'Se importó una persona.', other: 'Se importaron {count} personas.' },
+        branches: { one: 'También se creó una ubicación nueva.', other: 'También se crearon {count} ubicaciones nuevas.' },
+        countCreate: { one: 'Se creará una persona', other: 'Se crearán {count} personas' },
+        countSkip: { one: 'una ya existe y se omitirá', other: '{count} ya existen y se omitirán' },
+        countErrors: { one: 'una fila no se importará', other: '{count} filas no se importarán' },
+        confirm: { one: 'Importar una persona', other: 'Importar {count} personas' },
+        open: 'Importar una lista',
+        title: 'Importar personal',
+        hint: 'Selecciona tu lista en Excel, cópiala y pégala aquí, o elige un archivo CSV. La primera columna es el nombre. Después, si los tienes: ubicaciones, turnos y un límite semanal. Una ubicación que no exista se creará sola.',
+        placeholder: 'Dana Cohen\tSede central\tMañana;Tarde\t5',
+        file: 'Elegir un archivo CSV',
+        sample: 'Poner un ejemplo',
+        maxColumn: 'Límite',
+        line: 'Fila {line}:',
+        allShifts: 'Todos los turnos',
+        allBranches: 'Todas las ubicaciones',
+        newBranches: 'También se crearán estas ubicaciones: {names}. Configura sus días y horas después de importar.',
+        nothing: 'No hay nada que importar de este texto.',
+        confirmEmpty: 'Importar',
+        blocked: '{count} no se añadieron por el límite del plan.',
+        skip: {
+          exists: 'ya está en el sistema',
+          duplicateInFile: 'aparece más de una vez en la lista'
+        },
+        error: {
+          noName: 'la fila no tiene nombre',
+          badMax: 'el límite no es un número: {value}',
+          badShift: 'un turno que este negocio no ha definido: {value}'
+        }
       },
 
       common: {
@@ -4220,6 +4341,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         chooseEmployee: 'Choisissez une personne pour l’export personnel'
       },
 
+      importData: {
+        done: { one: 'Une personne importée.', other: '{count} personnes importées.' },
+        branches: { one: 'Un nouveau site a aussi été créé.', other: '{count} nouveaux sites ont aussi été créés.' },
+        countCreate: { one: 'Une personne sera créée', other: '{count} personnes seront créées' },
+        countSkip: { one: 'une existe déjà et sera ignorée', other: '{count} existent déjà et seront ignorées' },
+        countErrors: { one: 'une ligne ne sera pas importée', other: '{count} lignes ne seront pas importées' },
+        confirm: { one: 'Importer une personne', other: 'Importer {count} personnes' },
+        open: 'Importer une liste',
+        title: 'Importer le personnel',
+        hint: 'Sélectionnez votre liste dans Excel, copiez-la et collez-la ici – ou choisissez un fichier CSV. La première colonne est le nom. Ensuite, si vous les avez : sites, types de service et une limite hebdomadaire. Un site qui n’existe pas encore sera créé.',
+        placeholder: 'Dana Cohen\tSite central\tMatin;Soir\t5',
+        file: 'Choisir un fichier CSV',
+        sample: 'Insérer un exemple',
+        maxColumn: 'Limite',
+        line: 'Ligne {line} :',
+        allShifts: 'Tous les services',
+        allBranches: 'Tous les sites',
+        newBranches: 'Ces sites seront aussi créés : {names}. Réglez leurs jours et horaires après l’import.',
+        nothing: 'Il n’y a rien à importer dans ce texte.',
+        confirmEmpty: 'Importer',
+        blocked: '{count} n’ont pas été ajoutées à cause de la limite de la formule.',
+        skip: {
+          exists: 'déjà dans le système',
+          duplicateInFile: 'apparaît plus d’une fois dans la liste'
+        },
+        error: {
+          noName: 'la ligne n’a pas de nom',
+          badMax: 'la limite n’est pas un nombre : {value}',
+          badShift: 'un service que cette entreprise n’a pas défini : {value}'
+        }
+      },
+
       common: {
         emailUs: 'Écrivez-nous',
         moveUp: 'Monter', moveDown: 'Descendre', timePlaceholder: 'hh:mm',
@@ -4916,6 +5069,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         duplicatePerson: 'لا يمكن أن يظهر الموظف نفسه مرتين في مناوبة واحدة',
         printBlocked: 'الطباعة محجوبة هنا – استخدم «نسخ كنص» أو التصدير إلى إكسل',
         chooseEmployee: 'اختر موظفًا للتصدير الشخصي'
+      },
+
+      importData: {
+        done: { one: 'تم استيراد موظف واحد.', other: 'تم استيراد {count} موظفين.' },
+        branches: { one: 'وأُنشئ أيضًا فرع جديد واحد.', other: 'وأُنشئت أيضًا {count} فروع جديدة.' },
+        countCreate: { one: 'سيُنشأ موظف واحد', other: 'سيُنشأ {count} موظفين' },
+        countSkip: { one: 'واحد موجود بالفعل وسيتم تخطّيه', other: '{count} موجودون بالفعل وسيتم تخطّيهم' },
+        countErrors: { one: 'صف واحد لن يُستورد', other: '{count} صفوف لن تُستورد' },
+        confirm: { one: 'استيراد موظف واحد', other: 'استيراد {count} موظفين' },
+        open: 'استيراد قائمة',
+        title: 'استيراد الموظفين',
+        hint: 'حدّد قائمتك في إكسل، وانسخها والصقها هنا — أو اختر ملف CSV. العمود الأول هو الاسم. بعده، إن كانت لديك: الفروع وأنواع المناوبات وحصة أسبوعية. الفرع غير الموجود سيُنشأ تلقائيًا.',
+        placeholder: 'دانا كوهين\tالفرع المركزي\tصباح;مساء\t5',
+        file: 'اختيار ملف CSV',
+        sample: 'إدراج مثال',
+        maxColumn: 'الحصة',
+        line: 'الصف {line}:',
+        allShifts: 'كل المناوبات',
+        allBranches: 'كل الفروع',
+        newBranches: 'ستُنشأ أيضًا هذه الفروع: {names}. اضبط أيامها وساعاتها بعد الاستيراد.',
+        nothing: 'لا شيء لاستيراده من هذا النص.',
+        confirmEmpty: 'استيراد',
+        blocked: '{count} لم تُضَف بسبب حدّ الباقة.',
+        skip: {
+          exists: 'موجود في النظام بالفعل',
+          duplicateInFile: 'يظهر أكثر من مرة في القائمة'
+        },
+        error: {
+          noName: 'لا اسم في الصف',
+          badMax: 'الحصة ليست رقمًا: {value}',
+          badShift: 'مناوبة غير معرَّفة في هذا العمل: {value}'
+        }
       },
 
       common: {
@@ -5616,6 +5801,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         chooseEmployee: 'Выберите сотрудника для личного экспорта'
       },
 
+      importData: {
+        done: { one: 'Импортирован один сотрудник.', other: 'Импортировано сотрудников: {count}.' },
+        branches: { one: 'Также создан один новый филиал.', other: 'Также создано новых филиалов: {count}.' },
+        countCreate: { one: 'Будет создан один сотрудник', other: 'Будет создано сотрудников: {count}' },
+        countSkip: { one: 'один уже существует и будет пропущен', other: '{count} уже существуют и будут пропущены' },
+        countErrors: { one: 'одна строка не будет импортирована', other: '{count} строк не будут импортированы' },
+        confirm: { one: 'Импортировать одного', other: 'Импортировать {count}' },
+        open: 'Импорт списка',
+        title: 'Импорт сотрудников',
+        hint: 'Выделите список в Excel, скопируйте и вставьте здесь — или выберите файл CSV. Первый столбец — имя. Далее, если есть: филиалы, типы смен и недельная квота. Филиал, которого ещё нет, будет создан.',
+        placeholder: 'Дана Коэн\tЦентральный филиал\tУтро;Вечер\t5',
+        file: 'Выбрать файл CSV',
+        sample: 'Вставить пример',
+        maxColumn: 'Квота',
+        line: 'Строка {line}:',
+        allShifts: 'Все смены',
+        allBranches: 'Все филиалы',
+        newBranches: 'Также будут созданы филиалы: {names}. Их дни и часы настройте после импорта.',
+        nothing: 'В этом тексте нечего импортировать.',
+        confirmEmpty: 'Импорт',
+        blocked: '{count} не добавлены из-за ограничения тарифа.',
+        skip: {
+          exists: 'уже есть в системе',
+          duplicateInFile: 'встречается в списке более одного раза'
+        },
+        error: {
+          noName: 'в строке нет имени',
+          badMax: 'квота не число: {value}',
+          badShift: 'смена, не заданная в этом бизнесе: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Напишите нам',
         moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
@@ -6314,6 +6531,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         chooseEmployee: 'Wählen Sie eine Person für den persönlichen Export'
       },
 
+      importData: {
+        done: { one: 'Eine Person importiert.', other: '{count} Personen importiert.' },
+        branches: { one: 'Ein neuer Standort wurde ebenfalls angelegt.', other: '{count} neue Standorte wurden ebenfalls angelegt.' },
+        countCreate: { one: 'Eine Person wird angelegt', other: '{count} Personen werden angelegt' },
+        countSkip: { one: 'eine ist schon vorhanden und wird übersprungen', other: '{count} sind schon vorhanden und werden übersprungen' },
+        countErrors: { one: 'eine Zeile wird nicht importiert', other: '{count} Zeilen werden nicht importiert' },
+        confirm: { one: 'Eine Person importieren', other: '{count} Personen importieren' },
+        open: 'Liste importieren',
+        title: 'Mitarbeitende importieren',
+        hint: 'Markieren Sie Ihre Liste in Excel, kopieren Sie sie und fügen Sie sie hier ein – oder wählen Sie eine CSV-Datei. Die erste Spalte ist der Name. Danach, falls vorhanden: Standorte, Schichtarten und ein Wochenkontingent. Ein Standort, den es noch nicht gibt, wird angelegt.',
+        placeholder: 'Dana Cohen\tStandort Mitte\tFrüh;Abend\t5',
+        file: 'CSV-Datei wählen',
+        sample: 'Beispiel einfügen',
+        maxColumn: 'Kontingent',
+        line: 'Zeile {line}:',
+        allShifts: 'Alle Schichten',
+        allBranches: 'Alle Standorte',
+        newBranches: 'Diese Standorte werden ebenfalls angelegt: {names}. Tage und Zeiten stellen Sie nach dem Import ein.',
+        nothing: 'In diesem Text gibt es nichts zu importieren.',
+        confirmEmpty: 'Importieren',
+        blocked: '{count} wurden wegen des Tariflimits nicht hinzugefügt.',
+        skip: {
+          exists: 'schon im System',
+          duplicateInFile: 'kommt in der Liste mehr als einmal vor'
+        },
+        error: {
+          noName: 'die Zeile hat keinen Namen',
+          badMax: 'das Kontingent ist keine Zahl: {value}',
+          badShift: 'eine Schicht, die dieser Betrieb nicht definiert hat: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Schreiben Sie uns',
         moveUp: 'Nach oben', moveDown: 'Nach unten', timePlaceholder: 'hh:mm',
@@ -7010,6 +7259,38 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         duplicatePerson: 'A mesma pessoa não pode aparecer duas vezes no mesmo turno',
         printBlocked: 'A impressão está bloqueada aqui – usa «Copiar como texto» ou a exportação para Excel',
         chooseEmployee: 'Escolhe uma pessoa para a exportação pessoal'
+      },
+
+      importData: {
+        done: { one: 'Importada uma pessoa.', other: 'Importadas {count} pessoas.' },
+        branches: { one: 'Também foi criado um local novo.', other: 'Também foram criados {count} locais novos.' },
+        countCreate: { one: 'Vai ser criada uma pessoa', other: 'Vão ser criadas {count} pessoas' },
+        countSkip: { one: 'uma já existe e vai ser ignorada', other: '{count} já existem e vão ser ignoradas' },
+        countErrors: { one: 'uma linha não vai ser importada', other: '{count} linhas não vão ser importadas' },
+        confirm: { one: 'Importar uma pessoa', other: 'Importar {count} pessoas' },
+        open: 'Importar uma lista',
+        title: 'Importar pessoal',
+        hint: 'Seleciona a tua lista no Excel, copia e cola aqui – ou escolhe um ficheiro CSV. A primeira coluna é o nome. Depois, se tiveres: locais, tipos de turno e um limite semanal. Um local que ainda não exista será criado.',
+        placeholder: 'Dana Cohen\tLoja central\tManhã;Noite\t5',
+        file: 'Escolher um ficheiro CSV',
+        sample: 'Inserir um exemplo',
+        maxColumn: 'Limite',
+        line: 'Linha {line}:',
+        allShifts: 'Todos os turnos',
+        allBranches: 'Todos os locais',
+        newBranches: 'Também vão ser criados estes locais: {names}. Define os dias e horas depois de importar.',
+        nothing: 'Não há nada a importar deste texto.',
+        confirmEmpty: 'Importar',
+        blocked: '{count} não foram adicionadas por causa do limite do plano.',
+        skip: {
+          exists: 'já está no sistema',
+          duplicateInFile: 'aparece mais de uma vez na lista'
+        },
+        error: {
+          noName: 'a linha não tem nome',
+          badMax: 'o limite não é um número: {value}',
+          badShift: 'um turno que este negócio não definiu: {value}'
+        }
       },
 
       common: {
@@ -9856,6 +10137,559 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 
+/* ===== js/import.js ===== */
+/* ייבוא עובדים מרשימה קיימת.
+
+   למה זה לא "עוד פיצ'ר": לקוח חדש מגיע עם 30 עובדים באקסל או
+   בפתק, והקמה ידנית של 30 כרטיסים היא הרגע שבו הוא סוגר את
+   הלשונית. שתי הדרכים שעובדות בפועל הן הדבקה מאקסל (שנותנת
+   טורים מופרדים ב-Tab) וקובץ CSV, ולכן שתיהן נתמכות – ואין כאן
+   קורא xlsx, שהוא הרבה עבודה עבור אותה תוצאה.
+
+   הקובץ הזה אינו נוגע ב-DOM ואינו משנה את המצב: הוא קורא טקסט
+   ומחזיר תוכנית. מי שמאשר אותה הוא המסך. */
+(function (root) {
+  'use strict';
+
+  var Store = root.ShiftStore || (typeof require === 'function' ? require('./store.js') : null);
+
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
+  /* ===== קריאת הטבלה ===== */
+
+  /* המפריד נקבע לפי מה שיש בשורות עצמן, ולא לפי מה שהלקוח הבטיח:
+     הדבקה מאקסל מגיעה עם Tab, קובץ שנשמר כ-CSV עם פסיק, ולפעמים
+     יש רק שמות בשורות. נקודה-פסיק נפוצה באקסל בעברית. */
+  function detectSeparator(lines) {
+    var counts = { '\t': 0, ';': 0, ',': 0 };
+    lines.forEach(function (line) {
+      Object.keys(counts).forEach(function (sep) {
+        counts[sep] += line.split(sep).length - 1;
+      });
+    });
+    if (counts['\t']) return '\t';
+    if (counts[';'] > counts[',']) return ';';
+    if (counts[',']) return ',';
+    return null;   // טור אחד: שם בכל שורה
+  }
+
+  /* פיצול שורת CSV שמכבד מירכאות, כי שם עם פסיק בתוכו הוא מקרה
+     אמיתי ולא קצה */
+  function splitLine(line, separator) {
+    if (!separator) return [line];
+    var cells = [];
+    var current = '';
+    var quoted = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') {
+        if (quoted && line[i + 1] === '"') { current += '"'; i++; }
+        else { quoted = !quoted; }
+        continue;
+      }
+      if (ch === separator && !quoted) { cells.push(current); current = ''; continue; }
+      current += ch;
+    }
+    cells.push(current);
+    return cells;
+  }
+
+  function parseTable(text) {
+    var lines = String(text || '')
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .filter(function (line) { return line.trim() !== ''; });
+    if (!lines.length) return [];
+    var separator = detectSeparator(lines);
+    return lines.map(function (line) {
+      return splitLine(line, separator).map(function (cell) { return cell.trim(); });
+    });
+  }
+
+  /* ===== זיהוי הכותרות ===== */
+
+  /* הלקוח לא יודע איזה סדר טורים אנחנו רוצים, ולכן אם יש שורת
+     כותרות – הולכים לפיה. המילים נלקחות מהתרגום הפעיל ומרשימת
+     מילים נפוצות, כדי שקובץ באנגלית יעבוד גם בממשק בעברית. */
+  var FIELD_WORDS = {
+    name: ['name', 'employee', 'staff', 'שם', 'עובד', 'עובדת', 'שם העובד'],
+    branches: ['branch', 'branches', 'location', 'locations', 'site', 'סניף', 'סניפים', 'מקום'],
+    shifts: ['shift', 'shifts', 'משמרת', 'משמרות'],
+    maxShifts: ['max', 'maxshifts', 'quota', 'limit', 'מכסה', 'מקסימום', 'מכסה שבועית'],
+    note: ['note', 'notes', 'comment', 'הערה', 'הערות'],
+    active: ['active', 'status', 'פעיל', 'סטטוס']
+  };
+
+  function normalizeWord(value) {
+    return String(value || '').trim().toLowerCase().replace(/[\s_"']+/g, '');
+  }
+
+  function fieldOf(header) {
+    var word = normalizeWord(header);
+    if (!word) return null;
+    var names = Object.keys(FIELD_WORDS);
+    for (var i = 0; i < names.length; i++) {
+      var words = FIELD_WORDS[names[i]].map(normalizeWord);
+      if (words.indexOf(word) !== -1) return names[i];
+    }
+    return null;
+  }
+
+  /* מחזיר מיפוי טור→שדה אם השורה הראשונה היא כותרות, אחרת null */
+  function headerMap(row) {
+    var map = {};
+    var matched = 0;
+    row.forEach(function (cell, index) {
+      var field = fieldOf(cell);
+      if (field && !(field in map)) { map[field] = index; matched++; }
+    });
+    /* כותרת אמיתית מזוהה בזכות השם. טור בודד עם המילה "שם" הוא
+       כותרת; שורה של נתונים כמעט לעולם אינה מכילה אותה. */
+    if (!('name' in map) || matched < 1) return null;
+    return map;
+  }
+
+  /* סדר ברירת המחדל, כשאין שורת כותרות */
+  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note'];
+
+  /* ===== פענוח תא ===== */
+
+  function splitList(value) {
+    return String(value || '').split(/[;,|\/]/)
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean);
+  }
+
+  var NO_WORDS = ['0', 'no', 'false', 'inactive', 'לא', 'מושבת', 'לא פעיל'];
+
+  function parseActive(value) {
+    if (value === undefined || value === '') return true;
+    return NO_WORDS.indexOf(normalizeWord(value)) === -1;
+  }
+
+  function sameName(a, b) {
+    return String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') ===
+      String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  /* ===== בניית התוכנית ===== */
+
+  /* מחזיר תוכנית ייבוא: מה ייווצר, מה ידולג, מה שגוי, ואילו סניפים
+     חדשים יידרשו. שום דבר כאן לא משנה את המצב. */
+  function planEmployees(state, text) {
+    var rows = parseTable(text);
+    var plan = { create: [], skip: [], errors: [], newBranches: [], columns: null };
+    if (!rows.length) return plan;
+
+    var map = headerMap(rows[0]);
+    var body = rows;
+    if (map) { body = rows.slice(1); }
+    plan.columns = map || null;
+
+    function cell(row, field) {
+      var index = map ? map[field] : POSITIONAL.indexOf(field);
+      if (index === undefined || index === null || index < 0) return '';
+      return row[index] === undefined ? '' : row[index];
+    }
+
+    var shifts = Store.shifts(state);
+    var allShiftIds = shifts.map(function (shift) { return shift.id; });
+    /* שמות המשמרות של העסק הזה, ולא מזהים פנימיים: הלקוח כותב
+       "בוקר", לא "morning". */
+    function shiftIdOf(label) {
+      var word = normalizeWord(label);
+      if (!word) return null;
+      for (var i = 0; i < shifts.length; i++) {
+        if (normalizeWord(shifts[i].name) === word ||
+            normalizeWord(shifts[i].id) === word) return shifts[i].id;
+      }
+      return null;
+    }
+
+    var existingNames = state.employees.map(function (emp) { return emp.name; });
+    var plannedNames = [];
+    var branchNames = state.branches.map(function (branch) { return branch.name; });
+    var plannedBranches = [];
+
+    body.forEach(function (row, index) {
+      var lineNumber = index + 1 + (map ? 1 : 0);
+      var name = cell(row, 'name');
+      if (!name) {
+        plan.errors.push({ line: lineNumber, raw: row.join(' '), code: 'noName' });
+        return;
+      }
+
+      var duplicate = existingNames.some(function (existing) { return sameName(existing, name); });
+      if (duplicate) {
+        plan.skip.push({ line: lineNumber, name: name, code: 'exists' });
+        return;
+      }
+      if (plannedNames.some(function (planned) { return sameName(planned, name); })) {
+        plan.skip.push({ line: lineNumber, name: name, code: 'duplicateInFile' });
+        return;
+      }
+
+      var maxRaw = cell(row, 'maxShifts');
+      var max = maxRaw === '' ? 6 : Number(String(maxRaw).replace(/[^\d.]/g, ''));
+      if (!(max > 0)) {
+        if (maxRaw !== '') {
+          plan.errors.push({ line: lineNumber, raw: name, code: 'badMax', value: maxRaw });
+          return;
+        }
+        max = 6;
+      }
+
+      /* סניף שאינו קיים אינו שגיאה: לקוח חדש מייבא רשימה שכוללת
+         את הסניפים שלו, ואנחנו פותחים אותם בדרך. */
+      var branchIds = [];
+      var missing = [];
+      splitList(cell(row, 'branches')).forEach(function (label) {
+        var found = state.branches.filter(function (branch) {
+          return sameName(branch.name, label);
+        })[0];
+        if (found) { branchIds.push(found.id); return; }
+        var already = plannedBranches.filter(function (item) {
+          return sameName(item.name, label);
+        })[0];
+        if (already) { missing.push(already.name); return; }
+        plannedBranches.push({ name: label });
+        branchNames.push(label);
+        missing.push(label);
+      });
+
+      var shiftIds = [];
+      var unknownShifts = [];
+      splitList(cell(row, 'shifts')).forEach(function (label) {
+        var id = shiftIdOf(label);
+        if (id) { if (shiftIds.indexOf(id) === -1) shiftIds.push(id); }
+        else { unknownShifts.push(label); }
+      });
+      if (unknownShifts.length) {
+        plan.errors.push({ line: lineNumber, raw: name, code: 'badShift',
+          value: unknownShifts.join(', ') });
+        return;
+      }
+
+      plannedNames.push(name);
+      plan.create.push({
+        line: lineNumber,
+        name: name,
+        branchNames: missing,
+        branchIds: branchIds,
+        shifts: shiftIds.length ? shiftIds : allShiftIds.slice(),
+        maxShifts: max,
+        note: cell(row, 'note'),
+        active: parseActive(cell(row, 'active'))
+      });
+    });
+
+    plan.newBranches = plannedBranches;
+    return plan;
+  }
+
+  /* מחיל תוכנית שאושרה. מחזיר את מה שנוצר בפועל.
+     createBranch/createEmployee מגיעים מהאפליקציה, כדי שמגבלת
+     התוכנית והשמירה יעברו באותו מסלול כמו הוספה ידנית. */
+  function applyPlan(state, plan, hooks) {
+    var created = { employees: [], branches: [], blocked: 0 };
+
+    plan.newBranches.forEach(function (item) {
+      var branch = hooks.createBranch(item.name);
+      if (branch) created.branches.push(branch);
+    });
+
+    plan.create.forEach(function (row) {
+      var employee = hooks.createEmployee(row.name);
+      if (!employee) { created.blocked++; return; }
+
+      /* הסניפים שנוצרו זה עתה מזוהים לפי שם, כי המזהה נקבע בהוספה */
+      var ids = row.branchIds.slice();
+      row.branchNames.forEach(function (name) {
+        var branch = state.branches.filter(function (item) {
+          return sameName(item.name, name);
+        })[0];
+        if (branch && ids.indexOf(branch.id) === -1) ids.push(branch.id);
+      });
+
+      employee.branches = ids;
+      employee.shifts = row.shifts.slice();
+      employee.maxShifts = row.maxShifts;
+      employee.note = row.note;
+      employee.active = row.active;
+      created.employees.push(employee);
+    });
+
+    return created;
+  }
+
+  /* דוגמה להדבקה, בשפה ובשמות של העסק הזה */
+  function sampleText(state) {
+    var branch = (state.branches[0] || {}).name || t('branches.newName');
+    var shifts = Store.shifts(state);
+    var first = (shifts[0] || {}).name || '';
+    var second = (shifts[1] || {}).name || first;
+    return [
+      [t('users.nameColumn'), t('schedule.branch'), t('schedule.shift'), t('importData.maxColumn')].join('\t'),
+      ['דנה כהן', branch, first + ';' + second, '5'].join('\t')
+    ].join('\n');
+  }
+
+  var API = {
+    parseTable: parseTable,
+    headerMap: headerMap,
+    planEmployees: planEmployees,
+    applyPlan: applyPlan,
+    sampleText: sampleText,
+    detectSeparator: detectSeparator
+  };
+
+  root.ShiftImport = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ===== js/import-ui.js ===== */
+/* מסך הייבוא: הדבקה או קובץ, תצוגה מקדימה, ואישור.
+
+   התצוגה המקדימה היא העיקר. ייבוא שמריץ שינויים בלי להראות מה
+   עומד לקרות הוא ייבוא שלקוח לא ילחץ עליו פעמיים, ובצדק. */
+(function (root) {
+  'use strict';
+
+  var Import = root.ShiftImport;
+  var Store = root.ShiftStore;
+
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
+  /* "נפתחו 1 סניפים" הוא בדיוק סוג הפרט שנקרא כרשלנות */
+  function tCount(key, count) {
+    if (!root.I18n) return key;
+    try { return root.I18n.plural(key, count); } catch (err) { return key; }
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var host = null;
+  var ctx = null;
+  var plan = null;
+  var timer = null;
+
+  function close() {
+    if (!host) return;
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    plan = null;
+  }
+
+  function nameOfBranch(state, id) {
+    var branch = Store.byId(state.branches, id);
+    return branch ? branch.name : '';
+  }
+
+  function shiftLabels(state, ids) {
+    var all = Store.shifts(state);
+    if (ids.length === all.length) return t('importData.allShifts');
+    return ids.map(function (id) { return Store.shiftName(state, id); }).join(', ');
+  }
+
+  function branchLabels(state, row) {
+    var names = row.branchIds.map(function (id) { return nameOfBranch(state, id); })
+      .concat(row.branchNames);
+    if (!names.length) return t('importData.allBranches');
+    return names.join(', ');
+  }
+
+  function previewHtml() {
+    var state = ctx.getState();
+    var html = '';
+
+    if (!plan.create.length && !plan.skip.length && !plan.errors.length) {
+      return '<p class="import-empty">' + esc(t('importData.nothing')) + '</p>';
+    }
+
+    html += '<p class="import-counts">' +
+      '<b>' + esc(tCount('importData.countCreate', plan.create.length)) + '</b>';
+    if (plan.skip.length) {
+      html += ' · ' + esc(tCount('importData.countSkip', plan.skip.length));
+    }
+    if (plan.errors.length) {
+      html += ' · <span class="import-bad">' +
+        esc(tCount('importData.countErrors', plan.errors.length)) + '</span>';
+    }
+    html += '</p>';
+
+    if (plan.newBranches.length) {
+      html += '<p class="import-note">' + esc(t('importData.newBranches', {
+        names: plan.newBranches.map(function (item) { return item.name; }).join(', ')
+      })) + '</p>';
+    }
+
+    if (plan.create.length) {
+      html += '<div class="import-table"><table><thead><tr>' +
+        '<th>' + esc(t('users.nameColumn')) + '</th>' +
+        '<th>' + esc(t('branches.title')) + '</th>' +
+        '<th>' + esc(t('schedule.shift')) + '</th>' +
+        '<th>' + esc(t('importData.maxColumn')) + '</th>' +
+        '</tr></thead><tbody>';
+      plan.create.forEach(function (row) {
+        html += '<tr><td>' + esc(row.name) + '</td>' +
+          '<td>' + esc(branchLabels(state, row)) + '</td>' +
+          '<td>' + esc(shiftLabels(state, row.shifts)) + '</td>' +
+          '<td>' + esc(row.maxShifts) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    if (plan.skip.length) {
+      html += '<ul class="import-list">';
+      plan.skip.forEach(function (item) {
+        html += '<li>' + esc(t('importData.line', { line: item.line })) + ' ' +
+          esc(item.name) + ' — ' + esc(t('importData.skip.' + item.code)) + '</li>';
+      });
+      html += '</ul>';
+    }
+
+    if (plan.errors.length) {
+      html += '<ul class="import-list import-bad">';
+      plan.errors.forEach(function (item) {
+        html += '<li>' + esc(t('importData.line', { line: item.line })) + ' ' +
+          esc(t('importData.error.' + item.code, { value: item.value || '' })) +
+          (item.raw ? ' — ' + esc(item.raw) : '') + '</li>';
+      });
+      html += '</ul>';
+    }
+
+    return html;
+  }
+
+  function refresh() {
+    var text = host.querySelector('#import-text').value;
+    plan = Import.planEmployees(ctx.getState(), text);
+    host.querySelector('#import-preview').innerHTML = previewHtml();
+    var confirm = host.querySelector('#import-confirm');
+    confirm.disabled = !plan.create.length;
+    confirm.textContent = plan.create.length
+      ? tCount('importData.confirm', plan.create.length)
+      : t('importData.confirmEmpty');
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 200);
+  }
+
+  function apply() {
+    if (!plan || !plan.create.length) return;
+    var result = Import.applyPlan(ctx.getState(), plan, {
+      createEmployee: ctx.createEmployee,
+      createBranch: ctx.createBranch
+    });
+    if (ctx.commit) ctx.commit();
+
+    var message = tCount('importData.done', result.employees.length);
+    if (result.branches.length) {
+      message += ' ' + tCount('importData.branches', result.branches.length);
+    }
+    if (result.blocked) {
+      message += ' ' + t('importData.blocked', { count: result.blocked });
+    }
+    close();
+    if (ctx.toast) ctx.toast(message);
+  }
+
+  function ensureHost() {
+    if (host) return host;
+    host = document.createElement('div');
+    host.id = 'import-overlay';
+    host.className = 'why-overlay hidden';
+    host.setAttribute('role', 'dialog');
+    host.setAttribute('aria-modal', 'true');
+    document.body.appendChild(host);
+
+    host.addEventListener('click', function (event) {
+      if (event.target === host || event.target.closest('[data-import-close]')) {
+        close();
+        return;
+      }
+      if (event.target.closest('#import-sample')) {
+        event.preventDefault();
+        host.querySelector('#import-text').value = Import.sampleText(ctx.getState());
+        refresh();
+        return;
+      }
+      if (event.target.closest('#import-confirm')) { apply(); }
+    });
+    host.addEventListener('input', function (event) {
+      if (event.target.id === 'import-text') schedule();
+    });
+    host.addEventListener('change', function (event) {
+      if (event.target.id !== 'import-file') return;
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        /* BOM שאקסל מוסיף לקובצי CSV הופך את הכותרת הראשונה
+           לשדה שלא מזוהה, ולכן הוא מוסר */
+        host.querySelector('#import-text').value =
+          String(reader.result || '').replace(/^﻿/, '');
+        refresh();
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && host && !host.classList.contains('hidden')) close();
+    });
+    return host;
+  }
+
+  function open(options) {
+    ctx = options;
+    var node = ensureHost();
+    node.innerHTML =
+      '<div class="why-card import-card">' +
+        '<button class="why-close" data-import-close aria-label="' +
+          esc(t('common.close')) + '">✕</button>' +
+        '<h2 class="why-title">' + esc(t('importData.title')) + '</h2>' +
+        '<p class="import-hint">' + esc(t('importData.hint')) + '</p>' +
+        '<textarea id="import-text" class="text-input import-text" rows="7" ' +
+          'placeholder="' + esc(t('importData.placeholder')) + '"></textarea>' +
+        '<div class="import-actions">' +
+          '<label class="btn ghost file-btn">' + esc(t('importData.file')) +
+            '<input type="file" id="import-file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>' +
+          '</label>' +
+          '<button class="btn ghost small" id="import-sample">' +
+            esc(t('importData.sample')) + '</button>' +
+        '</div>' +
+        '<div id="import-preview" class="import-preview"></div>' +
+        '<div class="import-actions import-confirm-row">' +
+          '<button class="btn primary" id="import-confirm" disabled>' +
+            esc(t('importData.confirmEmpty')) + '</button>' +
+          '<button class="btn ghost" data-import-close>' + esc(t('common.cancel')) + '</button>' +
+        '</div>' +
+      '</div>';
+    node.classList.remove('hidden');
+    refresh();
+    var text = node.querySelector('#import-text');
+    if (text) text.focus();
+    return true;
+  }
+
+  var API = { open: open, close: close };
+  root.ShiftImportUI = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
 /* ===== js/app.js ===== */
 /* ממשק המשתמש: תצוגת הסידור, עריכה ידנית, אילוצים, עובדים, סניפים והגדרות */
 (function () {
@@ -10719,7 +11553,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     'select.emp-select', '.cstate', '.pill', '.holiday-chip',
     '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
     '#clear-constraints', '#copy-constraints',
-    '#add-employee', '#add-branch',
+    '#add-employee', '#add-branch', '#import-employees',
     '#employees-list input', '#employees-list button',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
@@ -10751,7 +11585,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
      קיים גם כפונקציה בשם, ולא רק בתוך המאזין של הכפתור, כי הזמנת
      עובד למערכת צריכה ליצור לו כרטיס באותה הדרך בדיוק. */
-  function addEmployee(name) {
+  function addEmployee(name, defer) {
     if (source.planLimit) {
       var active = state.employees.filter(function (emp) { return emp.active; }).length;
       var check = source.planLimit(active + 1);
@@ -10767,8 +11601,20 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       maxShifts: 6, note: ''
     };
     state.employees.push(employee);
-    persist('config');
+    /* בייבוא נוספים עשרות כרטיסים בבת אחת, ושמירה לכל אחד מהם היא
+       עשרות פניות לשרת. שם השמירה נעשית פעם אחת בסוף. */
+    if (!defer) persist('config');
     return employee;
+  }
+
+  function addBranch(name, defer) {
+    var branch = {
+      id: Store.newId('br'), name: String(name || '').trim() || t('branches.newName'),
+      active: true, schedule: Data.defaultSchedule(null, state.settings.shifts)
+    };
+    state.branches.push(branch);
+    if (!defer) persist('config');
+    return branch;
   }
 
   /* ========== רינדור כולל ========== */
@@ -11573,15 +12419,31 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();
     });
+
+    /* ייבוא רשימה קיימת. הכפתור קיים רק כשהמסך נטען עם המודול,
+       כדי שהכלי המקומי לא ייפול על כפתור שאין לו מסך. */
+    var importButton = $('#import-employees');
+    if (importButton && window.ShiftImportUI) {
+      importButton.addEventListener('click', function () {
+        if (blocked()) return;
+        window.ShiftImportUI.open({
+          getState: function () { return state; },
+          createEmployee: function (name) { return addEmployee(name, true); },
+          createBranch: function (name) { return addBranch(name, true); },
+          /* כתיבה אחת בסוף, אחרי כל הכרטיסים */
+          commit: function () { persist('config'); render(); },
+          toast: toast
+        });
+      });
+    } else if (importButton) {
+      importButton.classList.add('hidden');
+    }
   }
 
   function bindBranchesTab() {
     $('#add-branch').addEventListener('click', function () {
-      state.branches.push({
-        id: Store.newId('br'), name: t('branches.newName'), active: true,
-        schedule: Data.defaultSchedule(null, state.settings.shifts)
-      });
-      persist('config');
+      if (blocked()) return;
+      addBranch(t('branches.newName'));
       render();
     });
 
@@ -12291,6 +13153,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     start: start,
     render: render,
     addEmployee: addEmployee,
+    addBranch: addBranch,
     getState: function () { return state; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,

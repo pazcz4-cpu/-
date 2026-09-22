@@ -690,6 +690,38 @@
         chooseEmployee: 'Choose a person for the personal export'
       },
 
+      importData: {
+        done: { one: 'One person imported.', other: '{count} people imported.' },
+        branches: { one: 'One new location was created too.', other: '{count} new locations were created too.' },
+        countCreate: { one: 'One person will be created', other: '{count} people will be created' },
+        countSkip: { one: 'one already exists and will be skipped', other: '{count} already exist and will be skipped' },
+        countErrors: { one: 'one row will not be imported', other: '{count} rows will not be imported' },
+        confirm: { one: 'Import one person', other: 'Import {count} people' },
+        open: 'Import a list',
+        title: 'Import staff',
+        hint: 'Select your list in Excel, copy it and paste it here – or choose a CSV file. The first column is the name. After it, if you have them: locations, shift types and a weekly limit. A location that does not exist yet will be created.',
+        placeholder: 'Dana Cohen\tCentral location\tMorning;Evening\t5',
+        file: 'Choose a CSV file',
+        sample: 'Insert an example',
+        maxColumn: 'Limit',
+        line: 'Row {line}:',
+        allShifts: 'All shifts',
+        allBranches: 'All locations',
+        newBranches: 'These locations will also be created: {names}. Set their days and hours after the import.',
+        nothing: 'There is nothing to import from this text.',
+        confirmEmpty: 'Import',
+        blocked: '{count} were not added because of the plan limit.',
+        skip: {
+          exists: 'already in the system',
+          duplicateInFile: 'appears more than once in the list'
+        },
+        error: {
+          noName: 'the row has no name',
+          badMax: 'the limit is not a number: {value}',
+          badShift: 'a shift this business has not defined: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Email us',
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',

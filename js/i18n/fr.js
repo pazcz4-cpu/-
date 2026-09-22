@@ -684,6 +684,38 @@
         chooseEmployee: 'Choisissez une personne pour l’export personnel'
       },
 
+      importData: {
+        done: { one: 'Une personne importée.', other: '{count} personnes importées.' },
+        branches: { one: 'Un nouveau site a aussi été créé.', other: '{count} nouveaux sites ont aussi été créés.' },
+        countCreate: { one: 'Une personne sera créée', other: '{count} personnes seront créées' },
+        countSkip: { one: 'une existe déjà et sera ignorée', other: '{count} existent déjà et seront ignorées' },
+        countErrors: { one: 'une ligne ne sera pas importée', other: '{count} lignes ne seront pas importées' },
+        confirm: { one: 'Importer une personne', other: 'Importer {count} personnes' },
+        open: 'Importer une liste',
+        title: 'Importer le personnel',
+        hint: 'Sélectionnez votre liste dans Excel, copiez-la et collez-la ici – ou choisissez un fichier CSV. La première colonne est le nom. Ensuite, si vous les avez : sites, types de service et une limite hebdomadaire. Un site qui n’existe pas encore sera créé.',
+        placeholder: 'Dana Cohen\tSite central\tMatin;Soir\t5',
+        file: 'Choisir un fichier CSV',
+        sample: 'Insérer un exemple',
+        maxColumn: 'Limite',
+        line: 'Ligne {line} :',
+        allShifts: 'Tous les services',
+        allBranches: 'Tous les sites',
+        newBranches: 'Ces sites seront aussi créés : {names}. Réglez leurs jours et horaires après l’import.',
+        nothing: 'Il n’y a rien à importer dans ce texte.',
+        confirmEmpty: 'Importer',
+        blocked: '{count} n’ont pas été ajoutées à cause de la limite de la formule.',
+        skip: {
+          exists: 'déjà dans le système',
+          duplicateInFile: 'apparaît plus d’une fois dans la liste'
+        },
+        error: {
+          noName: 'la ligne n’a pas de nom',
+          badMax: 'la limite n’est pas un nombre : {value}',
+          badShift: 'un service que cette entreprise n’a pas défini : {value}'
+        }
+      },
+
       common: {
         emailUs: 'Écrivez-nous',
         moveUp: 'Monter', moveDown: 'Descendre', timePlaceholder: 'hh:mm',

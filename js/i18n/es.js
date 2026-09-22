@@ -684,6 +684,38 @@
         chooseEmployee: 'Elige una persona para la exportación personal'
       },
 
+      importData: {
+        done: { one: 'Se importó una persona.', other: 'Se importaron {count} personas.' },
+        branches: { one: 'También se creó una ubicación nueva.', other: 'También se crearon {count} ubicaciones nuevas.' },
+        countCreate: { one: 'Se creará una persona', other: 'Se crearán {count} personas' },
+        countSkip: { one: 'una ya existe y se omitirá', other: '{count} ya existen y se omitirán' },
+        countErrors: { one: 'una fila no se importará', other: '{count} filas no se importarán' },
+        confirm: { one: 'Importar una persona', other: 'Importar {count} personas' },
+        open: 'Importar una lista',
+        title: 'Importar personal',
+        hint: 'Selecciona tu lista en Excel, cópiala y pégala aquí, o elige un archivo CSV. La primera columna es el nombre. Después, si los tienes: ubicaciones, turnos y un límite semanal. Una ubicación que no exista se creará sola.',
+        placeholder: 'Dana Cohen\tSede central\tMañana;Tarde\t5',
+        file: 'Elegir un archivo CSV',
+        sample: 'Poner un ejemplo',
+        maxColumn: 'Límite',
+        line: 'Fila {line}:',
+        allShifts: 'Todos los turnos',
+        allBranches: 'Todas las ubicaciones',
+        newBranches: 'También se crearán estas ubicaciones: {names}. Configura sus días y horas después de importar.',
+        nothing: 'No hay nada que importar de este texto.',
+        confirmEmpty: 'Importar',
+        blocked: '{count} no se añadieron por el límite del plan.',
+        skip: {
+          exists: 'ya está en el sistema',
+          duplicateInFile: 'aparece más de una vez en la lista'
+        },
+        error: {
+          noName: 'la fila no tiene nombre',
+          badMax: 'el límite no es un número: {value}',
+          badShift: 'un turno que este negocio no ha definido: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Escríbenos',
         moveUp: 'Subir', moveDown: 'Bajar', timePlaceholder: 'hh:mm',

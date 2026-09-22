@@ -689,6 +689,38 @@
         chooseEmployee: 'בחרו עובד לייצוא אישי'
       },
 
+      importData: {
+        done: { one: 'יובא עובד אחד.', other: 'יובאו {count} עובדים.' },
+        branches: { one: 'נפתח גם סניף חדש אחד.', other: 'נפתחו גם {count} סניפים חדשים.' },
+        countCreate: { one: 'עובד אחד ייווצר', other: '{count} עובדים ייווצרו' },
+        countSkip: { one: 'אחד קיים כבר וידולג', other: '{count} קיימים כבר וידולגו' },
+        countErrors: { one: 'שורה אחת לא תיובא', other: '{count} שורות לא יובאו' },
+        confirm: { one: 'ייבוא עובד אחד', other: 'ייבוא {count} עובדים' },
+        open: 'ייבוא מרשימה',
+        title: 'ייבוא עובדים',
+        hint: 'סמנו את הרשימה באקסל, העתיקו והדביקו כאן – או בחרו קובץ CSV. הטור הראשון הוא השם. אחריו, אם יש: סניפים, משמרות ומכסה שבועית. סניף שאינו קיים ייפתח בדרך.',
+        placeholder: 'דנה כהן\tסניף מרכז\tבוקר;ערב\t5',
+        file: 'בחירת קובץ CSV',
+        sample: 'הכנסת דוגמה',
+        maxColumn: 'מכסה',
+        line: 'שורה {line}:',
+        allShifts: 'כל המשמרות',
+        allBranches: 'כל הסניפים',
+        newBranches: 'ייפתחו גם סניפים חדשים: {names}. אחרי הייבוא כדאי להגדיר להם ימים ושעות.',
+        nothing: 'אין מה לייבא מהטקסט הזה.',
+        confirmEmpty: 'ייבוא',
+        blocked: '{count} לא נוספו בגלל מגבלת התוכנית.',
+        skip: {
+          exists: 'כבר קיים במערכת',
+          duplicateInFile: 'מופיע יותר מפעם אחת ברשימה'
+        },
+        error: {
+          noName: 'אין שם בשורה',
+          badMax: 'המכסה אינה מספר: {value}',
+          badShift: 'משמרת שאינה מוגדרת בעסק: {value}'
+        }
+      },
+
       common: {
         emailUs: 'כתבו לנו',
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',

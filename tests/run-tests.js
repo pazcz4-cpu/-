@@ -12,6 +12,7 @@ var Validate = require('../js/validate.js');
 var Xlsx = require('../js/xlsx.js');
 var Explain = require('../js/explain.js');
 var Model = require('../js/backend/model.js');
+var Import = require('../js/import.js');
 var fs = require('fs');
 var path = require('path');
 
@@ -1309,6 +1310,173 @@ test('הסכימה נפתחת בשורה באנגלית', function () {
     path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
   var first = schema.split('\n')[0];
   assert(/^-- [A-Za-z]/.test(first), 'השורה הראשונה אינה מתחילה בתווית לטינית: ' + first);
+});
+
+console.log('\n== ייבוא רשימת עובדים ==');
+
+/* הלקוח לא יודע איזה פורמט אנחנו רוצים, ולכן הפענוח צריך לעמוד
+   במה שבאמת מגיע: הדבקה מאקסל (Tab), קובץ CSV, נקודה-פסיק
+   שאקסל בעברית מייצר, ורשימת שמות בלי טורים בכלל. */
+test('מזהה את המפריד לפי מה שיש בשורות', function () {
+  assertEqual(Import.detectSeparator(['a\tb', 'c\td']), '\t', 'לא זוהה Tab');
+  assertEqual(Import.detectSeparator(['a,b', 'c,d']), ',', 'לא זוהה פסיק');
+  assertEqual(Import.detectSeparator(['a;b', 'c;d']), ';', 'לא זוהתה נקודה-פסיק');
+  assertEqual(Import.detectSeparator(['דנה', 'יוסי']), null, 'טור בודד זוהה כטבלה');
+});
+
+test('שם עם פסיק בתוך מירכאות נשאר שלם', function () {
+  var quote = String.fromCharCode(34);
+  var line = quote + 'כהן, דנה' + quote + ',סניף מרכז\n' +
+    quote + 'לוי ' + quote + quote + 'יוסי' + quote + quote + quote + ',סניף צפון';
+  var rows = Import.parseTable(line);
+  assertEqual(rows[0][0], 'כהן, דנה', 'הפסיק פיצל שם');
+  assertEqual(rows[0][1], 'סניף מרכז', 'הטור השני אבד');
+  assertEqual(rows[1][0], 'לוי ' + quote + 'יוסי' + quote, 'מירכאות כפולות לא פוענחו');
+});
+
+test('שורת כותרות מזוהה לפי השמות ולא לפי המקום', function () {
+  var map = Import.headerMap(['מכסה', 'שם', 'סניפים']);
+  assertEqual(map.name, 1, 'טור השם לא זוהה');
+  assertEqual(map.maxShifts, 0, 'טור המכסה לא זוהה');
+  assertEqual(map.branches, 2, 'טור הסניפים לא זוהה');
+  /* כותרות באנגלית בממשק בעברית – מקרה נפוץ מאוד */
+  assertEqual(Import.headerMap(['Name', 'Branch']).name, 0, 'כותרת באנגלית לא זוהתה');
+  /* שורת נתונים אינה כותרת */
+  assertEqual(Import.headerMap(['דנה כהן', 'סניף מרכז']), null,
+    'שורת נתונים זוהתה כשורת כותרות, והעובד הראשון ייעלם');
+});
+
+test('בלי שורת כותרות הטורים נקראים לפי הסדר', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'דנה כהן\tסניף מרכז\tבוקר\t4');
+  assertEqual(plan.create.length, 1, 'השורה לא נקראה');
+  assertEqual(plan.create[0].name, 'דנה כהן', 'השם לא נקרא');
+  assertEqual(plan.create[0].maxShifts, 4, 'המכסה לא נקראה');
+  assertEqual(plan.create[0].shifts.join(','), 'morning', 'המשמרת לא נקראה');
+});
+
+test('חסר הופך לברירת מחדל ולא לשגיאה', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\nדנה כהן');
+  assertEqual(plan.errors.length, 0, 'שם לבד נחשב שגוי');
+  assertEqual(plan.create[0].maxShifts, 6, 'ברירת המחדל של המכסה השתנתה');
+  assertEqual(plan.create[0].shifts.length, Store.shifts(state).length,
+    'בלי משמרות העובד אינו מוסמך לכלום');
+  assertEqual(plan.create[0].branchIds.length, 0, 'בלי סניף הוא אינו מחליף כללי');
+  assertEqual(plan.create[0].active, true, 'עובד חדש אינו פעיל');
+});
+
+test('עובד שקיים מדולג, ולא נוצר פעמיים', function () {
+  var state = freshState();
+  var existing = state.employees[0].name;
+  var plan = Import.planEmployees(state, existing + '\n  ' + existing + ' ');
+  assertEqual(plan.create.length, 0, 'נוצר כרטיס כפול לעובד קיים');
+  assertEqual(plan.skip.length, 2, 'הדילוג לא דווח');
+  assertEqual(plan.skip[0].code, 'exists', 'הסיבה לדילוג אינה "קיים"');
+});
+
+test('אותו שם פעמיים באותה רשימה נוצר פעם אחת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'רות אבני\nרות אבני');
+  assertEqual(plan.create.length, 1, 'נוצרו שני כרטיסים לאותו אדם');
+  assertEqual(plan.skip[0].code, 'duplicateInFile', 'הסיבה לדילוג אינה כפילות ברשימה');
+});
+
+test('סניף שאינו קיים נרשם כסניף שייפתח, ורק פעם אחת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'א\tסניף חדש\nב\tסניף חדש\nג\tסניף אחר');
+  assertEqual(plan.newBranches.length, 2, 'מספר הסניפים החדשים שגוי: ' +
+    JSON.stringify(plan.newBranches));
+  assertEqual(plan.newBranches[0].name, 'סניף חדש', 'שם הסניף לא נשמר');
+  assertEqual(plan.create.length, 3, 'עובד נפל בגלל סניף חדש');
+});
+
+test('משמרת שאינה מוגדרת בעסק עוצרת את השורה ומוסברת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'דנה\t\tלילה');
+  assertEqual(plan.create.length, 0, 'העובד נוצר עם משמרת שאינה קיימת');
+  assertEqual(plan.errors[0].code, 'badShift', 'הסיבה אינה משמרת שגויה');
+  assertEqual(plan.errors[0].value, 'לילה', 'הערך השגוי אינו מדווח');
+});
+
+test('מכסה שאינה מספר עוצרת את השורה, וריקה לא', function () {
+  var state = freshState();
+  var bad = Import.planEmployees(state, 'דנה\t\t\tהמון');
+  assertEqual(bad.errors.length, 1, 'מכסה לא חוקית עברה');
+  assertEqual(bad.errors[0].code, 'badMax', 'הסיבה אינה מכסה שגויה');
+  var empty = Import.planEmployees(state, 'דנה\t\t\t');
+  assertEqual(empty.errors.length, 0, 'מכסה ריקה נחשבה שגויה');
+  assertEqual(empty.create[0].maxShifts, 6, 'מכסה ריקה לא קיבלה ברירת מחדל');
+});
+
+test('"לא" בטור הפעילות יוצר עובד מושבת', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'שם\tפעיל\nדנה\tלא\nיוסי\tכן');
+  assertEqual(plan.create[0].active, false, 'המושבת נוצר כפעיל');
+  assertEqual(plan.create[1].active, true, 'הפעיל נוצר כמושבת');
+});
+
+test('הייבוא אינו משנה דבר עד שמאשרים', function () {
+  var state = freshState();
+  var before = JSON.stringify(state);
+  Import.planEmployees(state, 'דנה כהן\tסניף חדש\nיוסי\tסניף חדש');
+  assertEqual(JSON.stringify(state), before,
+    'בניית התוכנית שינתה את הנתונים לפני האישור');
+});
+
+test('אישור התוכנית יוצר עובדים, סניפים והקישור ביניהם', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state,
+    'דנה כהן\tסניף הרצליה\tבוקר;ערב\t5\nיוסי לוי\tסניף הרצליה');
+
+  var result = Import.applyPlan(state, plan, {
+    createBranch: function (name) {
+      var branch = { id: Store.newId('br'), name: name, active: true,
+        schedule: Data.defaultSchedule(null, state.settings.shifts) };
+      state.branches.push(branch);
+      return branch;
+    },
+    createEmployee: function (name) {
+      var employee = { id: Store.newId('emp'), name: name, active: true,
+        branches: [], shifts: Store.shiftIds(state).slice(), maxShifts: 6, note: '' };
+      state.employees.push(employee);
+      return employee;
+    }
+  });
+
+  assertEqual(result.employees.length, 2, 'לא נוצרו שני עובדים');
+  assertEqual(result.branches.length, 1, 'הסניף החדש נוצר יותר מפעם אחת או בכלל לא');
+
+  var branch = state.branches[state.branches.length - 1];
+  assertEqual(branch.name, 'סניף הרצליה', 'שם הסניף שנוצר שגוי');
+  /* לסניף חדש יש כבר ימים ושעות, אחרת הוא סגור והסידור ריק */
+  assertEqual(Object.keys(branch.schedule).length, 7, 'לסניף החדש אין שבוע מוגדר');
+
+  result.employees.forEach(function (emp) {
+    assertEqual(emp.branches.join(','), branch.id,
+      emp.name + ' אינו מקושר לסניף שנפתח עבורו');
+  });
+  assertEqual(result.employees[0].maxShifts, 5, 'המכסה לא הועברה');
+  assertEqual(result.employees[0].shifts.join(','), 'morning,evening',
+    'המשמרות לא הועברו');
+});
+
+test('מגבלת תוכנית שחוסמת עובד מדווחת ואינה מפילה את הייבוא', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'א\nב\nג');
+  var allowed = 1;
+  var result = Import.applyPlan(state, plan, {
+    createBranch: function () { return null; },
+    createEmployee: function (name) {
+      if (allowed-- <= 0) return null;   // כמו מגבלת תוכנית שנגמרה
+      var employee = { id: Store.newId('emp'), name: name, active: true,
+        branches: [], shifts: [], maxShifts: 6, note: '' };
+      state.employees.push(employee);
+      return employee;
+    }
+  });
+  assertEqual(result.employees.length, 1, 'נוצרו עובדים מעל המותר');
+  assertEqual(result.blocked, 2, 'החסומים לא דווחו');
 });
 
 console.log('\n== העמודים המשפטיים ==');

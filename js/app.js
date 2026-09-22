@@ -860,7 +860,7 @@
     'select.emp-select', '.cstate', '.pill', '.holiday-chip',
     '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
     '#clear-constraints', '#copy-constraints',
-    '#add-employee', '#add-branch',
+    '#add-employee', '#add-branch', '#import-employees',
     '#employees-list input', '#employees-list button',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
@@ -892,7 +892,7 @@
 
      קיים גם כפונקציה בשם, ולא רק בתוך המאזין של הכפתור, כי הזמנת
      עובד למערכת צריכה ליצור לו כרטיס באותה הדרך בדיוק. */
-  function addEmployee(name) {
+  function addEmployee(name, defer) {
     if (source.planLimit) {
       var active = state.employees.filter(function (emp) { return emp.active; }).length;
       var check = source.planLimit(active + 1);
@@ -908,8 +908,20 @@
       maxShifts: 6, note: ''
     };
     state.employees.push(employee);
-    persist('config');
+    /* בייבוא נוספים עשרות כרטיסים בבת אחת, ושמירה לכל אחד מהם היא
+       עשרות פניות לשרת. שם השמירה נעשית פעם אחת בסוף. */
+    if (!defer) persist('config');
     return employee;
+  }
+
+  function addBranch(name, defer) {
+    var branch = {
+      id: Store.newId('br'), name: String(name || '').trim() || t('branches.newName'),
+      active: true, schedule: Data.defaultSchedule(null, state.settings.shifts)
+    };
+    state.branches.push(branch);
+    if (!defer) persist('config');
+    return branch;
   }
 
   /* ========== רינדור כולל ========== */
@@ -1714,15 +1726,31 @@
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();
     });
+
+    /* ייבוא רשימה קיימת. הכפתור קיים רק כשהמסך נטען עם המודול,
+       כדי שהכלי המקומי לא ייפול על כפתור שאין לו מסך. */
+    var importButton = $('#import-employees');
+    if (importButton && window.ShiftImportUI) {
+      importButton.addEventListener('click', function () {
+        if (blocked()) return;
+        window.ShiftImportUI.open({
+          getState: function () { return state; },
+          createEmployee: function (name) { return addEmployee(name, true); },
+          createBranch: function (name) { return addBranch(name, true); },
+          /* כתיבה אחת בסוף, אחרי כל הכרטיסים */
+          commit: function () { persist('config'); render(); },
+          toast: toast
+        });
+      });
+    } else if (importButton) {
+      importButton.classList.add('hidden');
+    }
   }
 
   function bindBranchesTab() {
     $('#add-branch').addEventListener('click', function () {
-      state.branches.push({
-        id: Store.newId('br'), name: t('branches.newName'), active: true,
-        schedule: Data.defaultSchedule(null, state.settings.shifts)
-      });
-      persist('config');
+      if (blocked()) return;
+      addBranch(t('branches.newName'));
       render();
     });
 
@@ -2432,6 +2460,7 @@
     start: start,
     render: render,
     addEmployee: addEmployee,
+    addBranch: addBranch,
     getState: function () { return state; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,

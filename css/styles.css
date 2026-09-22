@@ -1024,3 +1024,27 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .billing-trial.warn {
   background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
 }
+
+/* ===== ייבוא רשימת עובדים =====
+   התצוגה המקדימה היא העיקר כאן, ולכן היא מקבלת את רוב הגובה. */
+.import-card { max-width: 720px; }
+.import-hint { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+.import-text {
+  width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px; line-height: 1.6; resize: vertical; white-space: pre;
+}
+.import-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.import-confirm-row { margin-bottom: 0; }
+.import-preview { max-height: 46vh; overflow-y: auto; }
+.import-counts { margin: 6px 0; font-size: 14px; }
+.import-note { margin: 4px 0 10px; font-size: 13px; color: var(--warn); }
+.import-empty { margin: 10px 0; color: var(--muted); font-size: 14px; }
+.import-bad { color: var(--err); }
+.import-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
+.import-table table { min-width: 0; }
+.import-table th, .import-table td { font-size: 13px; text-align: start; }
+.import-list { margin: 10px 0 0; padding-inline-start: 20px; font-size: 13px; line-height: 1.7; }
+
+@media (max-width: 760px) {
+  .import-preview { max-height: 40vh; }
+}

@@ -684,6 +684,38 @@
         chooseEmployee: 'Wählen Sie eine Person für den persönlichen Export'
       },
 
+      importData: {
+        done: { one: 'Eine Person importiert.', other: '{count} Personen importiert.' },
+        branches: { one: 'Ein neuer Standort wurde ebenfalls angelegt.', other: '{count} neue Standorte wurden ebenfalls angelegt.' },
+        countCreate: { one: 'Eine Person wird angelegt', other: '{count} Personen werden angelegt' },
+        countSkip: { one: 'eine ist schon vorhanden und wird übersprungen', other: '{count} sind schon vorhanden und werden übersprungen' },
+        countErrors: { one: 'eine Zeile wird nicht importiert', other: '{count} Zeilen werden nicht importiert' },
+        confirm: { one: 'Eine Person importieren', other: '{count} Personen importieren' },
+        open: 'Liste importieren',
+        title: 'Mitarbeitende importieren',
+        hint: 'Markieren Sie Ihre Liste in Excel, kopieren Sie sie und fügen Sie sie hier ein – oder wählen Sie eine CSV-Datei. Die erste Spalte ist der Name. Danach, falls vorhanden: Standorte, Schichtarten und ein Wochenkontingent. Ein Standort, den es noch nicht gibt, wird angelegt.',
+        placeholder: 'Dana Cohen\tStandort Mitte\tFrüh;Abend\t5',
+        file: 'CSV-Datei wählen',
+        sample: 'Beispiel einfügen',
+        maxColumn: 'Kontingent',
+        line: 'Zeile {line}:',
+        allShifts: 'Alle Schichten',
+        allBranches: 'Alle Standorte',
+        newBranches: 'Diese Standorte werden ebenfalls angelegt: {names}. Tage und Zeiten stellen Sie nach dem Import ein.',
+        nothing: 'In diesem Text gibt es nichts zu importieren.',
+        confirmEmpty: 'Importieren',
+        blocked: '{count} wurden wegen des Tariflimits nicht hinzugefügt.',
+        skip: {
+          exists: 'schon im System',
+          duplicateInFile: 'kommt in der Liste mehr als einmal vor'
+        },
+        error: {
+          noName: 'die Zeile hat keinen Namen',
+          badMax: 'das Kontingent ist keine Zahl: {value}',
+          badShift: 'eine Schicht, die dieser Betrieb nicht definiert hat: {value}'
+        }
+      },
+
       common: {
         emailUs: 'Schreiben Sie uns',
         moveUp: 'Nach oben', moveDown: 'Nach unten', timePlaceholder: 'hh:mm',

@@ -52,6 +52,19 @@ try {
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1200);
 
+  console.log('\n== הזהות במסך ==');
+  check('הכותרת היא שם המוצר', await page.locator('.brand h1').textContent(), 'SetShifts');
+  check('הסמל מצויר ואינו אימוג\'י', await page.evaluate(() => {
+    const mark = document.querySelector('.brand svg.logo');
+    return !!mark && mark.getBoundingClientRect().width > 20;
+  }), true);
+  check('אין אייקון כפול באף כפתור', await page.evaluate(() => {
+    const doubled = /([\u2190-\u2BFF\u2600-\u27BF])\s*\1/;
+    return Array.from(document.querySelectorAll('button'))
+      .filter((node) => doubled.test(node.textContent))
+      .map((node) => node.textContent.trim()).join(' | ');
+  }), '');
+
   console.log('\n== סידור חדש הוא טיוטה ==');
   await page.click('#generate');
   await page.waitForTimeout(1600);

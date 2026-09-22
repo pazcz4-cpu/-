@@ -1327,5 +1327,63 @@ test('לכל שפה יש נוסח לפנייה לתמיכה', function () {
   I18n.use('he');
 });
 
+console.log('\n== אייקונים בכפתורים ==');
+
+/* האייקון שייך לפריסה, והתרגום נותן רק את המילים. כשגם התרגום כלל
+   אייקון, כפתורים בעברית הציגו "✨✨" ו-"🔒🔒" – ובשפות אחרות
+   האייקון היה חסר. הבדיקה סוגרת את שתי הצורות בבת אחת. */
+var EMOJI_START = /^[\u2190-\u2BFF\u2600-\u27BF\uD83C-\uDBFF]/;
+
+/* מפתחות שהפריסה מקדימה להם אייקון בקוד ולא ב-HTML */
+var PREFIXED_IN_JS = ['toolbar.viewOnly', 'toolbar.exitViewOnly',
+  'toolbar.moreTools', 'toolbar.closeTools', 'auth.enableNotifications'];
+
+function iconPrefixedKeys() {
+  var keys = {};
+  ['app.html', 'index.html'].forEach(function (file) {
+    var html = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    var pattern = /([\u2190-\u2BFF\u2600-\u27BF\uD83C-\uDBFF][\uDC00-\uDFFF]?)\s*<span data-i18n="([^"]+)"/g;
+    var match;
+    while ((match = pattern.exec(html))) { keys[match[2]] = file; }
+  });
+  PREFIXED_IN_JS.forEach(function (key) { keys[key] = 'js'; });
+  return keys;
+}
+
+test('תרגום של כפתור עם אייקון בפריסה אינו כולל אייקון בעצמו', function () {
+  var keys = iconPrefixedKeys();
+  var names = Object.keys(keys);
+  assert(names.length >= 6, 'לא נמצאו מספיק כפתורים עם אייקון: ' + names.length);
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    names.forEach(function (key) {
+      var text = I18n.t(key);
+      assert(!EMOJI_START.test(text),
+        lang.code + ' – ' + key + ': האייקון מופיע גם בתרגום וגם ב-' + keys[key] +
+        ', והכפתור יציג אותו פעמיים: ' + text);
+    });
+  });
+  I18n.use('he');
+});
+
+test('אין אייקון כפול בטקסט של כפתור בשום שפה', function () {
+  /* אותו תו פעמיים ברצף בתוך טקסט מתורגם – סימן לחיבור כפול */
+  var doubled = /([\u2190-\u2BFF\u2600-\u27BF])\s*\1/;
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    ['toolbar', 'settings', 'auth', 'publish'].forEach(function (section) {
+      var dict = (I18n.active() || {}).dict || {};
+      dict = dict[section];
+      if (!dict) return;
+      Object.keys(dict).forEach(function (key) {
+        if (typeof dict[key] !== 'string') return;
+        assert(!doubled.test(dict[key]),
+          lang.code + ' – ' + section + '.' + key + ': אייקון כפול בטקסט');
+      });
+    });
+  });
+  I18n.use('he');
+});
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

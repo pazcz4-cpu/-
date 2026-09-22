@@ -122,11 +122,11 @@
       toolbar: {
         prevWeek: 'שבוע קודם', nextWeek: 'שבוע הבא', thisWeek: 'השבוע הנוכחי',
         week: 'שבוע {from} – {to}', currentWeek: 'השבוע הנוכחי',
-        generate: '✨ בנה סידור אוטומטי', clear: 'נקה סידור',
+        generate: 'בנה סידור אוטומטי', clear: 'נקה סידור',
         keepManual: 'שמירת שיבוצים ידניים',
-        copyText: '📋 העתק כטקסט', excel: '⬇ אקסל', csv: '⬇ CSV', print: '🖨 הדפסה',
-        moreTools: '⋯ כלים נוספים', closeTools: '✕ סגירת הכלים',
-        viewOnly: '🔒 מצב צפייה', exitViewOnly: '🔓 יציאה ממצב צפייה',
+        copyText: 'העתק כטקסט', excel: 'אקסל', csv: 'CSV', print: 'הדפסה',
+        moreTools: 'כלים נוספים', closeTools: 'סגירת הכלים',
+        viewOnly: 'מצב צפייה', exitViewOnly: 'יציאה ממצב צפייה',
         shabbatEnd: 'צאת שבת',
         byBranch: 'תצוגה לפי סניף', byEmployee: 'תצוגה לפי עובד',
         personalExport: 'ייצוא אישי לעובד (רק המשמרות שלו):',
@@ -459,7 +459,7 @@
         sabbathHint: 'בכל שבוע אפשר לעדכן את השעה בפועל בראש לשונית הסידור. ' +
           'משמרת מוצ״ש מתחילה חצי שעה אחריה.',
         backup: 'גיבוי ושחזור',
-        exportJson: '⬇ ייצוא כל הנתונים (JSON)', importJson: '⬆ ייבוא נתונים',
+        exportJson: 'ייצוא כל הנתונים (JSON)', importJson: 'ייבוא נתונים',
         reset: 'איפוס להגדרות ברירת מחדל',
         deadlineTitle: 'מועד סגירת הגשות',
         deadlineEnable: 'לסגור את הגשת האילוצים במועד קבוע',
@@ -556,7 +556,7 @@
         signOut: 'יציאה', blocked: 'הגישה חסומה',
         blockedOwner: 'להפעלת המנוי יש לפנות לתמיכה.',
         blockedMember: 'יש לפנות לבעל החשבון בחברה כדי לחדש את המנוי.',
-        enableNotifications: '🔔 הפעלת התראות',
+        enableNotifications: 'הפעלת התראות',
         failedSignIn: 'ההתחברות נכשלה', failedSignUp: 'ההרשמה נכשלה'
       },
 

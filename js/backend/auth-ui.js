@@ -188,7 +188,10 @@
     var Notify = root.ShiftNotify;
     var notifyButton = '';
     if (Notify && Notify.supported() && !(Notify.enabled() && Notify.permission() === 'granted')) {
-      notifyButton = '<button id="user-notify" class="btn ghost small">' + t('auth.enableNotifications') + '</button>';
+      /* האייקון שייך לכפתור ולא לתרגום, אחרת הוא מופיע פעמיים
+         בשפה אחת וחסר באחרות. */
+      notifyButton = '<button id="user-notify" class="btn ghost small">🔔 ' +
+        t('auth.enableNotifications') + '</button>';
     }
 
     var langSelect = '<select id="user-language" class="user-lang" aria-label="' +

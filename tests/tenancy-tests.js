@@ -873,6 +873,87 @@ asyncTest('עובד אינו יכול לבטל הזמנות', function () {
     });
 });
 
+console.log('\n== זהות: השם שלי מול שם העסק ==');
+
+asyncTest('כל משתמש משנה את השם של עצמו', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id1@a.com', password: 'secret1', name: 'שם ישן' })
+    .then(function () { return backend.saveOwnName('שם חדש'); })
+    .then(function (user) {
+      assertEqual(user.name, 'שם חדש', 'השם לא השתנה');
+      assertEqual(backend.session().user.name, 'שם חדש', 'ההתחברות לא התעדכנה');
+      /* השם אינו נוגע בתפקיד, ולכן גם לא בהרשאות */
+      assertEqual(backend.session().user.role, 'owner', 'התפקיד השתנה');
+    });
+});
+
+asyncTest('שם ריק נדחה', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id2@a.com', password: 'secret1', name: 'פז' })
+    .then(function () { return assertRejects(backend.saveOwnName('   '), 'invalid', 'שם ריק'); })
+    .then(function () { assertEqual(backend.session().user.name, 'פז', 'השם נמחק'); });
+});
+
+/* עובד לא יכול לשנות שם של מישהו אחר: אין ל-saveOwnName מזהה
+   משתמש בכלל, והדרך היחידה לשנות אחרים – updateUser – חסומה לו. */
+asyncTest('עובד משנה רק את שמו שלו', function () {
+  var backend = freshBackend();
+  var boss;
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id3@a.com', password: 'secret1', name: 'הבעלים' })
+    .then(function () {
+      boss = backend.session().user.id;
+      return backend.createUser({ name: 'עובד', email: 'id3w@a.com', role: 'employee' });
+    })
+    .then(function () {
+      backend.followLink('id3w@a.com', 'invite');
+      return backend.setPassword('secret2');
+    })
+    .then(function () { return backend.saveOwnName('עובד מתוקן'); })
+    .then(function () {
+      assertEqual(backend.session().user.name, 'עובד מתוקן', 'השם של העובד לא השתנה');
+      assertEqual(backend.db.users[boss].name, 'הבעלים', 'שם הבעלים השתנה');
+      return assertRejects(backend.updateUser(boss, { name: 'נחטף' }), 'forbidden', 'עובד משנה אחרים');
+    });
+});
+
+asyncTest('שם העסק – לבעלים בלבד', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'שם ברשם החברות', email: 'id4@a.com', password: 'secret1' })
+    .then(function () { return backend.renameCompany('השם המסחרי'); })
+    .then(function () {
+      assertEqual(backend.session().company.name, 'השם המסחרי', 'שם העסק לא השתנה');
+      return backend.createUser({ name: 'מנהל', email: 'id4m@a.com', role: 'manager' });
+    })
+    .then(function () {
+      backend.followLink('id4m@a.com', 'invite');
+      return backend.setPassword('secret2');
+    })
+    .then(function () {
+      /* מנהל מנהל משתמשים וסידורים – לא את זהות העסק */
+      return assertRejects(backend.renameCompany('לא שלי'), 'forbidden', 'מנהל משנה שם עסק');
+    })
+    .then(function () {
+      assertEqual(backend.session().company.name, 'השם המסחרי', 'השם הוחלף בכל זאת');
+    });
+});
+
+asyncTest('שינוי שם אינו חוצה חברות', function () {
+  var backend = freshBackend();
+  var firstId;
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'id5a@a.com', password: 'secret1' })
+    .then(function () {
+      firstId = backend.session().company.id;
+      return backend.signOut();
+    })
+    .then(function () {
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'id5b@a.com', password: 'secret1' });
+    })
+    .then(function () { return backend.renameCompany('ב החדשה'); })
+    .then(function () {
+      assertEqual(backend.db.companies[firstId].name, 'חברה א', 'שם החברה השנייה נדרס');
+    });
+});
+
 queue.then(function () {
   console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed === 0 ? 0 : 1);

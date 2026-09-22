@@ -532,6 +532,38 @@
     return Promise.resolve({ id: userId, cancelled: true });
   };
 
+  /* ===== זהות: השם שלי, ושם העסק ===== */
+
+  /* כל משתמש רשאי לשנות את השם שלו – ורק אותו. אין כאן userId,
+     ולכן אי אפשר לכוון את הפעולה לשורה של מישהו אחר. התפקיד
+     והשיוך לכרטיס העובד אינם נוגעים בה. */
+  MockBackend.prototype.saveOwnName = function (name) {
+    var session;
+    try { session = this._require(); } catch (err) { return Promise.reject(err); }
+    var clean = String(name || '').trim();
+    if (!clean) return Promise.reject(this._fail('invalid', t('server.nameRequired')));
+    var user = this.db.users[session.user.id];
+    if (!user) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    user.name = clean.slice(0, 80);
+    this._save();
+    return Promise.resolve(publicUser(user));
+  };
+
+  /* שם העסק הוא השם המסחרי: מה שהעובדים רואים ומה שמופיע
+     במיילים אליהם. בהרשמה נשמר לא פעם שם רשם החברות, ובלי
+     האפשרות הזו הוא היה נשאר על המסך לתמיד. הבעלים בלבד. */
+  MockBackend.prototype.renameCompany = function (name) {
+    var session;
+    try { session = this._require('company.rename'); } catch (err) { return Promise.reject(err); }
+    var clean = String(name || '').trim();
+    if (!clean) return Promise.reject(this._fail('invalid', t('server.companyNameRequired')));
+    var company = this.db.companies[session.company.id];
+    if (!company) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    company.name = clean.slice(0, 120);
+    this._save();
+    return Promise.resolve(clone(company));
+  };
+
   /* ===== מנוי ===== */
   MockBackend.prototype.setSubscription = function (patch) {
     var session;

@@ -541,7 +541,27 @@
         weekMissing: 'هذا الأسبوع غير موجود',
         userNotFound: 'المستخدم غير موجود',
         inviteNotPending: 'هذه الدعوة استُخدمت بالفعل أو أنها غير موجودة.',
+        nameRequired: 'الاسم مطلوب.',
+        companyNameRequired: 'اسم النشاط التجاري مطلوب.',
         cannotChangeOwner: 'لا يمكن تغيير مالك الحساب'
+      },
+
+      account: {
+        open: 'حسابي',
+        title: 'حسابي',
+        close: 'إغلاق',
+        barCompany: 'النشاط',
+        barUser: 'المسجَّل',
+        myName: 'اسمي',
+        myNameHint: 'هكذا يظهر اسمك للمدير ولبقية الموظفين.',
+        companyName: 'اسم النشاط',
+        companyNameHint: 'الاسم التجاري الذي يراه الموظفون والذي يظهر في الرسائل المرسلة إليهم. لا يلزم أن يطابق الاسم المسجَّل.',
+        companyOwnerOnly: 'يمكن لصاحب الحساب وحده تغيير اسم النشاط.',
+        email: 'البريد الإلكتروني',
+        role: 'الدور',
+        save: 'حفظ',
+        saved: 'تم الحفظ',
+        nameRequired: 'الاسم مطلوب.'
       },
 
       notify: {

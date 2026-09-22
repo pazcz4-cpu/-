@@ -219,6 +219,16 @@ FakeSupabase.prototype.fetch = function (url, options) {
     return reply(200, row);
   }
 
+  /* save_own_name: השורה של הקורא בלבד, ובלי מזהה משתמש בכלל */
+  if (path === '/rest/v1/rpc/save_own_name') {
+    var me = this.companyUsers[this._userFromAuth(headers)];
+    if (!me) return reply(400, { message: 'user not found' });
+    var wanted = String(body.p_name || '').trim();
+    if (!wanted) return reply(400, { code: '22023', message: 'name required' });
+    me.name = wanted.slice(0, 80);
+    return reply(200, me);
+  }
+
   if (path === '/rest/v1/rpc/save_own_constraint') {
     var employee = this.companyUsers[this._userFromAuth(headers)];
     if (!employee || !employee.employee_id) {
@@ -261,6 +271,12 @@ FakeSupabase.prototype.fetch = function (url, options) {
     if (method === 'PATCH') {
       var company = this.companies[where.id];
       if (!company) return reply(200, []);
+      /* כמו companies_update: רק הבעלים, ורק בחברה שלו. RLS
+         שדוחה שורה אינו שגיאה ב-PostgREST אלא תשובה ריקה. */
+      var patcher = this.companyUsers[this._userFromAuth(headers)];
+      if (patcher && (patcher.role !== 'owner' || patcher.company_id !== company.id)) {
+        return reply(200, []);
+      }
       Object.assign(company, body);
       return reply(200, [company]);
     }
@@ -1343,6 +1359,87 @@ run('גם /auth/v1 ולוכסן בסוף מנוקים', function () {
   assertEqual(urlOf('  https://a.supabase.co  '), 'https://a.supabase.co', 'רווחים');
   /* מה שאינו סיומת של Supabase נשאר – יש מי שמריץ מאחורי דומיין משלו */
   assertEqual(urlOf('https://api.setshifts.com/sb'), 'https://api.setshifts.com/sb', 'נתיב משלו');
+});
+
+console.log('\n== זהות: השם שלי מול שם העסק ==');
+
+run('שינוי השם שלי עובר דרך הפונקציה, בלי מזהה משתמש', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'id1@sb.test', password: 'secret123', name: 'שם ישן', companyName: 'עסק'
+  }).then(function () {
+    return backend.saveOwnName('  שם חדש  ');
+  }).then(function (user) {
+    assertEqual(user.name, 'שם חדש', 'השם לא נשמר, או שהרווחים נשארו');
+    assertEqual(backend.session().user.name, 'שם חדש', 'ההתחברות לא התעדכנה');
+    var call = server.calls.filter(function (c) {
+      return c.path === '/rest/v1/rpc/save_own_name';
+    }).pop();
+    assert(call, 'הפונקציה לא נקראה');
+    /* כתיבה ישירה לטבלה הייתה נחסמת על ידי company_users_update,
+       שדורש מנהל – ולכן זה חייב להיות דרך הפונקציה. */
+    assertEqual(Object.keys(call.body).join(','), 'p_name',
+      'נשלח משהו מעבר לשם – למשל מזהה משתמש');
+    assertEqual(server.calls.filter(function (c) {
+      return c.method === 'PATCH' && c.path.indexOf('company_users') !== -1;
+    }).length, 0, 'המתאם ניסה לכתוב ישירות לטבלת המשתמשים');
+  });
+});
+
+run('שם ריק אינו מגיע לשרת בכלל', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'id2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function () {
+    var before = server.calls.length;
+    return backend.saveOwnName('   ').then(function () {
+      throw new Error('שם ריק התקבל');
+    }, function (err) {
+      assertEqual(err.code, 'invalid', 'קוד שגיאה');
+      assertEqual(server.calls.length, before, 'נשלחה בקשה מיותרת');
+    });
+  });
+});
+
+run('שם העסק נכתב לעמודה אחת, ורק לבעלים', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'id3@sb.test', password: 'secret123', name: 'פז', companyName: 'שם ברשם החברות'
+  }).then(function (session) {
+    return backend.renameCompany('השם המסחרי').then(function () {
+      assertEqual(backend.session().company.name, 'השם המסחרי', 'ההתחברות לא התעדכנה');
+      assertEqual(server.companies[session.company.id].name, 'השם המסחרי', 'השרת לא עודכן');
+      var call = server.calls.filter(function (c) {
+        return c.method === 'PATCH' && c.path.indexOf('companies') !== -1;
+      }).pop();
+      /* המנוי, התוקף ופרטי הכרטיס נכתבים רק בשרת. בקשה שנוגעת
+         בהם מהדפדפן היא בדיוק מה שה-GRANT אמור למנוע. */
+      assertEqual(Object.keys(call.body).join(','), 'name',
+        'נשלחו עמודות נוספות מעבר לשם');
+      assert(call.query.indexOf('id=eq.' + session.company.id) !== -1,
+        'הבקשה אינה מוגבלת לחברה של המשתמש');
+    });
+  });
+});
+
+run('מנהל שמנסה לשנות את שם העסק מקבל סירוב ולא שקט', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'id4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function (session) {
+    /* אותו משתמש, תפקיד מנהל: כך RLS רואה אותו */
+    server.companyUsers[session.user.id].role = 'manager';
+    return backend.renameCompany('לא שלי').then(function () {
+      throw new Error('הכתיבה עברה');
+    }, function (err) {
+      assertEqual(err.code, 'forbidden', 'קוד שגיאה');
+      assertEqual(server.companies[session.company.id].name, 'עסק', 'השם הוחלף בכל זאת');
+    });
+  });
 });
 
 chain.then(function () {

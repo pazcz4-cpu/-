@@ -546,7 +546,27 @@
         weekMissing: 'השבוע אינו קיים',
         userNotFound: 'המשתמש לא נמצא',
         inviteNotPending: 'ההזמנה כבר נוצלה או שאינה קיימת.',
+        nameRequired: 'צריך להזין שם.',
+        companyNameRequired: 'צריך להזין שם עסק.',
         cannotChangeOwner: 'לא ניתן לשנות את בעל החשבון'
+      },
+
+      account: {
+        open: 'החשבון שלי',
+        title: 'החשבון שלי',
+        close: 'סגירה',
+        barCompany: 'עסק',
+        barUser: 'מחובר/ת',
+        myName: 'השם שלי',
+        myNameHint: 'כך שמך מופיע למנהל ולשאר העובדים.',
+        companyName: 'שם העסק',
+        companyNameHint: 'השם המסחרי שהעובדים רואים ושמופיע במיילים אליהם. לא חייב להיות השם שברשם החברות.',
+        companyOwnerOnly: 'רק בעל החשבון יכול לשנות את שם העסק.',
+        email: 'אימייל',
+        role: 'תפקיד',
+        save: 'שמירה',
+        saved: 'נשמר',
+        nameRequired: 'צריך להזין שם.'
       },
 
       notify: {

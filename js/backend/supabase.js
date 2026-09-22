@@ -759,6 +759,42 @@
     });
   };
 
+  /* ===== זהות: השם שלי, ושם העסק ===== */
+
+  /* company_users_update דורש is_manager(), ולכן עובד לא יכול היה
+     לתקן שגיאת כתיב בשם של עצמו. הפונקציה בשרת היא security
+     definer ומוגבלת ל-auth.uid(): אין בה מזהה משתמש, ולכן אי
+     אפשר לכוון אותה למישהו אחר. */
+  SupabaseBackend.prototype.saveOwnName = function (name) {
+    var self = this;
+    var clean = String(name || '').trim();
+    if (!clean) return Promise.reject(fail('invalid', t('server.nameRequired')));
+    return this._rpc('save_own_name', { p_name: clean }).then(function (row) {
+      var user = mapUser(row);
+      if (self._session) self._session.user.name = user.name;
+      return user;
+    });
+  };
+
+  /* שם העסק הוא השם המסחרי: מה שהעובדים רואים ומה שמופיע במיילים
+     אליהם. בהרשמה נשמר לא פעם שם רשם החברות. RLS פותח את העמודה
+     הזו – ורק אותה – לבעלים בלבד. */
+  SupabaseBackend.prototype.renameCompany = function (name) {
+    var self = this;
+    var companyId;
+    try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
+    var clean = String(name || '').trim();
+    if (!clean) return Promise.reject(fail('invalid', t('server.companyNameRequired')));
+    return this._rest('/companies?id=eq.' + companyId, {
+      method: 'PATCH', body: { name: clean.slice(0, 120) }
+    }).then(function (rows) {
+      /* שורה ריקה כאן פירושה שכללי ההרשאה דחו את הכתיבה */
+      if (!rows || !rows.length) throw fail('forbidden', t('server.noPermission'));
+      if (self._session) self._session.company.name = rows[0].name;
+      return self._session ? self._session.company : { name: rows[0].name };
+    });
+  };
+
   SupabaseBackend.prototype.updateUser = function (userId, patch) {
     var companyId;
     try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }

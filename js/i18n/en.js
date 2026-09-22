@@ -547,7 +547,27 @@
         weekMissing: 'That week does not exist',
         userNotFound: 'User not found',
         inviteNotPending: 'That invitation has already been used, or does not exist.',
+        nameRequired: 'A name is required.',
+        companyNameRequired: 'A business name is required.',
         cannotChangeOwner: 'The account owner cannot be changed'
+      },
+
+      account: {
+        open: 'My account',
+        title: 'My account',
+        close: 'Close',
+        barCompany: 'Business',
+        barUser: 'Signed in',
+        myName: 'My name',
+        myNameHint: 'This is how your name appears to your manager and colleagues.',
+        companyName: 'Business name',
+        companyNameHint: 'The trading name your staff see and the one used in emails to them. It need not match the registered name.',
+        companyOwnerOnly: 'Only the account owner can change the business name.',
+        email: 'Email',
+        role: 'Role',
+        save: 'Save',
+        saved: 'Saved',
+        nameRequired: 'A name is required.'
       },
 
       notify: {

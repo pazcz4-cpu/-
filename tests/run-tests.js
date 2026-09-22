@@ -1041,6 +1041,41 @@ test('הסכימה אוכפת את המועד גם בשרת', function () {
     'הבדיקה אינה מוגבלת לעובדים, ותחסום גם מנהל');
 });
 
+/* השם של המשתמש עצמו. company_users_update דורש is_manager(),
+   ולכן בלי הפונקציה הזו עובד תקוע עם השם שהוקלד לו בהזמנה. */
+test('הסכימה מאפשרת לכל משתמש לתקן את שמו – ורק אותו', function () {
+  var schema = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+  assert(schema.indexOf('function public.save_own_name') !== -1,
+    'אין פונקציה לשינוי השם בסכימה');
+  var body = schema.slice(schema.indexOf('function public.save_own_name'));
+  body = body.slice(0, body.indexOf('$$;'));
+  assert(body.indexOf('security definer') !== -1,
+    'בלי security definer עובד לא יוכל לכתוב את השורה שלו');
+  assert(body.indexOf('id = auth.uid()') !== -1,
+    'הפונקציה אינה מוגבלת לשורה של הקורא');
+  assert(body.indexOf('p_user_id') === -1,
+    'הפונקציה מקבלת מזהה משתמש, ולכן אפשר לכוון אותה למישהו אחר');
+  /* השם בלבד: תפקיד או שיוך לכרטיס עובד כאן היו הסלמת הרשאות */
+  assert(body.indexOf('set role') === -1 && body.indexOf('employee_id =') === -1,
+    'הפונקציה נוגעת גם בתפקיד או בשיוך לכרטיס עובד');
+  assert(schema.indexOf('grant execute on function public.save_own_name(text)') !== -1,
+    'אין הרשאת הרצה לפונקציה');
+});
+
+/* שם העסק הוא השם המסחרי, והוא של הבעלים. מצב המנוי והתוקף
+   אינם ניתנים לכתיבה מהדפדפן – שם, וכאן, זה אותו GRANT. */
+test('שם העסק פתוח לכתיבה לבעלים בלבד, והוא העמודה היחידה', function () {
+  var schema = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+  assert(schema.indexOf('grant update (name) on public.companies') !== -1,
+    'העמודה name אינה פתוחה לכתיבה, או שנפתחו איתה עמודות נוספות');
+  var policy = schema.slice(schema.indexOf('create policy companies_update'));
+  policy = policy.slice(0, policy.indexOf(';'));
+  assert(policy.indexOf("current_role_name() = 'owner'") !== -1,
+    'כל אחד בחברה יכול לשנות את שם העסק');
+});
+
 console.log('\n== טיוטה ופרסום ==');
 
 /* בלי פרסום מפורש העובד אינו רואה סידור. לכן "מה מצב הפרסום" הוא

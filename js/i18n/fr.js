@@ -541,7 +541,27 @@
         weekMissing: 'Cette semaine n’existe pas',
         userNotFound: 'Utilisateur introuvable',
         inviteNotPending: 'Cette invitation a déjà été utilisée ou n\'existe pas.',
+        nameRequired: 'Un nom est requis.',
+        companyNameRequired: "Un nom d'entreprise est requis.",
         cannotChangeOwner: 'Le propriétaire du compte ne peut pas être modifié'
+      },
+
+      account: {
+        open: 'Mon compte',
+        title: 'Mon compte',
+        close: 'Fermer',
+        barCompany: 'Entreprise',
+        barUser: 'Connecté',
+        myName: 'Mon nom',
+        myNameHint: 'C\'est ainsi que votre nom apparaît à votre responsable et à vos collègues.',
+        companyName: "Nom de l'entreprise",
+        companyNameHint: "Le nom commercial que vos équipes voient et celui qui figure dans les e-mails qui leur sont envoyés. Il n'a pas à correspondre au nom enregistré.",
+        companyOwnerOnly: "Seul le titulaire du compte peut changer le nom de l'entreprise.",
+        email: 'E-mail',
+        role: 'Rôle',
+        save: 'Enregistrer',
+        saved: 'Enregistré',
+        nameRequired: 'Un nom est requis.'
       },
 
       notify: {

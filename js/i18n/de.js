@@ -541,7 +541,27 @@
         weekMissing: 'Diese Woche existiert nicht',
         userNotFound: 'Benutzer nicht gefunden',
         inviteNotPending: 'Diese Einladung wurde bereits genutzt oder existiert nicht.',
+        nameRequired: 'Ein Name ist erforderlich.',
+        companyNameRequired: 'Ein Firmenname ist erforderlich.',
         cannotChangeOwner: 'Der Kontoinhaber kann nicht geändert werden'
+      },
+
+      account: {
+        open: 'Mein Konto',
+        title: 'Mein Konto',
+        close: 'Schließen',
+        barCompany: 'Betrieb',
+        barUser: 'Angemeldet',
+        myName: 'Mein Name',
+        myNameHint: 'So erscheint Ihr Name für Ihre Führungskraft und die Kolleginnen und Kollegen.',
+        companyName: 'Name des Betriebs',
+        companyNameHint: 'Der Name, den Ihre Belegschaft sieht und der in den E-Mails an sie steht. Er muss nicht dem Handelsregistereintrag entsprechen.',
+        companyOwnerOnly: 'Nur die Kontoinhaberin oder der Kontoinhaber kann den Namen des Betriebs ändern.',
+        email: 'E-Mail',
+        role: 'Rolle',
+        save: 'Speichern',
+        saved: 'Gespeichert',
+        nameRequired: 'Ein Name ist erforderlich.'
       },
 
       notify: {

@@ -126,6 +126,9 @@
 
   var opts = {};
   var authRef = null;
+  /* מה לצייר מחדש אחרי ששם המשתמש או שם העסק השתנו. נקבע בתוך
+     enterApp, כי רק שם ידוע איזה מסך פתוח. */
+  var identityRefresh = null;
 
   function boot(options) {
     opts = options || {};
@@ -133,7 +136,8 @@
     authRef = new root.ShiftAuthUI.AuthUI({
       backend: backend,
       onSignedIn: function (session) { return enterApp(backend, session); },
-      onSignedOut: function () { root.location.reload(); }
+      onSignedOut: function () { root.location.reload(); },
+      onIdentityChange: function (session) { if (identityRefresh) identityRefresh(session); }
     });
     /* שרת אמיתי צריך לשחזר את ההתחברות מהאסימון השמור לפני שמסך
        הכניסה מצויר, אחרת משתמש מחובר יראה לרגע מסך התחברות.
@@ -239,6 +243,12 @@
       document.getElementById('manager-root').classList.add('hidden');
       document.getElementById('employee-root').classList.remove('hidden');
       var employeeUI = new root.ShiftEmployeeUI.EmployeeUI({ backend: backend, session: session });
+      /* כותרת מסך העובד נושאת את שם העסק. אם הבעלים שינה אותו,
+         או שהעובד תיקן את שמו שלו, המסך צריך לומר את החדש. */
+      identityRefresh = function (fresh) {
+        if (fresh) employeeUI.session = fresh;
+        employeeUI.render();
+      };
       backend.subscribe(function (change) {
         if (change.type !== 'week' || change.weekKey !== employeeUI.weekKey) return;
         announce(employeeUI.week, change.week);
@@ -283,6 +293,9 @@
           backend: backend, session: session, getEmployees: getEmployees,
           addEmployee: function (name) { return root.ShiftApp.addEmployee(name); }
         });
+        /* המנהל מופיע בטבלת המשתמשים. שינה את שמו – שם ישן בטבלה
+           שנייה אחרי שהמסך אמר "נשמר" נראה כאילו לא נשמר. */
+        identityRefresh = function () { root.ShiftUsersUI.render(); };
       }
 
       if (root.ShiftBillingUI && root.ShiftBilling) {

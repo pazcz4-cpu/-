@@ -93,6 +93,7 @@
     this.appRoot = document.getElementById('app-root');
     this.mode = 'signin';
     this.busy = false;
+    this.accountOpen = false;
   }
 
   AuthUI.prototype.start = function () {
@@ -172,6 +173,26 @@
       if (event.target.closest('#user-signout')) {
         event.preventDefault();
         self.signOut();
+        return;
+      }
+      if (event.target.closest('#user-account')) {
+        event.preventDefault();
+        self._toggleAccount();
+        return;
+      }
+      if (event.target.closest('#account-close')) {
+        event.preventDefault();
+        self._toggleAccount(false);
+        return;
+      }
+      if (event.target.closest('#account-save-name')) {
+        event.preventDefault();
+        self._saveIdentity('user');
+        return;
+      }
+      if (event.target.closest('#account-save-company')) {
+        event.preventDefault();
+        self._saveIdentity('company');
         return;
       }
       if (event.target.closest('#user-notify')) {
@@ -387,14 +408,128 @@
         esc(t('preview.open')) + '</button>';
     }
 
-    bar.innerHTML =
-      '<span class="user-company">' + esc(session.company.name) + '</span>' +
-      '<span class="user-name">' + esc(session.user.name) +
-      ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
+    /* שני שמות זה ליד זה בלי תווית הם חידה: מי מהם העסק ומי
+       המשתמש. התוויות פותרות את זה, והלחיצה פותחת את המקום שבו
+       אפשר לתקן כל אחד מהם בנפרד. */
+    var identity =
+      '<button type="button" id="user-account" class="user-id" ' +
+        'aria-expanded="' + (this.accountOpen ? 'true' : 'false') + '" ' +
+        'aria-controls="account-panel" title="' + esc(t('account.open')) + '">' +
+        '<span class="user-company"><span class="user-tag">' + esc(t('account.barCompany')) +
+          '</span> ' + esc(session.company.name) + '</span>' +
+        '<span class="user-name"><span class="user-tag">' + esc(t('account.barUser')) +
+          '</span> ' + esc(session.user.name) +
+          ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
+      '</button>';
+
+    bar.innerHTML = identity +
       notice + langSelect + previewButton + notifyButton +
-      '<button id="user-signout" class="btn ghost small">' + t('auth.signOut') + '</button>';
+      '<button id="user-signout" class="btn ghost small">' + t('auth.signOut') + '</button>' +
+      '<div id="account-panel" class="account-panel' + (this.accountOpen ? '' : ' hidden') + '"></div>';
     bar.classList.remove('hidden');
+    if (this.accountOpen) { this.renderAccount(session); }
     if (root.I18nDom) { root.I18nDom.fillPicker(bar.querySelector('#user-language')); }
+  };
+
+  /* ===== החשבון שלי =====
+     שם המשתמש ושם העסק נקלטו יחד במסך הרשמה אחד, ומאז לא הייתה
+     דרך לשנות אף אחד מהם. כאן הם שני שדות נפרדים: השם שלי – לכל
+     משתמש על עצמו; שם העסק – לבעלים בלבד, כי זה השם המסחרי
+     שהעובדים רואים ושמופיע במיילים אליהם. */
+  AuthUI.prototype.renderAccount = function (session) {
+    var panel = document.getElementById('account-panel');
+    if (!panel) return;
+    var canRename = Model.can(session.user.role, 'company.rename');
+
+    var html = '<h3 class="account-title">' + esc(t('account.title')) + '</h3>';
+
+    html += '<div class="account-field">' +
+      '<label for="account-name">' + esc(t('account.myName')) + '</label>' +
+      '<div class="account-row">' +
+        '<input type="text" id="account-name" class="text-input" maxlength="80" value="' +
+          esc(session.user.name) + '">' +
+        '<button type="button" id="account-save-name" class="btn primary small">' +
+          esc(t('account.save')) + '</button>' +
+      '</div>' +
+      '<p class="hint">' + esc(t('account.myNameHint')) + '</p>' +
+      '</div>';
+
+    html += '<div class="account-field">' +
+      '<label' + (canRename ? ' for="account-company"' : '') + '>' +
+        esc(t('account.companyName')) + '</label>';
+    if (canRename) {
+      html += '<div class="account-row">' +
+        '<input type="text" id="account-company" class="text-input" maxlength="120" value="' +
+          esc(session.company.name) + '">' +
+        '<button type="button" id="account-save-company" class="btn primary small">' +
+          esc(t('account.save')) + '</button>' +
+        '</div>' +
+        '<p class="hint">' + esc(t('account.companyNameHint')) + '</p>';
+    } else {
+      html += '<p class="account-static">' + esc(session.company.name) + '</p>' +
+        '<p class="hint">' + esc(t('account.companyOwnerOnly')) + '</p>';
+    }
+    html += '</div>';
+
+    /* המייל והתפקיד אינם ניתנים לשינוי מכאן, אבל הם מה שמזהה את
+       החשבון – ובלעדיהם המסך הזה לא עונה על "באיזה חשבון אני". */
+    html += '<dl class="account-facts">' +
+      '<dt>' + esc(t('account.email')) + '</dt><dd dir="ltr">' + esc(session.user.email) + '</dd>' +
+      '<dt>' + esc(t('account.role')) + '</dt><dd>' +
+        esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</dd>' +
+      '</dl>';
+
+    html += '<p id="account-message" class="users-message hidden"></p>' +
+      '<div class="row"><button type="button" id="account-close" class="btn ghost small">' +
+        esc(t('account.close')) + '</button></div>';
+
+    panel.innerHTML = html;
+  };
+
+  AuthUI.prototype._accountSay = function (text, isError) {
+    var node = document.getElementById('account-message');
+    if (!node) return;
+    node.textContent = text || '';
+    node.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
+  };
+
+  AuthUI.prototype._toggleAccount = function (open) {
+    var session = this.backend.session();
+    if (!session) return;
+    this.accountOpen = open === undefined ? !this.accountOpen : !!open;
+    this.renderUserBar(session);
+    if (this.accountOpen) {
+      var field = document.getElementById('account-name');
+      if (field) field.focus();
+    }
+  };
+
+  /* שמירת שם – של המשתמש או של העסק. שניהם מסתיימים באותו אופן:
+     ציור מחדש של השורה, כדי שמה שעל המסך יהיה מה שבשרת. */
+  AuthUI.prototype._saveIdentity = function (kind) {
+    var self = this;
+    var input = document.getElementById(kind === 'company' ? 'account-company' : 'account-name');
+    if (!input) return;
+    var value = String(input.value || '').trim();
+    if (!value) { this._accountSay(t('account.nameRequired'), true); return; }
+
+    var button = document.getElementById(kind === 'company' ? 'account-save-company' : 'account-save-name');
+    if (button) button.disabled = true;
+    this._accountSay('');
+
+    var call = kind === 'company'
+      ? this.backend.renameCompany(value)
+      : this.backend.saveOwnName(value);
+
+    Promise.resolve(call).then(function () {
+      var session = self.backend.session();
+      if (session) self.renderUserBar(session);
+      self._accountSay(t('account.saved'));
+      if (self.onIdentityChange) self.onIdentityChange(session);
+    }, function (err) {
+      if (button) button.disabled = false;
+      self._accountSay((err && err.message) || t('account.nameRequired'), true);
+    });
   };
 
   /* שורת המשתמש נכתבת מחדש כשהשפה מתחלפת */

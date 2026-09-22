@@ -929,6 +929,43 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .user-bar .btn { margin-inline-start: auto; }
 .user-notice ~ .btn { margin-inline-start: 0; }
 
+/* הזהות כפתור אחד: עסק ומשתמש, כל אחד עם התווית שלו */
+.user-id {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: none; border: 1px solid transparent; border-radius: 9px;
+  padding: 3px 8px; margin-inline-start: -8px;
+  font: inherit; color: inherit; text-align: start; cursor: pointer;
+}
+.user-id:hover { border-color: var(--line); background: var(--bg); }
+.user-id[aria-expanded="true"] { border-color: var(--brand); background: var(--bg); }
+.user-tag {
+  display: inline-block; margin-inline-end: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  text-transform: uppercase; color: var(--muted);
+}
+.user-id .user-name .user-tag { opacity: .85; }
+
+/* מגירת החשבון: נפתחת בשורה שנייה של הסרגל, ואינה מכסה כלום */
+.account-panel {
+  flex-basis: 100%; margin-top: 8px; padding: 14px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  display: flex; flex-direction: column; gap: 12px; max-width: 560px;
+}
+.account-panel.hidden { display: none; }
+.account-title { margin: 0; font-size: 15px; }
+.account-field { display: flex; flex-direction: column; gap: 5px; }
+.account-field > label { font-weight: 600; font-size: 13px; }
+.account-field .hint { margin: 0; }
+.account-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.account-row .text-input { flex: 1 1 200px; min-width: 0; }
+.account-static { margin: 0; font-weight: 600; }
+.account-facts {
+  margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;
+  font-size: 13px; color: var(--muted);
+}
+.account-facts dt { font-weight: 600; }
+.account-facts dd { margin: 0; }
+
 /* ===================== מסך העובד וניהול משתמשים ===================== */
 .employee-root { padding: 16px; max-width: 760px; margin: 0 auto; }
 .employee-root.hidden { display: none; }

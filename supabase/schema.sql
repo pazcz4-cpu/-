@@ -161,6 +161,35 @@ as $$
    where id = auth.uid() and joined_at is null
 $$;
 
+-- שם התצוגה של המשתמש עצמו. עד עכשיו רק מנהל יכול היה לשנות שם,
+-- כי company_users_update דורש is_manager() – כלומר עובד שנרשם
+-- עם שגיאת כתיב בשם שלו היה תקוע איתה. security definer, ומוגבל
+-- לשורה של הקורא בלבד: אין כאן p_user_id, ואי אפשר לכוון אותה
+-- למישהו אחר. התפקיד והשיוך לכרטיס העובד אינם נוגעים בה.
+create or replace function public.save_own_name(p_name text)
+returns public.company_users
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text := btrim(coalesce(p_name, ''));
+  v_row  public.company_users;
+begin
+  if v_name = '' then
+    raise exception 'name required' using errcode = '22023';
+  end if;
+  update public.company_users
+     set name = left(v_name, 80)
+   where id = auth.uid()
+  returning * into v_row;
+  if v_row.id is null then
+    raise exception 'user not found' using errcode = 'P0002';
+  end if;
+  return v_row;
+end
+$$;
+
 -- RLS: הפעלת בידוד
 
 alter table public.companies       enable row level security;
@@ -517,6 +546,7 @@ grant execute on function public.current_role_name()                            
 grant execute on function public.current_employee_id()                           to authenticated;
 grant execute on function public.is_manager()                                    to authenticated;
 grant execute on function public.mark_self_joined()                               to authenticated;
+grant execute on function public.save_own_name(text)                              to authenticated;
 grant execute on function public.constraints_deadline(uuid, text)                to authenticated;
 
 -- חברות: קריאה בלבד, ושינוי השם בלבד. פתיחת חברה נעשית דרך

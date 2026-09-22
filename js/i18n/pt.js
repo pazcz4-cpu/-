@@ -541,7 +541,27 @@
         weekMissing: 'Essa semana não existe',
         userNotFound: 'Utilizador não encontrado',
         inviteNotPending: 'Esse convite já foi usado ou não existe.',
+        nameRequired: 'É necessário um nome.',
+        companyNameRequired: 'É necessário um nome de empresa.',
         cannotChangeOwner: 'O proprietário da conta não pode ser alterado'
+      },
+
+      account: {
+        open: 'A minha conta',
+        title: 'A minha conta',
+        close: 'Fechar',
+        barCompany: 'Empresa',
+        barUser: 'Sessão de',
+        myName: 'O meu nome',
+        myNameHint: 'É assim que o seu nome aparece à chefia e aos colegas.',
+        companyName: 'Nome da empresa',
+        companyNameHint: 'O nome comercial que a equipa vê e o que consta dos e-mails enviados para ela. Não tem de coincidir com o nome registado.',
+        companyOwnerOnly: 'Só o titular da conta pode alterar o nome da empresa.',
+        email: 'E-mail',
+        role: 'Função',
+        save: 'Guardar',
+        saved: 'Guardado',
+        nameRequired: 'É necessário um nome.'
       },
 
       notify: {

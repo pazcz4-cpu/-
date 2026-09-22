@@ -409,9 +409,36 @@ td.closed {
 .shift-middle  { background: var(--c1-bg); border-inline-start: 4px solid var(--c1-line); }
 .shift-evening { background: var(--c2-bg); border-inline-start: 4px solid var(--c2-line); }
 
+/* ===== תא בסידור =====
+
+   עד עכשיו כל תא מאויש נצבע במלואו בצבע המשמרת. בשבוע עם עשרה
+   חוסרי איוש זה אומר שהתא התקין צועק בדיוק כמו התא הבעייתי, ומי
+   שפותח את המסך לא רואה לאן להסתכל.
+
+   מעכשיו: התא התקין לבן, וסוג המשמרת נקרא מפס צבעוני בקצה שלו
+   ומכותרת השורה, שנשארת צבועה במלואה. הצבע המלא משוחרר למה
+   שבאמת דורש תשומת לב. */
 td.cell { min-width: 130px; }
-td.cell.has-error { outline: 2px solid var(--err); outline-offset: -2px; }
-td.cell.has-warning { outline: 2px dashed var(--badge-warn); outline-offset: -2px; }
+td.cell.sh, td.sched-cell.sh { background: var(--surface); }
+td.cell.sh { box-shadow: inset 4px 0 0 0 var(--sh-line); border-inline-start-width: 1px; }
+[dir="rtl"] td.cell.sh { box-shadow: inset -4px 0 0 0 var(--sh-line); }
+
+/* חריגה: רקע, ולא רק מסגרת. מסגרת בלבד נבלעת כשכל התאים סביבה
+   צבועים ממילא – וזה בדיוק המצב שממנו באנו. */
+td.cell.has-warning {
+  background: var(--warn-bg);
+  outline: 1px solid var(--warn-line); outline-offset: -1px;
+}
+td.cell.has-error {
+  background: var(--err-bg);
+  outline: 2px solid var(--err); outline-offset: -2px;
+}
+/* הפס של סוג המשמרת נשאר גם בתא חורג: מה נשבר, ובאיזו משמרת */
+td.cell.has-error.sh, td.cell.has-warning.sh { border-inline-start-color: var(--sh-line); }
+
+/* כותרת השורה היא המקרא: שם המשמרת בצבע המלא שלה, פעם אחת
+   בשורה. משם נקרא הפס הדק שבתאים עצמם. */
+td.row-head.sh { background: var(--sh-bg); font-weight: 700; }
 
 select.emp-select {
   width: 100%; font-family: inherit; font-size: 13px; padding: 4px 6px; margin-bottom: 3px;
@@ -724,8 +751,10 @@ body { -webkit-tap-highlight-color: transparent; }
 }
 .m-shift-head b { font-size: 14.5px; }
 .m-shift-head span { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.m-shift.flag-error { box-shadow: inset 3px 0 0 var(--err); }
-.m-shift.flag-warning { box-shadow: inset 3px 0 0 var(--badge-warn); }
+/* אותו כלל בטלפון: הכרטיס התקין לבן עם פס צבע, והחריגה נצבעת */
+.m-shift.sh { background: var(--surface); }
+.m-shift.flag-error { background: var(--err-bg); border-inline-start-color: var(--err); }
+.m-shift.flag-warning { background: var(--warn-bg); border-inline-start-color: var(--badge-warn); }
 .m-shift .emp-select { margin-bottom: 6px; }
 .m-shift .emp-select:last-child { margin-bottom: 0; }
 .m-closed { padding: 14px; color: var(--muted); font-size: 13.5px; text-align: center; }

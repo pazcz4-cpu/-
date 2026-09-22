@@ -126,6 +126,7 @@
         viewOnly: 'Nur Ansicht', exitViewOnly: 'Ansichtsmodus beenden',
         shabbatEnd: 'Schabbat-Ende',
         byBranch: 'Nach Filiale', byEmployee: 'Nach Mitarbeiter',
+        editInBranchView: 'Zum Zuweisen und Bearbeiten zur Filialansicht wechseln.',
         personalExport: 'Persönlicher Export (nur eigene Schichten):',
         choosePerson: 'Person auswählen…',
         holidays: 'Feiertage (alle Filialen geschlossen):'
@@ -239,6 +240,7 @@
         holidayAllClosed: 'Alle Filialen geschlossen – freier Tag für alle',
         holidayNoRequests: 'Feiertag – keine Wünsche nötig',
         branchClosedToday: 'An diesem Tag geschlossen',
+        noActiveEmployees: 'Keine aktiven Mitarbeitenden.',
         noActiveBranches: 'Keine aktiven Filialen.',
         noActiveBranchesTab: 'Keine aktiven Filialen. Öffnen Sie den Reiter „Filialen“.',
         allClosedOn: 'Am {day} sind alle Filialen geschlossen.',

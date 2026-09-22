@@ -133,6 +133,7 @@
         viewOnly: 'Lock editing', exitViewOnly: 'Unlock editing',
         shabbatEnd: 'Sabbath ends',
         byBranch: 'By location', byEmployee: 'By employee',
+        editInBranchView: 'To assign and edit, switch to the location view.',
         personalExport: 'Personal export (their shifts only):',
         choosePerson: 'Choose a person…',
         holidays: 'Holidays (all locations closed):'
@@ -245,6 +246,7 @@
         holidayAllClosed: 'All locations closed – a day off for everyone',
         holidayNoRequests: 'Holiday – no requests needed',
         branchClosedToday: 'Closed on this day',
+        noActiveEmployees: 'No active employees.',
         noActiveBranches: 'No active locations.',
         noActiveBranchesTab: 'No active locations. Open the Locations tab.',
         allClosedOn: 'All locations are closed on {day}.',

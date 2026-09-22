@@ -126,6 +126,7 @@
         viewOnly: 'Apenas leitura', exitViewOnly: 'Sair de apenas leitura',
         shabbatEnd: 'Fim do Shabbat',
         byBranch: 'Por filial', byEmployee: 'Por colaborador',
+        editInBranchView: 'Para atribuir e editar, mude para a vista por filial.',
         personalExport: 'Exportação pessoal (só os turnos dele):',
         choosePerson: 'Escolhe uma pessoa…',
         holidays: 'Feriados (todas as filiais fechadas):'
@@ -239,6 +240,7 @@
         holidayAllClosed: 'Todas as filiais fechadas – folga para todos',
         holidayNoRequests: 'Feriado – não são precisos pedidos',
         branchClosedToday: 'Fechado neste dia',
+        noActiveEmployees: 'Não há colaboradores ativos.',
         noActiveBranches: 'Não há filiais ativas.',
         noActiveBranchesTab: 'Não há filiais ativas. Abre o separador Filiais.',
         allClosedOn: 'Todas as filiais estão fechadas em {day}.',

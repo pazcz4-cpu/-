@@ -38,7 +38,17 @@
 
   var state = Store.emptyState();
   var weekKey = Store.currentWeekKey();
-  var view = 'branch';
+  var VIEW_KEY = 'maiphone-shifts-view';
+  /* ברירת המחדל היא "לפי עובד": השאלה שמנהל שואל את עצמו ראשונה
+     היא מי עובד מתי וכמה משמרות יצאו לכל אחד, ולא מה קורה בסניף
+     מסוים. העריכה נעשית בתצוגה לפי סניף, ולכן הבחירה נזכרת
+     במכשיר – מי שעובד רוב הזמן בעריכה קובע אותה פעם אחת. */
+  var view = (function () {
+    try {
+      var saved = window.localStorage.getItem(VIEW_KEY);
+      return saved === 'branch' || saved === 'employee' ? saved : 'employee';
+    } catch (err) { return 'employee'; }
+  })();
   var mobileDay = new Date().getDay();
   var VIEW_ONLY_KEY = 'maiphone-shifts-view-only';
   /* מצב צפייה הוא העדפה של המכשיר הזה בלבד – הוא לא נשמר בנתונים
@@ -261,6 +271,78 @@
       html = '<div class="m-card"><div class="m-closed">' + t('ui.noActiveBranches') + '</div></div>';
     }
     $('#schedule-mobile').innerHTML = html;
+  }
+
+  /* תצוגה לפי עובד בטלפון: כרטיס לכל עובד עם כל השבוע, בדיוק
+     כמו הטבלה במחשב. לוח ימים אין כאן – השאלה בתצוגה הזו היא
+     "מה יש לו השבוע", ולא "מה קורה היום". */
+  function renderMobileEmployees(marks) {
+    var current = week();
+    var shown = state.employees.filter(function (emp) { return emp.active; });
+    var html = '';
+
+    if (!shown.length) {
+      $('#schedule-mobile').innerHTML =
+        '<div class="m-card"><div class="m-closed">' + t('ui.noActiveEmployees') + '</div></div>';
+      return;
+    }
+
+    shown.forEach(function (emp) {
+      var total = 0;
+      var days = '';
+      Data.DAYS.forEach(function (day) {
+        var slots = Store.employeeDayAssignments(state, current, emp.id, day.idx);
+        total += slots.length;
+        var constraint = Store.getConstraint(current, emp.id, day.idx);
+        var flagged = marks.employeesDay[emp.id + '|' + day.idx];
+        var body;
+        if (slots.length) {
+          body = slots.map(function (slot) {
+            var shift = Store.shiftById(state, slot.shiftId);
+            return '<span class="emp-chip ' + shiftClass(slot.shiftId) +
+              (slots.length > 1 ? ' dup' : '') + '">' +
+              esc(branchNameOf(slot.branchId)) + ' · ' + esc(shift ? shift.name : slot.shiftId) +
+              '</span>';
+          }).join('');
+        } else if (Store.isHoliday(current, day.idx)) {
+          body = '<span class="empty-cell holiday-text">' +
+            esc(Store.holidayName(current, day.idx)) + '</span>';
+        } else {
+          body = '<span class="empty-cell">' +
+            (constraint.off ? t('schedule.dayOff') : '—') + '</span>';
+        }
+        days += '<div class="m-emp-day' + (flagged ? ' has-error' : '') + '">' +
+          '<span class="m-emp-daylabel">' + esc(day.name) +
+            '<small>' + esc(Store.formatDate(Store.dateOfDay(weekKey, day.idx))) + '</small></span>' +
+          '<span class="m-emp-slots">' + body + '</span></div>';
+      });
+
+      html += '<div class="m-card"><div class="m-card-head">' + esc(emp.name) +
+        '<span class="m-emp-total">' +
+          esc(t('ui.outOf', { done: total, total: emp.maxShifts || '-' })) +
+        '</span></div>' + days + '</div>';
+    });
+
+    /* בתצוגה הזו אי אפשר לשבץ, ולכן נאמר איפה כן */
+    html += '<p class="hint view-edit-hint">' + esc(t('toolbar.editInBranchView')) + '</p>';
+    $('#schedule-mobile').innerHTML = html;
+  }
+
+  /* מי מוצג ומי מוסתר בכל אחת משתי התצוגות. מקום אחד, כי אחרת
+     הציור הראשון והלחיצה על הצ'יפ יכולים לומר שני דברים שונים. */
+  function applyView() {
+    var byBranch = view === 'branch';
+    document.querySelectorAll('.view-switch .chip').forEach(function (chip) {
+      var on = chip.dataset.view === view;
+      chip.classList.toggle('active', on);
+      chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('#schedule-branch').classList.toggle('hidden', !byBranch);
+    $('#schedule-employee').classList.toggle('hidden', byBranch);
+    /* לוח הימים שייך לתצוגה לפי סניף: בתצוגה לפי עובד מוצג
+       כל השבוע, ויום נבחר שם אינו אומר כלום. */
+    var nav = $('#day-nav');
+    if (nav) nav.classList.toggle('hidden', !byBranch);
   }
 
   function renderMobileConstraints() {
@@ -1125,7 +1207,8 @@
     renderIssues(lastReport);
     renderDayNav('#day-nav', mobileDay);
     renderDayNav('#constraints-day-nav', mobileDay);
-    renderMobileSchedule(marks);
+    if (view === 'branch') { renderMobileSchedule(marks); }
+    else { renderMobileEmployees(marks); }
     renderMobileConstraints();
     renderBranchView(marks);
     renderEmployeeView(marks);
@@ -1138,6 +1221,7 @@
     renderBranches();
     renderSettings();
     renderSaveState();
+    applyView();
     applyViewOnly();
   }
 
@@ -1571,11 +1655,12 @@
 
     document.querySelectorAll('.view-switch .chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
+        if (view === chip.dataset.view) return;
         view = chip.dataset.view;
-        document.querySelectorAll('.view-switch .chip').forEach(function (c) { c.classList.remove('active'); });
-        chip.classList.add('active');
-        $('#schedule-branch').classList.toggle('hidden', view !== 'branch');
-        $('#schedule-employee').classList.toggle('hidden', view !== 'employee');
+        try { window.localStorage.setItem(VIEW_KEY, view); } catch (err) { /* מצב פרטי */ }
+        /* בטלפון שתי התצוגות הן אותו אזור, ולכן צריך לצייר מחדש
+           ולא רק להחליף מה מוסתר. */
+        render();
       });
     });
 

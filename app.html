@@ -97,16 +97,16 @@
 
     <div id="issues" class="issues"></div>
 
-    <div class="view-switch no-print">
-      <button class="chip active" data-view="branch" data-i18n="toolbar.byBranch">תצוגה לפי סניף</button>
-      <button class="chip" data-view="employee" data-i18n="toolbar.byEmployee">תצוגה לפי עובד</button>
+    <div class="view-switch no-print" role="group">
+      <button type="button" class="chip" data-view="branch" aria-pressed="false" data-i18n="toolbar.byBranch">תצוגה לפי סניף</button>
+      <button type="button" class="chip active" data-view="employee" aria-pressed="true" data-i18n="toolbar.byEmployee">תצוגה לפי עובד</button>
     </div>
 
-    <nav id="day-nav" class="day-nav mobile-only no-print"></nav>
+    <nav id="day-nav" class="day-nav mobile-only no-print hidden"></nav>
     <div id="schedule-mobile" class="mobile-only"></div>
 
-    <div id="schedule-branch" class="table-wrap desktop-only"></div>
-    <div id="schedule-employee" class="table-wrap desktop-only hidden"></div>
+    <div id="schedule-branch" class="table-wrap desktop-only hidden"></div>
+    <div id="schedule-employee" class="table-wrap desktop-only"></div>
     <div id="workload" class="workload"></div>
     <div id="availability" class="availability no-print"></div>
 

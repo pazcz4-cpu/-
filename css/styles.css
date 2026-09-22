@@ -635,11 +635,33 @@ body { -webkit-tap-highlight-color: transparent; }
 .m-cstates { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
 .m-cstates .cstate { flex: 1 1 auto; min-width: 70px; min-height: 40px; font-size: 13.5px; }
 
+/* ===== תצוגה לפי עובד בטלפון: כרטיס לעובד, שבוע שלם בפנים ===== */
+.m-card-head:has(.m-emp-total) { display: flex; align-items: baseline; gap: 10px; }
+.m-card-head .m-emp-total {
+  margin-inline-start: auto; font-weight: 600; font-size: 12.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.m-emp-day {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; border-top: 1px solid var(--line);
+}
+.m-emp-day.has-error { background: var(--err-bg); }
+.m-emp-daylabel {
+  flex: 0 0 74px; font-weight: 600; font-size: 13px; line-height: 1.3;
+}
+.m-emp-daylabel small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+.m-emp-slots { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; padding-top: 1px; }
+.m-emp-slots .emp-chip { font-size: 12.5px; }
+.view-edit-hint { margin: 10px 2px 0; }
+
 @media (max-width: 820px) {
   .mobile-only { display: block; }
   .day-nav.mobile-only { display: flex; }
   .desktop-only { display: none !important; }
-  .view-switch { display: none; }
+  /* המעבר בין "לפי סניף" ל"לפי עובד" שייך בעיקר לטלפון: שם אין
+     שתי טבלאות זו לצד זו, והשאלה "מי עובד מתי" נענית רק בתצוגה
+     לפי עובד. עד עכשיו הצ'יפים היו מוסתרים כאן לגמרי. */
+  .view-switch .chip { flex: 1 1 0; min-height: 42px; font-size: 13.5px; }
 
   /* אזורים בטוחים של האייפון: מגן המסך למעלה ופס הבית למטה */
   .app-header {

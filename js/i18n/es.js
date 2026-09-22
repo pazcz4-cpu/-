@@ -126,6 +126,7 @@
         viewOnly: 'Solo lectura', exitViewOnly: 'Salir de solo lectura',
         shabbatEnd: 'Fin del Sabbat',
         byBranch: 'Por sucursal', byEmployee: 'Por empleado',
+        editInBranchView: 'Para asignar y editar, cambia a la vista por sucursal.',
         personalExport: 'Exportación personal (solo sus turnos):',
         choosePerson: 'Elige una persona…',
         holidays: 'Festivos (todas las sucursales cerradas):'
@@ -239,6 +240,7 @@
         holidayAllClosed: 'Todas las sucursales cerradas: día libre para todos',
         holidayNoRequests: 'Festivo: no hacen falta solicitudes',
         branchClosedToday: 'Cerrado este día',
+        noActiveEmployees: 'No hay empleados activos.',
         noActiveBranches: 'No hay sucursales activas.',
         noActiveBranchesTab: 'No hay sucursales activas. Abre la pestaña Sucursales.',
         allClosedOn: 'Todas las sucursales están cerradas el {day}.',

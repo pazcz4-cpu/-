@@ -26,6 +26,7 @@
     "test:invite": "node tests/invite-browser-test.mjs",
     "test:limit": "node tests/constraint-limit-browser-test.mjs",
     "test:account": "node tests/account-browser-test.mjs",
+    "test:view": "node tests/view-browser-test.mjs",
     "brand": "node tools/logo.js",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",

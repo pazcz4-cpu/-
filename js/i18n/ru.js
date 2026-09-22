@@ -126,6 +126,7 @@
         viewOnly: 'Только просмотр', exitViewOnly: 'Выйти из просмотра',
         shabbatEnd: 'Исход субботы',
         byBranch: 'По филиалам', byEmployee: 'По сотрудникам',
+        editInBranchView: 'Чтобы назначать и править, перейдите к виду по филиалам.',
         personalExport: 'Личный экспорт (только его смены):',
         choosePerson: 'Выберите сотрудника…',
         holidays: 'Праздники (все филиалы закрыты):'
@@ -239,6 +240,7 @@
         holidayAllClosed: 'Все филиалы закрыты — выходной для всех',
         holidayNoRequests: 'Праздник — заявки не нужны',
         branchClosedToday: 'Закрыто в этот день',
+        noActiveEmployees: 'Нет активных сотрудников.',
         noActiveBranches: 'Нет активных филиалов.',
         noActiveBranchesTab: 'Нет активных филиалов. Откройте вкладку «Филиалы».',
         allClosedOn: 'Все филиалы закрыты в {day}.',

@@ -126,6 +126,7 @@
         viewOnly: 'وضع العرض فقط', exitViewOnly: 'الخروج من وضع العرض',
         shabbatEnd: 'خروج السبت',
         byBranch: 'حسب الفرع', byEmployee: 'حسب الموظف',
+        editInBranchView: 'للتعيين والتعديل، انتقل إلى العرض حسب الفرع.',
         personalExport: 'تصدير شخصي (مناوباته فقط):',
         choosePerson: 'اختر موظفًا…',
         holidays: 'أيام العطل (جميع الفروع مغلقة):'
@@ -239,6 +240,7 @@
         holidayAllClosed: 'جميع الفروع مغلقة – إجازة للجميع',
         holidayNoRequests: 'عطلة – لا حاجة للطلبات',
         branchClosedToday: 'الفرع مغلق في هذا اليوم',
+        noActiveEmployees: 'لا يوجد موظفون نشطون.',
         noActiveBranches: 'لا توجد فروع نشطة.',
         noActiveBranchesTab: 'لا توجد فروع نشطة. افتح تبويب الفروع.',
         allClosedOn: 'جميع الفروع مغلقة يوم {day}.',

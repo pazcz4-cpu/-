@@ -30,6 +30,10 @@ page.on('dialog', async d => { await d.accept(); });
 try {
   await page.goto(LOCAL);
   await page.waitForTimeout(500);
+  /* כפתורי "למה שובץ ככה" יושבים על טבלת הסניפים. ברירת המחדל
+     היא תצוגה לפי עובד, ולכן עוברים אליה במפורש. */
+  await page.click('.view-switch .chip[data-view="branch"]');
+  await page.waitForTimeout(400);
 
   console.log('\n== בניית סידור ==');
   await page.click('#generate');

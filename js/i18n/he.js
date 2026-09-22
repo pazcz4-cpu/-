@@ -132,6 +132,7 @@
         viewOnly: 'מצב צפייה', exitViewOnly: 'יציאה ממצב צפייה',
         shabbatEnd: 'צאת שבת',
         byBranch: 'תצוגה לפי סניף', byEmployee: 'תצוגה לפי עובד',
+        editInBranchView: 'לשיבוץ ולשינויים – תצוגה לפי סניף.',
         personalExport: 'ייצוא אישי לעובד (רק המשמרות שלו):',
         choosePerson: 'בחרו עובד…',
         holidays: 'ימי חג (הסניפים סגורים):'
@@ -244,6 +245,7 @@
         holidayAllClosed: 'כל הסניפים סגורים – יום חופש לכל העובדים',
         holidayNoRequests: 'יום חג – אין צורך באילוצים',
         branchClosedToday: 'הסניף סגור ביום זה',
+        noActiveEmployees: 'לא הוגדרו עובדים פעילים.',
         noActiveBranches: 'לא הוגדרו סניפים פעילים.',
         noActiveBranchesTab: 'לא הוגדרו סניפים פעילים. עברו ללשונית "סניפים".',
         allClosedOn: 'כל הסניפים סגורים ב{day}.',

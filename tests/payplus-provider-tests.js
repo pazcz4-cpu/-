@@ -338,8 +338,31 @@ test('חיוב מיידי הוא J4 ומנפיק חשבונית', function () {
       returnUrl: 'r', cancelUrl: 'c'
     }).then(function () {
       assertEqual(fake.last().body.charge_method, 1, 'חיוב מיידי נשלח בסוג עסקה שגוי');
-      assertEqual(fake.last().body.initial_invoice, true, 'לא הונפקה חשבונית על חיוב');
     });
+  });
+});
+
+test('חשבונית אינה מתבקשת עד שמאשרים שהמודול פעיל', function () {
+  /* שדה של מודול שאינו פעיל עלול להפיל את הבקשה כולה, וכישלון
+     כזה מתגלה דווקא ברגע שעובר כסף. */
+  ready(true);
+  return withFake(function (fake) {
+    fake.reply(200, { results: { status: 'success' },
+      data: { payment_page_link: 'x' } });
+    fake.reply(200, { results: { status: 'success' },
+      data: { payment_page_link: 'x' } });
+  }, function (fake) {
+    return payplus.createCheckout({ companyId: 'co-1', amount: 399, saveCardOnly: false,
+      returnUrl: 'r', cancelUrl: 'c' }).then(function () {
+      assertEqual(fake.last().body.initial_invoice, undefined,
+        'נתבקשה חשבונית בלי שהמודול אושר');
+      process.env.PAYPLUS_INVOICES = 'true';
+      return payplus.createCheckout({ companyId: 'co-1', amount: 399, saveCardOnly: false,
+        returnUrl: 'r', cancelUrl: 'c' });
+    }).then(function () {
+      assertEqual(fake.last().body.initial_invoice, true, 'החשבונית לא הופעלה');
+      delete process.env.PAYPLUS_INVOICES;
+    }, function (err) { delete process.env.PAYPLUS_INVOICES; throw err; });
   });
 });
 

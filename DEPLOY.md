@@ -479,6 +479,7 @@ node tools/payplus-smoke.js
 | `PAYPLUS_TERMINAL_UID` | מזהה המסוף |
 | `PAYPLUS_PAYMENT_PAGE_UID` | מזהה דף התשלום |
 | `PAYPLUS_CASHIER_UID` | לא חובה. נשלח בחיוב אם הוגדר |
+| `PAYPLUS_INVOICES` | `true` רק אחרי שאושר שמודול המסמכים פעיל בחשבון |
 | `PAYPLUS_SANDBOX` | `true` לבדיקות, להסיר בייצור |
 | `PAYPLUS_READY` | `true` רק אחרי שכלי העשן עבר |
 | `BILLING_WEBHOOK_SECRET` | לא נדרש ל-PayPlus |

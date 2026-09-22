@@ -130,6 +130,10 @@ function payplusHeaders() {
   };
 }
 
+/* הנפקת מסמכים דרך PayPlus. כבוי עד שמאשרים שהמודול פעיל
+   בחשבון – ראו נושא 6 ב-docs/payplus-open-questions.md. */
+function payplusInvoices() { return process.env.PAYPLUS_INVOICES === 'true'; }
+
 function payplusKeysMissing() {
   return !process.env.PAYPLUS_API_KEY || !process.env.PAYPLUS_SECRET_KEY;
 }
@@ -338,8 +342,10 @@ const payplus = {
       }
     };
 
-    /* חשבונית מופקת רק כשעבר כסף */
-    if (!saveOnly) request.initial_invoice = true;
+    /* חשבונית מופקת רק כשעבר כסף, ורק אם מודול המסמכים מופעל
+       בחשבון. שדה של מודול שאינו פעיל עלול להפיל את הבקשה כולה,
+       ולכן זה לא דולק לבד. */
+    if (!saveOnly && payplusInvoices()) request.initial_invoice = true;
 
     const result = await payplusCall('/PaymentPages/generateLink', request);
     if (!result.ok || !result.body) {
@@ -385,9 +391,9 @@ const payplus = {
       use_token: true,
       credit_card: { token: input.subscriptionId },
       /* חוזר אלינו בהודעה, ולכן הוא מפתח מניעת הכפילות שלנו */
-      more_info: input.idempotencyKey,
-      initial_invoice: true
+      more_info: input.idempotencyKey
     };
+    if (payplusInvoices()) request.initial_invoice = true;
     if (process.env.PAYPLUS_CASHIER_UID) {
       request.cashier_uid = process.env.PAYPLUS_CASHIER_UID;
     }

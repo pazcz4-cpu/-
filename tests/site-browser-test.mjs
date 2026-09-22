@@ -111,6 +111,46 @@ try {
     }
   }
 
+  console.log('\n== דף המכירה בכל שמונה השפות ==');
+  {
+    /* ההבטחה למכור בכל העולם נמדדת כאן: לא "יש בורר שפות" אלא
+       שכל מילה בעמוד באמת מתחלפת, ושום שדה לא נשאר ריק. */
+    const langs = await page.$$eval('#landing-language option', (nodes) =>
+      nodes.map((n) => n.value));
+    check('שמונה שפות בבורר', langs.length, 8);
+
+    const titles = {};
+    for (const code of langs) {
+      await page.selectOption('#landing-language', code);
+      await page.waitForTimeout(250);
+
+      check(code + ': שפת המסמך', await page.getAttribute('html', 'lang'), code);
+
+      const texts = await page.$$eval(
+        '[data-i18n], [data-i18n-html]',
+        (nodes) => nodes.map((n) => (n.textContent || '').trim()));
+      const untranslated = texts.filter((v) => /^(landing|tabs|billing|common)\./.test(v));
+      check(code + ': אין מפתח שלא תורגם', untranslated.length, 0);
+      check(code + ': אין שדה ריק', texts.filter((v) => v === '').length, 0);
+
+      const title = await page.locator('h1').first().textContent();
+      titles[code] = title.trim();
+      check(code + ': כותרת ראשית מלאה', titles[code].length > 10, true);
+
+      check(code + ': המחירים נשארו',
+        await page.locator('.lp-plan-price').first().textContent(), /199/);
+      check(code + ': מקטע "למה דווקא הוא" מלא',
+        await page.locator('.lp-why-facts li').count(), 3);
+    }
+
+    /* אם שתי שפות מציגות אותה כותרת, אחת מהן לא באמת תורגמה */
+    const unique = new Set(Object.values(titles));
+    check('כל שפה מציגה כותרת משלה', unique.size, langs.length);
+
+    await page.selectOption('#landing-language', 'he');
+    await page.waitForTimeout(250);
+  }
+
   console.log('\n== דומיין, גוגל ושיתופים ==');
   const DOMAIN = 'https://setshifts.com';
   check('קישור קנוני לדומיין',

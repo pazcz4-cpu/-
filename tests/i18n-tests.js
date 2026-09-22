@@ -37,9 +37,11 @@ function params(text) {
   return (text.match(/\{\w+\}/g) || []).sort().join(',');
 }
 
-/* מקטעים שמותר לתרגם חלקית. דף המכירה ארוך, והנפילה לאנגלית בו היא
-   התנהגות מכוונת – שפה בלי תרגום שיווקי תציג את הנוסח האנגלי. */
-var OPTIONAL_SECTIONS = ['landing'];
+/* אין מקטעים שמותר לתרגם חלקית.
+   דף המכירה היה פעם פטור, בהנחה שנפילה לאנגלית היא פשרה סבירה –
+   אבל דף המכירה הוא בדיוק מה שמוכרים בו, ולקוח בברזיל שנוחת על
+   עמוד באנגלית לא קונה. הפטור הוסר, והבדיקה נועלת את זה. */
+var OPTIONAL_SECTIONS = [];
 function optional(key) {
   return OPTIONAL_SECTIONS.indexOf(key.split('.')[0]) !== -1;
 }
@@ -92,7 +94,7 @@ languages.forEach(function (lang) {
     assert(!empty.length, 'ערכים ריקים: ' + empty.slice(0, 5).join(', '));
   });
 
-  test(lang.code + ': דף המכירה מתורגם במלואו או נופל לאנגלית', function () {
+  test(lang.code + ': דף המכירה מתורגם במלואו', function () {
     var landingKeys = baseKeys.filter(optional);
     var have = landingKeys.filter(function (key) { return dict[key] !== undefined; }).length;
     /* אין כאן כישלון – רק דרישה שלא יהיה תרגום חלקי שמערבב שפות */
@@ -160,15 +162,22 @@ test('גם דפדפן בשפה אחרת מקבל את ברירת המחדל', fu
   });
 });
 
-test('מפתח חסר עדיין נופל לאנגלית ולא לעברית', function () {
-  /* מקטע landing קיים רק באנגלית ובעברית, ולכן בספרדית הוא נופל.
-     חשוב שייפול לאנגלית: עברית למי שביקש ספרדית אינה קריאה. */
-  I18n.use('es');
-  var missing = I18n.t('landing.heroTitle');
+test('מפתח חסר נופל לאנגלית ולא לעברית', function () {
+  /* כל השפות מתורגמות במלואן, ולכן אין מפתח חסר אמיתי לבדוק עליו.
+     רושמים שפה זמנית חלקית ובודקים את המנגנון עצמו – וזו בדיקה
+     טובה יותר, כי היא אינה תלויה במקריות שבנתונים. */
+  I18n.register({
+    code: 'zz', name: 'Test', dir: 'ltr',
+    dict: { app: { title: 'Only this key' } }
+  });
+  I18n.use('zz');
+  var missing = I18n.t('tabs.schedule');
   I18n.use('en');
-  var english = I18n.t('landing.heroTitle');
+  var english = I18n.t('tabs.schedule');
   I18n.use('he');
-  var hebrew = I18n.t('landing.heroTitle');
+  var hebrew = I18n.t('tabs.schedule');
+  I18n.use('he');
+
   assert(missing === english, 'מפתח חסר לא נפל לאנגלית: ' + missing);
   assert(missing !== hebrew, 'מפתח חסר נפל לעברית: ' + missing);
 });

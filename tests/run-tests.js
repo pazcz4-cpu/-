@@ -1312,6 +1312,59 @@ test('הסכימה נפתחת בשורה באנגלית', function () {
   assert(/^-- [A-Za-z]/.test(first), 'השורה הראשונה אינה מתחילה בתווית לטינית: ' + first);
 });
 
+console.log('\n== מה שמובטח מול מה שקורה ==');
+
+/* המכסה במוצר היא מספר משמרות בשבוע (emp.maxShifts), ולא שעות.
+   דף מכירה שמבטיח "מכסות שעות" מוכר משהו אחר ממה שהלקוח יקבל,
+   והפער הזה מתגלה בדיוק במסך הראשון. */
+test('המכסה שהמנוע אוכף נמדדת במשמרות', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  state.employees.forEach(function (emp) {
+    assertEqual(typeof emp.maxShifts, 'number', emp.name + ': אין מכסה מספרית');
+    assert(Store.employeeWeekCount(state, weekData, emp.id) <= emp.maxShifts,
+      emp.name + ': המנוע חרג מהמכסה');
+  });
+});
+
+test('דף המכירה מבטיח מכסת משמרות ולא מכסת שעות', function () {
+  var pairs = [
+    ['he', 'מכסת המשמרות', ['מכסות השעות', 'מכסת השעות']],
+    ['en', 'shift limit', ['hour limit', 'hour limits']]
+  ];
+  pairs.forEach(function (pair) {
+    I18n.use(pair[0]);
+    var text = I18n.t('landing.heroSubtitle');
+    assert(text.indexOf(pair[1]) !== -1,
+      pair[0] + ': הכותרת אינה מזכירה מכסת משמרות');
+    pair[2].forEach(function (wrong) {
+      assert(text.indexOf(wrong) === -1,
+        pair[0] + ': הכותרת עדיין מבטיחה "' + wrong + '", והמוצר סופר משמרות');
+    });
+  });
+  I18n.use('he');
+});
+
+/* המנוע דטרמיניסטי ביחס לזרע, וכל הרצה מקבלת זרע אחר. הודעה
+   שמפנה את המנהל להסבר הפרטני עדיפה על "נסו שוב", שנשמע ככישלון
+   של המערכת גם כשפשוט אין מספיק אנשים. */
+test('ההודעה על משמרות שלא אוישו מפנה להסבר ולא מתנצלת', function () {
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    var text = I18n.t('toast.generated', { shifts: 3 });
+    assert(text.indexOf('{shifts}') === -1, lang.code + ': המספר לא הוזרק');
+    assert(text !== 'toast.generated', lang.code + ': חסר תרגום');
+  });
+  I18n.use('he');
+
+  /* הנוסח הישן הציע "לבנות מחדש" כפתרון יחיד לחוסר. הצעה ראשונה
+     צריכה להיות מה שבאמת פותר: שיבוץ ידני של מי שכשיר. */
+  var free = I18n.t('alerts.reasonFree', { names: 'דנה' });
+  assert(free.indexOf('ידנית') !== -1,
+    'ההסבר על חוסר אינו מציע את הפעולה שפותרת אותו');
+});
+
 console.log('\n== קיבוץ ההתראות ==');
 
 /* חמישים התראות באותו משקל הן רעש: הסידור נדחק מהמסך, וגם ההתראה

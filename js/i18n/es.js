@@ -552,7 +552,6 @@
         open: 'Mi cuenta',
         title: 'Mi cuenta',
         close: 'Cerrar',
-        barCompany: 'Empresa',
         barUser: 'Sesión de',
         myName: 'Mi nombre',
         myNameHint: 'Así aparece tu nombre ante tu responsable y tus compañeros.',

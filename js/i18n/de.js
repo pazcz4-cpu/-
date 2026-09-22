@@ -552,7 +552,6 @@
         open: 'Mein Konto',
         title: 'Mein Konto',
         close: 'Schließen',
-        barCompany: 'Betrieb',
         barUser: 'Angemeldet',
         myName: 'Mein Name',
         myNameHint: 'So erscheint Ihr Name für Ihre Führungskraft und die Kolleginnen und Kollegen.',

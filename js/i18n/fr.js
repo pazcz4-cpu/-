@@ -552,7 +552,6 @@
         open: 'Mon compte',
         title: 'Mon compte',
         close: 'Fermer',
-        barCompany: 'Entreprise',
         barUser: 'Connecté',
         myName: 'Mon nom',
         myNameHint: 'C\'est ainsi que votre nom apparaît à votre responsable et à vos collègues.',

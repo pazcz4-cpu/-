@@ -45,15 +45,17 @@ try {
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1300);
 
-  console.log('\n== שני השמות בשורה העליונה, כל אחד עם תווית ==');
-  const company = await page.locator('#user-bar .user-company').innerText();
+  console.log('\n== בשורה העליונה מופיע מי מחובר, ולא שם העסק ==');
+  const bar = await page.locator('#user-bar').innerText();
   const user = await page.locator('#user-bar .user-name').innerText();
-  check('שם העסק נושא תווית', company, /^עסק/);
-  check('ובתוכו השם שנקלט בהרשמה', company, /פ\.ט אינטק סחר/);
-  check('שם המשתמש נושא תווית משלו', user, /^מחובר\/ת/);
+  check('שם המשתמש נושא תווית', user, /^מחובר\/ת/);
   check('ובתוכו השם והתפקיד', user, /מייפון הכיסוי המושלם בעמ · בעלים/);
-  check('שני השמות הם כפתור אחד שפותח את החשבון',
-    await page.locator('#user-id, #user-account').count(), 1);
+  /* המיתוג שמעל השורה הוא SetShifts, ושם העסק של הלקוח שם רק
+     התחרה בו – במיוחד כששמור שם רשם החברות מההרשמה. */
+  check('שם העסק אינו מופיע בשורה', /פ\.ט אינטק סחר/.test(bar), false);
+  check('ואין בה תווית "עסק"', await page.locator('#user-bar .user-company').count(), 0);
+  check('השם הוא כפתור שפותח את החשבון',
+    await page.locator('#user-account').count(), 1);
 
   console.log('\n== המגירה סגורה עד שלוחצים ==');
   check('סגורה', await page.locator('#account-panel').isVisible(), false);
@@ -72,23 +74,26 @@ try {
   check('נאמר שנשמר', await page.locator('#account-message').innerText(), /נשמר/);
   check('השורה העליונה מציגה את השם החדש',
     await page.locator('#user-bar .user-name').innerText(), /פז · בעלים/);
-  check('ושם העסק לא זז',
-    await page.locator('#user-bar .user-company').innerText(), /פ\.ט אינטק סחר/);
+  check('ושם העסק במגירה לא זז',
+    await page.inputValue('#account-company'), 'פ.ט אינטק סחר');
 
   console.log('\n== עריכת שם העסק בלבד ==');
   await page.fill('#account-company', 'מייפון');
   await page.click('#account-save-company');
   await page.waitForTimeout(600);
-  check('שם העסק התחלף',
-    await page.locator('#user-bar .user-company').innerText(), /מייפון$/);
+  check('נאמר שנשמר', await page.locator('#account-message').innerText(), /נשמר/);
   check('ושם המשתמש לא זז',
     await page.locator('#user-bar .user-name').innerText(), /פז · בעלים/);
 
   console.log('\n== השינוי נשמר בשרת, לא רק על המסך ==');
   await page.reload();
   await page.waitForTimeout(1300);
-  check('אחרי רענון – שם העסק', await page.locator('#user-bar .user-company').innerText(), /מייפון$/);
   check('אחרי רענון – שם המשתמש', await page.locator('#user-bar .user-name').innerText(), /פז/);
+  await page.click('#user-account');
+  await page.waitForTimeout(400);
+  check('אחרי רענון – שם העסק', await page.inputValue('#account-company'), 'מייפון');
+  await page.click('#user-account');
+  await page.waitForTimeout(300);
 
   console.log('\n== שם ריק אינו נשמר ==');
   await page.click('#user-account');
@@ -137,7 +142,13 @@ try {
   check('השם שלה התעדכן',
     await page.locator('#user-bar .user-name').innerText(), /רונית כהן/);
   check('ושם העסק נשאר של העסק',
-    await page.locator('#user-bar .user-company').innerText(), /מייפון$/);
+    await page.locator('#account-panel .account-static').innerText(), 'מייפון');
+  /* ובמקום שבו הוא באמת נחוץ הוא כן מופיע: מסך העובד, שצריך
+     לומר לעובדת היכן היא עובדת. שם הוא לא מתחרה במיתוג. */
+  check('שם העסק מופיע בכותרת מסך העובד',
+    await page.locator('.employee-company').innerText(), 'מייפון');
+  check('ולצידו הלוגו של SetShifts',
+    await page.locator('.employee-head .brand-img, .employee-head img').count() > 0, true);
 
   /* וגם בשרת: ניסיון ישיר לשנות את שם העסק כעובדת נדחה */
   const denied = await page.evaluate(async () => {

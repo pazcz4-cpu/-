@@ -408,15 +408,15 @@
         esc(t('preview.open')) + '</button>';
     }
 
-    /* שני שמות זה ליד זה בלי תווית הם חידה: מי מהם העסק ומי
-       המשתמש. התוויות פותרות את זה, והלחיצה פותחת את המקום שבו
-       אפשר לתקן כל אחד מהם בנפרד. */
+    /* בשורה הזו מופיע מי מחובר, ולא שם העסק. המיתוג שמעל הוא
+       SetShifts, ושם העסק של הלקוח לצידו רק התחרה בו – במיוחד
+       כששמור שם שם רשם החברות מההרשמה. הוא ממשיך לחיות בשני
+       המקומות שבהם הוא באמת נחוץ: "החשבון שלי", שם גם משנים
+       אותו, ומסך העובד, שצריך לומר לעובד היכן הוא עובד. */
     var identity =
       '<button type="button" id="user-account" class="user-id" ' +
         'aria-expanded="' + (this.accountOpen ? 'true' : 'false') + '" ' +
         'aria-controls="account-panel" title="' + esc(t('account.open')) + '">' +
-        '<span class="user-company"><span class="user-tag">' + esc(t('account.barCompany')) +
-          '</span> ' + esc(session.company.name) + '</span>' +
         '<span class="user-name"><span class="user-tag">' + esc(t('account.barUser')) +
           '</span> ' + esc(session.user.name) +
           ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +

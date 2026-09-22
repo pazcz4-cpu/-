@@ -941,7 +941,6 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   font-size: 13px;
 }
 .user-bar.hidden { display: none; }
-.user-company { font-weight: 700; }
 .user-name { color: var(--muted); }
 .user-notice {
   margin-inline-start: auto; padding: 3px 10px; border-radius: 999px;

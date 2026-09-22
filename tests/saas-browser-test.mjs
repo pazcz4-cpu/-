@@ -66,7 +66,7 @@ await b.page.click('#signup-form button[type="submit"]');
 await b.page.waitForTimeout(1200);
 const bFilled = await b.page.locator('#schedule-branch select.emp-select').evaluateAll(e => e.filter(x=>x.value).length);
 console.log('5. חברה ב רואה סידור ריק:', bFilled === 0, `(${bFilled} שיבוצים)`);
-console.log('   שם החברה שלה:', (await b.page.locator('.user-company').innerText()));
+console.log('   מי מחובר אצלה:', (await b.page.locator('.user-name').innerText()));
 
 // --- התחברות שגויה ---
 await b.page.click('#user-signout');

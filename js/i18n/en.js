@@ -558,7 +558,6 @@
         open: 'My account',
         title: 'My account',
         close: 'Close',
-        barCompany: 'Business',
         barUser: 'Signed in',
         myName: 'My name',
         myNameHint: 'This is how your name appears to your manager and colleagues.',

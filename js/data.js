@@ -166,6 +166,15 @@
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // אין בוקר אחרי ערב של היום הקודם
     oneDayOffPerWeek: true,   // יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+    /* מועד סגירת ההגשות. dayIdx ו-time מתארים את המועד האחרון
+       להגשת אילוצים לשבוע מסוים, ביום שלפני תחילת אותו שבוע.
+       remindHours הוא כמה שעות לפני כן שולחים תזכורת. */
+    constraintsDeadline: {
+      enabled: false,
+      dayIdx: 4,             // חמישי
+      time: '20:00',
+      remindHours: 24
+    },
     /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
     get shifts() { return defaultShifts(); },
     defaultShabbatEnd: '20:00'

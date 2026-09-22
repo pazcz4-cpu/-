@@ -227,6 +227,25 @@
       <label class="check"><input type="checkbox" id="opt-one-day-off"> <span data-i18n="settings.oneDayOff">יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</span></label>
     </div>
 
+    <h2 data-i18n="settings.deadlineTitle">מועד סגירת הגשות</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-deadline">
+        <span data-i18n="settings.deadlineEnable">לסגור את הגשת האילוצים במועד קבוע</span></label>
+      <div class="row deadline-row">
+        <label class="check"><span data-i18n="settings.deadlineDay">יום</span>
+          <select id="deadline-day" class="text-input"></select></label>
+        <label class="check"><span data-i18n="settings.deadlineTime">שעה</span>
+          <input type="text" id="deadline-time" class="time-input" inputmode="numeric" maxlength="5"
+            data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד"></label>
+        <label class="check"><span data-i18n="settings.deadlineRemind">תזכורת לפני</span>
+          <select id="deadline-remind" class="text-input"></select></label>
+      </div>
+      <p class="hint" id="deadline-preview" style="margin:0"></p>
+      <p class="hint" style="margin:0" data-i18n="settings.deadlineHint">
+        אחרי המועד הזה עובדים אינם יכולים להגיש או לשנות אילוצים לשבוע הבא. מנהל יכול לתקן תמיד.
+      </p>
+    </div>
+
     <h2 data-i18n="settings.shiftTypes">סוגי המשמרות בעסק</h2>
     <div class="settings-block">
       <div id="default-hours" class="shift-grid"></div>

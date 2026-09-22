@@ -351,6 +351,60 @@
     return days;
   }
 
+  /* ===== מועד סגירת ההגשות =====
+     המנהל קובע יום ושעה. המועד חל על היום הזה *לפני* תחילת השבוע
+     שאליו מגישים – כך שהגשות לשבוע הבא נסגרות בשבוע הנוכחי.
+     הכול מחושב מהתאריך ולא נשמר, כדי שלא יהיה מצב שבו השעון של
+     המערכת והשעון של המשתמש אומרים דברים שונים. */
+  function deadlineSettings(state) {
+    var defaults = (Data.DEFAULT_SETTINGS && Data.DEFAULT_SETTINGS.constraintsDeadline) || {};
+    var value = (state && state.settings && state.settings.constraintsDeadline) || {};
+    return {
+      enabled: !!value.enabled,
+      dayIdx: typeof value.dayIdx === 'number' ? value.dayIdx : (defaults.dayIdx || 0),
+      time: value.time || defaults.time || '20:00',
+      remindHours: typeof value.remindHours === 'number'
+        ? value.remindHours : (defaults.remindHours || 24)
+    };
+  }
+
+  /* מתי בדיוק נסגרות ההגשות לשבוע הזה. null אם לא הוגדר מועד. */
+  function deadlineFor(state, weekKey) {
+    var config = deadlineSettings(state);
+    if (!config.enabled || !weekKey) return null;
+
+    var weekStart = dateOfDay(weekKey, 0);
+    var date = new Date(weekStart);
+    /* אחורה עד היום המבוקש, תמיד לפני תחילת השבוע */
+    do { date.setDate(date.getDate() - 1); } while (date.getDay() !== config.dayIdx);
+
+    var parts = String(config.time).split(':');
+    date.setHours(Number(parts[0]) || 0, Number(parts[1]) || 0, 0, 0);
+    return date;
+  }
+
+  function deadlinePassed(state, weekKey, now) {
+    var at = deadlineFor(state, weekKey);
+    if (!at) return false;
+    return (now || new Date()) > at;
+  }
+
+  /* כמה שעות נותרו. null אם אין מועד, שלילי אם עבר. */
+  function hoursToDeadline(state, weekKey, now) {
+    var at = deadlineFor(state, weekKey);
+    if (!at) return null;
+    return (at - (now || new Date())) / 3600000;
+  }
+
+  /* האם זה הרגע לתזכר: בתוך חלון התזכורת, ולפני שנסגר */
+  function shouldRemind(state, weekKey, now) {
+    var config = deadlineSettings(state);
+    if (!config.enabled) return false;
+    var left = hoursToDeadline(state, weekKey, now);
+    if (left === null) return false;
+    return left > 0 && left <= config.remindHours;
+  }
+
   /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
      ממספר הימים שבהם הוא יכול לעבוד בפועל. */
   function targetShifts(state, week, emp) {
@@ -604,6 +658,9 @@
   }
 
   var API = {
+    deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
+    deadlinePassed: deadlinePassed, hoursToDeadline: hoursToDeadline,
+    shouldRemind: shouldRemind,
     STORAGE_KEY: STORAGE_KEY,
     clone: clone,
     toKey: toKey,

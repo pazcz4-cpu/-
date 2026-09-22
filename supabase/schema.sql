@@ -230,6 +230,50 @@ $$;
 -- CONSTRAINTS: אילוץ של עובד
 -- עובד אינו רשאי לכתוב לשורת השבוע ישירות, ולכן העריכה עוברת כאן:
 -- הפונקציה כותבת רק את המפתח שלו, ותמיד מסמנת את הבקשה כממתינה.
+-- DEADLINE: מועד סגירת ההגשות
+-- המנהל קובע יום ושעה בהגדרות החברה. המועד חל על היום הזה לפני
+-- תחילת השבוע שאליו מגישים. הבדיקה חוזרת כאן ולא רק בדפדפן, כי
+-- עובד שיפתח את כלי הפיתוח יוכל אחרת להגיש אחרי הסגירה.
+create or replace function public.constraints_deadline(p_company uuid, p_week_key text)
+returns timestamptz
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_config   jsonb;
+  v_deadline jsonb;
+  v_day      int;
+  v_time     time;
+  v_tz       text;
+  v_date     date;
+begin
+  select config->'settings'->'constraintsDeadline' into v_deadline
+    from public.company_configs where company_id = p_company;
+
+  if v_deadline is null or coalesce((v_deadline->>'enabled')::boolean, false) = false then
+    return null;
+  end if;
+
+  v_day  := coalesce((v_deadline->>'dayIdx')::int, 0);
+  v_time := coalesce(nullif(v_deadline->>'time', ''), '20:00')::time;
+  v_tz   := coalesce(nullif(v_deadline->>'timezone', ''), 'Asia/Jerusalem');
+
+  -- אחורה מתחילת השבוע עד היום שנבחר, תמיד לפניו
+  v_date := (p_week_key::date) - 1;
+  while extract(dow from v_date)::int <> v_day loop
+    v_date := v_date - 1;
+  end loop;
+
+  return (v_date + v_time) at time zone v_tz;
+exception
+  when others then
+    -- הגדרה פגומה לא תחסום עובד מלהגיש
+    return null;
+end;
+$$;
+
 create or replace function public.save_own_constraint(
   p_week_key text, p_day_idx int, p_constraint jsonb)
 returns public.company_weeks
@@ -262,6 +306,16 @@ begin
 
   if v_week.published and v_role = 'employee' then
     raise exception 'week already published' using errcode = '55000';
+  end if;
+
+  -- מועד הסגירה חל על עובדים בלבד. מנהל רשאי לתקן גם אחריו.
+  if v_role = 'employee' then
+    declare v_deadline timestamptz := public.constraints_deadline(v_company, p_week_key);
+    begin
+      if v_deadline is not null and now() > v_deadline then
+        raise exception 'constraint deadline has passed' using errcode = '55001';
+      end if;
+    end;
   end if;
 
   v_key := v_employee || '|' || p_day_idx::text;
@@ -390,6 +444,7 @@ grant execute on function public.current_company_id()                           
 grant execute on function public.current_role_name()                             to authenticated;
 grant execute on function public.current_employee_id()                           to authenticated;
 grant execute on function public.is_manager()                                    to authenticated;
+grant execute on function public.constraints_deadline(uuid, text)                to authenticated;
 
 -- חברות: קריאה בלבד, ושינוי השם בלבד. פתיחת חברה נעשית דרך
 -- create_company, ומחיקה אינה מתאפשרת מהדפדפן.

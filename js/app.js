@@ -727,12 +727,57 @@
     $('#branches-list').innerHTML = html;
   }
 
+  /* ===== מועד סגירת ההגשות =====
+     מוצג כתאריך מלא ולא רק כיום בשבוע, כי "חמישי בשעה 20:00"
+     אינו אומר למנהל לאיזה חמישי הכוונה. */
+  function renderDeadline() {
+    var config = Store.deadlineSettings(state);
+    var toggle = $('#opt-deadline');
+    if (!toggle) return;
+    toggle.checked = config.enabled;
+
+    var daySelect = $('#deadline-day');
+    daySelect.innerHTML = Data.DAYS.map(function (day) {
+      return '<option value="' + day.idx + '"' +
+        (day.idx === config.dayIdx ? ' selected' : '') + '>' + esc(day.name) + '</option>';
+    }).join('');
+
+    $('#deadline-time').value = config.time;
+
+    var remind = $('#deadline-remind');
+    remind.innerHTML = [2, 6, 12, 24, 48, 72].map(function (hours) {
+      return '<option value="' + hours + '"' +
+        (hours === config.remindHours ? ' selected' : '') + '>' +
+        esc(t('settings.deadlineHours', { hours: hours })) + '</option>';
+    }).join('');
+
+    /* שני מצבים נפרדים ננעלים על אותם שדות: ההגדרה כבויה, או
+       שהמסך כולו במצב צפייה. applyViewOnly רץ על אותם אלמנטים,
+       ולכן הכלל המשולב חייב להיקבע במקום אחד. */
+    toggle.disabled = viewOnly;
+    [daySelect, $('#deadline-time'), remind].forEach(function (node) {
+      node.disabled = viewOnly || !config.enabled;
+    });
+
+    var preview = $('#deadline-preview');
+    var at = Store.deadlineFor(state, weekKey);
+    preview.textContent = at
+      ? t('settings.deadlinePreview', {
+          date: Store.formatDate(at),
+          day: (Data.DAYS[at.getDay()] || {}).name || '',
+          time: config.time,
+          week: Store.formatDate(Store.dateOfDay(weekKey, 0))
+        })
+      : '';
+  }
+
   /* ========== הגדרות ========== */
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
+    renderDeadline();
 
     var list = shiftList();
     var html = '';
@@ -786,6 +831,7 @@
     '#employees-list input', '#employees-list button',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
+    '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
   ];
 
@@ -802,6 +848,9 @@
         node.disabled = viewOnly;
       });
     });
+
+    /* אחרון, כדי שהנעילה לפי ההגדרה עצמה לא תידרס */
+    renderDeadline();
   }
 
   /* ========== רינדור כולל ========== */
@@ -1819,6 +1868,27 @@
       state.settings.oneDayOffPerWeek = event.target.checked;
       persist('config');
       render();
+    });
+
+    function saveDeadline(patch) {
+      var current = Store.deadlineSettings(state);
+      state.settings.constraintsDeadline = Object.assign({}, current, patch);
+      persist('config');
+      render();
+    }
+    $('#opt-deadline').addEventListener('change', function (event) {
+      saveDeadline({ enabled: event.target.checked });
+    });
+    $('#deadline-day').addEventListener('change', function (event) {
+      saveDeadline({ dayIdx: Number(event.target.value) });
+    });
+    $('#deadline-remind').addEventListener('change', function (event) {
+      saveDeadline({ remindHours: Number(event.target.value) });
+    });
+    $('#deadline-time').addEventListener('change', function (event) {
+      var normalized = Store.normalizeTimeInput(event.target.value);
+      if (normalized === null) { toast(t('errors.invalidTime')); render(); return; }
+      saveDeadline({ time: normalized });
     });
 
     $('#default-shabbat').addEventListener('change', function (event) {

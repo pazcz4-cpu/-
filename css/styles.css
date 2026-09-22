@@ -768,6 +768,21 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .why-blocked summary { cursor: pointer; color: var(--muted); }
 .why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
 
+/* ===== מועד סגירת ההגשות ===== */
+.deadline-strip {
+  border-radius: 10px; padding: 10px 13px; margin-bottom: 12px;
+  font-size: 13.5px; font-weight: 600;
+  background: var(--info-bg); color: var(--info); border: 1px solid transparent;
+}
+.deadline-strip.is-soon {
+  background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line);
+}
+.deadline-strip.is-closed {
+  background: var(--err-bg); color: var(--err); border-color: var(--err-line);
+}
+.deadline-row { flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.deadline-row .check { flex-direction: column; align-items: flex-start; gap: 4px; }
+
 /* ===== תצוגת עובד ===== */
 .preview-bar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;

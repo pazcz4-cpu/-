@@ -950,6 +950,94 @@ test('שם גיליון ארוך או עם תווים אסורים מנוקה', 
   assert(!/[:\\\/?*\[\]]/.test(match[1]), 'הוסרו תווים אסורים: ' + match[1]);
 });
 
+console.log('\n== מועד סגירת ההגשות ==');
+
+/* הפרש בימים בין תאריכים, בלי שעת היום. השוואת חותמות זמן
+   ישירות נותנת 6.17 במקום 7, כי המועד הוא ב-20:00 והשבוע מתחיל
+   בחצות – וזו טעות שקל מאוד לעשות בבדיקה ולא לשים לב. */
+function daysApart(later, earlier) {
+  function midnight(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  return Math.round((midnight(later) - midnight(earlier)) / 86400000);
+}
+
+function stateWithDeadline(patch) {
+  var state = freshState();
+  state.settings.constraintsDeadline = Object.assign(
+    { enabled: true, dayIdx: 4, time: '20:00', remindHours: 24 }, patch || {});
+  return state;
+}
+
+test('המועד נופל לפני תחילת השבוע, ביום שנבחר', function () {
+  var state = stateWithDeadline();          // חמישי 20:00
+  var at = Store.deadlineFor(state, '2026-09-27');   // שבוע שמתחיל בראשון
+  assertEqual(at.getDay(), 4, 'היום בשבוע אינו חמישי');
+  assert(at < Store.dateOfDay('2026-09-27', 0), 'המועד אינו לפני תחילת השבוע');
+  assertEqual(at.getHours(), 20, 'השעה אינה 20');
+  assertEqual(daysApart(Store.dateOfDay('2026-09-27', 0), at), 3,
+    'המרחק מתחילת השבוע אינו שלושה ימים');
+});
+
+test('מועד ביום תחילת השבוע נופל שבוע קודם ולא באותו יום', function () {
+  var state = stateWithDeadline({ dayIdx: 0 });      // ראשון
+  var at = Store.deadlineFor(state, '2026-09-27');
+  assertEqual(at.getDay(), 0, 'היום אינו ראשון');
+  assertEqual(daysApart(Store.dateOfDay('2026-09-27', 0), at), 7,
+    'המועד אינו שבוע לפני');
+});
+
+test('כשההגדרה כבויה אין מועד ואין חסימה', function () {
+  var state = stateWithDeadline({ enabled: false });
+  assertEqual(Store.deadlineFor(state, '2026-09-27'), null, 'הוחזר מועד למרות שכבוי');
+  assertEqual(Store.deadlinePassed(state, '2026-09-27', new Date('2030-01-01')), false,
+    'נחסם למרות שההגדרה כבויה');
+});
+
+test('הרגע המדויק: לפני המועד פתוח, אחריו סגור', function () {
+  var state = stateWithDeadline();
+  var at = Store.deadlineFor(state, '2026-09-27');
+  assertEqual(Store.deadlinePassed(state, '2026-09-27', new Date(at.getTime() - 1000)), false,
+    'נחסם שנייה לפני המועד');
+  assertEqual(Store.deadlinePassed(state, '2026-09-27', at), false, 'נחסם בדיוק במועד');
+  assertEqual(Store.deadlinePassed(state, '2026-09-27', new Date(at.getTime() + 1000)), true,
+    'לא נחסם שנייה אחרי המועד');
+});
+
+test('התזכורת יוצאת רק בתוך החלון שהמנהל קבע', function () {
+  var state = stateWithDeadline({ remindHours: 24 });
+  var at = Store.deadlineFor(state, '2026-09-27');
+  function at_(hoursBefore) { return new Date(at.getTime() - hoursBefore * 3600000); }
+  assertEqual(Store.shouldRemind(state, '2026-09-27', at_(25)), false, 'תזכורת מוקדמת מדי');
+  assertEqual(Store.shouldRemind(state, '2026-09-27', at_(23)), true, 'לא תוזכר בתוך החלון');
+  assertEqual(Store.shouldRemind(state, '2026-09-27', at_(1)), true, 'לא תוזכר שעה לפני');
+  assertEqual(Store.shouldRemind(state, '2026-09-27', new Date(at.getTime() + 1000)), false,
+    'תוזכר אחרי שהמועד עבר');
+});
+
+test('חלון תזכורת אחר משנה רק את התזכורת ולא את המועד', function () {
+  var wide = stateWithDeadline({ remindHours: 72 });
+  var at = Store.deadlineFor(wide, '2026-09-27');
+  assertEqual(Store.shouldRemind(wide, '2026-09-27', new Date(at.getTime() - 48 * 3600000)), true,
+    'חלון של 72 שעות לא תפס 48 שעות לפני');
+  var narrow = stateWithDeadline({ remindHours: 6 });
+  assertEqual(Store.shouldRemind(narrow, '2026-09-27', new Date(at.getTime() - 48 * 3600000)), false,
+    'חלון של 6 שעות תפס 48 שעות לפני');
+  assertEqual(Store.deadlineFor(narrow, '2026-09-27').getTime(), at.getTime(),
+    'המועד עצמו השתנה בגלל חלון התזכורת');
+});
+
+test('הסכימה אוכפת את המועד גם בשרת', function () {
+  var schema = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+  assert(schema.indexOf('constraints_deadline') !== -1,
+    'אין פונקציית מועד בסכימה');
+  var body = schema.slice(schema.indexOf('function public.save_own_constraint'));
+  body = body.slice(0, body.indexOf('$$;'));
+  assert(body.indexOf('constraints_deadline') !== -1,
+    'save_own_constraint אינה בודקת את המועד – עובד יוכל לעקוף מהדפדפן');
+  assert(body.indexOf("v_role = 'employee'") !== -1,
+    'הבדיקה אינה מוגבלת לעובדים, ותחסום גם מנהל');
+});
+
 console.log('\n== למה שובץ ככה ==');
 
 /* ההסבר חייב להיגזר מאותם תנאים שהמנוע החליט לפיהם. בדיקה שמסתפקת

@@ -17,6 +17,11 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function pad2(date) {
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return two(date.getHours()) + ':' + two(date.getMinutes());
+  }
+
   function EmployeeUI(options) {
     this.backend = options.backend;
     this.session = options.session;
@@ -105,10 +110,16 @@
     return this._record(dayIdx) || Store.emptyConstraint();
   };
 
+  /* חסום להגשה: אחרי מועד הסגירה, אם המנהל הגדיר אחד */
+  EmployeeUI.prototype._locked = function () {
+    return Store.deadlinePassed(this.state, this.weekKey);
+  };
+
   EmployeeUI.prototype._toggle = function (button) {
     var self = this;
     if (this.busy) return;
     if (this.week.published) { this._flash(t('employee.publishedLocked')); return; }
+    if (this._locked()) { this._flash(t('employee.deadlineLocked')); return; }
 
     var dayIdx = Number(button.dataset.day);
     var constraint = JSON.parse(JSON.stringify(this._constraint(dayIdx)));
@@ -215,6 +226,29 @@
         '<button type="button" id="preview-exit" class="btn ghost small">' +
         esc(t('preview.exit')) + '</button></div>';
     }
+    /* מתי נסגרות ההגשות – ההודעה החשובה ביותר במסך הזה, ולכן
+       למעלה ולא בתחתית. */
+    var deadlineAt = Store.deadlineFor(this.state, this.weekKey);
+    if (deadlineAt) {
+      var hoursLeft = Store.hoursToDeadline(this.state, this.weekKey);
+      var closed = hoursLeft <= 0;
+      var soon = !closed && hoursLeft <= Store.deadlineSettings(this.state).remindHours;
+      var text;
+      if (closed) {
+        text = t('employee.deadlineClosed');
+      } else if (hoursLeft < 24) {
+        text = t('employee.deadlineHours', { hours: Math.max(1, Math.round(hoursLeft)) });
+      } else {
+        text = t('employee.deadlineOpen', {
+          day: (Data.DAYS[deadlineAt.getDay()] || {}).name || '',
+          date: Store.formatDate(deadlineAt),
+          time: pad2(deadlineAt)
+        });
+      }
+      html += '<div class="deadline-strip' + (closed ? ' is-closed' : (soon ? ' is-soon' : '')) +
+        '">' + esc(text) + '</div>';
+    }
+
     html += '<div class="employee-weeknav">' +
       '<button class="btn ghost" data-week-step="-1">' + t('employee.prevWeek') + '</button>' +
       '<strong>' + Store.formatDate(start) + ' – ' + Store.formatDate(end) + '</strong>' +

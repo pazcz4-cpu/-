@@ -107,6 +107,7 @@
     /* נקודת הקצה שיוצרת משתמשים. רצה בשרת, כי יצירת משתמש דורשת
        מפתח שאסור שיגיע לדפדפן. */
     this.adminEndpoint = opts.adminEndpoint || '/api/create-user';
+    this.cancelEndpoint = opts.cancelEndpoint || '/api/cancel-invite';
     /* שינוי מנוי עובר דרך השרת ומשם לספק התשלומים. הדפדפן אינו
        רשאי לכתוב את מצב המנוי – ראו supabase/schema.sql. */
     this.billingEndpoint = opts.billingEndpoint || '/api/billing';
@@ -241,7 +242,7 @@
     if (!userId) { this._clearTokens(); return Promise.resolve(null); }
 
     return this._rest('/company_users?id=eq.' + encodeURIComponent(userId) +
-      '&select=id,email,name,role,employee_id,active,company_id')
+      '&select=id,email,name,role,employee_id,active,company_id,joined_at')
       .then(function (rows) {
         var profile = rows && rows[0];
         /* שתי סיבות שונות לחלוטין לכך שאין התחברות, ואסור לבלבל
@@ -250,6 +251,12 @@
         if (!profile) { self._session = null; self._sessionMiss = 'no-profile'; return null; }
         if (!profile.active) { self._session = null; self._sessionMiss = 'inactive'; return null; }
         self._sessionMiss = null;
+        /* "הצטרף" הוא מה שהמנהל רואה במסך ההזמנות, ולכן הוא נרשם
+           כאן – בכניסה הראשונה בפועל – ולא כשההזמנה נשלחה. נכשל?
+           זו שורה במסך ניהול, לא תנאי להתחברות. */
+        if (!profile.joined_at) {
+          self._rpc('mark_self_joined', {}).then(null, function () {});
+        }
         return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
           '&select=id,name,plan,status,valid_until,created_at')
           .then(function (companies) {
@@ -619,18 +626,21 @@
 
   /* ===== משתמשים ===== */
 
+  function mapUser(row) {
+    return {
+      id: row.id, email: row.email, name: row.name,
+      role: row.role, employeeId: row.employee_id, active: row.active,
+      invitedAt: row.invited_at || null, joinedAt: row.joined_at || null
+    };
+  }
+
   SupabaseBackend.prototype.listUsers = function () {
     var companyId;
     try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
     return this._rest('/company_users?company_id=eq.' + companyId +
-      '&select=id,email,name,role,employee_id,active&order=created_at.asc')
+      '&select=id,email,name,role,employee_id,active,invited_at,joined_at&order=created_at.asc')
       .then(function (rows) {
-        return (rows || []).map(function (row) {
-          return {
-            id: row.id, email: row.email, name: row.name,
-            role: row.role, employeeId: row.employee_id, active: row.active
-          };
-        });
+        return (rows || []).map(mapUser);
       });
   };
 
@@ -737,12 +747,34 @@
       method: 'PATCH', body: body
     }).then(function (rows) {
       if (!rows || !rows.length) throw fail('not_found', t('server.userNotFound'));
-      var row = rows[0];
-      return {
-        id: row.id, email: row.email, name: row.name,
-        role: row.role, employeeId: row.employee_id, active: row.active
-      };
+      return mapUser(rows[0]);
     });
+  };
+
+  /* שליחה חוזרת של הקישור. הקישור שנשלח הוא קישור לקביעת סיסמה,
+     והוא עובד גם למי שטרם קבע אחת – ולכן אותה פעולה משרתת גם
+     הזמנה שפגה וגם עובד ששכח. אחרי השליחה מתאפס שעון התוקף,
+     אחרת המסך היה ממשיך להציג "פג" על קישור חדש לגמרי. */
+  SupabaseBackend.prototype.resendInvite = function (user) {
+    var self = this;
+    var companyId;
+    try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
+    var email = String((user && user.email) || '').trim().toLowerCase();
+    var userId = user && user.id;
+    return this.requestPasswordReset(email).then(function () {
+      if (!userId) return null;
+      return self._rest('/company_users?id=eq.' + encodeURIComponent(userId) +
+        '&company_id=eq.' + companyId, {
+        method: 'PATCH', body: { invited_at: new Date().toISOString() }
+      }).then(function (rows) {
+        return rows && rows.length ? mapUser(rows[0]) : null;
+      }, function () { return null; });   // הקישור נשלח; התאריך משני
+    });
+  };
+
+  /* ביטול הזמנה = מחיקת המשתמש. דורש מפתח ניהול, ולכן עובר בשרת. */
+  SupabaseBackend.prototype.cancelInvite = function (userId) {
+    return this._server(this.cancelEndpoint, { userId: userId });
   };
 
   /* ===== מנוי ===== */

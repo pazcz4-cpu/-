@@ -18,6 +18,38 @@
 
   var ctx = null;
 
+  /* מה המנהל רואה על כל מוזמן. עד עכשיו הוא ראה כפתור "שליחת
+     קישור" ותו לא, ולכן לא היה לו שום דרך לדעת אם העובד עוד לא
+     הספיק, אם הקישור פג, או שהוא כבר בפנים מזמן – והוא שלח שוב. */
+  var CHIP = { joined: 'ok', pending: 'info', expired: 'warning', unknown: '' };
+
+  function inviteLabel(user) {
+    var state = Model.inviteState(user);
+    if (state === Model.INVITE.UNKNOWN) return t('users.inviteNone');
+    var date = Model.formatDate(state === Model.INVITE.JOINED ? user.joinedAt : user.invitedAt);
+    if (state === Model.INVITE.JOINED) return t('users.inviteJoined', { date: date });
+    if (state === Model.INVITE.EXPIRED) return t('users.inviteExpired', { date: date });
+    return t('users.invitePending', { date: date });
+  }
+
+  function inviteCell(user) {
+    var state = Model.inviteState(user);
+    var html = '<div class="invite-cell">' +
+      '<span class="invite-chip ' + CHIP[state] + '">' + esc(inviteLabel(user)) + '</span>' +
+      '<span class="invite-actions">' +
+      '<button class="btn ghost small" data-action="resend" data-user="' + esc(user.id) +
+      '" data-email="' + esc(user.email) + '">' +
+      esc(state === Model.INVITE.JOINED || state === Model.INVITE.UNKNOWN
+        ? t('users.resendInvite') : t('users.resendAgain')) + '</button>';
+    if (Model.canCancelInvite(user)) {
+      html += '<button class="btn ghost small danger" data-action="cancel-invite" data-user="' +
+        esc(user.id) + '" data-name="' + esc(user.name || user.email) + '">' +
+        esc(t('users.cancelInvite')) + '</button>';
+    }
+    return html + '</span></div>';
+  }
+
+
   function render() {
     var container = document.getElementById('users-list');
     if (!container || !ctx) return;
@@ -29,7 +61,7 @@
         '<th>' + t('users.role') + '</th>' +
         '<th>' + t('users.staffCard') + '</th>' +
         '<th>' + t('users.activeColumn') + '</th>' +
-        '<th>' + t('users.accessColumn') + '</th></tr></thead><tbody>';
+        '<th>' + t('users.inviteColumn') + '</th></tr></thead><tbody>';
 
       users.forEach(function (user) {
         var isOwner = user.role === 'owner';
@@ -50,11 +82,7 @@
           }).join('') + '</select>') + '</td>';
         html += '<td>' + (isOwner ? '✔' :
           '<input type="checkbox" data-field="active"' + (user.active ? ' checked' : '') + '>') + '</td>';
-        /* קישור לקביעת סיסמה, לכל מי שלא קיבל או שאיבד אותו. המנהל
-           אינו צריך לדעת סיסמאות של אף אחד כדי לעזור. */
-        html += '<td>' + (isOwner ? '—' :
-          '<button class="btn ghost small" data-action="resend" data-email="' +
-          esc(user.email) + '">' + esc(t('users.resendInvite')) + '</button>') + '</td>';
+        html += '<td>' + (isOwner ? '—' : inviteCell(user)) + '</td>';
         html += '</tr>';
       });
 
@@ -74,17 +102,10 @@
     }
 
     list.addEventListener('click', function (event) {
-      var button = event.target.closest('[data-action="resend"]');
-      if (!button) return;
-      say('');
-      button.disabled = true;
-      ctx.backend.requestPasswordReset(button.dataset.email).then(function () {
-        button.disabled = false;
-        say(t('users.resendSent', { email: button.dataset.email }));
-      }, function (err) {
-        button.disabled = false;
-        say((err && err.message) || t('users.resendFailed'), true);
-      });
+      var resend = event.target.closest('[data-action="resend"]');
+      if (resend) return sendAgain(resend, say);
+      var cancel = event.target.closest('[data-action="cancel-invite"]');
+      if (cancel) return cancelInvite(cancel, say);
     });
 
     list.addEventListener('change', function (event) {
@@ -135,6 +156,58 @@
         say((err && err.message) || t('users.createFailed'), true);
       });
     });
+  }
+
+  /* שליחה חוזרת. אותו קישור משרת גם הזמנה שפגה וגם עובד ששכח,
+     ולכן אין כאן שתי פעולות – יש אחת, ושעון התוקף מתחיל מחדש. */
+  function sendAgain(button, say) {
+    say('');
+    button.disabled = true;
+    var email = button.dataset.email;
+    var send = ctx.backend.resendInvite
+      ? ctx.backend.resendInvite({ id: button.dataset.user, email: email })
+      : ctx.backend.requestPasswordReset(email);
+    send.then(function () {
+      button.disabled = false;
+      say(t('users.resendSent', { email: email }));
+      render();
+    }, function (err) {
+      button.disabled = false;
+      say((err && err.message) || t('users.resendFailed'), true);
+    });
+  }
+
+  /* ביטול הזמנה מוחק משתמש, ולכן הוא עובר דרך שאלה. השאלה אומרת
+     מה בדיוק קורה לקישור שכבר נשלח, כי זה מה שהמנהל רוצה לדעת. */
+  function cancelInvite(button, say) {
+    say('');
+    var name = button.dataset.name;
+    var userId = button.dataset.user;
+    ask({
+      title: t('users.cancelTitle'),
+      lines: [t('users.cancelBody', { name: name })],
+      tone: 'danger',
+      confirmLabel: t('users.cancelYes'),
+      cancelLabel: t('users.cancelNo')
+    }).then(function (yes) {
+      if (!yes) return;
+      button.disabled = true;
+      ctx.backend.cancelInvite(userId).then(function () {
+        say(t('users.cancelled', { name: name }));
+        render();
+      }, function (err) {
+        button.disabled = false;
+        say((err && err.message) || t('users.cancelFailed'), true);
+      });
+    });
+  }
+
+  /* אם מסך האישור לא נטען משום מה, עדיף שאלה של הדפדפן מאשר
+     מחיקה בלי לשאול. */
+  function ask(options) {
+    if (root.ShiftConfirmUI && root.ShiftConfirmUI.ask) return root.ShiftConfirmUI.ask(options);
+    return Promise.resolve(root.confirm
+      ? root.confirm(options.title + '\n\n' + options.lines.join('\n')) : false);
   }
 
   function sameName(a, b) {

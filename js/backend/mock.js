@@ -223,6 +223,9 @@
   };
 
   MockBackend.prototype._startSession = function (userId) {
+    /* "הצטרף" נרשם בכניסה הראשונה בפועל, כמו בשרת האמיתי */
+    var user = this.db.users[userId];
+    if (user && !user.joinedAt) { user.joinedAt = this.now().toISOString(); this._save(); }
     this.storage.set(SESSION_KEY, { userId: userId, at: this.now().toISOString() });
     return Promise.resolve(this.session());
   };
@@ -406,6 +409,12 @@
   };
 
   /* ===== משתמשים בחברה ===== */
+  function publicUser(user) {
+    return { id: user.id, email: user.email, name: user.name,
+      role: user.role, employeeId: user.employeeId, active: user.active,
+      invitedAt: user.invitedAt || null, joinedAt: user.joinedAt || null };
+  }
+
   MockBackend.prototype.listUsers = function () {
     var session = this._require();
     var companyId = session.company.id;
@@ -414,8 +423,7 @@
     Object.keys(users).forEach(function (id) {
       var user = users[id];
       if (user.companyId !== companyId) return;   // בידוד
-      out.push({ id: user.id, email: user.email, name: user.name,
-        role: user.role, employeeId: user.employeeId, active: user.active });
+      out.push(publicUser(user));
     });
     return Promise.resolve(out);
   };
@@ -443,13 +451,17 @@
       name: String(input.name || '').trim() || email,
       companyId: session.company.id, role: role,
       employeeId: input.employeeId || null, active: true,
-      createdAt: this.now().toISOString()
+      createdAt: this.now().toISOString(),
+      /* הזמנה שנשלחה מקבלת תאריך. משתמש שנוצר עם סיסמה לא הוזמן
+         כלל – ולכן אין לו סטטוס הזמנה, ולא ממציאים לו אחד. */
+      invitedAt: password ? null : this.now().toISOString(),
+      joinedAt: null
     };
     this._save();
     var created = this.db.users[userId];
-    return Promise.resolve({ id: created.id, email: created.email, name: created.name,
-      role: created.role, employeeId: created.employeeId, active: created.active,
-      invited: !password });
+    var out = publicUser(created);
+    out.invited = !password;
+    return Promise.resolve(out);
   };
 
   MockBackend.prototype.updateUser = function (userId, patch) {
@@ -467,8 +479,40 @@
     if ('employeeId' in patch) user.employeeId = patch.employeeId || null;
     if (patch.name) user.name = String(patch.name).trim();
     this._save();
-    return Promise.resolve({ id: user.id, email: user.email, name: user.name,
-      role: user.role, employeeId: user.employeeId, active: user.active });
+    return Promise.resolve(publicUser(user));
+  };
+
+  /* שליחה חוזרת: אותו קישור לקביעת סיסמה, ושעון התוקף מתאפס. */
+  MockBackend.prototype.resendInvite = function (user) {
+    var self = this;
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var row = user && this.db.users[user.id];
+    if (row && row.companyId !== session.company.id) row = null;   // בידוד
+    return this.requestPasswordReset((user && user.email) || (row && row.email))
+      .then(function () {
+        if (!row) return null;
+        row.invitedAt = self.now().toISOString();
+        self._save();
+        return publicUser(row);
+      });
+  };
+
+  /* ביטול הזמנה: מוחק משתמש שעוד לא נכנס. מי שכבר נכנס אינו
+     הזמנה תלויה – אותו מנטרלים דרך התיבה "פעיל". */
+  MockBackend.prototype.cancelInvite = function (userId) {
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var user = this.db.users[userId];
+    if (!user || user.companyId !== session.company.id) {
+      return Promise.reject(this._fail('not_found', t('server.userNotFound')));   // בידוד
+    }
+    if (!Model.canCancelInvite(user, this.now())) {
+      return Promise.reject(this._fail('forbidden', t('server.inviteNotPending')));
+    }
+    delete this.db.users[userId];
+    this._save();
+    return Promise.resolve({ id: userId, cancelled: true });
   };
 
   /* ===== מנוי ===== */

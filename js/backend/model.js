@@ -115,6 +115,42 @@
     return { kind: kind, subject: subject, body: body };
   }
 
+  /* ===== מצב ההזמנה =====
+     מנהל שמזמין עובד רואה רק "נשלח" – ומשם ואילך הוא מנחש. ארבעה
+     מצבים, ושלושתם הראשונים נגזרים משני תאריכים בלבד:
+       joined    המוזמן כבר נכנס פעם אחת. סוף הסיפור.
+       pending   נשלחה הזמנה, הקישור עדיין בתוקף.
+       expired   הקישור פג. שליחה חוזרת היא הפעולה היחידה שעוזרת.
+       unknown   אין תאריכים – שורה שנוצרה לפני שהמעקב היה קיים,
+                 או הבעלים עצמו. לא ממציאים לו סטטוס.
+     חלון התוקף הוא של Supabase (ברירת מחדל 24 שעות למייל), ולכן
+     שינוי שם חייב להיות שינוי גם שם. */
+  var INVITE_TTL_HOURS = 24;
+  var INVITE = {
+    JOINED: 'joined', PENDING: 'pending', EXPIRED: 'expired', UNKNOWN: 'unknown'
+  };
+
+  function inviteState(user, now) {
+    var at = user && (user.joinedAt || user.joined_at);
+    if (at) return INVITE.JOINED;
+    var sent = user && (user.invitedAt || user.invited_at);
+    if (!sent) return INVITE.UNKNOWN;
+    var sentAt = new Date(sent).getTime();
+    if (!sentAt) return INVITE.UNKNOWN;
+    var at_now = (now ? new Date(now) : new Date()).getTime();
+    return (at_now - sentAt) > INVITE_TTL_HOURS * 3600 * 1000
+      ? INVITE.EXPIRED : INVITE.PENDING;
+  }
+
+  /* הזמנה אפשר לבטל רק כל עוד היא לא נוצלה. מי שכבר נכנס אינו
+     "הזמנה תלויה" אלא משתמש – ואותו מנטרלים, לא מוחקים, כדי שלא
+     ייעלמו איתו הרשומות שלו. */
+  function canCancelInvite(user, now) {
+    if (!user || user.role === 'owner') return false;
+    var state = inviteState(user, now);
+    return state === INVITE.PENDING || state === INVITE.EXPIRED;
+  }
+
   var TRIAL_DAYS = 14;
 
   /* מדיניות הניסיון, במקום אחד. פתיחת חשבון אינה דורשת כרטיס, ולכן
@@ -351,6 +387,8 @@
     SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS, WHATSAPP_NUMBER: WHATSAPP_NUMBER,
     TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
     TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
+    INVITE: INVITE, INVITE_TTL_HOURS: INVITE_TTL_HOURS,
+    inviteState: inviteState, canCancelInvite: canCancelInvite,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS,
     TRIAL_REQUIRES_CARD: TRIAL_REQUIRES_CARD, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,

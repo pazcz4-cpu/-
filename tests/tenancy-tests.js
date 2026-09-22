@@ -603,6 +603,136 @@ test('מנוי שפג ומנוי שבוטל מציגים הסבר נכון', fun
   assert(canceled.text.indexOf('לחדש') !== -1, 'מציע לחדש');
 });
 
+console.log('\n== מצב ההזמנות ==');
+
+test('ארבעת מצבי ההזמנה נגזרים משני תאריכים בלבד', function () {
+  var now = new Date('2026-09-20T12:00:00.000Z');
+  assertEqual(Model.inviteState({ joinedAt: '2026-09-01' }, now), 'joined', 'הצטרף');
+  assertEqual(Model.inviteState({ invitedAt: '2026-09-20T06:00:00.000Z' }, now), 'pending', 'ממתין');
+  assertEqual(Model.inviteState({ invitedAt: '2026-09-18T06:00:00.000Z' }, now), 'expired', 'פג');
+  assertEqual(Model.inviteState({}, now), 'unknown', 'בלי תאריכים');
+  /* מי שכבר נכנס אינו "פג" גם אם ההזמנה ישנה */
+  assertEqual(Model.inviteState({ invitedAt: '2026-01-01', joinedAt: '2026-01-02' }, now),
+    'joined', 'הצטרפות גוברת על תוקף');
+});
+
+test('רק הזמנה שלא נוצלה ניתנת לביטול', function () {
+  var now = new Date('2026-09-20T12:00:00.000Z');
+  assertEqual(Model.canCancelInvite({ role: 'employee', invitedAt: '2026-09-20T06:00:00.000Z' }, now),
+    true, 'ממתין');
+  assertEqual(Model.canCancelInvite({ role: 'employee', invitedAt: '2026-01-01' }, now),
+    true, 'פג');
+  assertEqual(Model.canCancelInvite({ role: 'employee', joinedAt: '2026-09-19' }, now),
+    false, 'כבר הצטרף');
+  assertEqual(Model.canCancelInvite({ role: 'owner', invitedAt: '2026-09-20T06:00:00.000Z' }, now),
+    false, 'בעלים');
+});
+
+asyncTest('הזמנה מקבלת תאריך, והכניסה הראשונה מסמנת הצטרפות', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv1@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ name: 'דנה', email: 'dana1@a.com', role: 'employee' });
+    })
+    .then(function (user) {
+      assert(user.invitedAt, 'נרשם תאריך הזמנה');
+      assertEqual(user.joinedAt, null, 'עוד לא הצטרף');
+      assertEqual(Model.inviteState(user), 'pending', 'ממתין');
+      backend.followLink('dana1@a.com', 'invite');
+      return backend.setPassword('secret2');
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      return backend.signIn({ email: 'inv1@a.com', password: 'secret1' });
+    })
+    .then(function () { return backend.listUsers(); })
+    .then(function (users) {
+      var dana = users.filter(function (u) { return u.email === 'dana1@a.com'; })[0];
+      assert(dana.joinedAt, 'הכניסה הראשונה נרשמה');
+      assertEqual(Model.inviteState(dana), 'joined', 'הצטרף');
+    });
+});
+
+asyncTest('שליחה חוזרת מאפסת את שעון התוקף', function () {
+  var backend = freshBackend();
+  var clock = new Date('2026-09-01T08:00:00.000Z');
+  backend.now = function () { return clock; };
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv2@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ name: 'רון', email: 'ron2@a.com', role: 'employee' });
+    })
+    .then(function (user) {
+      clock = new Date('2026-09-05T08:00:00.000Z');
+      assertEqual(Model.inviteState(user, clock), 'expired', 'פג אחרי ארבעה ימים');
+      return backend.resendInvite(user);
+    })
+    .then(function (user) {
+      assertEqual(Model.inviteState(user, clock), 'pending', 'אחרי שליחה חוזרת – בתוקף שוב');
+    });
+});
+
+asyncTest('ביטול הזמנה מוחק רק מוזמן שטרם נכנס', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv3@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ name: 'נועה', email: 'noa3@a.com', role: 'employee' });
+    })
+    .then(function (user) { return backend.cancelInvite(user.id); })
+    .then(function () { return backend.listUsers(); })
+    .then(function (users) {
+      assertEqual(users.filter(function (u) { return u.email === 'noa3@a.com'; }).length, 0,
+        'המוזמן נמחק');
+      /* אותה כתובת פנויה שוב – אחרת ביטול לא היה שווה כלום */
+      return backend.createUser({ name: 'נועה', email: 'noa3@a.com', role: 'employee' });
+    })
+    .then(function (again) {
+      backend.followLink('noa3@a.com', 'invite');
+      return backend.setPassword('secret2')
+        .then(function () { return backend.signOut(); })
+        .then(function () { return backend.signIn({ email: 'inv3@a.com', password: 'secret1' }); })
+        .then(function () {
+          return assertRejects(backend.cancelInvite(again.id), 'forbidden',
+            'ביטול של מי שכבר נכנס');
+        });
+    });
+});
+
+asyncTest('אי אפשר לבטל הזמנה של חברה אחרת', function () {
+  var backend = freshBackend();
+  var target;
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'inv4a@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ name: 'מוזמן', email: 'target4@a.com', role: 'employee' });
+    })
+    .then(function (user) { target = user; return backend.signOut(); })
+    .then(function () {
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'inv4b@a.com', password: 'secret1' });
+    })
+    .then(function () {
+      return assertRejects(backend.cancelInvite(target.id), 'not_found', 'חברה אחרת');
+    });
+});
+
+asyncTest('עובד אינו יכול לבטל הזמנות', function () {
+  var backend = freshBackend();
+  var target;
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv5@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ name: 'מוזמן', email: 'target5@a.com', role: 'employee' });
+    })
+    .then(function (user) {
+      target = user;
+      return backend.createUser({ name: 'עובד', email: 'worker5@a.com', role: 'employee' });
+    })
+    .then(function () {
+      backend.followLink('worker5@a.com', 'invite');
+      return backend.setPassword('secret2');
+    })
+    .then(function () {
+      return assertRejects(backend.cancelInvite(target.id), 'forbidden', 'עובד מבטל');
+    });
+});
+
 queue.then(function () {
   console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed === 0 ? 0 : 1);

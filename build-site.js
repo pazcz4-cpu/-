@@ -22,12 +22,14 @@ const SITE_URL = (process.env.PUBLIC_BASE_URL || 'https://setshifts.com').replac
 /* החיבור ל-Supabase של האתר החי.
    הערכים נכנסים רק לאתר הבנוי, ולא ל-config.js שבמאגר – כך פתיחה
    מקומית של app.html והבדיקות ממשיכות לרוץ במצב הדגמה, בלי לגעת
-   בנתונים אמיתיים. אפשר לדרוס דרך משתני סביבה ב-Vercel, וכך
-   להחליף מפתח בלי commit. */
-const SUPABASE_URL = process.env.SUPABASE_URL ||
-  'https://bdoqoppgwavutjzljcrt.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
-  'sb_publishable_ZYYKx9bJbmUSTsaFWGfnCA_bIyaATfS';
+   בנתונים אמיתיים.
+
+   אין כאן ברירת מחדל בכוונה. כתובת פרויקט קבועה בקוד שורדת את
+   הפרויקט עצמו: ביום שמעבירים אזור או מכבים פרויקט ישן, בנייה
+   בלי משתני סביבה הייתה מפנה לקוחות לבסיס נתונים מת בלי להגיד
+   מילה. בלי הערכים האלה האתר נבנה במצב הדגמה מוצהר, עם באנר. */
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 /* ===== הפרטים של העמודים המשפטיים =====
 
@@ -260,7 +262,8 @@ write('app/config.js',
   'window.SHIFT_CONFIG = ' + JSON.stringify({
     supabaseUrl: SUPABASE_URL,
     supabaseAnonKey: SUPABASE_ANON_KEY,
-    adminEndpoint: '/api/create-user'
+    adminEndpoint: '/api/create-user',
+    cancelEndpoint: '/api/cancel-invite'
   }, null, 2) + ';\n');
 
 /* ===== קבצים לשורש ===== */
@@ -293,6 +296,12 @@ console.log('  /tool/  הכלי המקומי לעסק אחד');
 LEGAL_PAGES.forEach((item) => {
   console.log(('  /' + item.dir + '/').padEnd(10, ' ') + ' עמוד משפטי');
 });
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.log('\n⚠ האתר נבנה במצב הדגמה: אין SUPABASE_URL או SUPABASE_ANON_KEY.');
+  console.log('  נתוני לקוחות לא יישמרו בענן, והאפליקציה תציג באנר הדגמה.');
+  console.log('  להפעלה אמיתית: הגדרת שני המשתנים ב-Vercel ואז Redeploy.');
+}
 
 if (legalMissing.length) {
   console.log('\n⚠ העמודים המשפטיים חסרים פרטים. הם פורסמו עם סימון גלוי,');

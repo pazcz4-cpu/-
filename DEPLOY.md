@@ -158,6 +158,12 @@ Vercel הוא מי שמארח את האתר. הוא מתחבר ל-GitHub, וכל
 > לא יכולה לראות נתונים של חברה אחרת. הכללים נאכפים בבסיס הנתונים
 > עצמו, ולא בקוד שרץ בדפדפן – כך שגם פנייה ישירה לשרת לא תעקוף אותם.
 
+> **הסקריפט בטוח להרצה חוזרת.** כל פקודה בו היא `if not exists` או
+> `create or replace`, ולכן אחרי כל עדכון של `supabase/schema.sql`
+> פשוט מריצים אותו שוב על אותו פרויקט – הוא מוסיף מה שחסר ואינו
+> נוגע בנתונים הקיימים. עדכון סכימה תמיד רץ **לפני** הפריסה של
+> הקוד שמשתמש בו, אחרת הקוד מבקש עמודה שעוד לא קיימת.
+
 ### אימות מייל – משאירים דלוק
 
 Supabase שולח מייל אימות לכל נרשם, ועד שלא לוחצים על הקישור אי
@@ -272,13 +278,14 @@ Redeploy, והעמודים מתעדכנים. שינוי מהותי בתנאים 
 > ולא לדפדפן – רק למשתני הסביבה של Vercel.
 > המפתח `anon` לעומת זאת מיועד לדפדפן ואינו סודי.
 
-### 5א. החיבור ל-Supabase ✅ הושלם
+### 5א. החיבור ל-Supabase
 
-הכתובת והמפתח של הפרויקט כבר בקוד, ב-`build-site.js`:
+הכתובת והמפתח **אינם בקוד**, בכוונה. `build-site.js` קורא אותם
+ממשתני סביבה בלבד:
 
 ```js
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://...supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_...';
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 ```
 
 הם נכתבים ל-`site/app/config.js` בכל פריסה, ולא לקובץ שבמאגר.
@@ -286,26 +293,33 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_...';
 של `app.html` והרצת הבדיקות ממשיכות במצב הדגמה ולעולם אינן נוגעות
 בנתונים של לקוחות אמיתיים.
 
-> **המפתח הזה אינו סודי.** הוא מיועד לרוץ בדפדפן של כל לקוח, ו-
+> **למה אין ברירת מחדל בקוד.** כתובת פרויקט קבועה בקוד שורדת את
+> הפרויקט עצמו: ביום שמעבירים אזור או מכבים פרויקט ישן, פריסה בלי
+> משתני סביבה הייתה ממשיכה להפנות לקוחות לבסיס נתונים מת – בלי
+> הודעה. בלי המשתנים האלה האתר נבנה במצב הדגמה מוצהר, עם באנר
+> צהוב, והבנייה מדפיסה אזהרה.
+
+> **המפתח הציבורי אינו סודי.** הוא מיועד לרוץ בדפדפן של כל לקוח, ו-
 > Supabase עצמה מגדירה אותו כ"בטוח לשיתוף פומבי". מה שמגן על
 > הנתונים הוא כללי ההרשאה שב-`supabase/schema.sql`, שנאכפים בבסיס
 > הנתונים עצמו.
->
-> **להחלפת מפתח** אין צורך לגעת בקוד: מגדירים `SUPABASE_URL` ו-
-> `SUPABASE_ANON_KEY` כמשתני סביבה ב-Vercel, והם גוברים.
 
 ---
 
 ### 5ב. משתני הסביבה ב-Vercel
 
-**Vercel → Project → Settings → Environment Variables**, והוסף שניים:
+**Vercel → Project → Settings → Environment Variables**, והוסף שלושה:
 
-| Name | Value |
-|------|-------|
-| `SUPABASE_URL` | אותה כתובת Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | המפתח `service_role` |
+| Name | Value | סוג |
+|------|-------|-----|
+| `SUPABASE_URL` | כתובת Project URL, בלי `/rest/v1/` ובלי לוכסן בסוף | Config |
+| `SUPABASE_ANON_KEY` | ה-Publishable key (`sb_publishable_…`) | Config |
+| `SUPABASE_SERVICE_ROLE_KEY` | ה-Secret key (`sb_secret_…`) | **Secret** |
 
 סמן את שלושת הסביבות (Production, Preview, Development) ולחץ **Save**.
+
+> את ה-Secret key מעתיקים מ-Supabase ישירות לתיבה הזו. לא לקובץ,
+> לא לצ׳אט, לא לוואטסאפ.
 
 אחרי ההוספה לחץ **Deployments → … → Redeploy** כדי שהמשתנים ייכנסו
 לתוקף.

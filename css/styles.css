@@ -1123,3 +1123,17 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .confirm-line { margin: 0 0 10px; font-size: 14px; line-height: 1.7; color: var(--muted); }
 .confirm-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
 .confirm-card.tone-danger .btn.primary { background: var(--err); border-color: var(--err); }
+
+/* ===== מצב ההזמנה בטבלת המשתמשים =====
+   השורה אומרת קודם מה המצב ורק אחר כך מציעה פעולה, כדי שמנהל
+   לא ישלח קישור שלישי למי שכבר בפנים. */
+.invite-cell { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.invite-chip {
+  border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700;
+  white-space: nowrap; background: var(--surface); color: var(--muted);
+  border: 1px solid var(--line);
+}
+.invite-chip.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+.invite-chip.info { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
+.invite-chip.warning { background: var(--badge-warn); color: #fff; border-color: var(--badge-warn); }
+.invite-actions { display: flex; flex-wrap: wrap; gap: 6px; }

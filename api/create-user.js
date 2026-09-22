@@ -115,7 +115,11 @@ module.exports = async function handler(req, res) {
     name: String(input.name || '').trim() || email,
     role: role,
     employee_id: input.employeeId || null,
-    active: true
+    active: true,
+    /* מתי נשלחה ההזמנה. בלי זה המנהל אינו יודע אם העובד עוד לא
+       הספיק להיכנס או שהקישור פג לפני שבוע. משתמש שנוצר עם סיסמה
+       לא הוזמן כלל, ולכן אין לו תאריך. */
+    invited_at: withPassword ? null : new Date().toISOString()
   };
 
   const linked = await callSupabase(url, '/rest/v1/company_users', serviceKey, {
@@ -135,6 +139,7 @@ module.exports = async function handler(req, res) {
   return send(res, 200, {
     id: saved.id, email: saved.email, name: saved.name,
     role: saved.role, employeeId: saved.employee_id, active: saved.active,
+    invitedAt: saved.invited_at || null, joinedAt: saved.joined_at || null,
     /* המסך אומר למנהל מה בעצם קרה: נשלחה הזמנה, או נקבעה סיסמה */
     invited: !withPassword
   });

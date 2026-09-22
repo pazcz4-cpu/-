@@ -38,6 +38,18 @@ create table if not exists public.company_users (
 
 create index if not exists company_users_company_idx on public.company_users (company_id);
 
+-- מצב ההזמנה. מנהל שמזמין עובד צריך לדעת אם ההזמנה הגיעה ליעדה:
+-- מתי נשלחה, ואם המוזמן כבר נכנס בפעם הראשונה. בלי זה אי אפשר
+-- להבדיל בין "עוד לא הספיק" לבין "הקישור אבד" – והמנהל שולח שוב
+-- ושוב לעובד שכבר בפנים.
+--   invited_at  מתי נשלחה ההזמנה האחרונה (נקבע בשרת, ומתעדכן
+--               בשליחה חוזרת כדי שספירת התוקף תתחיל מחדש)
+--   joined_at   מתי המוזמן נכנס בפעם הראשונה. את זה כותב רק הוא
+--               על עצמו, דרך mark_self_joined.
+alter table public.company_users
+  add column if not exists invited_at timestamptz,
+  add column if not exists joined_at  timestamptz;
+
 -- פרטי המנוי אצל ספק התשלומים. נכתבים אך ורק בידי השרת, בתגובה
 -- ל-webhook מהספק – לעולם לא בידי הדפדפן.
 alter table public.companies
@@ -133,6 +145,20 @@ security definer
 set search_path = public
 as $$
   select coalesce(public.current_role_name() in ('owner', 'manager'), false)
+$$;
+
+-- מסמן שהמשתמש הנוכחי נכנס. security definer כדי שיוכל לכתוב
+-- עמודה שאינה פתוחה לכתיבה מהדפדפן, ומוגבל לשורה של הקורא בלבד.
+-- נכתב פעם אחת: כניסה שנייה אינה משנה את התאריך הראשון.
+create or replace function public.mark_self_joined()
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.company_users
+     set joined_at = now()
+   where id = auth.uid() and joined_at is null
 $$;
 
 -- RLS: הפעלת בידוד
@@ -444,6 +470,7 @@ grant execute on function public.current_company_id()                           
 grant execute on function public.current_role_name()                             to authenticated;
 grant execute on function public.current_employee_id()                           to authenticated;
 grant execute on function public.is_manager()                                    to authenticated;
+grant execute on function public.mark_self_joined()                               to authenticated;
 grant execute on function public.constraints_deadline(uuid, text)                to authenticated;
 
 -- חברות: קריאה בלבד, ושינוי השם בלבד. פתיחת חברה נעשית דרך
@@ -456,7 +483,10 @@ grant update (name) on public.companies to authenticated;
 -- כי היא דורשת מפתח ניהול.
 revoke all on public.company_users from authenticated;
 grant select on public.company_users to authenticated;
-grant update (name, role, employee_id, active) on public.company_users to authenticated;
+-- invited_at פתוח למנהל כדי ששליחה חוזרת תאפס את שעון התוקף.
+-- joined_at אינו פתוח לאיש: אותו כותב רק המוזמן על עצמו,
+-- דרך mark_self_joined, כדי ש"הצטרף" יהיה עובדה ולא הצהרה.
+grant update (name, role, employee_id, active, invited_at) on public.company_users to authenticated;
 
 grant select, insert, update, delete on public.company_configs to authenticated;
 grant select, insert, update, delete on public.company_weeks   to authenticated;

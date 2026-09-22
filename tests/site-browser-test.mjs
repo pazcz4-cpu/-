@@ -4,7 +4,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -14,6 +14,17 @@ catch (err) { ({ chromium } = await import('/opt/node22/lib/node_modules/playwri
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 4179;
 const BASE = 'http://localhost:' + PORT;
+
+/* בונים כאן, ועם משתני סביבה – בדיוק כמו Vercel. אין בקוד ערך
+   ברירת מחדל לפרויקט, ולכן בנייה בלי המשתנים היא בנייה להדגמה. */
+const BUILD_URL = 'https://build-test.supabase.co';
+const BUILD_KEY = 'sb_publishable_build_test_0123456789';
+function build(env) {
+  spawnSync(process.execPath, [path.join(here, '..', 'build-site.js')], {
+    stdio: 'ignore', env: Object.assign({}, process.env, env)
+  });
+}
+build({ SUPABASE_URL: BUILD_URL, SUPABASE_ANON_KEY: BUILD_KEY });
 
 const server = spawn(process.execPath, [path.join(here, '..', 'tools', 'serve.js'), String(PORT)], {
   stdio: 'ignore'
@@ -278,6 +289,19 @@ try {
   for (const asset of ['/css/styles.css', '/css/landing.css', '/js/app.js', '/js/i18n/ar.js', '/sw.js']) {
     check(asset, (await page.request.get(BASE + asset)).status(), 200);
   }
+
+  /* ההפך: בנייה בלי משתני סביבה. עד היום הייתה כאן כתובת פרויקט
+     קבועה בקוד, ובנייה כזו הייתה מפנה לקוחות לבסיס נתונים שאולי
+     כבר כבוי – בשקט. עכשיו היא מוצהרת כהדגמה. */
+  console.log('\n== בנייה בלי משתני סביבה ==');
+  build({ SUPABASE_URL: '', SUPABASE_ANON_KEY: '' });
+  await page.goto(BASE + '/app/');
+  await page.waitForTimeout(600);
+  check('אין כתובת פרויקט קבועה בקוד',
+    await page.evaluate(() => (window.SHIFT_CONFIG || {}).supabaseUrl || ''), '');
+  check('והאתר מצהיר שהוא בהדגמה',
+    await page.locator('#demo-banner').isVisible(), true);
+  build({ SUPABASE_URL: BUILD_URL, SUPABASE_ANON_KEY: BUILD_KEY });
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

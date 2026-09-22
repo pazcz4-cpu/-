@@ -370,6 +370,7 @@
         url: config.supabaseUrl,
         anonKey: config.supabaseAnonKey,
         adminEndpoint: config.adminEndpoint || '/api/create-user',
+        cancelEndpoint: config.cancelEndpoint || '/api/cancel-invite',
         storage: window.localStorage
       });
     } else {

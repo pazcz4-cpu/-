@@ -1173,6 +1173,102 @@ run('הזמנת משתמש נשלחת בלי סיסמה', function () {
   });
 });
 
+console.log('\n== מצב ההזמנות ==');
+
+run('רשימת המשתמשים מביאה גם את תאריכי ההזמנה וההצטרפות', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'boss3@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
+  }).then(function (session) {
+    /* המוזמן יושב בטבלה עם תאריך הזמנה ובלי תאריך הצטרפות */
+    server.companyUsers['invited-1'] = {
+      id: 'invited-1', company_id: session.company.id, email: 'p@link.test',
+      name: 'מוזמן', role: 'employee', employee_id: null, active: true,
+      invited_at: '2026-09-20T08:00:00.000Z', joined_at: null,
+      created_at: '2026-09-20T08:00:00.000Z'
+    };
+    return backend.listUsers();
+  }).then(function (users) {
+    var row = users.filter(function (u) { return u.email === 'p@link.test'; })[0];
+    assert(row, 'המוזמן לא הוחזר');
+    assertEqual(row.invitedAt, '2026-09-20T08:00:00.000Z', 'תאריך ההזמנה לא הוחזר');
+    assertEqual(row.joinedAt, null, 'תאריך הצטרפות הומצא');
+    var call = server.calls.filter(function (c) {
+      return c.method === 'GET' && c.path.indexOf('company_users') !== -1 &&
+        c.query.indexOf('company_id=eq.') !== -1;
+    }).pop();
+    assert(call.query.indexOf('invited_at') !== -1, 'השאילתה אינה מבקשת invited_at');
+    assert(call.query.indexOf('joined_at') !== -1, 'השאילתה אינה מבקשת joined_at');
+  });
+});
+
+run('הכניסה הראשונה מסמנת הצטרפות, והשנייה כבר לא', function () {
+  var server = new FakeSupabase();
+  var storage = memoryStorage();
+  var backend = makeBackend(server, storage);
+  function joinCalls() {
+    return server.calls.filter(function (c) {
+      return c.path === '/rest/v1/rpc/mark_self_joined';
+    }).length;
+  }
+  return backend.signUpCompany({
+    email: 'boss4@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
+  }).then(function (session) {
+    assertEqual(joinCalls(), 1, 'הכניסה הראשונה לא נרשמה');
+    /* עכשיו השורה נושאת תאריך, כמו אחרי הכתיבה האמיתית */
+    server.companyUsers[session.user.id].joined_at = '2026-09-20T08:00:00.000Z';
+    return makeBackend(server, storage).restore();
+  }).then(function () {
+    assertEqual(joinCalls(), 1, 'הכניסה השנייה דרסה את התאריך הראשון');
+  });
+});
+
+run('שליחה חוזרת שולחת קישור ומאפסת את שעון התוקף', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'boss5@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
+  }).then(function (session) {
+    server.companyUsers['invited-5'] = {
+      id: 'invited-5', company_id: session.company.id, email: 'old@link.test',
+      name: 'מוזמן', role: 'employee', employee_id: null, active: true,
+      invited_at: '2026-01-01T08:00:00.000Z', joined_at: null,
+      created_at: '2026-01-01T08:00:00.000Z'
+    };
+    return backend.resendInvite({ id: 'invited-5', email: 'Old@Link.test' });
+  }).then(function () {
+    assertEqual(server.recoverCalls.length, 1, 'לא נשלח קישור');
+    assertEqual(server.recoverCalls[0].email, 'old@link.test', 'הכתובת לא נורמלה');
+    var fresh = server.companyUsers['invited-5'].invited_at;
+    assert(fresh !== '2026-01-01T08:00:00.000Z', 'תאריך ההזמנה לא התעדכן');
+    assertEqual(Model.inviteState({ invitedAt: fresh }), 'pending', 'ההזמנה לא חזרה לתוקף');
+  });
+});
+
+run('ביטול הזמנה עובר בשרת, כי מחיקה דורשת מפתח ניהול', function () {
+  var server = new FakeSupabase();
+  server.serverRoutes = {
+    '/api/cancel-invite': { status: 200, body: { id: 'invited-6', cancelled: true } }
+  };
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'boss6@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
+  }).then(function () {
+    return backend.cancelInvite('invited-6');
+  }).then(function (result) {
+    assertEqual(result.cancelled, true, 'הביטול לא אושר');
+    var call = server.calls.filter(function (c) { return c.path === '/api/cancel-invite'; })[0];
+    assert(call, 'הבקשה לא נשלחה לשרת שלנו');
+    assertEqual(call.body.userId, 'invited-6', 'המשתמש לא נשלח');
+    /* מחיקה ישירה מהדפדפן היא בדיוק מה שאסור */
+    var direct = server.calls.filter(function (c) {
+      return c.method === 'DELETE' && c.path.indexOf('company_users') !== -1;
+    });
+    assertEqual(direct.length, 0, 'הדפדפן ניסה למחוק משתמש בעצמו');
+  });
+});
+
 chain.then(function () {
   console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed ? 1 : 0);

@@ -23,6 +23,7 @@
     "test:password": "node tests/password-browser-test.mjs",
     "test:import": "node tests/import-browser-test.mjs",
     "test:employees": "node tests/employees-browser-test.mjs",
+    "test:invite": "node tests/invite-browser-test.mjs",
     "test:support": "node tests/support-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",
     "test:lang": "node tests/language-browser-test.mjs",

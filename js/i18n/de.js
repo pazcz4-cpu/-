@@ -280,6 +280,9 @@
 
       alerts: {
         group: {
+          staffingName: 'Besetzungslücken',
+          violationsName: 'Verstöße',
+          adviceName: 'Hinweise',
           staffing: { one: 'Eine Besetzungslücke', other: '{count} Besetzungslücken' },
           staffingNone: 'Vollständig besetzt',
           violations: { one: 'Ein Verstoß', other: '{count} Verstöße' },
@@ -395,8 +398,14 @@
       },
 
       publish: {
-        action: 'Plan veröffentlichen',
-        update: 'Änderungen veröffentlichen',
+        confirmTitle: 'Was jetzt hinausgeht',
+        confirmVisible: 'Nach der Veröffentlichung sieht Ihr Team den Plan sofort, und jede Person bekommt eine Benachrichtigung.',
+        confirmIssues: 'Er geht so hinaus, mit den verbliebenen Problemen. Sie können jetzt veröffentlichen und später korrigieren – gesehen ist aber gesehen.',
+        confirmClean: 'Keine Besetzungslücken und keine Verstöße.',
+        confirmYes: 'Veröffentlichen',
+        confirmNo: 'Zurück zum Korrigieren',
+        action: 'Prüfen und veröffentlichen',
+        update: 'Änderungen prüfen und veröffentlichen',
         revert: 'Zurück zum Entwurf',
         draft: 'Entwurf – Ihr Team sieht diesen Plan noch nicht',
         published: 'Veröffentlicht am {date} um {time}',

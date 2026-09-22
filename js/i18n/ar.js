@@ -280,6 +280,9 @@
 
       alerts: {
         group: {
+          staffingName: 'نقص في الطاقم',
+          violationsName: 'مخالفات',
+          adviceName: 'اقتراحات',
           staffing: { one: 'نقص واحد في الطاقم', other: '{count} حالات نقص في الطاقم' },
           staffingNone: 'الطاقم مكتمل',
           violations: { one: 'مخالفة واحدة', other: '{count} مخالفات' },
@@ -395,8 +398,14 @@
       },
 
       publish: {
-        action: 'نشر الجدول',
-        update: 'نشر التحديثات',
+        confirmTitle: 'ما الذي سيُنشر',
+        confirmVisible: 'بعد النشر يرى فريقك الجدول فورًا، ويصل تنبيه إلى كل واحد منهم.',
+        confirmIssues: 'سيخرج كما هو، بما بقي فيه من مشكلات. يمكنك النشر والتصحيح لاحقًا، لكن ما رآه الناس قد رأوه.',
+        confirmClean: 'لا نقص في الطاقم ولا مخالفات.',
+        confirmYes: 'نشر',
+        confirmNo: 'العودة للتصحيح',
+        action: 'مراجعة ونشر',
+        update: 'مراجعة ونشر التحديثات',
         revert: 'إرجاع إلى مسودة',
         draft: 'مسودة – فريقك لا يرى هذا الجدول بعد',
         published: 'نُشر في {date} الساعة {time}',

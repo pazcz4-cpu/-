@@ -1101,3 +1101,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 760px) {
   .list-tools #emp-search, .list-tools select { flex: 1 1 100%; }
 }
+
+/* ===== חלון אישור =====
+   כשהשאלה היא "לפרסם עם 17 חוסרים", המספרים הם העיקר ולכן הם
+   גדולים, ולא מוטמעים בתוך משפט. */
+.confirm-card { max-width: 460px; }
+.confirm-title { margin: 0 0 14px; font-size: 19px; text-wrap: balance; }
+.confirm-facts { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.confirm-fact {
+  flex: 1 1 130px; background: var(--surface-sunken); border: 1px solid var(--line);
+  border-radius: 11px; padding: 10px 13px; display: flex; flex-direction: column; gap: 2px;
+}
+.confirm-fact b { font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.confirm-fact span { font-size: 12.5px; color: var(--muted); }
+.confirm-fact.ok { border-color: var(--ok-line); background: var(--ok-bg); }
+.confirm-fact.ok b { color: var(--ok); }
+.confirm-fact.warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.confirm-fact.warn b { color: var(--warn); }
+.confirm-fact.bad { border-color: var(--err-line); background: var(--err-bg); }
+.confirm-fact.bad b { color: var(--err); }
+.confirm-line { margin: 0 0 10px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.confirm-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.confirm-card.tone-danger .btn.primary { background: var(--err); border-color: var(--err); }

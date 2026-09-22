@@ -280,6 +280,9 @@
 
       alerts: {
         group: {
+          staffingName: 'huecos de personal',
+          violationsName: 'infracciones',
+          adviceName: 'sugerencias',
           staffing: { one: 'Un hueco de personal', other: '{count} huecos de personal' },
           staffingNone: 'Personal completo',
           violations: { one: 'Una infracción', other: '{count} infracciones' },
@@ -395,8 +398,14 @@
       },
 
       publish: {
-        action: 'Publicar horario',
-        update: 'Publicar cambios',
+        confirmTitle: 'Lo que está a punto de salir',
+        confirmVisible: 'Tras publicar, tu equipo ve el horario al momento y cada persona recibe un aviso.',
+        confirmIssues: 'Sale tal como está, con los problemas que quedan. Puedes publicar y corregir después, pero lo que ya se ha visto, visto está.',
+        confirmClean: 'Sin huecos de personal y sin infracciones.',
+        confirmYes: 'Publicar',
+        confirmNo: 'Volver a corregir',
+        action: 'Revisar y publicar',
+        update: 'Revisar y publicar cambios',
         revert: 'Volver a borrador',
         draft: 'Borrador: tu equipo aún no ve este horario',
         published: 'Publicado el {date} a las {time}',

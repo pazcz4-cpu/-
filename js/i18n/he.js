@@ -285,6 +285,9 @@
 
       alerts: {
         group: {
+          staffingName: 'בעיות איוש',
+          violationsName: 'הפרות',
+          adviceName: 'המלצות',
           staffing: { one: 'בעיית איוש אחת', other: '{count} בעיות איוש' },
           staffingNone: 'האיוש מלא',
           violations: { one: 'הפרה אחת', other: '{count} הפרות' },
@@ -400,8 +403,14 @@
       },
 
       publish: {
-        action: 'פרסום הסידור',
-        update: 'פרסום העדכונים',
+        confirmTitle: 'מה עומד להתפרסם',
+        confirmVisible: 'אחרי הפרסום העובדים רואים את הסידור מיד, וכל אחד מהם מקבל התראה.',
+        confirmIssues: 'הסידור ייצא כמו שהוא, על הבעיות שנשארו בו. אפשר לפרסם ולתקן אחר כך, אבל מה שכבר נראה — נראה.',
+        confirmClean: 'אין בסידור חוסרים ואין הפרות.',
+        confirmYes: 'פרסום',
+        confirmNo: 'חזרה לתיקון',
+        action: 'בדיקה ופרסום',
+        update: 'בדיקה ופרסום העדכונים',
         revert: 'החזרה לטיוטה',
         draft: 'טיוטה – העובדים עדיין אינם רואים את הסידור',
         published: 'פורסם ב־{date} בשעה {time}',

@@ -280,6 +280,9 @@
 
       alerts: {
         group: {
+          staffingName: 'manques d’effectif',
+          violationsName: 'infractions',
+          adviceName: 'suggestions',
           staffing: { one: 'Un manque d’effectif', other: '{count} manques d’effectif' },
           staffingNone: 'Effectif complet',
           violations: { one: 'Une infraction', other: '{count} infractions' },
@@ -395,8 +398,14 @@
       },
 
       publish: {
-        action: 'Publier le planning',
-        update: 'Publier les modifications',
+        confirmTitle: 'Ce qui va être publié',
+        confirmVisible: 'Une fois publié, votre équipe voit le planning immédiatement et chacun reçoit une notification.',
+        confirmIssues: 'Il part tel quel, avec les problèmes qui restent. Vous pouvez publier et corriger ensuite, mais ce qui a été vu a été vu.',
+        confirmClean: 'Aucun manque d’effectif et aucune infraction.',
+        confirmYes: 'Publier',
+        confirmNo: 'Revenir aux corrections',
+        action: 'Vérifier et publier',
+        update: 'Vérifier et publier les modifications',
         revert: 'Repasser en brouillon',
         draft: 'Brouillon – votre équipe ne voit pas encore ce planning',
         published: 'Publié le {date} à {time}',

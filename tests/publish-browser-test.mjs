@@ -71,12 +71,46 @@ try {
   const draft = await stateOf(page);
   check('הסטטוס אומר טיוטה', draft.label, /טיוטה/);
   check('ומסביר שהעובדים אינם רואים', draft.label, /אינם רואים/);
-  check('הכפתור מציע לפרסם', draft.button, 'פרסום הסידור');
+  check('הכפתור מציע לבדוק ולפרסם', draft.button, 'בדיקה ופרסום');
   check('והוא פעיל', draft.disabled, false);
   check('אין החזרה לטיוטה במצב טיוטה', draft.revertHidden, true);
 
+  console.log('\n== אישור לפני פרסום ==');
+  await page.click('#publish-week');
+  await page.waitForTimeout(400);
+  check('נפתח חלון אישור, ולא פורסם מיד',
+    await page.locator('#confirm-overlay .confirm-card').isVisible(), true);
+  check('עדיין טיוטה', (await stateOf(page)).label, /טיוטה/);
+  const facts = await page.locator('.confirm-fact').allInnerTexts();
+  check('שני מספרים מוצגים', facts.length, 2);
+  /* המספר בחלון חייב להיות אותו מספר שבהתראות. שני מקורות אמת
+     לאותו נתון הם בדיוק מה שמפיל אמון. */
+  check('המספרים הם אלה שבהתראות',
+    facts.map((text) => (text.match(/\d+/) || ['?'])[0]).join(','),
+    await page.evaluate(() => {
+      const chips = Array.from(document.querySelectorAll('.issue-chip'));
+      const num = (name) => {
+        const chip = chips.find((c) => c.dataset.group === name);
+        return (chip.textContent.match(/\d+/) || ['0'])[0];
+      };
+      return num('staffing') + ',' + num('violations');
+    }));
+  check('התווית היא שם הקבוצה', facts.join(' '), /בעיות איוש[\s\S]*הפרות/);
+  check('נאמר שהעובדים יראו מיד',
+    (await page.locator('.confirm-line').allInnerTexts()).join(' '), /רואים את הסידור מיד/);
+
+  console.log('\n== ביטול משאיר בטיוטה ==');
+  await page.click('[data-confirm-no]');
+  await page.waitForTimeout(400);
+  check('החלון נסגר', await page.locator('#confirm-overlay').isHidden(), true);
+  check('והסידור נשאר טיוטה', (await stateOf(page)).label, /טיוטה/);
+  check('והשרת לא יודע על פרסום', await page.evaluate(
+    () => window.__backend.loadWeek(window.ShiftApp.weekKey()).then((w) => !!w.published)), false);
+
   console.log('\n== פרסום ==');
   await page.click('#publish-week');
+  await page.waitForTimeout(400);
+  await page.click('[data-confirm-yes]');
   await page.waitForTimeout(900);
   const published = await stateOf(page);
   check('הסטטוס מציג תאריך ושעה', published.label, /פורסם ב־\d+\/\d+ בשעה \d+:\d+/);
@@ -97,10 +131,12 @@ try {
   const changed = await stateOf(page);
   check('הסטטוס אומר "שונה מאז הפרסום"', changed.label, /שונה מאז הפרסום ב־\d+\/\d+/);
   check('הסימון מתריע', changed.cls, /changed/);
-  check('הכפתור מציע לפרסם את העדכונים', changed.button, 'פרסום העדכונים');
+  check('הכפתור מציע לבדוק ולפרסם את העדכונים', changed.button, 'בדיקה ופרסום העדכונים');
   check('והוא פעיל שוב', changed.disabled, false);
 
   await page.click('#publish-week');
+  await page.waitForTimeout(400);
+  await page.click('[data-confirm-yes]');
   await page.waitForTimeout(900);
   check('פרסום העדכונים מחזיר למצב "פורסם"', (await stateOf(page)).cls, /published/);
 

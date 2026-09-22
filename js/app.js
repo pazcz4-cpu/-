@@ -1569,10 +1569,13 @@
     if ($('#publish-week')) {
       $('#publish-week').addEventListener('click', function () {
         if (blocked()) return;
-        Store.markPublished(week());
-        persist('week');
-        render();
-        toast(t('publish.publishedNow'));
+        askBeforePublish().then(function (go) {
+          if (!go) return;
+          Store.markPublished(week());
+          persist('week');
+          render();
+          toast(t('publish.publishedNow'));
+        });
       });
 
       $('#unpublish-week').addEventListener('click', function () {
@@ -2453,6 +2456,44 @@
     renderSaveState();
   }
 
+  /* פרסום הוא הרגע שבו הסידור הופך למה שהעובדים רואים, והוא אינו
+     נסוג בלחיצה אחת: מי שכבר ראה אותו וסידר את השבוע לפיו לא
+     "מבטל" את זה. לכן לפניו מוצג מה בדיוק עומד להתפרסם – ובראש
+     ובראשונה כמה בעיות נשארו פתוחות בו. */
+  function askBeforePublish() {
+    if (!window.ShiftConfirmUI) return Promise.resolve(true);
+
+    var groups = {};
+    (lastReport.groups || []).forEach(function (group) { groups[group.name] = group.count; });
+    var staffing = groups.staffing || 0;
+    var violations = groups.violations || 0;
+
+    /* המספר מוצג בגדול, ולכן התווית היא שם הקבוצה בלבד ולא משפט
+       שחוזר על המספר */
+    var facts = [
+      { label: t('alerts.group.staffingName'), value: staffing,
+        tone: staffing ? 'warn' : 'ok' },
+      { label: t('alerts.group.violationsName'), value: violations,
+        tone: violations ? 'bad' : 'ok' }
+    ];
+
+    var lines = [t('publish.confirmVisible')];
+    if (!staffing && !violations) {
+      lines.unshift(t('publish.confirmClean'));
+    } else {
+      lines.unshift(t('publish.confirmIssues'));
+    }
+
+    return window.ShiftConfirmUI.ask({
+      title: t('publish.confirmTitle'),
+      facts: facts,
+      lines: lines,
+      tone: violations ? 'danger' : '',
+      confirmLabel: t('publish.confirmYes'),
+      cancelLabel: t('publish.confirmNo')
+    });
+  }
+
   /* ========== טיוטה ופרסום ==========
      בלי פרסום מפורש הסידור נשאר טיוטה, והעובדים אינם רואים אותו.
      לכן הסטטוס נמצא ליד הכפתור ולא במסך אחר: השאלה "העובדים כבר
@@ -2480,6 +2521,8 @@
     label.textContent = t('publish.' + mode, when);
 
     button.classList.remove('hidden');
+    /* "בדיקה ופרסום" ולא "פרסום": הלחיצה פותחת את מה שעומד
+       להתפרסם, ואינה מפרסמת בעצמה. */
     button.textContent = t(mode === Store.PUBLISH_STATE.CHANGED ? 'publish.update' : 'publish.action');
     /* מפתח התרגום נקבע לפי המצב, ולכן החלפת שפה מצוירת מכאן */
     button.removeAttribute('data-i18n');

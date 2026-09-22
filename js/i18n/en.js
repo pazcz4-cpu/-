@@ -286,6 +286,9 @@
 
       alerts: {
         group: {
+          staffingName: 'staffing gaps',
+          violationsName: 'violations',
+          adviceName: 'suggestions',
           staffing: { one: 'One staffing gap', other: '{count} staffing gaps' },
           staffingNone: 'Fully staffed',
           violations: { one: 'One violation', other: '{count} violations' },
@@ -401,8 +404,14 @@
       },
 
       publish: {
-        action: 'Publish schedule',
-        update: 'Publish updates',
+        confirmTitle: 'What is about to go out',
+        confirmVisible: 'Once published, your staff see the schedule immediately and each of them gets a notification.',
+        confirmIssues: 'It goes out as it is, with the problems still in it. You can publish now and fix later, but what has been seen has been seen.',
+        confirmClean: 'No staffing gaps and no violations.',
+        confirmYes: 'Publish',
+        confirmNo: 'Back to fixing',
+        action: 'Review and publish',
+        update: 'Review and publish updates',
         revert: 'Back to draft',
         draft: 'Draft – your staff cannot see this schedule yet',
         published: 'Published on {date} at {time}',

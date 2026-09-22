@@ -280,6 +280,9 @@
 
       alerts: {
         group: {
+          staffingName: 'falhas de pessoal',
+          violationsName: 'infrações',
+          adviceName: 'sugestões',
           staffing: { one: 'Uma falha de pessoal', other: '{count} falhas de pessoal' },
           staffingNone: 'Pessoal completo',
           violations: { one: 'Uma infração', other: '{count} infrações' },
@@ -395,8 +398,14 @@
       },
 
       publish: {
-        action: 'Publicar horário',
-        update: 'Publicar alterações',
+        confirmTitle: 'O que está prestes a sair',
+        confirmVisible: 'Depois de publicares, a tua equipa vê o horário de imediato e cada pessoa recebe um aviso.',
+        confirmIssues: 'Sai como está, com os problemas que ficaram. Podes publicar e corrigir depois, mas o que já foi visto foi visto.',
+        confirmClean: 'Sem falhas de pessoal e sem infrações.',
+        confirmYes: 'Publicar',
+        confirmNo: 'Voltar a corrigir',
+        action: 'Rever e publicar',
+        update: 'Rever e publicar alterações',
         revert: 'Voltar a rascunho',
         draft: 'Rascunho – a tua equipa ainda não vê este horário',
         published: 'Publicado a {date} às {time}',

@@ -1109,6 +1109,28 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   .list-tools #emp-search, .list-tools select { flex: 1 1 100%; }
 }
 
+/* ===== חלון אישור =====
+   כשהשאלה היא "לפרסם עם 17 חוסרים", המספרים הם העיקר ולכן הם
+   גדולים, ולא מוטמעים בתוך משפט. */
+.confirm-card { max-width: 460px; }
+.confirm-title { margin: 0 0 14px; font-size: 19px; text-wrap: balance; }
+.confirm-facts { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.confirm-fact {
+  flex: 1 1 130px; background: var(--surface-sunken); border: 1px solid var(--line);
+  border-radius: 11px; padding: 10px 13px; display: flex; flex-direction: column; gap: 2px;
+}
+.confirm-fact b { font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.confirm-fact span { font-size: 12.5px; color: var(--muted); }
+.confirm-fact.ok { border-color: var(--ok-line); background: var(--ok-bg); }
+.confirm-fact.ok b { color: var(--ok); }
+.confirm-fact.warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.confirm-fact.warn b { color: var(--warn); }
+.confirm-fact.bad { border-color: var(--err-line); background: var(--err-bg); }
+.confirm-fact.bad b { color: var(--err); }
+.confirm-line { margin: 0 0 10px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.confirm-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.confirm-card.tone-danger .btn.primary { background: var(--err); border-color: var(--err); }
+
 </style>
 </head>
 <body>
@@ -1804,6 +1826,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'staffing gaps',
+          violationsName: 'violations',
+          adviceName: 'suggestions',
           staffing: { one: 'One staffing gap', other: '{count} staffing gaps' },
           staffingNone: 'Fully staffed',
           violations: { one: 'One violation', other: '{count} violations' },
@@ -1919,8 +1944,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Publish schedule',
-        update: 'Publish updates',
+        confirmTitle: 'What is about to go out',
+        confirmVisible: 'Once published, your staff see the schedule immediately and each of them gets a notification.',
+        confirmIssues: 'It goes out as it is, with the problems still in it. You can publish now and fix later, but what has been seen has been seen.',
+        confirmClean: 'No staffing gaps and no violations.',
+        confirmYes: 'Publish',
+        confirmNo: 'Back to fixing',
+        action: 'Review and publish',
+        update: 'Review and publish updates',
         revert: 'Back to draft',
         draft: 'Draft – your staff cannot see this schedule yet',
         published: 'Published on {date} at {time}',
@@ -2562,6 +2593,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'בעיות איוש',
+          violationsName: 'הפרות',
+          adviceName: 'המלצות',
           staffing: { one: 'בעיית איוש אחת', other: '{count} בעיות איוש' },
           staffingNone: 'האיוש מלא',
           violations: { one: 'הפרה אחת', other: '{count} הפרות' },
@@ -2677,8 +2711,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'פרסום הסידור',
-        update: 'פרסום העדכונים',
+        confirmTitle: 'מה עומד להתפרסם',
+        confirmVisible: 'אחרי הפרסום העובדים רואים את הסידור מיד, וכל אחד מהם מקבל התראה.',
+        confirmIssues: 'הסידור ייצא כמו שהוא, על הבעיות שנשארו בו. אפשר לפרסם ולתקן אחר כך, אבל מה שכבר נראה — נראה.',
+        confirmClean: 'אין בסידור חוסרים ואין הפרות.',
+        confirmYes: 'פרסום',
+        confirmNo: 'חזרה לתיקון',
+        action: 'בדיקה ופרסום',
+        update: 'בדיקה ופרסום העדכונים',
         revert: 'החזרה לטיוטה',
         draft: 'טיוטה – העובדים עדיין אינם רואים את הסידור',
         published: 'פורסם ב־{date} בשעה {time}',
@@ -3315,6 +3355,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'huecos de personal',
+          violationsName: 'infracciones',
+          adviceName: 'sugerencias',
           staffing: { one: 'Un hueco de personal', other: '{count} huecos de personal' },
           staffingNone: 'Personal completo',
           violations: { one: 'Una infracción', other: '{count} infracciones' },
@@ -3430,8 +3473,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Publicar horario',
-        update: 'Publicar cambios',
+        confirmTitle: 'Lo que está a punto de salir',
+        confirmVisible: 'Tras publicar, tu equipo ve el horario al momento y cada persona recibe un aviso.',
+        confirmIssues: 'Sale tal como está, con los problemas que quedan. Puedes publicar y corregir después, pero lo que ya se ha visto, visto está.',
+        confirmClean: 'Sin huecos de personal y sin infracciones.',
+        confirmYes: 'Publicar',
+        confirmNo: 'Volver a corregir',
+        action: 'Revisar y publicar',
+        update: 'Revisar y publicar cambios',
         revert: 'Volver a borrador',
         draft: 'Borrador: tu equipo aún no ve este horario',
         published: 'Publicado el {date} a las {time}',
@@ -4068,6 +4117,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'manques d’effectif',
+          violationsName: 'infractions',
+          adviceName: 'suggestions',
           staffing: { one: 'Un manque d’effectif', other: '{count} manques d’effectif' },
           staffingNone: 'Effectif complet',
           violations: { one: 'Une infraction', other: '{count} infractions' },
@@ -4183,8 +4235,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Publier le planning',
-        update: 'Publier les modifications',
+        confirmTitle: 'Ce qui va être publié',
+        confirmVisible: 'Une fois publié, votre équipe voit le planning immédiatement et chacun reçoit une notification.',
+        confirmIssues: 'Il part tel quel, avec les problèmes qui restent. Vous pouvez publier et corriger ensuite, mais ce qui a été vu a été vu.',
+        confirmClean: 'Aucun manque d’effectif et aucune infraction.',
+        confirmYes: 'Publier',
+        confirmNo: 'Revenir aux corrections',
+        action: 'Vérifier et publier',
+        update: 'Vérifier et publier les modifications',
         revert: 'Repasser en brouillon',
         draft: 'Brouillon – votre équipe ne voit pas encore ce planning',
         published: 'Publié le {date} à {time}',
@@ -4821,6 +4879,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'نقص في الطاقم',
+          violationsName: 'مخالفات',
+          adviceName: 'اقتراحات',
           staffing: { one: 'نقص واحد في الطاقم', other: '{count} حالات نقص في الطاقم' },
           staffingNone: 'الطاقم مكتمل',
           violations: { one: 'مخالفة واحدة', other: '{count} مخالفات' },
@@ -4936,8 +4997,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'نشر الجدول',
-        update: 'نشر التحديثات',
+        confirmTitle: 'ما الذي سيُنشر',
+        confirmVisible: 'بعد النشر يرى فريقك الجدول فورًا، ويصل تنبيه إلى كل واحد منهم.',
+        confirmIssues: 'سيخرج كما هو، بما بقي فيه من مشكلات. يمكنك النشر والتصحيح لاحقًا، لكن ما رآه الناس قد رأوه.',
+        confirmClean: 'لا نقص في الطاقم ولا مخالفات.',
+        confirmYes: 'نشر',
+        confirmNo: 'العودة للتصحيح',
+        action: 'مراجعة ونشر',
+        update: 'مراجعة ونشر التحديثات',
         revert: 'إرجاع إلى مسودة',
         draft: 'مسودة – فريقك لا يرى هذا الجدول بعد',
         published: 'نُشر في {date} الساعة {time}',
@@ -5574,6 +5641,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'нехватка людей',
+          violationsName: 'нарушения',
+          adviceName: 'рекомендации',
           staffing: { one: 'Одна нехватка людей', other: 'Нехваток людей: {count}' },
           staffingNone: 'Людей хватает',
           violations: { one: 'Одно нарушение', other: 'Нарушений: {count}' },
@@ -5689,8 +5759,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Опубликовать график',
-        update: 'Опубликовать изменения',
+        confirmTitle: 'Что сейчас уйдёт сотрудникам',
+        confirmVisible: 'После публикации сотрудники сразу видят график, и каждый получает уведомление.',
+        confirmIssues: 'Он уйдёт как есть, вместе с оставшимися проблемами. Можно опубликовать и поправить потом, но увиденное уже увидено.',
+        confirmClean: 'Нет ни нехватки людей, ни нарушений.',
+        confirmYes: 'Опубликовать',
+        confirmNo: 'Вернуться к правкам',
+        action: 'Проверить и опубликовать',
+        update: 'Проверить и опубликовать изменения',
         revert: 'Вернуть в черновик',
         draft: 'Черновик — сотрудники пока не видят этот график',
         published: 'Опубликован {date} в {time}',
@@ -6327,6 +6403,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'Besetzungslücken',
+          violationsName: 'Verstöße',
+          adviceName: 'Hinweise',
           staffing: { one: 'Eine Besetzungslücke', other: '{count} Besetzungslücken' },
           staffingNone: 'Vollständig besetzt',
           violations: { one: 'Ein Verstoß', other: '{count} Verstöße' },
@@ -6442,8 +6521,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Plan veröffentlichen',
-        update: 'Änderungen veröffentlichen',
+        confirmTitle: 'Was jetzt hinausgeht',
+        confirmVisible: 'Nach der Veröffentlichung sieht Ihr Team den Plan sofort, und jede Person bekommt eine Benachrichtigung.',
+        confirmIssues: 'Er geht so hinaus, mit den verbliebenen Problemen. Sie können jetzt veröffentlichen und später korrigieren – gesehen ist aber gesehen.',
+        confirmClean: 'Keine Besetzungslücken und keine Verstöße.',
+        confirmYes: 'Veröffentlichen',
+        confirmNo: 'Zurück zum Korrigieren',
+        action: 'Prüfen und veröffentlichen',
+        update: 'Änderungen prüfen und veröffentlichen',
         revert: 'Zurück zum Entwurf',
         draft: 'Entwurf – Ihr Team sieht diesen Plan noch nicht',
         published: 'Veröffentlicht am {date} um {time}',
@@ -7080,6 +7165,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       alerts: {
         group: {
+          staffingName: 'falhas de pessoal',
+          violationsName: 'infrações',
+          adviceName: 'sugestões',
           staffing: { one: 'Uma falha de pessoal', other: '{count} falhas de pessoal' },
           staffingNone: 'Pessoal completo',
           violations: { one: 'Uma infração', other: '{count} infrações' },
@@ -7195,8 +7283,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       publish: {
-        action: 'Publicar horário',
-        update: 'Publicar alterações',
+        confirmTitle: 'O que está prestes a sair',
+        confirmVisible: 'Depois de publicares, a tua equipa vê o horário de imediato e cada pessoa recebe um aviso.',
+        confirmIssues: 'Sai como está, com os problemas que ficaram. Podes publicar e corrigir depois, mas o que já foi visto foi visto.',
+        confirmClean: 'Sem falhas de pessoal e sem infrações.',
+        confirmYes: 'Publicar',
+        confirmNo: 'Voltar a corrigir',
+        action: 'Rever e publicar',
+        update: 'Rever e publicar alterações',
         revert: 'Voltar a rascunho',
         draft: 'Rascunho – a tua equipa ainda não vê este horário',
         published: 'Publicado a {date} às {time}',
@@ -10430,6 +10524,112 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 
+/* ===== js/confirm-ui.js ===== */
+/* חלון אישור לפעולות שאי אפשר לבטל בלחיצה אחת.
+
+   window.confirm מציג שורה אחת ואינו יודע להראות מבנה. כשהשאלה
+   היא "האם לפרסם סידור עם 17 חוסרים", המספרים הם העיקר – ולכן
+   הם צריכים להיות על המסך, ולא בתוך משפט שקוראים באלכסון. */
+(function (root) {
+  'use strict';
+
+  function t(key, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.t(key, params); } catch (err) { return key; }
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var host = null;
+  var pending = null;
+  var lastFocus = null;
+
+  function finish(answer) {
+    var resolve = pending;
+    pending = null;
+    if (host) {
+      host.classList.add('hidden');
+      host.innerHTML = '';
+    }
+    if (lastFocus && lastFocus.focus) {
+      try { lastFocus.focus(); } catch (err) { /* לא קריטי */ }
+    }
+    lastFocus = null;
+    if (resolve) resolve(answer);
+  }
+
+  function ensureHost() {
+    if (host) return host;
+    host = document.createElement('div');
+    host.id = 'confirm-overlay';
+    host.className = 'why-overlay hidden';
+    host.setAttribute('role', 'dialog');
+    host.setAttribute('aria-modal', 'true');
+    document.body.appendChild(host);
+
+    host.addEventListener('click', function (event) {
+      if (!pending) return;
+      if (event.target.closest('[data-confirm-yes]')) { finish(true); return; }
+      /* לחיצה מחוץ לחלון היא ביטול, ולא אישור בטעות */
+      if (event.target === host || event.target.closest('[data-confirm-no]')) { finish(false); }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (!pending) return;
+      if (event.key === 'Escape') finish(false);
+    });
+    return host;
+  }
+
+  /* options: title, lines[], facts[{label,value,tone}], confirmLabel,
+     cancelLabel, tone ('danger' מסמן פעולה שכדאי לעצור לפניה). */
+  function ask(options) {
+    var opts = options || {};
+    var node = ensureHost();
+    if (pending) finish(false);
+    lastFocus = document.activeElement;
+
+    var html = '<div class="why-card confirm-card' +
+      (opts.tone ? ' tone-' + esc(opts.tone) : '') + '">';
+    html += '<h2 class="confirm-title">' + esc(opts.title || '') + '</h2>';
+
+    if (opts.facts && opts.facts.length) {
+      html += '<div class="confirm-facts">';
+      opts.facts.forEach(function (fact) {
+        html += '<div class="confirm-fact' + (fact.tone ? ' ' + esc(fact.tone) : '') + '">' +
+          '<b>' + esc(fact.value) + '</b><span>' + esc(fact.label) + '</span></div>';
+      });
+      html += '</div>';
+    }
+
+    (opts.lines || []).forEach(function (line) {
+      html += '<p class="confirm-line">' + esc(line) + '</p>';
+    });
+
+    html += '<div class="confirm-actions">' +
+      '<button class="btn primary" data-confirm-yes>' +
+        esc(opts.confirmLabel || t('common.yes')) + '</button>' +
+      '<button class="btn ghost" data-confirm-no>' +
+        esc(opts.cancelLabel || t('common.cancel')) + '</button>' +
+      '</div></div>';
+
+    node.innerHTML = html;
+    node.classList.remove('hidden');
+    var yes = node.querySelector('[data-confirm-yes]');
+    if (yes) yes.focus();
+
+    return new Promise(function (resolve) { pending = resolve; });
+  }
+
+  var API = { ask: ask };
+  root.ShiftConfirmUI = API;
+  if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
 /* ===== js/import.js ===== */
 /* ייבוא עובדים מרשימה קיימת.
 
@@ -12555,10 +12755,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     if ($('#publish-week')) {
       $('#publish-week').addEventListener('click', function () {
         if (blocked()) return;
-        Store.markPublished(week());
-        persist('week');
-        render();
-        toast(t('publish.publishedNow'));
+        askBeforePublish().then(function (go) {
+          if (!go) return;
+          Store.markPublished(week());
+          persist('week');
+          render();
+          toast(t('publish.publishedNow'));
+        });
       });
 
       $('#unpublish-week').addEventListener('click', function () {
@@ -13439,6 +13642,44 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     renderSaveState();
   }
 
+  /* פרסום הוא הרגע שבו הסידור הופך למה שהעובדים רואים, והוא אינו
+     נסוג בלחיצה אחת: מי שכבר ראה אותו וסידר את השבוע לפיו לא
+     "מבטל" את זה. לכן לפניו מוצג מה בדיוק עומד להתפרסם – ובראש
+     ובראשונה כמה בעיות נשארו פתוחות בו. */
+  function askBeforePublish() {
+    if (!window.ShiftConfirmUI) return Promise.resolve(true);
+
+    var groups = {};
+    (lastReport.groups || []).forEach(function (group) { groups[group.name] = group.count; });
+    var staffing = groups.staffing || 0;
+    var violations = groups.violations || 0;
+
+    /* המספר מוצג בגדול, ולכן התווית היא שם הקבוצה בלבד ולא משפט
+       שחוזר על המספר */
+    var facts = [
+      { label: t('alerts.group.staffingName'), value: staffing,
+        tone: staffing ? 'warn' : 'ok' },
+      { label: t('alerts.group.violationsName'), value: violations,
+        tone: violations ? 'bad' : 'ok' }
+    ];
+
+    var lines = [t('publish.confirmVisible')];
+    if (!staffing && !violations) {
+      lines.unshift(t('publish.confirmClean'));
+    } else {
+      lines.unshift(t('publish.confirmIssues'));
+    }
+
+    return window.ShiftConfirmUI.ask({
+      title: t('publish.confirmTitle'),
+      facts: facts,
+      lines: lines,
+      tone: violations ? 'danger' : '',
+      confirmLabel: t('publish.confirmYes'),
+      cancelLabel: t('publish.confirmNo')
+    });
+  }
+
   /* ========== טיוטה ופרסום ==========
      בלי פרסום מפורש הסידור נשאר טיוטה, והעובדים אינם רואים אותו.
      לכן הסטטוס נמצא ליד הכפתור ולא במסך אחר: השאלה "העובדים כבר
@@ -13466,6 +13707,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     label.textContent = t('publish.' + mode, when);
 
     button.classList.remove('hidden');
+    /* "בדיקה ופרסום" ולא "פרסום": הלחיצה פותחת את מה שעומד
+       להתפרסם, ואינה מפרסמת בעצמה. */
     button.textContent = t(mode === Store.PUBLISH_STATE.CHANGED ? 'publish.update' : 'publish.action');
     /* מפתח התרגום נקבע לפי המצב, ולכן החלפת שפה מצוירת מכאן */
     button.removeAttribute('data-i18n');

@@ -2430,6 +2430,36 @@ test('בלי סליקה, חשבון בניסיון אינו מתבקש להוס�
   Model.setBillingLive(true);   // לא להשאיר מצב גלובלי לבדיקה הבאה
 });
 
+/* ימי החסד אחרי כישלון תשלום.
+
+   שני מקומות מחליטים כאן, והם חייבים להסכים: מנוע החיוב ממשיך
+   לנסות שבעה ימים, והמסך מחליט אם לתת גישה. קודם לכן הם לא
+   הסכימו – המסך חסם ברגע שהתוקף עבר, כלומר באותו יום שבו
+   הכרטיס נדחה, בזמן שאנחנו עוד מנסים לגבות. */
+test('כרטיס שנדחה אינו נועל את הלקוח באותו יום', function () {
+  var cron = require('../api/billing/cron.js');
+  assertEqual(Model.GRACE_DAYS, cron.GRACE_DAYS,
+    'המסך ומנוע החיוב סופרים ימי חסד שונים');
+
+  var now = new Date('2026-09-20T10:00:00Z');
+  function at(daysAgo) {
+    return Model.accessState({
+      status: 'past_due',
+      validUntil: new Date(now.getTime() - daysAgo * 864e5).toISOString()
+    }, now);
+  }
+
+  var day1 = at(1);
+  assert(day1.allowed, 'לקוח ננעל יום אחרי שהכרטיס נדחה');
+  assertEqual(day1.daysLeft, Model.GRACE_DAYS - 1,
+    'מספר הימים שמוצג אינו הימים שנשארו לתקן');
+  assert(/6/.test(day1.text), 'ההודעה אינה נוקבת בימים שנשארו: ' + day1.text);
+
+  assert(at(Model.GRACE_DAYS).allowed, 'ננעל ביום האחרון של החסד');
+  assert(!at(Model.GRACE_DAYS + 1).allowed, 'לא ננעל אחרי ימי החסד');
+  assertEqual(at(Model.GRACE_DAYS + 1).reason, 'past-due-expired', 'סיבת החסימה');
+});
+
 test('חשבון עם כרטיס אינו מושפע ממצב הסליקה', function () {
   var company = Model.newTrialCompany('עם כרטיס', new Date('2026-09-01T08:00:00Z'));
   company.billingCustomerId = 'cus-1';

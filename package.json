@@ -10,7 +10,7 @@
     "vercel-build": "node build-site.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
-    "test:all": "node tests/vercel-limits-tests.js && node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/xlsx-read-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js && node tests/payplus-provider-tests.js && node tests/billing-cron-tests.js && node tests/admin-tests.js",
+    "test:all": "node tests/vercel-limits-tests.js && node tests/schema-guard-tests.js && node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/xlsx-read-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js && node tests/payplus-provider-tests.js && node tests/billing-cron-tests.js && node tests/admin-tests.js",
     "test:saas": "node tests/saas-browser-test.mjs && node tests/roles-browser-test.mjs",
     "test:billing": "node tests/billing-browser-test.mjs",
     "test:approval": "node tests/approval-browser-test.mjs",
@@ -53,7 +53,9 @@
     "test:xlsxread": "node tests/xlsx-read-tests.js",
     "test:admin": "node tests/admin-tests.js",
     "test:adminui": "node tests/admin-browser-test.mjs",
-    "test:limits": "node tests/vercel-limits-tests.js"
+    "test:limits": "node tests/vercel-limits-tests.js",
+    "test:xss": "node tests/xss-browser-test.mjs",
+    "test:schema": "node tests/schema-guard-tests.js"
   },
   "license": "MIT"
 }

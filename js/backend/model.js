@@ -325,12 +325,27 @@
     }
 
     if (company.status === SUBSCRIPTION.PAST_DUE) {
-      if (expired) {
+      /* ימי חסד אחרי כישלון תשלום.
+
+         מנוע החיוב ממשיך לנסות GRACE_DAYS ימים אחרי שהתוקף עבר,
+         והטקסט אומר ללקוח "הגישה תיחסם בעוד X ימים". קודם לכן
+         המספר הזה היה הבטחה בלבד: החסימה התרחשה ברגע שהתוקף עבר,
+         כלומר באותו יום שבו הכרטיס נדחה.
+
+         זה פגע דווקא בלקוח משלם – כרטיס שפג או יום בלי מסגרת
+         נעלו לו את הסידור מיד, בזמן שאנחנו עוד מנסים לגבות ממנו.
+         עכשיו שני הצדדים משתמשים באותו מספר. */
+      var sinceDue = validUntil
+        ? Math.floor((today - validUntil) / (24 * 60 * 60 * 1000))
+        : 0;
+      if (validUntil && sinceDue > GRACE_DAYS) {
         return { allowed: false, reason: 'past-due-expired', daysLeft: 0,
           text: translate('access.pastDueBlocked', 'התשלום לא התקבל והגישה נחסמה.') };
       }
-      return { allowed: true, reason: 'past-due', daysLeft: daysLeft,
-        text: translate('access.pastDue', 'התשלום האחרון לא עבר.', { days: daysLeft }) };
+      /* כמה ימים נשארו לתקן, ולא כמה נשארו לתוקף שכבר עבר */
+      var graceLeft = Math.max(0, GRACE_DAYS - Math.max(0, sinceDue));
+      return { allowed: true, reason: 'past-due', daysLeft: graceLeft,
+        text: translate('access.pastDue', 'התשלום האחרון לא עבר.', { days: graceLeft }) };
     }
 
     if (company.status === SUBSCRIPTION.EXPIRED) {

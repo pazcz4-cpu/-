@@ -605,11 +605,23 @@ test('מנוי פעיל שפג חוסם גישה', function () {
 });
 
 test('תשלום שנכשל מאפשר ימי חסד ואז חוסם', function () {
-  var company = { status: Model.SUBSCRIPTION.PAST_DUE, validUntil: '2026-09-20T00:00:00.000Z', plan: 'basic' };
-  var during = Model.accessState(company, new Date('2026-09-18'));
-  assertEqual(during.allowed, true, 'בתוך ימי החסד');
+  /* הבדיקה נגזרת מ-GRACE_DAYS ולא ממספר קבוע. קודם לכן היא
+     בדקה חסימה אחרי חמישה ימים בזמן שהמספר הוא שבעה, ולכן
+     קיבעה בדיוק את הפער בין המסך למנוע החיוב. */
+  var due = new Date('2026-09-20T00:00:00.000Z');
+  var company = { status: Model.SUBSCRIPTION.PAST_DUE,
+    validUntil: due.toISOString(), plan: 'basic' };
+  function at(days) {
+    return Model.accessState(company, new Date(due.getTime() + days * 864e5));
+  }
+
+  var during = at(-2);
+  assertEqual(during.allowed, true, 'לפני שהתוקף עבר');
   assert(during.text.indexOf('תיחסם') !== -1, 'מוצגת אזהרה');
-  assertEqual(Model.accessState(company, new Date('2026-09-25')).allowed, false, 'אחרי ימי החסד');
+
+  assertEqual(at(1).allowed, true, 'ננעל יום אחרי שהכרטיס נדחה');
+  assertEqual(at(Model.GRACE_DAYS).allowed, true, 'ננעל ביום האחרון של החסד');
+  assertEqual(at(Model.GRACE_DAYS + 1).allowed, false, 'לא ננעל אחרי ימי החסד');
 });
 
 test('מנוי מבוטל חוסם גישה', function () {

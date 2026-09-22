@@ -629,3 +629,53 @@ exception
   when duplicate_object then null;   -- כבר נוסף בהרצה קודמת
 end;
 $$;
+
+-- ROLE GUARD: הגנה על עמודת התפקיד
+-- company_users_update דורש is_manager(), ו-GRANT מתיר לעדכן את
+-- העמודה role. שני אלה יחד פירושם שמנהל יכול לשלוח ל-PostgREST
+--     PATCH /company_users?id=eq.<עצמו>   {"role":"owner"}
+-- ולהעניק לעצמו בעלות – ומשם גישה למסך החיוב: ביטול המנוי,
+-- החלפת התוכנית, והחלפת אמצעי התשלום.
+--
+-- זו אינה תקלה תיאורטית: "מנהל" הוא בדיוק אחראי משמרת, כלומר
+-- עובד שהבעלים נתן לו גישה לסידור ובמכוון לא לכסף.
+--
+-- המסך והשרת כבר מגבילים את זה, והספק המדומה גם – ולכן שום
+-- בדיקה לא תפסה את זה. מי שפותח את כלי הפיתוח אינו עובר דרך
+-- אף אחד מהם, והכלל צריך לשבת במקום היחיד שאי אפשר לעקוף.
+--
+-- הכללים זהים לאלה של הספק המדומה, כדי שסביבת הפיתוח והייצור
+-- יתנהגו אותו דבר:
+--   · בעלות אינה ניתנת להענקה בעדכון. היא נקבעת פעם אחת,
+--     ב-create_company, ותו לא.
+--   · שורת הבעלים אינה ניתנת לשינוי תפקיד או השבתה בכלל –
+--     גם לא בידי הבעלים עצמו, אחרת אפשר להישאר בלי בעלים.
+create or replace function public.guard_user_role()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- השרת (service_role) אינו נושא זהות משתמש ואינו משנה תפקידים
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role and new.role = 'owner' then
+    raise exception 'ownership cannot be granted by update' using errcode = '42501';
+  end if;
+
+  if old.role = 'owner'
+     and (new.role is distinct from old.role or new.active is distinct from old.active) then
+    raise exception 'the owner account cannot be changed this way' using errcode = '42501';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists company_users_role_guard on public.company_users;
+create trigger company_users_role_guard
+  before update on public.company_users
+  for each row execute function public.guard_user_role();

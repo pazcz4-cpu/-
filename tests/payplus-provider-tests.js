@@ -327,6 +327,31 @@ test('שמירת כרטיס היא בדיקת כרטיס, לא חיוב ולא �
   });
 });
 
+test('אמצעי תשלום אינם נשלחים עד שהוגדרו', function () {
+  /* ערך שכולל אמצעי שאינו פעיל על החשבון עלול להפיל את פתיחת
+     הדף כולה. בלי השדה, הדף מציג את מה שמוגדר אצלם. */
+  ready(true);
+  return withFake(function (fake) {
+    fake.reply(200, { results: { status: 'success' }, data: { payment_page_link: 'x' } });
+    fake.reply(200, { results: { status: 'success' }, data: { payment_page_link: 'x' } });
+  }, function (fake) {
+    return payplus.createCheckout({ companyId: 'co-1', amount: 199, saveCardOnly: true,
+      returnUrl: 'r', cancelUrl: 'c' }).then(function () {
+      assertEqual(fake.last().body.allowed_charge_methods, undefined,
+        'נשלחה רשימת אמצעים בלי שהוגדרה');
+      process.env.PAYPLUS_CHARGE_METHODS = 'credit-card, apple-pay , google-pay';
+      return payplus.createCheckout({ companyId: 'co-1', amount: 199, saveCardOnly: true,
+        returnUrl: 'r', cancelUrl: 'c' });
+    }).then(function () {
+      var sent = fake.last().body.allowed_charge_methods;
+      assertEqual(JSON.stringify(sent),
+        JSON.stringify(['credit-card', 'apple-pay', 'google-pay']),
+        'הרשימה לא נשלחה כפי שהוגדרה');
+      delete process.env.PAYPLUS_CHARGE_METHODS;
+    }, function (err) { delete process.env.PAYPLUS_CHARGE_METHODS; throw err; });
+  });
+});
+
 test('חיוב מיידי הוא J4 ומנפיק חשבונית', function () {
   ready(true);
   return withFake(function (fake) {

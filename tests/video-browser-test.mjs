@@ -15,6 +15,13 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(here, '..');
 const SITE = path.join(ROOT, 'site');
 const MP4 = path.join(ROOT, 'assets', 'video', 'setshifts-demo-he.mp4');
+const VTT = path.join(ROOT, 'assets', 'video', 'setshifts-demo-he.vtt');
+
+/* כתוביות טיוטה אינן נשלחות עם הסרטון: מי שקורא אותן מקבל תוכן
+   שאינו מה שנאמר בו. הבדיקה הולכת אחרי הכוונה ולא אחרי המצב –
+   ברגע שיוחלף התמלול, היא תדרוש שהכתוביות כן יופיעו. */
+const captionsAreDraft = fs.existsSync(VTT) &&
+  fs.readFileSync(VTT, 'utf8').indexOf('אחרי שמחליפים את setshifts-demo-he.mp4') !== -1;
 
 const failures = [];
 function check(label, actual, expected) {
@@ -70,8 +77,11 @@ try {
   let host = await serve(SITE);
   let page = await open(host.port);
   check('האזור קיים', await page.locator('#lp-video').count(), 1);
-  check('הכותרת', await page.locator('#demo h2').innerText(), /בדקה וחצי/);
-  check('והשורה מתחתיה', await page.locator('#demo .lp-section-sub').innerText(), /פרסום המשמרות/);
+  /* הכותרת מתארת את מה שהסרטון באמת מראה – סיור ביכולות, ולא
+     הדגמה של בניית סידור בזמן נקוב. הבטחת זמן בכותרת שמעל סרטון
+     ארוך יותר היא הסוג הקטן של אי-דיוק שעולה באמון. */
+  check('הכותרת', await page.locator('#demo h2').innerText(), /יודעת לעשות/);
+  check('והשורה מתחתיה', await page.locator('#demo .lp-section-sub').innerText(), /יכולות המערכת/);
   check('אין כפתור Play שמוביל לשום מקום',
     await page.locator('#lp-video-play').isVisible(), false);
   check('ובמקומו נאמר שהוא בדרך',
@@ -113,11 +123,16 @@ try {
   check('עם בקרים מלאים', await page.locator('video').getAttribute('controls'), '');
   check('ולא מתנגן אוטומטית',
     await page.locator('video').getAttribute('autoplay'), null);
-  check('כתוביות בעברית', await page.locator('video track').getAttribute('src'),
-    '/assets/video/setshifts-demo-he.vtt');
-  check('  מסוג captions', await page.locator('video track').getAttribute('kind'), 'captions');
-  check('  ודלוקות כברירת מחדל',
-    await page.locator('video track').getAttribute('default'), '');
+  if (captionsAreDraft) {
+    check('כתוביות טיוטה אינן נשלחות כלל',
+      await page.locator('video track').count(), 0);
+  } else {
+    check('כתוביות בעברית', await page.locator('video track').getAttribute('src'),
+      '/assets/video/setshifts-demo-he.vtt');
+    check('  מסוג captions', await page.locator('video track').getAttribute('kind'), 'captions');
+    check('  ודלוקות כברירת מחדל',
+      await page.locator('video track').getAttribute('default'), '');
+  }
   check('עכשיו הקובץ כן נטען',
     wire.filter(u => /setshifts-demo-he\.mp4/.test(u)).length > 0, true);
   check('הכפתור פינה את מקומו', await page.locator('#lp-video-play').count(), 0);

@@ -134,6 +134,22 @@ function payplusHeaders() {
    בחשבון – ראו נושא 6 ב-docs/payplus-open-questions.md. */
 function payplusInvoices() { return process.env.PAYPLUS_INVOICES === 'true'; }
 
+/* אמצעי התשלום המותרים בדף. ברירת המחדל היא לא לשלוח את השדה
+   בכלל, ואז הדף מציג את מה שמוגדר אצלם – כי אמצעי שאינו פעיל
+   על החשבון עלול להפיל את פתיחת הדף כולה.
+
+     PAYPLUS_CHARGE_METHODS=credit-card,apple-pay,google-pay,bit
+
+   מה שכדאי לאמת לפני שמדליקים ארנקים: האם טוקן שנוצר מארנק
+   דיגיטלי ניתן לחיוב חוזר. אם לא, לקוח שנרשם דרכו לא יתחדש
+   בתום הניסיון – ראו נושא 1א ב-docs/payplus-open-questions.md. */
+function payplusMethods() {
+  const raw = String(process.env.PAYPLUS_CHARGE_METHODS || '').trim();
+  if (!raw) return null;
+  const list = raw.split(',').map(function (item) { return item.trim(); }).filter(Boolean);
+  return list.length ? list : null;
+}
+
 function payplusKeysMissing() {
   return !process.env.PAYPLUS_API_KEY || !process.env.PAYPLUS_SECRET_KEY;
 }
@@ -336,11 +352,18 @@ const payplus = {
       /* חוזר אלינו כפי ששלחנו, ולכן נושא את מזהה החברה */
       more_info: input.companyId,
       more_info_2: input.plan || '',
+      /* ארנקים דיגיטליים. חלק ניכר מההרשמות מגיעות מהטלפון,
+         ושם Apple Pay ו-Google Pay מורידים חיכוך משמעותי.
+         הרשימה נשלחת רק כשהיא הוגדרה, כי ערך שכולל אמצעי
+         שאינו פעיל על החשבון עלול להפיל את פתיחת הדף. */
+      allowed_charge_methods: payplusMethods(),
       customer: {
         customer_name: input.companyName || '',
         email: input.email || ''
       }
     };
+
+    if (!request.allowed_charge_methods) delete request.allowed_charge_methods;
 
     /* חשבונית מופקת רק כשעבר כסף, ורק אם מודול המסמכים מופעל
        בחשבון. שדה של מודול שאינו פעיל עלול להפיל את הבקשה כולה,

@@ -47,7 +47,7 @@
         heroSubtitle: 'L’IA de SetShifts construit seule le planning de chaque site : d’après les disponibilités de vos équipes, les demandes qu’elles déposent, le nombre de services hebdomadaire de chacun, les postes et vos propres règles. Et pour chaque affectation, elle vous dit pourquoi cette personne. Vous validez, vous ne construisez pas.',
         heroNote: '{days} jours gratuits, sans carte bancaire. Un moyen de paiement n’est nécessaire que pour continuer après l’essai.',
         heroSecondary: 'Comment ça marche',
-        videoTitle: 'Voyez un planning bâti en une minute trente',
+        videoTitle: 'Ce que fait SetShifts',
         videoBody: "De la configuration des succursales à la publication des postes.",
         videoPlay: 'Lire la vidéo',
         videoCaptions: 'Sous-titres',

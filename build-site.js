@@ -200,17 +200,28 @@ function markVideo(html) {
      מי שקורא אותן מקבל תוכן שגוי ובטוח שהוא נכון. הקובץ נולד
      כטיוטה עם הערה בראשו, ולכן אפשר לזהות שהוא עדיין כזה. */
   const vtt = path.join(root, 'assets', 'video', 'setshifts-demo-he.vtt');
-  /* markVideo רץ לכל עמוד שפה; האזהרה נאמרת פעם אחת */
-  if (!markVideo.warned && fs.existsSync(vtt)) {
-    markVideo.warned = true;
+  let draftCaptions = false;
+  if (fs.existsSync(vtt)) {
     const text = fs.readFileSync(vtt, 'utf8');
-    if (text.indexOf('אחרי שמחליפים את setshifts-demo-he.mp4') !== -1) {
-      console.log('\n  ⚠ הכתוביות עדיין טיוטה ואינן תואמות לסרטון.');
-      console.log('    assets/video/setshifts-demo-he.vtt\n');
+    draftCaptions = text.indexOf('אחרי שמחליפים את setshifts-demo-he.mp4') !== -1;
+  }
+
+  html = html.replace('data-video-ready="0"', 'data-video-ready="1"');
+
+  if (draftCaptions) {
+    /* כתוביות טיוטה אינן נשלחות כלל. הן אינן "טוב יותר מכלום":
+       מי שקורא אותן מקבל תוכן שאינו מה שנאמר בסרטון, ובטוח
+       שהוא נכון. הנגן מסיר את הכתוביות אם אין data-captions. */
+    html = html.replace(/\s*data-captions="[^"]*"/, '');
+    /* markVideo רץ לכל עמוד שפה; האזהרה נאמרת פעם אחת */
+    if (!markVideo.warned) {
+      markVideo.warned = true;
+      console.log('\n  ⚠ הכתוביות עדיין טיוטה, ולכן אינן נשלחות עם הסרטון.');
+      console.log('    להחליף את assets/video/setshifts-demo-he.vtt בתמלול אמיתי.\n');
     }
   }
 
-  return html.replace('data-video-ready="0"', 'data-video-ready="1"');
+  return html;
 }
 
 /* כותרת ותיאור דף המכירה, לשימוש חוזר בתגיות השיתוף.

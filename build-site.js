@@ -370,9 +370,39 @@ write('app/config.js',
     cancelEndpoint: '/api/cancel-invite'
   }, null, 2) + ';\n');
 
+/* ===== חותמת גרסה =====
+   בלי זה אי אפשר לדעת מה באוויר. "הדף לא מתעדכן" יכול להיות
+   מטמון, פריסה שלא רצה, או פריסה מענף אחר – ושלושתם נראים אותו
+   דבר מהדפדפן. הקובץ הזה עונה על זה בשנייה:
+
+     https://setshifts.com/version.txt
+
+   Vercel מספק את מזהה הקומיט במשתנה סביבה, ולכן אין כאן קריאה
+   ל-git – שממילא לא הייתה עובדת בסביבת הבנייה שלהם. */
+function buildStamp() {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.GITHUB_SHA || '';
+  const branch = process.env.VERCEL_GIT_COMMIT_REF ||
+    process.env.GITHUB_REF_NAME || '';
+  const env = process.env.VERCEL_ENV || '';
+  return [
+    'built:    ' + new Date().toISOString(),
+    'commit:   ' + (sha ? sha.slice(0, 12) : 'לא ידוע (בנייה מקומית)'),
+    'branch:   ' + (branch || 'לא ידוע'),
+    'env:      ' + (env || 'local'),
+    'video:    ' + (fs.existsSync(path.join(root, 'assets', 'video',
+      'setshifts-demo-he.mp4')) ? 'כן' : 'לא'),
+    'billing:  ' + (billingIsLive() ? 'מחובר' : 'לא מחובר'),
+    'admin:    כן',
+    ''
+  ].join('\n');
+}
+
+write('version.txt', buildStamp());
+
 /* ===== קבצים לשורש ===== */
 write('robots.txt',
-  'User-agent: *\nAllow: /\nDisallow: /tool/\nDisallow: /admin/\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
+  'User-agent: *\nAllow: /\nDisallow: /tool/\nDisallow: /admin/\nDisallow: /version.txt\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
 
 /* דף המכירה מגיש את כל השפות מאותה כתובת, ולכן יש בדיוק כתובת
    אחת למנועי החיפוש */

@@ -37,6 +37,9 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
    צועקת כשהם חסרים במקום להשתיק את הבעיה. */
 const LEGAL = {
   LEGAL_ENTITY: process.env.LEGAL_ENTITY || '',
+  /* מספר עוסק מורשה או ח.פ. חובה להציג אותו באתר מסחרי, ולכן
+     הוא שדה נפרד ולא חלק מהשם – כדי שלא יישכח בתוכו. */
+  LEGAL_ID: process.env.LEGAL_ID || '',
   LEGAL_ADDRESS: process.env.LEGAL_ADDRESS || '',
   DATA_REGION: process.env.DATA_REGION || '',
   PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER || '',

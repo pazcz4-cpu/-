@@ -62,14 +62,15 @@
 
   /* ===== שרת ===== */
 
-  function api(name, payload) {
-    return fetch('/api/admin/' + name, {
+  /* נקודת קצה אחת לכל הפעולות; op קובע איזו. ראו api/admin/index.js. */
+  function api(op, payload) {
+    return fetch('/api/admin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + (session && session.access_token)
       },
-      body: JSON.stringify(payload || {})
+      body: JSON.stringify(Object.assign({ op: op }, payload || {}))
     }).then(function (response) {
       return response.json().catch(function () { return {}; }).then(function (body) {
         if (!response.ok) {

@@ -4,11 +4,10 @@
    עם זה יש תור עבודה. */
 'use strict';
 
-const { endpoint } = require('./_admin.js');
 
 const STATUSES = ['open', 'in_progress', 'answered', 'closed'];
 
-module.exports = endpoint(async function ({ user, body, db }) {
+module.exports = async function ({ user, body, db }) {
   const action = String((body && body.action) || 'list');
 
   if (action === 'list') {
@@ -73,4 +72,4 @@ module.exports = endpoint(async function ({ user, body, db }) {
   }
 
   return { status: 400, body: { message: 'Unknown action: ' + action } };
-});
+};

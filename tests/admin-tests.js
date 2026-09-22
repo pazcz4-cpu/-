@@ -12,11 +12,21 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
 process.env.PLATFORM_OWNER_EMAILS = 'boss@setshifts.com, second@setshifts.com';
 
 var Money = require('../api/admin/_money.js');
-var overview = require('../api/admin/overview.js');
-var companies = require('../api/admin/companies.js');
-var company = require('../api/admin/company.js');
-var action = require('../api/admin/action.js');
-var tickets = require('../api/admin/tickets.js');
+/* נקודת קצה אחת, וה-op קובע את המסלול. העטיפות למטה שומרות על
+   הבדיקות קריאות: כל אחת עדיין נכתבת כאילו יש נקודת קצה נפרדת. */
+var admin = require('../api/admin/index.js');
+function route(op) {
+  return function (req, res) {
+    var body = JSON.parse(req.body || '{}');
+    body.op = op;
+    return admin(Object.assign({}, req, { body: JSON.stringify(body) }), res);
+  };
+}
+var overview = route('overview');
+var companies = route('companies');
+var company = route('company');
+var action = route('action');
+var tickets = route('tickets');
 
 var passed = 0, failed = 0;
 function assert(condition, message) { if (!condition) throw new Error(message); }
@@ -152,6 +162,35 @@ function call(handler, payload, options) {
   };
   return Promise.resolve(handler(req, res)).then(function () { return res; });
 }
+
+console.log('\n== נקודת קצה אחת ==');
+
+test('op שאינו מוכר נדחה, ולא מחזיר נתונים', function () {
+  var fake = new Fake(); fake.install();
+  return call(route('אין-כזה'), {}).then(function (res) {
+    assertEqual(res.statusCode, 400, 'op לא מוכר התקבל');
+    assert(!res.payload.counts, 'דלפו נתונים');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('בקשה בלי op נדחית', function () {
+  var fake = new Fake(); fake.install();
+  return call(admin, {}).then(function (res) {
+    assertEqual(res.statusCode, 400, 'בקשה בלי op התקבלה');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('op אינו יכול להגיע לתכונות של Object', function () {
+  /* 'constructor' ו-'toString' קיימים על כל אובייקט, ובלי בדיקת
+     בעלות אמיתית הם היו נחשבים מסלול קיים. */
+  var fake = new Fake(); fake.install();
+  return call(route('constructor'), {}).then(function (res) {
+    assertEqual(res.statusCode, 400, 'תכונה של Object נחשבה מסלול');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
 
 console.log('\n== מי לא נכנס ==');
 

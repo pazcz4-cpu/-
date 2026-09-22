@@ -113,9 +113,10 @@ const sent = [];
 
 try {
   /* השרת מדומה ברמת הרשת, כדי שהדף עצמו ירוץ בדיוק כמו שהוא */
-  await page.route('**/api/admin/*', async (route) => {
-    const name = route.request().url().split('/').pop();
+  /* נקודת קצה אחת, וה-op בגוף הבקשה קובע את המסלול */
+  await page.route('**/api/admin', async (route) => {
     const body = JSON.parse(route.request().postData() || '{}');
+    const name = body.op;
     sent.push({ name, body });
     let payload = WORLD[name] || { ok: true };
     if (name === 'action') payload = { ok: true, company: WORLD.company.company, detail: {} };

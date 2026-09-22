@@ -7,11 +7,10 @@
    אם הוא משתמש במערכת. */
 'use strict';
 
-const { endpoint } = require('./_admin.js');
 const Money = require('./_money.js');
 const Model = require('../../js/backend/model.js');
 
-module.exports = endpoint(async function ({ body, db }) {
+module.exports = async function ({ body, db }) {
   const id = String((body && body.id) || '').trim();
   if (!id) return { status: 400, body: { message: 'Missing company id' } };
   const key = encodeURIComponent(id);
@@ -88,4 +87,4 @@ module.exports = endpoint(async function ({ body, db }) {
       }
     }
   };
-});
+};

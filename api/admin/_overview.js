@@ -5,7 +5,6 @@
    השבוע ואין להם כרטיס" הוא רשימת שיחות טלפון. */
 'use strict';
 
-const { endpoint } = require('./_admin.js');
 const Money = require('./_money.js');
 const Model = require('../../js/backend/model.js');
 
@@ -16,7 +15,7 @@ function daysFromNow(iso) {
   return Math.round((new Date(iso).getTime() - Date.now()) / DAY);
 }
 
-module.exports = endpoint(async function ({ db }) {
+module.exports = async function ({ db }) {
   /* כל החברות. בקנה מידה של אלפי לקוחות זה יתחלף בצבירה בשרת,
      אבל אז גם יהיה ברור אילו מספרים באמת נחוצים. */
   const companiesCall = await db('/companies?select=*&order=created_at.desc&limit=5000');
@@ -137,4 +136,4 @@ module.exports = endpoint(async function ({ db }) {
       })
     }
   };
-});
+};

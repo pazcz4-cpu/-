@@ -4,7 +4,6 @@
    מי הבעלים, כמה משתמשים, כמה שילם עד היום, ומתי התוקף נגמר. */
 'use strict';
 
-const { endpoint } = require('./_admin.js');
 const Money = require('./_money.js');
 const Model = require('../../js/backend/model.js');
 
@@ -17,7 +16,7 @@ function matches(company, owner, term) {
   return hay.indexOf(needle) !== -1;
 }
 
-module.exports = endpoint(async function ({ body, db }) {
+module.exports = async function ({ body, db }) {
   const term = String((body && body.q) || '');
   const status = String((body && body.status) || '');
   const plan = String((body && body.plan) || '');
@@ -89,4 +88,4 @@ module.exports = endpoint(async function ({ body, db }) {
     });
 
   return { body: { ok: true, total: companies.length, shown: rows.length, companies: rows } };
-});
+};

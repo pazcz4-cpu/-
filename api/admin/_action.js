@@ -19,7 +19,6 @@
    אחת, ולא איחוד של שתי טבלאות שצריך לזכור לעשות. */
 'use strict';
 
-const { endpoint } = require('./_admin.js');
 const Model = require('../../js/backend/model.js');
 
 const DAY = 864e5;
@@ -32,7 +31,7 @@ function laterOf(a, b) {
   return new Date(Math.max(first, second));
 }
 
-module.exports = endpoint(async function ({ user, body, db }) {
+module.exports = async function ({ user, body, db }) {
   const action = String((body && body.action) || '');
   const id = String((body && body.id) || '').trim();
   const reason = String((body && body.reason) || '').trim();
@@ -122,4 +121,4 @@ module.exports = endpoint(async function ({ user, body, db }) {
   }
 
   return { body: { ok: true, company: updated.body[0], logged: entry.id, detail: detail } };
-});
+};

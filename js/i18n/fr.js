@@ -69,8 +69,8 @@
         featuresSubtitle: 'Pas un tableur en couleurs. Un planificateur qui connaît vos règles.',
         feature1Title: 'Planification automatique',
         feature1Body: 'Un clic remplit la semaine entière sur tous les sites, répartit la charge équitablement et respecte la limite hebdomadaire de chacun.',
-        feature2Title: 'Détection des doublons',
-        feature2Body: 'Chaque doublon, trou et demande non respectée est signalé dès son apparition, avec la raison et une correction proposée.',
+        feature2Title: 'Détection des conflits',
+        feature2Body: 'Chaque sureffectif, trou et conflit de disponibilité est signalé dès son apparition, avec la raison et une correction proposée.',
         feature3Title: 'Demandes soumises à validation',
         feature3Body: 'Les équipes déposent leurs demandes, avec un motif facultatif. Rien n’affecte le planning tant que vous n’avez pas validé.',
         feature4Title: 'Vos créneaux, vos horaires',
@@ -163,9 +163,9 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'Doublon',
-        'duplicate-employee-slot': 'Doublon',
-        'double-booked': 'Deux services dans la journée',
+        'duplicate-shift': 'Effectif excédentaire',
+        'duplicate-employee-slot': 'Affectation en double',
+        'double-booked': 'Double service',
         understaffed: 'Effectif insuffisant',
         'constraint-off': 'Demande non respectée',
         'constraint-blocked': 'Demande non respectée',
@@ -282,11 +282,11 @@
         errorsOne: 'Une erreur', errorsOther: '{count} erreurs',
         warningsOne: 'Un avertissement', warningsOther: '{count} avertissements',
         infosOne: 'Une remarque', infosOther: '{count} remarques',
-        allGood: '✔ Le planning est valide – aucun doublon, manque ou demande non respectée',
+        allGood: '✔ Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
         showAll: 'Afficher les {count} alertes', showLess: 'Masquer les alertes',
-        duplicate: 'Doublon : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
-        duplicateSelf: 'Doublon : {name} est affecté deux fois au même service – {label}.',
-        doubleBooked: 'Doublon : {name} a {count} services le {day}{where} ({detail}).',
+        duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
+        duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
+        doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',
         sameBranch: ' dans la même succursale', differentBranches: ' dans des succursales différentes',
         understaffed: 'Effectif insuffisant : {label} – {assigned} sur {need} affectés.',
         reasonBusy: '{names} sont déjà affectés à un autre service ce jour-là',
@@ -359,7 +359,7 @@
       branches: {
         title: 'Succursales', add: '+ Ajouter une succursale', active: 'Active', newName: 'Nouvelle succursale',
         hint: 'Chaque succursale a ses propres jours, horaires et effectifs par service. ' +
-          'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un doublon.',
+          'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un sureffectif.',
         peopleLabel: 'Personnes', closed: 'Fermé', day: 'Jour',
         copyFrom: 'Copier les jours et horaires d’une autre succursale', chooseBranch: 'Choisir une succursale…',
         copyConfirm: 'Copier les jours et horaires de {from} vers {to} ?',
@@ -634,7 +634,7 @@
         severity: 'Gravité', type: 'Type', detail: 'Détail',
         missing: '— manquant —', closed: 'Fermé', notAssigned: 'Non affecté',
         personalTitle: 'Planning personnel – {name}', totalWeek: '{count} services cette semaine',
-        noIssues: 'Aucun doublon, manque ni demande non respectée'
+        noIssues: 'Ni sureffectif, ni manque, ni conflit de disponibilité'
       },
 
       errors: {

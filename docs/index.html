@@ -1476,9 +1476,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       shifts: { morning: 'Morning', middle: 'Midday', evening: 'Evening', night: 'Night' },
 
       seed: {
-        branchCenter: 'Central branch', branchNorth: 'North branch', branchSouth: 'South branch',
+        branchCenter: 'Central location', branchNorth: 'North location', branchSouth: 'South location',
         employee: 'Team member {n}',
-        noteFloater: 'Covers every branch', noteStudent: 'Student – no mornings'
+        noteFloater: 'Covers every location', noteStudent: 'Student – no mornings'
       },
 
       colors: {
@@ -1510,7 +1510,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
         problemsTitle: 'The three things that go wrong every week',
         problem1Title: 'The same shift, two people',
-        problem1Body: 'A branch ends up double-staffed while another runs short. ' +
+        problem1Body: 'One location ends up overstaffed while another runs short. ' +
           'You only find out when someone shows up and has nothing to do.',
         problem2Title: 'Requests get lost',
         problem2Body: 'A day-off request arrives by message, gets forgotten, and the schedule breaks a promise you made.',
@@ -1520,28 +1520,28 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresTitle: 'What the system does',
         featuresSubtitle: 'Not a spreadsheet with colours. A scheduler that knows your rules.',
         feature1Title: 'Automatic scheduling',
-        feature1Body: 'One click fills the whole week across every branch, balancing the load fairly and respecting each person’s weekly limit.',
-        feature2Title: 'Double-booking detection',
-        feature2Body: 'Every double booking, gap and broken request is flagged the moment it appears – with the reason and a suggested fix.',
+        feature1Body: 'One click fills the whole week across every location, balancing the load fairly and respecting each person’s weekly limit.',
+        feature2Title: 'Conflict detection',
+        feature2Body: 'Every overstaffed shift, gap and availability conflict is flagged the moment it appears – with the reason and a suggested fix.',
         feature3Title: 'Requests with approval',
         feature3Body: 'Staff send their own requests with an optional reason. Nothing affects the schedule until you approve it.',
         feature4Title: 'Your shifts, your hours',
-        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per branch.',
+        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per location.',
         feature5Title: 'Excel and WhatsApp',
         feature5Body: 'Export the whole week, or send each person only their own shifts – as a personal sheet or ready-to-paste text.',
         feature6Title: 'Live on every device',
         feature6Body: 'Manager edits on a computer, staff see their shifts on their phone. Everyone sees the same schedule, instantly.',
 
         howTitle: 'Up and running in an afternoon',
-        how1Title: 'Add branches and staff',
-        how1Body: 'Opening days, hours and headcount per shift – each branch set up its own way.',
+        how1Title: 'Add locations and staff',
+        how1Body: 'Opening days, hours and headcount per shift – each location set up its own way.',
         how2Title: 'Collect the requests',
         how2Body: 'Staff log in and send time-off requests. You approve or decline, and see everything in one place.',
         how3Title: 'Build and publish',
         how3Body: 'One click builds the week. Review the alerts, fix what matters, publish – and everyone sees their shifts.',
 
         pricingTitle: 'Simple pricing, by team size',
-        pricingSubtitle: 'Unlimited branches on every plan. Cancel any time.',
+        pricingSubtitle: 'Unlimited locations on every plan. Cancel any time.',
         pricingCta: 'Start free',
         pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan — the first charge comes only when the trial ends, and cancelling before then costs nothing.',
         planPopular: 'Most popular',
@@ -1559,15 +1559,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         faq5A: 'Hebrew, English, Spanish, French, German, Portuguese, Russian and Arabic – including right-to-left layouts. Each person picks their own.',
 
         ctaTitle: 'Try it on next week’s schedule',
-        ctaBody: 'Set up your branches, build one week, and see the difference. It takes an afternoon.',
+        ctaBody: 'Set up your locations, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
         footerTagline: 'Shift scheduling for chains.'
       },
 
       tabs: {
         support: 'Support',
-        schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
-        branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'
+        schedule: 'Schedule', constraints: 'Availability', employees: 'Staff',
+        branches: 'Locations', users: 'Users', billing: 'Subscription', settings: 'Settings'
       },
 
       toolbar: {
@@ -1577,27 +1577,27 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         keepManual: 'Keep manual assignments',
         copyText: 'Copy as text', excel: 'Excel', csv: 'CSV', print: 'Print',
         moreTools: 'More tools', closeTools: 'Close tools',
-        viewOnly: 'View only', exitViewOnly: 'Exit view only',
+        viewOnly: 'Lock editing', exitViewOnly: 'Unlock editing',
         shabbatEnd: 'Sabbath ends',
-        byBranch: 'By branch', byEmployee: 'By employee',
+        byBranch: 'By location', byEmployee: 'By employee',
         personalExport: 'Personal export (their shifts only):',
         choosePerson: 'Choose a person…',
-        holidays: 'Holidays (all branches closed):'
+        holidays: 'Holidays (all locations closed):'
       },
 
       schedule: {
-        branch: 'Branch', shift: 'Shift', employee: 'Employee', totalShifts: 'Total shifts',
+        branch: 'Location', shift: 'Shift', employee: 'Employee', totalShifts: 'Total shifts',
         empty: '— empty —', add: '+ add', addPerson: '+ add person', notAssigned: '— not assigned —',
-        closed: 'Closed on this day', noBranches: 'No active branches. Open the Branches tab.',
+        closed: 'Closed on this day', noBranches: 'No active locations. Open the Locations tab.',
         required: 'Required: {count}', people: '{count} people',
-        holidayClosed: 'All branches closed', dayOff: 'Day off', holiday: 'Holiday',
+        holidayClosed: 'All locations closed', dayOff: 'Day off', holiday: 'Holiday',
         missingSabbath: 'Sabbath end time missing'
       },
 
       status: {
         demoTitle: 'Demo mode',
         demoBody: 'Data is saved in this browser only and does not move between devices.',
-        localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
+        localOnly: 'Saved on this device only', readOnly: 'Read only – no edit permission',
         saving: 'Saving…',
         savedCloud: 'All changes saved to the cloud',
         savedCloudAt: 'All changes saved to the cloud · {time}',
@@ -1607,7 +1607,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         remoteUpdate: 'Update received from another device ({time})',
         localCopy: 'This is a local copy – data is stored in this browser only and does not sync. ' +
           'To work from two computers use the hosted version. To move data: export JSON in Settings, then import it there.',
-        viewOnlyBanner: 'View only – the schedule is shown for review and editing is disabled. ' +
+        viewOnlyBanner: 'Editing is locked – the schedule is shown for review only. ' +
           'Export, printing and week navigation still work.'
       },
 
@@ -1615,18 +1615,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       marks: {
         dayOff: 'day off', blocked: 'blocked', prefers: 'prefers',
-        notInBranch: 'not in this branch', notInShift: 'not in this shift',
+        notInBranch: 'not in this location', notInShift: 'not in this shift',
         alreadyAssigned: 'already assigned', inactive: 'inactive'
       },
 
       issueTypes: {
-        'duplicate-shift': 'Double booking',
-        'duplicate-employee-slot': 'Double booking',
-        'double-booked': 'Two shifts in one day',
+        'duplicate-shift': 'Overstaffed',
+        'duplicate-employee-slot': 'Duplicate assignment',
+        'double-booked': 'Double booking',
         understaffed: 'Understaffed',
-        'constraint-off': 'Request broken',
-        'constraint-blocked': 'Request broken',
-        'branch-mismatch': 'Wrong branch',
+        'constraint-off': 'Availability conflict',
+        'constraint-blocked': 'Availability conflict',
+        'branch-mismatch': 'Wrong location',
         'shift-mismatch': 'Wrong shift type',
         'over-max': 'Over limit',
         rest: 'Short rest',
@@ -1645,14 +1645,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         cleared: 'Schedule cleared',
         copied: 'Schedule copied to clipboard',
         personalCopied: 'Personal schedule copied to clipboard',
-        viewOnlyOn: 'View only is on – editing is disabled',
-        viewOnlyOff: 'View only is off – you can edit',
+        viewOnlyOn: 'Editing is locked',
+        viewOnlyOff: 'Editing is unlocked',
         copyPrompt: 'Copy the text:',
         holidayCleared: '{day} is a working day again',
-        holidayPrompt: 'Name of the holiday on {day} (branches close and the day counts as time off for everyone):',
+        holidayPrompt: 'Name of the holiday on {day} (locations close and the day counts as time off for everyone):',
         holidayDefault: 'Holiday',
         holidayHasAssignments: '{count} people are already assigned that day. Mark it as a holiday and clear them?',
-        holidayMarked: '{day} is marked as a holiday – branches are closed',
+        holidayMarked: '{day} is marked as a holiday – locations are closed',
         clearConstraintsConfirm: 'Clear every request for this week?',
         constraintsCleared: 'Requests cleared',
         noPreviousConstraints: 'No requests in the previous week',
@@ -1660,20 +1660,20 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         requestApproved: 'Request approved', requestRejected: 'Request rejected',
         updateFailed: 'Update failed',
         deleteShiftConfirm: 'Delete the shift "{name}"?\n\n{usage}',
-        deleteShiftUsed: 'It is set on {count} branch-days, and all of its assignments will be deleted.',
-        deleteShiftUnused: 'It is not used by any branch.',
+        deleteShiftUsed: 'It is set on {count} location-days, and all of its assignments will be deleted.',
+        deleteShiftUnused: 'It is not used by any location.',
         shiftDeleted: 'Shift deleted{removed}',
         shiftRemovedCount: ' ({count} assignments removed)',
-        shiftAdded: 'Shift added. Set it up in Branches so it shows in the schedule.',
+        shiftAdded: 'Shift added. Set it up in Locations so it shows in the schedule.',
         newShift: 'Shift {n}',
-        applyHoursConfirm: 'Apply the default hours to all {count} branches, Sunday to Thursday?\n\n' +
+        applyHoursConfirm: 'Apply the default hours to all {count} locations, Sunday to Thursday?\n\n' +
           'Open days and headcount stay as they are. Friday and Saturday night are not changed.',
         hoursUpdated: 'Hours updated on {count} shifts',
         hoursAlready: 'Every shift already uses these hours',
         imported: 'Data imported',
         importedCloud: 'Data imported and uploaded to the cloud ({count} weeks)',
         importFailed: 'Invalid file: {message}',
-        resetConfirm: 'Reset all data (staff, branches, schedules and requests) to the defaults?',
+        resetConfirm: 'Reset all data (staff, locations, schedules and requests) to the defaults?',
         reset: 'Data reset'
       },
 
@@ -1685,17 +1685,17 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         iconLetters: 'SH',
         dayHeading: '{day} ({date})',
         missingStaff: 'understaffed',
-        holidayClosedLine: '{name} – all branches closed',
+        holidayClosedLine: '{name} – all locations closed',
         spareLine: '— {verb} {shifts} still to assign —',
-        unknownBranch: 'Unknown branch', unknownEmployee: 'Unknown person',
+        unknownBranch: 'Unknown location', unknownEmployee: 'Unknown person',
         weekLabel: 'Week {from} – {to}', constraintsWeek: 'Requests · {label}',
-        holidayAllClosed: 'All branches closed – a day off for everyone',
+        holidayAllClosed: 'All locations closed – a day off for everyone',
         holidayNoRequests: 'Holiday – no requests needed',
         branchClosedToday: 'Closed on this day',
-        noActiveBranches: 'No active branches.',
-        noActiveBranchesTab: 'No active branches. Open the Branches tab.',
-        allClosedOn: 'All branches are closed on {day}.',
-        branchesClosed: 'Branches closed',
+        noActiveBranches: 'No active locations.',
+        noActiveBranchesTab: 'No active locations. Open the Locations tab.',
+        allClosedOn: 'All locations are closed on {day}.',
+        branchesClosed: 'Locations closed',
         noHours: 'No hours',
         outOf: '{done} of {total}',
         cloudSaved: 'Data is saved in the cloud and updates on every computer open on this link',
@@ -1717,12 +1717,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         ruleOnePerDayOff: 'A person may work several shifts a day.',
         ruleRestOn: 'No morning shift after an evening shift the day before.',
         ruleRestOff: 'No rest requirement between an evening and a morning shift.',
-        summaryBranches: 'Branches:', summaryEmployees: 'Staff:',
+        summaryBranches: 'Locations:', summaryEmployees: 'Staff:',
         summaryCurrent: 'Current schedule:', summaryAvailability: 'Availability left:',
         summaryIssues: 'Schedule alerts:', summaryNoIssues: 'No alerts – the schedule is valid.',
-        closedAllWeek: 'closed all week', allBranches: 'all branches',
+        closedAllWeek: 'closed all week', allBranches: 'all locations',
         peopleCount: '{count} people',
-        empBranches: 'branches', empShifts: 'shifts', empMax: 'maximum {count} per week',
+        empBranches: 'locations', empShifts: 'shifts', empMax: 'maximum {count} per week',
         empAskedOff: 'asked off', empBlocked: 'blocked', empNote: 'note',
         empAssignedOf: '{name}: assigned {total} of a quota of {max}',
         empFreeDays: 'free days: {days}', none: 'none',
@@ -1734,28 +1734,28 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       alerts: {
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
-        deletedBranch: '(deleted branch)',
+        deletedBranch: '(deleted location)',
         errorsOne: 'One error', errorsOther: '{count} errors',
         warningsOne: 'One warning', warningsOther: '{count} warnings',
         infosOne: 'One note', infosOther: '{count} notes',
-        allGood: '✔ Schedule is valid – no double bookings, gaps or broken requests',
+        allGood: '✔ Schedule is valid – no overstaffing, gaps or availability conflicts',
         showAll: 'Show all {count} alerts', showLess: 'Hide alerts',
-        duplicate: 'Double booking: {label} – {count} people assigned ({names}) instead of {need}.',
-        duplicateSelf: 'Double booking: {name} is assigned twice to the same shift – {label}.',
+        duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
+        duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
-        sameBranch: ' at the same branch', differentBranches: ' at different branches',
+        sameBranch: ' at the same location', differentBranches: ' at different locations',
         understaffed: 'Understaffed: {label} – {assigned} of {need} assigned.',
         reasonBusy: '{names} are already assigned to another shift that day',
         reasonMaxed: '{names} reached their weekly shift limit',
         reasonResting: '{names} need rest between an evening and a morning shift',
-        reasonNone: 'No one is set up for both this branch and this shift, or everyone blocked it.',
+        reasonNone: 'No one is set up for both this location and this shift, or everyone blocked it.',
         reasonFree: 'These people are free ({names}) – try building the schedule again.',
         reasonPrefix: 'Reason: ',
         suggestTwoPerDay: ' You can allow two shifts per day per person in Settings.',
         suggestRaiseMax: ' You can raise the weekly limit on the staff card.',
-        constraintOff: 'Request broken: {name} asked for {day} off but is assigned to {shift} at {branch}.',
-        constraintBlocked: 'Request broken: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
-        branchMismatch: '{name} is assigned to {branch} on {day} although that branch is not on their card.',
+        constraintOff: 'Availability conflict: {name} asked for {day} off but is assigned to {shift} at {branch}.',
+        constraintBlocked: 'Availability conflict: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
+        branchMismatch: '{name} is assigned to {branch} on {day} although that location is not on their card.',
         shiftMismatch: '{name} is assigned to {shift} on {day} although that shift type is not on their card.',
         overMax: 'Over limit: {name} is assigned {total} shifts (maximum {max}).',
         noShifts: '{name} has no shifts this week.',
@@ -1773,7 +1773,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         title: 'What is still available',
         none: 'Nothing available – {reason}',
         reasonMaxed: 'everyone has reached their weekly shift limit.',
-        reasonNoDays: 'the people with quota left have no free day when their branches are open.',
+        reasonNoDays: 'the people with quota left have no free day when their locations are open.',
         totalOne: '{verb} one more shift to assign, across {people}:',
         totalOther: '{verb} {count} more shifts to assign, across {people}:',
         peopleOne: 'one person', peopleOther: '{count} people',
@@ -1805,7 +1805,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
       employees: {
         title: 'Staff', add: '+ Add person', active: 'Active',
-        branchesLabel: 'Branches (none selected = all branches)',
+        branchesLabel: 'Locations (none selected = all locations)',
         shiftTypes: 'Shift types they can work',
         maxShifts: 'Maximum shifts per week', note: 'Note',
         deleteConfirm: 'Delete {name}? Their assignments will be removed from every week.',
@@ -1813,11 +1813,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       branches: {
-        title: 'Branches', add: '+ Add branch', active: 'Active', newName: 'New branch',
-        hint: 'Each branch has its own days, hours and headcount per shift. ' +
-          'Setting people to 0 closes that shift on that day. Assigning more than the number set is flagged as a double booking.',
-        peopleLabel: 'People', closed: 'Closed', day: 'Day',
-        copyFrom: 'Copy days and hours from another branch', chooseBranch: 'Choose a branch…',
+        title: 'Locations', add: '+ Add location', active: 'Active', newName: 'New location',
+        hint: 'Each location has its own days, hours and headcount per shift. ' +
+          'Setting the required staff to 0 closes that shift on that day. Assigning more people than that is flagged as overstaffing.',
+        peopleLabel: 'Required staff', closed: 'Closed', day: 'Day',
+        copyFrom: 'Copy days and hours from another location', chooseBranch: 'Choose a location…',
         copyConfirm: 'Copy the days and hours from {from} to {to}?',
         copied: 'Days and hours copied',
         deleteConfirm: 'Delete {name}? Its assignments will be removed from every week.',
@@ -1900,10 +1900,10 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         rest: 'No morning shift after an evening shift the day before',
         oneDayOff: 'A day marked off in Requests is the only day off that week',
         shiftTypes: 'Shift types',
-        addShift: '+ Add shift', applyHours: 'Apply hours to all branches (Mon–Fri)',
+        addShift: '+ Add shift', applyHours: 'Apply hours to all locations (Mon–Fri)',
         shiftsHint: 'Define how many shifts your business runs, their names, hours, colour and order. ' +
-          'Hours here are the defaults; each branch can override them. ' +
-          'The button updates existing branches without changing open days or headcount.',
+          'Hours here are the defaults; each location can override them. ' +
+          'The button updates existing locations without changing open days or headcount.',
         shiftNamePlaceholder: 'Shift name',
         sabbathTitle: 'Saturday night',
         sabbathDefault: 'Default Sabbath end time for a new week:',
@@ -2079,18 +2079,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         spare: 'Left in quota', required: 'Required',
         valid: 'Valid', checksTitle: 'Schedule checks',
         personalText: 'Text for WhatsApp',
-        byBranch: 'By branch', byEmployee: 'By employee', availability: 'Availability',
+        byBranch: 'By location', byEmployee: 'By employee', availability: 'Availability',
         checks: 'Checks', personal: 'My schedule',
         title: 'Work schedule – week {from} to {to}',
-        viewBranch: 'By branch', viewEmployee: 'By employee',
+        viewBranch: 'By location', viewEmployee: 'By employee',
         sabbathEnds: 'Sabbath ends {time}',
-        day: 'Day', date: 'Date', branch: 'Branch', shift: 'Shift', hours: 'Hours',
+        day: 'Day', date: 'Date', branch: 'Location', shift: 'Shift', hours: 'Hours',
         staff: 'Staff', assigned: 'Assigned', quota: 'Quota', left: 'Left in quota',
         canAssign: 'Can assign', freeDays: 'Free days', totalShifts: 'Total shifts',
         severity: 'Severity', type: 'Type', detail: 'Detail',
         missing: '— missing —', closed: 'Closed', notAssigned: 'Not assigned',
         personalTitle: 'Personal schedule – {name}', totalWeek: '{count} shifts this week',
-        noIssues: 'No double bookings, gaps or broken requests'
+        noIssues: 'No overstaffing, gaps or availability conflicts'
       },
 
       errors: {
@@ -2098,7 +2098,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         emptyShiftName: 'A shift name cannot be empty',
         lastShift: 'At least one shift must remain',
         notSaved: 'Save failed', copied: 'Copied to clipboard',
-        viewOnlyBlocked: 'View only – editing is disabled. You can turn it off at the top of the screen.',
+        viewOnlyBlocked: 'Editing is locked. You can unlock it at the top of the screen.',
         duplicatePerson: 'The same person cannot appear twice in one shift',
         printBlocked: 'Printing is blocked here – use "Copy as text" or the Excel export',
         chooseEmployee: 'Choose a person for the personal export'
@@ -2188,8 +2188,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'לא אקסל צבעוני. מנוע שיבוץ שמכיר את הכללים שלך.',
         feature1Title: 'שיבוץ אוטומטי',
         feature1Body: 'לחיצה אחת ממלאת שבוע שלם בכל הסניפים, מחלקת את העומס בהוגנות ומכבדת את המכסה של כל עובד.',
-        feature2Title: 'זיהוי כפל משמרות',
-        feature2Body: 'כל כפל משמרת, חוסר והפרת אילוץ מסומנים ברגע שהם נוצרים – עם הסיבה ועם פתרון מוצע.',
+        feature2Title: 'זיהוי התנגשויות',
+        feature2Body: 'כל עודף באיוש, חוסר והפרת אילוץ מסומנים ברגע שהם נוצרים – עם הסיבה ועם פתרון מוצע.',
         feature3Title: 'אילוצים באישור מנהל',
         feature3Body: 'העובדים מגישים בקשות בעצמם, עם סיבה אופציונלית. שום בקשה לא משפיעה על הסידור עד שאישרת אותה.',
         feature4Title: 'המשמרות שלך, השעות שלך',
@@ -2287,9 +2287,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'כפל משמרת',
-        'duplicate-employee-slot': 'כפל משמרת',
-        'double-booked': 'כפל משמרת לעובד',
+        'duplicate-shift': 'עודף באיוש',
+        'duplicate-employee-slot': 'שיבוץ כפול',
+        'double-booked': 'כפל משמרות לעובד',
         understaffed: 'חוסר באיוש',
         'constraint-off': 'הפרת אילוץ',
         'constraint-blocked': 'הפרת אילוץ',
@@ -2405,11 +2405,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
         warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
         infosOne: 'הערה אחת', infosOther: '{count} הערות',
-        allGood: '✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים',
+        allGood: '✔ הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
         showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
-        duplicate: 'כפל משמרת: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
-        duplicateSelf: 'כפל משמרת: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
-        doubleBooked: 'כפל משמרת לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
+        duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
+        duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
+        doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
         sameBranch: ' באותו סניף', differentBranches: ' בסניפים שונים',
         understaffed: 'חוסר באיוש: {label} – משובצים {assigned} מתוך {need}.',
         reasonBusy: '{names} כבר משובצים במשמרת אחרת באותו יום',
@@ -2482,7 +2482,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'סניפים מוגדרים', add: '+ הוסף סניף', active: 'פעיל', newName: 'סניף חדש',
         hint: 'לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת. ' +
-          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן ככפל משמרת.',
+          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן כעודף באיוש.',
         peopleLabel: 'עובדים', closed: 'סגור', day: 'יום',
         copyFrom: 'העתקת ימים ושעות מסניף אחר', chooseBranch: 'בחרו סניף…',
         copyConfirm: 'להעתיק את הימים והשעות מ{from} אל {to}?',
@@ -2757,7 +2757,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'חומרה', type: 'סוג', detail: 'פירוט',
         missing: '— חסר —', closed: 'סגור', notAssigned: 'לא משובץ',
         personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} משמרות השבוע',
-        noIssues: 'אין כפל משמרות, חוסרים או הפרות אילוצים'
+        noIssues: 'אין עודף או חוסר באיוש ואין הפרות אילוצים'
       },
 
       errors: {
@@ -2854,8 +2854,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'No es una hoja de cálculo con colores. Es un planificador que conoce tus reglas.',
         feature1Title: 'Planificación automática',
         feature1Body: 'Un clic llena la semana entera en todas las sucursales, reparte la carga con justicia y respeta el límite semanal de cada persona.',
-        feature2Title: 'Detección de solapamientos',
-        feature2Body: 'Cada solapamiento, hueco y solicitud incumplida se señala en cuanto aparece, con el motivo y una solución propuesta.',
+        feature2Title: 'Detección de conflictos',
+        feature2Body: 'Cada exceso de personal, hueco y conflicto de disponibilidad se señala en cuanto aparece, con el motivo y una solución propuesta.',
         feature3Title: 'Solicitudes con aprobación',
         feature3Body: 'El equipo envía sus solicitudes, con un motivo opcional. Nada afecta al cuadrante hasta que lo apruebas.',
         feature4Title: 'Tus turnos, tus horas',
@@ -2948,9 +2948,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'Solapamiento',
-        'duplicate-employee-slot': 'Solapamiento',
-        'double-booked': 'Dos turnos en un día',
+        'duplicate-shift': 'Exceso de personal',
+        'duplicate-employee-slot': 'Asignación duplicada',
+        'double-booked': 'Doble turno',
         understaffed: 'Falta personal',
         'constraint-off': 'Solicitud incumplida',
         'constraint-blocked': 'Solicitud incumplida',
@@ -3067,11 +3067,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'Un error', errorsOther: '{count} errores',
         warningsOne: 'Un aviso', warningsOther: '{count} avisos',
         infosOne: 'Una nota', infosOther: '{count} notas',
-        allGood: '✔ El horario es válido: sin solapamientos, huecos ni solicitudes incumplidas',
+        allGood: '✔ El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
         showAll: 'Ver los {count} avisos', showLess: 'Ocultar los avisos',
-        duplicate: 'Solapamiento: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
-        duplicateSelf: 'Solapamiento: {name} está asignado dos veces al mismo turno – {label}.',
-        doubleBooked: 'Solapamiento: {name} tiene {count} turnos el {day}{where} ({detail}).',
+        duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
+        duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
+        doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',
         sameBranch: ' en la misma sucursal', differentBranches: ' en sucursales distintas',
         understaffed: 'Falta personal: {label} – {assigned} de {need} asignados.',
         reasonBusy: '{names} ya tienen otro turno ese día',
@@ -3144,7 +3144,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'Sucursales', add: '+ Añadir sucursal', active: 'Activa', newName: 'Sucursal nueva',
         hint: 'Cada sucursal tiene sus propios días, horas y número de personas por turno. ' +
-          'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como solapamiento.',
+          'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como exceso de personal.',
         peopleLabel: 'Personas', closed: 'Cerrado', day: 'Día',
         copyFrom: 'Copiar días y horas de otra sucursal', chooseBranch: 'Elige una sucursal…',
         copyConfirm: '¿Copiar los días y las horas de {from} a {to}?',
@@ -3419,7 +3419,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'Gravedad', type: 'Tipo', detail: 'Detalle',
         missing: '— falta —', closed: 'Cerrado', notAssigned: 'Sin asignar',
         personalTitle: 'Horario personal – {name}', totalWeek: '{count} turnos esta semana',
-        noIssues: 'Sin solapamientos, huecos ni solicitudes incumplidas'
+        noIssues: 'Sin exceso ni falta de personal y sin conflictos de disponibilidad'
       },
 
       errors: {
@@ -3516,8 +3516,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'Pas un tableur en couleurs. Un planificateur qui connaît vos règles.',
         feature1Title: 'Planification automatique',
         feature1Body: 'Un clic remplit la semaine entière sur tous les sites, répartit la charge équitablement et respecte la limite hebdomadaire de chacun.',
-        feature2Title: 'Détection des doublons',
-        feature2Body: 'Chaque doublon, trou et demande non respectée est signalé dès son apparition, avec la raison et une correction proposée.',
+        feature2Title: 'Détection des conflits',
+        feature2Body: 'Chaque sureffectif, trou et conflit de disponibilité est signalé dès son apparition, avec la raison et une correction proposée.',
         feature3Title: 'Demandes soumises à validation',
         feature3Body: 'Les équipes déposent leurs demandes, avec un motif facultatif. Rien n’affecte le planning tant que vous n’avez pas validé.',
         feature4Title: 'Vos créneaux, vos horaires',
@@ -3610,9 +3610,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'Doublon',
-        'duplicate-employee-slot': 'Doublon',
-        'double-booked': 'Deux services dans la journée',
+        'duplicate-shift': 'Effectif excédentaire',
+        'duplicate-employee-slot': 'Affectation en double',
+        'double-booked': 'Double service',
         understaffed: 'Effectif insuffisant',
         'constraint-off': 'Demande non respectée',
         'constraint-blocked': 'Demande non respectée',
@@ -3729,11 +3729,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'Une erreur', errorsOther: '{count} erreurs',
         warningsOne: 'Un avertissement', warningsOther: '{count} avertissements',
         infosOne: 'Une remarque', infosOther: '{count} remarques',
-        allGood: '✔ Le planning est valide – aucun doublon, manque ou demande non respectée',
+        allGood: '✔ Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
         showAll: 'Afficher les {count} alertes', showLess: 'Masquer les alertes',
-        duplicate: 'Doublon : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
-        duplicateSelf: 'Doublon : {name} est affecté deux fois au même service – {label}.',
-        doubleBooked: 'Doublon : {name} a {count} services le {day}{where} ({detail}).',
+        duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
+        duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
+        doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',
         sameBranch: ' dans la même succursale', differentBranches: ' dans des succursales différentes',
         understaffed: 'Effectif insuffisant : {label} – {assigned} sur {need} affectés.',
         reasonBusy: '{names} sont déjà affectés à un autre service ce jour-là',
@@ -3806,7 +3806,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'Succursales', add: '+ Ajouter une succursale', active: 'Active', newName: 'Nouvelle succursale',
         hint: 'Chaque succursale a ses propres jours, horaires et effectifs par service. ' +
-          'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un doublon.',
+          'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un sureffectif.',
         peopleLabel: 'Personnes', closed: 'Fermé', day: 'Jour',
         copyFrom: 'Copier les jours et horaires d’une autre succursale', chooseBranch: 'Choisir une succursale…',
         copyConfirm: 'Copier les jours et horaires de {from} vers {to} ?',
@@ -4081,7 +4081,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'Gravité', type: 'Type', detail: 'Détail',
         missing: '— manquant —', closed: 'Fermé', notAssigned: 'Non affecté',
         personalTitle: 'Planning personnel – {name}', totalWeek: '{count} services cette semaine',
-        noIssues: 'Aucun doublon, manque ni demande non respectée'
+        noIssues: 'Ni sureffectif, ni manque, ni conflit de disponibilité'
       },
 
       errors: {
@@ -4178,8 +4178,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'ليس جدول بيانات ملوّنًا. بل مُجدوِل يعرف قواعدك.',
         feature1Title: 'جدولة تلقائية',
         feature1Body: 'نقرة واحدة تملأ الأسبوع كاملًا في كل الفروع، وتوزّع العبء بإنصاف، وتحترم الحد الأسبوعي لكل شخص.',
-        feature2Title: 'كشف الازدواج',
-        feature2Body: 'كل ازدواج وفجوة وطلب غير محترم يُعلَّم فور ظهوره — مع السبب وحل مقترح.',
+        feature2Title: 'كشف التعارضات',
+        feature2Body: 'كل زيادة في الطاقم وفجوة وتعارض في التفرّغ يُعلَّم فور ظهوره — مع السبب وحل مقترح.',
         feature3Title: 'طلبات باعتماد المدير',
         feature3Body: 'يقدّم الموظفون طلباتهم بأنفسهم، مع سبب اختياري. لا شيء يؤثر في الجدول قبل أن تعتمده.',
         feature4Title: 'ورديّاتك وساعاتك',
@@ -4272,9 +4272,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'ازدواج مناوبة',
-        'duplicate-employee-slot': 'ازدواج مناوبة',
-        'double-booked': 'مناوبتان في يوم واحد',
+        'duplicate-shift': 'زيادة في الطاقم',
+        'duplicate-employee-slot': 'تعيين مكرر',
+        'double-booked': 'ازدواج مناوبات',
         understaffed: 'نقص في التغطية',
         'constraint-off': 'مخالفة طلب',
         'constraint-blocked': 'مخالفة طلب',
@@ -4391,11 +4391,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'خطأ واحد', errorsOther: '{count} أخطاء',
         warningsOne: 'تنبيه واحد', warningsOther: '{count} تنبيهات',
         infosOne: 'ملاحظة واحدة', infosOther: '{count} ملاحظات',
-        allGood: '✔ الجدول سليم – لا ازدواج ولا نقص ولا مخالفة طلبات',
+        allGood: '✔ الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
         showAll: 'عرض كل التنبيهات ({count})', showLess: 'إخفاء التنبيهات',
-        duplicate: 'ازدواج مناوبة: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
-        duplicateSelf: 'ازدواج مناوبة: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
-        doubleBooked: 'ازدواج مناوبة: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
+        duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
+        duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
+        doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
         sameBranch: ' في الفرع نفسه', differentBranches: ' في فروع مختلفة',
         understaffed: 'نقص في التغطية: {label} – معيَّن {assigned} من {need}.',
         reasonBusy: '{names} معيَّنون في مناوبة أخرى في اليوم نفسه',
@@ -4468,7 +4468,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'الفروع', add: '+ إضافة فرع', active: 'نشط', newName: 'فرع جديد',
         hint: 'لكل فرع أيامه وأوقاته وعدد موظفيه في كل مناوبة. ' +
-          'وضع 0 موظفين يغلق تلك المناوبة في ذلك اليوم. تعيين أكثر من العدد المحدد يُعلَّم كازدواج مناوبة.',
+          'وضع 0 موظفين يغلق تلك المناوبة في ذلك اليوم. تعيين أكثر من العدد المحدد يُعلَّم كزيادة في الطاقم.',
         peopleLabel: 'موظفون', closed: 'مغلق', day: 'اليوم',
         copyFrom: 'نسخ الأيام والأوقات من فرع آخر', chooseBranch: 'اختر فرعًا…',
         copyConfirm: 'هل تريد نسخ الأيام والأوقات من {from} إلى {to}؟',
@@ -4743,7 +4743,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'الخطورة', type: 'النوع', detail: 'التفاصيل',
         missing: '— ناقص —', closed: 'مغلق', notAssigned: 'غير معيَّن',
         personalTitle: 'جدول شخصي – {name}', totalWeek: '{count} مناوبات هذا الأسبوع',
-        noIssues: 'لا ازدواج ولا نقص ولا مخالفة طلبات'
+        noIssues: 'لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ'
       },
 
       errors: {
@@ -4840,8 +4840,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'Не цветная таблица. Планировщик, который знает ваши правила.',
         feature1Title: 'Автоматическое расписание',
         feature1Body: 'Один клик заполняет всю неделю по всем филиалам, распределяет нагрузку справедливо и соблюдает недельный лимит каждого.',
-        feature2Title: 'Поиск накладок',
-        feature2Body: 'Каждая накладка, дыра и нарушенная заявка отмечаются сразу — с причиной и предложенным решением.',
+        feature2Title: 'Поиск конфликтов',
+        feature2Body: 'Каждый избыток людей, дыра и конфликт с доступностью отмечаются сразу — с причиной и предложенным решением.',
         feature3Title: 'Заявки с подтверждением',
         feature3Body: 'Сотрудники подают заявки сами, с необязательной причиной. Ничто не влияет на расписание, пока вы не подтвердите.',
         feature4Title: 'Ваши смены, ваши часы',
@@ -4934,8 +4934,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'Накладка',
-        'duplicate-employee-slot': 'Накладка',
+        'duplicate-shift': 'Избыток людей',
+        'duplicate-employee-slot': 'Дублирующее назначение',
         'double-booked': 'Две смены в один день',
         understaffed: 'Не хватает людей',
         'constraint-off': 'Заявка нарушена',
@@ -5053,11 +5053,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'Одна ошибка', errorsOther: 'Ошибок: {count}',
         warningsOne: 'Одно предупреждение', warningsOther: 'Предупреждений: {count}',
         infosOne: 'Одна заметка', infosOther: 'Заметок: {count}',
-        allGood: '✔ График корректен — нет накладок, нехватки людей и нарушенных заявок',
+        allGood: '✔ График корректен — нет ни избытка, ни нехватки людей и нет конфликтов с доступностью',
         showAll: 'Показать все предупреждения ({count})', showLess: 'Скрыть предупреждения',
-        duplicate: 'Накладка: {label} — назначено {count} чел. ({names}) вместо {need}.',
-        duplicateSelf: 'Накладка: {name} назначен дважды на одну смену — {label}.',
-        doubleBooked: 'Накладка: у {name} {count} смен в {day}{where} ({detail}).',
+        duplicate: 'Избыток людей: {label} — назначено {count} чел. ({names}) вместо {need}.',
+        duplicateSelf: 'Дублирующее назначение: {name} назначен дважды на одну смену — {label}.',
+        doubleBooked: 'Две смены в один день: у {name} {count} смен в {day}{where} ({detail}).',
         sameBranch: ' в одном филиале', differentBranches: ' в разных филиалах',
         understaffed: 'Не хватает людей: {label} — назначено {assigned} из {need}.',
         reasonBusy: '{names} уже назначены на другую смену в этот день',
@@ -5130,7 +5130,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'Филиалы', add: '+ Добавить филиал', active: 'Активен', newName: 'Новый филиал',
         hint: 'У каждого филиала свои дни, время и количество людей на смену. ' +
-          'Значение 0 закрывает эту смену в этот день. Назначение сверх указанного числа помечается как накладка.',
+          'Значение 0 закрывает эту смену в этот день. Назначение сверх указанного числа помечается как избыток людей.',
         peopleLabel: 'Людей', closed: 'Закрыто', day: 'День',
         copyFrom: 'Скопировать дни и время из другого филиала', chooseBranch: 'Выберите филиал…',
         copyConfirm: 'Скопировать дни и время из {from} в {to}?',
@@ -5405,7 +5405,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'Уровень', type: 'Тип', detail: 'Подробности',
         missing: '— не хватает —', closed: 'Закрыто', notAssigned: 'Не назначен',
         personalTitle: 'Личный график — {name}', totalWeek: 'Смен на этой неделе: {count}',
-        noIssues: 'Нет накладок, нехватки людей и нарушенных заявок'
+        noIssues: 'Нет ни избытка, ни нехватки людей и нет конфликтов с доступностью'
       },
 
       errors: {
@@ -5502,8 +5502,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'Keine bunte Tabelle. Eine Planung, die Ihre Regeln kennt.',
         feature1Title: 'Automatische Planung',
         feature1Body: 'Ein Klick füllt die ganze Woche an allen Standorten, verteilt die Last fair und hält das Wochenlimit jeder Person ein.',
-        feature2Title: 'Doppelbelegungen erkennen',
-        feature2Body: 'Jede Doppelbelegung, jede Lücke und jeder gebrochene Wunsch wird sofort markiert – mit Grund und Lösungsvorschlag.',
+        feature2Title: 'Konflikte erkennen',
+        feature2Body: 'Jede Überbesetzung, jede Lücke und jeder Verfügbarkeitskonflikt wird sofort markiert – mit Grund und Lösungsvorschlag.',
         feature3Title: 'Wünsche mit Freigabe',
         feature3Body: 'Mitarbeitende reichen ihre Wünsche selbst ein, mit optionaler Begründung. Nichts wirkt auf den Plan, bevor Sie es freigeben.',
         feature4Title: 'Ihre Schichten, Ihre Zeiten',
@@ -5596,8 +5596,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'Doppelbelegung',
-        'duplicate-employee-slot': 'Doppelbelegung',
+        'duplicate-shift': 'Überbesetzung',
+        'duplicate-employee-slot': 'Doppelte Zuteilung',
         'double-booked': 'Zwei Schichten an einem Tag',
         understaffed: 'Unterbesetzt',
         'constraint-off': 'Wunsch verletzt',
@@ -5715,11 +5715,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'Ein Fehler', errorsOther: '{count} Fehler',
         warningsOne: 'Eine Warnung', warningsOther: '{count} Warnungen',
         infosOne: 'Ein Hinweis', infosOther: '{count} Hinweise',
-        allGood: '✔ Der Plan ist in Ordnung – keine Doppelbelegungen, Lücken oder verletzten Wünsche',
+        allGood: '✔ Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
         showAll: 'Alle {count} Hinweise anzeigen', showLess: 'Hinweise ausblenden',
-        duplicate: 'Doppelbelegung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
-        duplicateSelf: 'Doppelbelegung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
-        doubleBooked: 'Doppelbelegung: {name} hat {count} Schichten am {day}{where} ({detail}).',
+        duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
+        duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
+        doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',
         sameBranch: ' in derselben Filiale', differentBranches: ' in verschiedenen Filialen',
         understaffed: 'Unterbesetzt: {label} – {assigned} von {need} eingeteilt.',
         reasonBusy: '{names} sind an diesem Tag bereits einer anderen Schicht zugeteilt',
@@ -5792,7 +5792,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'Filialen', add: '+ Filiale hinzufügen', active: 'Aktiv', newName: 'Neue Filiale',
         hint: 'Jede Filiale hat eigene Tage, Zeiten und Personalstärke pro Schicht. ' +
-          '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Doppelbelegung.',
+          '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Überbesetzung.',
         peopleLabel: 'Personen', closed: 'Geschlossen', day: 'Tag',
         copyFrom: 'Tage und Zeiten aus einer anderen Filiale kopieren', chooseBranch: 'Filiale auswählen…',
         copyConfirm: 'Tage und Zeiten von {from} nach {to} kopieren?',
@@ -6067,7 +6067,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'Schweregrad', type: 'Typ', detail: 'Details',
         missing: '— fehlt —', closed: 'Geschlossen', notAssigned: 'Nicht eingeteilt',
         personalTitle: 'Persönlicher Plan – {name}', totalWeek: '{count} Schichten diese Woche',
-        noIssues: 'Keine Doppelbelegungen, Lücken oder verletzten Wünsche'
+        noIssues: 'Keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte'
       },
 
       errors: {
@@ -6164,8 +6164,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         featuresSubtitle: 'Não é uma folha de cálculo colorida. É um planeador que conhece as tuas regras.',
         feature1Title: 'Planeamento automático',
         feature1Body: 'Um clique preenche a semana inteira em todas as lojas, distribui a carga com justiça e respeita o limite semanal de cada pessoa.',
-        feature2Title: 'Deteção de sobreposições',
-        feature2Body: 'Cada sobreposição, falha e pedido não cumprido é assinalado assim que aparece — com o motivo e uma correção sugerida.',
+        feature2Title: 'Deteção de conflitos',
+        feature2Body: 'Cada excesso de pessoal, falha e conflito de disponibilidade é assinalado assim que aparece — com o motivo e uma correção sugerida.',
         feature3Title: 'Pedidos com aprovação',
         feature3Body: 'A equipa envia os seus pedidos, com um motivo opcional. Nada afeta o horário até tu aprovares.',
         feature4Title: 'Os teus turnos, os teus horários',
@@ -6258,9 +6258,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       issueTypes: {
-        'duplicate-shift': 'Sobreposição',
-        'duplicate-employee-slot': 'Sobreposição',
-        'double-booked': 'Dois turnos no mesmo dia',
+        'duplicate-shift': 'Excesso de pessoal',
+        'duplicate-employee-slot': 'Atribuição duplicada',
+        'double-booked': 'Turno duplo',
         understaffed: 'Falta pessoal',
         'constraint-off': 'Pedido não cumprido',
         'constraint-blocked': 'Pedido não cumprido',
@@ -6377,11 +6377,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         errorsOne: 'Um erro', errorsOther: '{count} erros',
         warningsOne: 'Um aviso', warningsOther: '{count} avisos',
         infosOne: 'Uma nota', infosOther: '{count} notas',
-        allGood: '✔ O horário está correto – sem sobreposições, falhas ou pedidos não cumpridos',
+        allGood: '✔ O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
         showAll: 'Ver os {count} alertas', showLess: 'Ocultar os alertas',
-        duplicate: 'Sobreposição: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
-        duplicateSelf: 'Sobreposição: {name} está atribuído duas vezes ao mesmo turno – {label}.',
-        doubleBooked: 'Sobreposição: {name} tem {count} turnos em {day}{where} ({detail}).',
+        duplicate: 'Excesso de pessoal: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
+        duplicateSelf: 'Atribuição duplicada: {name} está atribuído duas vezes ao mesmo turno – {label}.',
+        doubleBooked: 'Turno duplo: {name} tem {count} turnos em {day}{where} ({detail}).',
         sameBranch: ' na mesma filial', differentBranches: ' em filiais diferentes',
         understaffed: 'Falta pessoal: {label} – {assigned} de {need} atribuídos.',
         reasonBusy: '{names} já estão noutro turno nesse dia',
@@ -6454,7 +6454,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       branches: {
         title: 'Filiais', add: '+ Adicionar filial', active: 'Ativa', newName: 'Filial nova',
         hint: 'Cada filial tem os seus dias, horas e número de pessoas por turno. ' +
-          'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como sobreposição.',
+          'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como excesso de pessoal.',
         peopleLabel: 'Pessoas', closed: 'Fechado', day: 'Dia',
         copyFrom: 'Copiar dias e horas de outra filial', chooseBranch: 'Escolhe uma filial…',
         copyConfirm: 'Copiar os dias e as horas de {from} para {to}?',
@@ -6729,7 +6729,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         severity: 'Gravidade', type: 'Tipo', detail: 'Detalhe',
         missing: '— em falta —', closed: 'Fechado', notAssigned: 'Por atribuir',
         personalTitle: 'Horário pessoal – {name}', totalWeek: '{count} turnos esta semana',
-        noIssues: 'Sem sobreposições, falhas ou pedidos não cumpridos'
+        noIssues: 'Sem excesso nem falta de pessoal e sem conflitos de disponibilidade'
       },
 
       errors: {

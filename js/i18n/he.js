@@ -70,8 +70,8 @@
         featuresSubtitle: 'לא אקסל צבעוני. מנוע שיבוץ שמכיר את הכללים שלך.',
         feature1Title: 'שיבוץ אוטומטי',
         feature1Body: 'לחיצה אחת ממלאת שבוע שלם בכל הסניפים, מחלקת את העומס בהוגנות ומכבדת את המכסה של כל עובד.',
-        feature2Title: 'זיהוי כפל משמרות',
-        feature2Body: 'כל כפל משמרת, חוסר והפרת אילוץ מסומנים ברגע שהם נוצרים – עם הסיבה ועם פתרון מוצע.',
+        feature2Title: 'זיהוי התנגשויות',
+        feature2Body: 'כל עודף באיוש, חוסר והפרת אילוץ מסומנים ברגע שהם נוצרים – עם הסיבה ועם פתרון מוצע.',
         feature3Title: 'אילוצים באישור מנהל',
         feature3Body: 'העובדים מגישים בקשות בעצמם, עם סיבה אופציונלית. שום בקשה לא משפיעה על הסידור עד שאישרת אותה.',
         feature4Title: 'המשמרות שלך, השעות שלך',
@@ -169,9 +169,9 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'כפל משמרת',
-        'duplicate-employee-slot': 'כפל משמרת',
-        'double-booked': 'כפל משמרת לעובד',
+        'duplicate-shift': 'עודף באיוש',
+        'duplicate-employee-slot': 'שיבוץ כפול',
+        'double-booked': 'כפל משמרות לעובד',
         understaffed: 'חוסר באיוש',
         'constraint-off': 'הפרת אילוץ',
         'constraint-blocked': 'הפרת אילוץ',
@@ -287,11 +287,11 @@
         errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
         warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
         infosOne: 'הערה אחת', infosOther: '{count} הערות',
-        allGood: '✔ הסידור תקין – אין כפל משמרות, חוסרים או הפרות אילוצים',
+        allGood: '✔ הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
         showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
-        duplicate: 'כפל משמרת: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
-        duplicateSelf: 'כפל משמרת: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
-        doubleBooked: 'כפל משמרת לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
+        duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
+        duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
+        doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
         sameBranch: ' באותו סניף', differentBranches: ' בסניפים שונים',
         understaffed: 'חוסר באיוש: {label} – משובצים {assigned} מתוך {need}.',
         reasonBusy: '{names} כבר משובצים במשמרת אחרת באותו יום',
@@ -364,7 +364,7 @@
       branches: {
         title: 'סניפים מוגדרים', add: '+ הוסף סניף', active: 'פעיל', newName: 'סניף חדש',
         hint: 'לכל סניף נקבעים בנפרד הימים, השעות וכמות העובדים בכל משמרת. ' +
-          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן ככפל משמרת.',
+          'עובדים = 0 סוגר את המשמרת באותו יום. שיבוץ של יותר מהמספר שנקבע יסומן כעודף באיוש.',
         peopleLabel: 'עובדים', closed: 'סגור', day: 'יום',
         copyFrom: 'העתקת ימים ושעות מסניף אחר', chooseBranch: 'בחרו סניף…',
         copyConfirm: 'להעתיק את הימים והשעות מ{from} אל {to}?',
@@ -639,7 +639,7 @@
         severity: 'חומרה', type: 'סוג', detail: 'פירוט',
         missing: '— חסר —', closed: 'סגור', notAssigned: 'לא משובץ',
         personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} משמרות השבוע',
-        noIssues: 'אין כפל משמרות, חוסרים או הפרות אילוצים'
+        noIssues: 'אין עודף או חוסר באיוש ואין הפרות אילוצים'
       },
 
       errors: {

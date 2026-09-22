@@ -55,7 +55,8 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   check('כיוון בפועל של הטבלה', await computedDir(page, '#schedule-branch table'), 'ltr');
   check('שפת המסמך', await page.getAttribute('html', 'lang'), 'en');
   check('לשונית הסידור', await page.locator('.tab[data-tab="schedule"]').textContent(), 'Schedule');
-  check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'Branch');
+  /* באנגלית סניף הוא Location: "branch" באנגלית עסקית הוא סניף בנק */
+  check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'Location');
   check('שמות הימים', await page.locator('#schedule-branch th.day-head').first().textContent(), /^Sunday/);
   check('טקסט ההתראות', await page.locator('#issues .issue').first().textContent(), /Understaffed|No Sabbath/);
   check('סיכום הזמינות', await page.locator('#availability .summary-title').textContent(), 'What is still available');

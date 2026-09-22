@@ -69,8 +69,8 @@
         featuresSubtitle: 'ليس جدول بيانات ملوّنًا. بل مُجدوِل يعرف قواعدك.',
         feature1Title: 'جدولة تلقائية',
         feature1Body: 'نقرة واحدة تملأ الأسبوع كاملًا في كل الفروع، وتوزّع العبء بإنصاف، وتحترم الحد الأسبوعي لكل شخص.',
-        feature2Title: 'كشف الازدواج',
-        feature2Body: 'كل ازدواج وفجوة وطلب غير محترم يُعلَّم فور ظهوره — مع السبب وحل مقترح.',
+        feature2Title: 'كشف التعارضات',
+        feature2Body: 'كل زيادة في الطاقم وفجوة وتعارض في التفرّغ يُعلَّم فور ظهوره — مع السبب وحل مقترح.',
         feature3Title: 'طلبات باعتماد المدير',
         feature3Body: 'يقدّم الموظفون طلباتهم بأنفسهم، مع سبب اختياري. لا شيء يؤثر في الجدول قبل أن تعتمده.',
         feature4Title: 'ورديّاتك وساعاتك',
@@ -163,9 +163,9 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'ازدواج مناوبة',
-        'duplicate-employee-slot': 'ازدواج مناوبة',
-        'double-booked': 'مناوبتان في يوم واحد',
+        'duplicate-shift': 'زيادة في الطاقم',
+        'duplicate-employee-slot': 'تعيين مكرر',
+        'double-booked': 'ازدواج مناوبات',
         understaffed: 'نقص في التغطية',
         'constraint-off': 'مخالفة طلب',
         'constraint-blocked': 'مخالفة طلب',
@@ -282,11 +282,11 @@
         errorsOne: 'خطأ واحد', errorsOther: '{count} أخطاء',
         warningsOne: 'تنبيه واحد', warningsOther: '{count} تنبيهات',
         infosOne: 'ملاحظة واحدة', infosOther: '{count} ملاحظات',
-        allGood: '✔ الجدول سليم – لا ازدواج ولا نقص ولا مخالفة طلبات',
+        allGood: '✔ الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
         showAll: 'عرض كل التنبيهات ({count})', showLess: 'إخفاء التنبيهات',
-        duplicate: 'ازدواج مناوبة: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
-        duplicateSelf: 'ازدواج مناوبة: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
-        doubleBooked: 'ازدواج مناوبة: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
+        duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
+        duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
+        doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
         sameBranch: ' في الفرع نفسه', differentBranches: ' في فروع مختلفة',
         understaffed: 'نقص في التغطية: {label} – معيَّن {assigned} من {need}.',
         reasonBusy: '{names} معيَّنون في مناوبة أخرى في اليوم نفسه',
@@ -359,7 +359,7 @@
       branches: {
         title: 'الفروع', add: '+ إضافة فرع', active: 'نشط', newName: 'فرع جديد',
         hint: 'لكل فرع أيامه وأوقاته وعدد موظفيه في كل مناوبة. ' +
-          'وضع 0 موظفين يغلق تلك المناوبة في ذلك اليوم. تعيين أكثر من العدد المحدد يُعلَّم كازدواج مناوبة.',
+          'وضع 0 موظفين يغلق تلك المناوبة في ذلك اليوم. تعيين أكثر من العدد المحدد يُعلَّم كزيادة في الطاقم.',
         peopleLabel: 'موظفون', closed: 'مغلق', day: 'اليوم',
         copyFrom: 'نسخ الأيام والأوقات من فرع آخر', chooseBranch: 'اختر فرعًا…',
         copyConfirm: 'هل تريد نسخ الأيام والأوقات من {from} إلى {to}؟',
@@ -634,7 +634,7 @@
         severity: 'الخطورة', type: 'النوع', detail: 'التفاصيل',
         missing: '— ناقص —', closed: 'مغلق', notAssigned: 'غير معيَّن',
         personalTitle: 'جدول شخصي – {name}', totalWeek: '{count} مناوبات هذا الأسبوع',
-        noIssues: 'لا ازدواج ولا نقص ولا مخالفة طلبات'
+        noIssues: 'لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ'
       },
 
       errors: {

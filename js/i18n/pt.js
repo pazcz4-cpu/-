@@ -69,8 +69,8 @@
         featuresSubtitle: 'Não é uma folha de cálculo colorida. É um planeador que conhece as tuas regras.',
         feature1Title: 'Planeamento automático',
         feature1Body: 'Um clique preenche a semana inteira em todas as lojas, distribui a carga com justiça e respeita o limite semanal de cada pessoa.',
-        feature2Title: 'Deteção de sobreposições',
-        feature2Body: 'Cada sobreposição, falha e pedido não cumprido é assinalado assim que aparece — com o motivo e uma correção sugerida.',
+        feature2Title: 'Deteção de conflitos',
+        feature2Body: 'Cada excesso de pessoal, falha e conflito de disponibilidade é assinalado assim que aparece — com o motivo e uma correção sugerida.',
         feature3Title: 'Pedidos com aprovação',
         feature3Body: 'A equipa envia os seus pedidos, com um motivo opcional. Nada afeta o horário até tu aprovares.',
         feature4Title: 'Os teus turnos, os teus horários',
@@ -163,9 +163,9 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'Sobreposição',
-        'duplicate-employee-slot': 'Sobreposição',
-        'double-booked': 'Dois turnos no mesmo dia',
+        'duplicate-shift': 'Excesso de pessoal',
+        'duplicate-employee-slot': 'Atribuição duplicada',
+        'double-booked': 'Turno duplo',
         understaffed: 'Falta pessoal',
         'constraint-off': 'Pedido não cumprido',
         'constraint-blocked': 'Pedido não cumprido',
@@ -282,11 +282,11 @@
         errorsOne: 'Um erro', errorsOther: '{count} erros',
         warningsOne: 'Um aviso', warningsOther: '{count} avisos',
         infosOne: 'Uma nota', infosOther: '{count} notas',
-        allGood: '✔ O horário está correto – sem sobreposições, falhas ou pedidos não cumpridos',
+        allGood: '✔ O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
         showAll: 'Ver os {count} alertas', showLess: 'Ocultar os alertas',
-        duplicate: 'Sobreposição: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
-        duplicateSelf: 'Sobreposição: {name} está atribuído duas vezes ao mesmo turno – {label}.',
-        doubleBooked: 'Sobreposição: {name} tem {count} turnos em {day}{where} ({detail}).',
+        duplicate: 'Excesso de pessoal: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
+        duplicateSelf: 'Atribuição duplicada: {name} está atribuído duas vezes ao mesmo turno – {label}.',
+        doubleBooked: 'Turno duplo: {name} tem {count} turnos em {day}{where} ({detail}).',
         sameBranch: ' na mesma filial', differentBranches: ' em filiais diferentes',
         understaffed: 'Falta pessoal: {label} – {assigned} de {need} atribuídos.',
         reasonBusy: '{names} já estão noutro turno nesse dia',
@@ -359,7 +359,7 @@
       branches: {
         title: 'Filiais', add: '+ Adicionar filial', active: 'Ativa', newName: 'Filial nova',
         hint: 'Cada filial tem os seus dias, horas e número de pessoas por turno. ' +
-          'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como sobreposição.',
+          'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como excesso de pessoal.',
         peopleLabel: 'Pessoas', closed: 'Fechado', day: 'Dia',
         copyFrom: 'Copiar dias e horas de outra filial', chooseBranch: 'Escolhe uma filial…',
         copyConfirm: 'Copiar os dias e as horas de {from} para {to}?',
@@ -634,7 +634,7 @@
         severity: 'Gravidade', type: 'Tipo', detail: 'Detalhe',
         missing: '— em falta —', closed: 'Fechado', notAssigned: 'Por atribuir',
         personalTitle: 'Horário pessoal – {name}', totalWeek: '{count} turnos esta semana',
-        noIssues: 'Sem sobreposições, falhas ou pedidos não cumpridos'
+        noIssues: 'Sem excesso nem falta de pessoal e sem conflitos de disponibilidade'
       },
 
       errors: {

@@ -69,8 +69,8 @@
         featuresSubtitle: 'No es una hoja de cálculo con colores. Es un planificador que conoce tus reglas.',
         feature1Title: 'Planificación automática',
         feature1Body: 'Un clic llena la semana entera en todas las sucursales, reparte la carga con justicia y respeta el límite semanal de cada persona.',
-        feature2Title: 'Detección de solapamientos',
-        feature2Body: 'Cada solapamiento, hueco y solicitud incumplida se señala en cuanto aparece, con el motivo y una solución propuesta.',
+        feature2Title: 'Detección de conflictos',
+        feature2Body: 'Cada exceso de personal, hueco y conflicto de disponibilidad se señala en cuanto aparece, con el motivo y una solución propuesta.',
         feature3Title: 'Solicitudes con aprobación',
         feature3Body: 'El equipo envía sus solicitudes, con un motivo opcional. Nada afecta al cuadrante hasta que lo apruebas.',
         feature4Title: 'Tus turnos, tus horas',
@@ -163,9 +163,9 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'Solapamiento',
-        'duplicate-employee-slot': 'Solapamiento',
-        'double-booked': 'Dos turnos en un día',
+        'duplicate-shift': 'Exceso de personal',
+        'duplicate-employee-slot': 'Asignación duplicada',
+        'double-booked': 'Doble turno',
         understaffed: 'Falta personal',
         'constraint-off': 'Solicitud incumplida',
         'constraint-blocked': 'Solicitud incumplida',
@@ -282,11 +282,11 @@
         errorsOne: 'Un error', errorsOther: '{count} errores',
         warningsOne: 'Un aviso', warningsOther: '{count} avisos',
         infosOne: 'Una nota', infosOther: '{count} notas',
-        allGood: '✔ El horario es válido: sin solapamientos, huecos ni solicitudes incumplidas',
+        allGood: '✔ El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
         showAll: 'Ver los {count} avisos', showLess: 'Ocultar los avisos',
-        duplicate: 'Solapamiento: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
-        duplicateSelf: 'Solapamiento: {name} está asignado dos veces al mismo turno – {label}.',
-        doubleBooked: 'Solapamiento: {name} tiene {count} turnos el {day}{where} ({detail}).',
+        duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
+        duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
+        doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',
         sameBranch: ' en la misma sucursal', differentBranches: ' en sucursales distintas',
         understaffed: 'Falta personal: {label} – {assigned} de {need} asignados.',
         reasonBusy: '{names} ya tienen otro turno ese día',
@@ -359,7 +359,7 @@
       branches: {
         title: 'Sucursales', add: '+ Añadir sucursal', active: 'Activa', newName: 'Sucursal nueva',
         hint: 'Cada sucursal tiene sus propios días, horas y número de personas por turno. ' +
-          'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como solapamiento.',
+          'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como exceso de personal.',
         peopleLabel: 'Personas', closed: 'Cerrado', day: 'Día',
         copyFrom: 'Copiar días y horas de otra sucursal', chooseBranch: 'Elige una sucursal…',
         copyConfirm: '¿Copiar los días y las horas de {from} a {to}?',
@@ -634,7 +634,7 @@
         severity: 'Gravedad', type: 'Tipo', detail: 'Detalle',
         missing: '— falta —', closed: 'Cerrado', notAssigned: 'Sin asignar',
         personalTitle: 'Horario personal – {name}', totalWeek: '{count} turnos esta semana',
-        noIssues: 'Sin solapamientos, huecos ni solicitudes incumplidas'
+        noIssues: 'Sin exceso ni falta de personal y sin conflictos de disponibilidad'
       },
 
       errors: {

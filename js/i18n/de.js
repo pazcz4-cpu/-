@@ -69,8 +69,8 @@
         featuresSubtitle: 'Keine bunte Tabelle. Eine Planung, die Ihre Regeln kennt.',
         feature1Title: 'Automatische Planung',
         feature1Body: 'Ein Klick füllt die ganze Woche an allen Standorten, verteilt die Last fair und hält das Wochenlimit jeder Person ein.',
-        feature2Title: 'Doppelbelegungen erkennen',
-        feature2Body: 'Jede Doppelbelegung, jede Lücke und jeder gebrochene Wunsch wird sofort markiert – mit Grund und Lösungsvorschlag.',
+        feature2Title: 'Konflikte erkennen',
+        feature2Body: 'Jede Überbesetzung, jede Lücke und jeder Verfügbarkeitskonflikt wird sofort markiert – mit Grund und Lösungsvorschlag.',
         feature3Title: 'Wünsche mit Freigabe',
         feature3Body: 'Mitarbeitende reichen ihre Wünsche selbst ein, mit optionaler Begründung. Nichts wirkt auf den Plan, bevor Sie es freigeben.',
         feature4Title: 'Ihre Schichten, Ihre Zeiten',
@@ -163,8 +163,8 @@
       },
 
       issueTypes: {
-        'duplicate-shift': 'Doppelbelegung',
-        'duplicate-employee-slot': 'Doppelbelegung',
+        'duplicate-shift': 'Überbesetzung',
+        'duplicate-employee-slot': 'Doppelte Zuteilung',
         'double-booked': 'Zwei Schichten an einem Tag',
         understaffed: 'Unterbesetzt',
         'constraint-off': 'Wunsch verletzt',
@@ -282,11 +282,11 @@
         errorsOne: 'Ein Fehler', errorsOther: '{count} Fehler',
         warningsOne: 'Eine Warnung', warningsOther: '{count} Warnungen',
         infosOne: 'Ein Hinweis', infosOther: '{count} Hinweise',
-        allGood: '✔ Der Plan ist in Ordnung – keine Doppelbelegungen, Lücken oder verletzten Wünsche',
+        allGood: '✔ Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
         showAll: 'Alle {count} Hinweise anzeigen', showLess: 'Hinweise ausblenden',
-        duplicate: 'Doppelbelegung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
-        duplicateSelf: 'Doppelbelegung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
-        doubleBooked: 'Doppelbelegung: {name} hat {count} Schichten am {day}{where} ({detail}).',
+        duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
+        duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
+        doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',
         sameBranch: ' in derselben Filiale', differentBranches: ' in verschiedenen Filialen',
         understaffed: 'Unterbesetzt: {label} – {assigned} von {need} eingeteilt.',
         reasonBusy: '{names} sind an diesem Tag bereits einer anderen Schicht zugeteilt',
@@ -359,7 +359,7 @@
       branches: {
         title: 'Filialen', add: '+ Filiale hinzufügen', active: 'Aktiv', newName: 'Neue Filiale',
         hint: 'Jede Filiale hat eigene Tage, Zeiten und Personalstärke pro Schicht. ' +
-          '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Doppelbelegung.',
+          '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Überbesetzung.',
         peopleLabel: 'Personen', closed: 'Geschlossen', day: 'Tag',
         copyFrom: 'Tage und Zeiten aus einer anderen Filiale kopieren', chooseBranch: 'Filiale auswählen…',
         copyConfirm: 'Tage und Zeiten von {from} nach {to} kopieren?',
@@ -634,7 +634,7 @@
         severity: 'Schweregrad', type: 'Typ', detail: 'Details',
         missing: '— fehlt —', closed: 'Geschlossen', notAssigned: 'Nicht eingeteilt',
         personalTitle: 'Persönlicher Plan – {name}', totalWeek: '{count} Schichten diese Woche',
-        noIssues: 'Keine Doppelbelegungen, Lücken oder verletzten Wünsche'
+        noIssues: 'Keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte'
       },
 
       errors: {

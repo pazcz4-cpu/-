@@ -217,17 +217,19 @@ test('מוצ״ש: משמרת ערב אחת בכל סניף', function () {
   motzash.forEach(function (demand) { assertEqual(demand.shiftId, 'evening', 'מוצ״ש היא משמרת ערב'); });
 });
 
-console.log('\n== בדיקות תקינות (כפל משמרת וחוסרים) ==');
+console.log('\n== בדיקות תקינות (עודף וחוסר באיוש) ==');
 
-test('מזהה כפל משמרת: שני עובדים באותה משמרת באותו סניף', function () {
+test('מזהה עודף באיוש: שני עובדים במשמרת שדורשת אחד', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');
   var branchId = state.branches[0].id; // נדרש עובד אחד בבוקר
   Store.setAssigned(weekData, 0, branchId, 'morning', [state.employees[0].id, state.employees[1].id]);
   var report = Validate.validate(state, weekData);
   var found = issuesOfType(report, 'duplicate-shift');
-  assertEqual(found.length, 1, 'לא זוהה כפל משמרת');
-  assert(found[0].text.indexOf('כפל משמרת') === 0, 'הניסוח אינו מציין כפל משמרת');
+  assertEqual(found.length, 1, 'לא זוהה עודף באיוש');
+  /* עודף באיוש אינו "כפל משמרת": האנשים שונים, והמקום אחד */
+  assert(found[0].text.indexOf('עודף באיוש') === 0,
+    'הניסוח אינו מציין עודף באיוש: ' + found[0].text);
   assert(found[0].text.indexOf(state.employees[0].name) !== -1 &&
     found[0].text.indexOf(state.employees[1].name) !== -1, 'שמות שני העובדים אינם מופיעים בהתראה');
 });
@@ -1324,6 +1326,54 @@ test('לכל שפה יש נוסח לפנייה לתמיכה', function () {
     var text = I18n.t('common.emailUs');
     assert(text && text !== 'common.emailUs', lang.code + ': חסר תרגום');
   });
+  I18n.use('he');
+});
+
+console.log('\n== מונחים ==');
+
+/* שלושה מקרים שונים נשאו בכל השפות את אותו שם, ולכן ההתראה לא אמרה
+   למנהל מה קרה: יותר אנשים ממה שנדרש במשמרת אחת, אותו אדם פעמיים
+   באותה משמרת, ואותו אדם בשתי משמרות ביום. */
+test('עודף באיוש, שיבוץ כפול וכפל משמרות אינם חולקים שם', function () {
+  var types = ['duplicate-shift', 'duplicate-employee-slot', 'double-booked'];
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    var seen = {};
+    types.forEach(function (type) {
+      var label = I18n.t('issueTypes.' + type);
+      assert(label && label !== 'issueTypes.' + type, lang.code + ': חסר תרגום ל-' + type);
+      assert(!seen[label], lang.code + ': "' + label + '" משמש גם ל-' + seen[label] +
+        ' וגם ל-' + type + ', ולכן המנהל אינו יודע מה קרה');
+      seen[label] = type;
+    });
+  });
+  I18n.use('he');
+});
+
+test('כל התראה נפתחת בשם המקרה שלה', function () {
+  var pairs = [['alerts.duplicate', 'duplicate-shift'],
+    ['alerts.duplicateSelf', 'duplicate-employee-slot'],
+    ['alerts.doubleBooked', 'double-booked']];
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    pairs.forEach(function (pair) {
+      var text = I18n.t(pair[0]);
+      var label = I18n.t('issueTypes.' + pair[1]);
+      assert(text.indexOf(label) === 0,
+        lang.code + ' – ' + pair[0] + ' אינה נפתחת ב"' + label + '": ' + text);
+    });
+  });
+  I18n.use('he');
+});
+
+test('באנגלית "double booking" אינו מתאר עודף באיוש', function () {
+  I18n.use('en');
+  assertEqual(I18n.t('issueTypes.duplicate-shift'), 'Overstaffed',
+    'עודף באיוש נקרא באנגלית בשם של מקרה אחר');
+  assertEqual(I18n.t('issueTypes.double-booked'), 'Double booking',
+    'המקרה שהוא באמת double booking אינו נקרא כך');
+  assert(I18n.t('alerts.duplicate').toLowerCase().indexOf('double') === -1,
+    'ההתראה על עודף באיוש עדיין מדברת על double booking');
   I18n.use('he');
 });
 

@@ -26,9 +26,9 @@
       shifts: { morning: 'Morning', middle: 'Midday', evening: 'Evening', night: 'Night' },
 
       seed: {
-        branchCenter: 'Central branch', branchNorth: 'North branch', branchSouth: 'South branch',
+        branchCenter: 'Central location', branchNorth: 'North location', branchSouth: 'South location',
         employee: 'Team member {n}',
-        noteFloater: 'Covers every branch', noteStudent: 'Student – no mornings'
+        noteFloater: 'Covers every location', noteStudent: 'Student – no mornings'
       },
 
       colors: {
@@ -60,7 +60,7 @@
 
         problemsTitle: 'The three things that go wrong every week',
         problem1Title: 'The same shift, two people',
-        problem1Body: 'A branch ends up double-staffed while another runs short. ' +
+        problem1Body: 'One location ends up overstaffed while another runs short. ' +
           'You only find out when someone shows up and has nothing to do.',
         problem2Title: 'Requests get lost',
         problem2Body: 'A day-off request arrives by message, gets forgotten, and the schedule breaks a promise you made.',
@@ -70,28 +70,28 @@
         featuresTitle: 'What the system does',
         featuresSubtitle: 'Not a spreadsheet with colours. A scheduler that knows your rules.',
         feature1Title: 'Automatic scheduling',
-        feature1Body: 'One click fills the whole week across every branch, balancing the load fairly and respecting each person’s weekly limit.',
-        feature2Title: 'Double-booking detection',
-        feature2Body: 'Every double booking, gap and broken request is flagged the moment it appears – with the reason and a suggested fix.',
+        feature1Body: 'One click fills the whole week across every location, balancing the load fairly and respecting each person’s weekly limit.',
+        feature2Title: 'Conflict detection',
+        feature2Body: 'Every overstaffed shift, gap and availability conflict is flagged the moment it appears – with the reason and a suggested fix.',
         feature3Title: 'Requests with approval',
         feature3Body: 'Staff send their own requests with an optional reason. Nothing affects the schedule until you approve it.',
         feature4Title: 'Your shifts, your hours',
-        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per branch.',
+        feature4Body: 'Morning, midday, evening, night – define as many shifts as your business runs, with your own hours and colours per location.',
         feature5Title: 'Excel and WhatsApp',
         feature5Body: 'Export the whole week, or send each person only their own shifts – as a personal sheet or ready-to-paste text.',
         feature6Title: 'Live on every device',
         feature6Body: 'Manager edits on a computer, staff see their shifts on their phone. Everyone sees the same schedule, instantly.',
 
         howTitle: 'Up and running in an afternoon',
-        how1Title: 'Add branches and staff',
-        how1Body: 'Opening days, hours and headcount per shift – each branch set up its own way.',
+        how1Title: 'Add locations and staff',
+        how1Body: 'Opening days, hours and headcount per shift – each location set up its own way.',
         how2Title: 'Collect the requests',
         how2Body: 'Staff log in and send time-off requests. You approve or decline, and see everything in one place.',
         how3Title: 'Build and publish',
         how3Body: 'One click builds the week. Review the alerts, fix what matters, publish – and everyone sees their shifts.',
 
         pricingTitle: 'Simple pricing, by team size',
-        pricingSubtitle: 'Unlimited branches on every plan. Cancel any time.',
+        pricingSubtitle: 'Unlimited locations on every plan. Cancel any time.',
         pricingCta: 'Start free',
         pricingNote: 'All prices in ILS, per month, VAT not included. {days} days free on every plan — the first charge comes only when the trial ends, and cancelling before then costs nothing.',
         planPopular: 'Most popular',
@@ -109,15 +109,15 @@
         faq5A: 'Hebrew, English, Spanish, French, German, Portuguese, Russian and Arabic – including right-to-left layouts. Each person picks their own.',
 
         ctaTitle: 'Try it on next week’s schedule',
-        ctaBody: 'Set up your branches, build one week, and see the difference. It takes an afternoon.',
+        ctaBody: 'Set up your locations, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
         footerTagline: 'Shift scheduling for chains.'
       },
 
       tabs: {
         support: 'Support',
-        schedule: 'Schedule', constraints: 'Requests', employees: 'Staff',
-        branches: 'Branches', users: 'Users', billing: 'Subscription', settings: 'Settings'
+        schedule: 'Schedule', constraints: 'Availability', employees: 'Staff',
+        branches: 'Locations', users: 'Users', billing: 'Subscription', settings: 'Settings'
       },
 
       toolbar: {
@@ -127,27 +127,27 @@
         keepManual: 'Keep manual assignments',
         copyText: 'Copy as text', excel: 'Excel', csv: 'CSV', print: 'Print',
         moreTools: 'More tools', closeTools: 'Close tools',
-        viewOnly: 'View only', exitViewOnly: 'Exit view only',
+        viewOnly: 'Lock editing', exitViewOnly: 'Unlock editing',
         shabbatEnd: 'Sabbath ends',
-        byBranch: 'By branch', byEmployee: 'By employee',
+        byBranch: 'By location', byEmployee: 'By employee',
         personalExport: 'Personal export (their shifts only):',
         choosePerson: 'Choose a person…',
-        holidays: 'Holidays (all branches closed):'
+        holidays: 'Holidays (all locations closed):'
       },
 
       schedule: {
-        branch: 'Branch', shift: 'Shift', employee: 'Employee', totalShifts: 'Total shifts',
+        branch: 'Location', shift: 'Shift', employee: 'Employee', totalShifts: 'Total shifts',
         empty: '— empty —', add: '+ add', addPerson: '+ add person', notAssigned: '— not assigned —',
-        closed: 'Closed on this day', noBranches: 'No active branches. Open the Branches tab.',
+        closed: 'Closed on this day', noBranches: 'No active locations. Open the Locations tab.',
         required: 'Required: {count}', people: '{count} people',
-        holidayClosed: 'All branches closed', dayOff: 'Day off', holiday: 'Holiday',
+        holidayClosed: 'All locations closed', dayOff: 'Day off', holiday: 'Holiday',
         missingSabbath: 'Sabbath end time missing'
       },
 
       status: {
         demoTitle: 'Demo mode',
         demoBody: 'Data is saved in this browser only and does not move between devices.',
-        localOnly: 'Saved on this device only', readOnly: 'View only – no edit permission',
+        localOnly: 'Saved on this device only', readOnly: 'Read only – no edit permission',
         saving: 'Saving…',
         savedCloud: 'All changes saved to the cloud',
         savedCloudAt: 'All changes saved to the cloud · {time}',
@@ -157,7 +157,7 @@
         remoteUpdate: 'Update received from another device ({time})',
         localCopy: 'This is a local copy – data is stored in this browser only and does not sync. ' +
           'To work from two computers use the hosted version. To move data: export JSON in Settings, then import it there.',
-        viewOnlyBanner: 'View only – the schedule is shown for review and editing is disabled. ' +
+        viewOnlyBanner: 'Editing is locked – the schedule is shown for review only. ' +
           'Export, printing and week navigation still work.'
       },
 
@@ -165,18 +165,18 @@
 
       marks: {
         dayOff: 'day off', blocked: 'blocked', prefers: 'prefers',
-        notInBranch: 'not in this branch', notInShift: 'not in this shift',
+        notInBranch: 'not in this location', notInShift: 'not in this shift',
         alreadyAssigned: 'already assigned', inactive: 'inactive'
       },
 
       issueTypes: {
-        'duplicate-shift': 'Double booking',
-        'duplicate-employee-slot': 'Double booking',
-        'double-booked': 'Two shifts in one day',
+        'duplicate-shift': 'Overstaffed',
+        'duplicate-employee-slot': 'Duplicate assignment',
+        'double-booked': 'Double booking',
         understaffed: 'Understaffed',
-        'constraint-off': 'Request broken',
-        'constraint-blocked': 'Request broken',
-        'branch-mismatch': 'Wrong branch',
+        'constraint-off': 'Availability conflict',
+        'constraint-blocked': 'Availability conflict',
+        'branch-mismatch': 'Wrong location',
         'shift-mismatch': 'Wrong shift type',
         'over-max': 'Over limit',
         rest: 'Short rest',
@@ -195,14 +195,14 @@
         cleared: 'Schedule cleared',
         copied: 'Schedule copied to clipboard',
         personalCopied: 'Personal schedule copied to clipboard',
-        viewOnlyOn: 'View only is on – editing is disabled',
-        viewOnlyOff: 'View only is off – you can edit',
+        viewOnlyOn: 'Editing is locked',
+        viewOnlyOff: 'Editing is unlocked',
         copyPrompt: 'Copy the text:',
         holidayCleared: '{day} is a working day again',
-        holidayPrompt: 'Name of the holiday on {day} (branches close and the day counts as time off for everyone):',
+        holidayPrompt: 'Name of the holiday on {day} (locations close and the day counts as time off for everyone):',
         holidayDefault: 'Holiday',
         holidayHasAssignments: '{count} people are already assigned that day. Mark it as a holiday and clear them?',
-        holidayMarked: '{day} is marked as a holiday – branches are closed',
+        holidayMarked: '{day} is marked as a holiday – locations are closed',
         clearConstraintsConfirm: 'Clear every request for this week?',
         constraintsCleared: 'Requests cleared',
         noPreviousConstraints: 'No requests in the previous week',
@@ -210,20 +210,20 @@
         requestApproved: 'Request approved', requestRejected: 'Request rejected',
         updateFailed: 'Update failed',
         deleteShiftConfirm: 'Delete the shift "{name}"?\n\n{usage}',
-        deleteShiftUsed: 'It is set on {count} branch-days, and all of its assignments will be deleted.',
-        deleteShiftUnused: 'It is not used by any branch.',
+        deleteShiftUsed: 'It is set on {count} location-days, and all of its assignments will be deleted.',
+        deleteShiftUnused: 'It is not used by any location.',
         shiftDeleted: 'Shift deleted{removed}',
         shiftRemovedCount: ' ({count} assignments removed)',
-        shiftAdded: 'Shift added. Set it up in Branches so it shows in the schedule.',
+        shiftAdded: 'Shift added. Set it up in Locations so it shows in the schedule.',
         newShift: 'Shift {n}',
-        applyHoursConfirm: 'Apply the default hours to all {count} branches, Sunday to Thursday?\n\n' +
+        applyHoursConfirm: 'Apply the default hours to all {count} locations, Sunday to Thursday?\n\n' +
           'Open days and headcount stay as they are. Friday and Saturday night are not changed.',
         hoursUpdated: 'Hours updated on {count} shifts',
         hoursAlready: 'Every shift already uses these hours',
         imported: 'Data imported',
         importedCloud: 'Data imported and uploaded to the cloud ({count} weeks)',
         importFailed: 'Invalid file: {message}',
-        resetConfirm: 'Reset all data (staff, branches, schedules and requests) to the defaults?',
+        resetConfirm: 'Reset all data (staff, locations, schedules and requests) to the defaults?',
         reset: 'Data reset'
       },
 
@@ -235,17 +235,17 @@
         iconLetters: 'SH',
         dayHeading: '{day} ({date})',
         missingStaff: 'understaffed',
-        holidayClosedLine: '{name} – all branches closed',
+        holidayClosedLine: '{name} – all locations closed',
         spareLine: '— {verb} {shifts} still to assign —',
-        unknownBranch: 'Unknown branch', unknownEmployee: 'Unknown person',
+        unknownBranch: 'Unknown location', unknownEmployee: 'Unknown person',
         weekLabel: 'Week {from} – {to}', constraintsWeek: 'Requests · {label}',
-        holidayAllClosed: 'All branches closed – a day off for everyone',
+        holidayAllClosed: 'All locations closed – a day off for everyone',
         holidayNoRequests: 'Holiday – no requests needed',
         branchClosedToday: 'Closed on this day',
-        noActiveBranches: 'No active branches.',
-        noActiveBranchesTab: 'No active branches. Open the Branches tab.',
-        allClosedOn: 'All branches are closed on {day}.',
-        branchesClosed: 'Branches closed',
+        noActiveBranches: 'No active locations.',
+        noActiveBranchesTab: 'No active locations. Open the Locations tab.',
+        allClosedOn: 'All locations are closed on {day}.',
+        branchesClosed: 'Locations closed',
         noHours: 'No hours',
         outOf: '{done} of {total}',
         cloudSaved: 'Data is saved in the cloud and updates on every computer open on this link',
@@ -267,12 +267,12 @@
         ruleOnePerDayOff: 'A person may work several shifts a day.',
         ruleRestOn: 'No morning shift after an evening shift the day before.',
         ruleRestOff: 'No rest requirement between an evening and a morning shift.',
-        summaryBranches: 'Branches:', summaryEmployees: 'Staff:',
+        summaryBranches: 'Locations:', summaryEmployees: 'Staff:',
         summaryCurrent: 'Current schedule:', summaryAvailability: 'Availability left:',
         summaryIssues: 'Schedule alerts:', summaryNoIssues: 'No alerts – the schedule is valid.',
-        closedAllWeek: 'closed all week', allBranches: 'all branches',
+        closedAllWeek: 'closed all week', allBranches: 'all locations',
         peopleCount: '{count} people',
-        empBranches: 'branches', empShifts: 'shifts', empMax: 'maximum {count} per week',
+        empBranches: 'locations', empShifts: 'shifts', empMax: 'maximum {count} per week',
         empAskedOff: 'asked off', empBlocked: 'blocked', empNote: 'note',
         empAssignedOf: '{name}: assigned {total} of a quota of {max}',
         empFreeDays: 'free days: {days}', none: 'none',
@@ -284,28 +284,28 @@
       alerts: {
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
-        deletedBranch: '(deleted branch)',
+        deletedBranch: '(deleted location)',
         errorsOne: 'One error', errorsOther: '{count} errors',
         warningsOne: 'One warning', warningsOther: '{count} warnings',
         infosOne: 'One note', infosOther: '{count} notes',
-        allGood: '✔ Schedule is valid – no double bookings, gaps or broken requests',
+        allGood: '✔ Schedule is valid – no overstaffing, gaps or availability conflicts',
         showAll: 'Show all {count} alerts', showLess: 'Hide alerts',
-        duplicate: 'Double booking: {label} – {count} people assigned ({names}) instead of {need}.',
-        duplicateSelf: 'Double booking: {name} is assigned twice to the same shift – {label}.',
+        duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
+        duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
-        sameBranch: ' at the same branch', differentBranches: ' at different branches',
+        sameBranch: ' at the same location', differentBranches: ' at different locations',
         understaffed: 'Understaffed: {label} – {assigned} of {need} assigned.',
         reasonBusy: '{names} are already assigned to another shift that day',
         reasonMaxed: '{names} reached their weekly shift limit',
         reasonResting: '{names} need rest between an evening and a morning shift',
-        reasonNone: 'No one is set up for both this branch and this shift, or everyone blocked it.',
+        reasonNone: 'No one is set up for both this location and this shift, or everyone blocked it.',
         reasonFree: 'These people are free ({names}) – try building the schedule again.',
         reasonPrefix: 'Reason: ',
         suggestTwoPerDay: ' You can allow two shifts per day per person in Settings.',
         suggestRaiseMax: ' You can raise the weekly limit on the staff card.',
-        constraintOff: 'Request broken: {name} asked for {day} off but is assigned to {shift} at {branch}.',
-        constraintBlocked: 'Request broken: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
-        branchMismatch: '{name} is assigned to {branch} on {day} although that branch is not on their card.',
+        constraintOff: 'Availability conflict: {name} asked for {day} off but is assigned to {shift} at {branch}.',
+        constraintBlocked: 'Availability conflict: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
+        branchMismatch: '{name} is assigned to {branch} on {day} although that location is not on their card.',
         shiftMismatch: '{name} is assigned to {shift} on {day} although that shift type is not on their card.',
         overMax: 'Over limit: {name} is assigned {total} shifts (maximum {max}).',
         noShifts: '{name} has no shifts this week.',
@@ -323,7 +323,7 @@
         title: 'What is still available',
         none: 'Nothing available – {reason}',
         reasonMaxed: 'everyone has reached their weekly shift limit.',
-        reasonNoDays: 'the people with quota left have no free day when their branches are open.',
+        reasonNoDays: 'the people with quota left have no free day when their locations are open.',
         totalOne: '{verb} one more shift to assign, across {people}:',
         totalOther: '{verb} {count} more shifts to assign, across {people}:',
         peopleOne: 'one person', peopleOther: '{count} people',
@@ -355,7 +355,7 @@
 
       employees: {
         title: 'Staff', add: '+ Add person', active: 'Active',
-        branchesLabel: 'Branches (none selected = all branches)',
+        branchesLabel: 'Locations (none selected = all locations)',
         shiftTypes: 'Shift types they can work',
         maxShifts: 'Maximum shifts per week', note: 'Note',
         deleteConfirm: 'Delete {name}? Their assignments will be removed from every week.',
@@ -363,11 +363,11 @@
       },
 
       branches: {
-        title: 'Branches', add: '+ Add branch', active: 'Active', newName: 'New branch',
-        hint: 'Each branch has its own days, hours and headcount per shift. ' +
-          'Setting people to 0 closes that shift on that day. Assigning more than the number set is flagged as a double booking.',
-        peopleLabel: 'People', closed: 'Closed', day: 'Day',
-        copyFrom: 'Copy days and hours from another branch', chooseBranch: 'Choose a branch…',
+        title: 'Locations', add: '+ Add location', active: 'Active', newName: 'New location',
+        hint: 'Each location has its own days, hours and headcount per shift. ' +
+          'Setting the required staff to 0 closes that shift on that day. Assigning more people than that is flagged as overstaffing.',
+        peopleLabel: 'Required staff', closed: 'Closed', day: 'Day',
+        copyFrom: 'Copy days and hours from another location', chooseBranch: 'Choose a location…',
         copyConfirm: 'Copy the days and hours from {from} to {to}?',
         copied: 'Days and hours copied',
         deleteConfirm: 'Delete {name}? Its assignments will be removed from every week.',
@@ -450,10 +450,10 @@
         rest: 'No morning shift after an evening shift the day before',
         oneDayOff: 'A day marked off in Requests is the only day off that week',
         shiftTypes: 'Shift types',
-        addShift: '+ Add shift', applyHours: 'Apply hours to all branches (Mon–Fri)',
+        addShift: '+ Add shift', applyHours: 'Apply hours to all locations (Mon–Fri)',
         shiftsHint: 'Define how many shifts your business runs, their names, hours, colour and order. ' +
-          'Hours here are the defaults; each branch can override them. ' +
-          'The button updates existing branches without changing open days or headcount.',
+          'Hours here are the defaults; each location can override them. ' +
+          'The button updates existing locations without changing open days or headcount.',
         shiftNamePlaceholder: 'Shift name',
         sabbathTitle: 'Saturday night',
         sabbathDefault: 'Default Sabbath end time for a new week:',
@@ -629,18 +629,18 @@
         spare: 'Left in quota', required: 'Required',
         valid: 'Valid', checksTitle: 'Schedule checks',
         personalText: 'Text for WhatsApp',
-        byBranch: 'By branch', byEmployee: 'By employee', availability: 'Availability',
+        byBranch: 'By location', byEmployee: 'By employee', availability: 'Availability',
         checks: 'Checks', personal: 'My schedule',
         title: 'Work schedule – week {from} to {to}',
-        viewBranch: 'By branch', viewEmployee: 'By employee',
+        viewBranch: 'By location', viewEmployee: 'By employee',
         sabbathEnds: 'Sabbath ends {time}',
-        day: 'Day', date: 'Date', branch: 'Branch', shift: 'Shift', hours: 'Hours',
+        day: 'Day', date: 'Date', branch: 'Location', shift: 'Shift', hours: 'Hours',
         staff: 'Staff', assigned: 'Assigned', quota: 'Quota', left: 'Left in quota',
         canAssign: 'Can assign', freeDays: 'Free days', totalShifts: 'Total shifts',
         severity: 'Severity', type: 'Type', detail: 'Detail',
         missing: '— missing —', closed: 'Closed', notAssigned: 'Not assigned',
         personalTitle: 'Personal schedule – {name}', totalWeek: '{count} shifts this week',
-        noIssues: 'No double bookings, gaps or broken requests'
+        noIssues: 'No overstaffing, gaps or availability conflicts'
       },
 
       errors: {
@@ -648,7 +648,7 @@
         emptyShiftName: 'A shift name cannot be empty',
         lastShift: 'At least one shift must remain',
         notSaved: 'Save failed', copied: 'Copied to clipboard',
-        viewOnlyBlocked: 'View only – editing is disabled. You can turn it off at the top of the screen.',
+        viewOnlyBlocked: 'Editing is locked. You can unlock it at the top of the screen.',
         duplicatePerson: 'The same person cannot appear twice in one shift',
         printBlocked: 'Printing is blocked here – use "Copy as text" or the Excel export',
         chooseEmployee: 'Choose a person for the personal export'

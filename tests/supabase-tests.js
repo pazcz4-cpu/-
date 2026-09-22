@@ -997,6 +997,83 @@ run('קריאות של חברה אחת אינן נראות לאחרת', function
   });
 });
 
+console.log('\n== בידוד בין חברות בשאילתות עצמן ==');
+
+/* הבידוד נאכף בבסיס הנתונים, אבל שאילתה שאינה מסננת לפי חברה היא
+   שאילתה שמסתמכת על זה לגמרי. אם כלל ההרשאה ישתנה או יבוטל בטעות,
+   רק הסינון הזה יעמוד בדרך. */
+function queriesOf(server, path, method) {
+  return server.calls.filter(function (c) {
+    return c.path === path && (c.method || 'GET') === method;
+  });
+}
+
+run('כל שאילתה על שבועות מסננת לפי חברה', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a@weeks.test').then(function (backend) {
+    return backend.saveWeek('2026-09-20', { assignments: {}, published: false })
+      .then(function () { return backend.loadWeek('2026-09-20'); })
+      .then(function () { return backend.listWeeks(); })
+      .then(function () { return backend.publishWeek('2026-09-20', true); })
+      .then(function () {
+        var reads = queriesOf(server, '/rest/v1/company_weeks', 'GET');
+        assert(reads.length >= 2, 'לא בוצעו קריאות שבועות');
+        reads.forEach(function (call) {
+          assert(call.query.indexOf('company_id=eq.') !== -1,
+            'קריאת שבועות בלי סינון חברה: ' + call.query);
+        });
+        var patches = queriesOf(server, '/rest/v1/company_weeks', 'PATCH');
+        assertEqual(patches.length, 1, 'הפרסום לא נשלח כעדכון');
+        assert(patches[0].query.indexOf('company_id=eq.') !== -1,
+          'פרסום בלי סינון חברה: ' + patches[0].query);
+        var writes = queriesOf(server, '/rest/v1/company_weeks', 'POST');
+        writes.forEach(function (call) {
+          assert(call.body[0] && call.body[0].company_id,
+            'כתיבת שבוע בלי מזהה חברה');
+        });
+      });
+  });
+});
+
+run('פרסום שבוע של חברה אחרת אינו מוצא אותו', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a2@weeks.test').then(function (first) {
+    return first.saveWeek('2026-09-20', { assignments: { x: ['e1'] } });
+  }).then(function () {
+    return withCompany(server, 'b2@weeks.test');
+  }).then(function (second) {
+    return second.publishWeek('2026-09-20', true).then(function () {
+      throw new Error('חברה ב פרסמה שבוע של חברה א');
+    }, function (err) {
+      assertEqual(err.code, 'not_found', 'קוד השגיאה אינו "לא נמצא": ' + err.code);
+      return second.loadWeek('2026-09-20');
+    }).then(function (week) {
+      assertEqual(week, null, 'שבוע של חברה א נראה לחברה ב');
+    });
+  });
+});
+
+run('הפרסום אינו נשלח דרך ה-JSON של השבוע בלבד', function () {
+  var server = new FakeSupabase();
+  return withCompany(server, 'a3@weeks.test').then(function (backend) {
+    return backend.saveWeek('2026-09-20', {
+      assignments: {}, published: true, publishedAt: '2026-09-18T10:00:00.000Z',
+      publishedSignature: 'sig'
+    }).then(function () {
+      var write = queriesOf(server, '/rest/v1/company_weeks', 'POST')[0].body[0];
+      /* published הוא עמודה, כדי שכללי ההרשאה יוכלו לסנן עליו
+         בלי לפתוח את ה-JSON */
+      assertEqual(write.published, true, 'הפרסום לא נכתב כעמודה');
+      assertEqual(write.week.published, undefined,
+        'הפרסום נכתב גם בתוך ה-JSON, ואז יש שתי אמיתות');
+      /* שעת הפרסום והחתימה כן יושבות ב-JSON, באותה כתיבה */
+      assertEqual(write.week.publishedAt, '2026-09-18T10:00:00.000Z',
+        'שעת הפרסום לא נשמרה');
+      assertEqual(write.week.publishedSignature, 'sig', 'החתימה לא נשמרה');
+    });
+  });
+});
+
 console.log('\n== קישורים מהדואר ואיפוס סיסמה ==');
 
 /* המתאם קורא את האסימונים מה-fragment של הכתובת. בלי זה, לקוח

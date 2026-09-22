@@ -149,6 +149,103 @@ asyncTest('עדכון חי אינו מגיע לחברה אחרת', function () {
     });
 });
 
+asyncTest('פרסום סידור בחברה אחת אינו נוגע בחברה אחרת', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a6@a.com', password: 'secret1' })
+    .then(function () { return backend.saveWeek('2026-09-20', { assignments: { x: ['emp-1'] } }); })
+    .then(function () { return backend.publishWeek('2026-09-20', true); })
+    .then(function (week) { assertEqual(week.published, true, 'הפרסום לא נשמר'); })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b6@b.com', password: 'secret1' });
+    })
+    .then(function () {
+      /* השבוע של חברה א אינו קיים אצל חברה ב, ולכן גם אינו מפורסם
+         אצלה – והניסיון לפרסם אותו נדחה ולא יוצר שבוע חדש. */
+      return assertRejects(backend.publishWeek('2026-09-20', true), 'not_found',
+        'חברה ב פרסמה שבוע של חברה א');
+    })
+    .then(function () { return backend.loadWeek('2026-09-20'); })
+    .then(function (week) { assertEqual(week, null, 'הפרסום חשף שבוע של חברה אחרת'); });
+});
+
+asyncTest('אימייל שקיים בחברה אחת אינו נגרר לחברה אחרת', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a7@a.com', password: 'secret1' })
+    .then(function () { return backend.createUser({ email: 'shared@x.com', role: 'employee' }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b7@b.com', password: 'secret1' });
+    })
+    .then(function () {
+      /* הזמנה לכתובת שכבר שייכת לחברה אחרת נדחית. אחרת אותו אדם
+         היה מקבל שתי חברות, והמשתמש של חברה א היה נמשך לחברה ב. */
+      return assertRejects(backend.createUser({ email: 'shared@x.com', role: 'employee' }),
+        'email_taken', 'חברה ב הזמינה משתמש שקיים בחברה א');
+    })
+    .then(function () { return backend.listUsers(); })
+    .then(function (users) {
+      assertEqual(users.length, 1, 'רשימת המשתמשים של חברה ב השתנתה');
+      assertEqual(users[0].email, 'b7@b.com', 'משתמש זר נכנס לרשימה');
+    });
+});
+
+asyncTest('קישור לקביעת סיסמה מכניס לחברה שלו בלבד', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a8@a.com', password: 'secret1' })
+    .then(function () { return backend.saveConfig({ secret: 'נתוני חברה א' }); })
+    .then(function () { return backend.createUser({ email: 'worker8@a.com', role: 'employee' }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b8@b.com', password: 'secret1' });
+    })
+    .then(function () { return backend.saveConfig({ secret: 'נתוני חברה ב' }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      /* הקישור של עובד חברה א נפתח על אותו דפדפן שבו חברה ב עבדה */
+      backend.followLink('worker8@a.com', 'invite');
+      return backend.setPassword('chosen123');
+    })
+    .then(function (session) {
+      assertEqual(session.company.name, 'חברה א', 'הקישור הכניס לחברה הלא נכונה');
+      assertEqual(session.user.role, 'employee', 'המוזמן קיבל תפקיד אחר');
+      return backend.loadConfig();
+    })
+    .then(function (config) {
+      assertEqual(config.secret, 'נתוני חברה א',
+        'העובד קיבל את ההגדרות של החברה השנייה');
+    });
+});
+
+asyncTest('בקשת איפוס אינה מגלה אם הכתובת קיימת', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a9@a.com', password: 'secret1' })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.requestPasswordReset('a9@a.com'); })
+    .then(function (known) {
+      return backend.requestPasswordReset('nobody@nowhere.com').then(function (unknown) {
+        assertEqual(known, unknown,
+          'התשובה שונה לכתובת קיימת, וכך אפשר לגלות מי רשום למערכת');
+      });
+    });
+});
+
+asyncTest('קישור שלא נפתח אינו מקנה כלום', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a10@a.com', password: 'secret1' })
+    .then(function () { return backend.signOut(); })
+    .then(function () {
+      /* בקשה לאיפוס אינה מכניסה לשום מקום בפני עצמה */
+      return backend.requestPasswordReset('a10@a.com');
+    })
+    .then(function () {
+      assertEqual(backend.pendingAuthAction(), null, 'הבקשה עצמה פתחה מסך סיסמה');
+      assertEqual(backend.session(), null, 'הבקשה עצמה הכניסה למערכת');
+      return assertRejects(backend.setPassword('nothing123'), 'link_expired',
+        'אפשר היה לקבוע סיסמה בלי לפתוח את הקישור');
+    });
+});
+
 console.log('\n== אכיפת הרשאות בשרת ==');
 
 asyncTest('עובד אינו יכול לשמור סידור', function () {

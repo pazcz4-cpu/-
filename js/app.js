@@ -2340,6 +2340,10 @@
         if (blocked()) return;
         window.ShiftImportUI.open({
           getState: function () { return state; },
+          /* התבנית להורדה, וההודעות – דרך אותם עוזרים שכל שאר
+             המסך משתמש בהם */
+          saveFile: saveFile,
+          toast: toast,
           createEmployee: function (name) { return addEmployee(name, true); },
           createBranch: function (name) { return addBranch(name, true); },
           /* כתיבה אחת בסוף, אחרי כל הכרטיסים */

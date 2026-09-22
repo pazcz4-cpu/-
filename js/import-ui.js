@@ -7,6 +7,10 @@
 
   var Import = root.ShiftImport;
   var Store = root.ShiftStore;
+  var Template = root.ShiftTemplate;
+  var XlsxRead = root.ShiftXlsxRead;
+
+  var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
   function t(key, params) {
     if (!root.I18n) return key;
@@ -33,6 +37,38 @@
      אינדקס, כדי שהסימון לא יזוז כשהטקסט משתנה מעליו. */
   var excluded = {};
   var knownEmails = [];
+
+  /* ===== התבנית להורדה ===== */
+
+  function downloadTemplate() {
+    if (!Template || !ctx || !ctx.saveFile) return;
+    var bytes = Template.build(ctx.getState());
+    ctx.saveFile(Template.fileName(), new Blob([bytes], { type: XLSX_MIME }), XLSX_MIME);
+    if (ctx.toast) ctx.toast(t('importData.templateDone'));
+  }
+
+  function isWorkbook(file) {
+    return /\.xlsx$/i.test(file.name || '') || file.type === XLSX_MIME;
+  }
+
+  /* קריאת קובץ אקסל מלא. התוצאה נכנסת לאותו תיבת טקסט שאליה
+     מדביקים ידנית, ולכן משם והלאה המסלול זהה לחלוטין – ואין
+     שני מקומות שבהם הייבוא יכול להתנהג אחרת. */
+  function readWorkbook(file) {
+    if (!XlsxRead) return;
+    var box = host && host.querySelector('#import-text');
+    file.arrayBuffer().then(function (buffer) {
+      return XlsxRead.readText(buffer);
+    }).then(function (text) {
+      if (!box || !host || host.classList.contains('hidden')) return;
+      box.value = text;
+      refresh();
+      if (ctx && ctx.toast) ctx.toast(t('importData.xlsxRead'));
+    }, function (err) {
+      var message = (err && err.code) ? t(err.code) : t('importData.xlsxBroken');
+      if (ctx && ctx.toast) ctx.toast(message);
+    });
+  }
 
   function close() {
     if (!host) return;
@@ -247,6 +283,11 @@
         refresh();
         return;
       }
+      if (event.target.closest('#import-template')) {
+        event.preventDefault();
+        downloadTemplate();
+        return;
+      }
       if (event.target.closest('#import-confirm')) { apply(); }
     });
     host.addEventListener('change', function (event) {
@@ -272,6 +313,9 @@
       if (event.target.id !== 'import-file') return;
       var file = event.target.files && event.target.files[0];
       if (!file) return;
+      /* התבנית שאנחנו נותנים היא xlsx, ולכן היא חייבת להתקבל
+         כמו שהיא. "שמירה בשם CSV" הוא בדיוק השלב שמאבד אנשים. */
+      if (isWorkbook(file)) { readWorkbook(file); return; }
       var reader = new FileReader();
       reader.onload = function () {
         /* BOM שאקסל מוסיף לקובצי CSV הופך את הכותרת הראשונה
@@ -301,8 +345,10 @@
           'placeholder="' + esc(t('importData.placeholder')) + '"></textarea>' +
         '<div class="import-actions">' +
           '<label class="btn ghost file-btn">' + esc(t('importData.file')) +
-            '<input type="file" id="import-file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>' +
+            '<input type="file" id="import-file" accept=".xlsx,.csv,.tsv,.txt,text/csv,text/plain" hidden>' +
           '</label>' +
+          '<button class="btn ghost small" id="import-template">' +
+            esc(t('importData.template')) + '</button>' +
           '<button class="btn ghost small" id="import-sample">' +
             esc(t('importData.sample')) + '</button>' +
         '</div>' +

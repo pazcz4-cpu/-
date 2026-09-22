@@ -90,15 +90,47 @@
     return String(value || '').trim().toLowerCase().replace(/[\s_"']+/g, '');
   }
 
+  /* הכותרות שאנחנו עצמנו כותבים בתבנית להורדה. הן חייבות להיות
+     מזוהות בחזרה, אחרת התבנית שלנו לא נקראת אצלנו – ובשפה שאינה
+     עברית או אנגלית זה בדיוק מה שהיה קורה, כי הרשימה הקבועה
+     מכילה רק את שתיהן. */
+  var FIELD_KEYS = {
+    name: 'importData.colName',
+    branches: 'importData.colBranches',
+    shifts: 'importData.colShifts',
+    roles: 'importData.colRoles',
+    maxShifts: 'importData.colMax',
+    email: 'importData.colEmail',
+    note: 'importData.colNote',
+    active: 'importData.colActive'
+  };
+
   function fieldOf(header) {
     var word = normalizeWord(header);
     if (!word) return null;
     var names = Object.keys(FIELD_WORDS);
-    for (var i = 0; i < names.length; i++) {
+    var i;
+    for (i = 0; i < names.length; i++) {
       var words = FIELD_WORDS[names[i]].map(normalizeWord);
       if (words.indexOf(word) !== -1) return names[i];
     }
+    /* ואז לפי השפה הפעילה. קובץ שנכתב בשפה אחת ונקרא בממשק בשפה
+       אחרת ממשיך לעבוד דרך הרשימה הקבועה שלמעלה. */
+    var keyed = Object.keys(FIELD_KEYS);
+    for (i = 0; i < keyed.length; i++) {
+      var label = t(FIELD_KEYS[keyed[i]]);
+      if (label && label !== FIELD_KEYS[keyed[i]] && normalizeWord(label) === word) {
+        return keyed[i];
+      }
+    }
     return null;
+  }
+
+  /* שמות הטורים כפי שהם נכתבים בתבנית, לפי הסדר בקובץ */
+  var COLUMNS = ['name', 'branches', 'shifts', 'roles', 'maxShifts', 'email', 'note', 'active'];
+
+  function columnLabels() {
+    return COLUMNS.map(function (field) { return t(FIELD_KEYS[field]); });
   }
 
   /* מחזיר מיפוי טור→שדה אם השורה הראשונה היא כותרות, אחרת null */
@@ -394,6 +426,10 @@
     applyPlan: applyPlan,
     looksLikeEmail: looksLikeEmail,
     sampleText: sampleText,
+    COLUMNS: COLUMNS,
+    FIELD_KEYS: FIELD_KEYS,
+    columnLabels: columnLabels,
+    fieldOf: fieldOf,
     detectSeparator: detectSeparator
   };
 

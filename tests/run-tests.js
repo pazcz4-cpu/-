@@ -1833,6 +1833,69 @@ test('ביטול ייבוא מנקה שיבוצים ואילוצים שנוצר�
   assert(removed.assignments >= 2, 'הניקוי לא דווח');
 });
 
+console.log('\n== תבניות המייל ==');
+
+/* שלוש ההודעות שלקוח מקבל. עד עכשיו הן חיו רק בלוח הבקרה של
+   Supabase, בלי מקור ובלי בדיקה – כלומר שבירה שקטה שלהן הייתה
+   מתגלה רק כשעובד מדווח שהקישור לא עובד. */
+var MAIL_DIR = path.join(__dirname, '..', 'supabase', 'emails');
+var MAILS = ['confirm-signup.html', 'invite-user.html', 'reset-password.html'];
+
+function mailHtml(name) {
+  return fs.readFileSync(path.join(MAIL_DIR, name), 'utf8');
+}
+
+test('שלוש התבניות קיימות ומתועדות', function () {
+  var readme = fs.readFileSync(path.join(MAIL_DIR, 'README.md'), 'utf8');
+  MAILS.forEach(function (name) {
+    assert(fs.existsSync(path.join(MAIL_DIR, name)), name + ' חסר');
+    assert(readme.indexOf(name) !== -1, name + ' אינו מופיע ב-README');
+  });
+});
+
+test('הקישור של Supabase מופיע בכפתור וגם ככתובת לגיבוי', function () {
+  MAILS.forEach(function (name) {
+    var html = mailHtml(name);
+    var hits = html.split('{{ .ConfirmationURL }}').length - 1;
+    /* פעמיים: בכפתור, ובשורת הכתובת למי שהכפתור אינו עובד אצלו */
+    assertEqual(hits, 2, name + ': מספר המופעים של הקישור');
+    assert(/href="\{\{ \.ConfirmationURL \}\}"/.test(html),
+      name + ': הכפתור אינו מצביע על הקישור');
+  });
+});
+
+test('הלוגו נטען מכתובת מלאה ויש לו נפילה לטקסט', function () {
+  MAILS.forEach(function (name) {
+    var html = mailHtml(name);
+    /* כתובת יחסית לא תיפתר בתוכנת דואר: אין לה שורש */
+    assert(/src="https:\/\/setshifts\.com\/brand\/logo-lockup\.png"/.test(html),
+      name + ': הלוגו אינו נטען מכתובת מלאה');
+    /* תוכנות דואר חוסמות תמונות; בלי alt נשאר ריבוע ריק */
+    assert(/alt="SetShifts"/.test(html), name + ': ללוגו אין alt');
+    assert(/width="\d+" height="\d+"/.test(html),
+      name + ': ללוגו אין מידות מפורשות, ואאוטלוק מתעלם מ-CSS');
+  });
+});
+
+test('הכתובת בתבניות היא הדומיין שהאתר נבנה אליו', function () {
+  var build = fs.readFileSync(path.join(__dirname, '..', 'build-site.js'), 'utf8');
+  var fallback = (build.match(/PUBLIC_BASE_URL \|\| '([^']+)'/) || [])[1];
+  assert(fallback, 'לא נמצאה כתובת ברירת המחדל של האתר');
+  MAILS.forEach(function (name) {
+    assert(mailHtml(name).indexOf(fallback + '/brand/') !== -1,
+      name + ': הלוגו מצביע לדומיין אחר מזה שהאתר נבנה אליו');
+  });
+});
+
+test('אין בתבניות נוסח שנשאר מברירת המחדל של Supabase', function () {
+  MAILS.forEach(function (name) {
+    var html = mailHtml(name);
+    assert(!/Follow this link|Confirm your mail|Reset Password<\/h2>/i.test(html),
+      name + ': נשאר נוסח אנגלי של Supabase');
+    assert(html.indexOf('dir="rtl"') !== -1, name + ': המייל אינו מוגדר כעברי');
+  });
+});
+
 console.log('\n== העמודים המשפטיים ==');
 
 /* בעמודים האלה יש עובדות שרק בעל העסק יודע (שם רשום, כתובת, אזור

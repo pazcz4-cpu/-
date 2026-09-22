@@ -1179,3 +1179,16 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
    מצב — ולכן משנה צבע ולא רק טקסט. */
 .limit-note { font-weight: 500; }
 .limit-note.spent { color: var(--badge-warn); }
+
+/* ===== כותרת האזור האישי =====
+   מסך העובד נפתח מקישור במייל, לרוב בטלפון, ולעיתים חודשים
+   אחרי ההזמנה. בלי לוגו ושם העסק הוא נראה כמו טופס אקראי. */
+.employee-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding-bottom: 12px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.employee-logo { display: block; flex: 0 0 auto; }
+.employee-logo .brand-img { width: 148px; max-width: 46vw; }
+.employee-company { font-size: 14px; font-weight: 500; color: var(--muted); }

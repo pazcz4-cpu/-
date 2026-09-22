@@ -8,6 +8,12 @@
     try { return root.I18n.t(key, params); } catch (err) { return key; }
   }
 
+  /* הלוגו מגיע מ-ShiftBrand כדי שהנתיב ייפתר נכון גם באתר החי
+     (המערכת מוגשת מ-/app/) וגם בפתיחה מקומית. */
+  function brandLockup() {
+    return root.ShiftBrand ? root.ShiftBrand.lockupImg('SetShifts') : '';
+  }
+
   /* "נותרו לך 1 בקשות" הוא בדיוק סוג הפרט שנקרא כרשלנות */
   function tPlural(key, count, params) {
     if (!root.I18n) return key;
@@ -239,6 +245,15 @@
     var end = Store.dateOfDay(this.weekKey, 6);
 
     var html = '<div class="employee-screen' + (this.preview ? ' is-preview' : '') + '">';
+
+    /* כותרת ממותגת. מסך העובד נפתח מקישור במייל, לרוב בטלפון,
+       ולעיתים חודשים אחרי ההזמנה – ובלי לוגו הוא נראה כמו טופס
+       אקראי ולא כמו המערכת של מקום העבודה. */
+    html += '<header class="employee-head">' +
+      '<span class="employee-logo">' + brandLockup() + '</span>' +
+      '<span class="employee-company">' + esc(this.session.company.name) + '</span>' +
+      '</header>';
+
     if (this.preview) {
       /* הכרזה שאי אפשר לפספס: זה מסך של מישהו אחר */
       html += '<div class="preview-bar">' +

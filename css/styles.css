@@ -53,6 +53,49 @@
   --toast-ink: #ffffff;
   --shadow: 0 2px 12px rgba(29, 39, 51, .12);
   --shadow-lg: 0 6px 20px rgba(29, 39, 51, .28);
+
+  /* ===== מדרגות =====
+     כל ריווח, פינה, צל וגודל טקסט במסמך הזה נלקח מהסולמות
+     האלה. בלעדיהם נוצרים 9, 13 ו-14 פיקסלים זה לצד זה, ואי אפשר
+     לראות את זה בשום מסך בודד – רק בהצטברות, כרעש.
+
+     הריווח בנוי על 8, עם חצי־מדרגה של 4 לצמדים צמודים (אייקון
+     וטקסט בתוך כפתור) שבהם 8 כבר מנתק. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+
+  /* פינות: קטן לשדות ולצ'יפים, בינוני לכפתורים, גדול לכרטיסים */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* שלוש מדרגות הגבהה בלבד. כרטיס רגיל אינו "מרחף": הוא מוגדר
+     בגבול, והצל שמור למה שבאמת צף מעל המסך. */
+  --e1: 0 1px 2px rgba(29, 39, 51, .06);
+  --e2: 0 4px 12px rgba(29, 39, 51, .10);
+  --e3: 0 12px 32px rgba(29, 39, 51, .18);
+
+  /* טיפוגרפיה */
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-base: 15px;
+  --t-md: 16px;
+  --t-lg: 18px;
+  --t-xl: 22px;
+  --t-2xl: 28px;
+  --lh-tight: 1.25;
+  --lh-body: 1.6;
+
+  /* פוקוס: טבעת אחת לכל המערכת, ולא outline שונה לכל רכיב */
+  --focus-ring: 0 0 0 3px rgba(47, 95, 224, .38);
 }
 
 /* ===== ערכה כהה – לפי העדפת המערכת ===== */
@@ -111,6 +154,11 @@
     --toast-ink: #131722;
     --shadow: 0 2px 12px rgba(0, 0, 0, .45);
     --shadow-lg: 0 6px 22px rgba(0, 0, 0, .6);
+    /* הצללים והפוקוס בלבד נגזרים מהערכה; שאר המדרגות אחידות */
+    --e1: 0 1px 2px rgba(0, 0, 0, .40);
+    --e2: 0 4px 12px rgba(0, 0, 0, .46);
+    --e3: 0 12px 32px rgba(0, 0, 0, .58);
+    --focus-ring: 0 0 0 3px rgba(122, 160, 255, .45);
   }
 }
 
@@ -169,6 +217,11 @@
   --toast-ink: #131722;
   --shadow: 0 2px 12px rgba(0, 0, 0, .45);
   --shadow-lg: 0 6px 22px rgba(0, 0, 0, .6);
+  /* הצללים והפוקוס בלבד נגזרים מהערכה; שאר המדרגות אחידות */
+  --e1: 0 1px 2px rgba(0, 0, 0, .40);
+  --e2: 0 4px 12px rgba(0, 0, 0, .46);
+  --e3: 0 12px 32px rgba(0, 0, 0, .58);
+  --focus-ring: 0 0 0 3px rgba(122, 160, 255, .45);
 }
 
 * { box-sizing: border-box; }
@@ -180,17 +233,19 @@ body {
   font-family: "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
   background: var(--bg);
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ===== כותרת ולשוניות ===== */
 .app-header {
   background: linear-gradient(135deg, var(--header-from), var(--header-to));
   color: var(--header-ink);
-  padding: 14px 16px 0;
-  box-shadow: var(--shadow);
+  padding: var(--s4) var(--s4) 0;
+  box-shadow: var(--e2);
 }
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: var(--s3); }
 
 /* ===== הלוגו =====
    שתי הגרסאות נטענות, ו-CSS בוחר ביניהן: מצב כהה יכול להשתנות
@@ -210,45 +265,60 @@ body {
    הבהירה – ולסמל אין בכלל גרסה כזו, כי הוא נקרא על שתיהן. */
 .brand-mark { display: flex; flex: 0 0 auto; }
 .brand-mark .brand-img { width: 40px; height: 40px; }
-.app-header h1 { margin: 0; font-size: 20px; }
-.sub { margin: 2px 0 10px; font-size: 13px; opacity: .88; }
+.app-header h1 { margin: 0; font-size: var(--t-xl); line-height: var(--lh-tight); letter-spacing: -.01em; }
+.sub { margin: var(--s1) 0 var(--s3); font-size: var(--t-sm); opacity: .9; }
 
-.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs { display: flex; gap: var(--s1); flex-wrap: wrap; }
 .tab {
   background: rgba(255, 255, 255, .14);
   border: 0; color: var(--header-ink); cursor: pointer;
-  padding: 9px 16px; font-size: 14px; font-family: inherit;
-  border-radius: 10px 10px 0 0;
+  padding: var(--s2) var(--s4); font-size: var(--t-sm); font-family: inherit;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  transition: background .15s;
 }
 .tab:hover { background: rgba(255, 255, 255, .26); }
 .tab.active { background: var(--bg); color: var(--ink); font-weight: 700; }
-.tab:focus-visible, .btn:focus-visible, .chip:focus-visible,
-.pill:focus-visible, .cstate:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 
-main { padding: 16px; max-width: 1500px; margin: 0 auto; }
+/* טבעת פוקוס אחת לכל המערכת. outline נפרד לכל רכיב נראה שונה
+   בכל מסך, ומי שמנווט במקלדת מאבד את מקומו. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-sm);
+}
+
+main { padding: var(--s4); max-width: 1500px; margin: 0 auto; }
 .panel { display: none; }
 .panel.active { display: block; }
 
-h2 { font-size: 17px; margin: 18px 0 10px; }
+h2 { font-size: var(--t-lg); margin: var(--s5) 0 var(--s3); line-height: var(--lh-tight); }
 
 .toolbar {
   display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+  flex-wrap: wrap; gap: var(--s3); margin-bottom: var(--s4);
 }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.actions { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
 
 .btn {
-  font-family: inherit; font-size: 14px; cursor: pointer;
-  border-radius: 9px; padding: 9px 14px; border: 1px solid var(--line);
-  background: var(--surface); color: var(--ink); transition: .15s;
+  font-family: inherit; font-size: var(--t-sm); font-weight: 500; cursor: pointer;
+  border-radius: var(--r-md); padding: var(--s2) var(--s4);
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  /* אייקון וטקסט באותו כפתור יושבים על אותו קו בסיס */
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s1);
+  min-height: 38px; line-height: 1.2;
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
 }
 .btn:hover { border-color: var(--brand); color: var(--brand); }
-.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); font-weight: 600; }
-.btn.primary:hover { background: var(--brand-dark); color: var(--brand-ink); }
+.btn.primary {
+  background: var(--brand); border-color: var(--brand); color: var(--brand-ink);
+  font-weight: 600; box-shadow: var(--e1);
+}
+.btn.primary:hover { background: var(--brand-dark); color: var(--brand-ink); box-shadow: var(--e2); }
 .btn.danger { border-color: var(--err); color: var(--err); }
 .btn.danger:hover { background: var(--err); color: var(--surface); }
-.btn.ghost.small { padding: 6px 10px; font-size: 13px; }
-.btn.icon { padding: 4px 9px; line-height: 1.2; }
+.btn.ghost.small { padding: var(--s1) var(--s3); font-size: var(--t-sm); min-height: 32px; }
+.btn.icon { padding: var(--s1) var(--s2); line-height: 1.2; min-height: 32px; }
 
 /* פרסום הוא הצעד השני, אחרי הבנייה: כפתור מלא בצבע אחר, כדי
    שיהיה ברור שהוא לא עוד כלי בסרגל אלא ההחלטה שמשנה מה העובדים רואים. */
@@ -277,15 +347,24 @@ h2 { font-size: 17px; margin: 18px 0 10px; }
 .sync-state.error::before { color: var(--err); }
 .sync-state.error { color: var(--err); }
 
-.view-switch { display: flex; gap: 6px; margin: 10px 0; }
+.view-switch { display: flex; gap: var(--s2); margin: var(--s3) 0; }
 .chip {
   border: 1px solid var(--line); background: var(--surface); color: var(--muted);
-  padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 13px;
+  padding: var(--s2) var(--s4); border-radius: var(--r-pill); cursor: pointer;
+  font-family: inherit; font-size: var(--t-sm); font-weight: 500;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.chip.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.chip:hover { border-color: var(--brand); color: var(--brand); }
+.chip.active {
+  background: var(--brand); border-color: var(--brand); color: var(--brand-ink); font-weight: 600;
+}
+.chip.active:hover { color: var(--brand-ink); }
 
 /* ===== טבלאות ===== */
-.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.table-wrap {
+  overflow-x: auto; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--e1);
+}
 table { border-collapse: collapse; width: 100%; min-width: 900px; }
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: top; font-size: 13px; }
 thead th { background: var(--surface-head); position: sticky; top: 0; z-index: 2; font-size: 13px; }
@@ -324,12 +403,12 @@ select.emp-select {
 select.emp-select.extra { border-style: dashed; color: var(--muted); }
 
 /* ===== פאנל התראות ===== */
-.issues { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
-.issue { padding: 8px 12px; border-radius: 9px; font-size: 13.5px; border: 1px solid transparent; }
+.issues { margin-bottom: var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.issue { padding: var(--s2) var(--s3); border-radius: var(--r-md); font-size: var(--t-sm); border: 1px solid transparent; }
 .issue.error { background: var(--err-bg); color: var(--err); border-color: var(--err-line); font-weight: 600; }
 .issue.warning { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
 .issue.info { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
-.issues-summary { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 2px; }
+.issues-summary { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; margin-bottom: var(--s1); }
 .badge { border-radius: 999px; padding: 3px 11px; font-size: 12.5px; font-weight: 700; color: #fff; }
 .badge.error { background: var(--err); color: var(--surface); }
 .badge.warning { background: var(--badge-warn); color: #fff; }
@@ -355,7 +434,7 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .issues-drawer {
   margin-top: 8px; display: flex; flex-direction: column; gap: 6px;
   max-height: 34vh; overflow-y: auto;
-  border: 1px solid var(--line); border-radius: 11px; padding: 10px;
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s3);
   background: var(--surface);
 }
 
@@ -370,8 +449,11 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .load-pill.zero { color: var(--muted); }
 
 /* ===== כרטיסים ===== */
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s3); }
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s4); box-shadow: var(--e1);
+}
 .card.inactive { opacity: .6; }
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .card:not(.collapsed) .card-head { margin-bottom: 0; }
@@ -412,7 +494,11 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .legend.block { background: var(--err-bg); color: var(--err); }
 .hint { font-size: 13px; color: var(--muted); margin: 6px 0 12px; }
 
-.settings-block { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.settings-block {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3);
+  box-shadow: var(--e1);
+}
 .settings-block.row { flex-direction: row; flex-wrap: wrap; align-items: center; }
 
 .emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
@@ -421,7 +507,7 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(150%);
-  background: var(--toast-bg); color: var(--toast-ink); padding: 11px 20px; border-radius: 10px;
+  background: var(--toast-bg); color: var(--toast-ink); padding: var(--s3) var(--s5); border-radius: var(--r-md);
   font-size: 14px; transition: transform .25s; z-index: 50; box-shadow: var(--shadow-lg);
   max-width: min(92vw, 420px); text-align: center;
 }

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
 import { skipWizard } from './_wizard.mjs';
+import { url } from './_serve.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -12,7 +13,7 @@ try { ({ chromium } = require('playwright')); }
 catch (err) { ({ chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs')); }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const APP = 'file://' + path.join(here, '..', 'app.html');
+const APP = url('app.html');
 
 const failures = [];
 function check(label, actual, expected) {

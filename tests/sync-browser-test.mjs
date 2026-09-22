@@ -12,9 +12,10 @@ try {
 }
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { url } from './_serve.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const appPath = 'file://' + path.join(here, '..', 'dist', 'sidur-mishmarot.html');
+const appPath = url('dist', 'sidur-mishmarot.html');
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
 const errors = [];

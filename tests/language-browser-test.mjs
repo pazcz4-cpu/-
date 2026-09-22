@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { skipWizard } from './_wizard.mjs';
+import { url } from './_serve.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -11,8 +12,8 @@ try { ({ chromium } = require('playwright')); }
 catch (err) { ({ chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs')); }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const LOCAL = 'file://' + path.join(here, '..', 'index.html');
-const APP = 'file://' + path.join(here, '..', 'app.html');
+const LOCAL = url('index.html');
+const APP = url('app.html');
 const browser = await chromium.launch();
 
 const failures = [];

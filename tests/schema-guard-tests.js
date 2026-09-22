@@ -87,6 +87,19 @@ test('אילוצים נכתבים רק דרך פונקציה בשרת', function
   has('security definer', 'הפונקציות אינן security definer');
 });
 
+test('מספר היום נבדק בכל פונקציה שמקבלת יום', function () {
+  /* שבוע הוא שבעה ימים. בלי בדיקה, עובד שפותח את כלי הפיתוח
+     שולח יום 999, מייצר מפתח שאיש אינו קורא, ושורף בו בקשה
+     מהמכסה – זבל שקט שמתגלה רק כשהמכסה אוזלת בלי סיבה. */
+  ['save_own_constraint', 'save_own_note', 'decide_constraint'].forEach(function (fn) {
+    var at = sql.indexOf('create or replace function public.' + fn);
+    assert(at !== -1, 'לא נמצאה הפונקציה ' + fn);
+    var block = sql.slice(at, sql.indexOf('$$;', at));
+    assert(block.indexOf('p_day_idx > 6') !== -1,
+      fn + ' – מספר היום אינו נבדק');
+  });
+});
+
 test('כתיבה ישירה לשבועות מוגבלת למנהל', function () {
   assert(/create policy company_weeks_write[\s\S]{0,200}is_manager\(\)/.test(sql),
     'עובד יכול לכתוב ישירות לשבוע');

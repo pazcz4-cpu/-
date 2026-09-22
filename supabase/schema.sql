@@ -351,6 +351,14 @@ begin
     raise exception 'user is not linked to a staff card' using errcode = '22023';
   end if;
 
+  -- שבוע הוא שבעה ימים. בלי הבדיקה הזו עובד שפותח את כלי
+  -- הפיתוח יכול לשלוח יום 999, לייצר מפתח שאיש אינו קורא,
+  -- ולשרוף בו בקשה מהמכסה שלו – זבל שקט שמתגלה רק כשהמכסה
+  -- אוזלת בלי סיבה נראית לעין.
+  if p_day_idx is null or p_day_idx < 0 or p_day_idx > 6 then
+    raise exception 'day index must be between 0 and 6' using errcode = '22023';
+  end if;
+
   insert into public.company_weeks (company_id, week_key, week)
   values (v_company, p_week_key,
           '{"constraints":{},"assignments":{},"manual":{},"holidays":{},"shabbatEnd":"","note":""}'::jsonb)
@@ -461,6 +469,10 @@ declare
   v_key      text;
   v_week     public.company_weeks;
 begin
+
+  if p_day_idx is null or p_day_idx < 0 or p_day_idx > 6 then
+    raise exception 'day index must be between 0 and 6' using errcode = '22023';
+  end if;
   if v_company is null then
     raise exception 'not signed in' using errcode = '28000';
   end if;
@@ -507,6 +519,10 @@ declare
   v_key     text := p_employee_id || '|' || p_day_idx::text;
   v_week    public.company_weeks;
 begin
+
+  if p_day_idx is null or p_day_idx < 0 or p_day_idx > 6 then
+    raise exception 'day index must be between 0 and 6' using errcode = '22023';
+  end if;
   if v_company is null or not public.is_manager() then
     raise exception 'not allowed' using errcode = '42501';
   end if;

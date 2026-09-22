@@ -328,6 +328,28 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .badge.ok { background: var(--ok); color: var(--surface); }
 .issues-toggle { background: none; border: 0; color: var(--brand); cursor: pointer; font-family: inherit; font-size: 13px; text-decoration: underline; }
 
+/* שלושת המספרים שמעל הסידור. הם כפתורים, ולכן הם נראים כמו כפתורים. */
+.issue-chip {
+  border-radius: 999px; padding: 4px 13px; font-size: 12.5px; font-weight: 700;
+  font-family: inherit; cursor: pointer; border: 1px solid transparent;
+  background: var(--surface); color: var(--muted); border-color: var(--line);
+}
+.issue-chip.error { background: var(--err); color: var(--surface); border-color: var(--err); }
+.issue-chip.warning { background: var(--badge-warn); color: #fff; border-color: var(--badge-warn); }
+.issue-chip.info { background: var(--info); color: var(--surface); border-color: var(--info); }
+.issue-chip.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+.issue-chip:disabled { cursor: default; font-weight: 600; }
+.issue-chip:not(:disabled):hover { filter: brightness(1.07); }
+.issue-chip.open { box-shadow: 0 0 0 2px var(--brand) inset; }
+
+/* מגירת הפירוט: נפתחת רק בלחיצה, ואינה דוחקת את הסידור מהמסך */
+.issues-drawer {
+  margin-top: 8px; display: flex; flex-direction: column; gap: 6px;
+  max-height: 34vh; overflow-y: auto;
+  border: 1px solid var(--line); border-radius: 11px; padding: 10px;
+  background: var(--surface);
+}
+
 .workload { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
 .load-pill {
   background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
@@ -1741,14 +1763,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'One staffing gap', other: '{count} staffing gaps' },
+          staffingNone: 'Fully staffed',
+          violations: { one: 'One violation', other: '{count} violations' },
+          violationsNone: 'No violations',
+          advice: { one: 'One suggestion', other: '{count} suggestions' },
+          adviceNone: 'No suggestions'
+        },
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
         deletedBranch: '(deleted location)',
-        errorsOne: 'One error', errorsOther: '{count} errors',
-        warningsOne: 'One warning', warningsOther: '{count} warnings',
-        infosOne: 'One note', infosOther: '{count} notes',
         allGood: '✔ Schedule is valid – no overstaffing, gaps or availability conflicts',
-        showAll: 'Show all {count} alerts', showLess: 'Hide alerts',
         duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
         duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
@@ -2476,14 +2502,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'בעיית איוש אחת', other: '{count} בעיות איוש' },
+          staffingNone: 'האיוש מלא',
+          violations: { one: 'הפרה אחת', other: '{count} הפרות' },
+          violationsNone: 'אין הפרות',
+          advice: { one: 'המלצה אחת', other: '{count} המלצות' },
+          adviceNone: 'אין המלצות'
+        },
         slotLabel: '{day} · {branch} · משמרת {shift}',
         deletedEmployee: '(עובד שנמחק: {id})',
         deletedBranch: '(סניף שנמחק)',
-        errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
-        warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
-        infosOne: 'הערה אחת', infosOther: '{count} הערות',
         allGood: '✔ הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
-        showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
         duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
         duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
         doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
@@ -3206,14 +3236,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Un hueco de personal', other: '{count} huecos de personal' },
+          staffingNone: 'Personal completo',
+          violations: { one: 'Una infracción', other: '{count} infracciones' },
+          violationsNone: 'Sin infracciones',
+          advice: { one: 'Una sugerencia', other: '{count} sugerencias' },
+          adviceNone: 'Sin sugerencias'
+        },
         slotLabel: '{day} · {branch} · turno de {shift}',
         deletedEmployee: '(persona eliminada: {id})',
         deletedBranch: '(sucursal eliminada)',
-        errorsOne: 'Un error', errorsOther: '{count} errores',
-        warningsOne: 'Un aviso', warningsOther: '{count} avisos',
-        infosOne: 'Una nota', infosOther: '{count} notas',
         allGood: '✔ El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
-        showAll: 'Ver los {count} avisos', showLess: 'Ocultar los avisos',
         duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
         duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
         doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',
@@ -3936,14 +3970,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Un manque d’effectif', other: '{count} manques d’effectif' },
+          staffingNone: 'Effectif complet',
+          violations: { one: 'Une infraction', other: '{count} infractions' },
+          violationsNone: 'Aucune infraction',
+          advice: { one: 'Une suggestion', other: '{count} suggestions' },
+          adviceNone: 'Aucune suggestion'
+        },
         slotLabel: '{day} · {branch} · service {shift}',
         deletedEmployee: '(personne supprimée : {id})',
         deletedBranch: '(succursale supprimée)',
-        errorsOne: 'Une erreur', errorsOther: '{count} erreurs',
-        warningsOne: 'Un avertissement', warningsOther: '{count} avertissements',
-        infosOne: 'Une remarque', infosOther: '{count} remarques',
         allGood: '✔ Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
-        showAll: 'Afficher les {count} alertes', showLess: 'Masquer les alertes',
         duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
         duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
         doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',
@@ -4666,14 +4704,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'نقص واحد في الطاقم', other: '{count} حالات نقص في الطاقم' },
+          staffingNone: 'الطاقم مكتمل',
+          violations: { one: 'مخالفة واحدة', other: '{count} مخالفات' },
+          violationsNone: 'لا مخالفات',
+          advice: { one: 'اقتراح واحد', other: '{count} اقتراحات' },
+          adviceNone: 'لا اقتراحات'
+        },
         slotLabel: '{day} · {branch} · مناوبة {shift}',
         deletedEmployee: '(موظف محذوف: {id})',
         deletedBranch: '(فرع محذوف)',
-        errorsOne: 'خطأ واحد', errorsOther: '{count} أخطاء',
-        warningsOne: 'تنبيه واحد', warningsOther: '{count} تنبيهات',
-        infosOne: 'ملاحظة واحدة', infosOther: '{count} ملاحظات',
         allGood: '✔ الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
-        showAll: 'عرض كل التنبيهات ({count})', showLess: 'إخفاء التنبيهات',
         duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
         duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
         doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
@@ -5396,14 +5438,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Одна нехватка людей', other: 'Нехваток людей: {count}' },
+          staffingNone: 'Людей хватает',
+          violations: { one: 'Одно нарушение', other: 'Нарушений: {count}' },
+          violationsNone: 'Нарушений нет',
+          advice: { one: 'Одна рекомендация', other: 'Рекомендаций: {count}' },
+          adviceNone: 'Рекомендаций нет'
+        },
         slotLabel: '{day} · {branch} · смена {shift}',
         deletedEmployee: '(удалённый сотрудник: {id})',
         deletedBranch: '(удалённый филиал)',
-        errorsOne: 'Одна ошибка', errorsOther: 'Ошибок: {count}',
-        warningsOne: 'Одно предупреждение', warningsOther: 'Предупреждений: {count}',
-        infosOne: 'Одна заметка', infosOther: 'Заметок: {count}',
         allGood: '✔ График корректен — нет ни избытка, ни нехватки людей и нет конфликтов с доступностью',
-        showAll: 'Показать все предупреждения ({count})', showLess: 'Скрыть предупреждения',
         duplicate: 'Избыток людей: {label} — назначено {count} чел. ({names}) вместо {need}.',
         duplicateSelf: 'Дублирующее назначение: {name} назначен дважды на одну смену — {label}.',
         doubleBooked: 'Две смены в один день: у {name} {count} смен в {day}{where} ({detail}).',
@@ -6126,14 +6172,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Eine Besetzungslücke', other: '{count} Besetzungslücken' },
+          staffingNone: 'Vollständig besetzt',
+          violations: { one: 'Ein Verstoß', other: '{count} Verstöße' },
+          violationsNone: 'Keine Verstöße',
+          advice: { one: 'Ein Hinweis', other: '{count} Hinweise' },
+          adviceNone: 'Keine Hinweise'
+        },
         slotLabel: '{day} · {branch} · {shift}schicht',
         deletedEmployee: '(gelöschte Person: {id})',
         deletedBranch: '(gelöschte Filiale)',
-        errorsOne: 'Ein Fehler', errorsOther: '{count} Fehler',
-        warningsOne: 'Eine Warnung', warningsOther: '{count} Warnungen',
-        infosOne: 'Ein Hinweis', infosOther: '{count} Hinweise',
         allGood: '✔ Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
-        showAll: 'Alle {count} Hinweise anzeigen', showLess: 'Hinweise ausblenden',
         duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
         duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
         doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',
@@ -6856,14 +6906,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Uma falha de pessoal', other: '{count} falhas de pessoal' },
+          staffingNone: 'Pessoal completo',
+          violations: { one: 'Uma infração', other: '{count} infrações' },
+          violationsNone: 'Sem infrações',
+          advice: { one: 'Uma sugestão', other: '{count} sugestões' },
+          adviceNone: 'Sem sugestões'
+        },
         slotLabel: '{day} · {branch} · turno de {shift}',
         deletedEmployee: '(pessoa eliminada: {id})',
         deletedBranch: '(filial eliminada)',
-        errorsOne: 'Um erro', errorsOther: '{count} erros',
-        warningsOne: 'Um aviso', warningsOther: '{count} avisos',
-        infosOne: 'Uma nota', infosOther: '{count} notas',
         allGood: '✔ O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
-        showAll: 'Ver os {count} alertas', showLess: 'Ocultar os alertas',
         duplicate: 'Excesso de pessoal: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
         duplicateSelf: 'Atribuição duplicada: {name} está atribuído duas vezes ao mesmo turno – {label}.',
         doubleBooked: 'Turno duplo: {name} tem {count} turnos em {day}{where} ({detail}).',
@@ -9567,8 +9621,40 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return text;
   }
 
+  /* ===== שלוש קבוצות, לפי מה שהמנהל צריך לעשות =====
+
+     רשימה של עשרים התראות באותו משקל נקראת כרעש, וגם התראה חשובה
+     נבלעת בה. החלוקה כאן היא לפי הפעולה הנדרשת ולא לפי חומרה:
+     איוש – חסר או עודף אנשים במשמרת; הפרות – משהו בסידור נוגד
+     כלל או בקשה שאושרה; המלצות – שווה להסתכל, אבל הסידור תקף. */
+  var GROUPS = { STAFFING: 'staffing', VIOLATIONS: 'violations', ADVICE: 'advice' };
+
+  var GROUP_OF = {
+    understaffed: GROUPS.STAFFING,
+    'duplicate-shift': GROUPS.STAFFING,
+    'inactive-slot': GROUPS.STAFFING,
+
+    'duplicate-employee-slot': GROUPS.VIOLATIONS,
+    'double-booked': GROUPS.VIOLATIONS,
+    'constraint-off': GROUPS.VIOLATIONS,
+    'constraint-blocked': GROUPS.VIOLATIONS,
+    'branch-mismatch': GROUPS.VIOLATIONS,
+    'shift-mismatch': GROUPS.VIOLATIONS,
+    'over-max': GROUPS.VIOLATIONS,
+    rest: GROUPS.VIOLATIONS,
+    'holiday-assignment': GROUPS.VIOLATIONS,
+
+    'pending-constraints': GROUPS.ADVICE,
+    'extra-days-off': GROUPS.ADVICE,
+    'below-target': GROUPS.ADVICE,
+    'no-shifts': GROUPS.ADVICE,
+    'missing-shabbat-end': GROUPS.ADVICE
+  };
+
+  function groupOf(type) { return GROUP_OF[type] || GROUPS.ADVICE; }
+
   function issue(level, type, text, ref) {
-    return { level: level, type: type, text: text, ref: ref || {} };
+    return { level: level, type: type, group: groupOf(type), text: text, ref: ref || {} };
   }
 
   function validate(state, week) {
@@ -9791,15 +9877,30 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       return (order[a.level] - order[b.level]) || (priorityOf(a) - priorityOf(b));
     });
 
+    function countGroup(name) {
+      return issues.filter(function (item) { return item.group === name; }).length;
+    }
+
+    /* החומרה הגבוהה ביותר בקבוצה קובעת את הצבע שלה על המסך */
+    function levelOfGroup(name) {
+      var inGroup = issues.filter(function (item) { return item.group === name; });
+      if (inGroup.some(function (item) { return item.level === 'error'; })) return 'error';
+      if (inGroup.some(function (item) { return item.level === 'warning'; })) return 'warning';
+      return inGroup.length ? 'info' : 'ok';
+    }
+
     return {
       issues: issues,
       errors: issues.filter(function (i) { return i.level === 'error'; }).length,
       warnings: issues.filter(function (i) { return i.level === 'warning'; }).length,
-      infos: issues.filter(function (i) { return i.level === 'info'; }).length
+      infos: issues.filter(function (i) { return i.level === 'info'; }).length,
+      groups: [GROUPS.STAFFING, GROUPS.VIOLATIONS, GROUPS.ADVICE].map(function (name) {
+        return { name: name, count: countGroup(name), level: levelOfGroup(name) };
+      })
     };
   }
 
-  var API = { validate: validate };
+  var API = { validate: validate, GROUPS: GROUPS, groupOf: groupOf };
   root.ShiftValidate = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -10712,6 +10813,12 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return t(base + (count === 1 ? 'One' : 'Other'), merged);
   }
 
+  /* המפתחות החדשים בנויים כ-{ one, other } תחת שם אחד, וזה מה
+     ש-I18n.plural יודע לקרוא */
+  function tPlural(key, count) {
+    return I18n ? I18n.plural(key, count) : key;
+  }
+
   /* מקור הנתונים נקבע באתחול. ברירת המחדל היא שמירה מקומית, והגרסה
      המסחרית מזריקה מקור שמדבר עם השרת. */
   var source = {
@@ -10734,7 +10841,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     try { return window.localStorage.getItem(VIEW_ONLY_KEY) === '1'; }
     catch (err) { return false; }
   })();
-  var showAllIssues = false;
+  /* איזו קבוצת התראות פתוחה כרגע. סגור כברירת מחדל, כדי שהסידור
+     עצמו יהיה על המסך מיד. */
+  var openGroup = null;
   var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
 
   function $(sel) { return document.querySelector(sel); }
@@ -11146,30 +11255,49 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   }
 
 
+  /* שלושה מספרים במקום רשימה ארוכה.
+
+     רשימה של חמישים התראות באותו משקל היא רעש: הסידור עצמו נדחק
+     מהמסך, וגם ההתראה החשובה נבלעת. שלוש הקבוצות הן לפי הפעולה
+     הנדרשת – איוש, הפרות, המלצות – והפירוט נפתח רק כשלוחצים. */
   function renderIssues(report) {
     var container = $('#issues');
-    // בנייד ההתראות מקופלות כברירת מחדל, כדי שהסידור עצמו יהיה מיד על המסך
-    var limit = isMobile() ? 0 : 6;
-    var visible = showAllIssues ? report.issues : report.issues.slice(0, limit);
     var html = '<div class="issues-summary">';
-    if (report.errors) html += '<span class="badge error">' + tCount('alerts.errors', report.errors) + '</span>';
-    if (report.warnings) html += '<span class="badge warning">' + tCount('alerts.warnings', report.warnings) + '</span>';
-    if (report.infos) html += '<span class="badge info">' + tCount('alerts.infos', report.infos) + '</span>';
-    if (!report.issues.length) html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
-    if (report.issues.length > limit) {
-      html += '<button class="issues-toggle" id="toggle-issues">' +
-        (showAllIssues ? t('alerts.showLess') : t('alerts.showAll', { count: report.issues.length })) +
-        '</button>';
+
+    if (!report.issues.length) {
+      html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
     }
-    html += '</div>';
-    visible.forEach(function (item) {
-      html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
+
+    report.groups.forEach(function (group) {
+      var label = group.count
+        ? tPlural('alerts.group.' + group.name, group.count)
+        : t('alerts.group.' + group.name + 'None');
+      var open = openGroup === group.name && group.count;
+      html += '<button class="issue-chip ' + esc(group.level) + (open ? ' open' : '') +
+        '" data-group="' + esc(group.name) + '"' +
+        (group.count ? '' : ' disabled') +
+        ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+        esc(label) + '</button>';
     });
-    container.innerHTML = html;
-    var toggle = $('#toggle-issues');
-    if (toggle) {
-      toggle.addEventListener('click', function () { showAllIssues = !showAllIssues; renderIssues(report); });
+    html += '</div>';
+
+    var shown = report.issues.filter(function (item) { return item.group === openGroup; });
+    if (shown.length) {
+      html += '<div class="issues-drawer">';
+      shown.forEach(function (item) {
+        html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
+      });
+      html += '</div>';
     }
+
+    container.innerHTML = html;
+    container.querySelectorAll('.issue-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var name = chip.dataset.group;
+        openGroup = openGroup === name ? null : name;
+        renderIssues(report);
+      });
+    });
   }
 
   function dayNames(dayIndexes) {

@@ -84,6 +84,9 @@ await page.click('.tab[data-tab="schedule"]');
 await page.waitForTimeout(400);
 await page.click('#generate');
 await page.waitForTimeout(1800);
+/* ההתראות מסוכמות; בקשה שממתינה לאישור היא "המלצה" */
+await page.click('.issue-chip[data-group="advice"]');
+await page.waitForTimeout(250);
 const warn = (await page.locator('#issues .issue').allTextContents()).filter(t => t.includes('ממתינ'));
 console.log('4. אזהרה על בקשה ממתינה:', warn.length > 0);
 if (warn.length) console.log('   ' + warn[0]);
@@ -100,6 +103,8 @@ await page.click('.tab[data-tab="schedule"]');
 await page.waitForTimeout(400);
 await page.click('#generate');
 await page.waitForTimeout(1800);
+await page.click('.issue-chip[data-group="advice"]').catch(() => {});
+await page.waitForTimeout(250);
 const after = (await page.locator('#issues .issue').allTextContents()).filter(t => t.includes('ממתינ'));
 console.log('   האזהרה נעלמה:', after.length === 0);
 

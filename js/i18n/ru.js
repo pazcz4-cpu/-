@@ -279,14 +279,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Одна нехватка людей', other: 'Нехваток людей: {count}' },
+          staffingNone: 'Людей хватает',
+          violations: { one: 'Одно нарушение', other: 'Нарушений: {count}' },
+          violationsNone: 'Нарушений нет',
+          advice: { one: 'Одна рекомендация', other: 'Рекомендаций: {count}' },
+          adviceNone: 'Рекомендаций нет'
+        },
         slotLabel: '{day} · {branch} · смена {shift}',
         deletedEmployee: '(удалённый сотрудник: {id})',
         deletedBranch: '(удалённый филиал)',
-        errorsOne: 'Одна ошибка', errorsOther: 'Ошибок: {count}',
-        warningsOne: 'Одно предупреждение', warningsOther: 'Предупреждений: {count}',
-        infosOne: 'Одна заметка', infosOther: 'Заметок: {count}',
         allGood: '✔ График корректен — нет ни избытка, ни нехватки людей и нет конфликтов с доступностью',
-        showAll: 'Показать все предупреждения ({count})', showLess: 'Скрыть предупреждения',
         duplicate: 'Избыток людей: {label} — назначено {count} чел. ({names}) вместо {need}.',
         duplicateSelf: 'Дублирующее назначение: {name} назначен дважды на одну смену — {label}.',
         doubleBooked: 'Две смены в один день: у {name} {count} смен в {day}{where} ({detail}).',

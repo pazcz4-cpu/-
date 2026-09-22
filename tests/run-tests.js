@@ -1312,6 +1312,76 @@ test('הסכימה נפתחת בשורה באנגלית', function () {
   assert(/^-- [A-Za-z]/.test(first), 'השורה הראשונה אינה מתחילה בתווית לטינית: ' + first);
 });
 
+console.log('\n== קיבוץ ההתראות ==');
+
+/* חמישים התראות באותו משקל הן רעש: הסידור נדחק מהמסך, וגם ההתראה
+   החשובה נבלעת. הקיבוץ הוא לפי הפעולה הנדרשת, ולכן כל סוג התראה
+   חייב לשבת בקבוצה אחת – ובדיוק אחת. */
+test('לכל התראה יש קבוצה, ואף אחת אינה נופלת לברירת מחדל בשקט', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  /* מוסיפים הפרות במכוון, כדי שכל שלוש הקבוצות תיוצגנה */
+  var emp = state.employees[0];
+  Store.setConstraint(weekData, emp.id, 1, { off: true, status: Store.CONSTRAINT_STATUS.APPROVED });
+  var report = Validate.validate(state, weekData);
+
+  var names = { staffing: true, violations: true, advice: true };
+  report.issues.forEach(function (item) {
+    assert(item.group, 'התראה בלי קבוצה: ' + item.type);
+    assert(names[item.group], 'קבוצה שאינה מוכרת: ' + item.group + ' (' + item.type + ')');
+  });
+});
+
+test('הסכום של שלוש הקבוצות הוא כל ההתראות', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  var report = Validate.validate(state, weekData);
+  var total = report.groups.reduce(function (sum, group) { return sum + group.count; }, 0);
+  assertEqual(total, report.issues.length,
+    'התראה נעלמה או נספרה פעמיים בקיבוץ');
+  assertEqual(report.groups.length, 3, 'מספר הקבוצות אינו שלוש');
+});
+
+test('חוסר באיוש הוא איוש, והפרת אילוץ היא הפרה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  assertEqual(Validate.groupOf('understaffed'), 'staffing', 'חוסר באיוש אינו מסומן כאיוש');
+  assertEqual(Validate.groupOf('duplicate-shift'), 'staffing', 'עודף באיוש אינו מסומן כאיוש');
+  assertEqual(Validate.groupOf('constraint-off'), 'violations', 'הפרת אילוץ אינה הפרה');
+  assertEqual(Validate.groupOf('over-max'), 'violations', 'חריגה ממכסה אינה הפרה');
+  assertEqual(Validate.groupOf('below-target'), 'advice', 'מי שקיבל פחות מהמכסה אינו המלצה');
+  assertEqual(Validate.groupOf('pending-constraints'), 'advice', 'בקשה שממתינה אינה המלצה');
+  /* סוג שלא הוגדר נופל להמלצות – הקבוצה שאינה מכריזה על תקלה */
+  assertEqual(Validate.groupOf('something-new'), 'advice', 'סוג חדש הוכרז כתקלה');
+  assert(weekData, 'שבוע לא נוצר');
+});
+
+test('צבע הקבוצה נקבע לפי החומרה הגבוהה שבה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+
+  /* שיבוץ אותו אדם פעמיים באותה משמרת הוא שגיאה, ולכן קבוצת
+     ההפרות חייבת להיצבע כשגיאה ולא כאזהרה */
+  var key = Object.keys(weekData.assignments).filter(function (k) {
+    return (weekData.assignments[k] || []).length;
+  })[0];
+  var slot = Explain.parseSlotKey(key);
+  var who = weekData.assignments[key][0];
+  Store.setAssigned(weekData, slot.dayIdx, slot.branchId, slot.shiftId, [who, who]);
+
+  var report = Validate.validate(state, weekData);
+  var violations = report.groups.filter(function (g) { return g.name === 'violations'; })[0];
+  assertEqual(violations.level, 'error', 'קבוצה עם שגיאה נצבעה כאזהרה');
+
+  var empty = Validate.validate(freshState(), Store.emptyWeek());
+  empty.groups.forEach(function (group) {
+    if (!group.count) assertEqual(group.level, 'ok', 'קבוצה ריקה אינה במצב תקין');
+  });
+});
+
 console.log('\n== ייבוא רשימת עובדים ==');
 
 /* הלקוח לא יודע איזה פורמט אנחנו רוצים, ולכן הפענוח צריך לעמוד

@@ -19,6 +19,12 @@
     return t(base + (count === 1 ? 'One' : 'Other'), merged);
   }
 
+  /* המפתחות החדשים בנויים כ-{ one, other } תחת שם אחד, וזה מה
+     ש-I18n.plural יודע לקרוא */
+  function tPlural(key, count) {
+    return I18n ? I18n.plural(key, count) : key;
+  }
+
   /* מקור הנתונים נקבע באתחול. ברירת המחדל היא שמירה מקומית, והגרסה
      המסחרית מזריקה מקור שמדבר עם השרת. */
   var source = {
@@ -41,7 +47,9 @@
     try { return window.localStorage.getItem(VIEW_ONLY_KEY) === '1'; }
     catch (err) { return false; }
   })();
-  var showAllIssues = false;
+  /* איזו קבוצת התראות פתוחה כרגע. סגור כברירת מחדל, כדי שהסידור
+     עצמו יהיה על המסך מיד. */
+  var openGroup = null;
   var lastReport = { issues: [], errors: 0, warnings: 0, infos: 0 };
 
   function $(sel) { return document.querySelector(sel); }
@@ -453,30 +461,49 @@
   }
 
 
+  /* שלושה מספרים במקום רשימה ארוכה.
+
+     רשימה של חמישים התראות באותו משקל היא רעש: הסידור עצמו נדחק
+     מהמסך, וגם ההתראה החשובה נבלעת. שלוש הקבוצות הן לפי הפעולה
+     הנדרשת – איוש, הפרות, המלצות – והפירוט נפתח רק כשלוחצים. */
   function renderIssues(report) {
     var container = $('#issues');
-    // בנייד ההתראות מקופלות כברירת מחדל, כדי שהסידור עצמו יהיה מיד על המסך
-    var limit = isMobile() ? 0 : 6;
-    var visible = showAllIssues ? report.issues : report.issues.slice(0, limit);
     var html = '<div class="issues-summary">';
-    if (report.errors) html += '<span class="badge error">' + tCount('alerts.errors', report.errors) + '</span>';
-    if (report.warnings) html += '<span class="badge warning">' + tCount('alerts.warnings', report.warnings) + '</span>';
-    if (report.infos) html += '<span class="badge info">' + tCount('alerts.infos', report.infos) + '</span>';
-    if (!report.issues.length) html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
-    if (report.issues.length > limit) {
-      html += '<button class="issues-toggle" id="toggle-issues">' +
-        (showAllIssues ? t('alerts.showLess') : t('alerts.showAll', { count: report.issues.length })) +
-        '</button>';
+
+    if (!report.issues.length) {
+      html += '<span class="badge ok">' + t('alerts.allGood') + '</span>';
     }
-    html += '</div>';
-    visible.forEach(function (item) {
-      html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
+
+    report.groups.forEach(function (group) {
+      var label = group.count
+        ? tPlural('alerts.group.' + group.name, group.count)
+        : t('alerts.group.' + group.name + 'None');
+      var open = openGroup === group.name && group.count;
+      html += '<button class="issue-chip ' + esc(group.level) + (open ? ' open' : '') +
+        '" data-group="' + esc(group.name) + '"' +
+        (group.count ? '' : ' disabled') +
+        ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+        esc(label) + '</button>';
     });
-    container.innerHTML = html;
-    var toggle = $('#toggle-issues');
-    if (toggle) {
-      toggle.addEventListener('click', function () { showAllIssues = !showAllIssues; renderIssues(report); });
+    html += '</div>';
+
+    var shown = report.issues.filter(function (item) { return item.group === openGroup; });
+    if (shown.length) {
+      html += '<div class="issues-drawer">';
+      shown.forEach(function (item) {
+        html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
+      });
+      html += '</div>';
     }
+
+    container.innerHTML = html;
+    container.querySelectorAll('.issue-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var name = chip.dataset.group;
+        openGroup = openGroup === name ? null : name;
+        renderIssues(report);
+      });
+    });
   }
 
   function dayNames(dayIndexes) {

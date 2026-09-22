@@ -279,14 +279,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Un manque d’effectif', other: '{count} manques d’effectif' },
+          staffingNone: 'Effectif complet',
+          violations: { one: 'Une infraction', other: '{count} infractions' },
+          violationsNone: 'Aucune infraction',
+          advice: { one: 'Une suggestion', other: '{count} suggestions' },
+          adviceNone: 'Aucune suggestion'
+        },
         slotLabel: '{day} · {branch} · service {shift}',
         deletedEmployee: '(personne supprimée : {id})',
         deletedBranch: '(succursale supprimée)',
-        errorsOne: 'Une erreur', errorsOther: '{count} erreurs',
-        warningsOne: 'Un avertissement', warningsOther: '{count} avertissements',
-        infosOne: 'Une remarque', infosOther: '{count} remarques',
         allGood: '✔ Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
-        showAll: 'Afficher les {count} alertes', showLess: 'Masquer les alertes',
         duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
         duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
         doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',

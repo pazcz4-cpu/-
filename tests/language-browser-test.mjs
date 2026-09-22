@@ -58,7 +58,14 @@ console.log('\n== הממשק המקומי עולה בעברית לדפדפן ע�
   /* באנגלית סניף הוא Location: "branch" באנגלית עסקית הוא סניף בנק */
   check('כותרת הסניף בטבלה', await page.locator('#schedule-branch th.row-head').first().textContent(), 'Location');
   check('שמות הימים', await page.locator('#schedule-branch th.day-head').first().textContent(), /^Sunday/);
-  check('טקסט ההתראות', await page.locator('#issues .issue').first().textContent(), /Understaffed|No Sabbath/);
+  /* ההתראות מסוכמות לשלושה מספרים, והפירוט נפתח בלחיצה */
+  check('סיכום ההתראות מתורגם',
+    await page.locator('.issue-chip').first().textContent(), /staffing gap|Fully staffed/);
+  await page.click('.tab[data-tab="schedule"]');
+  await page.waitForTimeout(200);
+  await page.click('.issue-chip[data-group="staffing"]');
+  await page.waitForTimeout(200);
+  check('טקסט ההתראות', await page.locator('#issues .issue').first().textContent(), /Understaffed|Overstaffed/);
   check('סיכום הזמינות', await page.locator('#availability .summary-title').textContent(), 'What is still available');
 
   console.log('\n== ערבית: שפה שנייה עם כיוון כתיבה מימין לשמאל ==');

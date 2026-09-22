@@ -279,14 +279,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Eine Besetzungslücke', other: '{count} Besetzungslücken' },
+          staffingNone: 'Vollständig besetzt',
+          violations: { one: 'Ein Verstoß', other: '{count} Verstöße' },
+          violationsNone: 'Keine Verstöße',
+          advice: { one: 'Ein Hinweis', other: '{count} Hinweise' },
+          adviceNone: 'Keine Hinweise'
+        },
         slotLabel: '{day} · {branch} · {shift}schicht',
         deletedEmployee: '(gelöschte Person: {id})',
         deletedBranch: '(gelöschte Filiale)',
-        errorsOne: 'Ein Fehler', errorsOther: '{count} Fehler',
-        warningsOne: 'Eine Warnung', warningsOther: '{count} Warnungen',
-        infosOne: 'Ein Hinweis', infosOther: '{count} Hinweise',
         allGood: '✔ Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
-        showAll: 'Alle {count} Hinweise anzeigen', showLess: 'Hinweise ausblenden',
         duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
         duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
         doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',

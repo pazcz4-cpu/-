@@ -86,8 +86,40 @@
     return text;
   }
 
+  /* ===== שלוש קבוצות, לפי מה שהמנהל צריך לעשות =====
+
+     רשימה של עשרים התראות באותו משקל נקראת כרעש, וגם התראה חשובה
+     נבלעת בה. החלוקה כאן היא לפי הפעולה הנדרשת ולא לפי חומרה:
+     איוש – חסר או עודף אנשים במשמרת; הפרות – משהו בסידור נוגד
+     כלל או בקשה שאושרה; המלצות – שווה להסתכל, אבל הסידור תקף. */
+  var GROUPS = { STAFFING: 'staffing', VIOLATIONS: 'violations', ADVICE: 'advice' };
+
+  var GROUP_OF = {
+    understaffed: GROUPS.STAFFING,
+    'duplicate-shift': GROUPS.STAFFING,
+    'inactive-slot': GROUPS.STAFFING,
+
+    'duplicate-employee-slot': GROUPS.VIOLATIONS,
+    'double-booked': GROUPS.VIOLATIONS,
+    'constraint-off': GROUPS.VIOLATIONS,
+    'constraint-blocked': GROUPS.VIOLATIONS,
+    'branch-mismatch': GROUPS.VIOLATIONS,
+    'shift-mismatch': GROUPS.VIOLATIONS,
+    'over-max': GROUPS.VIOLATIONS,
+    rest: GROUPS.VIOLATIONS,
+    'holiday-assignment': GROUPS.VIOLATIONS,
+
+    'pending-constraints': GROUPS.ADVICE,
+    'extra-days-off': GROUPS.ADVICE,
+    'below-target': GROUPS.ADVICE,
+    'no-shifts': GROUPS.ADVICE,
+    'missing-shabbat-end': GROUPS.ADVICE
+  };
+
+  function groupOf(type) { return GROUP_OF[type] || GROUPS.ADVICE; }
+
   function issue(level, type, text, ref) {
-    return { level: level, type: type, text: text, ref: ref || {} };
+    return { level: level, type: type, group: groupOf(type), text: text, ref: ref || {} };
   }
 
   function validate(state, week) {
@@ -310,15 +342,30 @@
       return (order[a.level] - order[b.level]) || (priorityOf(a) - priorityOf(b));
     });
 
+    function countGroup(name) {
+      return issues.filter(function (item) { return item.group === name; }).length;
+    }
+
+    /* החומרה הגבוהה ביותר בקבוצה קובעת את הצבע שלה על המסך */
+    function levelOfGroup(name) {
+      var inGroup = issues.filter(function (item) { return item.group === name; });
+      if (inGroup.some(function (item) { return item.level === 'error'; })) return 'error';
+      if (inGroup.some(function (item) { return item.level === 'warning'; })) return 'warning';
+      return inGroup.length ? 'info' : 'ok';
+    }
+
     return {
       issues: issues,
       errors: issues.filter(function (i) { return i.level === 'error'; }).length,
       warnings: issues.filter(function (i) { return i.level === 'warning'; }).length,
-      infos: issues.filter(function (i) { return i.level === 'info'; }).length
+      infos: issues.filter(function (i) { return i.level === 'info'; }).length,
+      groups: [GROUPS.STAFFING, GROUPS.VIOLATIONS, GROUPS.ADVICE].map(function (name) {
+        return { name: name, count: countGroup(name), level: levelOfGroup(name) };
+      })
     };
   }
 
-  var API = { validate: validate };
+  var API = { validate: validate, GROUPS: GROUPS, groupOf: groupOf };
   root.ShiftValidate = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

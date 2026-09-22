@@ -284,14 +284,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'בעיית איוש אחת', other: '{count} בעיות איוש' },
+          staffingNone: 'האיוש מלא',
+          violations: { one: 'הפרה אחת', other: '{count} הפרות' },
+          violationsNone: 'אין הפרות',
+          advice: { one: 'המלצה אחת', other: '{count} המלצות' },
+          adviceNone: 'אין המלצות'
+        },
         slotLabel: '{day} · {branch} · משמרת {shift}',
         deletedEmployee: '(עובד שנמחק: {id})',
         deletedBranch: '(סניף שנמחק)',
-        errorsOne: 'שגיאה אחת', errorsOther: '{count} שגיאות',
-        warningsOne: 'אזהרה אחת', warningsOther: '{count} אזהרות',
-        infosOne: 'הערה אחת', infosOther: '{count} הערות',
         allGood: '✔ הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
-        showAll: 'הצג את כל {count} ההתראות', showLess: 'הסתרת ההתראות',
         duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
         duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
         doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',

@@ -279,14 +279,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'نقص واحد في الطاقم', other: '{count} حالات نقص في الطاقم' },
+          staffingNone: 'الطاقم مكتمل',
+          violations: { one: 'مخالفة واحدة', other: '{count} مخالفات' },
+          violationsNone: 'لا مخالفات',
+          advice: { one: 'اقتراح واحد', other: '{count} اقتراحات' },
+          adviceNone: 'لا اقتراحات'
+        },
         slotLabel: '{day} · {branch} · مناوبة {shift}',
         deletedEmployee: '(موظف محذوف: {id})',
         deletedBranch: '(فرع محذوف)',
-        errorsOne: 'خطأ واحد', errorsOther: '{count} أخطاء',
-        warningsOne: 'تنبيه واحد', warningsOther: '{count} تنبيهات',
-        infosOne: 'ملاحظة واحدة', infosOther: '{count} ملاحظات',
         allGood: '✔ الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
-        showAll: 'عرض كل التنبيهات ({count})', showLess: 'إخفاء التنبيهات',
         duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
         duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
         doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',

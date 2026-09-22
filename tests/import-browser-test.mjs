@@ -144,6 +144,29 @@ try {
   check('העובדים נשמרו', await page.evaluate(
     () => window.ShiftApp.getState().employees.length), before + 6);
 
+  console.log('\n== ההתראות מסוכמות לשלושה מספרים ==');
+  await page.click('.tab[data-tab="schedule"]');
+  await page.waitForTimeout(300);
+  check('שלושה מספרים', await page.locator('.issue-chip').count(), 3);
+  check('המגירה סגורה, והסידור על המסך',
+    await page.locator('.issues-drawer').count(), 0);
+  const labels = await page.locator('.issue-chip').allInnerTexts();
+  check('כל מספר נקרא כמשפט', labels.join(' | '),
+    /איוש[\s\S]*הפר[\s\S]*המלצ/);
+  await page.click('.issue-chip[data-group="staffing"]');
+  await page.waitForTimeout(250);
+  check('המגירה נפתחה', await page.locator('.issues-drawer .issue').count() > 0, true);
+  check('ורק הקבוצה שנבחרה מוצגת', await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.issues-drawer .issue'))
+      .every((node) => /חוסר באיוש|עודף באיוש|משמרת שאינה/.test(node.textContent))), true);
+  await page.click('.issue-chip[data-group="staffing"]');
+  await page.waitForTimeout(250);
+  check('לחיצה שנייה סוגרת', await page.locator('.issues-drawer').count(), 0);
+  check('קבוצה ריקה אינה נלחצת',
+    await page.locator('.issue-chip[data-group="violations"]').isDisabled(), true);
+  await page.click('.tab[data-tab="employees"]');
+  await page.waitForTimeout(200);
+
   console.log('\n== מצב צפייה חוסם ייבוא ==');
   await page.click('.tab[data-tab="schedule"]');
   await page.waitForTimeout(200);

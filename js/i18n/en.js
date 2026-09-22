@@ -285,14 +285,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'One staffing gap', other: '{count} staffing gaps' },
+          staffingNone: 'Fully staffed',
+          violations: { one: 'One violation', other: '{count} violations' },
+          violationsNone: 'No violations',
+          advice: { one: 'One suggestion', other: '{count} suggestions' },
+          adviceNone: 'No suggestions'
+        },
         slotLabel: '{day} · {branch} · {shift} shift',
         deletedEmployee: '(deleted person: {id})',
         deletedBranch: '(deleted location)',
-        errorsOne: 'One error', errorsOther: '{count} errors',
-        warningsOne: 'One warning', warningsOther: '{count} warnings',
-        infosOne: 'One note', infosOther: '{count} notes',
         allGood: '✔ Schedule is valid – no overstaffing, gaps or availability conflicts',
-        showAll: 'Show all {count} alerts', showLess: 'Hide alerts',
         duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
         duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',

@@ -279,14 +279,18 @@
       },
 
       alerts: {
+        group: {
+          staffing: { one: 'Un hueco de personal', other: '{count} huecos de personal' },
+          staffingNone: 'Personal completo',
+          violations: { one: 'Una infracción', other: '{count} infracciones' },
+          violationsNone: 'Sin infracciones',
+          advice: { one: 'Una sugerencia', other: '{count} sugerencias' },
+          adviceNone: 'Sin sugerencias'
+        },
         slotLabel: '{day} · {branch} · turno de {shift}',
         deletedEmployee: '(persona eliminada: {id})',
         deletedBranch: '(sucursal eliminada)',
-        errorsOne: 'Un error', errorsOther: '{count} errores',
-        warningsOne: 'Un aviso', warningsOther: '{count} avisos',
-        infosOne: 'Una nota', infosOther: '{count} notas',
         allGood: '✔ El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
-        showAll: 'Ver los {count} avisos', showLess: 'Ocultar los avisos',
         duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
         duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
         doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',

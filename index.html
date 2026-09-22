@@ -129,6 +129,15 @@
       <button id="add-employee" class="btn primary" data-i18n="employees.add">+ הוסף עובד</button>
       <button id="import-employees" class="btn ghost" data-i18n="importData.open">ייבוא מרשימה</button>
     </div>
+    <div class="list-tools no-print" id="employees-tools">
+      <input type="search" id="emp-search" class="text-input" data-i18n-placeholder="employees.search" placeholder="חיפוש לפי שם">
+      <select id="emp-branch-filter" class="text-input"></select>
+      <label class="check"><input type="checkbox" id="emp-active-only"> <span data-i18n="employees.activeOnly">רק פעילים</span></label>
+      <span id="emp-count" class="list-count"></span>
+      <button id="emp-expand-all" class="btn ghost small" data-i18n="employees.expandAll">פתיחת הכל</button>
+      <button id="emp-bulk-active" class="btn ghost small hidden" data-i18n="employees.bulkActivate">הפעלת המוצגים</button>
+      <button id="emp-bulk-inactive" class="btn ghost small hidden" data-i18n="employees.bulkDeactivate">השבתת המוצגים</button>
+    </div>
     <div id="employees-list" class="cards"></div>
   </section>
 

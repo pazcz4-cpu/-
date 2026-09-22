@@ -357,7 +357,8 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card.inactive { opacity: .6; }
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card:not(.collapsed) .card-head { margin-bottom: 0; }
 .card-head input.name {
   font-size: 15px; font-weight: 700; border: 1px solid transparent; background: transparent;
   border-radius: 7px; padding: 4px 6px; width: 100%; font-family: inherit; color: var(--ink);
@@ -1069,4 +1070,34 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 760px) {
   .import-preview { max-height: 40vh; }
+}
+
+/* ===== רשימת עובדים ארוכה =====
+   עם שלושים עובדים, כרטיסים פתוחים הם גלילה אין-סופית. */
+.list-tools {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px;
+}
+.list-tools #emp-search { flex: 1 1 200px; min-width: 150px; }
+.list-tools select { flex: 0 1 180px; }
+.list-count { font-size: 13px; color: var(--muted); }
+.list-empty { color: var(--muted); font-size: 14px; margin: 8px 0; }
+
+.card-toggle {
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 7px;
+  font-family: inherit; flex: 0 0 auto;
+}
+.card-toggle:hover { background: var(--line); color: inherit; }
+.card-summary {
+  display: block; width: 100%; text-align: start; border: 0; background: none;
+  cursor: pointer; font-family: inherit; font-size: 12.5px; color: var(--muted);
+  padding: 2px 4px 0; line-height: 1.5;
+}
+.card-summary:hover { color: var(--brand); }
+.card:not(.collapsed) .card-summary { display: none; }
+.card.collapsed .card-body { display: none; }
+.card-body { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+
+@media (max-width: 760px) {
+  .list-tools #emp-search, .list-tools select { flex: 1 1 100%; }
 }

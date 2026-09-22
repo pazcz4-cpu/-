@@ -364,7 +364,8 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card.inactive { opacity: .6; }
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card:not(.collapsed) .card-head { margin-bottom: 0; }
 .card-head input.name {
   font-size: 15px; font-weight: 700; border: 1px solid transparent; background: transparent;
   border-radius: 7px; padding: 4px 6px; width: 100%; font-family: inherit; color: var(--ink);
@@ -1078,6 +1079,36 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   .import-preview { max-height: 40vh; }
 }
 
+/* ===== רשימת עובדים ארוכה =====
+   עם שלושים עובדים, כרטיסים פתוחים הם גלילה אין-סופית. */
+.list-tools {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px;
+}
+.list-tools #emp-search { flex: 1 1 200px; min-width: 150px; }
+.list-tools select { flex: 0 1 180px; }
+.list-count { font-size: 13px; color: var(--muted); }
+.list-empty { color: var(--muted); font-size: 14px; margin: 8px 0; }
+
+.card-toggle {
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 7px;
+  font-family: inherit; flex: 0 0 auto;
+}
+.card-toggle:hover { background: var(--line); color: inherit; }
+.card-summary {
+  display: block; width: 100%; text-align: start; border: 0; background: none;
+  cursor: pointer; font-family: inherit; font-size: 12.5px; color: var(--muted);
+  padding: 2px 4px 0; line-height: 1.5;
+}
+.card-summary:hover { color: var(--brand); }
+.card:not(.collapsed) .card-summary { display: none; }
+.card.collapsed .card-body { display: none; }
+.card-body { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+
+@media (max-width: 760px) {
+  .list-tools #emp-search, .list-tools select { flex: 1 1 100%; }
+}
+
 </style>
 </head>
 <body>
@@ -1202,6 +1233,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       <h2 data-i18n="employees.title">עובדים מוגדרים</h2>
       <button id="add-employee" class="btn primary" data-i18n="employees.add">+ הוסף עובד</button>
       <button id="import-employees" class="btn ghost" data-i18n="importData.open">ייבוא מרשימה</button>
+    </div>
+    <div class="list-tools no-print" id="employees-tools">
+      <input type="search" id="emp-search" class="text-input" data-i18n-placeholder="employees.search" placeholder="חיפוש לפי שם">
+      <select id="emp-branch-filter" class="text-input"></select>
+      <label class="check"><input type="checkbox" id="emp-active-only"> <span data-i18n="employees.activeOnly">רק פעילים</span></label>
+      <span id="emp-count" class="list-count"></span>
+      <button id="emp-expand-all" class="btn ghost small" data-i18n="employees.expandAll">פתיחת הכל</button>
+      <button id="emp-bulk-active" class="btn ghost small hidden" data-i18n="employees.bulkActivate">הפעלת המוצגים</button>
+      <button id="emp-bulk-inactive" class="btn ghost small hidden" data-i18n="employees.bulkDeactivate">השבתת המוצגים</button>
     </div>
     <div id="employees-list" class="cards"></div>
   </section>
@@ -1839,6 +1879,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Search by name or note',
+        allBranchesFilter: 'All locations',
+        activeOnly: 'Active only',
+        showing: 'Showing {shown} of {total}',
+        total: { one: 'One person', other: '{count} people' },
+        expandAll: 'Open all',
+        collapseAll: 'Close all',
+        toggleCard: 'Open and close the card',
+        anyBranch: 'All locations',
+        allShifts: 'All shifts',
+        quotaShort: 'limit {count}',
+        inactiveTag: 'inactive',
+        noMatch: 'Nobody matches that search.',
+        none: 'No staff yet. Add one, or import a list.',
+        bulkActivate: 'Activate those shown',
+        bulkDeactivate: 'Deactivate those shown',
+        bulkActivateConfirm: 'Activate the {count} people shown?',
+        bulkDeactivateConfirm: 'Deactivate the {count} people shown? They stay in the system but will not be scheduled.',
+        bulkDone: '{count} people updated.',
         title: 'Staff', add: '+ Add person', active: 'Active',
         branchesLabel: 'Locations (none selected = all locations)',
         shiftTypes: 'Shift types they can work',
@@ -2578,6 +2637,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'חיפוש לפי שם או הערה',
+        allBranchesFilter: 'כל הסניפים',
+        activeOnly: 'רק פעילים',
+        showing: 'מוצגים {shown} מתוך {total}',
+        total: { one: 'עובד אחד', other: '{count} עובדים' },
+        expandAll: 'פתיחת הכל',
+        collapseAll: 'סגירת הכל',
+        toggleCard: 'פתיחה וסגירה של הכרטיס',
+        anyBranch: 'כל הסניפים',
+        allShifts: 'כל המשמרות',
+        quotaShort: 'מכסה {count}',
+        inactiveTag: 'מושבת',
+        noMatch: 'אין עובד שתואם לחיפוש.',
+        none: 'אין עדיין עובדים. אפשר להוסיף אחד, או לייבא רשימה.',
+        bulkActivate: 'הפעלת המוצגים',
+        bulkDeactivate: 'השבתת המוצגים',
+        bulkActivateConfirm: 'להפעיל את {count} העובדים המוצגים?',
+        bulkDeactivateConfirm: 'להשבית את {count} העובדים המוצגים? הם יישארו במערכת אך לא ישובצו.',
+        bulkDone: 'עודכנו {count} עובדים.',
         title: 'עובדים מוגדרים', add: '+ הוסף עובד', active: 'עובד/ת פעיל/ה',
         branchesLabel: 'סניפים (ללא בחירה = זמין בכל הסניפים)',
         shiftTypes: 'סוגי משמרות אפשריים',
@@ -3312,6 +3390,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Buscar por nombre o nota',
+        allBranchesFilter: 'Todas las ubicaciones',
+        activeOnly: 'Solo activos',
+        showing: 'Mostrando {shown} de {total}',
+        total: { one: 'Una persona', other: '{count} personas' },
+        expandAll: 'Abrir todo',
+        collapseAll: 'Cerrar todo',
+        toggleCard: 'Abrir y cerrar la ficha',
+        anyBranch: 'Todas las ubicaciones',
+        allShifts: 'Todos los turnos',
+        quotaShort: 'límite {count}',
+        inactiveTag: 'inactivo',
+        noMatch: 'Nadie coincide con esa búsqueda.',
+        none: 'Aún no hay personal. Añade a alguien o importa una lista.',
+        bulkActivate: 'Activar los mostrados',
+        bulkDeactivate: 'Desactivar los mostrados',
+        bulkActivateConfirm: '¿Activar las {count} personas mostradas?',
+        bulkDeactivateConfirm: '¿Desactivar las {count} personas mostradas? Siguen en el sistema pero no se asignarán.',
+        bulkDone: '{count} personas actualizadas.',
         title: 'Personal', add: '+ Añadir persona', active: 'Activo',
         branchesLabel: 'Sucursales (sin selección = todas)',
         shiftTypes: 'Tipos de turno que puede hacer',
@@ -4046,6 +4143,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Rechercher par nom ou note',
+        allBranchesFilter: 'Tous les sites',
+        activeOnly: 'Actifs seulement',
+        showing: '{shown} sur {total} affichés',
+        total: { one: 'Une personne', other: '{count} personnes' },
+        expandAll: 'Tout ouvrir',
+        collapseAll: 'Tout fermer',
+        toggleCard: 'Ouvrir et fermer la fiche',
+        anyBranch: 'Tous les sites',
+        allShifts: 'Tous les services',
+        quotaShort: 'limite {count}',
+        inactiveTag: 'inactif',
+        noMatch: 'Personne ne correspond à cette recherche.',
+        none: 'Pas encore de personnel. Ajoutez quelqu’un, ou importez une liste.',
+        bulkActivate: 'Activer les affichés',
+        bulkDeactivate: 'Désactiver les affichés',
+        bulkActivateConfirm: 'Activer les {count} personnes affichées ?',
+        bulkDeactivateConfirm: 'Désactiver les {count} personnes affichées ? Elles restent dans le système mais ne seront pas planifiées.',
+        bulkDone: '{count} personnes mises à jour.',
         title: 'Personnel', add: '+ Ajouter une personne', active: 'Actif',
         branchesLabel: 'Succursales (aucune sélection = toutes)',
         shiftTypes: 'Types de service possibles',
@@ -4780,6 +4896,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'بحث بالاسم أو الملاحظة',
+        allBranchesFilter: 'كل الفروع',
+        activeOnly: 'النشطون فقط',
+        showing: 'معروض {shown} من {total}',
+        total: { one: 'موظف واحد', other: '{count} موظفين' },
+        expandAll: 'فتح الكل',
+        collapseAll: 'إغلاق الكل',
+        toggleCard: 'فتح البطاقة وإغلاقها',
+        anyBranch: 'كل الفروع',
+        allShifts: 'كل المناوبات',
+        quotaShort: 'حصة {count}',
+        inactiveTag: 'موقوف',
+        noMatch: 'لا أحد يطابق هذا البحث.',
+        none: 'لا موظفين بعد. أضف واحدًا، أو استورد قائمة.',
+        bulkActivate: 'تنشيط المعروضين',
+        bulkDeactivate: 'إيقاف المعروضين',
+        bulkActivateConfirm: 'تنشيط الموظفين المعروضين ({count})؟',
+        bulkDeactivateConfirm: 'إيقاف الموظفين المعروضين ({count})؟ يبقون في النظام لكن لن يُجدولوا.',
+        bulkDone: 'تم تحديث {count} موظفين.',
         title: 'الموظفون', add: '+ إضافة موظف', active: 'نشط',
         branchesLabel: 'الفروع (بدون اختيار = كل الفروع)',
         shiftTypes: 'أنواع المناوبات الممكنة',
@@ -5514,6 +5649,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Поиск по имени или заметке',
+        allBranchesFilter: 'Все филиалы',
+        activeOnly: 'Только активные',
+        showing: 'Показано {shown} из {total}',
+        total: { one: 'Один сотрудник', other: 'Сотрудников: {count}' },
+        expandAll: 'Открыть все',
+        collapseAll: 'Закрыть все',
+        toggleCard: 'Открыть и закрыть карточку',
+        anyBranch: 'Все филиалы',
+        allShifts: 'Все смены',
+        quotaShort: 'квота {count}',
+        inactiveTag: 'отключён',
+        noMatch: 'По этому поиску никого нет.',
+        none: 'Сотрудников пока нет. Добавьте одного или импортируйте список.',
+        bulkActivate: 'Включить показанных',
+        bulkDeactivate: 'Отключить показанных',
+        bulkActivateConfirm: 'Включить показанных сотрудников ({count})?',
+        bulkDeactivateConfirm: 'Отключить показанных сотрудников ({count})? Они останутся в системе, но не будут ставиться в график.',
+        bulkDone: 'Обновлено сотрудников: {count}.',
         title: 'Сотрудники', add: '+ Добавить сотрудника', active: 'Активен',
         branchesLabel: 'Филиалы (ничего не выбрано = все филиалы)',
         shiftTypes: 'Доступные типы смен',
@@ -6248,6 +6402,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Nach Name oder Notiz suchen',
+        allBranchesFilter: 'Alle Standorte',
+        activeOnly: 'Nur Aktive',
+        showing: '{shown} von {total} angezeigt',
+        total: { one: 'Eine Person', other: '{count} Personen' },
+        expandAll: 'Alle öffnen',
+        collapseAll: 'Alle schließen',
+        toggleCard: 'Karte öffnen und schließen',
+        anyBranch: 'Alle Standorte',
+        allShifts: 'Alle Schichten',
+        quotaShort: 'Kontingent {count}',
+        inactiveTag: 'inaktiv',
+        noMatch: 'Niemand passt zu dieser Suche.',
+        none: 'Noch keine Mitarbeitenden. Fügen Sie jemanden hinzu oder importieren Sie eine Liste.',
+        bulkActivate: 'Angezeigte aktivieren',
+        bulkDeactivate: 'Angezeigte deaktivieren',
+        bulkActivateConfirm: 'Die {count} angezeigten Personen aktivieren?',
+        bulkDeactivateConfirm: 'Die {count} angezeigten Personen deaktivieren? Sie bleiben im System, werden aber nicht eingeteilt.',
+        bulkDone: '{count} Personen aktualisiert.',
         title: 'Team', add: '+ Person hinzufügen', active: 'Aktiv',
         branchesLabel: 'Filialen (keine Auswahl = alle Filialen)',
         shiftTypes: 'Mögliche Schichttypen',
@@ -6982,6 +7155,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       },
 
       employees: {
+        search: 'Procurar por nome ou nota',
+        allBranchesFilter: 'Todos os locais',
+        activeOnly: 'Só ativos',
+        showing: 'A mostrar {shown} de {total}',
+        total: { one: 'Uma pessoa', other: '{count} pessoas' },
+        expandAll: 'Abrir tudo',
+        collapseAll: 'Fechar tudo',
+        toggleCard: 'Abrir e fechar o cartão',
+        anyBranch: 'Todos os locais',
+        allShifts: 'Todos os turnos',
+        quotaShort: 'limite {count}',
+        inactiveTag: 'inativo',
+        noMatch: 'Ninguém corresponde a essa procura.',
+        none: 'Ainda não há pessoal. Adiciona alguém, ou importa uma lista.',
+        bulkActivate: 'Ativar os mostrados',
+        bulkDeactivate: 'Desativar os mostrados',
+        bulkActivateConfirm: 'Ativar as {count} pessoas mostradas?',
+        bulkDeactivateConfirm: 'Desativar as {count} pessoas mostradas? Continuam no sistema mas não serão escaladas.',
+        bulkDone: '{count} pessoas atualizadas.',
         title: 'Equipa', add: '+ Adicionar pessoa', active: 'Ativo',
         branchesLabel: 'Filiais (sem seleção = todas)',
         shiftTypes: 'Tipos de turno que pode fazer',
@@ -11477,12 +11669,95 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   }
 
   /* ========== עובדים ========== */
+  /* ========== לשונית העובדים ==========
+
+     עם שלושים עובדים, רשימה של כרטיסים פתוחים היא גלילה אין-סופית:
+     כדי לשנות מכסה לעובד אחד צריך לעבור על כולם. לכן הכרטיסים
+     מקופלים, עם שורת סיכום שמראה את מה שמחפשים בדרך כלל, ומעליהם
+     חיפוש וסינון. */
+  var empFilter = { text: '', branch: '', activeOnly: false };
+  var expandedEmp = {};
+  var branchOptionsKey = '';
+
+  function normalizeSearch(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function visibleEmployees() {
+    var text = normalizeSearch(empFilter.text);
+    return state.employees.filter(function (emp) {
+      if (empFilter.activeOnly && !emp.active) return false;
+      if (empFilter.branch) {
+        /* "מחליף כללי" (בלי סניפים) שייך לכל סניף, ולכן הוא נשאר
+           ברשימה גם כשמסננים לפי סניף אחד. */
+        var anyBranch = !emp.branches || !emp.branches.length;
+        if (!anyBranch && emp.branches.indexOf(empFilter.branch) === -1) return false;
+      }
+      if (text) {
+        var haystack = normalizeSearch(emp.name) + ' ' + normalizeSearch(emp.note);
+        if (haystack.indexOf(text) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function filterActive() {
+    return !!(empFilter.text || empFilter.branch || empFilter.activeOnly);
+  }
+
+  /* שורת הסיכום על כרטיס מקופל: סניפים, משמרות ומכסה */
+  function employeeSummary(emp) {
+    var parts = [];
+    if (emp.branches && emp.branches.length) {
+      parts.push(emp.branches.map(branchNameOf).join(', '));
+    } else {
+      parts.push(t('employees.anyBranch'));
+    }
+    var all = shiftList();
+    parts.push(emp.shifts.length === all.length
+      ? t('employees.allShifts')
+      : emp.shifts.map(shiftLabel).join(', '));
+    parts.push(t('employees.quotaShort', { count: emp.maxShifts }));
+    if (!emp.active) parts.push(t('employees.inactiveTag'));
+    return parts.join(' · ');
+  }
+
+  function renderBranchFilter() {
+    var select = $('#emp-branch-filter');
+    if (!select) return;
+    var key = state.branches.map(function (branch) {
+      return branch.id + ':' + branch.name;
+    }).join('|') + '|' + (I18n ? I18n.code() : '');
+    /* הבורר נבנה מחדש רק כשרשימת הסניפים או השפה השתנו, ולא בכל
+       הקשה בתיבת החיפוש */
+    if (key === branchOptionsKey) { select.value = empFilter.branch; return; }
+    branchOptionsKey = key;
+    select.innerHTML = '<option value="">' + esc(t('employees.allBranchesFilter')) + '</option>' +
+      state.branches.map(function (branch) {
+        return '<option value="' + esc(branch.id) + '">' + esc(branch.name) + '</option>';
+      }).join('');
+    select.value = empFilter.branch;
+  }
+
   function renderEmployees() {
+    var shown = visibleEmployees();
     var html = '';
-    state.employees.forEach(function (emp) {
-      html += '<div class="card' + (emp.active ? '' : ' inactive') + '" data-emp="' + esc(emp.id) + '">';
-      html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(emp.name) + '">' +
-        '<button class="btn icon danger" data-action="delete-emp" title="' + t('common.delete') + '">🗑</button></div>';
+
+    shown.forEach(function (emp) {
+      var open = !!expandedEmp[emp.id];
+      html += '<div class="card' + (emp.active ? '' : ' inactive') +
+        (open ? '' : ' collapsed') + '" data-emp="' + esc(emp.id) + '">';
+      html += '<div class="card-head">' +
+        '<button class="card-toggle" data-action="toggle-card" aria-expanded="' +
+          (open ? 'true' : 'false') + '" data-i18n-title="employees.toggleCard" title="' +
+          esc(t('employees.toggleCard')) + '">' + (open ? '▾' : '▸') + '</button>' +
+        '<input class="name" data-field="name" value="' + esc(emp.name) + '">' +
+        '<button class="btn icon danger" data-action="delete-emp" title="' +
+          esc(t('common.delete')) + '">🗑</button></div>';
+      html += '<button class="card-summary" data-action="toggle-card">' +
+        esc(employeeSummary(emp)) + '</button>';
+
+      html += '<div class="card-body">';
       html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
         (emp.active ? ' checked' : '') + '> ' + t('employees.active') + '</label></div>';
       html += '<div class="field"><label class="title">' + t('employees.branchesLabel') + '</label><div class="pills">';
@@ -11494,19 +11769,48 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       html += '<div class="field"><label class="title">' + t('employees.shiftTypes') + '</label><div class="pills">';
       shiftList().forEach(function (shift) {
         var on = emp.shifts.indexOf(shift.id) !== -1 ? ' on' : '';
-        html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + shift.name + '</button>';
+        html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + esc(shift.name) + '</button>';
       });
       html += '</div></div>';
       html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
         '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
       html += '<div class="field"><label class="title">' + t('employees.note') + '</label>' +
         '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
-      html += '</div>';
+      html += '</div></div>';
     });
+
+    if (!shown.length) {
+      html = '<p class="list-empty">' + esc(t(state.employees.length
+        ? 'employees.noMatch' : 'employees.none')) + '</p>';
+    }
     $('#employees-list').innerHTML = html;
+
+    renderBranchFilter();
+    var count = $('#emp-count');
+    if (count) {
+      count.textContent = shown.length === state.employees.length
+        ? tPlural('employees.total', state.employees.length)
+        : t('employees.showing', { shown: shown.length, total: state.employees.length });
+    }
+
+    var anyClosed = shown.some(function (emp) { return !expandedEmp[emp.id]; });
+    var expand = $('#emp-expand-all');
+    if (expand) {
+      expand.textContent = t(anyClosed ? 'employees.expandAll' : 'employees.collapseAll');
+      expand.dataset.mode = anyClosed ? 'expand' : 'collapse';
+      expand.classList.toggle('hidden', !shown.length);
+    }
+
+    /* פעולות על כל המוצגים נחשפות רק כשיש סינון. בלי סינון "המוצגים"
+       הם כל העובדים, וכפתור שמשבית את כולם בלחיצה אחת הוא מלכודת. */
+    [['#emp-bulk-active', true], ['#emp-bulk-inactive', false]].forEach(function (pair) {
+      var button = $(pair[0]);
+      if (!button) return;
+      var relevant = shown.some(function (emp) { return emp.active !== pair[1]; });
+      button.classList.toggle('hidden', !(filterActive() && relevant));
+    });
   }
 
-  /* ========== סניפים: ימים, שעות וכמות עובדים ========== */
   function timeInputHtml(field, value) {
     return '<input class="time-input" type="text" inputmode="numeric" maxlength="5"' +
       ' placeholder="' + esc(t('common.timePlaceholder')) + '"' +
@@ -11682,7 +11986,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
     '#clear-constraints', '#copy-constraints',
     '#add-employee', '#add-branch', '#import-employees',
-    '#employees-list input', '#employees-list button',
+    '#employees-list input', '#employees-list button:not(.card-toggle):not(.card-summary)',
+    '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
@@ -11729,6 +12034,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       maxShifts: 6, note: ''
     };
     state.employees.push(employee);
+    /* כרטיס שנוסף ביד נפתח מיד – בשביל זה לחצו על הכפתור. בייבוא
+       של עשרות כרטיסים הם נשארים מקופלים. */
+    if (!defer) expandedEmp[employee.id] = true;
     /* בייבוא נוספים עשרות כרטיסים בבת אחת, ושמירה לכל אחד מהם היא
        עשרות פניות לשרת. שם השמירה נעשית פעם אחת בסוף. */
     if (!defer) persist('config');
@@ -12500,7 +12808,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       if (!card) return;
       var emp = Store.byId(state.employees, card.dataset.emp);
       if (!emp) return;
-      var action = event.target.dataset.action;
+      var action = (event.target.closest('[data-action]') || {}).dataset;
+      action = action ? action.action : null;
+
+      /* פתיחה וסגירה אינן שינוי נתונים, ולכן אינן נחסמות במצב צפייה
+         ואינן נשמרות – זו העדפה של הרגע הזה בלבד. */
+      if (action === 'toggle-card') {
+        if (expandedEmp[emp.id]) delete expandedEmp[emp.id];
+        else expandedEmp[emp.id] = true;
+        renderEmployees();
+        applyViewOnly();
+        return;
+      }
 
       if (action === 'delete-emp') {
         if (!confirm(t('employees.deleteConfirm', { name: emp.name }))) return;
@@ -12547,6 +12866,54 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();
     });
+
+    var tools = $('#employees-tools');
+    if (tools) {
+      /* החיפוש מצייר רק את הרשימה, ולא את סרגל הכלים עצמו, אחרת
+         הסמן היה נופל מתיבת החיפוש בכל הקשה. */
+      tools.addEventListener('input', function (event) {
+        if (event.target.id !== 'emp-search') return;
+        empFilter.text = event.target.value;
+        renderEmployees();
+        applyViewOnly();
+      });
+      tools.addEventListener('change', function (event) {
+        if (event.target.id === 'emp-branch-filter') empFilter.branch = event.target.value;
+        else if (event.target.id === 'emp-active-only') empFilter.activeOnly = event.target.checked;
+        else return;
+        renderEmployees();
+        applyViewOnly();
+      });
+      tools.addEventListener('click', function (event) {
+        var button = event.target.closest('button');
+        if (!button) return;
+
+        if (button.id === 'emp-expand-all') {
+          var opening = button.dataset.mode === 'expand';
+          visibleEmployees().forEach(function (emp) {
+            if (opening) expandedEmp[emp.id] = true;
+            else delete expandedEmp[emp.id];
+          });
+          renderEmployees();
+          applyViewOnly();
+          return;
+        }
+
+        if (button.id !== 'emp-bulk-active' && button.id !== 'emp-bulk-inactive') return;
+        if (blocked()) return;
+        var active = button.id === 'emp-bulk-active';
+        var targets = visibleEmployees().filter(function (emp) { return emp.active !== active; });
+        if (!targets.length) return;
+        /* פעולה על כמה עובדים בבת אחת מקבלת אישור עם המספר, כי
+           ביטול שלה הוא עבודה ידנית */
+        if (!confirm(t(active ? 'employees.bulkActivateConfirm' : 'employees.bulkDeactivateConfirm',
+          { count: targets.length }))) return;
+        targets.forEach(function (emp) { emp.active = active; });
+        persist('config');
+        render();
+        toast(t('employees.bulkDone', { count: targets.length }));
+      });
+    }
 
     /* ייבוא רשימה קיימת. הכפתור קיים רק כשהמסך נטען עם המודול,
        כדי שהכלי המקומי לא ייפול על כפתור שאין לו מסך. */

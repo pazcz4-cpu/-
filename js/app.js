@@ -683,12 +683,95 @@
   }
 
   /* ========== עובדים ========== */
+  /* ========== לשונית העובדים ==========
+
+     עם שלושים עובדים, רשימה של כרטיסים פתוחים היא גלילה אין-סופית:
+     כדי לשנות מכסה לעובד אחד צריך לעבור על כולם. לכן הכרטיסים
+     מקופלים, עם שורת סיכום שמראה את מה שמחפשים בדרך כלל, ומעליהם
+     חיפוש וסינון. */
+  var empFilter = { text: '', branch: '', activeOnly: false };
+  var expandedEmp = {};
+  var branchOptionsKey = '';
+
+  function normalizeSearch(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function visibleEmployees() {
+    var text = normalizeSearch(empFilter.text);
+    return state.employees.filter(function (emp) {
+      if (empFilter.activeOnly && !emp.active) return false;
+      if (empFilter.branch) {
+        /* "מחליף כללי" (בלי סניפים) שייך לכל סניף, ולכן הוא נשאר
+           ברשימה גם כשמסננים לפי סניף אחד. */
+        var anyBranch = !emp.branches || !emp.branches.length;
+        if (!anyBranch && emp.branches.indexOf(empFilter.branch) === -1) return false;
+      }
+      if (text) {
+        var haystack = normalizeSearch(emp.name) + ' ' + normalizeSearch(emp.note);
+        if (haystack.indexOf(text) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function filterActive() {
+    return !!(empFilter.text || empFilter.branch || empFilter.activeOnly);
+  }
+
+  /* שורת הסיכום על כרטיס מקופל: סניפים, משמרות ומכסה */
+  function employeeSummary(emp) {
+    var parts = [];
+    if (emp.branches && emp.branches.length) {
+      parts.push(emp.branches.map(branchNameOf).join(', '));
+    } else {
+      parts.push(t('employees.anyBranch'));
+    }
+    var all = shiftList();
+    parts.push(emp.shifts.length === all.length
+      ? t('employees.allShifts')
+      : emp.shifts.map(shiftLabel).join(', '));
+    parts.push(t('employees.quotaShort', { count: emp.maxShifts }));
+    if (!emp.active) parts.push(t('employees.inactiveTag'));
+    return parts.join(' · ');
+  }
+
+  function renderBranchFilter() {
+    var select = $('#emp-branch-filter');
+    if (!select) return;
+    var key = state.branches.map(function (branch) {
+      return branch.id + ':' + branch.name;
+    }).join('|') + '|' + (I18n ? I18n.code() : '');
+    /* הבורר נבנה מחדש רק כשרשימת הסניפים או השפה השתנו, ולא בכל
+       הקשה בתיבת החיפוש */
+    if (key === branchOptionsKey) { select.value = empFilter.branch; return; }
+    branchOptionsKey = key;
+    select.innerHTML = '<option value="">' + esc(t('employees.allBranchesFilter')) + '</option>' +
+      state.branches.map(function (branch) {
+        return '<option value="' + esc(branch.id) + '">' + esc(branch.name) + '</option>';
+      }).join('');
+    select.value = empFilter.branch;
+  }
+
   function renderEmployees() {
+    var shown = visibleEmployees();
     var html = '';
-    state.employees.forEach(function (emp) {
-      html += '<div class="card' + (emp.active ? '' : ' inactive') + '" data-emp="' + esc(emp.id) + '">';
-      html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(emp.name) + '">' +
-        '<button class="btn icon danger" data-action="delete-emp" title="' + t('common.delete') + '">🗑</button></div>';
+
+    shown.forEach(function (emp) {
+      var open = !!expandedEmp[emp.id];
+      html += '<div class="card' + (emp.active ? '' : ' inactive') +
+        (open ? '' : ' collapsed') + '" data-emp="' + esc(emp.id) + '">';
+      html += '<div class="card-head">' +
+        '<button class="card-toggle" data-action="toggle-card" aria-expanded="' +
+          (open ? 'true' : 'false') + '" data-i18n-title="employees.toggleCard" title="' +
+          esc(t('employees.toggleCard')) + '">' + (open ? '▾' : '▸') + '</button>' +
+        '<input class="name" data-field="name" value="' + esc(emp.name) + '">' +
+        '<button class="btn icon danger" data-action="delete-emp" title="' +
+          esc(t('common.delete')) + '">🗑</button></div>';
+      html += '<button class="card-summary" data-action="toggle-card">' +
+        esc(employeeSummary(emp)) + '</button>';
+
+      html += '<div class="card-body">';
       html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
         (emp.active ? ' checked' : '') + '> ' + t('employees.active') + '</label></div>';
       html += '<div class="field"><label class="title">' + t('employees.branchesLabel') + '</label><div class="pills">';
@@ -700,19 +783,48 @@
       html += '<div class="field"><label class="title">' + t('employees.shiftTypes') + '</label><div class="pills">';
       shiftList().forEach(function (shift) {
         var on = emp.shifts.indexOf(shift.id) !== -1 ? ' on' : '';
-        html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + shift.name + '</button>';
+        html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + esc(shift.name) + '</button>';
       });
       html += '</div></div>';
       html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
         '<input class="num-input" type="number" min="0" max="14" data-field="maxShifts" value="' + esc(emp.maxShifts) + '"></div>';
       html += '<div class="field"><label class="title">' + t('employees.note') + '</label>' +
         '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
-      html += '</div>';
+      html += '</div></div>';
     });
+
+    if (!shown.length) {
+      html = '<p class="list-empty">' + esc(t(state.employees.length
+        ? 'employees.noMatch' : 'employees.none')) + '</p>';
+    }
     $('#employees-list').innerHTML = html;
+
+    renderBranchFilter();
+    var count = $('#emp-count');
+    if (count) {
+      count.textContent = shown.length === state.employees.length
+        ? tPlural('employees.total', state.employees.length)
+        : t('employees.showing', { shown: shown.length, total: state.employees.length });
+    }
+
+    var anyClosed = shown.some(function (emp) { return !expandedEmp[emp.id]; });
+    var expand = $('#emp-expand-all');
+    if (expand) {
+      expand.textContent = t(anyClosed ? 'employees.expandAll' : 'employees.collapseAll');
+      expand.dataset.mode = anyClosed ? 'expand' : 'collapse';
+      expand.classList.toggle('hidden', !shown.length);
+    }
+
+    /* פעולות על כל המוצגים נחשפות רק כשיש סינון. בלי סינון "המוצגים"
+       הם כל העובדים, וכפתור שמשבית את כולם בלחיצה אחת הוא מלכודת. */
+    [['#emp-bulk-active', true], ['#emp-bulk-inactive', false]].forEach(function (pair) {
+      var button = $(pair[0]);
+      if (!button) return;
+      var relevant = shown.some(function (emp) { return emp.active !== pair[1]; });
+      button.classList.toggle('hidden', !(filterActive() && relevant));
+    });
   }
 
-  /* ========== סניפים: ימים, שעות וכמות עובדים ========== */
   function timeInputHtml(field, value) {
     return '<input class="time-input" type="text" inputmode="numeric" maxlength="5"' +
       ' placeholder="' + esc(t('common.timePlaceholder')) + '"' +
@@ -888,7 +1000,8 @@
     '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
     '#clear-constraints', '#copy-constraints',
     '#add-employee', '#add-branch', '#import-employees',
-    '#employees-list input', '#employees-list button',
+    '#employees-list input', '#employees-list button:not(.card-toggle):not(.card-summary)',
+    '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
@@ -935,6 +1048,9 @@
       maxShifts: 6, note: ''
     };
     state.employees.push(employee);
+    /* כרטיס שנוסף ביד נפתח מיד – בשביל זה לחצו על הכפתור. בייבוא
+       של עשרות כרטיסים הם נשארים מקופלים. */
+    if (!defer) expandedEmp[employee.id] = true;
     /* בייבוא נוספים עשרות כרטיסים בבת אחת, ושמירה לכל אחד מהם היא
        עשרות פניות לשרת. שם השמירה נעשית פעם אחת בסוף. */
     if (!defer) persist('config');
@@ -1706,7 +1822,18 @@
       if (!card) return;
       var emp = Store.byId(state.employees, card.dataset.emp);
       if (!emp) return;
-      var action = event.target.dataset.action;
+      var action = (event.target.closest('[data-action]') || {}).dataset;
+      action = action ? action.action : null;
+
+      /* פתיחה וסגירה אינן שינוי נתונים, ולכן אינן נחסמות במצב צפייה
+         ואינן נשמרות – זו העדפה של הרגע הזה בלבד. */
+      if (action === 'toggle-card') {
+        if (expandedEmp[emp.id]) delete expandedEmp[emp.id];
+        else expandedEmp[emp.id] = true;
+        renderEmployees();
+        applyViewOnly();
+        return;
+      }
 
       if (action === 'delete-emp') {
         if (!confirm(t('employees.deleteConfirm', { name: emp.name }))) return;
@@ -1753,6 +1880,54 @@
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();
     });
+
+    var tools = $('#employees-tools');
+    if (tools) {
+      /* החיפוש מצייר רק את הרשימה, ולא את סרגל הכלים עצמו, אחרת
+         הסמן היה נופל מתיבת החיפוש בכל הקשה. */
+      tools.addEventListener('input', function (event) {
+        if (event.target.id !== 'emp-search') return;
+        empFilter.text = event.target.value;
+        renderEmployees();
+        applyViewOnly();
+      });
+      tools.addEventListener('change', function (event) {
+        if (event.target.id === 'emp-branch-filter') empFilter.branch = event.target.value;
+        else if (event.target.id === 'emp-active-only') empFilter.activeOnly = event.target.checked;
+        else return;
+        renderEmployees();
+        applyViewOnly();
+      });
+      tools.addEventListener('click', function (event) {
+        var button = event.target.closest('button');
+        if (!button) return;
+
+        if (button.id === 'emp-expand-all') {
+          var opening = button.dataset.mode === 'expand';
+          visibleEmployees().forEach(function (emp) {
+            if (opening) expandedEmp[emp.id] = true;
+            else delete expandedEmp[emp.id];
+          });
+          renderEmployees();
+          applyViewOnly();
+          return;
+        }
+
+        if (button.id !== 'emp-bulk-active' && button.id !== 'emp-bulk-inactive') return;
+        if (blocked()) return;
+        var active = button.id === 'emp-bulk-active';
+        var targets = visibleEmployees().filter(function (emp) { return emp.active !== active; });
+        if (!targets.length) return;
+        /* פעולה על כמה עובדים בבת אחת מקבלת אישור עם המספר, כי
+           ביטול שלה הוא עבודה ידנית */
+        if (!confirm(t(active ? 'employees.bulkActivateConfirm' : 'employees.bulkDeactivateConfirm',
+          { count: targets.length }))) return;
+        targets.forEach(function (emp) { emp.active = active; });
+        persist('config');
+        render();
+        toast(t('employees.bulkDone', { count: targets.length }));
+      });
+    }
 
     /* ייבוא רשימה קיימת. הכפתור קיים רק כשהמסך נטען עם המודול,
        כדי שהכלי המקומי לא ייפול על כפתור שאין לו מסך. */

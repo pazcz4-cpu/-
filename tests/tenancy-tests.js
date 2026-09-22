@@ -495,11 +495,45 @@ console.log('\n== מנוי ==');
 
 /* דף המכירה ומסך ההרשמה מבטיחים משהו על החיוב, והחשבון שנפתח
    צריך להתנהג בדיוק לפי ההבטחה. כאן נבדק שהמדיניות אחת. */
-test('פתיחת חשבון אינה דורשת כרטיס, ובדיוק זה מה שמוצהר', function () {
-  assertEqual(Model.TRIAL_REQUIRES_CARD, false,
-    'המדיניות שונתה – יש לעדכן גם את landing.heroNote, landing.pricingNote, ' +
-    'landing.faq6A ו-auth.trialNote בשמונה השפות');
+test('מדיניות הכרטיס נגזרת ממצב הסליקה, ואינה קבועה בקוד', function () {
+  /* בלי סליקה אי אפשר לבקש כרטיס – אין לאן לשלוח אותו. עם
+     סליקה זו המדיניות. אם שני אלה מתפצלים, הדף מבטיח דבר אחד
+     והמערכת עושה אחר. */
+  Model.setBillingLive(false);
+  assertEqual(Model.trialRequiresCard(), false, 'בלי סליקה נדרש כרטיס בהרשמה');
+  Model.setBillingLive(true);
+  assertEqual(Model.trialRequiresCard(), true, 'עם סליקה לא נדרש כרטיס בהרשמה');
+  Model.setBillingLive(false);
+});
 
+/* לכל הבטחה שנוגעת לכרטיס יש שני נוסחים, ושניהם חייבים להתקיים
+   בכל שפה: נוסח בלי סליקה ונוסח עם. נוסח חסר פירושו שבמצב אחד
+   הדף יציג מפתח תרגום במקום משפט. */
+test('לכל הבטחת כרטיס יש שני נוסחים, בשמונה השפות', function () {
+  var fs = require('fs');
+  var path = require('path');
+  var dir = path.join(__dirname, '..', 'js', 'i18n');
+  var pairs = [
+    ['landing', 'heroNote'], ['landing', 'pricingNote'],
+    ['landing', 'faq6A'], ['auth', 'trialNote']
+  ];
+  var langs = fs.readdirSync(dir).filter(function (file) {
+    return /\.js$/.test(file) && file !== 'core.js' && file !== 'dom.js';
+  });
+  assert(langs.length === 8, 'מספר השפות השתנה: ' + langs.length);
+
+  langs.forEach(function (file) {
+    var text = fs.readFileSync(path.join(dir, file), 'utf8');
+    pairs.forEach(function (pair) {
+      var name = pair[1];
+      assert(text.indexOf(name + ':') !== -1, file + ' – חסר ' + name);
+      assert(text.indexOf(name + 'Card:') !== -1,
+        file + ' – חסר הנוסח עם כרטיס: ' + name + 'Card');
+    });
+  });
+});
+
+test('פתיחת חשבון אינה יוצרת מנוי אצל הספק מעצמה', function () {
   var company = Model.newTrialCompany('חדשה', new Date('2026-09-01T08:00:00Z'));
   assertEqual(company.billingCustomerId, null, 'חשבון חדש נפתח עם אמצעי תשלום');
   assertEqual(company.billingSubscriptionId, null, 'חשבון חדש נפתח עם מנוי אצל הספק');

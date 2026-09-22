@@ -622,10 +622,14 @@
           terms: legalLink('/terms/', t('landing.terms')),
           privacy: legalLink('/privacy/', t('landing.privacy'))
         }) + '</p>' +
-        '<p class="auth-hint auth-trial-note">' + esc(t('auth.trialNote', {
-          days: Model.TRIAL_DAYS,
-          date: Model.formatDate(Model.addDays(new Date(), Model.TRIAL_DAYS))
-        })) + '</p>' +
+        /* אותה הבטחה בדיוק כמו בדף המכירה, ונבחרת לפי אותו
+           מצב: מי שקרא "בלי כרטיס אשראי" ומגיע להרשמה לא אמור
+           לפגוש שם משפט אחר. */
+        '<p class="auth-hint auth-trial-note">' + esc(t(
+          Model.trialRequiresCard() ? 'auth.trialNoteCard' : 'auth.trialNote', {
+            days: Model.TRIAL_DAYS,
+            date: Model.formatDate(Model.addDays(new Date(), Model.TRIAL_DAYS))
+          })) + '</p>' +
         '</form>';
     }
 

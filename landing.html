@@ -288,6 +288,10 @@
 <script src="js/i18n/pt.js"></script>
 <script src="js/i18n/dom.js"></script>
 <script src="js/video.js"></script>
+<!-- מצב הסליקה, נקבע בבנייה ממשתני הסביבה. דף סטטי אינו יכול
+     לשאול את השרת, ובלי הדגל הזה נוסח ההבטחה על הכרטיס היה
+     קבוע – והופך לשקר ביום שהסליקה נדלקת. -->
+<script>window.SHIFT_BILLING_LIVE = false;</script>
 <script src="js/backend/model.js"></script>
 <script>
 (function () {
@@ -328,7 +332,17 @@
     }).join('');
 
     var note = document.getElementById('pricing-note');
-    if (note) note.textContent = t('landing.pricingNote', { days: Model.TRIAL_DAYS });
+    if (note) note.textContent = t(key('landing.pricingNote'), { days: Model.TRIAL_DAYS });
+  }
+
+  /* כל הבטחה שנוגעת לכרטיס אשראי נבחרת לפי מצב הסליקה בפועל,
+     ולא נכתבת קבוע. בלי סליקה: "בלי כרטיס אשראי". עם סליקה:
+     "מזינים כרטיס, החיוב הראשון בתום התקופה". שניהם נכונים
+     במצב שלהם, ואין רגע שבו הדף מבטיח משהו שאינו קורה. */
+  Model.setBillingLive(window.SHIFT_BILLING_LIVE === true);
+
+  function key(name) {
+    return Model.trialRequiresCard() ? name + 'Card' : name;
   }
 
   function renderDynamic() {
@@ -337,9 +351,9 @@
     var cta = document.getElementById('hero-cta');
     if (cta) cta.textContent = t('landing.startLong', { days: Model.TRIAL_DAYS });
     var note = document.getElementById('hero-note');
-    if (note) note.textContent = t('landing.heroNote', { days: Model.TRIAL_DAYS });
+    if (note) note.textContent = t(key('landing.heroNote'), { days: Model.TRIAL_DAYS });
     var faq6 = document.getElementById('faq6-answer');
-    if (faq6) faq6.textContent = t('landing.faq6A', { days: Model.TRIAL_DAYS });
+    if (faq6) faq6.textContent = t(key('landing.faq6A'), { days: Model.TRIAL_DAYS });
     /* כתובת ליצירת קשר. קונה שמתלבט רוצה לדעת שיש למי לפנות
        לפני שהוא מוסר כרטיס אשראי. */
     var contact = document.getElementById('footer-contact');

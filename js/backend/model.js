@@ -156,11 +156,21 @@
 
   var TRIAL_DAYS = 14;
 
-  /* מדיניות הניסיון, במקום אחד. פתיחת חשבון אינה דורשת כרטיס, ולכן
-     כל טקסט שמבטיח "החיוב הראשון בתום התקופה" הוא הבטחה שאינה
-     נכונה – והסתירה הזו עולה עסקה. אם המדיניות תשתנה, היא משתנה
-     כאן, והבדיקה תפנה למי ששינה אותה גם אל נוסח דף המכירה. */
-  var TRIAL_REQUIRES_CARD = false;
+  /* מדיניות הניסיון, במקום אחד.
+
+     המדיניות שאליה מכוונים: הלקוח מזין כרטיס בהרשמה ואינו מחויב
+     במשך 14 יום. אבל היא יכולה להיות נכונה רק כשיש סליקה מחוברת –
+     בלעדיה מסך שמבקש כרטיס אין לו לאן לשלוח אותו, ואף אחד לא
+     יוכל להירשם בכלל.
+
+     לכן זו אינה קבועה אלא נגזרת ממצב הסליקה. כך אין רגע שבו הדף
+     מבטיח דבר אחד והמערכת עושה אחר: בלי סליקה נאמר "בלי כרטיס
+     אשראי", ועם סליקה נאמר "מזינים כרטיס, החיוב הראשון בתום
+     התקופה" – ושניהם נכונים במצב שלהם.
+
+     הנוסח בדף המכירה נבחר לפי אותה פונקציה בדיוק, ולכן אי אפשר
+     לשנות אחד בלי השני. */
+  function trialRequiresCard() { return isBillingLive(); }
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
   /* חלון להמתנה לאישור החיוב הראשון מספק התשלומים */
   var CHARGE_GRACE_DAYS = 2;
@@ -414,7 +424,7 @@
     INVITE: INVITE, INVITE_TTL_HOURS: INVITE_TTL_HOURS,
     inviteState: inviteState, canCancelInvite: canCancelInvite,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS,
-    TRIAL_REQUIRES_CARD: TRIAL_REQUIRES_CARD, GRACE_DAYS: GRACE_DAYS,
+    trialRequiresCard: trialRequiresCard, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,

@@ -189,6 +189,26 @@ function toAbsolutePaths(html) {
     });
 }
 
+/* האם יש סליקה מחוברת ומוכנה.
+
+   דף המכירה סטטי ואינו יכול לשאול את השרת, ולכן המצב נחרט בו
+   בזמן הבנייה. בלי זה ההבטחה על הכרטיס הייתה קבועה בקוד – נכונה
+   היום, ושקר ביום שהסליקה נדלקת.
+
+   ספק מדומה אינו סליקה, וספק אמיתי שאינו מוכן גם לא. */
+function billingIsLive() {
+  const provider = String(process.env.BILLING_PROVIDER || '').trim();
+  if (!provider || provider === 'mock') return false;
+  if (provider === 'payplus') return process.env.PAYPLUS_READY === 'true';
+  return true;
+}
+
+function markBilling(html) {
+  if (!billingIsLive()) return html;
+  return html.replace('window.SHIFT_BILLING_LIVE = false;',
+    'window.SHIFT_BILLING_LIVE = true;');
+}
+
 /* האם הסרטון קיים. הדף נשלח כבר במצב הנכון, ולכן אין בדיקה
    מהדפדפן – ואין 404 בקונסול של כל מבקר. */
 function markVideo(html) {
@@ -292,7 +312,7 @@ const SW_REGISTER = `
 
 function page(source, target, options) {
   const opts = options || {};
-  let html = markVideo(fillLegal(toAbsolutePaths(read(source))));
+  let html = markBilling(markVideo(fillLegal(toAbsolutePaths(read(source)))));
   html = html.replace('</head>', headExtras(opts) + '\n</head>');
   /* המשרד האחורי אינו עובד במצב לא מקוון ואינו אמור להישמר
      במטמון של המכשיר. מסך שרואה את כל הלקוחות לא צריך להשאיר

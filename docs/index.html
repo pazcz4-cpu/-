@@ -238,6 +238,18 @@ h2 { font-size: 17px; margin: 18px 0 10px; }
 .btn.danger:hover { background: var(--err); color: var(--surface); }
 .btn.ghost.small { padding: 6px 10px; font-size: 13px; }
 .btn.icon { padding: 4px 9px; line-height: 1.2; }
+
+/* פרסום הוא הצעד השני, אחרי הבנייה: כפתור מלא בצבע אחר, כדי
+   שיהיה ברור שהוא לא עוד כלי בסרגל אלא ההחלטה שמשנה מה העובדים רואים. */
+.btn.publish { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+.btn.publish:hover { filter: brightness(1.08); color: #fff; }
+.btn.publish:disabled { background: transparent; border-color: var(--line); color: var(--muted); }
+
+.publish-state { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+.publish-state::before { content: "●"; font-size: 10px; color: var(--badge-warn); }
+.publish-state.published::before { color: var(--ok); }
+.publish-state.changed { color: var(--warn); }
+.publish-state.changed::before { color: var(--warn); }
 .file-btn { display: inline-flex; align-items: center; }
 
 .week-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -667,6 +679,7 @@ body { -webkit-tap-highlight-color: transparent; }
   .week-nav .btn { padding: 8px 12px; }
   #this-week { order: 3; }
   .sync-state { order: 4; width: 100%; justify-content: center; }
+  .publish-state { order: 5; width: 100%; justify-content: center; }
   #tools-toggle { flex: 1 1 100%; }
 }
 
@@ -1789,6 +1802,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
       },
 
+      publish: {
+        action: 'Publish schedule',
+        update: 'Publish updates',
+        revert: 'Back to draft',
+        draft: 'Draft – your staff cannot see this schedule yet',
+        published: 'Published on {date} at {time}',
+        changed: 'Changed since it was published on {date} at {time}',
+        publishedNow: 'Published. Your staff can see the schedule',
+        revertedNow: 'Back to draft. Your staff cannot see the schedule',
+        confirmRevert: 'Move this schedule back to draft? Your staff will not see it until you publish again.'
+      },
+
       why: {
         button: 'Why this person?',
         title: 'Why {name}?',
@@ -2444,6 +2469,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'לפי צאת שבת', autoSabbathLabel: 'מצאת שבת +30 דק׳'
       },
 
+      publish: {
+        action: 'פרסום הסידור',
+        update: 'פרסום העדכונים',
+        revert: 'החזרה לטיוטה',
+        draft: 'טיוטה – העובדים עדיין אינם רואים את הסידור',
+        published: 'פורסם ב־{date} בשעה {time}',
+        changed: 'שונה מאז הפרסום ב־{date} בשעה {time}',
+        publishedNow: 'פורסם. העובדים רואים את הסידור',
+        revertedNow: 'הוחזר לטיוטה. העובדים אינם רואים את הסידור',
+        confirmRevert: 'להחזיר את הסידור לטיוטה? העובדים לא יראו אותו עד לפרסום הבא.'
+      },
+
       why: {
         button: 'למה דווקא הוא?',
         title: 'למה {name}?',
@@ -3092,6 +3129,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         copied: 'Días y horas copiados',
         deleteConfirm: '¿Eliminar {name}? Sus asignaciones se quitarán de todas las semanas.',
         autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
+      },
+
+      publish: {
+        action: 'Publicar horario',
+        update: 'Publicar cambios',
+        revert: 'Volver a borrador',
+        draft: 'Borrador: tu equipo aún no ve este horario',
+        published: 'Publicado el {date} a las {time}',
+        changed: 'Modificado desde que se publicó el {date} a las {time}',
+        publishedNow: 'Publicado. Tu equipo ya ve el horario',
+        revertedNow: 'Vuelto a borrador. Tu equipo no ve el horario',
+        confirmRevert: '¿Volver este horario a borrador? Tu equipo no lo verá hasta que lo publiques de nuevo.'
       },
 
       why: {
@@ -3744,6 +3793,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
       },
 
+      publish: {
+        action: 'Publier le planning',
+        update: 'Publier les modifications',
+        revert: 'Repasser en brouillon',
+        draft: 'Brouillon – votre équipe ne voit pas encore ce planning',
+        published: 'Publié le {date} à {time}',
+        changed: 'Modifié depuis sa publication le {date} à {time}',
+        publishedNow: 'Publié. Votre équipe voit le planning',
+        revertedNow: 'Repassé en brouillon. Votre équipe ne voit pas le planning',
+        confirmRevert: 'Repasser ce planning en brouillon ? Votre équipe ne le verra pas avant la prochaine publication.'
+      },
+
       why: {
         button: 'Pourquoi cette personne ?',
         title: 'Pourquoi {name} ?',
@@ -4392,6 +4453,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         copied: 'تم نسخ الأيام والأوقات',
         deleteConfirm: 'هل تريد حذف {name}؟ ستُزال تعييناته من جميع الأسابيع.',
         autoSabbath: 'حسب خروج السبت', autoSabbathLabel: 'خروج السبت +30 دقيقة'
+      },
+
+      publish: {
+        action: 'نشر الجدول',
+        update: 'نشر التحديثات',
+        revert: 'إرجاع إلى مسودة',
+        draft: 'مسودة – فريقك لا يرى هذا الجدول بعد',
+        published: 'نُشر في {date} الساعة {time}',
+        changed: 'تغيّر منذ نشره في {date} الساعة {time}',
+        publishedNow: 'تم النشر. فريقك يرى الجدول',
+        revertedNow: 'أُرجع إلى مسودة. فريقك لا يرى الجدول',
+        confirmRevert: 'إرجاع الجدول إلى مسودة؟ لن يراه فريقك حتى النشر التالي.'
       },
 
       why: {
@@ -5044,6 +5117,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'По исходу субботы', autoSabbathLabel: 'Исход субботы +30 мин'
       },
 
+      publish: {
+        action: 'Опубликовать график',
+        update: 'Опубликовать изменения',
+        revert: 'Вернуть в черновик',
+        draft: 'Черновик — сотрудники пока не видят этот график',
+        published: 'Опубликован {date} в {time}',
+        changed: 'Изменён после публикации {date} в {time}',
+        publishedNow: 'Опубликовано. Сотрудники видят график',
+        revertedNow: 'Возвращено в черновик. Сотрудники не видят график',
+        confirmRevert: 'Вернуть график в черновик? Сотрудники не увидят его до следующей публикации.'
+      },
+
       why: {
         button: 'Почему именно он?',
         title: 'Почему {name}?',
@@ -5694,6 +5779,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
       },
 
+      publish: {
+        action: 'Plan veröffentlichen',
+        update: 'Änderungen veröffentlichen',
+        revert: 'Zurück zum Entwurf',
+        draft: 'Entwurf – Ihr Team sieht diesen Plan noch nicht',
+        published: 'Veröffentlicht am {date} um {time}',
+        changed: 'Seit der Veröffentlichung am {date} um {time} geändert',
+        publishedNow: 'Veröffentlicht. Ihr Team sieht den Plan',
+        revertedNow: 'Zurück zum Entwurf. Ihr Team sieht den Plan nicht',
+        confirmRevert: 'Diesen Plan zurück zum Entwurf setzen? Ihr Team sieht ihn erst bei der nächsten Veröffentlichung.'
+      },
+
       why: {
         button: 'Warum diese Person?',
         title: 'Warum {name}?',
@@ -6342,6 +6439,18 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
         copied: 'Dias e horas copiados',
         deleteConfirm: 'Eliminar {name}? As suas atribuições serão retiradas de todas as semanas.',
         autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
+      },
+
+      publish: {
+        action: 'Publicar horário',
+        update: 'Publicar alterações',
+        revert: 'Voltar a rascunho',
+        draft: 'Rascunho – a tua equipa ainda não vê este horário',
+        published: 'Publicado a {date} às {time}',
+        changed: 'Alterado desde a publicação a {date} às {time}',
+        publishedNow: 'Publicado. A tua equipa vê o horário',
+        revertedNow: 'Voltou a rascunho. A tua equipa não vê o horário',
+        confirmRevert: 'Voltar este horário a rascunho? A tua equipa não o verá até à próxima publicação.'
       },
 
       why: {
@@ -7571,7 +7680,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   function emptyWeek() {
     return {
       constraints: {}, assignments: {}, manual: {}, holidays: {},
-      shabbatEnd: '', note: '', generatedAt: null
+      shabbatEnd: '', note: '', generatedAt: null,
+      published: false, publishedAt: null, publishedSignature: ''
     };
   }
 
@@ -7920,6 +8030,49 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
   }
 
+  /* ===== טיוטה ופרסום ===== */
+
+  /* חתימה של מה שהעובד רואה בפועל. אחרי פרסום, שינוי בחתימה הזו
+     הוא בדיוק "שונה מאז הפרסום" – ולכן היא נגזרת מהשיבוצים ומהערת
+     השבוע, ולא מדברים שאינם מגיעים למסך שלו (סימון שיבוץ ידני,
+     למשל, אינו שינוי בסידור). */
+  function scheduleSignature(week) {
+    var assignments = (week && week.assignments) || {};
+    var parts = Object.keys(assignments).filter(function (key) {
+      return (assignments[key] || []).length;
+    }).sort().map(function (key) {
+      return key + '=' + (assignments[key] || []).slice().sort().join(',');
+    });
+    parts.push('note=' + ((week && week.note) || ''));
+    return parts.join(';');
+  }
+
+  var PUBLISH_STATE = { DRAFT: 'draft', PUBLISHED: 'published', CHANGED: 'changed' };
+
+  function publishState(week) {
+    if (!week || !week.published) return PUBLISH_STATE.DRAFT;
+    /* שבוע שפורסם לפני שהחתימה נשמרה – אין במה להשוות, וטענה
+       ש"שונה מאז הפרסום" בלי בסיס גרועה מלא לטעון כלום. */
+    if (!week.publishedSignature) return PUBLISH_STATE.PUBLISHED;
+    return week.publishedSignature === scheduleSignature(week)
+      ? PUBLISH_STATE.PUBLISHED : PUBLISH_STATE.CHANGED;
+  }
+
+  /* מסמן את השבוע כמפורסם *במצבו הנוכחי*. השעה והחתימה נשמרות יחד,
+     כי בלעדיהן אין דרך לדעת שמאז הפרסום הסידור השתנה. */
+  function markPublished(week, when) {
+    week.published = true;
+    week.publishedAt = (when || new Date()).toISOString();
+    week.publishedSignature = scheduleSignature(week);
+    return week;
+  }
+
+  function markDraft(week) {
+    week.published = false;
+    week.publishedSignature = '';
+    return week;
+  }
+
   /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
 
   /* סיכום לכל עובד פעיל: כמה משמרות נותרו במכסה ובאילו ימים הוא פנוי */
@@ -8024,6 +8177,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
+      if (typeof weekData.published !== 'boolean') weekData.published = false;
+      if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
     });
     return state;
   }
@@ -8221,6 +8376,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     requestedDaysOff: requestedDaysOff,
     workableDays: workableDays,
     targetShifts: targetShifts,
+    scheduleSignature: scheduleSignature,
+    publishState: publishState,
+    PUBLISH_STATE: PUBLISH_STATE,
+    markPublished: markPublished,
+    markDraft: markDraft,
     weekAvailability: weekAvailability,
     byId: byId,
     migrate: migrate,
@@ -10235,8 +10395,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
       });
     });
 
-    /* אחרון, כדי שהנעילה לפי ההגדרה עצמה לא תידרס */
+    /* אחרונים, כדי שהנעילה לפי המצב עצמו לא תידרס */
     renderDeadline();
+    renderPublish();
   }
 
   /* ========== רינדור כולל ========== */
@@ -10735,6 +10896,27 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
     $('#copy-text').addEventListener('click', function () {
       copyText(scheduleAsText(), t('toast.copied'));
     });
+
+    /* הכלי המקומי אינו כולל את כפתורי הפרסום – אין לו עובדים
+       שמתחברים, ולכן אין למי לפרסם. */
+    if ($('#publish-week')) {
+      $('#publish-week').addEventListener('click', function () {
+        if (blocked()) return;
+        Store.markPublished(week());
+        persist('week');
+        render();
+        toast(t('publish.publishedNow'));
+      });
+
+      $('#unpublish-week').addEventListener('click', function () {
+        if (blocked()) return;
+        if (!window.confirm(t('publish.confirmRevert'))) return;
+        Store.markDraft(week());
+        persist('week');
+        render();
+        toast(t('publish.revertedNow'));
+      });
+    }
 
     $('#view-only-toggle').addEventListener('click', function () {
       viewOnly = !viewOnly;
@@ -11483,9 +11665,11 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   /* ========== סנכרון בין מכשירים ========== */
   var syncStatus = 'local';
 
-  function timeLabel(date) {
+  /* short – שעה ודקה בלבד, לטקסט שנקרא כמשפט ולא כחותמת */
+  function timeLabel(date, short) {
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
-    return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+    var text = pad(date.getHours()) + ':' + pad(date.getMinutes());
+    return short ? text : text + ':' + pad(date.getSeconds());
   }
 
   /* לאן הנתונים באמת הולכים. מצב ההדגמה משתמש בשרת מדומה שיושב
@@ -11539,6 +11723,42 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   function renderSyncState(status) {
     syncStatus = status || syncStatus;
     renderSaveState();
+  }
+
+  /* ========== טיוטה ופרסום ==========
+     בלי פרסום מפורש הסידור נשאר טיוטה, והעובדים אינם רואים אותו.
+     לכן הסטטוס נמצא ליד הכפתור ולא במסך אחר: השאלה "העובדים כבר
+     רואים את זה?" נשאלת בדיוק כאן. */
+  function renderPublish() {
+    var button = $('#publish-week');
+    var revert = $('#unpublish-week');
+    var label = $('#publish-state');
+    if (!button || !label) return;
+
+    if (!source.canPublish) {
+      [button, revert, label].forEach(function (node) {
+        if (node) node.classList.add('hidden');
+      });
+      return;
+    }
+
+    var current = week();
+    var mode = Store.publishState(current);
+    var at = current.publishedAt ? new Date(current.publishedAt) : null;
+    var when = at ? { date: Store.formatDate(at), time: timeLabel(at, true) } : {};
+
+    label.classList.remove('hidden');
+    label.className = 'publish-state ' + mode;
+    label.textContent = t('publish.' + mode, when);
+
+    button.classList.remove('hidden');
+    button.textContent = t(mode === Store.PUBLISH_STATE.CHANGED ? 'publish.update' : 'publish.action');
+    /* מפתח התרגום נקבע לפי המצב, ולכן החלפת שפה מצוירת מכאן */
+    button.removeAttribute('data-i18n');
+    button.disabled = viewOnly || mode === Store.PUBLISH_STATE.PUBLISHED;
+
+    revert.classList.toggle('hidden', mode === Store.PUBLISH_STATE.DRAFT);
+    revert.disabled = viewOnly;
   }
 
   function onSynced(date, fromRemote) {

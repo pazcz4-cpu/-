@@ -1038,6 +1038,100 @@ test('הסכימה אוכפת את המועד גם בשרת', function () {
     'הבדיקה אינה מוגבלת לעובדים, ותחסום גם מנהל');
 });
 
+console.log('\n== טיוטה ופרסום ==');
+
+/* בלי פרסום מפורש העובד אינו רואה סידור. לכן "מה מצב הפרסום" הוא
+   נתון שנגזר מהמצב, ולא דגל שמישהו צריך לזכור לעדכן. */
+test('סידור חדש הוא טיוטה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.DRAFT,
+    'סידור שלא פורסם אינו טיוטה');
+});
+
+test('אחרי פרסום נשמרות גם השעה וגם החתימה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  Store.markPublished(weekData, new Date('2026-09-11T20:30:00Z'));
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.PUBLISHED,
+    'שבוע שפורסם אינו מסומן כמפורסם');
+  assertEqual(weekData.publishedAt, '2026-09-11T20:30:00.000Z', 'שעת הפרסום לא נשמרה');
+  assertEqual(weekData.publishedSignature, Store.scheduleSignature(weekData),
+    'החתימה אינה של מה שפורסם');
+});
+
+test('שינוי בשיבוצים אחרי פרסום מסומן כשינוי', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  Store.markPublished(weekData);
+
+  var key = Object.keys(weekData.assignments).filter(function (k) {
+    return (weekData.assignments[k] || []).length;
+  })[0];
+  var slot = Explain.parseSlotKey(key);
+  Store.setAssigned(weekData, slot.dayIdx, slot.branchId, slot.shiftId, []);
+
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.CHANGED,
+    'שיבוץ שהוסר אחרי הפרסום אינו מסומן כשינוי');
+  Store.markPublished(weekData);
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.PUBLISHED,
+    'פרסום העדכונים אינו מאפס את הסימון');
+});
+
+test('שינוי בהערת השבוע נחשב שינוי, סימון ידני לא', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  Store.markPublished(weekData);
+
+  /* סימון "שובץ ידנית" הוא זיכרון של המנוע ואינו מגיע למסך העובד */
+  weekData.manual[Object.keys(weekData.assignments)[0]] = true;
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.PUBLISHED,
+    'סימון ידני נחשב בטעות לשינוי בסידור');
+
+  weekData.note = 'מי שמחליף – לתאם מראש';
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.CHANGED,
+    'הערה חדשה לעובדים אינה נחשבת שינוי');
+});
+
+test('סדר העובדים באותה משמרת אינו שינוי', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  var key = Object.keys(weekData.assignments).filter(function (k) {
+    return (weekData.assignments[k] || []).length > 1;
+  })[0];
+  if (!key) return;   // סידור בלי משמרת דו-אישית – אין מה לבדוק
+  Store.markPublished(weekData);
+  weekData.assignments[key] = weekData.assignments[key].slice().reverse();
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.PUBLISHED,
+    'היפוך סדר באותה משמרת נחשב בטעות לשינוי');
+});
+
+test('החזרה לטיוטה מנקה את החתימה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  Store.markPublished(weekData);
+  Store.markDraft(weekData);
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.DRAFT,
+    'החזרה לטיוטה לא החזירה לטיוטה');
+  assertEqual(weekData.publishedSignature, '', 'החתימה נשארה אחרי החזרה לטיוטה');
+});
+
+test('שבוע ותיק שפורסם בלי חתימה אינו מוכרז כשונה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  build(state, weekData);
+  weekData.published = true;
+  weekData.publishedSignature = '';
+  assertEqual(Store.publishState(weekData), Store.PUBLISH_STATE.PUBLISHED,
+    'טענה על שינוי בלי בסיס להשוואה');
+});
+
 console.log('\n== למה שובץ ככה ==');
 
 /* ההסבר חייב להיגזר מאותם תנאים שהמנוע החליט לפיהם. בדיקה שמסתפקת

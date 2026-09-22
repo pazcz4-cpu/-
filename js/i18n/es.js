@@ -368,6 +368,18 @@
         autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
       },
 
+      publish: {
+        action: 'Publicar horario',
+        update: 'Publicar cambios',
+        revert: 'Volver a borrador',
+        draft: 'Borrador: tu equipo aún no ve este horario',
+        published: 'Publicado el {date} a las {time}',
+        changed: 'Modificado desde que se publicó el {date} a las {time}',
+        publishedNow: 'Publicado. Tu equipo ya ve el horario',
+        revertedNow: 'Vuelto a borrador. Tu equipo no ve el horario',
+        confirmRevert: '¿Volver este horario a borrador? Tu equipo no lo verá hasta que lo publiques de nuevo.'
+      },
+
       why: {
         button: '¿Por qué esta persona?',
         title: '¿Por qué {name}?',

@@ -368,6 +368,18 @@
         autoSabbath: 'Conforme o fim do Shabbat', autoSabbathLabel: 'Fim do Shabbat +30 min'
       },
 
+      publish: {
+        action: 'Publicar horário',
+        update: 'Publicar alterações',
+        revert: 'Voltar a rascunho',
+        draft: 'Rascunho – a tua equipa ainda não vê este horário',
+        published: 'Publicado a {date} às {time}',
+        changed: 'Alterado desde a publicação a {date} às {time}',
+        publishedNow: 'Publicado. A tua equipa vê o horário',
+        revertedNow: 'Voltou a rascunho. A tua equipa não vê o horário',
+        confirmRevert: 'Voltar este horário a rascunho? A tua equipa não o verá até à próxima publicação.'
+      },
+
       why: {
         button: 'Porquê esta pessoa?',
         title: 'Porquê {name}?',

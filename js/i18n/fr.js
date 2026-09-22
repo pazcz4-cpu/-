@@ -368,6 +368,18 @@
         autoSabbath: 'Selon la fin du chabbat', autoSabbathLabel: 'Fin du chabbat +30 min'
       },
 
+      publish: {
+        action: 'Publier le planning',
+        update: 'Publier les modifications',
+        revert: 'Repasser en brouillon',
+        draft: 'Brouillon – votre équipe ne voit pas encore ce planning',
+        published: 'Publié le {date} à {time}',
+        changed: 'Modifié depuis sa publication le {date} à {time}',
+        publishedNow: 'Publié. Votre équipe voit le planning',
+        revertedNow: 'Repassé en brouillon. Votre équipe ne voit pas le planning',
+        confirmRevert: 'Repasser ce planning en brouillon ? Votre équipe ne le verra pas avant la prochaine publication.'
+      },
+
       why: {
         button: 'Pourquoi cette personne ?',
         title: 'Pourquoi {name} ?',

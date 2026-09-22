@@ -62,7 +62,8 @@
   function emptyWeek() {
     return {
       constraints: {}, assignments: {}, manual: {}, holidays: {},
-      shabbatEnd: '', note: '', generatedAt: null
+      shabbatEnd: '', note: '', generatedAt: null,
+      published: false, publishedAt: null, publishedSignature: ''
     };
   }
 
@@ -411,6 +412,49 @@
     return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
   }
 
+  /* ===== טיוטה ופרסום ===== */
+
+  /* חתימה של מה שהעובד רואה בפועל. אחרי פרסום, שינוי בחתימה הזו
+     הוא בדיוק "שונה מאז הפרסום" – ולכן היא נגזרת מהשיבוצים ומהערת
+     השבוע, ולא מדברים שאינם מגיעים למסך שלו (סימון שיבוץ ידני,
+     למשל, אינו שינוי בסידור). */
+  function scheduleSignature(week) {
+    var assignments = (week && week.assignments) || {};
+    var parts = Object.keys(assignments).filter(function (key) {
+      return (assignments[key] || []).length;
+    }).sort().map(function (key) {
+      return key + '=' + (assignments[key] || []).slice().sort().join(',');
+    });
+    parts.push('note=' + ((week && week.note) || ''));
+    return parts.join(';');
+  }
+
+  var PUBLISH_STATE = { DRAFT: 'draft', PUBLISHED: 'published', CHANGED: 'changed' };
+
+  function publishState(week) {
+    if (!week || !week.published) return PUBLISH_STATE.DRAFT;
+    /* שבוע שפורסם לפני שהחתימה נשמרה – אין במה להשוות, וטענה
+       ש"שונה מאז הפרסום" בלי בסיס גרועה מלא לטעון כלום. */
+    if (!week.publishedSignature) return PUBLISH_STATE.PUBLISHED;
+    return week.publishedSignature === scheduleSignature(week)
+      ? PUBLISH_STATE.PUBLISHED : PUBLISH_STATE.CHANGED;
+  }
+
+  /* מסמן את השבוע כמפורסם *במצבו הנוכחי*. השעה והחתימה נשמרות יחד,
+     כי בלעדיהן אין דרך לדעת שמאז הפרסום הסידור השתנה. */
+  function markPublished(week, when) {
+    week.published = true;
+    week.publishedAt = (when || new Date()).toISOString();
+    week.publishedSignature = scheduleSignature(week);
+    return week;
+  }
+
+  function markDraft(week) {
+    week.published = false;
+    week.publishedSignature = '';
+    return week;
+  }
+
   /* ===== יתרת זמינות: מה נשאר פנוי אחרי בניית הסידור ===== */
 
   /* סיכום לכל עובד פעיל: כמה משמרות נותרו במכסה ובאילו ימים הוא פנוי */
@@ -515,6 +559,8 @@
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
+      if (typeof weekData.published !== 'boolean') weekData.published = false;
+      if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
     });
     return state;
   }
@@ -712,6 +758,11 @@
     requestedDaysOff: requestedDaysOff,
     workableDays: workableDays,
     targetShifts: targetShifts,
+    scheduleSignature: scheduleSignature,
+    publishState: publishState,
+    PUBLISH_STATE: PUBLISH_STATE,
+    markPublished: markPublished,
+    markDraft: markDraft,
     weekAvailability: weekAvailability,
     byId: byId,
     migrate: migrate,

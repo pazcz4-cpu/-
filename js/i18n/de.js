@@ -368,6 +368,18 @@
         autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
       },
 
+      publish: {
+        action: 'Plan veröffentlichen',
+        update: 'Änderungen veröffentlichen',
+        revert: 'Zurück zum Entwurf',
+        draft: 'Entwurf – Ihr Team sieht diesen Plan noch nicht',
+        published: 'Veröffentlicht am {date} um {time}',
+        changed: 'Seit der Veröffentlichung am {date} um {time} geändert',
+        publishedNow: 'Veröffentlicht. Ihr Team sieht den Plan',
+        revertedNow: 'Zurück zum Entwurf. Ihr Team sieht den Plan nicht',
+        confirmRevert: 'Diesen Plan zurück zum Entwurf setzen? Ihr Team sieht ihn erst bei der nächsten Veröffentlichung.'
+      },
+
       why: {
         button: 'Warum diese Person?',
         title: 'Warum {name}?',

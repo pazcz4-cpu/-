@@ -882,8 +882,9 @@
       });
     });
 
-    /* אחרון, כדי שהנעילה לפי ההגדרה עצמה לא תידרס */
+    /* אחרונים, כדי שהנעילה לפי המצב עצמו לא תידרס */
     renderDeadline();
+    renderPublish();
   }
 
   /* ========== רינדור כולל ========== */
@@ -1382,6 +1383,27 @@
     $('#copy-text').addEventListener('click', function () {
       copyText(scheduleAsText(), t('toast.copied'));
     });
+
+    /* הכלי המקומי אינו כולל את כפתורי הפרסום – אין לו עובדים
+       שמתחברים, ולכן אין למי לפרסם. */
+    if ($('#publish-week')) {
+      $('#publish-week').addEventListener('click', function () {
+        if (blocked()) return;
+        Store.markPublished(week());
+        persist('week');
+        render();
+        toast(t('publish.publishedNow'));
+      });
+
+      $('#unpublish-week').addEventListener('click', function () {
+        if (blocked()) return;
+        if (!window.confirm(t('publish.confirmRevert'))) return;
+        Store.markDraft(week());
+        persist('week');
+        render();
+        toast(t('publish.revertedNow'));
+      });
+    }
 
     $('#view-only-toggle').addEventListener('click', function () {
       viewOnly = !viewOnly;
@@ -2130,9 +2152,11 @@
   /* ========== סנכרון בין מכשירים ========== */
   var syncStatus = 'local';
 
-  function timeLabel(date) {
+  /* short – שעה ודקה בלבד, לטקסט שנקרא כמשפט ולא כחותמת */
+  function timeLabel(date, short) {
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
-    return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+    var text = pad(date.getHours()) + ':' + pad(date.getMinutes());
+    return short ? text : text + ':' + pad(date.getSeconds());
   }
 
   /* לאן הנתונים באמת הולכים. מצב ההדגמה משתמש בשרת מדומה שיושב
@@ -2186,6 +2210,42 @@
   function renderSyncState(status) {
     syncStatus = status || syncStatus;
     renderSaveState();
+  }
+
+  /* ========== טיוטה ופרסום ==========
+     בלי פרסום מפורש הסידור נשאר טיוטה, והעובדים אינם רואים אותו.
+     לכן הסטטוס נמצא ליד הכפתור ולא במסך אחר: השאלה "העובדים כבר
+     רואים את זה?" נשאלת בדיוק כאן. */
+  function renderPublish() {
+    var button = $('#publish-week');
+    var revert = $('#unpublish-week');
+    var label = $('#publish-state');
+    if (!button || !label) return;
+
+    if (!source.canPublish) {
+      [button, revert, label].forEach(function (node) {
+        if (node) node.classList.add('hidden');
+      });
+      return;
+    }
+
+    var current = week();
+    var mode = Store.publishState(current);
+    var at = current.publishedAt ? new Date(current.publishedAt) : null;
+    var when = at ? { date: Store.formatDate(at), time: timeLabel(at, true) } : {};
+
+    label.classList.remove('hidden');
+    label.className = 'publish-state ' + mode;
+    label.textContent = t('publish.' + mode, when);
+
+    button.classList.remove('hidden');
+    button.textContent = t(mode === Store.PUBLISH_STATE.CHANGED ? 'publish.update' : 'publish.action');
+    /* מפתח התרגום נקבע לפי המצב, ולכן החלפת שפה מצוירת מכאן */
+    button.removeAttribute('data-i18n');
+    button.disabled = viewOnly || mode === Store.PUBLISH_STATE.PUBLISHED;
+
+    revert.classList.toggle('hidden', mode === Store.PUBLISH_STATE.DRAFT);
+    revert.disabled = viewOnly;
   }
 
   function onSynced(date, fromRemote) {

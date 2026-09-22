@@ -33,6 +33,15 @@
       decideConstraint: function (weekKey, employeeId, dayIdx, decision) {
         return backend.decideConstraint(weekKey, employeeId, dayIdx, decision, '');
       },
+
+      /* פרסום קיים רק כשיש למי לפרסם. בכלי המקומי אין עובדים
+         שמתחברים, ולכן אין גם כפתור.
+
+         הפרסום עצמו נשמר כמו כל שינוי אחר בשבוע, בכתיבה אחת: שעת
+         הפרסום והחתימה שלו יושבות ב-JSON של השבוע, ואין דרך לעדכן
+         רק אותן בשרת בלי לשלוח את השבוע כולו. שתי כתיבות היו
+         משאירות חלון שבו השבוע מסומן כמפורסם בלי לדעת מה פורסם. */
+      canPublish: Model.can(role, 'schedule.publish'),
       onPlanBlocked: function () {
         var tab = document.querySelector('.tab[data-tab="billing"]');
         if (tab && !tab.classList.contains('hidden')) { tab.click(); }
@@ -70,6 +79,8 @@
             target.shabbatEnd = remote.shabbatEnd || '';
             target.note = remote.note || '';
             target.published = !!remote.published;
+            target.publishedAt = remote.publishedAt || null;
+            target.publishedSignature = remote.publishedSignature || '';
           }
           target._loaded = true;
           return target;
@@ -92,7 +103,8 @@
           return backend.saveWeek(weekKey, {
             constraints: week.constraints, assignments: week.assignments,
             manual: week.manual, holidays: week.holidays,
-            shabbatEnd: week.shabbatEnd, note: week.note, published: week.published
+            shabbatEnd: week.shabbatEnd, note: week.note, published: week.published,
+            publishedAt: week.publishedAt, publishedSignature: week.publishedSignature
           });
         }
         return Promise.resolve();

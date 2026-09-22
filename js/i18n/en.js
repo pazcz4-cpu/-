@@ -374,6 +374,18 @@
         autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
       },
 
+      publish: {
+        action: 'Publish schedule',
+        update: 'Publish updates',
+        revert: 'Back to draft',
+        draft: 'Draft – your staff cannot see this schedule yet',
+        published: 'Published on {date} at {time}',
+        changed: 'Changed since it was published on {date} at {time}',
+        publishedNow: 'Published. Your staff can see the schedule',
+        revertedNow: 'Back to draft. Your staff cannot see the schedule',
+        confirmRevert: 'Move this schedule back to draft? Your staff will not see it until you publish again.'
+      },
+
       why: {
         button: 'Why this person?',
         title: 'Why {name}?',

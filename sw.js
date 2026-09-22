@@ -1,6 +1,9 @@
 /* Service Worker: עבודה גם ללא קליטה, והצגת התראות.
    אסטרטגיה: קודם רשת כדי שעדכונים יגיעו מיד, ובנפילה – מהמטמון. */
-var CACHE = 'shift-scheduler-v1';
+/* מספר הגרסה נועד להישרף: העלאתו מוחקת את המטמון הישן אצל כל
+   מי שכבר פתח את האפליקציה. מעלים אותו בכל פעם שקובץ שנשמר
+   במטמון משנה משמעות – למשל כשמחליפים פרויקט Supabase. */
+var CACHE = 'shift-scheduler-v2';
 
 self.addEventListener('install', function (event) {
   self.skipWaiting();
@@ -24,7 +27,12 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   var request = event.request;
   if (request.method !== 'GET') return;
-  if (new URL(request.url).origin !== self.location.origin) return;
+  var url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  /* קובץ ההגדרות אומר לאיזה שרת לפנות. עותק ישן שלו מפנה את
+     הלקוח לפרויקט שכבר הוחלף, והוא אינו עוזר גם ללא קליטה – אין
+     לאן לפנות ממילא. לכן הוא לעולם אינו נשמר. */
+  if (/\/config\.js$/.test(url.pathname)) return;
 
   event.respondWith(
     fetch(request).then(function (response) {

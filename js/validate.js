@@ -41,12 +41,20 @@
       branch: branchName(state, branchId),
       shift: shiftName(shiftId)
     });
-    /* "חסר אדם" ו"חסר מטבח" הן שתי בעיות שונות, ורק השנייה
-       אומרת למנהל את מי להתקשר. */
-    var branch = Store.byId(state.branches, branchId);
-    var roleId = branch ? Store.slotRole(state, branch, dayIdx, shiftId) : '';
-    if (!roleId) return label;
-    return label + ' · ' + Store.roleName(state, roleId);
+    return label;
+  }
+
+  /* "חסר אדם" ו"חסר מטבח" הן שתי בעיות שונות, ורק השנייה אומרת
+     למנהל את מי להתקשר. missing הוא רשימת המקומות שנותרו, וכל
+     מקום הוא תפקיד; מקום פתוח אינו מוסיף כלום לשם. */
+  function missingRolesLabel(state, missing) {
+    var names = [];
+    (missing || []).forEach(function (roleId) {
+      if (!roleId) return;
+      var name = Store.roleName(state, roleId);
+      if (name && names.indexOf(name) === -1) names.push(name);
+    });
+    return names.length ? ' · ' + names.join(', ') : '';
   }
 
   /* למה המשמרת הזו לא אוישה? מפרט את הסיבה לכל עובד רלוונטי. */
@@ -117,6 +125,7 @@
   var GROUP_OF = {
     understaffed: GROUPS.STAFFING,
     'duplicate-shift': GROUPS.STAFFING,
+    'role-mismatch': GROUPS.STAFFING,
     'inactive-slot': GROUPS.STAFFING,
 
     'duplicate-employee-slot': GROUPS.VIOLATIONS,
@@ -154,11 +163,29 @@
       var demand = demandMap[key];
       var assigned = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
       var label = slotLabel(state, demand.dayIdx, demand.branchId, demand.shiftId);
+      /* אילו מקומות במשמרת נשארו בלי אדם מתאים. משמרת יכולה
+         להיות מלאה במספר אנשים ועדיין חסרה מטבח. */
+      var missing = Store.openSeats(state, demand.roleNeeds, assigned);
+      var seat = { dayIdx: demand.dayIdx, branchId: demand.branchId,
+        shiftId: demand.shiftId, need: demand.need, role: missing[0] || '' };
 
       if (assigned.length < demand.need) {
         issues.push(issue('warning', 'understaffed',
-          t('alerts.understaffed', { label: label, assigned: assigned.length, need: demand.need }) +
-          ' ' + explainShortage(state, week, demand),
+          t('alerts.understaffed', {
+            label: label + missingRolesLabel(state, missing),
+            assigned: assigned.length, need: demand.need
+          }) + ' ' + explainShortage(state, week, seat),
+          { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
+      } else if (missing.length) {
+        /* מספר האנשים נכון, אבל לא התפקידים: שני מלצרים במשמרת
+           שביקשה מלצר ומטבח. בלי זה המנהל רואה משמרת "מלאה"
+           ומגלה את זה רק כשאין מי שיפתח את המטבח. */
+        issues.push(issue('warning', 'role-mismatch',
+          t('alerts.roleMismatch', {
+            label: label,
+            roles: missing.map(function (id) { return Store.roleName(state, id); })
+              .filter(Boolean).join(', ')
+          }) + ' ' + explainShortage(state, week, seat),
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 

@@ -365,14 +365,143 @@
     return role && typeof role.color === 'number' ? role.color : 0;
   }
 
-  /* התפקיד שהמשמרת הזו בסניף הזה מחפשת. ריק = כל אחד.
-     תפקיד שנמחק מההגדרות נחשב כאילו אינו – אחרת משמרת הייתה
-     נשארת לנצח בלי מועמדים, בלי שאיש יבין למה. */
-  function slotRole(state, branch, dayIdx, shiftId) {
+  /* תמהיל התפקידים של המשמרת: כמה אנשים נדרשים בכל תפקיד.
+
+     משמרת בוקר בבית קפה אינה "שלושה אנשים" אלא "מטבח אחד, מלצר
+     אחד, וברמן אחד". לכן המשמרת מחזיקה מפה של תפקיד → כמות,
+     וכמות האנשים הכוללת (need) היא הסכום שלה ועוד מקומות פתוחים
+     שכל אחד מתאים להם.
+
+     מחזיר רשימת שורות: [{ role: 'r1', count: 2 }, { role: '', count: 1 }].
+     השורה הריקה בסוף היא המקומות הפתוחים. תפקיד שנמחק מההגדרות
+     נחשב כאילו אינו – אחרת משמרת הייתה נשארת לנצח בלי מועמדים,
+     בלי שאיש יבין למה. */
+  function slotRoleNeeds(state, branch, dayIdx, shiftId) {
     var config = slotConfig(branch, dayIdx, shiftId);
-    var roleId = config && config.role ? String(config.role) : '';
-    if (!roleId) return '';
-    return roleById(state, roleId) ? roleId : '';
+    if (!config) return [];
+    return roleNeedsOf(state, config, Number(config.need) || 0);
+  }
+
+  /* אותו חישוב, ישירות על הגדרת המשמרת. נפרד כדי שגם מסכים
+     שמחזיקים config ביד יוכלו לשאול בלי לחפש את הסניף. */
+  function roleNeedsOf(state, config, need) {
+    var lines = [];
+    var used = 0;
+    var map = (config && config.roles) || {};
+
+    /* הסדר הוא סדר ההגדרות, כדי שהתצוגה תהיה יציבה בין מסכים */
+    roles(state).forEach(function (role) {
+      var count = Math.max(0, Math.floor(Number(map[role.id]) || 0));
+      if (!count) return;
+      /* לא מבקשים יותר אנשים ממה שהמשמרת פתחה */
+      count = Math.min(count, Math.max(0, need - used));
+      if (!count) return;
+      used += count;
+      lines.push({ role: role.id, count: count });
+    });
+
+    var open = Math.max(0, need - used);
+    if (open) lines.push({ role: '', count: open });
+    return lines;
+  }
+
+  /* כמה אנשים מבוקשים בתפקיד מסוים במשמרת הזו */
+  function slotRoleCount(state, config, roleId) {
+    var map = (config && config.roles) || {};
+    return Math.max(0, Math.floor(Number(map[roleId]) || 0));
+  }
+
+  /* סכום כל התפקידים שסומנו במשמרת. מתעלם מתפקידים שנמחקו. */
+  function slotRoleTotal(state, config) {
+    var map = (config && config.roles) || {};
+    var sum = 0;
+    roles(state).forEach(function (role) {
+      sum += Math.max(0, Math.floor(Number(map[role.id]) || 0));
+    });
+    return sum;
+  }
+
+  /* כתיבת כמות לתפקיד במשמרת.
+
+     סך האנשים במשמרת זז יחד עם השינוי, כך שמספר המקומות הפתוחים
+     נשאר כפי שהיה: מי שביקש "עוד מלצר" ביקש עוד אדם, ולא לקחת
+     אותו ממישהו אחר. הפונקציה מחזירה את הכמות שנרשמה בפועל. */
+  function setSlotRoleCount(state, branch, dayIdx, shiftId, roleId, count) {
+    var day = (branch.schedule || {})[dayIdx];
+    var config = day && day[shiftId];
+    if (!config || !roleById(state, roleId)) return 0;
+    if (!config.roles) config.roles = {};
+
+    var before = slotRoleCount(state, config, roleId);
+    var next = Math.max(0, Math.floor(Number(count) || 0));
+    var need = Math.max(0, Number(config.need) || 0);
+
+    config.need = Math.max(0, need + (next - before));
+    if (next) config.roles[roleId] = next;
+    else delete config.roles[roleId];
+    /* מפה ריקה היא רעש בייצוא ובשמירה */
+    if (!Object.keys(config.roles).length) delete config.roles;
+    return next;
+  }
+
+  /* אילו מקומות במשמרת עוד פתוחים, אחרי שחלק מהאנשים כבר שובצו
+     בה ידנית.
+
+     זו אינה ספירה פשוטה. אם המשמרת מבקשת מטבח אחד ומלצר אחד,
+     והמנהל שיבץ ידנית מישהו שמסומן בשני התפקידים, השאלה "איזה
+     מקום הוא תפס" קובעת אם נשאר לחפש מטבח או מלצר. תשובה חמדנית
+     תיתן לו את המקום הראשון שמתאים, ולפעמים תשאיר מקום שאי אפשר
+     לאייש למרות שיש פתרון.
+
+     לכן זו התאמה מקסימלית בגרף דו-צדדי (אלגוריתם קון): כל עובד
+     ששובץ נבדק מול כל המקומות, ומסלול משפר מזיז שיבוצים קודמים
+     כדי לפנות מקום. התוצאה היא המספר הקטן ביותר של מקומות
+     שנותרו – כלומר לא נמציא חוסר שאינו קיים.
+
+     המקומות מסודרים כך שתפקידים ספציפיים קודמים למקום הפתוח,
+     ולכן מי שמתאים לשניהם ייקח קודם את הספציפי. */
+  function openSeats(state, roleNeeds, assignedIds) {
+    var seats = [];
+    (roleNeeds || []).forEach(function (line) {
+      for (var i = 0; i < line.count; i++) seats.push(line.role);
+    });
+    if (!seats.length || !assignedIds || !assignedIds.length) return seats;
+
+    var people = [];
+    assignedIds.forEach(function (empId) {
+      var emp = byId(state.employees || [], empId);
+      if (emp) people.push(emp);
+    });
+    if (!people.length) return seats;
+
+    var seatOwner = seats.map(function () { return -1; });
+
+    function seat(personIdx, visited) {
+      for (var i = 0; i < seats.length; i++) {
+        if (visited[i]) continue;
+        if (!employeeFitsRole(state, people[personIdx], seats[i])) continue;
+        visited[i] = true;
+        if (seatOwner[i] === -1 || seat(seatOwner[i], visited)) {
+          seatOwner[i] = personIdx;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    for (var p = 0; p < people.length; p++) { seat(p, seats.map(function () { return false; })); }
+
+    var left = [];
+    seats.forEach(function (role, i) { if (seatOwner[i] === -1) left.push(role); });
+    return left;
+  }
+
+  /* האם העובד מתאים לפחות לאחת משורות התפקיד של המשמרת */
+  function employeeFitsSlot(state, emp, roleNeeds) {
+    if (!roleNeeds || !roleNeeds.length) return true;
+    return roleNeeds.some(function (line) {
+      return employeeFitsRole(state, emp, line.role);
+    });
   }
 
   function employeeRoles(emp) {
@@ -397,7 +526,11 @@
   }
 
   /* הסרת תפקיד מההגדרות: מנקה אותו גם מכרטיסי העובדים וגם
-     מלוחות הסניפים, כדי שלא יישארו הפניות למשהו שאינו קיים. */
+     מלוחות הסניפים, כדי שלא יישארו הפניות למשהו שאינו קיים.
+
+     מספר האנשים במשמרת אינו משתנה. מנהל שמוחק את "מלצר" לא אמר
+     שהוא צריך פחות אנשים במשמרת, אלא שהתפקיד הזה כבר לא קיים –
+     ולכן המקומות שהיו שמורים לו נפתחים לכולם. */
   function removeRole(state, roleId) {
     var removed = { employees: 0, slots: 0 };
     state.settings.roles = roles(state).filter(function (role) {
@@ -413,10 +546,11 @@
       Object.keys(branch.schedule || {}).forEach(function (day) {
         var dayMap = branch.schedule[day] || {};
         Object.keys(dayMap).forEach(function (shiftId) {
-          if (dayMap[shiftId] && dayMap[shiftId].role === roleId) {
-            delete dayMap[shiftId].role;
-            removed.slots++;
-          }
+          var config = dayMap[shiftId];
+          if (!config || !config.roles || !config.roles[roleId]) return;
+          delete config.roles[roleId];
+          if (!Object.keys(config.roles).length) delete config.roles;
+          removed.slots++;
         });
       });
     });
@@ -435,8 +569,8 @@
           if (need > 0) {
             demands.push({
               dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need,
-              /* התפקיד שהמשמרת מחפשת. ריק = כל אחד. */
-              role: slotRole(state, branch, day, shiftId)
+              /* תמהיל התפקידים: כמה אנשים בכל תפקיד, ומה נשאר פתוח */
+              roleNeeds: slotRoleNeeds(state, branch, day, shiftId)
             });
           }
         });
@@ -459,7 +593,7 @@
         if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
-        if (!employeeFitsRole(state, emp, slotRole(state, branch, dayIdx, shiftId))) return false;
+        if (!employeeFitsSlot(state, emp, slotRoleNeeds(state, branch, dayIdx, shiftId))) return false;
         return true;
       });
     });
@@ -765,6 +899,31 @@
       if (!branch.schedule) { branch.schedule = legacySchedule(branch, legacyDayShifts); }
       normalizeSchedule(branch.schedule);
       delete branch.need;
+      Object.keys(branch.schedule).forEach(function (day) {
+        var dayMap = branch.schedule[day] || {};
+        Object.keys(dayMap).forEach(function (shiftId) {
+          var config = dayMap[shiftId];
+          if (!config) return;
+          /* פעם המשמרת החזיקה תפקיד אחד, ומשמעותו הייתה שכל
+             האנשים בה חייבים להיות בתפקיד הזה. אותה כוונה בדיוק
+             נכתבת היום כתמהיל. */
+          if (config.role) {
+            if (!config.roles) config.roles = {};
+            if (!config.roles[config.role]) {
+              config.roles[config.role] = Math.max(1, Number(config.need) || 1);
+            }
+            delete config.role;
+          }
+          if (!config.roles) return;
+          /* תפקיד שנמחק מההגדרות אינו נשאר תלוי על המשמרת */
+          Object.keys(config.roles).forEach(function (roleId) {
+            var count = Math.max(0, Math.floor(Number(config.roles[roleId]) || 0));
+            if (!knownRoles[roleId] || !count) delete config.roles[roleId];
+            else config.roles[roleId] = count;
+          });
+          if (!Object.keys(config.roles).length) delete config.roles;
+        });
+      });
     });
     Object.keys(state.weeks).forEach(function (key) {
       var weekData = state.weeks[key];
@@ -1029,7 +1188,13 @@
     roleById: roleById,
     roleName: roleName,
     roleColor: roleColor,
-    slotRole: slotRole,
+    slotRoleNeeds: slotRoleNeeds,
+    roleNeedsOf: roleNeedsOf,
+    slotRoleCount: slotRoleCount,
+    slotRoleTotal: slotRoleTotal,
+    setSlotRoleCount: setSlotRoleCount,
+    employeeFitsSlot: employeeFitsSlot,
+    openSeats: openSeats,
     employeeRoles: employeeRoles,
     employeeFitsRole: employeeFitsRole,
     employeesForRole: employeesForRole,

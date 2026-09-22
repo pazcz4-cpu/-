@@ -300,11 +300,12 @@
           advice: { one: 'Una sugerencia', other: '{count} sugerencias' },
           adviceNone: 'Sin sugerencias'
         },
-        slotLabel: '{day} · {branch} · turno de {shift}',
+        slotLabel: 'Funciones de este turno',
         deletedEmployee: '(persona eliminada: {id})',
         deletedBranch: '(sucursal eliminada)',
         allGood: 'El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
         duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
+        roleMismatch: 'Falta una función: {label} — el número de personas está completo, pero nadie cubre {roles}.',
         duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
         doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',
         sameBranch: ' en la misma sucursal', differentBranches: ' en sucursales distintas',
@@ -463,7 +464,7 @@
       preview: {
         open: 'Vista de empleado',
         title: '¿Qué pantalla quieres ver?',
-        hint: 'Solo lectura. Nada de lo que hagas aquí se guarda como esa persona.',
+        hint: 'Caja, reposición, cocina, sala — lo que tu negocio necesite. Una persona puede tener varias funciones, y un turno puede pedir varias funciones a la vez.',
         banner: 'Estás viendo la pantalla de {name}',
         exit: 'Volver a gestión',
         noEmployees: 'Todavía no hay personal activo.'
@@ -575,7 +576,7 @@
 
       positions: {
         title: 'Funciones',
-        hint: 'Cajero, reponedor, cocina, camarero — lo que necesite tu negocio. Un empleado puede tener varias, y un turno puede pedir una.',
+        hint: 'Caja, reposición, cocina, sala — lo que tu negocio necesite. Una persona puede tener varias funciones, y un turno puede pedir varias funciones a la vez.',
         add: 'Añadir función',
         newName: 'Nueva función',
         name: 'Nombre de la función',
@@ -588,9 +589,12 @@
         employeeLabel: 'Funciones',
         employeeHint: 'Sin marcar: sirve para todos los turnos.',
         employeeAll: 'Todas las funciones',
-        slotLabel: 'Función requerida',
-        slotAny: 'Cualquiera',
-        slotHint: 'Este turno solo considerará a quien tenga esa función.',
+        slotLabel: 'Funciones de este turno',
+        slotAdd: 'Añadir una función al turno',
+        slotRemove: 'Quitar la función del turno',
+        slotOpen: 'Abierto a cualquiera: {count}',
+        slotBelowMix: 'Las funciones de este turno suman {count} personas. Para bajar el número, quita antes una función.',
+        slotHint: 'Cada función busca a su propia persona, así que un turno se cubre con varias personas en varias funciones.',
         count: '{count} funciones',
         fits: '{count} aptos'
       },
@@ -853,7 +857,7 @@
         sampleName: 'Ana García',
         open: 'Importar una lista',
         title: 'Importar personal',
-        hint: 'Selecciona tu lista en Excel, cópiala y pégala aquí, o elige un archivo CSV. La primera columna es el nombre. Después, si los tienes: ubicaciones, turnos y un límite semanal. Una ubicación que no exista se creará sola. Puedes añadir una columna de correo: evita una ficha duplicada de la misma persona.',
+        hint: 'Caja, reposición, cocina, sala — lo que tu negocio necesite. Una persona puede tener varias funciones, y un turno puede pedir varias funciones a la vez.',
         placeholder: 'Dana Cohen\tSede central\tMañana;Tarde\t5',
         file: 'Elegir un archivo CSV',
         sample: 'Poner un ejemplo',

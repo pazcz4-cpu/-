@@ -1154,15 +1154,18 @@ test('עובד יכול להחזיק כמה תפקידים', function () {
   assert(Store.employeeFitsRole(state, both, 'waiter'), 'נפסל ממלצרות');
 });
 
-test('הדרישה יודעת איזה תפקיד היא מחפשת', function () {
+test('הדרישה יודעת אילו תפקידים היא מחפשת', function () {
   var state = withRoles();
   var week = Store.emptyWeek();
   var demands = Store.weekDemands(state, week).filter(function (d) { return d.dayIdx === 0; });
   var byShift = {};
   demands.forEach(function (d) { byShift[d.shiftId] = d; });
-  assertEqual(byShift.morning.role, 'kitchen', 'משמרת הבוקר');
-  assertEqual(byShift.middle.role, 'waiter', 'משמרת האמצע');
-  assertEqual(byShift.evening.role, '', 'משמרת הערב אינה מחפשת תפקיד');
+  var mix = function (demand) {
+    return demand.roleNeeds.map(function (line) { return line.role + ':' + line.count; }).join(',');
+  };
+  assertEqual(mix(byShift.morning), 'kitchen:1', 'משמרת הבוקר');
+  assertEqual(mix(byShift.middle), 'waiter:2', 'משמרת האמצע');
+  assertEqual(mix(byShift.evening), ':1', 'משמרת הערב פתוחה לכל אחד');
 });
 
 /* הדוגמה של בית הקפה: שתי משמרות באותו בוקר, שעות שונות,
@@ -1192,7 +1195,9 @@ test('המנוע משבץ לפי תפקיד', function () {
 test('משמרת שמחפשת תפקיד שאיש אינו מחזיק נשארת ריקה', function () {
   var state = withRoles();
   state.settings.roles.push({ id: 'barista', name: 'ברמן', color: 2 });
-  state.branches[0].schedule[1] = { morning: { need: 1, from: '08:00', to: '16:00', role: 'barista' } };
+  state.branches[0].schedule[1] = {
+    morning: { need: 1, from: '08:00', to: '16:00', roles: { barista: 1 } }
+  };
   /* מבטלים את "מתאים להכל" של העובד הפתוח, כדי שבאמת לא יהיה מי */
   Store.byId(state.employees, 'e4').roles = ['kitchen'];
   var week = Store.emptyWeek();
@@ -1218,7 +1223,10 @@ test('מחיקת תפקיד מנקה אותו מהעובדים ומהמשמרו�
   assertEqual(removed.slots, 1, 'מספר המשמרות שנוקו');
   assertEqual(Store.roles(state).length, 1, 'התפקיד לא נמחק מההגדרות');
   assertEqual(Store.byId(state.employees, 'e1').roles.length, 0, 'נשאר על כרטיס העובד');
-  assert(!state.branches[0].schedule[0].morning.role, 'נשאר על המשמרת');
+  var morningCfg = state.branches[0].schedule[0].morning;
+  assert(!(morningCfg.roles && morningCfg.roles.kitchen), 'נשאר על המשמרת');
+  /* מספר האנשים אינו יורד: התפקיד נעלם, הצורך באדם לא */
+  assertEqual(morningCfg.need, 1, 'מחיקת תפקיד הורידה אנשים מהמשמרת');
 });
 
 /* תפקיד שנמחק ידנית מההגדרות אינו משאיר משמרת בלי מועמדים */
@@ -1226,7 +1234,8 @@ test('הפניה לתפקיד שאינו קיים נחשבת כאילו אין �
   var state = withRoles();
   state.settings.roles = [];
   state = Store.migrate(state);
-  assertEqual(Store.slotRole(state, state.branches[0], 0, 'morning'), '',
+  var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
+  assertEqual(lines.filter(function (line) { return line.role; }).length, 0,
     'משמרת נשארה קשורה לתפקיד שנמחק');
   state.employees.forEach(function (emp) {
     assertEqual(emp.roles.length, 0, emp.name + ': תפקיד שנמחק נשאר על הכרטיס');
@@ -1244,12 +1253,152 @@ test('עסק בלי תפקידים מתנהג בדיוק כמו קודם', funct
   var demands = Store.weekDemands(state, week);
   assert(demands.length > 0, 'אין דרישות');
   demands.forEach(function (demand) {
-    assertEqual(demand.role, '', 'דרישה קיבלה תפקיד בלי שביקשנו');
+    assertEqual(demand.roleNeeds.length, 1, 'דרישה פוצלה בלי שיש תפקידים');
+    assertEqual(demand.roleNeeds[0].role, '', 'דרישה קיבלה תפקיד בלי שביקשנו');
+    assertEqual(demand.roleNeeds[0].count, demand.need, 'כל האנשים פתוחים לכל אחד');
   });
   var filled = demands.filter(function (demand) {
     return Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId).length > 0;
   });
   assert(filled.length > demands.length / 2, 'השיבוץ נפגע');
+});
+
+/* ===== תמהיל תפקידים: משמרת אחת, כמה אנשים, כמה תפקידים =====
+
+   זה המקרה האמיתי של בית קפה: משמרת בוקר אחת שצריכה מטבח, מלצר
+   וברמן – שלושה אנשים בשלושה תפקידים באותה משמרת, ולא שלוש
+   משמרות נפרדות. */
+function withMix() {
+  var state = Store.blankState();
+  state.settings.roles = [
+    { id: 'kitchen', name: 'מטבח', color: 0 },
+    { id: 'waiter', name: 'מלצר', color: 1 },
+    { id: 'barista', name: 'ברמן', color: 2 }
+  ];
+  state.branches = [{
+    id: 'br1', name: 'סניף מרכז', active: true,
+    schedule: {
+      0: { morning: { need: 3, from: '08:00', to: '16:00',
+        roles: { kitchen: 1, waiter: 1, barista: 1 } } }
+    }
+  }];
+  state.employees = [
+    { id: 'c1', name: 'טבח', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['kitchen'] },
+    { id: 'w1', name: 'מלצר', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['waiter'] },
+    { id: 'b1', name: 'ברמן', active: true, branches: [], shifts: Data.ALL_SHIFT_IDS.slice(),
+      maxShifts: 6, roles: ['barista'] }
+  ];
+  return Store.migrate(state);
+}
+
+test('משמרת אחת מחזיקה כמה תפקידים', function () {
+  var state = withMix();
+  var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
+  assertEqual(lines.length, 3, 'מספר שורות התפקיד');
+  assertEqual(lines.map(function (l) { return l.role; }).join(','),
+    'kitchen,waiter,barista', 'סדר התפקידים');
+  lines.forEach(function (line) { assertEqual(line.count, 1, line.role); });
+});
+
+test('המנוע ממלא משמרת אחת בשלושה תפקידים שונים', function () {
+  var state = withMix();
+  var week = Store.emptyWeek();
+  build(state, week);
+  var assigned = Store.getAssigned(week, 0, 'br1', 'morning');
+  assertEqual(assigned.length, 3, 'מספר המשובצים במשמרת');
+  ['c1', 'w1', 'b1'].forEach(function (id) {
+    assert(assigned.indexOf(id) !== -1, id + ' לא שובץ למשמרת');
+  });
+});
+
+test('אותו תפקיד יכול לבקש כמה אנשים', function () {
+  var state = withMix();
+  state.branches[0].schedule[0].morning = {
+    need: 2, from: '08:00', to: '16:00', roles: { waiter: 2 }
+  };
+  state.employees.push({ id: 'w2', name: 'מלצר ב', active: true, branches: [],
+    shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, roles: ['waiter'] });
+  var week = Store.emptyWeek();
+  build(state, week);
+  var assigned = Store.getAssigned(week, 0, 'br1', 'morning');
+  assertEqual(assigned.length, 2, 'שני מלצרים');
+  assigned.forEach(function (id) {
+    assertEqual(Store.byId(state.employees, id).roles.join(','), 'waiter', id);
+  });
+});
+
+test('מקום שנותר מעבר לתפקידים פתוח לכל אחד', function () {
+  var state = withMix();
+  /* ארבעה אנשים, שלושה מהם בתפקיד – הרביעי פתוח */
+  state.branches[0].schedule[0].morning.need = 4;
+  var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
+  assertEqual(lines.length, 4, 'מספר השורות');
+  assertEqual(lines[3].role, '', 'השורה האחרונה אינה פתוחה');
+  assertEqual(lines[3].count, 1, 'מספר המקומות הפתוחים');
+});
+
+test('משמרת מלאה באנשים אך חסרה תפקיד מסומנת כבעיה', function () {
+  var state = withMix();
+  var week = Store.emptyWeek();
+  /* שלושה אנשים במשמרת שמבקשת שלושה – אבל שני מלצרים ואף ברמן */
+  state.employees.push({ id: 'w2', name: 'מלצר ב', active: true, branches: [],
+    shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, roles: ['waiter'] });
+  Store.setAssigned(week, 0, 'br1', 'morning', ['c1', 'w1', 'w2']);
+  var report = Validate.validate(state, week);
+  var gap = report.issues.filter(function (issue) { return issue.type === 'role-mismatch'; });
+  assert(gap.length === 1, 'לא דווח על תפקיד חסר: ' + report.issues.map(function (i) { return i.type; }));
+  assert(gap[0].text.indexOf('ברמן') !== -1, 'ההתראה אינה נוקבת בתפקיד: ' + gap[0].text);
+  /* ומספר האנשים תקין, ולכן אין גם "חוסר באיוש" */
+  assertEqual(report.issues.filter(function (i) { return i.type === 'understaffed'; }).length, 0,
+    'דווח חוסר באיוש למרות שהמשמרת מלאה');
+});
+
+/* מי שמחזיק שני תפקידים יכול לשבת בכל אחד מהם. חלוקה חמדנית
+   הייתה נותנת לו את המקום הראשון ומשאירה מקום שאי אפשר לאייש. */
+test('שיבוץ ידני משובץ למקום שמשאיר פתרון לשאר', function () {
+  var state = withMix();
+  state.employees.push({ id: 'x1', name: 'גמיש', active: true, branches: [],
+    shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, roles: ['kitchen', 'barista'] });
+  var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
+  /* הגמיש והטבח שובצו: הגמיש חייב לתפוס את הברמן, אחרת הטבח
+     נשאר בלי מקום והמנוע "יגלה" חוסר שאינו קיים */
+  var left = Store.openSeats(state, lines, ['x1', 'c1']);
+  assertEqual(left.join(','), 'waiter', 'החלוקה השאירה את המקום הלא נכון: ' + left.join(','));
+});
+
+test('המרה: תפקיד יחיד ישן הופך לתמהיל', function () {
+  var state = withMix();
+  /* כך זה נשמר עד היום: תפקיד אחד, וכולם במשמרת חייבים להיות בו */
+  state.branches[0].schedule[0].morning = {
+    need: 2, from: '08:00', to: '16:00', role: 'waiter'
+  };
+  state = Store.migrate(state);
+  var config = state.branches[0].schedule[0].morning;
+  assert(!config.role, 'השדה הישן נשאר');
+  assertEqual(config.roles.waiter, 2, 'הכמות לא הועברה');
+  assertEqual(config.need, 2, 'מספר האנשים השתנה בהמרה');
+});
+
+test('הוספת תפקיד למשמרת מוסיפה גם אדם', function () {
+  var state = withMix();
+  var branch = state.branches[0];
+  branch.schedule[0].morning = { need: 1, from: '08:00', to: '16:00' };
+  Store.setSlotRoleCount(state, branch, 0, 'morning', 'kitchen', 1);
+  assertEqual(branch.schedule[0].morning.need, 2, 'סך האנשים לא זז');
+  Store.setSlotRoleCount(state, branch, 0, 'morning', 'kitchen', 0);
+  assertEqual(branch.schedule[0].morning.need, 1, 'הסרה לא החזירה את המספר');
+  assert(!branch.schedule[0].morning.roles, 'נשארה מפת תפקידים ריקה');
+});
+
+test('תמהיל אינו חורג ממספר האנשים במשמרת', function () {
+  var state = withMix();
+  /* שלושה תפקידים, אבל המשמרת פתחה שני מקומות בלבד */
+  state.branches[0].schedule[0].morning.need = 2;
+  var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
+  var total = lines.reduce(function (sum, line) { return sum + line.count; }, 0);
+  assertEqual(total, 2, 'הדרישה ביקשה יותר אנשים ממה שנפתח');
 });
 
 console.log('\n== אייקונים ==');

@@ -129,6 +129,19 @@
     return ctx;
   }
 
+  /* מקום אחד בתוך משמרת: אותה משמרת בדיוק, עם התפקיד שהמקום
+     הזה מחפש. need נשאר סך האנשים במשמרת, כי פאזות התיקון
+     משתמשות בו כדי לדעת כמה כבר יושבים שם. */
+  function seatDemand(demand, role) {
+    return {
+      dayIdx: demand.dayIdx,
+      branchId: demand.branchId,
+      shiftId: demand.shiftId,
+      need: demand.need,
+      role: role || ''
+    };
+  }
+
   function applyAssignment(ctx, empId, demand) {
     ctx.counts[empId] += 1;
     ctx.byDay[empId][demand.dayIdx].push({ branchId: demand.branchId, shiftId: demand.shiftId });
@@ -327,12 +340,18 @@
       });
     }
 
-    // פירוק לדרישות בודדות (סלוט אחד = עובד אחד)
+    /* פירוק לדרישות בודדות: מקום אחד = עובד אחד.
+
+       לכל מקום יש התפקיד שלו, ולכן משמרת אחת יכולה לבקש מטבח
+       אחד ומלצר אחד ולהתמלא בשני אנשים שונים. מי שכבר שובץ ידנית
+       תופס מקום, ומה שנשאר הוא מה שהמנוע מחפש. */
     var slots = [];
     demands.forEach(function (demand) {
       var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
-      var already = (ctx.assignments[key] || []).length;
-      for (var i = already; i < demand.need; i++) { slots.push(demand); }
+      var taken = ctx.assignments[key] || [];
+      Store.openSeats(state, demand.roleNeeds, taken).forEach(function (role) {
+        slots.push(seatDemand(demand, role));
+      });
     });
 
     /* בכל צעד נבחרת המשמרת עם הכי מעט מועמדים אפשריים כרגע.

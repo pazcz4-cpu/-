@@ -58,15 +58,22 @@
 
     facts.push({ code: 'qualified' });
 
-    /* התפקיד, כשהמשמרת מחפשת אחד. זו העובדה שמנהל שואל עליה
-       ראשונה כשהוא רואה מלצר בעמדת מטבח. */
-    var branchForRole = Store.byId(state.branches, slot.branchId);
-    var wantedRole = branchForRole
-      ? Store.slotRole(state, branchForRole, slot.dayIdx, slot.shiftId) : '';
-    if (wantedRole) {
-      facts.push(Store.employeeRoles(emp).length
-        ? { code: 'hasRole', role: Store.roleName(state, wantedRole) }
-        : { code: 'anyRole', role: Store.roleName(state, wantedRole) });
+    /* התפקיד, כשהמשמרת מחפשת תפקידים. זו העובדה שמנהל שואל עליה
+       ראשונה כשהוא רואה מלצר בעמדת מטבח. משמרת יכולה לבקש כמה
+       תפקידים, ולכן נאמר איזה מהם העובד ממלא. */
+    var wanted = slotRoles(state, slot);
+    if (wanted.length) {
+      var mine = wanted.filter(function (roleId) {
+        return roleId && Store.employeeRoles(emp).indexOf(roleId) !== -1;
+      });
+      var names = (mine.length ? mine : wanted.filter(Boolean))
+        .map(function (roleId) { return Store.roleName(state, roleId); })
+        .filter(Boolean).join(', ');
+      if (names) {
+        facts.push(mine.length
+          ? { code: 'hasRole', role: names }
+          : { code: 'anyRole', role: names });
+      }
     }
 
     if (emp.branches && emp.branches.length) {
@@ -102,17 +109,31 @@
   }
 
   /* למה עובד אחר *לא* יכול – אותם תנאים, בסדר שבו המנוע בודק */
+  /* התפקידים שהמשמרת הזו מחפשת, בלי המקומות הפתוחים */
+  function slotRoles(state, slot) {
+    var branch = Store.byId(state.branches, slot.branchId);
+    if (!branch) return [];
+    return Store.slotRoleNeeds(state, branch, slot.dayIdx, slot.shiftId)
+      .map(function (line) { return line.role; })
+      .filter(Boolean);
+  }
+
   function blockedReason(state, week, ctx, emp, slot) {
     if (!emp.active) return { code: 'inactive' };
     if (emp.shifts.indexOf(slot.shiftId) === -1) return { code: 'notQualified' };
     if (!Scheduler.employeeAllowedInBranch(emp, slot.branchId)) return { code: 'otherBranch' };
     /* התפקיד לפני האילוצים: הוא תנאי יסוד, והוא גם הסיבה
-       שהכי קל לתקן – לסמן את העובד. */
-    var branchForRole = Store.byId(state.branches, slot.branchId);
-    var wantedRole = branchForRole
-      ? Store.slotRole(state, branchForRole, slot.dayIdx, slot.shiftId) : '';
-    if (wantedRole && !Store.employeeFitsRole(state, emp, wantedRole)) {
-      return { code: 'wrongRole', role: Store.roleName(state, wantedRole) };
+       שהכי קל לתקן – לסמן את העובד. נחסם רק מי שאינו מתאים לאף
+       אחד מהמקומות במשמרת. */
+    var blockedRoles = slotRoles(state, slot);
+    if (blockedRoles.length && !blockedRoles.some(function (roleId) {
+      return Store.employeeFitsRole(state, emp, roleId);
+    })) {
+      return {
+        code: 'wrongRole',
+        role: blockedRoles.map(function (roleId) { return Store.roleName(state, roleId); })
+          .filter(Boolean).join(', ')
+      };
     }
 
     var constraint = approvedConstraint(ctx, emp.id, slot.dayIdx);

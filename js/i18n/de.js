@@ -300,11 +300,12 @@
           advice: { one: 'Ein Hinweis', other: '{count} Hinweise' },
           adviceNone: 'Keine Hinweise'
         },
-        slotLabel: '{day} · {branch} · {shift}schicht',
+        slotLabel: 'Rollen in dieser Schicht',
         deletedEmployee: '(gelöschte Person: {id})',
         deletedBranch: '(gelöschte Filiale)',
         allGood: 'Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
         duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
+        roleMismatch: 'Rolle fehlt: {label} — die Personenzahl stimmt, aber {roles} ist nicht besetzt.',
         duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
         doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',
         sameBranch: ' in derselben Filiale', differentBranches: ' in verschiedenen Filialen',
@@ -463,7 +464,7 @@
       preview: {
         open: 'Mitarbeiteransicht',
         title: 'Wessen Bildschirm möchten Sie sehen?',
-        hint: 'Nur ansehen. Nichts davon wird in seinem Namen gespeichert.',
+        hint: 'Kasse, Regal, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, und eine Schicht kann mehrere Rollen zugleich verlangen.',
         banner: 'Sie sehen den Bildschirm von {name}',
         exit: 'Zurück zur Verwaltung',
         noEmployees: 'Noch keine aktiven Mitarbeiter.'
@@ -575,7 +576,7 @@
 
       positions: {
         title: 'Rollen',
-        hint: 'Kasse, Auffüllen, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, eine Schicht kann eine verlangen.',
+        hint: 'Kasse, Regal, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, und eine Schicht kann mehrere Rollen zugleich verlangen.',
         add: 'Rolle hinzufügen',
         newName: 'Neue Rolle',
         name: 'Name der Rolle',
@@ -588,9 +589,12 @@
         employeeLabel: 'Rollen',
         employeeHint: 'Nicht markiert: passt in jede Schicht.',
         employeeAll: 'Alle Rollen',
-        slotLabel: 'Benötigte Rolle',
-        slotAny: 'Egal wer',
-        slotHint: 'Diese Schicht berücksichtigt nur Personen mit dieser Rolle.',
+        slotLabel: 'Rollen in dieser Schicht',
+        slotAdd: 'Rolle zur Schicht hinzufügen',
+        slotRemove: 'Rolle aus der Schicht entfernen',
+        slotOpen: 'Offen für alle: {count}',
+        slotBelowMix: 'Die Rollen dieser Schicht ergeben zusammen {count} Personen. Für weniger Personen zuerst eine Rolle entfernen.',
+        slotHint: 'Jede Rolle sucht ihre eigene Person, eine Schicht wird also von mehreren Personen in mehreren Rollen besetzt.',
         count: '{count} Rollen',
         fits: '{count} geeignet'
       },
@@ -853,7 +857,7 @@
         sampleName: 'Anna Weber',
         open: 'Liste importieren',
         title: 'Mitarbeitende importieren',
-        hint: 'Markieren Sie Ihre Liste in Excel, kopieren Sie sie und fügen Sie sie hier ein – oder wählen Sie eine CSV-Datei. Die erste Spalte ist der Name. Danach, falls vorhanden: Standorte, Schichtarten und ein Wochenkontingent. Ein Standort, den es noch nicht gibt, wird angelegt. Eine E-Mail-Spalte ist möglich – sie verhindert eine zweite Karte für dieselbe Person.',
+        hint: 'Kasse, Regal, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, und eine Schicht kann mehrere Rollen zugleich verlangen.',
         placeholder: 'Dana Cohen\tStandort Mitte\tFrüh;Abend\t5',
         file: 'CSV-Datei wählen',
         sample: 'Beispiel einfügen',

@@ -300,11 +300,12 @@
           advice: { one: 'Une suggestion', other: '{count} suggestions' },
           adviceNone: 'Aucune suggestion'
         },
-        slotLabel: '{day} · {branch} · service {shift}',
+        slotLabel: 'Rôles sur ce poste',
         deletedEmployee: '(personne supprimée : {id})',
         deletedBranch: '(succursale supprimée)',
         allGood: 'Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
         duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
+        roleMismatch: "Rôle manquant : {label} — l'effectif est complet, mais personne ne couvre {roles}.",
         duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
         doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',
         sameBranch: ' dans la même succursale', differentBranches: ' dans des succursales différentes',
@@ -463,7 +464,7 @@
       preview: {
         open: 'Vue employé',
         title: 'Quel écran voulez-vous voir ?',
-        hint: 'Lecture seule. Rien de ce que vous faites ici n’est enregistré en son nom.',
+        hint: 'Caisse, rayon, cuisine, salle — ce dont votre entreprise a besoin. Une personne peut porter plusieurs rôles, et un poste peut en demander plusieurs à la fois.',
         banner: 'Vous consultez l’écran de {name}',
         exit: 'Retour à la gestion',
         noEmployees: 'Aucun employé actif pour l’instant.'
@@ -575,7 +576,7 @@
 
       positions: {
         title: 'Rôles',
-        hint: "Caissier, réassort, cuisine, serveur — ce dont votre entreprise a besoin. Un employé peut en avoir plusieurs, un poste peut en demander un.",
+        hint: 'Caisse, rayon, cuisine, salle — ce dont votre entreprise a besoin. Une personne peut porter plusieurs rôles, et un poste peut en demander plusieurs à la fois.',
         add: 'Ajouter un rôle',
         newName: 'Nouveau rôle',
         name: 'Nom du rôle',
@@ -588,9 +589,12 @@
         employeeLabel: 'Rôles',
         employeeHint: 'Non coché : convient à tous les postes.',
         employeeAll: 'Tous les rôles',
-        slotLabel: 'Rôle requis',
-        slotAny: "N'importe qui",
-        slotHint: 'Ce poste ne retiendra que les employés portant ce rôle.',
+        slotLabel: 'Rôles sur ce poste',
+        slotAdd: 'Ajouter un rôle au poste',
+        slotRemove: 'Retirer le rôle du poste',
+        slotOpen: 'Ouvert à tous : {count}',
+        slotBelowMix: "Les rôles de ce poste totalisent {count} personnes. Pour réduire l'effectif, retirez d'abord un rôle.",
+        slotHint: 'Chaque rôle cherche sa propre personne : un poste se remplit donc avec plusieurs personnes dans plusieurs rôles.',
         count: '{count} rôles',
         fits: '{count} éligibles'
       },
@@ -853,7 +857,7 @@
         sampleName: 'Claire Martin',
         open: 'Importer une liste',
         title: 'Importer le personnel',
-        hint: 'Sélectionnez votre liste dans Excel, copiez-la et collez-la ici – ou choisissez un fichier CSV. La première colonne est le nom. Ensuite, si vous les avez : sites, types de service et une limite hebdomadaire. Un site qui n’existe pas encore sera créé. Vous pouvez ajouter une colonne e-mail : elle évite une deuxième fiche pour la même personne.',
+        hint: 'Caisse, rayon, cuisine, salle — ce dont votre entreprise a besoin. Une personne peut porter plusieurs rôles, et un poste peut en demander plusieurs à la fois.',
         placeholder: 'Dana Cohen\tSite central\tMatin;Soir\t5',
         file: 'Choisir un fichier CSV',
         sample: 'Insérer un exemple',

@@ -306,11 +306,12 @@
           advice: { one: 'One suggestion', other: '{count} suggestions' },
           adviceNone: 'No suggestions'
         },
-        slotLabel: '{day} · {branch} · {shift} shift',
+        slotLabel: 'Roles on this shift',
         deletedEmployee: '(deleted person: {id})',
         deletedBranch: '(deleted location)',
         allGood: 'Schedule is valid – no overstaffing, gaps or availability conflicts',
         duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
+        roleMismatch: 'Role missing: {label} — the headcount is full, but nobody covers {roles}.',
         duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
         sameBranch: ' at the same location', differentBranches: ' at different locations',
@@ -469,7 +470,7 @@
       preview: {
         open: 'Employee view',
         title: 'Whose screen do you want to see?',
-        hint: 'Read only. Nothing you do here is saved as that person.',
+        hint: 'Cashier, stocker, kitchen, waiter — whatever your business needs. One person can hold several roles, and one shift can ask for several roles at once.',
         banner: 'You are viewing the screen of {name}',
         exit: 'Back to management',
         noEmployees: 'No active staff yet.'
@@ -581,7 +582,7 @@
 
       positions: {
         title: 'Roles',
-        hint: 'Cashier, stocker, kitchen, server — whatever your business needs. An employee can hold several roles, and a shift can ask for one.',
+        hint: 'Cashier, stocker, kitchen, waiter — whatever your business needs. One person can hold several roles, and one shift can ask for several roles at once.',
         add: 'Add role',
         newName: 'New role',
         name: 'Role name',
@@ -594,9 +595,12 @@
         employeeLabel: 'Roles',
         employeeHint: 'Unmarked means: fits every shift.',
         employeeAll: 'All roles',
-        slotLabel: 'Role needed',
-        slotAny: 'Anyone',
-        slotHint: 'This shift will only consider employees marked with that role.',
+        slotLabel: 'Roles on this shift',
+        slotAdd: 'Add a role to this shift',
+        slotRemove: 'Remove this role from the shift',
+        slotOpen: 'Open to anyone: {count}',
+        slotBelowMix: 'The roles on this shift add up to {count} people. To lower the headcount, remove a role first.',
+        slotHint: 'Each role looks for its own person, so one shift is filled by several people in several roles.',
         count: '{count} roles',
         fits: '{count} eligible'
       },
@@ -859,7 +863,7 @@
         sampleName: 'Dana Cohen',
         open: 'Import a list',
         title: 'Import staff',
-        hint: 'Select your list in Excel, copy it and paste it here – or choose a CSV file. The first column is the name. After it, if you have them: locations, shift types and a weekly limit. A location that does not exist yet will be created. An email column is optional, and it prevents a second card for the same person.',
+        hint: 'Cashier, stocker, kitchen, waiter — whatever your business needs. One person can hold several roles, and one shift can ask for several roles at once.',
         placeholder: 'Dana Cohen\tCentral location\tMorning;Evening\t5',
         file: 'Choose a CSV file',
         sample: 'Insert an example',

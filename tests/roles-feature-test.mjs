@@ -62,7 +62,7 @@ try {
     await page.locator('.pill.role-pill').count(), 0);
   await page.click('.tab[data-tab="branches"]');
   await page.waitForTimeout(500);
-  check('ואין בורר תפקיד בלוח הסניף', await page.locator('.sched-role').count(), 0);
+  check('ואין תמהיל תפקידים בלוח הסניף', await page.locator('.sched-roles').count(), 0);
 
   console.log('\n== הגדרת שני תפקידים ==');
   await page.click('.tab[data-tab="settings"]');
@@ -105,34 +105,65 @@ try {
   check('והכרטיס שמר', await page.evaluate(
     () => window.ShiftApp.getState().employees[0].roles.length), 2);
 
-  console.log('\n== משמרת מחפשת תפקיד ==');
+  console.log('\n== משמרת מחזיקה כמה תפקידים ==');
   await page.click('.tab[data-tab="branches"]');
   await page.waitForTimeout(600);
-  check('לכל משבצת יש בורר תפקיד', await page.locator('.sched-role').count() > 0, true);
-  const picker = page.locator('.sched-cell:not(.closed) select[data-sched="role"]').first();
-  check('ברירת המחדל: כל אחד', await picker.inputValue(), '');
-  const roleId = await page.evaluate(() => window.ShiftApp.getState().settings.roles[0].id);
-  await picker.selectOption(roleId);
-  await page.waitForTimeout(700);
-  check('נשמר על המשבצת', await page.evaluate((id) => {
-    const branch = window.ShiftApp.getState().branches[0];
-    const days = Object.keys(branch.schedule);
-    for (const day of days) {
-      const shifts = branch.schedule[day];
-      for (const shiftId of Object.keys(shifts)) {
-        if (shifts[shiftId].role === id) return true;
-      }
-    }
-    return false;
-  }, roleId), true);
+  check('לכל משבצת יש עורך תמהיל', await page.locator('.sched-roles').count() > 0, true);
 
-  console.log('\n== "כל אחד" חוזר למצב שבו התפקיד אינו קיים בנתונים ==');
-  await page.locator('.sched-cell:not(.closed) select[data-sched="role"]').first().selectOption('');
-  await page.waitForTimeout(700);
-  check('השדה ירד מהנתונים ולא נשמר כמחרוזת ריקה', await page.evaluate(() => {
+  const cell = page.locator('.sched-cell:not(.closed)').first();
+  const slotOf = () => page.evaluate(() => {
     const branch = window.ShiftApp.getState().branches[0];
-    return JSON.stringify(branch.schedule).indexOf('"role"') === -1;
-  }), true);
+    const day = Object.keys(branch.schedule).sort((a, b) => a - b)[0];
+    const shiftId = Object.keys(branch.schedule[day])[0];
+    return branch.schedule[day][shiftId];
+  });
+
+  const before = await slotOf();
+  check('מתחילים בלי תפקידים', before.roles === undefined, true);
+
+  const roles = await page.evaluate(() => window.ShiftApp.getState().settings.roles.map(r => r.id));
+  const roleId = roles[0];
+
+  await cell.locator('[data-role-add]').selectOption(roleId);
+  await page.waitForTimeout(700);
+  let slot = await slotOf();
+  check('התפקיד נשמר על המשמרת', slot.roles[roleId], 1);
+  check('ונוסף איתו גם אדם', slot.need, before.need + 1);
+
+  /* זה הלב: אותה משמרת, תפקיד שני, אדם נוסף */
+  await cell.locator('[data-role-add]').selectOption(roles[1]);
+  await page.waitForTimeout(700);
+  slot = await slotOf();
+  check('שני תפקידים באותה משמרת', Object.keys(slot.roles).length, 2);
+  check('ושני אנשים נוספו', slot.need, before.need + 2);
+
+  console.log('\n== כמה אנשים באותו תפקיד ==');
+  await cell.locator('[data-role-need="' + roleId + '"]').fill('3');
+  await cell.locator('[data-role-need="' + roleId + '"]').blur();
+  await page.waitForTimeout(700);
+  slot = await slotOf();
+  check('הכמות נשמרה', slot.roles[roleId], 3);
+  check('וסך האנשים זז איתה', slot.need, before.need + 4);
+
+  console.log('\n== התא בסידור אומר מה המשמרת מחפשת ==');
+  await page.click('.tab[data-tab="schedule"]');
+  await page.waitForTimeout(700);
+  check('מוצגות תגיות תפקיד', await page.locator('.cell-role').count() > 0, true);
+  check('ותפקיד שחסר לו אדם מסומן', await page.locator('.cell-role.short').count() > 0, true);
+  await page.click('.tab[data-tab="branches"]');
+  await page.waitForTimeout(600);
+
+  console.log('\n== הסרת תפקיד מהמשמרת מחזירה את המצב ==');
+  await cell.locator('[data-role-remove="' + roleId + '"]').click();
+  await page.waitForTimeout(700);
+  slot = await slotOf();
+  check('התפקיד ירד', slot.roles[roleId] === undefined, true);
+  check('ואיתו גם האנשים שלו', slot.need, before.need + 1);
+  await cell.locator('[data-role-remove="' + roles[1] + '"]').click();
+  await page.waitForTimeout(700);
+  slot = await slotOf();
+  check('מפה ריקה אינה נשמרת', slot.roles === undefined, true);
+  check('והמשמרת חזרה למה שהייתה', slot.need, before.need);
 
   console.log('\n== מחיקת תפקיד מנקה אותו מכל מקום ==');
   await page.evaluate((id) => {
@@ -140,7 +171,7 @@ try {
     const branch = state.branches[0];
     const day = Object.keys(branch.schedule)[0];
     const shiftId = Object.keys(branch.schedule[day])[0];
-    branch.schedule[day][shiftId].role = id;
+    branch.schedule[day][shiftId].roles = { [id]: 1 };
     window.ShiftApp.persistConfig();
   }, roleId);
   await page.click('.tab[data-tab="settings"]');

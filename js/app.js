@@ -450,12 +450,25 @@
         (label ? esc(label) : '<span class="missing">' + t('schedule.missingSabbath') + '</span>') +
         (need > 1 ? ' · ' + t('schedule.people', { count: need }) : '') + '</div>';
     }
-    /* התפקיד שהמשמרת מחפשת. בלעדיו המנהל רואה משבצת ריקה ולא
-       יודע שהיא מחכה דווקא למטבח. */
-    var slotRole = Store.slotRole(state, branch, dayIdx, shiftId);
-    if (slotRole) {
-      html += '<div class="cell-role sh sh-' + Store.roleColor(state, slotRole) + '">' +
-        esc(Store.roleName(state, slotRole)) + '</div>';
+    /* התפקידים שהמשמרת מחפשת. בלעדיהם המנהל רואה משבצת ריקה ולא
+       יודע שהיא מחכה דווקא למטבח. תפקיד שכבר יש לו אדם מתאים
+       נשאר שקט; מה שחסר הוא מה שמסומן. */
+    var roleLines = Store.slotRoleNeeds(state, branch, dayIdx, shiftId);
+    if (roleLines.some(function (line) { return line.role; })) {
+      var stillOpen = {};
+      Store.openSeats(state, roleLines, assigned).forEach(function (roleId) {
+        if (roleId) stillOpen[roleId] = (stillOpen[roleId] || 0) + 1;
+      });
+      html += '<div class="cell-roles">';
+      roleLines.forEach(function (line) {
+        if (!line.role) return;
+        var short = stillOpen[line.role] || 0;
+        html += '<span class="cell-role sh sh-' + Store.roleColor(state, line.role) +
+          (short ? ' short' : '') + '">' +
+          esc(Store.roleName(state, line.role)) +
+          (line.count > 1 ? ' ×' + line.count : '') + '</span>';
+      });
+      html += '</div>';
     }
     for (var i = 0; i < rows; i++) {
       var value = assigned[i] || '';
@@ -993,22 +1006,52 @@
         html += '<label class="check tiny"><input type="checkbox" data-sched="auto"' +
           (isMotzash ? ' checked' : '') + '> ' + t('branches.autoSabbath') + '</label>';
       }
-      /* איזה תפקיד המשמרת הזו מחפשת. מוצג רק לעסק שהגדיר
-         תפקידים; "כל אחד" הוא ברירת המחדל וגם ההתנהגות הישנה.
+      /* תמהיל התפקידים של המשמרת: כמה אנשים בכל תפקיד.
 
-         כך נבנית הדוגמה של בית הקפה: שתי משמרות בוקר בלוח הזה,
-         אחת עם "מטבח" מ-08:00 ואחת עם "מלצר" מ-12:00. */
+         משמרת בוקר בבית קפה אינה "שלושה אנשים" אלא מטבח אחד,
+         מלצר אחד וברמן אחד – משמרת אחת עם שלושה אנשים בשלושה
+         תפקידים. מה שנשאר מעבר לסכום הוא "כל אחד", וזו בדיוק
+         ההתנהגות שהייתה לפני שהתפקידים קיימים.
+
+         מוצג רק לעסק שהגדיר תפקידים. מי שלא הגדיר לא יודע
+         שהם קיימים, והתא שלו נשאר קצר כמו קודם. */
       var roleList = Store.roles(state);
       if (roleList.length) {
-        var chosen = config.role || '';
-        html += '<label class="sched-role"><span>' + t('positions.slotLabel') + '</span>' +
-          '<select class="text-input" data-sched="role">' +
-          '<option value="">' + esc(t('positions.slotAny')) + '</option>';
-        roleList.forEach(function (role) {
-          html += '<option value="' + esc(role.id) + '"' +
-            (chosen === role.id ? ' selected' : '') + '>' + esc(role.name) + '</option>';
+        var lines = Store.roleNeedsOf(state, config, need);
+        var open = 0;
+        html += '<div class="sched-roles">';
+        lines.forEach(function (line) {
+          if (!line.role) { open = line.count; return; }
+          html += '<div class="sched-role-row">' +
+            '<span class="role-swatch sh sh-' + Store.roleColor(state, line.role) + '"></span>' +
+            '<span class="sched-role-name">' + esc(Store.roleName(state, line.role)) + '</span>' +
+            '<input class="num-input" type="number" min="1" max="9" ' +
+              'data-role-need="' + esc(line.role) + '" value="' + line.count + '" ' +
+              'aria-label="' + esc(Store.roleName(state, line.role)) + '">' +
+            '<button type="button" class="link-btn tiny" data-role-remove="' + esc(line.role) + '" ' +
+              'title="' + esc(t('positions.slotRemove')) + '" ' +
+              'aria-label="' + esc(t('positions.slotRemove')) + '">×</button>' +
+            '</div>';
         });
-        html += '</select></label>';
+        if (open) {
+          html += '<div class="sched-role-open">' +
+            esc(t('positions.slotOpen', { count: open })) + '</div>';
+        }
+
+        /* רק תפקידים שעוד לא בתמהיל. אחרת הרשימה מציעה להוסיף
+           פעם שנייה את מה שכבר שם. */
+        var free = roleList.filter(function (role) {
+          return !Store.slotRoleCount(state, config, role.id);
+        });
+        if (free.length) {
+          html += '<select class="text-input tiny" data-role-add>' +
+            '<option value="">' + esc(t('positions.slotAdd')) + '</option>';
+          free.forEach(function (role) {
+            html += '<option value="' + esc(role.id) + '">' + esc(role.name) + '</option>';
+          });
+          html += '</select>';
+        }
+        html += '</div>';
       }
     } else {
       html += '<div class="sched-closed">' + t('branches.closed') + '</div>';
@@ -2265,6 +2308,22 @@
 
     var list = $('#branches-list');
     list.addEventListener('click', function (event) {
+      /* הסרת תפקיד מהתמהיל של משמרת אחת. סך האנשים במשמרת יורד
+         יחד איתו, כי המקום הזה נפתח בשביל התפקיד הזה. */
+      var drop = event.target.closest('[data-role-remove]');
+      if (drop) {
+        if (blocked()) return;
+        var dropCell = drop.closest('.sched-cell');
+        var dropCard = drop.closest('.card');
+        var dropBranch = Store.byId(state.branches, dropCard.dataset.branch);
+        if (!dropBranch) return;
+        Store.setSlotRoleCount(state, dropBranch, dropCell.dataset.day,
+          dropCell.dataset.shift, drop.dataset.roleRemove, 0);
+        Store.normalizeSchedule(dropBranch.schedule);
+        persist('config');
+        render();
+        return;
+      }
       if (event.target.dataset.action !== 'delete-branch') return;
       var card = event.target.closest('.card');
       var branch = Store.byId(state.branches, card.dataset.branch);
@@ -2305,6 +2364,25 @@
         return;
       }
 
+      /* תמהיל התפקידים במשמרת. שינוי כמות בתפקיד מזיז גם את סך
+         האנשים במשמרת: מי שביקש עוד מלצר ביקש עוד אדם, ולא
+         לקחת אותו ממקום אחר. */
+      if (input.dataset.roleNeed || input.hasAttribute('data-role-add')) {
+        var roleCell = input.closest('.sched-cell');
+        var roleDay = roleCell.dataset.day;
+        var roleShift = roleCell.dataset.shift;
+        if (input.dataset.roleNeed) {
+          Store.setSlotRoleCount(state, branch, roleDay, roleShift,
+            input.dataset.roleNeed, Math.max(1, Number(input.value) || 1));
+        } else if (input.value) {
+          Store.setSlotRoleCount(state, branch, roleDay, roleShift, input.value, 1);
+        }
+        Store.normalizeSchedule(branch.schedule);
+        persist('config');
+        render();
+        return;
+      }
+
       if (input.dataset.sched) {
         var cell = input.closest('.sched-cell');
         var dayIdx = cell.dataset.day;
@@ -2314,6 +2392,14 @@
 
         if (input.dataset.sched === 'need') {
           var need = Math.max(0, Number(input.value) || 0);
+          /* אי אפשר לבקש שלושה אנשים ולסמן ארבעה תפקידים. מי
+             שרוצה פחות אנשים מוריד קודם תפקיד. */
+          var mixTotal = Store.slotRoleTotal(state, config);
+          if (need > 0 && need < mixTotal) {
+            toast(t('positions.slotBelowMix', { count: mixTotal }));
+            render();
+            return;
+          }
           if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
           else if (config) { config.need = need; }
           else {
@@ -2328,11 +2414,6 @@
           if (input.dataset.sched === 'auto') {
             if (input.checked) { config.auto = 'motzash'; delete config.from; }
             else { delete config.auto; config.from = config.from || '20:30'; }
-          } else if (input.dataset.sched === 'role') {
-            /* "כל אחד" אינו ערך אלא היעדרו: כך משמרת בלי תפקיד
-               נראית בנתונים בדיוק כמו לפני שהתפקידים היו. */
-            if (input.value) { config.role = input.value; }
-            else { delete config.role; }
           } else {
             var normalized = Store.normalizeTimeInput(input.value);
             if (normalized === null) {
@@ -2506,7 +2587,7 @@
       state.branches.forEach(function (branch) {
         Object.keys(branch.schedule || {}).forEach(function (day) {
           Object.keys(branch.schedule[day] || {}).forEach(function (shiftId) {
-            if (branch.schedule[day][shiftId].role === role.id) slots++;
+            if (Store.slotRoleCount(state, branch.schedule[day][shiftId], role.id)) slots++;
           });
         });
       });

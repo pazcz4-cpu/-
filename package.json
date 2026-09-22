@@ -7,6 +7,7 @@
     "test": "node tests/run-tests.js",
     "start": "npx http-server . -p 8080 -o",
     "build": "node build-artifact.js",
+    "vercel-build": "node build-site.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
     "test:all": "node tests/run-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/xlsx-read-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js && node tests/payplus-provider-tests.js && node tests/billing-cron-tests.js && node tests/admin-tests.js",

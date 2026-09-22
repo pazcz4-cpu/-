@@ -493,6 +493,25 @@ asyncTest('פעולה ללא התחברות נדחית', function () {
 
 console.log('\n== מנוי ==');
 
+/* דף המכירה ומסך ההרשמה מבטיחים משהו על החיוב, והחשבון שנפתח
+   צריך להתנהג בדיוק לפי ההבטחה. כאן נבדק שהמדיניות אחת. */
+test('פתיחת חשבון אינה דורשת כרטיס, ובדיוק זה מה שמוצהר', function () {
+  assertEqual(Model.TRIAL_REQUIRES_CARD, false,
+    'המדיניות שונתה – יש לעדכן גם את landing.heroNote, landing.pricingNote, ' +
+    'landing.faq6A ו-auth.trialNote בשמונה השפות');
+
+  var company = Model.newTrialCompany('חדשה', new Date('2026-09-01T08:00:00Z'));
+  assertEqual(company.billingCustomerId, null, 'חשבון חדש נפתח עם אמצעי תשלום');
+  assertEqual(company.billingSubscriptionId, null, 'חשבון חדש נפתח עם מנוי אצל הספק');
+
+  /* ולכן ההודעה שהלקוח רואה היא זו של "אין כרטיס", ולא הודעה
+     שמכריזה על חיוב ראשון בתאריך */
+  var access = Model.accessState(company, new Date('2026-09-02T08:00:00Z'));
+  assertEqual(access.reason, 'trial-no-card',
+    'החשבון החדש מדווח על מצב אחר: ' + access.reason);
+  assert(access.allowed, 'חשבון חדש נחסם');
+});
+
 test('תקופת ניסיון מעניקה גישה ומסתיימת בזמן', function () {
   var company = Model.newTrialCompany('חברה', new Date('2026-09-01'));
   assertEqual(Model.accessState(company, new Date('2026-09-10')).allowed, true, 'בתוך הניסיון');

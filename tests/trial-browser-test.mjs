@@ -42,10 +42,14 @@ try {
   await page.waitForTimeout(400);
   await page.click('[data-auth-mode="signup"]');
   await page.waitForTimeout(200);
-  const note = await page.locator('.auth-hint').textContent();
+  const note = await page.locator('.auth-trial-note').textContent();
   check('מספר ימי הניסיון מופיע', /14/.test(note), true);
-  check('תאריך החיוב הראשון מופיע', /\d{2}[./]\d{2}[./]\d{4}/.test(note), true);
-  check('לא מבטיחים "בלי כרטיס אשראי"', /לא נדרש אמצעי תשלום/.test(note), false);
+  check('התאריך שבו התקופה נגמרת מופיע', /\d{2}[./]\d{2}[./]\d{4}/.test(note), true);
+  /* ההרשמה באמת אינה מבקשת כרטיס, ולכן זה מה שכתוב. טקסט שמבטיח
+     "החיוב הראשון בתאריך" היה סתירה למה שקורה בפועל. */
+  check('נאמר במפורש שאין צורך בכרטיס', /בלי כרטיס אשראי/.test(note), true);
+  check('ההסכמה לתנאים מופיעה עם קישורים',
+    await page.locator('.auth-form a[href="/terms/"]').count(), 1);
 
   await page.fill('input[name="companyName"]', 'עסק ניסיון');
   await page.fill('input[name="email"]', 'trial@test.co.il');

@@ -116,6 +116,12 @@
   }
 
   var TRIAL_DAYS = 14;
+
+  /* מדיניות הניסיון, במקום אחד. פתיחת חשבון אינה דורשת כרטיס, ולכן
+     כל טקסט שמבטיח "החיוב הראשון בתום התקופה" הוא הבטחה שאינה
+     נכונה – והסתירה הזו עולה עסקה. אם המדיניות תשתנה, היא משתנה
+     כאן, והבדיקה תפנה למי ששינה אותה גם אל נוסח דף המכירה. */
+  var TRIAL_REQUIRES_CARD = false;
   var GRACE_DAYS = 7; // ימי חסד אחרי כישלון תשלום, לפני חסימה
   /* חלון להמתנה לאישור החיוב הראשון מספק התשלומים */
   var CHARGE_GRACE_DAYS = 2;
@@ -345,7 +351,8 @@
     SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS, WHATSAPP_NUMBER: WHATSAPP_NUMBER,
     TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
     TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
-    SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS, GRACE_DAYS: GRACE_DAYS,
+    SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS,
+    TRIAL_REQUIRES_CARD: TRIAL_REQUIRES_CARD, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,

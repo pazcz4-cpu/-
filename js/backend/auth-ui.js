@@ -404,7 +404,7 @@
           terms: legalLink('/terms/', t('landing.terms')),
           privacy: legalLink('/privacy/', t('landing.privacy'))
         }) + '</p>' +
-        '<p class="auth-hint">' + esc(t('auth.trialNote', {
+        '<p class="auth-hint auth-trial-note">' + esc(t('auth.trialNote', {
           days: Model.TRIAL_DAYS,
           date: Model.formatDate(Model.addDays(new Date(), Model.TRIAL_DAYS))
         })) + '</p>' +

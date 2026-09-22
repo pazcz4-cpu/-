@@ -333,6 +333,36 @@ test('כישלון אצל לקוח אחד אינו עוצר את השאר', func
   });
 });
 
+console.log('\n== שורת ההכנסה ==');
+
+test('חיוב מוצלח רושם כמה נגבה, לא רק שנגבה', function () {
+  /* בלי הסכום, המשרד האחורי מחשב מחזור מתוך המחירון ולא מתוך
+     מה שנגבה בפועל – וכל שינוי מחיר היסטורי מזייף את הדוח. */
+  var db = new FakeDb([company({ plan: 'growth' })]);
+  db.install();
+  return run().then(function () {
+    var row = db.events[Object.keys(db.events)[0]];
+    assertEqual(row.payload.outcome, 'charged', 'התוצאה לא נרשמה');
+    assertEqual(row.payload.amount, 399, 'הסכום לא נרשם');
+    assertEqual(row.payload.currency, 'ILS', 'המטבע לא נרשם');
+    assert(!!row.payload.period_start, 'תחילת התקופה נמחקה בעדכון');
+    assertEqual(row.payload.plan, 'growth', 'התוכנית נמחקה בעדכון');
+    db.restore();
+  }, function (err) { db.restore(); throw err; });
+});
+
+test('כישלון אינו מוחק את מה שכבר נרשם על התקופה', function () {
+  var db = new FakeDb([company({ billing_subscription_id: 'fail-tok' })]);
+  db.install();
+  return run().then(function () {
+    var row = db.events[Object.keys(db.events)[0]];
+    assertEqual(row.payload.outcome, 'declined', 'התוצאה לא נרשמה');
+    assert(!!row.payload.period_start, 'תחילת התקופה נמחקה');
+    assert(!row.payload.amount, 'נרשם סכום על חיוב שלא עבר');
+    db.restore();
+  }, function (err) { db.restore(); throw err; });
+});
+
 console.log('\n== ניסיון חוזר ביום שאחרי ==');
 
 /* הבדיקות למטה מריצות את ה-cron פעמיים על אותה חברה, כשבין

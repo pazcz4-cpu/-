@@ -85,13 +85,21 @@ async function claim(id, company, type, payload) {
 }
 
 /* התוצאה נרשמת על התביעה עצמה, כי היא שקובעת אם מותר לנסות שוב.
+     charged   – הכסף עבר. הסכום נשמר כאן, וזו שורת ההכנסה.
      declined  – חברת האשראי אמרה לא. מחר אולי תהיה מסגרת.
      uncertain – לא קיבלנו תשובה. ייתכן שהכרטיס חויב, ולכן לא
-                 מנסים שוב לבד; זה עולה לדוח ומחכה לאדם. */
-async function recordOutcome(id, outcome, reason) {
+                 מנסים שוב לבד; זה עולה לדוח ומחכה לאדם.
+
+   מיזוג ולא החלפה: בשורה כבר יושבים התוכנית ותחילת התקופה,
+   ודריסה שלהם הייתה מוחקת את מה שהדוח נשען עליו. */
+async function recordOutcome(id, outcome, extra) {
+  const current = await db('/billing_events?id=eq.' + encodeURIComponent(id) + '&select=payload');
+  const before = (current.ok && current.body && current.body[0] && current.body[0].payload) || {};
+  const payload = Object.assign({}, before, extra || {}, {
+    outcome: outcome, at: new Date().toISOString()
+  });
   return db('/billing_events?id=eq.' + encodeURIComponent(id), {
-    method: 'PATCH', prefer: 'return=minimal',
-    body: { payload: { outcome: outcome, reason: reason, at: new Date().toISOString() } }
+    method: 'PATCH', prefer: 'return=minimal', body: { payload: payload }
   });
 }
 
@@ -177,12 +185,21 @@ async function chargeCompany(provider, company, plans, now) {
      הריצה כל יום עד שמישהו מתקן אותה. גם לא מנסים שוב לבד, כי
      איננו יודעים אם הבקשה הספיקה להגיע. */
   if (thrown) {
-    await recordOutcome(attempt.periodId, 'uncertain', thrown);
+    await recordOutcome(attempt.periodId, 'uncertain', { reason: thrown });
     return { company: company.id, action: 'error', reason: thrown };
   }
 
   if (result && result.ok) {
     const nextEnd = addDays(new Date(periodStart) > now ? new Date(periodStart) : now, MONTH_DAYS);
+    /* שורת ההכנסה. בלי הסכום כאן אי אפשר לדעת כמה נכנס בפועל –
+       רק שמשהו נכנס – והמשרד האחורי היה מחשב מחזור מתוך המחירון
+       ולא מתוך מה שנגבה. */
+    await recordOutcome(attempt.periodId, 'charged', {
+      amount: plan.priceMonthly,
+      currency: 'ILS',
+      plan: company.plan,
+      transaction_id: result.transactionId || null
+    });
     await patchCompany(company.id, {
       status: 'active',
       valid_until: nextEnd.toISOString(),
@@ -199,7 +216,7 @@ async function chargeCompany(provider, company, plans, now) {
   const reason = (result && result.reason) || 'unknown';
   const declined = !!(result && result.retryable);
   /* התוצאה נרשמת על שורת התקופה, כי היא שנקראת מחר */
-  await recordOutcome(attempt.periodId, declined ? 'declined' : 'uncertain', reason);
+  await recordOutcome(attempt.periodId, declined ? 'declined' : 'uncertain', { reason: reason });
   await patchCompany(company.id, { status: 'past_due' });
   return {
     company: company.id, action: 'failed', reason: reason,

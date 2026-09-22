@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>SetShifts · משרד אחורי</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="adm-body">
+
+<header class="adm-top">
+  <h1>SetShifts · משרד אחורי</h1>
+  <span class="adm-who" id="adm-who"></span>
+</header>
+
+<main class="adm-wrap">
+  <!-- מסך הכניסה. אותו חשבון Supabase, אבל רק מי שכתובתו
+       ברשימת בעלי המוצר יקבל נתונים – וזה נבדק בשרת. -->
+  <section id="adm-signin" class="adm-card" style="max-width:420px;margin-inline:auto">
+    <h2>כניסה</h2>
+    <p class="adm-card-sub">החשבון שלך ב-SetShifts.</p>
+    <form id="adm-signin-form">
+      <label class="adm-field">
+        <span>אימייל</span>
+        <input class="adm-input" type="email" name="email" autocomplete="username" required>
+      </label>
+      <label class="adm-field">
+        <span>סיסמה</span>
+        <input class="adm-input" type="password" name="password"
+               autocomplete="current-password" required>
+      </label>
+      <button class="adm-btn is-primary" type="submit">כניסה</button>
+    </form>
+    <p id="adm-signin-error" class="adm-error" hidden></p>
+  </section>
+
+  <div id="adm-app" hidden>
+    <div class="adm-tabs" role="tablist">
+      <button class="adm-tab" role="tab" data-panel="overview" aria-selected="true">לוח מחוונים</button>
+      <button class="adm-tab" role="tab" data-panel="companies" aria-selected="false">לקוחות</button>
+      <button class="adm-tab" role="tab" data-panel="money" aria-selected="false">כסף</button>
+      <button class="adm-tab" role="tab" data-panel="tickets" aria-selected="false">קריאות שירות</button>
+    </div>
+
+    <section class="adm-panel" id="panel-overview"></section>
+    <section class="adm-panel" id="panel-companies" hidden></section>
+    <section class="adm-panel" id="panel-money" hidden></section>
+    <section class="adm-panel" id="panel-tickets" hidden></section>
+  </div>
+</main>
+
+<!-- חלון פעולה. אותו חלון לכל הפעולות, כי לכולן אותו מבנה:
+     מה משנים, ולמה. -->
+<div class="adm-modal" id="adm-modal" hidden>
+  <div class="adm-modal-card" role="dialog" aria-modal="true" aria-labelledby="adm-modal-title">
+    <h2 id="adm-modal-title"></h2>
+    <div id="adm-modal-fields"></div>
+    <label class="adm-field">
+      <span>למה? (נרשם ביומן, ואי אפשר בלי)</span>
+      <input class="adm-input" id="adm-modal-reason" type="text" maxlength="200">
+    </label>
+    <p id="adm-modal-error" class="adm-error" hidden></p>
+    <div class="adm-modal-actions">
+      <button class="adm-btn is-primary" id="adm-modal-ok">ביצוע</button>
+      <button class="adm-btn" id="adm-modal-cancel">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+/* המשרד האחורי.
+
+   הוא יושב על אותם טוקנים כמו שאר המערכת (styles.css נטען
+   לפניו), ולכן אין כאן צבע אחד או מרווח אחד שהומצא מחדש.
+
+   מה שכן שונה: זה מסך שקוראים בו מספרים, לא מסך שעובדים בו.
+   הטיפוגרפיה צפופה יותר, הטבלאות רחבות, והמספרים מיושרים לימין
+   עם ספרות ברוחב אחיד כדי שאפשר יהיה להשוות עמודה במבט. */
+
+.adm-body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+}
+
+.adm-top {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s5);
+  background: linear-gradient(90deg, var(--header-from), var(--header-to));
+  color: var(--header-ink);
+  position: sticky; top: 0; z-index: 20;
+}
+.adm-top h1 { margin: 0; font-size: var(--t-lg); font-weight: 700; }
+.adm-top .adm-who { margin-inline-start: auto; font-size: var(--t-sm); opacity: .85; }
+
+.adm-wrap { max-width: 1340px; margin: 0 auto; padding: var(--s5) var(--s4) var(--s8); }
+
+.adm-tabs {
+  display: flex; gap: var(--s2); flex-wrap: wrap;
+  margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+.adm-tab {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  padding: var(--s3) var(--s4); font: inherit; color: var(--muted);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.adm-tab:hover { color: var(--ink); }
+.adm-tab[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.adm-tab:focus-visible { outline: 0; box-shadow: var(--focus-ring); border-radius: var(--r-sm); }
+
+.adm-panel[hidden] { display: none; }
+
+/* ===== מספרים גדולים ===== */
+.adm-tiles {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin-bottom: var(--s5);
+}
+.adm-tile {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s4);
+}
+.adm-tile-label { font-size: var(--t-sm); color: var(--muted); margin: 0 0 var(--s1); }
+.adm-tile-value {
+  font-size: var(--t-2xl); font-weight: 700; line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+}
+.adm-tile-note { font-size: var(--t-xs); color: var(--muted); margin: var(--s1) 0 0; }
+/* המספר שמנהלים באמת מסתכלים עליו */
+.adm-tile.is-key { border-color: var(--brand); box-shadow: var(--e1); }
+.adm-tile.is-key .adm-tile-value { color: var(--brand); }
+
+/* ===== כרטיסים וטבלאות ===== */
+.adm-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s4); margin-bottom: var(--s5);
+}
+.adm-card > h2 {
+  margin: 0 0 var(--s3); font-size: var(--t-md); font-weight: 700;
+}
+.adm-card-sub { margin: calc(var(--s3) * -1) 0 var(--s3); font-size: var(--t-sm); color: var(--muted); }
+
+.adm-scroll { overflow-x: auto; }
+.adm-table { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+.adm-table th, .adm-table td {
+  padding: var(--s2) var(--s3); text-align: start;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.adm-table th {
+  background: var(--surface-head); font-weight: 600; color: var(--muted);
+  position: sticky; top: 0;
+}
+.adm-table tbody tr:hover { background: var(--surface-row); }
+.adm-table .num { text-align: end; font-variant-numeric: tabular-nums; }
+.adm-table .wide { white-space: normal; min-width: 220px; }
+.adm-row-link { cursor: pointer; }
+
+/* ===== מצבים =====
+   כל מצב נושא גם צורה או טקסט ולא רק צבע, כדי שהוא ייקרא גם
+   בהדפסה בשחור-לבן ולמי שאינו מבחין בצבעים. */
+.adm-pill {
+  display: inline-flex; align-items: center; gap: var(--s1);
+  padding: 2px var(--s2); border-radius: var(--r-pill);
+  font-size: var(--t-xs); font-weight: 600; border: 1px solid;
+}
+.adm-pill::before { content: "●"; font-size: 9px; line-height: 1; }
+.adm-pill.is-active  { color: var(--ok);   background: var(--ok-bg);   border-color: var(--ok-line); }
+.adm-pill.is-trial   { color: var(--info); background: var(--info-bg); border-color: var(--info-line); }
+.adm-pill.is-trial::before   { content: "◔"; }
+.adm-pill.is-past_due{ color: var(--err);  background: var(--err-bg);  border-color: var(--err-line); }
+.adm-pill.is-past_due::before { content: "!"; font-weight: 700; }
+.adm-pill.is-canceled,
+.adm-pill.is-expired { color: var(--muted); background: var(--surface-row); border-color: var(--line); }
+.adm-pill.is-canceled::before { content: "×"; }
+.adm-pill.is-expired::before  { content: "—"; }
+
+.adm-flag {
+  font-size: var(--t-xs); color: var(--warn); border: 1px dashed var(--warn-line);
+  border-radius: var(--r-sm); padding: 1px var(--s2);
+}
+
+/* ===== שדות ופעולות ===== */
+.adm-controls { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s3); }
+.adm-input, .adm-select {
+  font: inherit; padding: var(--s2) var(--s3);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); min-width: 0;
+}
+.adm-input:focus-visible, .adm-select:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.adm-input { flex: 1 1 240px; }
+
+.adm-btn {
+  font: inherit; cursor: pointer; padding: var(--s2) var(--s4);
+  border-radius: var(--r-md); border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink);
+}
+.adm-btn:hover { background: var(--surface-row); }
+.adm-btn:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.adm-btn.is-primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.adm-btn.is-primary:hover { background: var(--brand-dark); }
+.adm-btn.is-small { padding: var(--s1) var(--s3); font-size: var(--t-sm); }
+.adm-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+.adm-note { font-size: var(--t-sm); color: var(--muted); }
+.adm-empty { padding: var(--s5); text-align: center; color: var(--muted); }
+.adm-error {
+  padding: var(--s3); border-radius: var(--r-md);
+  background: var(--err-bg); border: 1px solid var(--err-line); color: var(--err);
+}
+
+/* ===== גרף חודשים =====
+   עמודות CSS ולא ספרייה: שנים עשר מספרים אינם דורשים 90 קילובייט. */
+.adm-bars { display: flex; align-items: flex-end; gap: var(--s2); height: 160px; padding-top: var(--s4); }
+.adm-bar { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s1); min-width: 28px; }
+.adm-bar-fill { background: var(--brand); border-radius: var(--r-sm) var(--r-sm) 0 0; min-height: 2px; }
+.adm-bar-fill.is-empty { background: var(--line); }
+.adm-bar-top { font-size: var(--t-xs); text-align: center; font-variant-numeric: tabular-nums; }
+.adm-bar-label { font-size: var(--t-xs); color: var(--muted); text-align: center; }
+
+/* ===== חלון פעולה ===== */
+.adm-modal {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: rgba(29, 39, 51, .55); padding: var(--s4);
+}
+.adm-modal[hidden] { display: none; }
+.adm-modal-card {
+  background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--e3);
+  padding: var(--s5); width: min(560px, 100%); max-height: 90vh; overflow: auto;
+}
+.adm-modal-card h2 { margin: 0 0 var(--s3); font-size: var(--t-lg); }
+.adm-field { display: block; margin-bottom: var(--s3); }
+.adm-field > span { display: block; font-size: var(--t-sm); color: var(--muted); margin-bottom: var(--s1); }
+.adm-field .adm-input, .adm-field .adm-select { width: 100%; }
+.adm-modal-actions { display: flex; gap: var(--s2); justify-content: flex-start; margin-top: var(--s4); }
+
+@media (max-width: 640px) {
+  .adm-wrap { padding-inline: var(--s3); }
+  .adm-top { padding-inline: var(--s3); }
+  .adm-tile-value { font-size: var(--t-xl); }
+}

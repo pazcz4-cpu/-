@@ -280,9 +280,15 @@ const SW_REGISTER = `
 </script>`;
 
 function page(source, target, options) {
+  const opts = options || {};
   let html = markVideo(fillLegal(toAbsolutePaths(read(source))));
-  html = html.replace('</head>', headExtras(options) + '\n</head>');
-  html = html.replace('</body>', SW_REGISTER + '\n</body>');
+  html = html.replace('</head>', headExtras(opts) + '\n</head>');
+  /* המשרד האחורי אינו עובד במצב לא מקוון ואינו אמור להישמר
+     במטמון של המכשיר. מסך שרואה את כל הלקוחות לא צריך להשאיר
+     עותק על דיסק. */
+  if (!opts.noServiceWorker) {
+    html = html.replace('</body>', SW_REGISTER + '\n</body>');
+  }
   write(target, html);
 }
 
@@ -294,6 +300,11 @@ page('landing.html', 'index.html', {
 });
 page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest', noindex: true });
 page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', noindex: true });
+
+/* המשרד האחורי. אינו מופיע ב-robots ואינו מקושר משום מקום:
+   מי שאינו יודע את הכתובת לא יגיע אליה במקרה. זו אינה ההגנה –
+   ההגנה היא PLATFORM_OWNER_EMAILS בשרת – אבל אין סיבה לפרסם. */
+page('admin.html', 'admin/index.html', { noindex: true, noServiceWorker: true });
 
 /* העמודים המשפטיים. הם כן נכנסים למנועי החיפוש: עסק שמחפש "האם
    אפשר לסמוך עליהם" מגיע בדיוק לשם. */
@@ -310,6 +321,15 @@ LEGAL_PAGES.forEach((item) => {
    המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
    שפותח את האתר. הבידוד בין חברות נאכף ב-supabase/schema.sql,
    ולא כאן. */
+/* המשרד האחורי מתחבר לאותו Supabase, ולכן הוא צריך את אותן
+   הגדרות – בעותק משלו, כי הוא יושב בתיקייה אחרת. */
+write('admin/config.js',
+  '/* נוצר אוטומטית על ידי build-site.js – אין לערוך ידנית. */\n' +
+  'window.SHIFT_CONFIG = ' + JSON.stringify({
+    supabaseUrl: SUPABASE_URL,
+    supabaseAnonKey: SUPABASE_ANON_KEY
+  }, null, 2) + ';\n');
+
 write('app/config.js',
   '/* נוצר אוטומטית על ידי build-site.js – אין לערוך ידנית. */\n' +
   'window.SHIFT_CONFIG = ' + JSON.stringify({
@@ -321,7 +341,7 @@ write('app/config.js',
 
 /* ===== קבצים לשורש ===== */
 write('robots.txt',
-  'User-agent: *\nAllow: /\nDisallow: /tool/\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
+  'User-agent: *\nAllow: /\nDisallow: /tool/\nDisallow: /admin/\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
 
 /* דף המכירה מגיש את כל השפות מאותה כתובת, ולכן יש בדיוק כתובת
    אחת למנועי החיפוש */

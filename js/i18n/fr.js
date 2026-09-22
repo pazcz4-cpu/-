@@ -320,6 +320,7 @@
         suggestTwoPerDay: ' Vous pouvez autoriser deux services par jour et par personne dans les Réglages.',
         suggestRaiseMax: ' Vous pouvez augmenter le quota hebdomadaire sur la fiche de l’employé.',
         constraintOff: 'Demande non respectée : {name} a demandé le {day} en repos mais est affecté au service {shift} à {branch}.',
+        standingConflict: 'Contrainte permanente non respectée : {name} n’est jamais disponible le {day} pour {shift}, mais est affecté à {branch}.',
         constraintBlocked: 'Demande non respectée : {name} a bloqué le service {shift} le {day} mais y est affecté à {branch}.',
         branchMismatch: '{name} est affecté à {branch} le {day} alors que cette succursale n’est pas sur sa fiche.',
         shiftMismatch: '{name} est affecté au service {shift} le {day} alors que ce type de service n’est pas sur sa fiche.',
@@ -349,6 +350,17 @@
         noEmployees: 'Aucun membre du personnel actif.',
         shiftsOne: 'un service', shiftsOther: '{count} services',
         remains: 'il reste', remainPlural: 'il reste'
+      },
+
+      standing: {
+        title: 'Contrainte permanente',
+        hint: 'Ce qui vaut pour cette personne chaque semaine — des cours tous les lundis soir, par exemple. Défini une fois, valable ensuite.',
+        allDay: 'Toute la journée',
+        noQuota: "Une contrainte permanente ne compte pas dans le plafond hebdomadaire de demandes : c'est un accord, pas une demande.",
+        state: 'Permanent',
+        cellTitle: "Contrainte permanente — définie sur la fiche de l'employé",
+        locked: "C'est une contrainte permanente convenue à l'avance. Voyez avec votre responsable pour la modifier.",
+        employeeTitle: 'Vos contraintes permanentes'
       },
 
       constraints: {
@@ -441,6 +453,7 @@
           qualified: 'Formé pour ce créneau',
           hasRole: 'Porte le rôle {role}',
           anyRole: "Sans rôle marqué, convient donc aussi à {role}",
+          standingClear: "Ce jour n'est pas bloqué en permanence pour cette personne",
           assignedBranch: 'Affecté à ce site',
           anyBranch: 'Travaille sur tous les sites',
           quota: 'Avant ce créneau {before}, après {after} sur un quota de {max}',
@@ -453,6 +466,7 @@
           notQualified: 'n’est pas formé pour ce créneau',
           otherBranch: 'travaille sur un autre site',
           wrongRole: 'Ne porte pas le rôle {role}',
+          standing: 'Jamais disponible le {day} — contrainte permanente',
           requestedOff: 'a demandé ce jour de congé',
           blockedShift: 'a demandé à ne pas faire ce créneau',
           atLimit: 'a atteint la limite hebdomadaire de {max}',

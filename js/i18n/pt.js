@@ -320,6 +320,7 @@
         suggestTwoPerDay: ' Podes permitir dois turnos por dia por pessoa nas Definições.',
         suggestRaiseMax: ' Podes aumentar o limite semanal na ficha do colaborador.',
         constraintOff: 'Pedido não cumprido: {name} pediu folga em {day} mas está atribuído ao turno {shift} em {branch}.',
+        standingConflict: 'Restrição fixa quebrada: {name} nunca está disponível à {day} para {shift}, mas está escalado em {branch}.',
         constraintBlocked: 'Pedido não cumprido: {name} bloqueou o turno {shift} em {day} mas está atribuído a ele em {branch}.',
         branchMismatch: '{name} está atribuído a {branch} em {day} apesar de essa filial não constar da sua ficha.',
         shiftMismatch: '{name} está atribuído ao turno {shift} em {day} apesar de esse tipo de turno não constar da sua ficha.',
@@ -349,6 +350,17 @@
         noEmployees: 'Não há pessoal ativo.',
         shiftsOne: 'um turno', shiftsOther: '{count} turnos',
         remains: 'resta', remainPlural: 'restam'
+      },
+
+      standing: {
+        title: 'Restrição fixa',
+        hint: 'O que é verdade para esta pessoa todas as semanas — estudar todas as segundas à noite, por exemplo. Define-se uma vez e vale daqui para a frente.',
+        allDay: 'O dia todo',
+        noQuota: 'Uma restrição fixa não conta para o limite semanal de pedidos: é um acordo, não um pedido.',
+        state: 'Fixa',
+        cellTitle: 'Restrição fixa — definida na ficha do funcionário',
+        locked: 'Esta é uma restrição fixa combinada antecipadamente. Fale com a chefia para alterar.',
+        employeeTitle: 'As tuas restrições fixas'
       },
 
       constraints: {
@@ -441,6 +453,7 @@
           qualified: 'Preparado para este turno',
           hasRole: 'Tem a função {role}',
           anyRole: 'Sem função marcada, por isso também serve para {role}',
+          standingClear: 'Esse dia não está bloqueado de forma permanente para esta pessoa',
           assignedBranch: 'Afeto a esta loja',
           anyBranch: 'Trabalha em qualquer loja',
           quota: 'Antes deste turno {before}, depois {after} de uma quota de {max}',
@@ -453,6 +466,7 @@
           notQualified: 'não está preparado para este turno',
           otherBranch: 'trabalha noutra loja',
           wrongRole: 'Não tem a função {role}',
+          standing: 'Nunca disponível à {day} — restrição fixa',
           requestedOff: 'pediu folga nesse dia',
           blockedShift: 'pediu para não fazer este turno',
           atLimit: 'atingiu o limite semanal de {max}',

@@ -326,6 +326,7 @@
         suggestTwoPerDay: ' You can allow two shifts per day per person in Settings.',
         suggestRaiseMax: ' You can raise the weekly limit on the staff card.',
         constraintOff: 'Availability conflict: {name} asked for {day} off but is assigned to {shift} at {branch}.',
+        standingConflict: 'Standing arrangement broken: {name} is never available on {day} for {shift}, but is scheduled at {branch}.',
         constraintBlocked: 'Availability conflict: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
         branchMismatch: '{name} is assigned to {branch} on {day} although that location is not on their card.',
         shiftMismatch: '{name} is assigned to {shift} on {day} although that shift type is not on their card.',
@@ -355,6 +356,17 @@
         noEmployees: 'No active staff.',
         shiftsOne: 'one shift', shiftsOther: '{count} shifts',
         remains: 'remains', remainPlural: 'remain'
+      },
+
+      standing: {
+        title: 'Standing arrangement',
+        hint: 'What is true for this person every week — studying every Monday evening, for example. Set it once, and it holds from here on.',
+        allDay: 'All day',
+        noQuota: 'A standing arrangement does not count against the weekly request limit: it is an arrangement, not a request.',
+        state: 'Standing',
+        cellTitle: 'Standing arrangement — set on the employee card',
+        locked: 'This is a standing arrangement set in advance. Ask your manager to change it.',
+        employeeTitle: 'Your standing arrangements'
       },
 
       constraints: {
@@ -447,6 +459,7 @@
           qualified: 'Trained for this shift',
           hasRole: 'Marked with the {role} role',
           anyRole: 'Not marked with any role, so fits {role} too',
+          standingClear: 'This day is not permanently blocked for them',
           assignedBranch: 'Assigned to this location',
           anyBranch: 'Works at any location',
           quota: 'Before this shift {before}, after it {after} of a quota of {max}',
@@ -459,6 +472,7 @@
           notQualified: 'not trained for this shift',
           otherBranch: 'works at another location',
           wrongRole: 'Not marked with the {role} role',
+          standing: 'Never available on {day} — standing arrangement',
           requestedOff: 'asked for the day off',
           blockedShift: 'asked not to work this shift',
           atLimit: 'reached the weekly limit of {max}',

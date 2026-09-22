@@ -768,7 +768,7 @@
       Data.DAYS.forEach(function (day) {
         var record = Store.getConstraintRecord(week(), emp.id, day.idx);
         var status = Store.constraintStatus(record);
-        var constraint = Store.getConstraint(week(), emp.id, day.idx);
+        var constraint = Store.effectiveConstraint(state, week(), emp.id, day.idx);
         if (Store.isHoliday(week(), day.idx)) {
           html += '<td class="closed holiday-cell">' + esc(Store.holidayName(week(), day.idx)) + '</td>';
           return;
@@ -788,15 +788,22 @@
         html += '<td>';
         dayShifts.forEach(function (shiftId) {
           var cls = 'free', title = t('constraints.free');
-          if (constraint.off) { cls = 'off-day'; title = t('constraints.dayOff'); }
+          /* הסדר קבוע אינו בקשה של השבוע הזה, ולכן אי אפשר להסיר
+             אותו מכאן – הוא נערך על כרטיס העובד. */
+          var fixed = Store.standingBlocks(emp, day.idx, shiftId);
+          if (fixed) { cls = 'block standing'; title = t('standing.cellTitle'); }
+          else if (constraint.off) { cls = 'off-day'; title = t('constraints.dayOff'); }
           else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = t('constraints.blocked'); }
           else if (constraint.preferred && constraint.preferred[shiftId]) { cls = 'pref'; title = t('constraints.preferred'); }
-          html += '<button class="cstate ' + cls + '" title="' + title + '" data-emp="' + esc(emp.id) +
+          html += '<button class="cstate ' + cls + '" title="' + esc(title) + '"' +
+            (fixed ? ' disabled data-locked-always="1"' : '') + ' data-emp="' + esc(emp.id) +
             '" data-day="' + day.idx + '" data-shift="' + esc(shiftId) + '">' +
             esc(shiftLabel(shiftId)) + '</button>';
         });
-        html += '<button class="cstate day-off-btn ' + (constraint.off ? 'off-day' : 'free') +
-          '" data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
+        var standingDay = Store.standingFor(emp, day.idx);
+        html += '<button class="cstate day-off-btn ' + (standingDay.off ? 'off-day standing' : (constraint.off ? 'off-day' : 'free')) +
+          '"' + (standingDay.off ? ' disabled data-locked-always="1" title="' + esc(t('standing.cellTitle')) + '"' : '') +
+          ' data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
           (constraint.off ? '✓ ' : '') + t('constraints.dayOff') + '</button>';
         html += cellTag + '</td>';
       });
@@ -918,6 +925,39 @@
         html += '<button class="pill' + on + '" data-action="toggle-shift" data-shift="' + shift.id + '">' + esc(shift.name) + '</button>';
       });
       html += '</div></div>';
+      /* אילוץ קבוע: מה שנכון לעובד הזה בכל שבוע.
+
+         עובד שלומד כל שני בערב לא צריך להגיש בקשה כל שבוע ולבזבז
+         עליה מהמכסה – זה לא משהו שמבקשים, זה משהו שסוכם. לכן זה
+         יושב כאן, על הכרטיס, ולא על שבוע מסוים.
+
+         לחיצה על שם המשמרת חוסמת אותה באותו יום; "כל היום" חוסם
+         את היום כולו. יום נקי אינו מוצג כלל, כדי שהכרטיס של רוב
+         העובדים יישאר קצר. */
+      html += '<div class="field standing-field"><label class="title">' +
+        t('standing.title') + '</label>';
+      html += '<p class="hint">' + esc(t('standing.hint')) + '</p>';
+      html += '<div class="standing-grid">';
+      Data.DAYS.forEach(function (dayInfo, dayIdx) {
+        var day = Store.standingFor(emp, dayIdx);
+        var any = day.off || Object.keys(day.blocked).length > 0;
+        html += '<div class="standing-row' + (any ? ' on' : '') + '">' +
+          '<span class="standing-day">' + esc(dayInfo.name) + '</span>' +
+          '<div class="pills">';
+        html += '<button class="pill tiny' + (day.off ? ' on' : '') +
+          '" data-action="standing-off" data-day="' + dayIdx + '">' +
+          esc(t('standing.allDay')) + '</button>';
+        shiftList().forEach(function (shift) {
+          var on = !day.off && day.blocked[shift.id] ? ' on' : '';
+          html += '<button class="pill tiny' + on + (day.off ? ' muted' : '') +
+            '" data-action="standing-shift" data-day="' + dayIdx +
+            '" data-shift="' + esc(shift.id) + '">' + esc(shift.name) + '</button>';
+        });
+        html += '</div></div>';
+      });
+      html += '</div>';
+      html += '<p class="hint quiet">' + esc(t('standing.noQuota')) + '</p></div>';
+
       /* התפקידים. מוצגים רק לעסק שהגדיר אותם – מי שלא צריך
          תפקידים לא צריך לדעת שהם קיימים. */
       var roleList = Store.roles(state);
@@ -930,7 +970,7 @@
             '" data-action="toggle-role" data-role="' + esc(role.id) + '">' + esc(role.name) + '</button>';
         });
         html += '</div>' +
-          '<p class="hint' + (mine.length ? ' hidden' : '') + '">' +
+          '<p class="hint role-hint' + (mine.length ? ' hidden' : '') + '">' +
             esc(t('positions.employeeHint')) + '</p></div>';
       }
       html += '<div class="field"><label class="title">' + t('employees.maxShifts') + '</label>' +
@@ -1289,6 +1329,10 @@
 
     LOCKED_SELECTORS.forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (node) {
+        /* פקד שנעול מסיבה משלו נשאר נעול. מצב צפייה מוסיף נעילה,
+           הוא לא מסיר אותה – אחרת יציאה ממצב צפייה הייתה פותחת
+           לעריכה דברים שאסור לערוך כאן בכלל, כמו אילוץ קבוע. */
+        if (node.dataset.lockedAlways === '1') { node.disabled = true; return; }
         node.disabled = viewOnly;
       });
     });
@@ -2201,6 +2245,26 @@
         var shiftId = event.target.dataset.shift;
         var pos = emp.shifts.indexOf(shiftId);
         if (pos === -1) emp.shifts.push(shiftId); else emp.shifts.splice(pos, 1);
+        persist('config');
+        render();
+      }
+      /* אילוץ קבוע. "כל היום" ומשמרת בודדת אינם מצטברים: מי
+         שחסם את כל היום כבר חסם את כל המשמרות שבו. */
+      if (action === 'standing-off') {
+        var offDay = Number(event.target.dataset.day);
+        var current = Store.standingFor(emp, offDay);
+        Store.setStanding(emp, offDay, current.off ? null : { off: true });
+        persist('config');
+        render();
+      }
+      if (action === 'standing-shift') {
+        var sDay = Number(event.target.dataset.day);
+        var sShift = event.target.dataset.shift;
+        var day = Store.standingFor(emp, sDay);
+        if (day.off) return;   // היום כולו חסום; אין מה לסמן בתוכו
+        var blocked = Object.assign({}, day.blocked);
+        if (blocked[sShift]) delete blocked[sShift]; else blocked[sShift] = true;
+        Store.setStanding(emp, sDay, { blocked: blocked });
         persist('config');
         render();
       }

@@ -246,6 +246,97 @@
     return isEffective(record) ? record : emptyConstraint();
   }
 
+  /* ===================== אילוץ קבוע =====================
+
+     יש אילוצים שאינם בקשה לשבוע מסוים אלא עובדה קבועה על העובד:
+     מי שלומד כל שני בערב לא יוכל לעבוד בשני בערב גם בעוד חודשיים.
+     עד היום הוא היה צריך להגיש את אותה בקשה כל שבוע מחדש, ולשרוף
+     עליה מהמכסה השבועית – על משהו שכולם כבר יודעים.
+
+     לכן ההסדר הקבוע יושב על כרטיס העובד ולא על השבוע:
+       emp.standing = { 1: { off: true }, 3: { blocked: { evening: true } } }
+
+     שתי תוצאות נובעות מזה ישירות. הוא חל על כל שבוע, כולל שבועות
+     שעוד לא נוצרו; והוא אינו נספר בתקרת הבקשות, כי התקרה סופרת
+     את week.constraints וההסדר אינו שם. זה לא טריק – זו בדיוק
+     ההבחנה: בקשה היא משהו שמבקשים, והסדר הוא משהו שסוכם. */
+
+  function standingMap(emp) {
+    var map = (emp && emp.standing) || {};
+    return (map && typeof map === 'object') ? map : {};
+  }
+
+  /* ההסדר הקבוע של העובד ליום מסוים, תמיד בצורה אחידה */
+  function standingFor(emp, dayIdx) {
+    var day = standingMap(emp)[String(dayIdx)];
+    if (!day) return { off: false, blocked: {} };
+    return {
+      off: !!day.off,
+      blocked: (day.blocked && typeof day.blocked === 'object') ? day.blocked : {}
+    };
+  }
+
+  /* האם ההסדר הקבוע חוסם את המשמרת הזו ביום הזה */
+  function standingBlocks(emp, dayIdx, shiftId) {
+    var day = standingFor(emp, dayIdx);
+    if (day.off) return true;
+    return !!day.blocked[shiftId];
+  }
+
+  function hasStanding(emp) {
+    var map = standingMap(emp);
+    return Object.keys(map).some(function (key) {
+      var day = standingFor(emp, key);
+      return day.off || Object.keys(day.blocked).length > 0;
+    });
+  }
+
+  /* כתיבת ההסדר ליום אחד. יום ריק יורד מהמפה, כדי שכרטיס בלי
+     הסדר ייראה בנתונים בדיוק כמו לפני שהתכונה קיימת. */
+  function setStanding(emp, dayIdx, value) {
+    if (!emp.standing) emp.standing = {};
+    var key = String(dayIdx);
+    var off = !!(value && value.off);
+    var blocked = {};
+    if (!off && value && value.blocked) {
+      Object.keys(value.blocked).forEach(function (shiftId) {
+        if (value.blocked[shiftId]) blocked[shiftId] = true;
+      });
+    }
+    if (!off && !Object.keys(blocked).length) { delete emp.standing[key]; }
+    else { emp.standing[key] = off ? { off: true } : { blocked: blocked }; }
+    if (!Object.keys(emp.standing).length) delete emp.standing;
+    return standingFor(emp, dayIdx);
+  }
+
+  /* האילוץ שתופס בפועל ביום הזה: ההסדר הקבוע ובקשת השבוע יחד.
+
+     ההסדר אינו מבטל את הבקשה ולהפך – שניהם מגבילים, ולכן הם
+     מתחברים. העדפות מגיעות רק מהבקשה: הסדר קבוע אומר מתי אי
+     אפשר, ולא מתי מעדיפים. */
+  function effectiveConstraint(state, week, empId, dayIdx) {
+    var weekly = getConstraint(week, empId, dayIdx);
+    var emp = byId((state && state.employees) || [], empId);
+    if (!emp || !hasStanding(emp)) return weekly;
+
+    var day = standingFor(emp, dayIdx);
+    if (!day.off && !Object.keys(day.blocked).length) return weekly;
+
+    var merged = {
+      off: weekly.off || day.off,
+      blocked: {},
+      preferred: weekly.preferred || {},
+      note: weekly.note || '',
+      /* כדי שהמסכים יוכלו לומר "זה הסדר קבוע" ולא "בקשה שאושרה" */
+      standing: true
+    };
+    Object.keys(weekly.blocked || {}).forEach(function (id) {
+      if (weekly.blocked[id]) merged.blocked[id] = true;
+    });
+    Object.keys(day.blocked).forEach(function (id) { merged.blocked[id] = true; });
+    return merged;
+  }
+
   /* עדכון סטטוס בקשה בידי מנהל */
   function setConstraintStatus(week, empId, dayIdx, status, managerNote) {
     var key = constraintKey(empId, dayIdx);
@@ -882,6 +973,9 @@
       knownRoles[role.id] = true;
     });
 
+    var knownShifts = {};
+    shiftIds(state).forEach(function (id) { knownShifts[id] = true; });
+
     state.employees.forEach(function (emp) {
       if (!Array.isArray(emp.branches)) emp.branches = [];
       if (!Array.isArray(emp.shifts)) emp.shifts = Data.ALL_SHIFT_IDS.slice();
@@ -889,6 +983,28 @@
       if (!Array.isArray(emp.roles)) emp.roles = [];
       else emp.roles = emp.roles.filter(function (id) { return knownRoles[id]; });
       if (typeof emp.maxShifts !== 'number') emp.maxShifts = 6;
+      /* הסדר קבוע: רק ימים אמיתיים ורק משמרות שקיימות בעסק.
+         משמרת שנמחקה מההגדרות לא תחסום לנצח יום שאיש לא מבין. */
+      if (emp.standing && typeof emp.standing === 'object') {
+        Object.keys(emp.standing).forEach(function (key) {
+          var dayIdx = Number(key);
+          var day = emp.standing[key];
+          if (!(dayIdx >= 0 && dayIdx <= 6) || !day || typeof day !== 'object') {
+            delete emp.standing[key];
+            return;
+          }
+          if (day.off) { emp.standing[key] = { off: true }; return; }
+          var blocked = {};
+          Object.keys(day.blocked || {}).forEach(function (shiftId) {
+            if (day.blocked[shiftId] && knownShifts[shiftId]) blocked[shiftId] = true;
+          });
+          if (Object.keys(blocked).length) emp.standing[key] = { blocked: blocked };
+          else delete emp.standing[key];
+        });
+        if (!Object.keys(emp.standing).length) delete emp.standing;
+      } else if (emp.standing !== undefined) {
+        delete emp.standing;
+      }
       /* כתובת מייל אופציונלית על הכרטיס. היא לא נדרשת לשיבוץ,
          אבל היא מה שמבדיל בין שני עובדים עם שם דומה בייבוא. */
       if (typeof emp.email !== 'string') emp.email = '';
@@ -1151,6 +1267,11 @@
     constraintKey: constraintKey,
     getConstraint: getConstraint,
     getConstraintRecord: getConstraintRecord,
+    standingFor: standingFor,
+    standingBlocks: standingBlocks,
+    hasStanding: hasStanding,
+    setStanding: setStanding,
+    effectiveConstraint: effectiveConstraint,
     constraintStatus: constraintStatus,
     setConstraintStatus: setConstraintStatus,
     pendingConstraints: pendingConstraints,

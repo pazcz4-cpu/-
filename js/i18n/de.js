@@ -320,6 +320,7 @@
         suggestTwoPerDay: ' In den Einstellungen können Sie zwei Schichten pro Tag und Person erlauben.',
         suggestRaiseMax: ' Das Wochenlimit lässt sich in der Mitarbeiterkarte erhöhen.',
         constraintOff: 'Wunsch verletzt: {name} wollte am {day} frei, ist aber der Schicht {shift} in {branch} zugeteilt.',
+        standingConflict: 'Feste Einschränkung verletzt: {name} ist am {day} nie für {shift} verfügbar, ist aber in {branch} eingeteilt.',
         constraintBlocked: 'Wunsch verletzt: {name} hat die Schicht {shift} am {day} gesperrt, ist ihr aber in {branch} zugeteilt.',
         branchMismatch: '{name} ist am {day} in {branch} eingeteilt, obwohl diese Filiale nicht in der Mitarbeiterkarte steht.',
         shiftMismatch: '{name} ist am {day} der Schicht {shift} zugeteilt, obwohl dieser Schichttyp nicht in der Mitarbeiterkarte steht.',
@@ -349,6 +350,17 @@
         noEmployees: 'Kein aktives Team.',
         shiftsOne: 'eine Schicht', shiftsOther: '{count} Schichten',
         remains: 'bleibt', remainPlural: 'bleiben'
+      },
+
+      standing: {
+        title: 'Feste Einschränkung',
+        hint: 'Was für diese Person jede Woche gilt — zum Beispiel Studium jeden Montagabend. Einmal festlegen, und es gilt ab sofort.',
+        allDay: 'Ganzer Tag',
+        noQuota: 'Eine feste Einschränkung zählt nicht zum wöchentlichen Antragslimit: sie ist eine Absprache, kein Antrag.',
+        state: 'Fest',
+        cellTitle: 'Feste Einschränkung — auf der Mitarbeiterkarte gesetzt',
+        locked: 'Das ist eine fest vereinbarte Einschränkung. Für Änderungen die Leitung ansprechen.',
+        employeeTitle: 'Ihre festen Einschränkungen'
       },
 
       constraints: {
@@ -441,6 +453,7 @@
           qualified: 'Für diese Schicht eingearbeitet',
           hasRole: 'Trägt die Rolle {role}',
           anyRole: 'Keine Rolle markiert, passt daher auch für {role}',
+          standingClear: 'Dieser Tag ist bei ihnen nicht dauerhaft blockiert',
           assignedBranch: 'Diesem Standort zugeordnet',
           anyBranch: 'Arbeitet an allen Standorten',
           quota: 'Vor dieser Schicht {before}, danach {after} von einem Kontingent von {max}',
@@ -453,6 +466,7 @@
           notQualified: 'ist für diese Schicht nicht eingearbeitet',
           otherBranch: 'arbeitet an einem anderen Standort',
           wrongRole: 'Trägt die Rolle {role} nicht',
+          standing: 'Am {day} nie verfügbar — feste Einschränkung',
           requestedOff: 'hat den Tag frei beantragt',
           blockedShift: 'möchte diese Schicht nicht',
           atLimit: 'hat das Wochenlimit von {max} erreicht',

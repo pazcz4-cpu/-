@@ -143,6 +143,20 @@
     if (this._locked()) { this._flash(t('employee.deadlineLocked')); return; }
 
     var dayIdx = Number(button.dataset.day);
+
+    /* הסדר קבוע אינו בקשה, ולכן הוא לא נערך מכאן ולא נספר במכסה.
+       בלי החסימה הזו העובד היה מבזבז בקשה על משהו שכבר סגור. */
+    var me = Store.byId(this.state.employees || [], this._employeeId());
+    if (me) {
+      var shiftForCheck = button.dataset.off ? null : button.dataset.shift;
+      var standingDay = Store.standingFor(me, dayIdx);
+      if (shiftForCheck === null ? standingDay.off
+          : Store.standingBlocks(me, dayIdx, shiftForCheck)) {
+        this._flash(t('standing.locked'));
+        return;
+      }
+    }
+
     var constraint = JSON.parse(JSON.stringify(this._constraint(dayIdx)));
     constraint.blocked = constraint.blocked || {};
     constraint.preferred = constraint.preferred || {};
@@ -228,7 +242,11 @@
     free:  { icon: 'circleEmpty', label: 'constraints.free' },
     pref:  { icon: 'star',        label: 'constraints.preferred' },
     block: { icon: 'ban',         label: 'constraints.blocked' },
-    'off-day': { icon: 'home',    label: 'constraints.dayOff' }
+    'off-day': { icon: 'home',    label: 'constraints.dayOff' },
+    /* הסדר קבוע. מצב נפרד ולא "חסום", כי העובד לא ביקש אותו
+       השבוע ואי אפשר להסיר אותו מכאן – וגם כדי שיראה שהוא אינו
+       עולה לו מהמכסה. */
+    standing: { icon: 'lock',     label: 'standing.state' }
   };
 
   function stateButton(cls, shiftLabel, attrs, locked) {
@@ -431,16 +449,23 @@
       } else {
         var locked = self.week.published ? ' disabled' : '';
         html += '<div class="m-cstates">';
+        var me = Store.byId(self.state.employees || [], self._employeeId());
         shiftIds.forEach(function (shiftId) {
           var cls = 'free';
-          if (constraint.off) cls = 'off-day';
+          var fixed = me && Store.standingBlocks(me, day.idx, shiftId);
+          if (fixed) cls = 'standing';
+          else if (constraint.off) cls = 'off-day';
           else if (constraint.blocked && constraint.blocked[shiftId]) cls = 'block';
           else if (constraint.preferred && constraint.preferred[shiftId]) cls = 'pref';
           html += stateButton(cls, Store.shiftName(self.state, shiftId),
-            'data-day="' + day.idx + '" data-shift="' + shiftId + '"', locked);
+            'data-day="' + day.idx + '" data-shift="' + shiftId + '"',
+            fixed ? ' disabled' : locked);
         });
-        html += stateButton(constraint.off ? 'off-day' : 'free', t('constraints.dayOff'),
-          'data-day="' + day.idx + '" data-off="1"', locked);
+        var standingDay = me ? Store.standingFor(me, day.idx) : { off: false, blocked: {} };
+        html += stateButton(standingDay.off ? 'standing' : (constraint.off ? 'off-day' : 'free'),
+          t('constraints.dayOff'),
+          'data-day="' + day.idx + '" data-off="1"',
+          standingDay.off ? ' disabled' : locked);
         html += '</div>';
         var record = self._record(day.idx);
         if (record && !self.week.published) {

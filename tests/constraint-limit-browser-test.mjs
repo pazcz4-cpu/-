@@ -158,6 +158,60 @@ try {
   });
   check('פנייה ישירה נדחית עם הסיבה הנכונה', direct, 'constraint_limit');
 
+  console.log('\n== המנהל אינו מוגבל ==');
+  /* התקרה מגבילה את מה שהעובד מגיש, לא את מה שהמנהל יודע. עובד
+     שלקח שבוע חופשה – המנהל מסמן לו את כל הימים, גם כשהתקרה
+     היא בקשה אחת. */
+  await mgr.click('.tab[data-tab="constraints"]');
+  await mgr.waitForTimeout(800);
+  const empId = await mgr.evaluate(() => {
+    const emp = window.ShiftApp.getState().employees.find(e => e.name === 'דני');
+    return emp && emp.id;
+  });
+  check('כרטיס העובד נמצא', !!empId, true);
+
+  /* חמישה ימי חופש ברצף, בזה אחר זה, דרך המסך של המנהל */
+  for (const day of [0, 1, 2, 3, 4]) {
+    await mgr.locator('#constraints-grid .cstate[data-off]' +
+      '[data-emp="' + empId + '"][data-day="' + day + '"]').click();
+    await mgr.waitForTimeout(350);
+  }
+  check('כל חמשת הימים נשמרו, למרות תקרה של בקשה אחת',
+    await mgr.evaluate((id) => {
+      const app = window.ShiftApp, S = window.ShiftStore;
+      const state = app.getState();
+      const week = S.getWeek(state, app.weekKey());
+      return [0, 1, 2, 3, 4].filter(d => S.getConstraint(week, id, d).off).length;
+    }, empId), 5);
+  check('ולא הוצגה הודעת תקרה למנהל',
+    (await mgr.locator('#toast').innerText()).indexOf('הגביל') === -1, true);
+
+  console.log('\n== והכלל יושב בשרת, לא רק במסך ==');
+  /* העובד נכנס אחרון, ושני הדפים חולקים אותו אחסון – ולכן
+     מתחברים שוב כמנהל לפני הקריאה הישירה. */
+  const direct2 = await mgr.evaluate(async (id) => {
+    const backend = window.__backend;
+    await backend.signIn({ email: 'boss@cap.test', password: 'secret123' });
+    const weeks = await backend.listWeeks();
+    const weekKey = weeks[weeks.length - 1];
+    const week = await backend.loadWeek(weekKey);
+    const constraints = Object.assign({}, (week && week.constraints) || {});
+    [5, 6].forEach((day) => {
+      constraints[id + '|' + day] = { off: true, blocked: {}, preferred: {}, status: 'approved' };
+    });
+    try {
+      const saved = await backend.saveWeek(weekKey, {
+        constraints: constraints, assignments: (week && week.assignments) || {},
+        manual: {}, holidays: {}, shabbatEnd: '', note: ''
+      });
+      return Object.keys(saved.constraints).filter(k => k.indexOf(id + '|') === 0).length;
+    } catch (err) { return (err && err.code) || 'unknown'; }
+  }, empId);
+  /* הנקודה היא שהשרת לא דחה: העובד קיבל constraint_limit על
+     בקשה שנייה, והמנהל שמר שניים בבת אחת באותה תקרה. */
+  check('שמירה ישירה של המנהל אינה נחסמת', typeof direct2 === 'number', true);
+  check('ושני הימים נשמרו', direct2 >= 2, true);
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

@@ -96,7 +96,7 @@ try {
   await page.waitForTimeout(400);
   check('שתי גלולות', await page.locator('.pill.role-pill').count(), 2);
   check('ונאמר מה המשמעות של לא לסמן',
-    await page.locator('.card-body .hint:not(.hidden)').first().innerText(), /מתאים לכל/);
+    await page.locator('.card-body .hint.role-hint:not(.hidden)').first().innerText(), /מתאים לכל/);
   await page.locator('.pill.role-pill').first().click();
   await page.waitForTimeout(600);
   await page.locator('.pill.role-pill').nth(1).click();

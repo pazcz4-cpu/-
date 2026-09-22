@@ -325,6 +325,7 @@
         suggestTwoPerDay: ' אפשר לאפשר שתי משמרות ביום באותו עובד בלשונית ההגדרות.',
         suggestRaiseMax: ' אפשר להעלות את מכסת המשמרות בכרטיס העובד.',
         constraintOff: 'הפרת אילוץ: {name} ביקש/ה יום חופש ב{day} אך משובץ/ת ל{shift} ב{branch}.',
+        standingConflict: 'הפרת אילוץ קבוע: {name} אינו זמין ב{day} ב{shift}, אך משובץ/ת ל{branch}.',
         constraintBlocked: 'הפרת אילוץ: {name} חסם/ה משמרת {shift} ב{day} אך משובץ/ת אליה ב{branch}.',
         branchMismatch: '{name} משובץ/ת ב{branch} ({day}) למרות שהסניף אינו מוגדר בכרטיס העובד.',
         shiftMismatch: '{name} משובץ/ת למשמרת {shift} ב{day} למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
@@ -354,6 +355,17 @@
         noEmployees: 'לא הוגדרו עובדים פעילים.',
         shiftsOne: 'משמרת אחת', shiftsOther: '{count} משמרות',
         remains: 'נותרה', remainPlural: 'נותרו'
+      },
+
+      standing: {
+        title: 'אילוץ קבוע',
+        hint: 'מה שנכון לעובד הזה בכל שבוע — למשל לימודים כל שני בערב. נקבע פעם אחת, ותופס מכאן והלאה.',
+        allDay: 'כל היום',
+        noQuota: 'אילוץ קבוע אינו נספר בתקרת הבקשות השבועית: הוא אינו בקשה אלא הסדר.',
+        state: 'קבוע',
+        cellTitle: 'אילוץ קבוע — נקבע בכרטיס העובד',
+        locked: 'זה אילוץ קבוע שנקבע מראש. לשינוי צריך לפנות למנהל.',
+        employeeTitle: 'האילוצים הקבועים שלך'
       },
 
       constraints: {
@@ -446,6 +458,7 @@
           qualified: 'מוסמך למשמרת הזו',
           hasRole: 'מסומן בתפקיד {role}',
           anyRole: 'לא סומן בתפקיד מסוים, ולכן מתאים גם ל{role}',
+          standingClear: 'היום הזה אינו חסום אצלו באופן קבוע',
           assignedBranch: 'משויך לסניף הזה',
           anyBranch: 'עובד בכל הסניפים',
           quota: 'לפני השיבוץ {before} משמרות, אחריו {after} מתוך מכסה של {max}',
@@ -458,6 +471,7 @@
           notQualified: 'אינו מוסמך למשמרת הזו',
           otherBranch: 'עובד בסניף אחר',
           wrongRole: 'אינו מסומן בתפקיד {role}',
+          standing: 'אינו זמין ב{day} — אילוץ קבוע',
           requestedOff: 'ביקש חופש ביום הזה',
           blockedShift: 'ביקש לא לעבוד במשמרת הזו',
           atLimit: 'הגיע למכסה השבועית ({max})',

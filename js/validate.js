@@ -70,7 +70,7 @@
       if (emp.shifts.indexOf(demand.shiftId) === -1) return;
       if (!Scheduler.employeeAllowedInBranch(emp, demand.branchId)) return;
       if (!Store.employeeFitsRole(state, emp, demand.role)) { wrongRole++; return; }
-      var constraint = Store.getConstraint(week, emp.id, demand.dayIdx);
+      var constraint = Store.effectiveConstraint(state, week, emp.id, demand.dayIdx);
       if (constraint.off || (constraint.blocked && constraint.blocked[demand.shiftId])) return;
       eligible.push(emp);
 
@@ -130,6 +130,7 @@
 
     'duplicate-employee-slot': GROUPS.VIOLATIONS,
     'double-booked': GROUPS.VIOLATIONS,
+    'standing-conflict': GROUPS.VIOLATIONS,
     'constraint-off': GROUPS.VIOLATIONS,
     'constraint-blocked': GROUPS.VIOLATIONS,
     'branch-mismatch': GROUPS.VIOLATIONS,
@@ -277,7 +278,7 @@
       for (var day = 0; day < 7; day++) {
         var slots = Store.employeeDayAssignments(state, week, emp.id, day);
         total += slots.length;
-        var constraint = Store.getConstraint(week, emp.id, day);
+        var constraint = Store.effectiveConstraint(state, week, emp.id, day);
 
         // כפל משמרת לעובד באותו יום
         if (slots.length > 1) {
@@ -297,7 +298,16 @@
         }
 
         slots.forEach(function (s) {
-          if (constraint.off) {
+          /* הסדר קבוע שנשבר הוא לא "בקשה שלא כובדה": איש לא ביקש
+             דבר השבוע, וזה בדיוק מה שהופך את זה לקל לפספוס. */
+          if (Store.standingBlocks(emp, day, s.shiftId)) {
+            issues.push(issue('error', 'standing-conflict',
+              t('alerts.standingConflict', {
+                name: emp.name, day: dayName(day),
+                shift: shiftName(s.shiftId), branch: branchName(state, s.branchId)
+              }),
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          } else if (constraint.off) {
             issues.push(issue('error', 'constraint-off',
               t('alerts.constraintOff', {
                 name: emp.name, day: dayName(day),

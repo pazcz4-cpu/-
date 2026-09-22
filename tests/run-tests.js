@@ -19,7 +19,17 @@ var path = require('path');
 var passed = 0, failed = 0;
 
 function test(name, fn) {
-  try { fn(); passed++; console.log('  ✓ ' + name); }
+  try {
+    var out = fn();
+    /* בדיקה אסינכרונית כאן תמיד "עוברת": הפונקציה חוזרת מיד,
+       ההבטחה נבדקת אחרי שהסיכום כבר הודפס, וכישלון נבלע. עדיף
+       ליפול על זה מיד מאשר להאמין למספר. בדיקות כאלה נכתבות
+       בקובצי ה-mjs, שם יש await. */
+    if (out && typeof out.then === 'function') {
+      throw new Error('בדיקה אסינכרונית אינה נתמכת כאן – העבירו אותה לקובץ mjs');
+    }
+    passed++; console.log('  ✓ ' + name);
+  }
   catch (err) { failed++; console.log('  ✗ ' + name + '\n      ' + err.message); }
 }
 function assert(condition, message) { if (!condition) throw new Error(message || 'assertion failed'); }
@@ -1399,6 +1409,127 @@ test('תמהיל אינו חורג ממספר האנשים במשמרת', functi
   var lines = Store.slotRoleNeeds(state, state.branches[0], 0, 'morning');
   var total = lines.reduce(function (sum, line) { return sum + line.count; }, 0);
   assertEqual(total, 2, 'הדרישה ביקשה יותר אנשים ממה שנפתח');
+});
+
+/* ===== אילוץ קבוע =====
+
+   עובד שלומד כל שני בערב לא צריך להגיש את אותה בקשה כל שבוע,
+   ובוודאי שלא לשרוף עליה מהמכסה. */
+function withStanding(standing) {
+  var state = Store.blankState();
+  state.branches = [{ id: 'br1', name: 'סניף', active: true, schedule: {} }];
+  for (var d = 0; d < 7; d++) {
+    state.branches[0].schedule[d] = { evening: { need: 1, from: '15:00', to: '22:00' } };
+  }
+  state.employees = [{
+    id: 'e1', name: 'דני', active: true, branches: [], roles: [],
+    shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 7, email: '', note: '',
+    standing: standing
+  }];
+  return Store.migrate(state);
+}
+
+test('אילוץ קבוע חוסם את המשמרת בכל שבוע', function () {
+  var state = withStanding({ 1: { blocked: { evening: true } } });
+  var week = Store.emptyWeek();
+  build(state, week);
+  assertEqual(Store.getAssigned(week, 1, 'br1', 'evening').length, 0,
+    'שובץ בשני ערב למרות אילוץ קבוע');
+  assertEqual(Store.getAssigned(week, 2, 'br1', 'evening').length, 1,
+    'שלישי ערב לא אויש');
+
+  /* וגם בשבוע אחר לגמרי, בלי שאיש הגיש דבר */
+  var other = Store.emptyWeek();
+  build(state, other);
+  assertEqual(Store.getAssigned(other, 1, 'br1', 'evening').length, 0,
+    'שבוע אחר לא כיבד את האילוץ הקבוע');
+});
+
+test('אילוץ קבוע אינו נספר בתקרת הבקשות', function () {
+  var state = withStanding({
+    1: { blocked: { evening: true } },
+    3: { off: true }
+  });
+  state.settings.constraintLimit = { enabled: true, max: 2 };
+  var week = Store.emptyWeek();
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 2,
+    'האילוץ הקבוע גזל מהמכסה');
+
+  /* ועדיין אפשר להגיש שתי בקשות רגילות */
+  Store.setConstraint(week, 'e1', 5, { off: true, blocked: {}, preferred: {}, status: 'approved' });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 1, 'בקשה ראשונה');
+  Store.setConstraint(week, 'e1', 6, { off: true, blocked: {}, preferred: {}, status: 'approved' });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 0, 'בקשה שנייה');
+});
+
+test('יום שלם קבוע חוסם את כל המשמרות שבו', function () {
+  var state = withStanding({ 2: { off: true } });
+  Data.ALL_SHIFT_IDS.forEach(function (shiftId) {
+    assert(Store.standingBlocks(state.employees[0], 2, shiftId),
+      shiftId + ' לא נחסם ביום שכולו סגור');
+  });
+  assert(!Store.standingBlocks(state.employees[0], 3, 'evening'), 'יום אחר נחסם בטעות');
+});
+
+test('אילוץ קבוע ובקשה שבועית מצטברים ולא דורסים', function () {
+  var state = withStanding({ 1: { blocked: { evening: true } } });
+  var week = Store.emptyWeek();
+  Store.setConstraint(week, 'e1', 1, {
+    off: false, blocked: { morning: true }, preferred: {}, status: 'approved'
+  });
+  var merged = Store.effectiveConstraint(state, week, 'e1', 1);
+  assert(merged.blocked.evening, 'הקבוע נעלם');
+  assert(merged.blocked.morning, 'הבקשה השבועית נעלמה');
+  assertEqual(merged.standing, true, 'לא סומן כהסדר קבוע');
+});
+
+test('שיבוץ שמפר אילוץ קבוע מדווח בנפרד', function () {
+  var state = withStanding({ 1: { blocked: { evening: true } } });
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 1, 'br1', 'evening', ['e1']);
+  var report = Validate.validate(state, week);
+  var hits = report.issues.filter(function (i) { return i.type === 'standing-conflict'; });
+  assertEqual(hits.length, 1, 'לא דווחה הפרה של אילוץ קבוע');
+  assertEqual(report.issues.filter(function (i) { return i.type === 'constraint-blocked'; }).length, 0,
+    'דווח גם כבקשה שבועית, למרות שאיש לא ביקש דבר');
+});
+
+test('ההסבר אומר "אילוץ קבוע" ולא "ביקש חופש"', function () {
+  var state = withStanding({ 1: { blocked: { evening: true } } });
+  var week = Store.emptyWeek();
+  var ctx = Explain.contextOf(state, week);
+  var emp = state.employees[0];
+  var reason = Explain.blockedReason(state, week, ctx, emp,
+    { dayIdx: 1, branchId: 'br1', shiftId: 'evening' });
+  assertEqual(reason && reason.code, 'standing',
+    'הסיבה שגויה: ' + JSON.stringify(reason));
+
+  /* וביום אחר הוא לא חסום בכלל */
+  var free = Explain.blockedReason(state, week, ctx, emp,
+    { dayIdx: 2, branchId: 'br1', shiftId: 'evening' });
+  assertEqual(free, null, 'נחסם ביום שאין בו אילוץ קבוע');
+});
+
+test('עובד בלי אילוץ קבוע מתנהג בדיוק כמו קודם', function () {
+  var state = withStanding(undefined);
+  assert(!Store.hasStanding(state.employees[0]), 'נוצר אילוץ קבוע יש מאין');
+  assert(state.employees[0].standing === undefined, 'נשאר שדה ריק בנתונים');
+  var week = Store.emptyWeek();
+  build(state, week);
+  var filled = 0;
+  for (var d = 0; d < 7; d++) {
+    if (Store.getAssigned(week, d, 'br1', 'evening').length) filled++;
+  }
+  assertEqual(filled, 7, 'השיבוץ נפגע');
+});
+
+test('כתיבת אילוץ קבוע: יום ריק יורד מהנתונים', function () {
+  var state = withStanding({ 1: { blocked: { evening: true } } });
+  var emp = state.employees[0];
+  Store.setStanding(emp, 1, { blocked: {} });
+  assert(emp.standing === undefined, 'נשארה מפה ריקה: ' + JSON.stringify(emp.standing));
+  Store.setStanding(emp, 4, { off: true });
+  assertEqual(JSON.stringify(emp.standing), '{"4":{"off":true}}', 'הכתיבה לא נשמרה');
 });
 
 console.log('\n== אייקונים ==');

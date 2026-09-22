@@ -320,6 +320,7 @@
         suggestTwoPerDay: ' Puedes permitir dos turnos al día por persona en Ajustes.',
         suggestRaiseMax: ' Puedes subir el límite semanal en la ficha del empleado.',
         constraintOff: 'Solicitud incumplida: {name} pidió libre el {day} pero está asignado a {shift} en {branch}.',
+        standingConflict: 'Restricción fija incumplida: {name} nunca está disponible el {day} para {shift}, pero está asignado en {branch}.',
         constraintBlocked: 'Solicitud incumplida: {name} bloqueó {shift} el {day} pero está asignado a ese turno en {branch}.',
         branchMismatch: '{name} está asignado a {branch} el {day} aunque esa sucursal no está en su ficha.',
         shiftMismatch: '{name} está asignado a {shift} el {day} aunque ese tipo de turno no está en su ficha.',
@@ -349,6 +350,17 @@
         noEmployees: 'No hay personal activo.',
         shiftsOne: 'un turno', shiftsOther: '{count} turnos',
         remains: 'queda', remainPlural: 'quedan'
+      },
+
+      standing: {
+        title: 'Restricción fija',
+        hint: 'Lo que vale para esta persona todas las semanas — por ejemplo, estudiar cada lunes por la tarde. Se define una vez y rige desde ahora.',
+        allDay: 'Todo el día',
+        noQuota: 'Una restricción fija no cuenta para el límite semanal de solicitudes: es un acuerdo, no una solicitud.',
+        state: 'Fija',
+        cellTitle: 'Restricción fija — se define en la ficha del empleado',
+        locked: 'Es una restricción fija acordada de antemano. Habla con tu responsable para cambiarla.',
+        employeeTitle: 'Tus restricciones fijas'
       },
 
       constraints: {
@@ -441,6 +453,7 @@
           qualified: 'Formado para este turno',
           hasRole: 'Tiene la función {role}',
           anyRole: 'Sin función marcada, así que también sirve para {role}',
+          standingClear: 'Ese día no está bloqueado de forma permanente para esta persona',
           assignedBranch: 'Asignado a esta sucursal',
           anyBranch: 'Trabaja en cualquier sucursal',
           quota: 'Antes de este turno {before}, después {after} de una cuota de {max}',
@@ -453,6 +466,7 @@
           notQualified: 'no está formado para este turno',
           otherBranch: 'trabaja en otra sucursal',
           wrongRole: 'No tiene la función {role}',
+          standing: 'Nunca disponible el {day} — restricción fija',
           requestedOff: 'pidió el día libre',
           blockedShift: 'pidió no trabajar en este turno',
           atLimit: 'alcanzó el límite semanal de {max}',

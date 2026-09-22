@@ -320,6 +320,7 @@
         suggestTwoPerDay: ' يمكنك السماح بمناوبتين في اليوم للموظف الواحد من الإعدادات.',
         suggestRaiseMax: ' يمكنك رفع الحد الأسبوعي في بطاقة الموظف.',
         constraintOff: 'مخالفة طلب: {name} طلب إجازة يوم {day} لكنه معيَّن في مناوبة {shift} في {branch}.',
+        standingConflict: 'خرق قيد ثابت: {name} غير متاح يوم {day} في {shift}، لكنه مجدول في {branch}.',
         constraintBlocked: 'مخالفة طلب: {name} حجب مناوبة {shift} يوم {day} لكنه معيَّن فيها في {branch}.',
         branchMismatch: '{name} معيَّن في {branch} يوم {day} رغم أن هذا الفرع غير مُدرج في بطاقته.',
         shiftMismatch: '{name} معيَّن في مناوبة {shift} يوم {day} رغم أن هذا النوع غير مُدرج في بطاقته.',
@@ -349,6 +350,17 @@
         noEmployees: 'لا يوجد موظفون نشطون.',
         shiftsOne: 'مناوبة واحدة', shiftsOther: '{count} مناوبات',
         remains: 'تبقّت', remainPlural: 'تبقّت'
+      },
+
+      standing: {
+        title: 'قيد ثابت',
+        hint: 'ما يصحّ على هذا الموظف كل أسبوع — مثلًا دراسة كل اثنين مساءً. يُحدَّد مرة واحدة ويسري من الآن فصاعدًا.',
+        allDay: 'اليوم كله',
+        noQuota: 'القيد الثابت لا يُحتسب ضمن حد الطلبات الأسبوعي: هو ترتيب وليس طلبًا.',
+        state: 'ثابت',
+        cellTitle: 'قيد ثابت — يُحدَّد في بطاقة الموظف',
+        locked: 'هذا قيد ثابت محدَّد مسبقًا. لتغييره راجع المدير.',
+        employeeTitle: 'قيودك الثابتة'
       },
 
       constraints: {
@@ -441,6 +453,7 @@
           qualified: 'مؤهل لهذه الوردية',
           hasRole: 'محدَّد بدور {role}',
           anyRole: 'لم يُحدَّد له دور، لذا يناسب {role} أيضًا',
+          standingClear: 'هذا اليوم ليس محجوبًا لديه بشكل دائم',
           assignedBranch: 'معيّن لهذا الفرع',
           anyBranch: 'يعمل في جميع الفروع',
           quota: 'قبل هذه الوردية {before}، وبعدها {after} من حصة قدرها {max}',
@@ -453,6 +466,7 @@
           notQualified: 'غير مؤهل لهذه الوردية',
           otherBranch: 'يعمل في فرع آخر',
           wrongRole: 'غير محدَّد بدور {role}',
+          standing: 'غير متاح يوم {day} — قيد ثابت',
           requestedOff: 'طلب إجازة في هذا اليوم',
           blockedShift: 'طلب عدم العمل في هذه الوردية',
           atLimit: 'بلغ الحد الأسبوعي ({max})',

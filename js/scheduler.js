@@ -108,6 +108,31 @@
       }
     });
 
+    /* וההסדרים הקבועים, שאינם בקשה לשבוע הזה אלא עובדה על העובד.
+       הם נכנסים לאותה מפה, כי מבחינת השיבוץ אין ביניהם הבדל: גם
+       זה וגם זה אומרים "אי אפשר". ההבדל היחיד הוא מי כתב אותם
+       ומתי, וזה נשמר לטובת ההסברים והמסכים. */
+    (state.employees || []).forEach(function (emp) {
+      if (!Store.hasStanding(emp)) return;
+      for (var day = 0; day < 7; day++) {
+        var standing = Store.standingFor(emp, day);
+        if (!standing.off && !Object.keys(standing.blocked).length) continue;
+        var key = emp.id + '|' + day;
+        var weekly = effective[key];
+        var merged = {
+          off: (weekly && weekly.off) || standing.off,
+          blocked: {},
+          preferred: (weekly && weekly.preferred) || {},
+          standing: true
+        };
+        Object.keys((weekly && weekly.blocked) || {}).forEach(function (id) {
+          if (weekly.blocked[id]) merged.blocked[id] = true;
+        });
+        Object.keys(standing.blocked).forEach(function (id) { merged.blocked[id] = true; });
+        effective[key] = merged;
+      }
+    });
+
     var ctx = {
       state: state,
       week: week,

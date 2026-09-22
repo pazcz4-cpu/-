@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -24,6 +25,7 @@ async function newSession() {
 
 // --- חברה א נרשמת ---
 const a = await newSession();
+await skipWizard(a.page);
 await a.page.goto(APP);
 await a.page.waitForTimeout(400);
 console.log('1. שער התחברות מוצג:', await a.page.locator('#auth-gate').isVisible(),
@@ -55,6 +57,7 @@ console.log('4. אחרי רענון – עדיין מחובר:', await a.page.lo
 
 // --- חברה ב בדפדפן נפרד ---
 const b = await newSession();
+await skipWizard(b.page);
 await b.page.goto(APP);
 await b.page.waitForTimeout(400);
 await b.page.click('[data-auth-mode="signup"]');

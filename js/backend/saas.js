@@ -318,6 +318,35 @@
         root.ShiftSupportUI.init({ backend: backend, session: session });
       }
 
+      /* אשף הפתיחה, אחרון: הוא מכסה את המסך, ולכן כל השאר צריך
+         להיות מוכן מתחתיו – מי שמדלג עליו נוחת על מערכת פעילה
+         ולא על מסך שעדיין נבנה. */
+      if (root.ShiftOnboarding) {
+        var wizard = new root.ShiftOnboarding.Onboarding({
+          session: session,
+          getState: function () { return root.ShiftApp.getState(); },
+          addBranch: function (name, defer) { return root.ShiftApp.addBranch(name, defer); },
+          addEmployee: function (name, defer) { return root.ShiftApp.addEmployee(name, defer); },
+          persistConfig: function () { return root.ShiftApp.persistConfig(); },
+          saveShifts: function (list) { return root.ShiftApp.saveShifts(list); },
+          renameCompany: function (name) {
+            return backend.renameCompany(name).then(function () {
+              var updated = backend.session();
+              if (updated) { authRef.renderUserBar(updated); }
+            });
+          },
+          saveOwnName: function (name) {
+            return backend.saveOwnName(name).then(function () {
+              var updated = backend.session();
+              if (updated) { authRef.renderUserBar(updated); }
+            });
+          },
+          onDone: function () { root.ShiftApp.render(); }
+        });
+        root.ShiftWizard = wizard;
+        wizard.start();
+      }
+
       return session;
     });
   }

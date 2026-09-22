@@ -7,6 +7,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -37,6 +38,7 @@ async function newPage() {
 
 try {
   const page = await newPage();
+  await skipWizard(page);
   await page.goto(APP);
   await page.waitForTimeout(400);
   await page.click('[data-auth-mode="signup"]');
@@ -87,6 +89,7 @@ try {
 
   console.log('\n== מוזמן שטרם קבע סיסמה אינו יכול להתחבר ==');
   const invitee = await newPage();
+  await skipWizard(invitee);
   await invitee.goto(APP);
   await invitee.waitForTimeout(400);
   await invitee.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
@@ -123,6 +126,7 @@ try {
 
   console.log('\n== שכחתי סיסמה ==');
   const forgot = await newPage();
+  await skipWizard(forgot);
   await forgot.goto(APP);
   await forgot.waitForTimeout(400);
   await forgot.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));

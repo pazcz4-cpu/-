@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { clickTool, openMenuFor } from './_menu.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -49,6 +50,7 @@ async function newPage(options) {
 }
 
 async function signUp(page, email) {
+  await skipWizard(page);
   await page.goto(APP);
   await page.waitForTimeout(400);
   await page.click('[data-auth-mode="signup"]');

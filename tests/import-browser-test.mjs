@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { clickTool, openMenuFor } from './_menu.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -41,6 +42,7 @@ async function paste(text) {
 }
 
 try {
+  await skipWizard(page);
   await page.goto(LOCAL);
   await page.waitForTimeout(500);
   await page.click('.tab[data-tab="employees"]');

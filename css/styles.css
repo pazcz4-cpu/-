@@ -1502,3 +1502,112 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* הצעת נתוני הדוגמה במסך ריק: הצעה, לא פעולה ראשית */
 .list-empty-actions { justify-content: center; margin-top: 4px; }
+
+/* ===================== אשף הפתיחה ===================== */
+.onboarding { position: fixed; inset: 0; z-index: 80; display: flex; }
+.onboarding.hidden { display: none; }
+body.onboarding-open { overflow: hidden; }
+
+.wiz-backdrop { position: absolute; inset: 0; background: rgba(17, 24, 39, .55); }
+
+.wiz-card {
+  position: relative; margin: auto;
+  width: min(560px, calc(100vw - var(--s6)));
+  max-height: calc(100vh - var(--s7));
+  display: flex; flex-direction: column;
+  background: var(--surface); border-radius: var(--r-xl);
+  box-shadow: var(--e3); overflow: hidden;
+}
+
+.wiz-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: var(--s4) var(--s5) 0;
+}
+.wiz-brand .brand-img { height: 28px; width: auto; }
+
+/* מד השלבים. מספר בלבד ("2 מתוך 4") אינו אומר מה נשאר לעשות,
+   ולכן כל שלב נושא את שמו. */
+.wiz-steps {
+  display: flex; gap: var(--s2); list-style: none;
+  margin: var(--s4) 0 0; padding: 0 var(--s5);
+}
+.wiz-step {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: var(--s1);
+  font-size: var(--t-xs); color: var(--muted); text-align: center; min-width: 0;
+}
+.wiz-dot {
+  width: 26px; height: 26px; border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); background: var(--bg);
+  font-size: var(--t-xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.wiz-step.now { color: var(--brand); font-weight: 700; }
+.wiz-step.now .wiz-dot { border-color: var(--brand); background: var(--brand); color: var(--brand-ink); }
+.wiz-step.done { color: var(--ok); }
+.wiz-step.done .wiz-dot { border-color: var(--ok-line); background: var(--ok-bg); color: var(--ok); }
+.wiz-step-name { overflow-wrap: anywhere; }
+
+.wiz-body { padding: var(--s5); overflow-y: auto; flex: 1 1 auto; }
+.wiz-body h2 {
+  display: flex; align-items: center; gap: var(--s2);
+  margin: 0 0 var(--s2); font-size: var(--t-xl);
+}
+.wiz-body h2 .ico { color: var(--brand); }
+.wiz-hint { margin: 0 0 var(--s4); color: var(--muted); font-size: var(--t-sm); }
+.wiz-note { margin: var(--s3) 0 0; color: var(--muted); font-size: var(--t-xs); }
+
+.wiz-field { display: flex; flex-direction: column; gap: var(--s1); margin-bottom: var(--s4); }
+.wiz-field > span { font-weight: 600; font-size: var(--t-sm); }
+
+.wiz-list { display: flex; flex-direction: column; gap: var(--s2); margin-bottom: var(--s3); }
+.wiz-row { display: flex; align-items: center; gap: var(--s2); }
+.wiz-row .text-input { flex: 1 1 auto; min-width: 0; }
+.wiz-dash { color: var(--muted); }
+.wiz-swatch {
+  flex: 0 0 auto; width: 14px; height: 28px; border-radius: var(--r-sm);
+  background: var(--sh-bg); border-inline-start: 4px solid var(--sh-line);
+}
+.wiz-shift .time-input { width: 74px; flex: 0 0 auto; }
+
+.wiz-choice { display: grid; gap: var(--s3); }
+.wiz-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--s4); font: inherit; color: inherit; text-align: start; width: 100%;
+}
+button.wiz-option { cursor: pointer; }
+button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
+.wiz-option .ico { color: var(--brand); }
+.wiz-option b { font-size: var(--t-md); }
+.wiz-option > span { color: var(--muted); font-size: var(--t-sm); }
+.wiz-option .wiz-row { width: 100%; margin-top: var(--s2); }
+.wiz-count { margin: var(--s2) 0 0; font-size: var(--t-sm); font-weight: 600; color: var(--ok); }
+.wiz-count.empty { color: var(--muted); font-weight: 400; }
+
+.wiz-error {
+  margin: var(--s3) 0 0; padding: var(--s2) var(--s3); border-radius: var(--r-md);
+  background: var(--err-bg); color: var(--err); border: 1px solid var(--err-line);
+  font-size: var(--t-sm); font-weight: 600;
+}
+.wiz-error.hidden { display: none; }
+
+.wiz-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: var(--s4) var(--s5); border-top: 1px solid var(--line); background: var(--bg);
+}
+.wiz-foot .btn.primary { min-height: 44px; padding-inline: var(--s5); }
+
+@media (max-width: 560px) {
+  /* בטלפון האשף הוא המסך, ולא חלון שמרחף מעליו */
+  .wiz-card {
+    width: 100vw; max-height: none; height: 100%;
+    border-radius: 0; margin: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .wiz-head, .wiz-steps, .wiz-body, .wiz-foot { padding-inline: var(--s4); }
+  .wiz-step-name { display: none; }
+  .wiz-step.now .wiz-step-name { display: block; }
+  .wiz-shift { flex-wrap: wrap; }
+  .wiz-shift .wiz-shift-name { flex: 1 1 100%; }
+}

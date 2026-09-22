@@ -5,6 +5,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -29,6 +30,7 @@ page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
 try {
+  await skipWizard(page);
   await page.goto(APP);
   await page.waitForTimeout(400);
 

@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -42,6 +43,8 @@ async function signIn(email, password) {
   await page.click('#signin-form button[type="submit"]');
   await page.waitForTimeout(1400);
 }
+
+await skipWizard(page);
 
 await page.goto(APP);
 await page.waitForTimeout(400);

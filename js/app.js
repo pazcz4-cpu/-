@@ -2928,6 +2928,27 @@
     /* שמירת ההגדרות לשרת. חשוף לשימוש חיצוני כי מסלולי הדפדפן
        בונים עסק מאויש ואז מרעננים; בלי שמירה הוא היה נעלם. */
     persistConfig: function () { return persist('config'); },
+    /* עדכון רשימת המשמרות בבת אחת. האשף עורך את כולן במסך אחד,
+       ושמירה לכל שדה בנפרד הייתה מייצרת מצב ביניים שבו משמרת
+       קיימת בלי שעות. שומר על הצבע והמזהה הקיימים, כי הם מה
+       שקושר את המשמרת לשיבוצים שכבר נעשו. */
+    saveShifts: function (list) {
+      var byId = {};
+      (state.settings.shifts || []).forEach(function (shift) { byId[shift.id] = shift; });
+      state.settings.shifts = list.map(function (item, index) {
+        var known = byId[item.id] || {};
+        return {
+          id: item.id || Store.newId('shift'),
+          name: item.name,
+          from: item.from,
+          to: item.to,
+          color: typeof known.color === 'number' ? known.color : index
+        };
+      });
+      state = Store.migrate(state);
+      render();
+      return persist('config');
+    },
     applyRemoteWeek: applyRemoteWeek,
     openWeek: openWeek,
     currentRole: currentRole,

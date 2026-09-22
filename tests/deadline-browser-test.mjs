@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -29,6 +30,7 @@ page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('dialog', async d => { await d.accept(); });
 
 try {
+  await skipWizard(page);
   await page.goto(APP);
   await page.waitForTimeout(400);
   await page.click('[data-auth-mode="signup"]');

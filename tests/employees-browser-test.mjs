@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -32,6 +33,7 @@ const visibleBodies = () => page.evaluate(() =>
     .filter((node) => node.offsetParent !== null).length);
 
 try {
+  await skipWizard(page);
   await page.goto(LOCAL);
   await page.waitForTimeout(500);
   await page.click('.tab[data-tab="employees"]');

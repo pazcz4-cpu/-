@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -25,6 +26,7 @@ async function mk(ctx) {
 // המנהל נרשם
 const mgrCtx = await browser.newContext({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
 const mgr = await mk(mgrCtx);
+await skipWizard(mgr);
 await mgr.goto(APP);
 await mgr.waitForTimeout(400);
 await mgr.click('[data-auth-mode="signup"]');
@@ -65,6 +67,7 @@ console.log('3. הסידור פורסם לשבוע', weekKey);
 
 // העובד נכנס בדפדפן נפרד — אותו localStorage לא משותף, לכן נשתמש באותו context
 const emp = await mk(mgrCtx);
+await skipWizard(emp);
 await emp.goto(APP);
 await emp.waitForTimeout(500);
 // יציאה והתחברות כעובד

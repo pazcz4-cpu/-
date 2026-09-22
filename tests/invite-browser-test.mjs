@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -25,6 +26,8 @@ const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 }, l
 const page = await ctx.newPage();
 page.on('pageerror', e => errors.push('PAGE: ' + e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
+
+await skipWizard(page);
 
 await page.goto(APP);
 await page.waitForTimeout(400);
@@ -120,6 +123,7 @@ check('אפשר להזמין שוב את אותה כתובת', !!(await chipOf('
 
 const worker = await ctx.newPage();
 worker.on('pageerror', e => errors.push('PAGE: ' + e.message));
+await skipWizard(worker);
 await worker.goto(APP);
 await worker.waitForTimeout(500);
 await worker.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));

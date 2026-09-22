@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSample } from './_sample.mjs';
+import { skipWizard } from './_wizard.mjs';
 
 const require = createRequire(import.meta.url);
 let chromium;
@@ -33,6 +34,7 @@ async function mk() {
 
 try {
   const mgr = await mk();
+  await skipWizard(mgr);
   await mgr.goto(APP);
   await mgr.waitForTimeout(400);
   await mgr.click('[data-auth-mode="signup"]');
@@ -94,6 +96,7 @@ try {
 
   console.log('\n== מה העובד רואה ==');
   const emp = await mk();
+  await skipWizard(emp);
   await emp.goto(APP);
   await emp.waitForTimeout(500);
   await emp.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));

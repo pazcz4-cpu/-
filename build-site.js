@@ -192,8 +192,24 @@ function toAbsolutePaths(html) {
 /* האם הסרטון קיים. הדף נשלח כבר במצב הנכון, ולכן אין בדיקה
    מהדפדפן – ואין 404 בקונסול של כל מבקר. */
 function markVideo(html) {
-  const ready = fs.existsSync(path.join(root, 'assets', 'video', 'setshifts-demo-he.mp4'));
+  const mp4 = path.join(root, 'assets', 'video', 'setshifts-demo-he.mp4');
+  const ready = fs.existsSync(mp4);
   if (!ready) return html;
+
+  /* כתוביות שאינן תואמות לסרטון גרועות מכתוביות שאינן קיימות:
+     מי שקורא אותן מקבל תוכן שגוי ובטוח שהוא נכון. הקובץ נולד
+     כטיוטה עם הערה בראשו, ולכן אפשר לזהות שהוא עדיין כזה. */
+  const vtt = path.join(root, 'assets', 'video', 'setshifts-demo-he.vtt');
+  /* markVideo רץ לכל עמוד שפה; האזהרה נאמרת פעם אחת */
+  if (!markVideo.warned && fs.existsSync(vtt)) {
+    markVideo.warned = true;
+    const text = fs.readFileSync(vtt, 'utf8');
+    if (text.indexOf('אחרי שמחליפים את setshifts-demo-he.mp4') !== -1) {
+      console.log('\n  ⚠ הכתוביות עדיין טיוטה ואינן תואמות לסרטון.');
+      console.log('    assets/video/setshifts-demo-he.vtt\n');
+    }
+  }
+
   return html.replace('data-video-ready="0"', 'data-video-ready="1"');
 }
 

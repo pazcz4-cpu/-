@@ -965,6 +965,24 @@
       : '';
   }
 
+  /* תקרת הבקשות. מוצגת גם כשהיא כבויה, כדי שמנהל שמחפש אותה
+     ימצא אותה במקום לנחש שהיא לא קיימת. */
+  function renderLimit() {
+    var toggle = $('#opt-limit');
+    if (!toggle) return;
+    var config = Store.constraintLimitSettings(state);
+    var max = $('#limit-max');
+
+    toggle.checked = config.enabled;
+    max.value = config.max;
+
+    toggle.disabled = viewOnly;
+    max.disabled = viewOnly || !config.enabled;
+
+    var unit = $('#limit-unit');
+    if (unit) { unit.textContent = tPlural('settings.limitUnit', config.max); }
+  }
+
   /* ========== הגדרות ========== */
   function renderSettings() {
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
@@ -972,6 +990,7 @@
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
     renderDeadline();
+    renderLimit();
 
     var list = shiftList();
     var html = '';
@@ -2223,6 +2242,23 @@
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) { toast(t('errors.invalidTime')); render(); return; }
       saveDeadline({ time: normalized });
+    });
+
+    function saveLimit(patch) {
+      var current = Store.constraintLimitSettings(state);
+      state.settings.constraintLimit = Object.assign({}, current, patch);
+      persist('config');
+      render();
+    }
+    $('#opt-limit').addEventListener('change', function (event) {
+      saveLimit({ enabled: event.target.checked });
+    });
+    $('#limit-max').addEventListener('change', function (event) {
+      var value = Math.round(Number(event.target.value));
+      /* אפס או מספר שלילי אינם "בלי הגבלה" אלא "אסור להגיש כלום",
+         וזו הגדרה שאיש לא התכוון אליה. כיבוי נעשה בתיבת הסימון. */
+      if (!(value >= 1)) { toast(t('settings.limitMin')); render(); return; }
+      saveLimit({ max: Math.min(7, value) });
     });
 
     $('#default-shabbat').addEventListener('change', function (event) {

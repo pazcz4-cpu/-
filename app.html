@@ -259,6 +259,21 @@
       </p>
     </div>
 
+
+    <h2 data-i18n="settings.limitTitle">תקרת בקשות לעובד</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-limit">
+        <span data-i18n="settings.limitEnable">להגביל כמה בקשות עובד יכול להגיש לשבוע</span></label>
+      <div class="row">
+        <label class="check"><span data-i18n="settings.limitMax">עד</span>
+          <input type="number" id="limit-max" class="num-input" min="1" max="7" step="1"></label>
+        <span class="hint" id="limit-unit" data-i18n="settings.limitUnit">בקשות בשבוע</span>
+      </div>
+      <p class="hint" style="margin:0" data-i18n="settings.limitHint">
+        נספרות בקשות שמגבילות זמינות: יום חופש או חסימת משמרת. העדפה אינה נספרת, ובקשה שנדחתה משחררת מקום. מנהל אינו מוגבל.
+      </p>
+    </div>
+
     <h2 data-i18n="settings.shiftTypes">סוגי המשמרות בעסק</h2>
     <div class="settings-block">
       <div id="default-hours" class="shift-grid"></div>

@@ -46,6 +46,16 @@
     if (lower.indexOf('already published') !== -1) {
       return fail('week_published', t('server.weekPublished'));
     }
+    if (lower.indexOf('deadline has passed') !== -1) {
+      return fail('deadline_passed', t('server.deadlinePassed'));
+    }
+    /* המספר מגיע בהודעה מהפונקציה, ולכן המסך אומר "עד 2 בקשות"
+       ולא "הגעת לתקרה" – ההבדל הוא בין הודעה שמסבירה מה לעשות
+       לבין הודעה שרק מודיעה על כישלון. */
+    if (lower.indexOf('constraint limit reached') !== -1) {
+      var max = (String(text).match(/(\d+)\s*$/) || [])[1];
+      return fail('constraint_limit', t('server.constraintLimit', { max: max || '' }));
+    }
     if (lower.indexOf('request not found') !== -1 || lower.indexOf('no request') !== -1) {
       return fail('not_found', t('server.requestNotFound'));
     }

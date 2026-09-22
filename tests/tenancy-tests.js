@@ -603,6 +603,124 @@ test('מנוי שפג ומנוי שבוטל מציגים הסבר נכון', fun
   assert(canceled.text.indexOf('לחדש') !== -1, 'מציע לחדש');
 });
 
+console.log('\n== תקרת בקשות: אכיפה בשרת ==');
+
+/* התקרה נאכפת בשרת ולא רק במסך. עובד שיפתח את כלי הפיתוח יוכל
+   אחרת לשלוח בקשה שלישית כשהמנהל התיר שתיים. */
+
+function withLimit(backend, max) {
+  return backend.saveConfig({
+    settings: { constraintLimit: { enabled: true, max: max } },
+    branches: [], employees: []
+  });
+}
+
+asyncTest('עובד אינו יכול לעבור את התקרה גם בפנייה ישירה לשרת', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap1@a.com', password: 'secret1' })
+    .then(function () { return withLimit(backend, 2); })
+    .then(function () {
+      return backend.createUser({ email: 'w1@a.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-c1' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'w1@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () {
+      return backend.saveOwnConstraint('2026-09-20', 1, { blocked: { morning: true } });
+    })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 2, 'שתי הבקשות הראשונות נשמרו');
+      return assertRejects(backend.saveOwnConstraint('2026-09-20', 2, { off: true }),
+        'constraint_limit', 'הבקשה השלישית נשמרה');
+    });
+});
+
+asyncTest('העדפה ומחיקה אינן נחסמות גם כשהתקרה מלאה', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2@a.com', password: 'secret1' })
+    .then(function () { return withLimit(backend, 1); })
+    .then(function () {
+      return backend.createUser({ email: 'w2@a.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-c2' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'w2@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () {
+      /* העדפה אינה מגבילה זמינות, ולכן אינה נספרת */
+      return backend.saveOwnConstraint('2026-09-20', 1, { preferred: { morning: true } });
+    })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 2, 'העדפה נחסמה');
+      /* ומחיקה משחררת מקום */
+      return backend.saveOwnConstraint('2026-09-20', 0, null);
+    })
+    .then(function () {
+      return backend.saveOwnConstraint('2026-09-20', 3, { off: true });
+    })
+    .then(function (week) {
+      assert(week.constraints['emp-c2|3'], 'אחרי מחיקה לא התפנה מקום');
+    });
+});
+
+asyncTest('עריכה של בקשה קיימת אינה נספרת פעמיים', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap3@a.com', password: 'secret1' })
+    .then(function () { return withLimit(backend, 1); })
+    .then(function () {
+      return backend.createUser({ email: 'w3@a.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-c3' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'w3@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () {
+      /* אותו יום, בקשה אחרת – זה תיקון, לא בקשה נוספת */
+      return backend.saveOwnConstraint('2026-09-20', 0, { blocked: { evening: true } });
+    })
+    .then(function (week) {
+      assert(week.constraints['emp-c3|0'].blocked.evening, 'התיקון לא נשמר');
+    });
+});
+
+asyncTest('מנהל אינו מוגבל בתקרה – הוא מתקן, לא מבקש', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap4@a.com', password: 'secret1' })
+    .then(function () { return withLimit(backend, 1); })
+    .then(function () {
+      /* הבעלים מקושר לכרטיס עובד ושומר שלוש בקשות לעצמו */
+      return backend.listUsers();
+    })
+    .then(function (users) {
+      return backend.updateUser(users[0].id, { employeeId: 'emp-boss' });
+    })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 1, { off: true }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 2, { off: true }); })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 3, 'המנהל נחסם');
+    });
+});
+
+asyncTest('כשהתקרה כבויה אין שום הגבלה', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap5@a.com', password: 'secret1' })
+    .then(function () {
+      return backend.createUser({ email: 'w5@a.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-c5' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'w5@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 1, { off: true }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 2, { off: true }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 3, { off: true }); })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 4, 'נחסם בלי שהוגדרה תקרה');
+    });
+});
+
 console.log('\n== מצב ההזמנות ==');
 
 test('ארבעת מצבי ההזמנה נגזרים משני תאריכים בלבד', function () {

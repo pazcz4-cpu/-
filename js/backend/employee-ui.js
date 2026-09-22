@@ -8,6 +8,12 @@
     try { return root.I18n.t(key, params); } catch (err) { return key; }
   }
 
+  /* "נותרו לך 1 בקשות" הוא בדיוק סוג הפרט שנקרא כרשלנות */
+  function tPlural(key, count, params) {
+    if (!root.I18n) return key;
+    try { return root.I18n.plural(key, count, params); } catch (err) { return key; }
+  }
+
   var Data = root.ShiftData;
   var Store = root.ShiftStore;
 
@@ -115,6 +121,11 @@
     return Store.deadlinePassed(this.state, this.weekKey);
   };
 
+  /* כמה בקשות נותרו לעובד השבוע. null כשאין תקרה. */
+  EmployeeUI.prototype._left = function () {
+    return Store.constraintsLeft(this.state, this.week, this._employeeId());
+  };
+
   EmployeeUI.prototype._toggle = function (button) {
     var self = this;
     if (this.busy) return;
@@ -140,6 +151,15 @@
     var isEmpty = !constraint.off &&
       Object.keys(constraint.blocked).length === 0 &&
       Object.keys(constraint.preferred).length === 0;
+
+    /* נעצר כאן ולא אחרי פנייה לשרת, כדי שהלחיצה לא תראה כאילו
+       עבדה ואז תתהפך. השרת חוסם את זה שוב ממילא. */
+    var cap = Store.constraintLimitSettings(this.state);
+    if (cap.enabled && Store.overConstraintLimit(this.state, this.week,
+        this._employeeId(), dayIdx, isEmpty ? null : constraint)) {
+      this._flash(t('employee.limitReached', { max: cap.max }));
+      return;
+    }
 
     this.busy = true;
     this.backend.saveOwnConstraint(this.weekKey, dayIdx, isEmpty ? null : constraint)
@@ -295,6 +315,17 @@
         preferred: t('constraints.preferred'),
         blocked: t('constraints.blocked')
       })) + '<br><b>' + esc(t('constraints.needsApproval')) + '</b></p>';
+
+      /* המכסה נאמרת מראש. עובד שמגלה אותה רק כשהוא נחסם חושב
+         שהמערכת תקולה, ולא שיש כלל. */
+      var cap = Store.constraintLimitSettings(this.state);
+      if (cap.enabled) {
+        var left = this._left();
+        html += '<p class="employee-note limit-note' + (left === 0 ? ' spent' : '') + '">' +
+          esc(left === 0
+            ? t('employee.limitSpent', { max: cap.max })
+            : tPlural('employee.limitLeft', left, { max: cap.max })) + '</p>';
+      }
     }
 
     html += '<div class="employee-days">';

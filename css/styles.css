@@ -1152,3 +1152,8 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .invite-chip.info { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
 .invite-chip.warning { background: var(--badge-warn); color: #fff; border-color: var(--badge-warn); }
 .invite-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* המכסה שנותרה לעובד. כשהיא אוזלת היא מפסיקה להיות הערה ונעשית
+   מצב — ולכן משנה צבע ולא רק טקסט. */
+.limit-note { font-weight: 500; }
+.limit-note.spent { color: var(--badge-warn); }

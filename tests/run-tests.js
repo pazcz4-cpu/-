@@ -1602,6 +1602,80 @@ test('מגבלת תוכנית שחוסמת עובד מדווחת ואינה מפ
   assertEqual(result.blocked, 2, 'החסומים לא דווחו');
 });
 
+console.log('\n== תקרת בקשות לעובד ==');
+
+/* בלי תקרה, עובד אחד שמבקש חמישה ימי חופש מוריד את הסידור על
+   השאר, והמנהל מגלה את זה רק כשהוא מנסה לשבץ. */
+
+function limitState(max) {
+  var state = freshState();
+  state.settings.constraintLimit = { enabled: true, max: max };
+  return state;
+}
+
+function weekWith(records) {
+  var week = { constraints: {}, assignments: {} };
+  Object.keys(records).forEach(function (key) { week.constraints[key] = records[key]; });
+  return week;
+}
+
+test('נספרות רק בקשות שמגבילות זמינות', function () {
+  var week = weekWith({
+    'e1|0': { off: true },
+    'e1|1': { blocked: { morning: true } },
+    'e1|2': { preferred: { evening: true } },
+    'e1|3': { off: true, status: 'rejected' },
+    'e2|0': { off: true }
+  });
+  assertEqual(Store.countLimitingConstraints(week, 'e1'), 2, 'ספירה שגויה');
+  /* העדפה עוזרת לשיבוץ ואין סיבה להגביל אותה */
+  assertEqual(Store.limitsAvailability({ preferred: { x: true } }), false, 'העדפה נספרה');
+  /* בקשה שנדחתה אינה מגבילה דבר, ולכן מפנה מקום לבקשה אחרת */
+  assertEqual(Store.limitsAvailability({ off: true, status: 'rejected' }), false, 'דחייה נספרה');
+  /* והספירה של עובד אחד אינה סופרת עובד אחר */
+  assertEqual(Store.countLimitingConstraints(week, 'e2'), 1, 'דליפה בין עובדים');
+});
+
+test('כמה נותרו, ומתי חורגים', function () {
+  var state = limitState(2);
+  var week = weekWith({ 'e1|0': { off: true } });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 1, 'נותרו');
+
+  week.constraints['e1|1'] = { blocked: { morning: true } };
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 0, 'אזלו');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, { off: true }), true, 'יום שלישי');
+  /* עריכה של יום שכבר נספר אינה נספרת פעמיים */
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 0, { off: true }), false, 'עריכה');
+  /* מחיקה והעדפה לעולם אינן חורגות */
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, null), false, 'מחיקה');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, { preferred: { x: 1 } }),
+    false, 'העדפה');
+});
+
+test('תקרה כבויה אינה מגבילה דבר', function () {
+  var state = freshState();
+  var week = weekWith({ 'e1|0': { off: true }, 'e1|1': { off: true }, 'e1|2': { off: true } });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), null, 'הוחזר מספר כשאין תקרה');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { off: true }), false, 'נחסם');
+});
+
+test('תקרה לא תקינה נופלת לערך שפוי ולא לאפס', function () {
+  /* 0 אינו "בלי הגבלה" אלא "אסור להגיש כלום", וזו הגדרה שאיש לא
+     התכוון אליה. */
+  var zero = freshState();
+  zero.settings.constraintLimit = { enabled: true, max: 0 };
+  assertEqual(Store.constraintLimitSettings(zero).max, 1, 'אפס לא תוקן');
+
+  var negative = freshState();
+  negative.settings.constraintLimit = { enabled: true, max: -3 };
+  assertEqual(Store.constraintLimitSettings(negative).max, 1, 'שלילי לא תוקן');
+
+  var missing = freshState();
+  missing.settings.constraintLimit = { enabled: true };
+  assertEqual(Store.constraintLimitSettings(missing).max,
+    Data.DEFAULT_SETTINGS.constraintLimit.max, 'ברירת המחדל לא הוחלה');
+});
+
 console.log('\n== הגנות הייבוא ==');
 
 /* מי שמייבא רשימה מסחרית מייבא אותה פעם אחת בחיים, ושגיאה שם

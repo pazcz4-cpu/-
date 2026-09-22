@@ -15,6 +15,9 @@
   }
 
   var Model = root.ShiftModel || (typeof require === 'function' ? require('./model.js') : null);
+  /* כללי האילוצים יושבים ב-Store, כדי שהשרת המדומה והמסך יסכימו
+     על אותה ספירה בדיוק. */
+  var Store = root.ShiftStore || (typeof require === 'function' ? require('../store.js') : null);
 
   var STORE_KEY = 'maiphone-mock-server-v1';
   var SESSION_KEY = 'maiphone-mock-session-v1';
@@ -322,6 +325,20 @@
     var week = data.weeks[weekKey];
     if (week.published && session.user.role === 'employee') {
       return Promise.reject(this._fail('week_published', t('server.weekPublished')));
+    }
+
+    /* תקרת הבקשות נאכפת כאן ולא רק במסך: מי שיפתח את כלי הפיתוח
+       יוכל אחרת לשלוח בקשה שלישית כשהמנהל התיר שתיים. מנהל אינו
+       מוגבל – הוא מתקן, לא מבקש. */
+    if (constraint !== null && session.user.role === 'employee') {
+      var settings = (data.config && data.config.settings) || {};
+      var over = Store.overConstraintLimit({ settings: settings }, week,
+        session.user.employeeId, dayIdx, constraint);
+      if (over) {
+        var cap = Store.constraintLimitSettings({ settings: settings }).max;
+        return Promise.reject(this._fail('constraint_limit',
+          t('server.constraintLimit', { max: cap })));
+      }
     }
 
     var key = session.user.employeeId + '|' + dayIdx;

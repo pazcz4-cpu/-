@@ -352,6 +352,66 @@
     return days;
   }
 
+  /* ===== תקרת בקשות לעובד בשבוע =====
+     בלי תקרה, עובד אחד שמבקש חמישה ימי חופש מוריד את כל הסידור
+     על השאר, והמנהל מגלה את זה רק כשהוא מנסה לשבץ.
+
+     מה נספר: יום שבו העובד הגביל את הזמינות שלו – ביקש חופש או
+     חסם משמרת. העדפה אינה נספרת: היא עוזרת לשיבוץ, ואין סיבה
+     להגביל אותה. בקשה שנדחתה אינה מגבילה דבר ולכן אינה נספרת –
+     כך שעובד שנדחה יכול לבקש יום אחר במקומו.
+
+     הספירה היא לפי ימים, ולא לפי משמרות: "עד 2 בקשות" פירושו
+     שני ימים, וזו הצורה שבה מנהל חושב על זה. */
+  function constraintLimitSettings(state) {
+    var defaults = (Data.DEFAULT_SETTINGS && Data.DEFAULT_SETTINGS.constraintLimit) || {};
+    var value = (state && state.settings && state.settings.constraintLimit) || {};
+    var max = typeof value.max === 'number' ? value.max : (defaults.max || 2);
+    return {
+      enabled: !!value.enabled,
+      max: Math.max(1, Math.round(max))
+    };
+  }
+
+  /* האם הרשומה מגבילה זמינות בפועל */
+  function limitsAvailability(record) {
+    if (!record) return false;
+    if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return false;
+    if (record.off) return true;
+    return Object.keys(record.blocked || {}).length > 0;
+  }
+
+  /* כמה בקשות מגבילות כבר יש לעובד בשבוע. exceptDay מוחרג, כדי
+     שעריכה של יום קיים לא תיספר פעמיים. */
+  function countLimitingConstraints(week, empId, exceptDay) {
+    var records = (week && week.constraints) || {};
+    var prefix = empId + '|';
+    var count = 0;
+    Object.keys(records).forEach(function (key) {
+      if (key.indexOf(prefix) !== 0) return;
+      var dayIdx = Number(key.slice(prefix.length));
+      if (exceptDay !== undefined && exceptDay !== null && dayIdx === Number(exceptDay)) return;
+      if (limitsAvailability(records[key])) count++;
+    });
+    return count;
+  }
+
+  /* כמה עוד מותר לו. null כשאין תקרה. */
+  function constraintsLeft(state, week, empId) {
+    var config = constraintLimitSettings(state);
+    if (!config.enabled) return null;
+    return Math.max(0, config.max - countLimitingConstraints(week, empId));
+  }
+
+  /* האם ההגשה הזו חורגת מהתקרה. next הוא האילוץ שעומד להישמר
+     (או null למחיקה), ולכן מחיקה לעולם אינה חורגת. */
+  function overConstraintLimit(state, week, empId, dayIdx, next) {
+    var config = constraintLimitSettings(state);
+    if (!config.enabled) return false;
+    if (!limitsAvailability(next)) return false;   // העדפה או מחיקה
+    return countLimitingConstraints(week, empId, dayIdx) >= config.max;
+  }
+
   /* ===== מועד סגירת ההגשות =====
      המנהל קובע יום ושעה. המועד חל על היום הזה *לפני* תחילת השבוע
      שאליו מגישים – כך שהגשות לשבוע הבא נסגרות בשבוע הנוכחי.
@@ -761,6 +821,11 @@
 
   var API = {
     deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
+    constraintLimitSettings: constraintLimitSettings,
+    countLimitingConstraints: countLimitingConstraints,
+    constraintsLeft: constraintsLeft,
+    overConstraintLimit: overConstraintLimit,
+    limitsAvailability: limitsAvailability,
     deadlinePassed: deadlinePassed, hoursToDeadline: hoursToDeadline,
     shouldRemind: shouldRemind,
     STORAGE_KEY: STORAGE_KEY,

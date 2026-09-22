@@ -346,6 +346,52 @@ begin
 
   v_key := v_employee || '|' || p_day_idx::text;
 
+  -- תקרת הבקשות. נאכפת כאן ולא רק במסך, מאותה סיבה כמו מועד
+  -- הסגירה: עובד שיפתח את כלי הפיתוח יוכל אחרת לשלוח בקשה
+  -- שלישית כשהמנהל התיר שתיים. חלה על עובדים בלבד.
+  --
+  -- מה נספר: יום שבו העובד הגביל זמינות – ביקש חופש או חסם
+  -- משמרת. העדפה אינה מגבילה ולכן אינה נספרת, ובקשה שנדחתה
+  -- אינה מגבילה דבר ולכן גם היא אינה נספרת. היום הנוכחי מוחרג,
+  -- כדי שעריכה של בקשה קיימת לא תיספר פעמיים.
+  if v_role = 'employee'
+     and p_constraint is not null and p_constraint <> 'null'::jsonb
+     and (coalesce((p_constraint->>'off')::boolean, false)
+          or coalesce(jsonb_typeof(p_constraint->'blocked'), 'null') = 'object'
+             and p_constraint->'blocked' <> '{}'::jsonb) then
+    declare
+      v_limit jsonb;
+      v_max   int;
+      v_used  int;
+    begin
+      select config->'settings'->'constraintLimit' into v_limit
+        from public.company_configs where company_id = v_company;
+
+      if v_limit is not null and coalesce((v_limit->>'enabled')::boolean, false) then
+        v_max := greatest(1, coalesce((v_limit->>'max')::int, 2));
+
+        select count(*) into v_used
+          from jsonb_each(coalesce(v_week.week->'constraints', '{}'::jsonb)) as item(key, value)
+         where item.key like v_employee || '|%'
+           and item.key <> v_key
+           and coalesce(item.value->>'status', 'approved') <> 'rejected'
+           and (coalesce((item.value->>'off')::boolean, false)
+                or coalesce(jsonb_typeof(item.value->'blocked'), 'null') = 'object'
+                   and item.value->'blocked' <> '{}'::jsonb);
+
+        if v_used >= v_max then
+          -- המספר נכנס להודעה כדי שהמסך יוכל לומר "עד N בקשות"
+          -- בלי לנחש ובלי לקרוא את ההגדרות בעצמו.
+          raise exception 'constraint limit reached: %', v_max using errcode = '55002';
+        end if;
+      end if;
+    exception
+      -- הגדרה פגומה לא תחסום עובד מלהגיש; חריגה אמיתית כן.
+      when sqlstate '55002' then raise;
+      when others then null;
+    end;
+  end if;
+
   if p_constraint is null or p_constraint = 'null'::jsonb then
     v_week.week := jsonb_set(
       coalesce(v_week.week, '{}'::jsonb), '{constraints}',

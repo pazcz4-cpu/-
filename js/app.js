@@ -924,7 +924,7 @@
           var cls = 'free', title = t('constraints.free');
           /* הסדר קבוע אינו בקשה של השבוע הזה, ולכן אי אפשר להסיר
              אותו מכאן – הוא נערך על כרטיס העובד. */
-          var fixed = Store.standingBlocks(emp, day.idx, shiftId);
+          var fixed = Store.standingBlocks(emp, day.idx, shiftId, weekKey);
           if (fixed) { cls = 'block standing'; title = t('standing.cellTitle'); }
           else if (constraint.off) { cls = 'off-day'; title = t('constraints.dayOff'); }
           else if (constraint.blocked && constraint.blocked[shiftId]) { cls = 'block'; title = t('constraints.blocked'); }
@@ -934,7 +934,7 @@
             '" data-day="' + day.idx + '" data-shift="' + esc(shiftId) + '">' +
             esc(shiftLabel(shiftId)) + '</button>';
         });
-        var standingDay = Store.standingFor(emp, day.idx);
+        var standingDay = Store.standingFor(emp, day.idx, weekKey);
         html += '<button class="cstate day-off-btn ' + (standingDay.off ? 'off-day standing' : (constraint.off ? 'off-day' : 'free')) +
           '"' + (standingDay.off ? ' disabled data-locked-always="1" title="' + esc(t('standing.cellTitle')) + '"' : '') +
           ' data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
@@ -1158,6 +1158,25 @@
       html += '<div class="field standing-field"><label class="title">' +
         t('standing.title') + '</label>';
       html += '<p class="hint">' + esc(t('standing.hint')) + '</p>';
+      /* תדירות ההסדר. יש הסדרים שאינם שבועיים – "פעם בשבועיים
+         הוא עובד חמישה ימים בלי שישי ומוצ"ש" – ואילוץ כזה נכון
+         בשבוע אחד ושגוי בשני. */
+      var cycle = Store.standingCycle(emp);
+      html += '<div class="pills standing-cycle">' +
+        '<button class="pill tiny' + (cycle ? '' : ' on') +
+          '" data-action="standing-every" data-every="1">' +
+          esc(t('standing.everyWeek')) + '</button>' +
+        '<button class="pill tiny' + (cycle ? ' on' : '') +
+          '" data-action="standing-every" data-every="2">' +
+          esc(t('standing.everyTwo')) + '</button></div>';
+      if (cycle) {
+        html += '<p class="hint">' +
+          esc(t('standing.cycleOn', {
+            date: Store.formatDate(Store.dateOfDay(cycle.anchor, 0))
+          })) +
+          ' <button class="pill tiny" data-action="standing-anchor">' +
+          esc(t('standing.cycleShift')) + '</button></p>';
+      }
       html += '<div class="standing-grid">';
       Data.DAYS.forEach(function (dayInfo, dayIdx) {
         var day = Store.standingFor(emp, dayIdx);
@@ -2528,6 +2547,26 @@
         persist('config');
         render();
       }
+      /* תדירות ההסדר הקבוע: כל שבוע, או כל שבועיים מהשבוע
+         שמוצג עכשיו. */
+      if (action === 'standing-every') {
+        var every = Number(event.target.dataset.every) || 1;
+        Store.setStandingCycle(emp, every, weekKey);
+        persist('config');
+        render();
+        return;
+      }
+      /* הזזת המחזור בשבוע, למי שבחר את השבוע ההפוך */
+      if (action === 'standing-anchor') {
+        var moved = Store.standingCycle(emp);
+        if (moved) {
+          Store.setStandingCycle(emp, moved.every, Store.shiftWeekKey(moved.anchor, 1));
+          persist('config');
+          render();
+        }
+        return;
+      }
+
       /* אילוץ קבוע. "כל היום" ומשמרת בודדת אינם מצטברים: מי
          שחסם את כל היום כבר חסם את כל המשמרות שבו. */
       if (action === 'standing-off') {

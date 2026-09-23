@@ -55,7 +55,8 @@
     } else if (!constraint || (!constraint.off && !(constraint.blocked || {})[slot.shiftId])) {
       facts.push({ code: 'available' });
     }
-    if (Store.hasStanding(emp) && !Store.standingBlocks(emp, slot.dayIdx, slot.shiftId)) {
+    if (Store.hasStanding(emp) &&
+        !Store.standingBlocks(emp, slot.dayIdx, slot.shiftId, Store.weekKeyOf(state, week))) {
       facts.push({ code: 'standingClear' });
     }
 
@@ -142,7 +143,7 @@
     /* הסדר קבוע לפני בקשת השבוע: מנהל שרואה "ביקש חופש" מחפש
        את הבקשה ולא מוצא אותה, כי לא הוגשה בקשה – זה פשוט היום
        שבו העובד לעולם אינו זמין. */
-    if (Store.standingBlocks(emp, slot.dayIdx, slot.shiftId)) {
+    if (Store.standingBlocks(emp, slot.dayIdx, slot.shiftId, Store.weekKeyOf(state, week))) {
       return { code: 'standing' };
     }
     var constraint = approvedConstraint(ctx, emp.id, slot.dayIdx);

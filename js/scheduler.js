@@ -112,10 +112,14 @@
        הם נכנסים לאותה מפה, כי מבחינת השיבוץ אין ביניהם הבדל: גם
        זה וגם זה אומרים "אי אפשר". ההבדל היחיד הוא מי כתב אותם
        ומתי, וזה נשמר לטובת ההסברים והמסכים. */
+    /* ההסדר הקבוע יכול להיות דו-שבועי, ולכן צריך לדעת באיזה
+       שבוע אנחנו – אחרת עובד שעובד פעם בשבועיים היה חסום תמיד. */
+    var weekKey = Store.weekKeyOf(state, week);
     (state.employees || []).forEach(function (emp) {
       if (!Store.hasStanding(emp)) return;
+      if (!Store.standingAppliesTo(emp, weekKey)) return;
       for (var day = 0; day < 7; day++) {
-        var standing = Store.standingFor(emp, day);
+        var standing = Store.standingFor(emp, day, weekKey);
         if (!standing.off && !Object.keys(standing.blocked).length) continue;
         var key = emp.id + '|' + day;
         var weekly = effective[key];

@@ -300,7 +300,7 @@
         slots.forEach(function (s) {
           /* הסדר קבוע שנשבר הוא לא "בקשה שלא כובדה": איש לא ביקש
              דבר השבוע, וזה בדיוק מה שהופך את זה לקל לפספוס. */
-          if (Store.standingBlocks(emp, day, s.shiftId)) {
+          if (Store.standingBlocks(emp, day, s.shiftId, Store.weekKeyOf(state, week))) {
             issues.push(issue('error', 'standing-conflict',
               t('alerts.standingConflict', {
                 name: emp.name, day: dayName(day),

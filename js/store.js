@@ -267,7 +267,61 @@
   }
 
   /* ההסדר הקבוע של העובד ליום מסוים, תמיד בצורה אחידה */
-  function standingFor(emp, dayIdx) {
+  /* ===== מחזור ההסדר הקבוע =====
+
+     יש הסדרים שאינם שבועיים: "פעם בשבועיים הוא עובד חמישה ימים
+     בלי שישי ומוצ"ש". אילוץ כזה נכון בשבוע אחד ושגוי בשני, ולכן
+     הוא נושא מחזור: כל כמה שבועות הוא חל, ומאיזה שבוע סופרים.
+
+     שבוע שבו ההסדר אינו חל הוא שבוע עבודה רגיל – לא יום חופש,
+     ולכן הוא גם אינו נספר בשום מקום כחופשה. */
+  function standingCycle(emp) {
+    var cycle = emp && emp.standingCycle;
+    if (!cycle) return null;
+    var every = Math.round(Number(cycle.every) || 1);
+    if (!(every > 1)) return null;
+    var anchor = typeof cycle.anchor === 'string' ? cycle.anchor : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor)) return null;
+    return { every: Math.min(8, every), anchor: anchor };
+  }
+
+  /* מספר השבועות בין שני מפתחות שבוע. Math.round ולא חילוק
+     שלם, כי מעבר שעון מזיז את היממה בשעה. */
+  function weeksBetween(fromKey, toKey) {
+    var from = dateOfDay(fromKey, 0);
+    var to = dateOfDay(toKey, 0);
+    return Math.round((to - from) / (7 * 24 * 60 * 60 * 1000));
+  }
+
+  /* בלי מפתח שבוע – ההסדר חל. זו ברירת המחדל הבטוחה: מסך
+     שמציג את ההגדרה עצמה צריך לראות אותה תמיד. */
+  function standingAppliesTo(emp, weekKey) {
+    var cycle = standingCycle(emp);
+    if (!cycle || !weekKey) return true;
+    var diff = weeksBetween(cycle.anchor, weekKey);
+    return ((diff % cycle.every) + cycle.every) % cycle.every === 0;
+  }
+
+  function setStandingCycle(emp, every, anchorWeekKey) {
+    var count = Math.round(Number(every) || 1);
+    if (!(count > 1) || !anchorWeekKey) { delete emp.standingCycle; return; }
+    emp.standingCycle = { every: Math.min(8, count), anchor: anchorWeekKey };
+  }
+
+  /* מוצא את מפתח השבוע של אובייקט שבוע. הבודקים והמנוע מקבלים
+     את השבוע ולא את המפתח שלו, והמחזור תלוי בתאריך – כך הם
+     מקבלים אותו בלי לשנות את החתימה של כל אחד מהם. */
+  function weekKeyOf(state, week) {
+    var weeks = (state && state.weeks) || {};
+    var keys = Object.keys(weeks);
+    for (var i = 0; i < keys.length; i++) {
+      if (weeks[keys[i]] === week) return keys[i];
+    }
+    return null;
+  }
+
+  function standingFor(emp, dayIdx, weekKey) {
+    if (!standingAppliesTo(emp, weekKey)) return { off: false, blocked: {} };
     var day = standingMap(emp)[String(dayIdx)];
     if (!day) return { off: false, blocked: {} };
     return {
@@ -277,8 +331,8 @@
   }
 
   /* האם ההסדר הקבוע חוסם את המשמרת הזו ביום הזה */
-  function standingBlocks(emp, dayIdx, shiftId) {
-    var day = standingFor(emp, dayIdx);
+  function standingBlocks(emp, dayIdx, shiftId, weekKey) {
+    var day = standingFor(emp, dayIdx, weekKey);
     if (day.off) return true;
     return !!day.blocked[shiftId];
   }
@@ -1080,6 +1134,11 @@
       } else if (emp.standing !== undefined) {
         delete emp.standing;
       }
+      /* מחזור פגום או מחזור על עובד בלי הסדר קבוע אינו נשאר
+         תלוי: הוא היה משנה התנהגות בלי שיהיה לו מה להחיל. */
+      if (emp.standingCycle && (!standingCycle(emp) || !hasStanding(emp))) {
+        delete emp.standingCycle;
+      }
       /* כתובת מייל אופציונלית על הכרטיס. היא לא נדרשת לשיבוץ,
          אבל היא מה שמבדיל בין שני עובדים עם שם דומה בייבוא. */
       if (typeof emp.email !== 'string') emp.email = '';
@@ -1355,6 +1414,11 @@
     standingBlocks: standingBlocks,
     hasStanding: hasStanding,
     setStanding: setStanding,
+    standingCycle: standingCycle,
+    standingAppliesTo: standingAppliesTo,
+    setStandingCycle: setStandingCycle,
+    weeksBetween: weeksBetween,
+    weekKeyOf: weekKeyOf,
     effectiveConstraint: effectiveConstraint,
     constraintStatus: constraintStatus,
     setConstraintStatus: setConstraintStatus,

@@ -149,9 +149,9 @@
     var me = Store.byId(this.state.employees || [], this._employeeId());
     if (me) {
       var shiftForCheck = button.dataset.off ? null : button.dataset.shift;
-      var standingDay = Store.standingFor(me, dayIdx);
+      var standingDay = Store.standingFor(me, dayIdx, this.weekKey);
       if (shiftForCheck === null ? standingDay.off
-          : Store.standingBlocks(me, dayIdx, shiftForCheck)) {
+          : Store.standingBlocks(me, dayIdx, shiftForCheck, this.weekKey)) {
         this._flash(t('standing.locked'));
         return;
       }
@@ -452,7 +452,7 @@
         var me = Store.byId(self.state.employees || [], self._employeeId());
         shiftIds.forEach(function (shiftId) {
           var cls = 'free';
-          var fixed = me && Store.standingBlocks(me, day.idx, shiftId);
+          var fixed = me && Store.standingBlocks(me, day.idx, shiftId, self.weekKey);
           if (fixed) cls = 'standing';
           else if (constraint.off) cls = 'off-day';
           else if (constraint.blocked && constraint.blocked[shiftId]) cls = 'block';
@@ -461,7 +461,8 @@
             'data-day="' + day.idx + '" data-shift="' + shiftId + '"',
             fixed ? ' disabled' : locked);
         });
-        var standingDay = me ? Store.standingFor(me, day.idx) : { off: false, blocked: {} };
+        var standingDay = me
+          ? Store.standingFor(me, day.idx, self.weekKey) : { off: false, blocked: {} };
         html += stateButton(standingDay.off ? 'standing' : (constraint.off ? 'off-day' : 'free'),
           t('constraints.dayOff'),
           'data-day="' + day.idx + '" data-off="1"',

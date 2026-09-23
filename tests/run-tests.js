@@ -1445,6 +1445,60 @@ test('אילוץ קבוע חוסם את המשמרת בכל שבוע', function 
     'שבוע אחר לא כיבד את האילוץ הקבוע');
 });
 
+/* ===== הסדר דו-שבועי =====
+
+   "פעם בשבועיים הוא עובד חמישה ימים בלי שישי ומוצ"ש". אילוץ
+   כזה נכון בשבוע אחד ושגוי בשני, ולכן הוא נושא מחזור. */
+test('הסדר דו-שבועי חל בשבוע אחד ולא בשני', function () {
+  var emp = { standing: { 5: { off: true } }, standingCycle: { every: 2, anchor: '2026-09-20' } };
+  assertEqual(Store.standingAppliesTo(emp, '2026-09-20'), true, 'שבוע העוגן');
+  assertEqual(Store.standingAppliesTo(emp, '2026-09-27'), false, 'השבוע שאחריו');
+  assertEqual(Store.standingAppliesTo(emp, '2026-10-04'), true, 'שבועיים אחרי');
+  assertEqual(Store.standingAppliesTo(emp, '2026-09-13'), false, 'שבוע לפני');
+  assertEqual(Store.standingAppliesTo(emp, '2026-09-06'), true, 'שבועיים לפני');
+});
+
+test('בלי מפתח שבוע ההסדר חל – זו ברירת המחדל הבטוחה', function () {
+  var emp = { standing: { 5: { off: true } }, standingCycle: { every: 2, anchor: '2026-09-20' } };
+  assertEqual(Store.standingAppliesTo(emp, null), true, 'ההגדרה עצמה צריכה להיראות תמיד');
+  assertEqual(Store.standingFor(emp, 5).off, true, 'ההגדרה נעלמה מהמסך שעורך אותה');
+});
+
+test('מחזור פגום אינו משנה דבר', function () {
+  assertEqual(Store.standingAppliesTo({ standingCycle: { every: 2 } }, '2026-09-20'), true, 'בלי עוגן');
+  assertEqual(Store.standingAppliesTo({ standingCycle: { every: 1, anchor: '2026-09-20' } },
+    '2026-09-27'), true, 'מחזור של אחד הוא כל שבוע');
+  assertEqual(Store.standingAppliesTo({ standingCycle: { every: 2, anchor: 'שבוע' } },
+    '2026-09-27'), true, 'עוגן שאינו תאריך');
+});
+
+test('המנוע משבץ בשבוע שבו ההסדר אינו חל', function () {
+  var state = withStanding({ 5: { off: true }, 6: { off: true } });
+  state.employees[0].standingCycle = { every: 2, anchor: '2026-09-20' };
+  state = Store.migrate(state);
+
+  /* שבוע העוגן: שישי ומוצ"ש חסומים */
+  state.weeks['2026-09-20'] = Store.emptyWeek();
+  build(state, state.weeks['2026-09-20']);
+  assertEqual(Store.getAssigned(state.weeks['2026-09-20'], 5, 'br1', 'evening').length, 0,
+    'שובץ בשישי בשבוע שבו ההסדר חל');
+
+  /* השבוע שאחריו: הוא עובד כרגיל */
+  state.weeks['2026-09-27'] = Store.emptyWeek();
+  build(state, state.weeks['2026-09-27']);
+  assertEqual(Store.getAssigned(state.weeks['2026-09-27'], 5, 'br1', 'evening').length, 1,
+    'לא שובץ בשישי בשבוע שבו ההסדר אינו חל');
+});
+
+test('מחזור נמחק מעובד שאין לו הסדר קבוע', function () {
+  var state = Store.blankState();
+  state.employees = [{ id: 'e1', name: 'דני', active: true, branches: [], roles: [],
+    shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 7, email: '', note: '',
+    standingCycle: { every: 2, anchor: '2026-09-20' } }];
+  Store.migrate(state);
+  assertEqual(state.employees[0].standingCycle, undefined, 'מחזור נשאר תלוי בלי מה להחיל');
+});
+
 test('אילוץ קבוע אינו נספר בתקרת הבקשות', function () {
   var state = withStanding({
     1: { blocked: { evening: true } },

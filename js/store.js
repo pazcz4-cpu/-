@@ -368,12 +368,15 @@
      ההסדר אינו מבטל את הבקשה ולהפך – שניהם מגבילים, ולכן הם
      מתחברים. העדפות מגיעות רק מהבקשה: הסדר קבוע אומר מתי אי
      אפשר, ולא מתי מעדיפים. */
-  function effectiveConstraint(state, week, empId, dayIdx) {
+  function effectiveConstraint(state, week, empId, dayIdx, weekKey) {
     var weekly = getConstraint(week, empId, dayIdx);
     var emp = byId((state && state.employees) || [], empId);
     if (!emp || !hasStanding(emp)) return weekly;
 
-    var day = standingFor(emp, dayIdx);
+    /* בלי מפתח שבוע מחפשים אותו במצב עצמו: הסדר דו-שבועי חל
+       רק בחלק מהשבועות, ובלי לדעת באיזה שבוע אנחנו הוא היה
+       חוסם תמיד. */
+    var day = standingFor(emp, dayIdx, weekKey || weekKeyOf(state, week));
     if (!day.off && !Object.keys(day.blocked).length) return weekly;
 
     var merged = {
@@ -435,19 +438,26 @@
      במקום אחר ולהיספר לנצח. */
   var LEAVE = { PAID: 'paid', UNPAID: 'unpaid' };
 
+  /* ברירת המחדל היא ללא תשלום. יום חופש שאיש לא סימן כמשולם
+     אינו משולם – זו ההנחה היחידה שאינה עולה כסף למי שלא שם לב,
+     והיא גם מה שכתוב בהעתקה שנשלחת לעובד.
+
+     null פירושו "זה בכלל לא יום חופש". */
   function leaveOf(week, empId, dayIdx) {
     var record = getConstraintRecord(week, empId, dayIdx);
     if (!record || !record.off) return null;
     if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return null;
-    return record.leave === LEAVE.PAID || record.leave === LEAVE.UNPAID ? record.leave : null;
+    return record.leave === LEAVE.PAID ? LEAVE.PAID : LEAVE.UNPAID;
   }
 
   /* leave = 'paid' | 'unpaid' | null. אפשרי רק על יום שמסומן
      כחופשי – אין "חופש" על יום עבודה. */
+  /* "ללא תשלום" נשמר כהיעדר סימון, כי זו ברירת המחדל: כך יום
+     ישן שלא נגעו בו מתנהג בדיוק כמו יום שסומן במפורש. */
   function setLeave(week, empId, dayIdx, leave) {
     var record = getConstraintRecord(week, empId, dayIdx);
     if (!record || !record.off) return false;
-    if (leave === LEAVE.PAID || leave === LEAVE.UNPAID) record.leave = leave;
+    if (leave === LEAVE.PAID) record.leave = LEAVE.PAID;
     else delete record.leave;
     return true;
   }

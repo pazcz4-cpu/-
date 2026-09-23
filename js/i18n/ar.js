@@ -841,21 +841,24 @@
 
       leave: {
         paid: 'مدفوع',
-        unpaid: 'بدون خصم',
-        paidTitle: 'إجازة مدفوعة – تُخصم من رصيد الموظف',
-        unpaidTitle: 'يوم عطلة بدون خصم – لا يُخصم من الرصيد',
+        unpaid: 'بدون أجر',
+        paidTitle: 'يوم إجازة مدفوع',
+        unpaidTitle: 'يوم عطلة بدون أجر — وهذا هو الوضع الافتراضي',
         summaryTitle: 'ملخّص أيام الإجازة',
-        summaryHint: 'الأيام المدفوعة تُخصم من رصيد الموظف. الأيام بدون خصم تُحسب على حدة ولا تُخصم.',
+        summaryHint: 'يوم العطلة الذي لم يُعلَّم كمدفوع يُحسب يومًا بدون أجر. الراحة الأسبوعية الثابتة لا تُحسب هنا.',
         month: 'الشهر',
         export: 'تصدير إلى إكسل',
         none: 'لم تُسجَّل أيام إجازة هذا الشهر.',
         columnName: 'الموظف',
         columnPaid: 'مدفوع',
-        columnUnpaid: 'بدون خصم',
+        columnUnpaid: 'بدون أجر',
         columnTotal: 'المجموع',
         totalRow: 'المجموع',
         sheetName: 'الإجازات',
-        fileName: 'الإجازات'
+        fileName: 'الإجازات',
+        dayPaid: 'يوم إجازة مدفوع',
+        dayUnpaid: 'يوم عطلة بدون أجر',
+        dayWeekly: 'يوم الراحة الأسبوعي — بدون أجر'
       },
 
       roles: { owner: 'المالك', manager: 'مدير', employee: 'موظف' },
@@ -905,7 +908,7 @@
         canAssign: 'يمكن تعيينه', freeDays: 'أيام متاحة', totalShifts: 'إجمالي المناوبات',
         severity: 'الخطورة', type: 'النوع', detail: 'التفاصيل',
         missing: '— ناقص —', closed: 'مغلق', notAssigned: 'غير معيَّن',
-        personalTitle: 'جدول شخصي – {name}', totalWeek: '{count} مناوبات هذا الأسبوع',
+        personalTitle: 'جدول شخصي – {name}', totalWeek: '{count} هذا الأسبوع',
         noIssues: 'لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ'
       },
 

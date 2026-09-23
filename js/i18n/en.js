@@ -847,21 +847,24 @@
 
       leave: {
         paid: 'Paid',
-        unpaid: 'Not charged',
-        paidTitle: 'Paid leave – comes off the staff member’s balance',
-        unpaidTitle: 'Day off, not charged – does not come off the balance',
+        unpaid: 'Unpaid',
+        paidTitle: 'Paid leave day',
+        unpaidTitle: 'Unpaid day off — this is the default',
         summaryTitle: 'Leave summary',
-        summaryHint: 'Days marked paid come off the staff member’s balance. Days marked not charged are counted separately and do not.',
+        summaryHint: 'A day off that is not marked paid counts as an unpaid day. The standing weekly rest day is not counted here.',
         month: 'Month',
         export: 'Export to Excel',
         none: 'No leave days were marked this month.',
         columnName: 'Staff',
         columnPaid: 'Paid',
-        columnUnpaid: 'Not charged',
+        columnUnpaid: 'Unpaid',
         columnTotal: 'Total',
         totalRow: 'Total',
         sheetName: 'Leave',
-        fileName: 'leave'
+        fileName: 'leave',
+        dayPaid: 'Paid leave day',
+        dayUnpaid: 'Unpaid day off',
+        dayWeekly: 'Weekly rest day — unpaid'
       },
 
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },
@@ -911,7 +914,7 @@
         canAssign: 'Can assign', freeDays: 'Free days', totalShifts: 'Total shifts',
         severity: 'Severity', type: 'Type', detail: 'Detail',
         missing: '— missing —', closed: 'Closed', notAssigned: 'Not assigned',
-        personalTitle: 'Personal schedule – {name}', totalWeek: '{count} shifts this week',
+        personalTitle: 'Personal schedule – {name}', totalWeek: '{count} this week',
         noIssues: 'No overstaffing, gaps or availability conflicts'
       },
 

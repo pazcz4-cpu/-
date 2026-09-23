@@ -902,7 +902,7 @@
       Data.DAYS.forEach(function (day) {
         var record = Store.getConstraintRecord(week(), emp.id, day.idx);
         var status = Store.constraintStatus(record);
-        var constraint = Store.effectiveConstraint(state, week(), emp.id, day.idx);
+        var constraint = Store.effectiveConstraint(state, week(), emp.id, day.idx, weekKey);
         if (Store.isHoliday(week(), day.idx)) {
           html += '<td class="closed holiday-cell">' + esc(Store.holidayName(week(), day.idx)) + '</td>';
           return;
@@ -1910,6 +1910,7 @@
   /* ===== ייצוא אישי: רק המשמרות של עובד אחד ===== */
   function personalRows(empId) {
     var current = week();
+    var emp = Store.byId(state.employees, empId) || {};
     var rows = [];
     Data.DAYS.forEach(function (day) {
       var slots = Store.employeeDayAssignments(state, current, empId, day.idx);
@@ -1917,10 +1918,21 @@
       var date = Store.formatDate(Store.dateOfDay(weekKey, day.idx));
 
       if (!slots.length) {
-        var idle = !Store.isHoliday(current, day.idx) && !constraint.off;
-        var status = Store.isHoliday(current, day.idx)
-          ? Store.holidayName(current, day.idx)
-          : (constraint.off ? t('constraints.dayOff') : t('excel.notAssigned'));
+        /* מה שכתוב בהעתקה שנשלחת לעובד הוא מה שהוא יראה מול
+           התלוש, ולכן הוא חייב להיות מדויק: יום חופש בתשלום,
+           יום חופש ללא תשלום, או המנוחה השבועית שסוכמה מראש –
+           ושלושתם נראים אותו דבר בסידור. */
+        var holiday = Store.isHoliday(current, day.idx);
+        var standingOff = Store.standingFor(emp, day.idx, weekKey).off;
+        var leave = Store.leaveOf(current, empId, day.idx);
+        var status;
+        if (holiday) { status = Store.holidayName(current, day.idx); }
+        else if (standingOff) { status = t('leave.dayWeekly'); }
+        else if (leave) {
+          status = t(leave === Store.LEAVE.PAID ? 'leave.dayPaid' : 'leave.dayUnpaid');
+        } else if (constraint.off) { status = t('leave.dayUnpaid'); }
+        else { status = t('excel.notAssigned'); }
+        var idle = !holiday && !standingOff && !leave && !constraint.off;
         rows.push({ day: day.name, date: date, status: status, working: false, idle: idle });
         return;
       }
@@ -2409,10 +2421,11 @@
       var empId = chip.dataset.emp;
       var dayIdx = Number(chip.dataset.day);
       var kind = chip.dataset.leave;
-      /* לחיצה על מה שכבר מסומן מסירה את הסימון. יום חופש שסומן
-         בטעות צריך דרך חזרה, ולא רק דרך שנייה קדימה. */
-      var next = Store.leaveOf(week(), empId, dayIdx) === kind ? null : kind;
-      if (!Store.setLeave(week(), empId, dayIdx, next)) return;
+      /* אחת משתי האפשרויות תמיד נכונה, ולכן לחיצה קובעת ואינה
+         מבטלת: "ללא תשלום" היא ברירת המחדל, והיא נשמרת כהיעדר
+         סימון. */
+      if (Store.leaveOf(week(), empId, dayIdx) === kind) return;
+      if (!Store.setLeave(week(), empId, dayIdx, kind)) return;
       persist();
       render();
     }
@@ -3613,6 +3626,9 @@
     /* שמירת ההגדרות לשרת. חשוף לשימוש חיצוני כי מסלולי הדפדפן
        בונים עסק מאויש ואז מרעננים; בלי שמירה הוא היה נעלם. */
     persistConfig: function () { return persist('config'); },
+    /* ההעתקה שנשלחת לעובד. חשופה כדי שאפשר יהיה לבדוק את
+       הנוסח שלה – זה הטקסט שהעובד מעמיד מול התלוש. */
+    personalText: personalText,
     /* עדכון רשימת המשמרות בבת אחת. האשף עורך את כולן במסך אחד,
        ושמירה לכל שדה בנפרד הייתה מייצרת מצב ביניים שבו משמרת
        קיימת בלי שעות. שומר על הצבע והמזהה הקיימים, כי הם מה

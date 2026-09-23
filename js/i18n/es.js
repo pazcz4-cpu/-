@@ -841,21 +841,24 @@
 
       leave: {
         paid: 'Pagado',
-        unpaid: 'Sin descontar',
-        paidTitle: 'Vacaciones pagadas: se descuentan del saldo del empleado',
-        unpaidTitle: 'Día libre sin descontar: no se resta del saldo',
+        unpaid: 'Sin pago',
+        paidTitle: 'Día de vacaciones pagado',
+        unpaidTitle: 'Día libre sin pago: es lo predeterminado',
         summaryTitle: 'Resumen de vacaciones',
-        summaryHint: 'Los días marcados como pagados se descuentan del saldo. Los días sin descontar se cuentan aparte.',
+        summaryHint: 'Un día libre que no se marca como pagado cuenta como día sin pago. El descanso semanal fijo no se cuenta aquí.',
         month: 'Mes',
         export: 'Exportar a Excel',
         none: 'Este mes no se marcaron días de vacaciones.',
         columnName: 'Empleado',
         columnPaid: 'Pagado',
-        columnUnpaid: 'Sin descontar',
+        columnUnpaid: 'Sin pago',
         columnTotal: 'Total',
         totalRow: 'Total',
         sheetName: 'Vacaciones',
-        fileName: 'vacaciones'
+        fileName: 'vacaciones',
+        dayPaid: 'Día de vacaciones pagado',
+        dayUnpaid: 'Día libre sin pago',
+        dayWeekly: 'Descanso semanal: sin pago'
       },
 
       roles: { owner: 'Propietario', manager: 'Responsable', employee: 'Empleado' },
@@ -905,7 +908,7 @@
         canAssign: 'Se puede asignar', freeDays: 'Días libres', totalShifts: 'Turnos en total',
         severity: 'Gravedad', type: 'Tipo', detail: 'Detalle',
         missing: '— falta —', closed: 'Cerrado', notAssigned: 'Sin asignar',
-        personalTitle: 'Horario personal – {name}', totalWeek: '{count} turnos esta semana',
+        personalTitle: 'Horario personal – {name}', totalWeek: '{count} esta semana',
         noIssues: 'Sin exceso ni falta de personal y sin conflictos de disponibilidad'
       },
 

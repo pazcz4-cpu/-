@@ -841,21 +841,24 @@
 
       leave: {
         paid: 'Bezahlt',
-        unpaid: 'Ohne Abzug',
-        paidTitle: 'Bezahlter Urlaub – geht vom Guthaben ab',
-        unpaidTitle: 'Freier Tag ohne Abzug – geht nicht vom Guthaben ab',
+        unpaid: 'Unbezahlt',
+        paidTitle: 'Bezahlter Urlaubstag',
+        unpaidTitle: 'Unbezahlter freier Tag — das ist die Voreinstellung',
         summaryTitle: 'Urlaubsübersicht',
-        summaryHint: 'Als bezahlt markierte Tage gehen vom Guthaben ab. Tage ohne Abzug werden getrennt gezählt.',
+        summaryHint: 'Ein freier Tag ohne Markierung "bezahlt" zählt als unbezahlter Tag. Der feste wöchentliche Ruhetag wird hier nicht gezählt.',
         month: 'Monat',
         export: 'Nach Excel exportieren',
         none: 'Diesen Monat wurden keine Urlaubstage markiert.',
         columnName: 'Mitarbeitende',
         columnPaid: 'Bezahlt',
-        columnUnpaid: 'Ohne Abzug',
+        columnUnpaid: 'Unbezahlt',
         columnTotal: 'Gesamt',
         totalRow: 'Gesamt',
         sheetName: 'Urlaub',
-        fileName: 'urlaub'
+        fileName: 'urlaub',
+        dayPaid: 'Bezahlter Urlaubstag',
+        dayUnpaid: 'Unbezahlter freier Tag',
+        dayWeekly: 'Wöchentlicher Ruhetag — unbezahlt'
       },
 
       roles: { owner: 'Inhaber', manager: 'Führungskraft', employee: 'Mitarbeiter' },
@@ -905,7 +908,7 @@
         canAssign: 'Einteilbar', freeDays: 'Freie Tage', totalShifts: 'Schichten gesamt',
         severity: 'Schweregrad', type: 'Typ', detail: 'Details',
         missing: '— fehlt —', closed: 'Geschlossen', notAssigned: 'Nicht eingeteilt',
-        personalTitle: 'Persönlicher Plan – {name}', totalWeek: '{count} Schichten diese Woche',
+        personalTitle: 'Persönlicher Plan – {name}', totalWeek: '{count} in dieser Woche',
         noIssues: 'Keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte'
       },
 

@@ -846,21 +846,24 @@
 
       leave: {
         paid: 'בתשלום',
-        unpaid: 'ללא חיוב',
-        paidTitle: 'יום חופש בתשלום – יורד מהמכסה של העובד',
-        unpaidTitle: 'יום חופש ללא חיוב – אינו יורד מהמכסה',
+        unpaid: 'ללא תשלום',
+        paidTitle: 'יום חופש בתשלום',
+        unpaidTitle: 'יום חופש ללא תשלום — זו ברירת המחדל',
         summaryTitle: 'סיכום ימי חופש',
-        summaryHint: 'ימי חופש שסומנו בתשלום יורדים מהמכסה של העובד. ימים ללא חיוב נספרים בנפרד ואינם יורדים ממנה.',
+        summaryHint: 'יום חופש שלא סומן כ"בתשלום" נספר כיום חופש ללא תשלום. המנוחה השבועית הקבועה אינה נספרת כאן.',
         month: 'חודש',
         export: 'ייצוא לאקסל',
         none: 'לא סומנו ימי חופש בחודש הזה.',
         columnName: 'עובד/ת',
         columnPaid: 'בתשלום',
-        columnUnpaid: 'ללא חיוב',
+        columnUnpaid: 'ללא תשלום',
         columnTotal: 'סך הכל',
         totalRow: 'סך הכל',
         sheetName: 'ימי חופש',
-        fileName: 'ימי-חופש'
+        fileName: 'ימי-חופש',
+        dayPaid: 'יום חופש בתשלום',
+        dayUnpaid: 'יום חופש ללא תשלום',
+        dayWeekly: 'יום חופש שבועי — ללא תשלום'
       },
 
       roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
@@ -910,7 +913,7 @@
         canAssign: 'ניתן לשבץ', freeDays: 'ימים פנויים', totalShifts: 'סה״כ משמרות',
         severity: 'חומרה', type: 'סוג', detail: 'פירוט',
         missing: '— חסר —', closed: 'סגור', notAssigned: 'לא משובץ',
-        personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} משמרות השבוע',
+        personalTitle: 'סידור אישי – {name}', totalWeek: 'סה״כ {count} השבוע',
         noIssues: 'אין עודף או חוסר באיוש ואין הפרות אילוצים'
       },
 

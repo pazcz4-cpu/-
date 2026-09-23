@@ -52,33 +52,37 @@ try {
   check('אחרי סימון יום חופש מופיעות שתי אפשרויות',
     await cell.locator('.leave-chip').count(), 2);
 
+  /* ברירת המחדל היא ללא תשלום, ולכן היא מסומנת כבר עכשיו */
+  check('ברירת המחדל היא ללא תשלום',
+    await cell.locator('.leave-chip.unpaid.on').count(), 1);
+
+  const leaveOf = () => page.evaluate(() => {
+    const Store = window.ShiftStore;
+    const state = window.ShiftApp.getState();
+    const week = state.weeks[Store.currentWeekKey()];
+    const key = Object.keys(week.constraints)[0];
+    if (!key) return null;
+    const parts = key.split('|');
+    return Store.leaveOf(week, parts[0], Number(parts[1]));
+  });
+
   await cell.locator('.leave-chip.paid').click();
   await page.waitForTimeout(400);
-  check('הסימון נשמר על היום', await page.evaluate(() => {
-    const state = window.ShiftApp.getState();
-    const key = Object.keys(state.weeks)[0];
-    const week = state.weeks[window.ShiftStore.currentWeekKey()];
-    const hit = Object.keys(week.constraints).filter((k) => week.constraints[k].leave);
-    return hit.length ? week.constraints[hit[0]].leave : null;
-  }), 'paid');
+  check('הסימון נשמר על היום', await leaveOf(), 'paid');
 
   await cell.locator('.leave-chip.unpaid').click();
   await page.waitForTimeout(400);
-  check('החלפה לסוג השני', await page.evaluate(() => {
-    const week = window.ShiftApp.getState().weeks[window.ShiftStore.currentWeekKey()];
-    const hit = Object.keys(week.constraints).filter((k) => week.constraints[k].leave);
-    return hit.length ? week.constraints[hit[0]].leave : null;
-  }), 'unpaid');
-
-  await cell.locator('.leave-chip.unpaid').click();
-  await page.waitForTimeout(400);
-  check('לחיצה שנייה מסירה את הסימון', await page.evaluate(() => {
+  check('החזרה לברירת המחדל', await leaveOf(), 'unpaid');
+  check('וללא תשלום נשמר כהיעדר סימון', await page.evaluate(() => {
     const week = window.ShiftApp.getState().weeks[window.ShiftStore.currentWeekKey()];
     return Object.keys(week.constraints).filter((k) => week.constraints[k].leave).length;
   }), 0);
 
   console.log('\n== הסיכום החודשי ==');
-  check('בלי סימונים – נאמר שאין',
+  /* מנקים את היום שסומן, כדי שהחודש יתחיל ריק */
+  await firstOff.click();
+  await page.waitForTimeout(500);
+  check('בלי ימי חופש – נאמר שאין',
     (await page.locator('#leave-summary').innerText()).trim(), /לא סומנו/);
 
   /* שני ימים בתשלום ואחד ללא חיוב, לשני עובדים */
@@ -88,10 +92,11 @@ try {
     const key = Store.currentWeekKey();
     const week = state.weeks[key];
     const staff = state.employees;
-    [[staff[0].id, 1, 'paid'], [staff[0].id, 2, 'paid'], [staff[1].id, 3, 'unpaid']]
+    [[staff[0].id, 1, 'paid'], [staff[0].id, 2, 'paid'], [staff[1].id, 3, null]]
       .forEach(([empId, day, kind]) => {
         week.constraints[empId + '|' + day] = { off: true, blocked: {}, preferred: {}, note: '' };
-        Store.setLeave(week, empId, day, kind);
+        /* null = לא סומן כלום. לפי ברירת המחדל זה יום ללא תשלום. */
+        if (kind) Store.setLeave(week, empId, day, kind);
       });
     window.ShiftApp.persistConfig();
     window.ShiftApp.render();
@@ -104,6 +109,30 @@ try {
   check('ושורת סך הכל קיימת', table, /סך הכל/);
   check('שתי שורות עובדים',
     await page.locator('#leave-summary tbody tr').count(), 2);
+
+  console.log('\n== מה שנשלח לעובד ==');
+  /* מה שכתוב בהעתקה הוא מה שהעובד יעמיד מול התלוש */
+  const copy = await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    const Store = window.ShiftStore;
+    const week = state.weeks[Store.currentWeekKey()];
+    const staff = state.employees;
+    /* יום חופש בתשלום, יום חופש ללא תשלום, ומנוחה שבועית קבועה */
+    week.constraints[staff[0].id + '|1'] = { off: true, blocked: {}, preferred: {}, note: '' };
+    Store.setLeave(week, staff[0].id, 1, 'paid');
+    week.constraints[staff[0].id + '|2'] = { off: true, blocked: {}, preferred: {}, note: '' };
+    Store.setStanding(staff[0], 6, { off: true });
+    window.ShiftApp.persistConfig();
+    window.ShiftApp.render();
+    return window.ShiftApp.personalText(staff[0].id);
+  });
+  console.log('   ' + copy.replace(/\n/g, ' · '));
+  check('יום חופש בתשלום נכתב במפורש', copy, /יום חופש בתשלום/);
+  check('יום שלא סומן נכתב כללא תשלום', copy, /יום חופש ללא תשלום/);
+  check('והמנוחה השבועית נכתבת כשבועית', copy, /יום חופש שבועי/);
+  /* "סה״כ 0 משמרות משמרות השבוע" – המילה הופיעה פעמיים, בדיוק
+     בשורה שהעובד קורא. */
+  check('שורת הסיכום אינה כופלת את המילה', copy, /^(?!.*משמרות משמרות)[\s\S]*$/);
 
   console.log('\n== איפוס סניף לשבוע אחד ==');
   await page.click('.tab[data-tab="schedule"]');

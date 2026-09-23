@@ -841,21 +841,24 @@
 
       leave: {
         paid: 'Payé',
-        unpaid: 'Non décompté',
-        paidTitle: 'Congé payé – déduit du solde de l’employé',
-        unpaidTitle: 'Jour de repos non décompté – ne réduit pas le solde',
+        unpaid: 'Non payé',
+        paidTitle: 'Jour de congé payé',
+        unpaidTitle: 'Jour de repos non payé — c’est la valeur par défaut',
         summaryTitle: 'Récapitulatif des congés',
-        summaryHint: 'Les jours marqués payés sont déduits du solde. Les jours non décomptés sont comptés à part.',
+        summaryHint: 'Un jour de repos non marqué payé compte comme jour non payé. Le repos hebdomadaire fixe n’est pas compté ici.',
         month: 'Mois',
         export: 'Exporter vers Excel',
         none: 'Aucun jour de congé marqué ce mois-ci.',
         columnName: 'Employé',
         columnPaid: 'Payé',
-        columnUnpaid: 'Non décompté',
+        columnUnpaid: 'Non payé',
         columnTotal: 'Total',
         totalRow: 'Total',
         sheetName: 'Congés',
-        fileName: 'conges'
+        fileName: 'conges',
+        dayPaid: 'Jour de congé payé',
+        dayUnpaid: 'Jour de repos non payé',
+        dayWeekly: 'Repos hebdomadaire — non payé'
       },
 
       roles: { owner: 'Propriétaire', manager: 'Responsable', employee: 'Employé' },
@@ -905,7 +908,7 @@
         canAssign: 'Peut être affecté', freeDays: 'Jours libres', totalShifts: 'Total des services',
         severity: 'Gravité', type: 'Type', detail: 'Détail',
         missing: '— manquant —', closed: 'Fermé', notAssigned: 'Non affecté',
-        personalTitle: 'Planning personnel – {name}', totalWeek: '{count} services cette semaine',
+        personalTitle: 'Planning personnel – {name}', totalWeek: '{count} cette semaine',
         noIssues: 'Ni sureffectif, ni manque, ni conflit de disponibilité'
       },
 

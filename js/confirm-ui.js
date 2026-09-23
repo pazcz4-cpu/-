@@ -47,6 +47,9 @@
     host.addEventListener('click', function (event) {
       if (!pending) return;
       if (event.target.closest('[data-confirm-yes]')) { finish(true); return; }
+      /* דרך שלישית, לשאלה שאין לה שתי תשובות. היא מוחזרת כמחרוזת
+         ולא כ-true, כדי שקוראים ישנים שמצפים לכן/לא לא ישתנו. */
+      if (event.target.closest('[data-confirm-alt]')) { finish('alt'); return; }
       /* לחיצה מחוץ לחלון היא ביטול, ולא אישור בטעות */
       if (event.target === host || event.target.closest('[data-confirm-no]')) { finish(false); }
     });
@@ -58,7 +61,11 @@
   }
 
   /* options: title, lines[], facts[{label,value,tone}], confirmLabel,
-     cancelLabel, tone ('danger' מסמן פעולה שכדאי לעצור לפניה). */
+     cancelLabel, tone ('danger' מסמן פעולה שכדאי לעצור לפניה),
+     altLabel + altTone (כפתור שלישי, מחזיר 'alt').
+
+     התשובה היא true / false / 'alt'. שאלה עם שלוש תשובות אמיתיות
+     עדיפה על שתי שאלות ברצף: ברצף, השנייה נלחצת בלי להיקרא. */
   function ask(options) {
     var opts = options || {};
     var node = ensureHost();
@@ -85,6 +92,10 @@
     html += '<div class="confirm-actions">' +
       '<button class="btn primary" data-confirm-yes>' +
         esc(opts.confirmLabel || t('common.yes')) + '</button>' +
+      (opts.altLabel
+        ? '<button class="btn ' + (opts.altTone === 'danger' ? 'danger' : 'ghost') +
+          '" data-confirm-alt>' + esc(opts.altLabel) + '</button>'
+        : '') +
       '<button class="btn ghost" data-confirm-no>' +
         esc(opts.cancelLabel || t('common.cancel')) + '</button>' +
       '</div></div>';

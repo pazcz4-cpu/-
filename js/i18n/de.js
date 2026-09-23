@@ -608,6 +608,31 @@
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      locked: {
+        factPeople: 'eingeteilte Personen',
+        factShifts: 'Schichten',
+        warnTitle: 'Diese Woche ist bereits veröffentlicht',
+        warnWhen: 'Veröffentlicht am {date} um {time}. Ihre Belegschaft hat sie bereits gesehen.',
+        warnPublished: 'Diese Woche ist veröffentlicht, und Ihre Belegschaft hat sie bereits gesehen.',
+        warnSeen: 'Jede Änderung erreicht sie sofort und ohne Hinweis. Wer seine Woche nach dem Gesehenen geplant hat, erfährt nicht, dass sich etwas verschoben hat.',
+        warnGo: 'Verstanden, weiter',
+        warnStop: 'Nicht ändern',
+        chooseTitle: 'Wie möchten Sie weitermachen?',
+        chooseDraft: 'Zurück zum Entwurf: Ihre Belegschaft sieht den Plan nicht mehr, bis Sie ihn erneut veröffentlichen. Das ist der sichere Weg — in Ruhe bearbeiten, einmal veröffentlichen.',
+        chooseDirect: 'Live bearbeiten: Der Plan bleibt veröffentlicht, und jede Änderung erreicht die Belegschaft sofort beim Speichern.',
+        goDraft: 'Zurück zum Entwurf',
+        goDirect: 'Den veröffentlichten bearbeiten',
+        nowDraft: 'Zurück zum Entwurf. Ihre Belegschaft sieht ihn bis zur nächsten Veröffentlichung nicht.',
+        nowDirect: 'Live-Bearbeitung. Jede Änderung erreicht die Belegschaft sofort.',
+        cancelled: 'Es wurde nichts geändert.',
+        blockedToast: 'Diese Woche ist veröffentlicht und kann hier nicht bearbeitet werden.',
+        bannerTitle: 'Live-Plan wird bearbeitet',
+        bannerBody: 'Diese Woche ist veröffentlicht. Jede Änderung erreicht die Belegschaft sofort.',
+        bannerStop: 'Bearbeitung beenden',
+        bannerStopped: 'Live-Bearbeitung beendet. Die Woche ist wieder gesperrt.'
+      },
+
       move: {
         trayTitle: 'Wartebereich',
         trayHint: 'Schichten ohne Besetzung. Von hier auf eine Person ziehen, oder eine Schicht hier ablegen, um sie freizugeben.',

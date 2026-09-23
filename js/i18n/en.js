@@ -614,6 +614,31 @@
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      locked: {
+        factPeople: 'people scheduled',
+        factShifts: 'shifts',
+        warnTitle: 'This week is already published',
+        warnWhen: 'Published on {date} at {time}. Your staff have already seen it.',
+        warnPublished: 'This week is published, and your staff have already seen it.',
+        warnSeen: 'Any change reaches them immediately, with no notice. Anyone who already planned their week around what they saw will not know something moved.',
+        warnGo: 'Understood, continue',
+        warnStop: "Don't change it",
+        chooseTitle: 'How do you want to continue?',
+        chooseDraft: 'Back to draft: your staff stop seeing the schedule until you publish it again. This is the safe path — edit quietly, publish once.',
+        chooseDirect: 'Edit live: the schedule stays published, and every change reaches your staff the moment it is saved.',
+        goDraft: 'Back to draft',
+        goDirect: 'Edit the published one',
+        nowDraft: 'Back to draft. Your staff cannot see it until you publish again.',
+        nowDirect: 'Editing live. Every change reaches your staff immediately.',
+        cancelled: 'Nothing was changed.',
+        blockedToast: 'This week is published and cannot be edited here.',
+        bannerTitle: 'Editing a live schedule',
+        bannerBody: 'This week is published. Every change reaches your staff immediately.',
+        bannerStop: 'Stop editing',
+        bannerStopped: 'Live editing stopped. The week is locked again.'
+      },
+
       move: {
         trayTitle: 'Holding area',
         trayHint: 'Shifts with nobody on them. Drag from here onto a person, or drop one here to clear it.',

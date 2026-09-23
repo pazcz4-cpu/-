@@ -608,6 +608,31 @@
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      locked: {
+        factPeople: 'personas en el cuadrante',
+        factShifts: 'turnos',
+        warnTitle: 'Esta semana ya está publicada',
+        warnWhen: 'Publicada el {date} a las {time}. Tu plantilla ya la ha visto.',
+        warnPublished: 'Esta semana está publicada y tu plantilla ya la ha visto.',
+        warnSeen: 'Cualquier cambio les llega al momento y sin aviso. Quien ya haya organizado su semana con lo que vio no sabrá que algo se ha movido.',
+        warnGo: 'Entendido, continuar',
+        warnStop: 'No cambiar nada',
+        chooseTitle: '¿Cómo quieres continuar?',
+        chooseDraft: 'Volver a borrador: tu plantilla deja de ver el cuadrante hasta que lo publiques de nuevo. Es el camino seguro: editas con calma y publicas una vez.',
+        chooseDirect: 'Editar en directo: el cuadrante sigue publicado y cada cambio les llega en cuanto se guarda.',
+        goDraft: 'Volver a borrador',
+        goDirect: 'Editar el publicado',
+        nowDraft: 'Vuelve a borrador. Tu plantilla no lo ve hasta la próxima publicación.',
+        nowDirect: 'Edición en directo. Cada cambio les llega al instante.',
+        cancelled: 'No se ha cambiado nada.',
+        blockedToast: 'Esta semana está publicada y no se edita desde aquí.',
+        bannerTitle: 'Editando un cuadrante en directo',
+        bannerBody: 'Esta semana está publicada. Cada cambio llega a tu plantilla al instante.',
+        bannerStop: 'Terminar edición',
+        bannerStopped: 'Edición en directo detenida. La semana vuelve a estar bloqueada.'
+      },
+
       move: {
         trayTitle: 'Zona de espera',
         trayHint: 'Turnos sin nadie asignado. Arrastra desde aquí a una persona, o suelta uno aquí para dejarlo libre.',

@@ -138,6 +138,132 @@
     return true;
   }
 
+
+  /* ===== שבוע שפורסם נעול =====
+
+     מנהל שפתח את המערכת בבוקר אינו זוכר איזה שבוע כבר פורסם.
+     שינוי קטן – גרירת משמרת, אישור בקשה, שינוי שעת מוצ״ש – מגיע
+     לטלפונים של כל העובדים מיד ובלי הודעה, והם כבר בנו את השבוע
+     שלהם סביב מה שראו. זו לא תקלה טכנית; זה עובד שמגיע לסניף
+     הלא נכון.
+
+     לכן הפעולה הראשונה על שבוע מפורסם נחסמת תמיד. היא אינה
+     נשמרת ואז מבקשת אישור – היא פשוט לא קורית, ובמקומה נפתחת
+     האזהרה. כך לחיצה בטעות אינה יכולה לשנות דבר.
+
+     אחרי האזהרה יש שאלה אחת עם שלוש תשובות אמיתיות, ולא שתי
+     שאלות ברצף: שאלה שנייה ברצף נלחצת בלי להיקרא.
+
+     ההיתר חל על השבוע הזה בלבד, ונמחק ברגע שעוברים שבוע או
+     שהשבוע מתפרסם מחדש. כל עוד הוא פעיל יש באנר אדום על המסך –
+     אחרת המנהל שוכח שהוא בתוך סידור חי. */
+  var publishedUnlocked = null;   // מפתח השבוע שהותר לעריכה
+
+  function weekIsPublished() {
+    var current = state.weeks[weekKey];
+    return !!(current && current.published);
+  }
+
+  /* השער לכל שינוי בשבוע עצמו. מחזיר true כשהשינוי נחסם. */
+  function weekBlocked() {
+    if (blocked()) return true;
+    if (!weekIsPublished()) return true === false;   /* לא פורסם – אין מה לחסום */
+    if (publishedUnlocked === weekKey) return false;
+    askPublishedEdit();
+    return true;
+  }
+
+  /* כמה אנשים ייפגעו מהשינוי. זה המספר שגורם למנהל לעצור, ולא
+     המילה "פורסם" – ולכן הוא בגדול בחלון. */
+  function publishedFacts() {
+    var current = state.weeks[weekKey] || {};
+    var people = {};
+    var shifts = 0;
+    Object.keys(current.assignments || {}).forEach(function (key) {
+      (current.assignments[key] || []).forEach(function (id) { people[id] = true; shifts++; });
+    });
+    return [
+      { label: t('locked.factPeople'), value: Object.keys(people).length, tone: 'warn' },
+      { label: t('locked.factShifts'), value: shifts, tone: 'warn' }
+    ];
+  }
+
+  var askingPublished = false;
+
+  function askPublishedEdit() {
+    if (askingPublished) return;
+    if (!window.ShiftConfirmUI) {
+      /* בלי חלון אישור אין הגנה, ולכן גם אין היתר */
+      toast(t('locked.blockedToast'));
+      return;
+    }
+    askingPublished = true;
+
+    var current = state.weeks[weekKey] || {};
+    var at = current.publishedAt ? new Date(current.publishedAt) : null;
+
+    /* אזהרה ראשונה: מה מצב השבוע, וכמה אנשים תלויים בו */
+    window.ShiftConfirmUI.ask({
+      title: t('locked.warnTitle'),
+      facts: publishedFacts(),
+      lines: [
+        at ? t('locked.warnWhen',
+              { date: Store.formatDate(at), time: timeLabel(at, true) })
+           : t('locked.warnPublished'),
+        t('locked.warnSeen')
+      ],
+      tone: 'danger',
+      confirmLabel: t('locked.warnGo'),
+      cancelLabel: t('locked.warnStop')
+    }).then(function (go) {
+      if (!go) { askingPublished = false; toast(t('locked.cancelled')); return; }
+
+      /* השאלה האמיתית. הדרך הבטוחה היא הכפתור הראשי. */
+      return window.ShiftConfirmUI.ask({
+        title: t('locked.chooseTitle'),
+        lines: [t('locked.chooseDraft'), t('locked.chooseDirect')],
+        tone: 'danger',
+        confirmLabel: t('locked.goDraft'),
+        altLabel: t('locked.goDirect'),
+        altTone: 'danger',
+        cancelLabel: t('locked.warnStop')
+      }).then(function (answer) {
+        askingPublished = false;
+        if (answer === true) {
+          /* החזרה לטיוטה: העובדים מפסיקים לראות עד הפרסום הבא,
+             וזו בדיוק ההתנהגות שמונעת "ראיתי משהו אחר". */
+          Store.markDraft(state.weeks[weekKey]);
+          publishedUnlocked = null;
+          persist('week');
+          render();
+          toast(t('locked.nowDraft'));
+          return;
+        }
+        if (answer === 'alt') {
+          publishedUnlocked = weekKey;
+          render();
+          toast(t('locked.nowDirect'));
+          return;
+        }
+        toast(t('locked.cancelled'));
+      });
+    }, function () { askingPublished = false; });
+  }
+
+  /* הבאנר. הוא נשאר על המסך כל עוד עורכים סידור חי, ואינו
+     נסגר בלחיצה: מי ששכח שהוא בתוך סידור מפורסם לא יחפש אותו. */
+  function renderPublishedBanner() {
+    var node = $('#live-edit-banner');
+    if (!node) return;
+    var live = publishedUnlocked === weekKey && weekIsPublished();
+    node.classList.toggle('hidden', !live);
+    if (!live) return;
+    node.innerHTML = '<b>' + esc(t('locked.bannerTitle')) + '</b> ' +
+      '<span>' + esc(t('locked.bannerBody')) + '</span>' +
+      '<button type="button" class="btn ghost small" id="live-edit-stop">' +
+      esc(t('locked.bannerStop')) + '</button>';
+  }
+
   var toastTimer = null;
   /* action = { label, onClick } – פעולה שאפשר לבצע מתוך ההודעה,
      כמו ביטול. הודעה עם פעולה נשארת זמן כפול: מי שצריך לבטל צריך
@@ -596,7 +722,7 @@
   /* ביצוע המהלך. כל המסלולים – גרירה, לחיצה, מקלדת – נכנסים לכאן,
      ולכן החוקים נאכפים פעם אחת ובאותו אופן. */
   function applyMove(spec, targetEmpId) {
-    if (blocked()) { render(); return; }
+    if (weekBlocked()) { render(); return; }
     if (!spec) return;
     var current = week();
     var nameOf = function (id) {
@@ -652,6 +778,9 @@
     function onDragStart(event) {
       var tile = event.target.closest('.shift-tile');
       if (!tile || viewOnly) return;
+      /* העצירה היא בתחילת התנועה ולא בסופה: לתפוס משמרת, לגרור
+         אותה, ורק אז לשמוע שאסור – זה מרגיש כמו תקלה. */
+      if (weekBlocked()) { event.preventDefault(); return; }
       var spec = tileSpec(tile);
       draggingSpec = spec;
       document.body.classList.add('moving-shift');
@@ -714,7 +843,11 @@
     function onClick(event) {
       if (viewOnly) return;
       var tile = event.target.closest('.shift-tile');
-      if (tile && !pickedTile) { pickTile(tile); return; }
+      if (tile && !pickedTile) {
+        if (weekBlocked()) return;
+        pickTile(tile);
+        return;
+      }
       if (!pickedTile) return;
 
       var spec = findTile(pickedTile);
@@ -1984,6 +2117,7 @@
     renderBranchView(marks);
     renderEmployeeView(marks);
     renderTray();
+    renderPublishedBanner();
     renderWorkload();
     renderAvailability();
     renderPersonalPicker();
@@ -2039,7 +2173,7 @@
 
   /* שינוי שיבוץ – משותף לתצוגת המחשב ולתצוגת הנייד */
   function applyCellChange(cell, dayIdx, branchId, shiftId) {
-    if (blocked()) { render(); return; }
+    if (weekBlocked()) { render(); return; }
     var values = Array.prototype.map.call(cell.querySelectorAll('.emp-select'), function (node) {
       return node.value;
     }).filter(function (value) { return value; });
@@ -2494,6 +2628,15 @@
 
   function bindScheduleTab() {
     function goToWeek(nextKey) { openWeek(nextKey); }
+    var banner = $('#live-edit-banner');
+    if (banner) {
+      banner.addEventListener('click', function (event) {
+        if (!event.target.closest('#live-edit-stop')) return;
+        publishedUnlocked = null;
+        render();
+        toast(t('locked.bannerStopped'));
+      });
+    }
     $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
     $('#next-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, 1)); });
     $('#this-week').addEventListener('click', function () { goToWeek(Store.currentWeekKey()); });
@@ -2510,7 +2653,7 @@
     });
 
     $('#generate').addEventListener('click', function () {
-      if (blocked()) return;
+      if (weekBlocked()) return;
       var current = week();
       var keepManual = $('#keep-manual').checked;
       var result = Scheduler.generate(state, current, { keepManual: keepManual, seed: Date.now() % 100000 });
@@ -2530,7 +2673,7 @@
     });
 
     $('#clear-week').addEventListener('click', function () {
-      if (blocked()) return;
+      if (weekBlocked()) return;
       if (!confirm(t('toast.clearWeekConfirm'))) return;
       var current = week();
       current.assignments = {};
@@ -2552,6 +2695,8 @@
         askBeforePublish().then(function (go) {
           if (!go) return;
           Store.markPublished(week());
+          /* פרסום מחדש סוגר את ההיתר: מכאן זה שוב סידור חי */
+          publishedUnlocked = null;
           persist('week');
           render();
           toast(t('publish.publishedNow'));
@@ -2598,7 +2743,7 @@
     $('#holiday-days').addEventListener('click', function (event) {
       var chip = event.target.closest('.holiday-chip');
       if (!chip) return;
-      if (blocked()) return;
+      if (weekBlocked()) return;
       var dayIdx = Number(chip.dataset.day);
       var current = week();
 
@@ -2635,7 +2780,7 @@
     });
 
     $('#shabbat-end').addEventListener('change', function (event) {
-      if (blocked()) { render(); return; }
+      if (weekBlocked()) { render(); return; }
       var normalized = Store.normalizeTimeInput(event.target.value);
       if (normalized === null) {
         toast(t('errors.invalidTime'));
@@ -2708,7 +2853,7 @@
     function onConstraintClick(event) {
       var button = event.target.closest('.cstate');
       if (!button) return;
-      if (blocked()) return;
+      if (weekBlocked()) return;
       var empId = button.dataset.emp;
       var dayIdx = Number(button.dataset.day);
       var current = week();
@@ -2739,7 +2884,7 @@
     function onLeaveClick(event) {
       var chip = event.target.closest('[data-leave]');
       if (!chip) return;
-      if (blocked()) return;
+      if (weekBlocked()) return;
       var empId = chip.dataset.emp;
       var dayIdx = Number(chip.dataset.day);
       var kind = chip.dataset.leave;
@@ -2767,7 +2912,7 @@
     $('#pending-constraints').addEventListener('click', function (event) {
       var button = event.target.closest('[data-decision]');
       if (!button) return;
-      if (blocked()) return;
+      if (weekBlocked()) return;
       var item = button.closest('.pending-item');
       var empId = item.dataset.emp;
       var dayIdx = Number(item.dataset.day);
@@ -2814,7 +2959,7 @@
 
   function bindEmployeesTab() {
     $('#add-employee').addEventListener('click', function () {
-      if (blocked()) return;
+      if (weekBlocked()) return;
       if (!addEmployee(t('employees.newName'))) return;
       render();
     });
@@ -2972,7 +3117,7 @@
         }
 
         if (button.id !== 'emp-bulk-active' && button.id !== 'emp-bulk-inactive') return;
-        if (blocked()) return;
+        if (weekBlocked()) return;
         var active = button.id === 'emp-bulk-active';
         var targets = visibleEmployees().filter(function (emp) { return emp.active !== active; });
         if (!targets.length) return;
@@ -3054,7 +3199,7 @@
          האנשים נשארים. רק מי שובץ. */
       var reset = event.target.closest('[data-action="reset-branch"]');
       if (reset) {
-        if (blocked()) return;
+        if (weekBlocked()) return;
         var resetCard = reset.closest('.card');
         var resetBranch = Store.byId(state.branches, resetCard.dataset.branch);
         if (!resetBranch) return;
@@ -3935,6 +4080,10 @@
 
   /* מעבר לשבוע אחר – דואג שהנתונים שלו נטענו מהמקור */
   function openWeek(nextKey) {
+    /* ההיתר לערוך סידור מפורסם שייך לשבוע שעליו ניתן. מעבר שבוע
+       סוגר אותו, אחרת מנהל שאישר פעם אחת היה עורך חופשי גם
+       שבועות אחרים בלי לשים לב. */
+    if (nextKey !== weekKey) publishedUnlocked = null;
     weekKey = nextKey;
     Platform.watchWeek(weekKey);
     return Promise.resolve(source.ensureWeek(state, weekKey)).then(render, render);

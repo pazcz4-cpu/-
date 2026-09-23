@@ -608,6 +608,31 @@
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      locked: {
+        factPeople: 'personnes planifiées',
+        factShifts: 'créneaux',
+        warnTitle: 'Cette semaine est déjà publiée',
+        warnWhen: 'Publiée le {date} à {time}. Vos équipes l’ont déjà vue.',
+        warnPublished: 'Cette semaine est publiée et vos équipes l’ont déjà vue.',
+        warnSeen: "Toute modification leur parvient immédiatement, sans avertissement. Celui qui a organisé sa semaine d'après ce qu'il a vu ne saura pas que quelque chose a bougé.",
+        warnGo: 'Compris, continuer',
+        warnStop: 'Ne rien changer',
+        chooseTitle: 'Comment voulez-vous continuer ?',
+        chooseDraft: "Repasser en brouillon : vos équipes ne voient plus le planning jusqu'à ce que vous le publiiez à nouveau. C'est la voie sûre — modifier tranquillement, publier une fois.",
+        chooseDirect: 'Modifier en direct : le planning reste publié, et chaque modification leur parvient dès son enregistrement.',
+        goDraft: 'Repasser en brouillon',
+        goDirect: 'Modifier le planning publié',
+        nowDraft: "Repassé en brouillon. Vos équipes ne le voient pas jusqu'à la prochaine publication.",
+        nowDirect: 'Modification en direct. Chaque changement leur parvient immédiatement.',
+        cancelled: "Rien n'a été modifié.",
+        blockedToast: "Cette semaine est publiée et ne se modifie pas d'ici.",
+        bannerTitle: 'Modification d’un planning en direct',
+        bannerBody: 'Cette semaine est publiée. Chaque modification parvient à vos équipes immédiatement.',
+        bannerStop: 'Terminer la modification',
+        bannerStopped: 'Modification en direct arrêtée. La semaine est de nouveau verrouillée.'
+      },
+
       move: {
         trayTitle: "Zone d'attente",
         trayHint: "Créneaux sans personne. Faites glisser d'ici vers une personne, ou déposez-en un ici pour le libérer.",

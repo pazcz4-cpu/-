@@ -608,6 +608,31 @@
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      locked: {
+        factPeople: 'pessoas na escala',
+        factShifts: 'turnos',
+        warnTitle: 'Esta semana já está publicada',
+        warnWhen: 'Publicada a {date} às {time}. A equipa já a viu.',
+        warnPublished: 'Esta semana está publicada e a equipa já a viu.',
+        warnSeen: 'Qualquer alteração chega-lhes de imediato, sem aviso. Quem já organizou a semana pelo que viu não saberá que algo mudou.',
+        warnGo: 'Percebi, continuar',
+        warnStop: 'Não alterar',
+        chooseTitle: 'Como quer continuar?',
+        chooseDraft: 'Voltar a rascunho: a equipa deixa de ver a escala até a publicar de novo. É o caminho seguro — edita com calma e publica uma vez.',
+        chooseDirect: 'Editar em direto: a escala continua publicada, e cada alteração chega-lhes assim que for guardada.',
+        goDraft: 'Voltar a rascunho',
+        goDirect: 'Editar a publicada',
+        nowDraft: 'Voltou a rascunho. A equipa não a vê até à próxima publicação.',
+        nowDirect: 'Edição em direto. Cada alteração chega-lhes de imediato.',
+        cancelled: 'Nada foi alterado.',
+        blockedToast: 'Esta semana está publicada e não se edita aqui.',
+        bannerTitle: 'A editar uma escala em direto',
+        bannerBody: 'Esta semana está publicada. Cada alteração chega à equipa de imediato.',
+        bannerStop: 'Terminar edição',
+        bannerStopped: 'Edição em direto terminada. A semana está bloqueada de novo.'
+      },
+
       move: {
         trayTitle: 'Zona de espera',
         trayHint: 'Turnos sem ninguém. Arraste daqui para uma pessoa, ou largue um aqui para o libertar.',

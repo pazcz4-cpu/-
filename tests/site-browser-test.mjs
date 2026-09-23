@@ -303,6 +303,20 @@ try {
     check('  יש לוגו בתוך התוכן',
       await page.locator('article[data-legal]:visible .guide-logo').count() > 0, true);
     check('  יש כפתור הדפסה', await page.locator('[data-print]:visible').count(), 1);
+    /* צילומי מסך: מדריך בלי תמונות הוא טקסט שאיש לא קורא, וצילום
+       שבור במסמך שנשלח לכל העובדים הוא ריבוע ריק שלא ניתן לתקן
+       אחרי ששלחו אותו. שתי הבדיקות נפרדות בכוונה. */
+    check('  יש צילומי מסך מהמערכת',
+      await page.locator('article[data-legal]:visible .guide-shot img').count() >= 4, true);
+    check('  כולם נטענו',
+      await page.evaluate(() => Array.from(document.querySelectorAll('.guide-shot img'))
+        .filter((img) => !img.complete || img.naturalWidth === 0)
+        .map((img) => img.getAttribute('src')).join(', ')), '');
+    check('  ולכל אחד יש כיתוב שמסביר מה רואים',
+      await page.evaluate(() => Array.from(
+        document.querySelectorAll('article[data-legal]:not([hidden]) .guide-shot'))
+        .every((fig) => (fig.querySelector('figcaption')?.textContent || '').trim().length > 20)),
+      true);
     check('  יש קישור למערכת',
       await page.locator('article[data-legal]:visible a[href="/app/"]').count(), 1);
     check('  נמצא במפת האתר',

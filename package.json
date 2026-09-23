@@ -46,6 +46,7 @@
     "build:preview": "node build-landing-artifact.js",
     "serve": "node build-site.js && node tools/serve.js",
     "test:site": "node build-site.js && node tests/site-browser-test.mjs",
+    "guide:shots": "node tools/guide-shots.mjs",
     "test:supabase": "node tests/supabase-tests.js",
     "test:webhook": "node tests/billing-webhook-tests.js",
     "test:trial": "node tests/trial-browser-test.mjs",

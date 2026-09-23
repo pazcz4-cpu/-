@@ -385,8 +385,13 @@
   AuthUI.prototype.renderUserBar = function (session) {
     var bar = document.getElementById('user-bar');
     if (!bar) return;
+    /* מצב המנוי – ימי ניסיון שנותרו, מתי החיוב הבא, כרטיס שנדחה –
+       שייך למי שיכול לעשות בו משהו. לעובד ולמנהל משמרת זו הודעה
+       על החשבון של מישהו אחר, והיא מופיעה בדיוק במקום שבו הוא
+       מחפש את המשמרות שלו. מנוי שפג הוא סיפור אחר לגמרי: שם
+       showBlocked חוסם את כולם ומסביר לכל תפקיד מה לעשות. */
     var notice = '';
-    if (session.access.text) {
+    if (session.access.text && Model.can(session.user.role, 'billing.manage')) {
       notice = '<span class="user-notice ' + (session.access.reason === 'past-due' ? 'warn' : '') + '">' +
         esc(session.access.text) + '</span>';
     }

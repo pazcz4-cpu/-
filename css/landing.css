@@ -343,6 +343,26 @@
 .guide table td { vertical-align: top; }
 .guide table td:first-child { white-space: nowrap; }
 
+/* ===== צילומי מסך =====
+   התמונות נוצרו מהמערכת עצמה (tools/guide-shots.mjs), ולכן הן
+   צולמו ברוחב טלפון. מסגרת דקה וצל קל מפרידים בין "זה המסך"
+   לבין "זה המסמך" – בלעדיהם הצילום נראה כמו חלק מהעיצוב של
+   העמוד, והקורא לא יודע מה הוא מסתכל עליו. */
+.guide-shot { margin: 16px 0 22px; }
+.guide-shot img {
+  display: block; width: 100%; max-width: 330px; height: auto;
+  border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, .1);
+  background: #ffffff;
+}
+.guide-shot figcaption {
+  margin-top: 8px; font-size: 13.5px; line-height: 1.6; color: var(--muted);
+  max-width: 330px;
+}
+/* שניים זה לצד זה כשיש רוחב, זה מתחת לזה בטלפון */
+.guide-pair { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px 0 22px; }
+.guide-pair .guide-shot { margin: 0; flex: 1 1 260px; }
+
 @media print {
   .no-print { display: none !important; }
   body { background: #ffffff; color: #000000; }
@@ -352,5 +372,14 @@
   .guide-logo-dark { display: block !important; }
   .guide h2 { break-after: avoid; }
   .guide ul, .guide ol, .guide table { break-inside: avoid; }
+  /* צילום שנחתך בין שני עמודים הוא צילום שאי אפשר לקרוא */
+  .guide-shot, .guide-pair { break-inside: avoid; }
+  .guide-shot img {
+    max-width: 78mm; border: 1px solid #cbd2e0; box-shadow: none;
+    /* הדפדפן משמיט רקעים בהדפסה כברירת מחדל, וצילום בלי הרקע
+       שלו הוא כתמי טקסט באוויר */
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .guide-shot figcaption { color: #333333; max-width: 78mm; }
   a { color: #000000; text-decoration: none; }
 }

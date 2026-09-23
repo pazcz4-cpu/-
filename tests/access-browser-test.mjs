@@ -108,6 +108,34 @@ try {
   check('המייל התמלא לבד',
     await page.locator('#invite-form input[name="email"]').inputValue(), 'dana@acc.test');
 
+  /* ביטול הבחירה מחזיר את התיבה לריקה. תיבה שנשארת מלאה אחרי
+     "ללא קישור" נראית מוכנה לשליחה, והכפתור בינתיים כבר מדבר
+     על משהו אחר לגמרי. */
+  await page.selectOption('#invite-form select[name="employeeId"]', '');
+  await page.waitForTimeout(300);
+  check('ביטול הבחירה מנקה את המייל',
+    await page.locator('#invite-form input[name="email"]').inputValue(), '');
+  check('והכפתור חוזר לשליחה לכולם',
+    (await page.locator('#invite-submit').innerText()).trim(), /שליחה לכל/);
+
+  /* אבל כתובת שהוקלדה ביד אינה נמחקת מתחת לידיים של המנהל */
+  await page.fill('#invite-form input[name="email"]', 'handtyped@acc.test');
+  await page.selectOption('#invite-form select[name="employeeId"]', withEmail);
+  await page.waitForTimeout(250);
+  await page.selectOption('#invite-form select[name="employeeId"]', '');
+  await page.waitForTimeout(250);
+  check('כתובת שמולאה מהכרטיס נמחקת גם אחרי הקלדה קודמת',
+    await page.locator('#invite-form input[name="email"]').inputValue(), '');
+
+  await page.fill('#invite-form input[name="email"]', 'handtyped@acc.test');
+  await page.waitForTimeout(200);
+  await page.selectOption('#invite-form select[name="employeeId"]', '');
+  await page.waitForTimeout(250);
+  check('כתובת שהוקלדה ביד נשארת',
+    await page.locator('#invite-form input[name="email"]').inputValue(), 'handtyped@acc.test');
+  await page.fill('#invite-form input[name="email"]', '');
+  await page.waitForTimeout(200);
+
   const noMail = await page.evaluate(() => {
     const emp = window.ShiftApp.getState().employees.filter((e) => !e.email)[0];
     return emp ? emp.id : null;

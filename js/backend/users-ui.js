@@ -17,6 +17,9 @@
   }
 
   var ctx = null;
+  /* הכתובת האחרונה שהמערכת עצמה כתבה לתיבת המייל, כדי להבדיל
+     בינה לבין כתובת שהוקלדה ביד */
+  var autoFilled = '';
 
   /* מה המנהל רואה על כל מוזמן. עד עכשיו הוא ראה כפתור "שליחת
      קישור" ותו לא, ולכן לא היה לו שום דרך לדעת אם העובד עוד לא
@@ -130,18 +133,31 @@
     });
 
     /* בחירת עובד מהרשימה ממלאת את המייל שלו. השם כבר יושב על
-       הכרטיס, ולכן אין סיבה להקליד אותו שוב. */
+       הכרטיס, ולכן אין סיבה להקליד אותו שוב.
+
+       ביטול הבחירה מוחק אותו בחזרה – אבל רק אם אנחנו אלה שכתבנו
+       אותו. כתובת שהמנהל הקליד ביד אינה נמחקת מתחת לידיים שלו,
+       וכתובת שהמערכת מילאה אינה נשארת בתיבה אחרי ש"ללא קישור"
+       נבחר: זו בדיוק תיבה שנראית מוכנה לשליחה ואינה. */
     form.addEventListener('change', function (event) {
       if (event.target === form.employeeId) {
         var employee = employeeById(form.employeeId.value);
-        /* ממלאים, לא מוחקים. עובד שאין על הכרטיס שלו מייל אינו
-           סיבה למחוק כתובת שהמנהל בדיוק הקליד. */
-        if (employee && employee.email) form.email.value = employee.email;
+        var mail = employee ? String(employee.email || '').trim() : '';
+        if (mail) {
+          form.email.value = mail;
+          autoFilled = mail;
+        } else if (autoFilled && form.email.value === autoFilled) {
+          form.email.value = '';
+          autoFilled = '';
+        }
       }
       updateSubmit();
     });
     form.addEventListener('input', function (event) {
-      if (event.target === form.email) updateSubmit();
+      if (event.target !== form.email) return;
+      /* מהרגע שהמנהל נגע בתיבה, היא שלו. לא נמחק אותה יותר. */
+      autoFilled = '';
+      updateSubmit();
     });
 
     form.addEventListener('submit', function (event) {
@@ -185,6 +201,7 @@
       }).then(function (user) {
         if (button) button.disabled = false;
         form.reset();
+        autoFilled = '';
         refreshEmployeeOptions();
         updateSubmit();
         var message = t('users.accessSent', { email: user.email || email });

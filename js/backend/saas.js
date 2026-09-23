@@ -63,6 +63,29 @@
           });
         }
         : null,
+      /* פרטי העסק: השם המסחרי ומספר העוסק / ח.פ. השם הוא מה
+         שהעובדים רואים ומה שמופיע במיילים אליהם; מספר העוסק הוא
+         מה שיופיע על החשבונית, ולכן הוא נתון של הלקוח ולא שלנו.
+         לבעלים בלבד – גם השרת אוכף את זה – ולכן למנהל אין כאן
+         טופס שייכשל. */
+      companyDetails: (Model.can(role, 'company.rename') && backend.saveCompanyDetails)
+        ? {
+          read: function () {
+            var current = backend.session();
+            var company = (current && current.company) || session.company;
+            return { name: company.name || '', taxId: company.taxId || '' };
+          },
+          save: function (details) {
+            return backend.saveCompanyDetails(details).then(function (company) {
+              /* שם העסק מופיע גם בשורה העליונה. בלי הציור הזה הוא
+                 היה נשאר ישן עד לרענון, ונראה כאילו לא נשמר. */
+              var updated = backend.session();
+              if (updated && authRef) { authRef.renderUserBar(updated); }
+              return company;
+            });
+          }
+        }
+        : null,
       /* שליחת פרטי כניסה מכרטיס העובד. קיימת רק למי שרשאי לנהל
          משתמשים, ורק כשהשרת יודע לשלוח דואר. */
       sendAccess: (Model.can(role, 'users.manage') && backend.sendEmployeeAccess)

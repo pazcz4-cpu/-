@@ -25,6 +25,13 @@
 }
 .adm-top h1 { margin: 0; font-size: var(--t-lg); font-weight: 700; }
 .adm-top .adm-who { margin-inline-start: auto; font-size: var(--t-sm); opacity: .85; }
+/* על הרקע הכהה של הכותרת, ולכן בקו מתאר ולא במילוי בהיר */
+.adm-top .adm-signout {
+  background: transparent; color: inherit;
+  border: 1px solid currentColor; opacity: .85;
+  padding: 4px var(--s3); font-size: var(--t-sm);
+}
+.adm-top .adm-signout:hover { opacity: 1; }
 
 .adm-wrap { max-width: 1340px; margin: 0 auto; padding: var(--s5) var(--s4) var(--s8); }
 

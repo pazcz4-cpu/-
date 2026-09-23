@@ -407,6 +407,19 @@
 
   /* האם יש כרטיס שמור אצל ספק התשלומים. בלעדיו אין מה לחייב
      בתום תקופת הניסיון. */
+  /* מספר עוסק / ח.פ.
+
+     המוצר עובד בכמה מדינות, ולכן אין כאן ולידציה לפי מבנה
+     ישראלי: מספר תקין בגרמניה אינו נראה כמו מספר תקין בישראל,
+     וחסימה לפי תבנית אחת פירושה לקוח שאינו יכול להזין את המספר
+     האמיתי שלו. מה שכן: מנקים רווחים ותווים שאינם שייכים, כדי
+     שמה שמגיע לחשבונית יהיה מה שהוא התכוון לכתוב. */
+  function normalizeTaxId(value) {
+    return String(value == null ? '' : value)
+      .replace(/[^0-9A-Za-z\-]/g, '')
+      .slice(0, 30);
+  }
+
   function hasPaymentMethod(company) {
     return !!(company && company.billingSubscriptionId);
   }
@@ -422,6 +435,9 @@
     var today = now ? new Date(now) : new Date();
     return {
       name: name,
+      /* מספר העוסק / ח.פ. – הלקוח מזין אותו בהגדרות כשהוא צריך
+         חשבונית על שם העסק */
+      taxId: '',
       plan: DEFAULT_PLAN,
       status: SUBSCRIPTION.TRIAL,
       validUntil: addDays(today, TRIAL_DAYS).toISOString(),
@@ -447,6 +463,7 @@
     trialRequiresCard: trialRequiresCard, GRACE_DAYS: GRACE_DAYS,
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,
+    normalizeTaxId: normalizeTaxId,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,

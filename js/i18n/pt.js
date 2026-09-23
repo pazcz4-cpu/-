@@ -592,6 +592,18 @@
         cannotChangeOwner: 'O proprietário da conta não pode ser alterado'
       },
 
+      /* פרטי העסק בהגדרות: השם המסחרי ומספר העוסק לחשבונית */
+      company: {
+        title: 'Dados da empresa',
+        name: 'Nome da empresa',
+        taxId: 'NIF / número de IVA',
+        save: 'Guardar dados da empresa',
+        hint: 'O nome é o que a equipa vê e o que consta dos e-mails enviados para ela. O NIF aparece na fatura da subscrição e pode ficar vazio.',
+        saved: 'Dados da empresa guardados.',
+        saveFailed: 'Não foi possível guardar os dados da empresa. Tente novamente.',
+        nameRequired: 'É necessário um nome de empresa.'
+      },
+
       account: {
         open: 'A minha conta',
         title: 'A minha conta',
@@ -599,8 +611,8 @@
         myName: 'O meu nome',
         myNameHint: 'É assim que o seu nome aparece à chefia e aos colegas.',
         companyName: 'Nome da empresa',
-        companyNameHint: 'O nome comercial que a equipa vê e o que consta dos e-mails enviados para ela. Não tem de coincidir com o nome registado.',
         companyOwnerOnly: 'Só o titular da conta pode alterar o nome da empresa.',
+        companyInSettings: 'O nome e o NIF da empresa editam-se em Definições, em «Dados da empresa».',
         email: 'E-mail',
         role: 'Função',
         save: 'Guardar',

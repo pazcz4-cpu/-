@@ -584,6 +584,16 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 }
 .settings-block.row { flex-direction: row; flex-wrap: wrap; align-items: center; }
 
+/* פרטי העסק: שני שדות זה לצד זה כשיש מקום, זה מתחת לזה בטלפון.
+   השדה עצמו מתחת לתווית ולא לצידה, כי "ח.פ. / מספר עוסק" ארוך
+   וזוג צמוד היה דוחס את התיבה למחצית הרוחב. */
+.company-fields {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.company-fields .check { flex-direction: column; align-items: stretch; gap: 4px; }
+.company-fields .text-input { width: 100%; }
+
 .emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
 .emp-chip.dup { outline: 2px solid var(--err); font-weight: 700; }
 .empty-cell { color: var(--muted); font-size: 12px; }

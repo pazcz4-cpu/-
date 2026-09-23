@@ -307,12 +307,13 @@
           self._rpc('mark_self_joined', {}).then(null, function () {});
         }
         return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
-          '&select=id,name,plan,status,valid_until,created_at')
+          '&select=id,name,tax_id,plan,status,valid_until,created_at')
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
             var company = {
-              id: row.id, name: row.name, plan: row.plan, status: row.status,
+              id: row.id, name: row.name, taxId: row.tax_id || '',
+              plan: row.plan, status: row.status,
               validUntil: row.valid_until, createdAt: row.created_at
             };
             self._session = {
@@ -839,20 +840,44 @@
   /* שם העסק הוא השם המסחרי: מה שהעובדים רואים ומה שמופיע במיילים
      אליהם. בהרשמה נשמר לא פעם שם רשם החברות. RLS פותח את העמודה
      הזו – ורק אותה – לבעלים בלבד. */
-  SupabaseBackend.prototype.renameCompany = function (name) {
+  SupabaseBackend.prototype.saveCompanyDetails = function (details) {
     var self = this;
     var companyId;
     try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
-    var clean = String(name || '').trim();
-    if (!clean) return Promise.reject(fail('invalid', t('server.companyNameRequired')));
-    return this._rest('/companies?id=eq.' + companyId, {
-      method: 'PATCH', body: { name: clean.slice(0, 120) }
+    var patch = details || {};
+    var body = {};
+    if ('name' in patch) {
+      var clean = String(patch.name || '').trim();
+      if (!clean) return Promise.reject(fail('invalid', t('server.companyNameRequired')));
+      body.name = clean.slice(0, 120);
+    }
+    /* מספר העוסק רשאי להיות ריק: לא לכל לקוח יש אחד, ולא בכל
+       מדינה הוא נדרש. ריק נשמר כ-null ולא כמחרוזת ריקה, כדי
+       שהשרת יידע להשמיט אותו מהחשבונית. */
+    if ('taxId' in patch) {
+      body.tax_id = Model.normalizeTaxId(patch.taxId) || null;
+    }
+    if (!Object.keys(body).length) {
+      return Promise.resolve(this._session ? this._session.company : null);
+    }
+    return this._rest('/companies?id=eq.' + companyId +
+      '&select=id,name,tax_id', {
+      method: 'PATCH', body: body
     }).then(function (rows) {
       /* שורה ריקה כאן פירושה שכללי ההרשאה דחו את הכתיבה */
       if (!rows || !rows.length) throw fail('forbidden', t('server.noPermission'));
-      if (self._session) self._session.company.name = rows[0].name;
-      return self._session ? self._session.company : { name: rows[0].name };
+      if (self._session) {
+        self._session.company.name = rows[0].name;
+        self._session.company.taxId = rows[0].tax_id || '';
+        return self._session.company;
+      }
+      return { name: rows[0].name, taxId: rows[0].tax_id || '' };
     });
+  };
+
+  /* אשף הפתיחה מכיר רק את השם, וזו העטיפה שלו */
+  SupabaseBackend.prototype.renameCompany = function (name) {
+    return this.saveCompanyDetails({ name: name });
   };
 
   SupabaseBackend.prototype.updateUser = function (userId, patch) {

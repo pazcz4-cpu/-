@@ -598,6 +598,18 @@
         cannotChangeOwner: 'The account owner cannot be changed'
       },
 
+      /* פרטי העסק בהגדרות: השם המסחרי ומספר העוסק לחשבונית */
+      company: {
+        title: 'Business details',
+        name: 'Business name',
+        taxId: 'Business / VAT number',
+        save: 'Save business details',
+        hint: 'The name is what your staff see and what appears in emails to them. The business number appears on your subscription invoice, and you may leave it empty.',
+        saved: 'Business details saved.',
+        saveFailed: 'We could not save the business details. Please try again.',
+        nameRequired: 'A business name is required.'
+      },
+
       account: {
         open: 'My account',
         title: 'My account',
@@ -605,8 +617,8 @@
         myName: 'My name',
         myNameHint: 'This is how your name appears to your manager and colleagues.',
         companyName: 'Business name',
-        companyNameHint: 'The trading name your staff see and the one used in emails to them. It need not match the registered name.',
         companyOwnerOnly: 'Only the account owner can change the business name.',
+        companyInSettings: 'The business name and number are edited in Settings, under "Business details".',
         email: 'Email',
         role: 'Role',
         save: 'Save',

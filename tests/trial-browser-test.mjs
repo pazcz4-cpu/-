@@ -70,8 +70,12 @@ try {
   check('נאמר שזה פיילוט ושאין חיוב', await panel(), /פיילוט/);
   check('אין כפתור הוספת אמצעי תשלום',
     await page.locator('#billing-add-card').count(), 0);
-  check('אין כפתורי בחירת תוכנית',
-    await page.locator('#billing-panel [data-plan]').count(), 0);
+  /* החלפת תוכנית כן קיימת גם בלי סליקה: היא משנה תקרה ומחיר,
+     והכסף נגבה בחיוב הבא. מה שאסור כאן הוא לבקש כרטיס. */
+  check('אפשר בכל זאת לעבור תוכנית',
+    await page.locator('#billing-panel [data-plan]').count() > 0, true);
+  check('והתוכנית הנוכחית אינה מוצעת לעצמה',
+    await page.locator('#billing-panel .plan-card.current [data-plan]').count(), 0);
   check('אין אזהרה על כרטיס חסר',
     await page.locator('.billing-trial.warn').count(), 0);
   check('ואין זכר למילה "מדומה" במסך', /מדומה|פיתוח בלבד/.test(await panel()), false);

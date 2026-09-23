@@ -1505,7 +1505,34 @@
     host.innerHTML = html;
   }
 
+  /* ===== פרטי העסק =====
+     השם המסחרי ומספר העוסק / ח.פ. הבלוק קיים רק בגרסה המסחרית
+     ורק לבעל החשבון: בכלי המקומי אין עסק רשום ואין חשבונית, ולמנהל
+     אין הרשאה לשנות – ולכן הוא לא רואה טופס שייכשל. */
+  function renderCompanyDetails() {
+    var block = $('#company-details');
+    if (!block) return;
+    var details = source.companyDetails;
+    block.classList.toggle('hidden', !details);
+    if (!details) return;
+    var current = details.read();
+    var nameField = $('#company-name');
+    var taxField = $('#company-tax-id');
+    /* הקלדה באמצע אינה נדרסת: המסך מצויר מחדש גם בעקבות שינוי
+       שהגיע מחבר צוות אחר. */
+    if (nameField && document.activeElement !== nameField) nameField.value = current.name;
+    if (taxField && document.activeElement !== taxField) taxField.value = current.taxId;
+  }
+
+  function sayCompany(text, isError) {
+    var node = $('#company-message');
+    if (!node) return;
+    node.textContent = text || '';
+    node.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
+  }
+
   function renderSettings() {
+    renderCompanyDetails();
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     $('#opt-rest').checked = !!state.settings.restEveningMorning;
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
@@ -3141,6 +3168,29 @@
       reader.readAsText(file);
       event.target.value = '';
     });
+
+    var saveCompany = $('#save-company-details');
+    if (saveCompany) {
+      saveCompany.addEventListener('click', function () {
+        var details = source.companyDetails;
+        if (!details) return;
+        var name = String($('#company-name').value || '').trim();
+        if (!name) { sayCompany(t('company.nameRequired'), true); return; }
+        saveCompany.disabled = true;
+        sayCompany('');
+        Promise.resolve(details.save({ name: name, taxId: $('#company-tax-id').value }))
+          .then(function () {
+            saveCompany.disabled = false;
+            /* מה שנשמר בשרת הוא מה שחוזר למסך: מספר עוסק שהוקלד עם
+               רווחים נראה כאן אחרי הניקוי, ולא כפי שהוקלד. */
+            renderCompanyDetails();
+            sayCompany(t('company.saved'));
+          }, function (err) {
+            saveCompany.disabled = false;
+            sayCompany((err && err.message) || t('company.saveFailed'), true);
+          });
+      });
+    }
 
     $('#reset-all').addEventListener('click', function () {
       if (!confirm(t('toast.resetConfirm'))) return;

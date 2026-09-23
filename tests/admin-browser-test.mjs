@@ -130,6 +130,8 @@ try {
   console.log('\n== לפני התחברות ==');
   check('מסך הכניסה מוצג', await page.locator('#adm-signin').isVisible(), true);
   check('הנתונים מוסתרים', await page.locator('#adm-app').isHidden(), true);
+  check('ואין כפתור יציאה למי שלא נכנס',
+    await page.locator('#adm-signout').isHidden(), true);
 
   /* מדלגים על GoTrue ומזריקים חיבור, כמו משתמש שכבר נכנס */
   await page.evaluate(() => {
@@ -218,6 +220,20 @@ try {
   const overflow = await page.evaluate(() =>
     document.documentElement.scrollWidth - document.documentElement.clientWidth);
   check('אין גלילה אופקית של הדף', overflow <= 1, true);
+
+  console.log('\n== יציאה ==');
+  await page.setViewportSize({ width: 1400, height: 1000 });
+  await page.waitForTimeout(200);
+  check('כפתור היציאה גלוי למי שנכנס',
+    await page.locator('#adm-signout').isVisible(), true);
+  await page.click('#adm-signout');
+  await page.waitForTimeout(900);
+  check('האסימון נמחק', await page.evaluate(
+    () => sessionStorage.getItem('setshifts-admin-session-v1')), null);
+  check('חוזרים למסך הכניסה', await page.locator('#adm-signin').isVisible(), true);
+  /* לא רק הסתרה: הנתונים של כל הלקוחות אינם נשארים ב-DOM */
+  check('נתוני הלקוחות ירדו מהמסך',
+    (await page.locator('body').innerText()).indexOf('מסעדת הגליל'), -1);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

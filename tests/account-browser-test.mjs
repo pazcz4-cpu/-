@@ -86,21 +86,44 @@ try {
   check('ושם העסק לא זז',
     await page.locator('#user-bar .user-company').innerText(), 'פ.ט אינטק סחר');
 
-  console.log('\n== עריכת שם העסק בלבד ==');
-  await page.fill('#account-company', 'מייפון');
-  await page.click('#account-save-company');
-  await page.waitForTimeout(600);
-  check('נאמר שנשמר', await page.locator('#account-message').innerText(), /נשמר/);
-  check('שם העסק התחלף בשורה',
+  console.log('\n== פרטי העסק נערכים בהגדרות, ולא בשני מקומות ==');
+  /* שני טפסים לאותו שדה נראים כמו שני ערכים. בחשבון שלי השם רק
+     מוצג, והמשתמש מופנה למקום שבו הוא נערך יחד עם הח.פ. */
+  check('אין שדה לשם העסק בחשבון שלי',
+    await page.locator('#account-company').count(), 0);
+  check('ונאמר לבעלים איפה כן',
+    await page.locator('#account-panel').innerText(), /בהגדרות/);
+  await page.click('#account-close');
+  await page.waitForTimeout(200);
+
+  await page.click('.tab[data-tab="settings"]');
+  await page.waitForTimeout(400);
+  check('הבלוק גלוי לבעלים',
+    await page.locator('#company-details').isVisible(), true);
+  check('השם הנוכחי מופיע בשדה',
+    await page.locator('#company-name').inputValue(), 'פ.ט אינטק סחר');
+  await page.fill('#company-name', 'מייפון');
+  /* כפי שלקוח מקליד אותו בפועל: עם רווחים */
+  await page.fill('#company-tax-id', ' 51-234 567 8 ');
+  await page.click('#save-company-details');
+  await page.waitForTimeout(700);
+  check('נאמר שנשמר', await page.locator('#company-message').innerText(), /נשמר/);
+  check('שם העסק התחלף בשורה העליונה',
     await page.locator('#user-bar .user-company').innerText(), 'מייפון');
   check('ושם המשתמש לא זז',
     await page.locator('#user-bar .user-name').innerText(), /פז · בעלים/);
+  check('והמספר חזר למסך נקי',
+    await page.locator('#company-tax-id').inputValue(), '51-2345678');
 
   console.log('\n== השינוי נשמר בשרת, לא רק על המסך ==');
   await page.reload();
   await page.waitForTimeout(1300);
   check('אחרי רענון – שם המשתמש', await page.locator('#user-bar .user-name').innerText(), /פז/);
   check('אחרי רענון – שם העסק', await page.locator('#user-bar .user-company').innerText(), 'מייפון');
+  await page.click('.tab[data-tab="settings"]');
+  await page.waitForTimeout(400);
+  check('אחרי רענון – מספר העוסק',
+    await page.locator('#company-tax-id').inputValue(), '51-2345678');
   await page.click('#user-account');
   await page.waitForTimeout(400);
   await page.click('#user-account');

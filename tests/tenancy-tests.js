@@ -1008,6 +1008,29 @@ asyncTest('שם העסק – לבעלים בלבד', function () {
     });
 });
 
+asyncTest('מספר העוסק – לבעלים בלבד, ואינו נשמר כשהמנהל מנסה', function () {
+  /* מספר העוסק הולך לחשבונית. מנהל משמרת אינו קובע על שם מי
+     היא יוצאת, בדיוק כמו שאינו קובע את שם העסק. */
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'עסק', email: 'tax1@a.com', password: 'secret1' })
+    .then(function () { return backend.saveCompanyDetails({ taxId: '51-234 5678' }); })
+    .then(function () {
+      assertEqual(backend.session().company.taxId, '51-2345678', 'מספר העוסק לא נשמר');
+      return backend.createUser({ name: 'מנהל', email: 'tax1m@a.com', role: 'manager' });
+    })
+    .then(function () {
+      backend.followLink('tax1m@a.com', 'invite');
+      return backend.setPassword('secret2');
+    })
+    .then(function () {
+      return assertRejects(backend.saveCompanyDetails({ taxId: '999999999' }),
+        'forbidden', 'מנהל משנה מספר עוסק');
+    })
+    .then(function () {
+      assertEqual(backend.session().company.taxId, '51-2345678', 'המספר הוחלף בכל זאת');
+    });
+});
+
 asyncTest('שינוי שם אינו חוצה חברות', function () {
   var backend = freshBackend();
   var firstId;

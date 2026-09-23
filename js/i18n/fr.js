@@ -592,6 +592,18 @@
         cannotChangeOwner: 'Le propriétaire du compte ne peut pas être modifié'
       },
 
+      /* פרטי העסק בהגדרות: השם המסחרי ומספר העוסק לחשבונית */
+      company: {
+        title: "Informations de l'entreprise",
+        name: "Nom de l'entreprise",
+        taxId: 'Numéro SIRET / TVA',
+        save: 'Enregistrer les informations',
+        hint: "Le nom est ce que vos équipes voient et ce qui figure dans les e-mails qui leur sont envoyés. Le numéro apparaît sur la facture de l'abonnement et peut rester vide.",
+        saved: "Informations de l'entreprise enregistrées.",
+        saveFailed: "Nous n'avons pas pu enregistrer les informations. Réessayez.",
+        nameRequired: "Un nom d'entreprise est requis."
+      },
+
       account: {
         open: 'Mon compte',
         title: 'Mon compte',
@@ -599,8 +611,8 @@
         myName: 'Mon nom',
         myNameHint: 'C\'est ainsi que votre nom apparaît à votre responsable et à vos collègues.',
         companyName: "Nom de l'entreprise",
-        companyNameHint: "Le nom commercial que vos équipes voient et celui qui figure dans les e-mails qui leur sont envoyés. Il n'a pas à correspondre au nom enregistré.",
         companyOwnerOnly: "Seul le titulaire du compte peut changer le nom de l'entreprise.",
+        companyInSettings: "Le nom et le numéro de l'entreprise se modifient dans Réglages, sous « Informations de l'entreprise ».",
         email: 'E-mail',
         role: 'Rôle',
         save: 'Enregistrer',

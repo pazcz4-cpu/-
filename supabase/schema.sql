@@ -52,6 +52,12 @@ alter table public.company_users
 
 -- פרטי המנוי אצל ספק התשלומים. נכתבים אך ורק בידי השרת, בתגובה
 -- ל-webhook מהספק – לעולם לא בידי הדפדפן.
+-- מספר העוסק / ח.פ. של הלקוח. נדרש על החשבונית שתצא לו, ולכן
+-- הוא נתון של הלקוח ולא שלנו: הוא מזין אותו בהגדרות, ואנחנו
+-- מעבירים אותו לספק הסליקה כשהוא מנפיק מסמך.
+alter table public.companies
+  add column if not exists tax_id text;
+
 alter table public.companies
   add column if not exists billing_provider        text,
   add column if not exists billing_customer_id     text,
@@ -577,7 +583,9 @@ grant execute on function public.constraints_deadline(uuid, text)               
 -- create_company, ומחיקה אינה מתאפשרת מהדפדפן.
 revoke all on public.companies from authenticated;
 grant select on public.companies to authenticated;
-grant update (name) on public.companies to authenticated;
+-- שם העסק ומספר העוסק הם של הלקוח, ולכן הוא עורך אותם. מצב
+-- המנוי, התוכנית והתוקף אינם ברשימה הזו בכוונה.
+grant update (name, tax_id) on public.companies to authenticated;
 
 -- משתמשים: קריאה ועדכון. יצירה נעשית בשרת (api/create-user.js),
 -- כי היא דורשת מפתח ניהול.

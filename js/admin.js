@@ -96,6 +96,25 @@
     });
   }
 
+  /* יציאה. האסימון מבוטל אצל Supabase כדי שהעתק שנשמר בטעות
+     במקום אחר יפסיק לעבוד, וגם אם הביטול נכשל – הדף נטען מחדש
+     בלי אסימון, ולכן המסך הזה ריק. */
+  function signOut() {
+    var token = session && session.access_token;
+    var done = function () {
+      session = null;
+      try { sessionStorage.removeItem(TOKEN_KEY); } catch (err) { /* ננוקה בטעינה */ }
+      /* טעינה מחדש ולא הסתרה: כאן יושבים נתונים של כל הלקוחות,
+         ואסור שיישארו ב-DOM או בזיכרון אחרי שיצאו. */
+      window.location.reload();
+    };
+    if (!token || !config.supabaseUrl || !config.supabaseAnonKey) { done(); return; }
+    fetch(config.supabaseUrl.replace(/\/+$/, '') + '/auth/v1/logout', {
+      method: 'POST',
+      headers: { apikey: config.supabaseAnonKey, Authorization: 'Bearer ' + token }
+    }).then(done, done);
+  }
+
   /* ===== לוח מחוונים ===== */
 
   function tile(label, value, note, key) {
@@ -556,6 +575,7 @@
     document.getElementById('adm-app').hidden = false;
     document.getElementById('adm-who').textContent =
       (session.user && session.user.email) || '';
+    document.getElementById('adm-signout').hidden = false;
     show('overview');
     loadOverview().catch(function (error) {
       document.getElementById('panel-overview').innerHTML =
@@ -586,6 +606,8 @@
   });
 
   document.addEventListener('click', function (event) {
+    if (event.target.closest('#adm-signout')) { signOut(); return; }
+
     var tab = event.target.closest('.adm-tab');
     if (tab) { show(tab.dataset.panel); return; }
 
@@ -646,5 +668,5 @@
     if (saved) { session = JSON.parse(saved); start(); }
   } catch (err) { /* נכנסים רגיל */ }
 
-  window.__admin = { api: api, show: show, data: data };
+  window.__admin = { api: api, show: show, data: data, signOut: signOut };
 })();

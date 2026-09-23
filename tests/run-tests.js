@@ -1075,15 +1075,43 @@ test('הסכימה מאפשרת לכל משתמש לתקן את שמו – ור�
 
 /* שם העסק הוא השם המסחרי, והוא של הבעלים. מצב המנוי והתוקף
    אינם ניתנים לכתיבה מהדפדפן – שם, וכאן, זה אותו GRANT. */
-test('שם העסק פתוח לכתיבה לבעלים בלבד, והוא העמודה היחידה', function () {
+test('פרטי העסק פתוחים לכתיבה לבעלים בלבד, והם העמודות היחידות', function () {
   var schema = fs.readFileSync(
     path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
-  assert(schema.indexOf('grant update (name) on public.companies') !== -1,
-    'העמודה name אינה פתוחה לכתיבה, או שנפתחו איתה עמודות נוספות');
+  /* השם ומספר העוסק – ותו לא. תוכנית, מצב מנוי ותוקף נשארים
+     מחוץ לרשימה, אחרת לקוח מאריך לעצמו את הניסיון. */
+  assert(schema.indexOf('grant update (name, tax_id) on public.companies') !== -1,
+    'פרטי העסק אינם פתוחים לכתיבה, או שנפתחו איתם עמודות נוספות');
   var policy = schema.slice(schema.indexOf('create policy companies_update'));
   policy = policy.slice(0, policy.indexOf(';'));
   assert(policy.indexOf("current_role_name() = 'owner'") !== -1,
-    'כל אחד בחברה יכול לשנות את שם העסק');
+    'כל אחד בחברה יכול לשנות את פרטי העסק');
+});
+
+/* מספר העוסק הוא נתון של הלקוח, והמוצר עובד בכל העולם: ח.פ.
+   ישראלי, VAT אירופי ו-EIN אמריקאי אינם באותה תבנית. לכן הניקוי
+   שומר ספרות, אותיות ומקף – ואינו פוסל מה שאינו ישראלי. */
+test('מספר העוסק מנוקה בלי לפסול פורמטים מחו"ל', function () {
+  assertEqual(Model.normalizeTaxId(' 51-234 567 8 '), '51-2345678', 'ח.פ. ישראלי');
+  assertEqual(Model.normalizeTaxId('DE 123 456 789'), 'DE123456789', 'מספר גרמני נפסל');
+  assertEqual(Model.normalizeTaxId('12-3456789'), '12-3456789', 'EIN אמריקאי נפסל');
+  assertEqual(Model.normalizeTaxId('<script>x</script>'), 'scriptxscript', 'תווים מסוכנים נשארו');
+  assertEqual(Model.normalizeTaxId(null), '', 'ריק אינו מחזיר מחרוזת ריקה');
+  assertEqual(Model.normalizeTaxId(new Array(60).join('9')).length, 30, 'האורך אינו מוגבל');
+});
+
+/* ח.פ. שנשמר בהגדרות ולא נוסע לספק הוא שדה שלא עושה כלום.
+   הנתיב עובר דרך שלושה קבצים, ובדיקה בכל אחד מהם בנפרד לא
+   הייתה מגלה חוליה מנותקת באמצע. */
+test('הח.פ. של הלקוח מגיע מהשרת אל בקשת התשלום', function () {
+  var checkout = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'billing', 'checkout.js'), 'utf8');
+  assert(/taxId:\s*company\.tax_id/.test(checkout),
+    'נקודת הקצה אינה מעבירה את מספר העוסק לספק');
+  var providers = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'billing', '_providers.js'), 'utf8');
+  assert(providers.indexOf('identification_number') !== -1,
+    'הספק אינו מקבל את מספר העוסק בשדה המתועד');
 });
 
 /* קובץ שפה עם שגיאת תחביר שובר את כל האפליקציה באותה שפה, ורק

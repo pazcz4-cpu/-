@@ -193,12 +193,7 @@
       }
       if (event.target.closest('#account-save-name')) {
         event.preventDefault();
-        self._saveIdentity('user');
-        return;
-      }
-      if (event.target.closest('#account-save-company')) {
-        event.preventDefault();
-        self._saveIdentity('company');
+        self._saveIdentity();
         return;
       }
       if (event.target.closest('#user-notify')) {
@@ -444,8 +439,6 @@
   AuthUI.prototype.renderAccount = function (session) {
     var panel = document.getElementById('account-panel');
     if (!panel) return;
-    var canRename = Model.can(session.user.role, 'company.rename');
-
     var html = '<h3 class="account-title">' + esc(t('account.title')) + '</h3>';
 
     html += '<div class="account-field">' +
@@ -459,22 +452,15 @@
       '<p class="hint">' + esc(t('account.myNameHint')) + '</p>' +
       '</div>';
 
+    /* שם העסק מוצג כאן כדי לענות על "באיזה עסק אני", אבל נערך
+       במקום אחד בלבד: הגדרות ← פרטי העסק, לצד מספר העוסק שנכנס
+       לחשבונית. שני טפסים לאותו שדה נראים כמו שני ערכים. */
     html += '<div class="account-field">' +
-      '<label' + (canRename ? ' for="account-company"' : '') + '>' +
-        esc(t('account.companyName')) + '</label>';
-    if (canRename) {
-      html += '<div class="account-row">' +
-        '<input type="text" id="account-company" class="text-input" maxlength="120" value="' +
-          esc(session.company.name) + '">' +
-        '<button type="button" id="account-save-company" class="btn primary small">' +
-          esc(t('account.save')) + '</button>' +
-        '</div>' +
-        '<p class="hint">' + esc(t('account.companyNameHint')) + '</p>';
-    } else {
-      html += '<p class="account-static">' + esc(session.company.name) + '</p>' +
-        '<p class="hint">' + esc(t('account.companyOwnerOnly')) + '</p>';
-    }
-    html += '</div>';
+      '<label>' + esc(t('account.companyName')) + '</label>' +
+      '<p class="account-static">' + esc(session.company.name) + '</p>' +
+      '<p class="hint">' + esc(Model.can(session.user.role, 'company.rename')
+        ? t('account.companyInSettings') : t('account.companyOwnerOnly')) + '</p>' +
+      '</div>';
 
     /* המייל והתפקיד אינם ניתנים לשינוי מכאן, אבל הם מה שמזהה את
        החשבון – ובלעדיהם המסך הזה לא עונה על "באיזה חשבון אני". */
@@ -509,24 +495,20 @@
     }
   };
 
-  /* שמירת שם – של המשתמש או של העסק. שניהם מסתיימים באותו אופן:
-     ציור מחדש של השורה, כדי שמה שעל המסך יהיה מה שבשרת. */
-  AuthUI.prototype._saveIdentity = function (kind) {
+  /* שמירת השם של המשתמש עצמו. שם העסק אינו נערך כאן אלא בהגדרות,
+     יחד עם מספר העוסק, ולכן נשארה כאן פעולה אחת. */
+  AuthUI.prototype._saveIdentity = function () {
     var self = this;
-    var input = document.getElementById(kind === 'company' ? 'account-company' : 'account-name');
+    var input = document.getElementById('account-name');
     if (!input) return;
     var value = String(input.value || '').trim();
     if (!value) { this._accountSay(t('account.nameRequired'), true); return; }
 
-    var button = document.getElementById(kind === 'company' ? 'account-save-company' : 'account-save-name');
+    var button = document.getElementById('account-save-name');
     if (button) button.disabled = true;
     this._accountSay('');
 
-    var call = kind === 'company'
-      ? this.backend.renameCompany(value)
-      : this.backend.saveOwnName(value);
-
-    Promise.resolve(call).then(function () {
+    Promise.resolve(this.backend.saveOwnName(value)).then(function () {
       var session = self.backend.session();
       if (session) self.renderUserBar(session);
       self._accountSay(t('account.saved'));

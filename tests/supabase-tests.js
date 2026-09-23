@@ -189,7 +189,7 @@ FakeSupabase.prototype.fetch = function (url, options) {
     }
     var companyId = this.id('co');
     this.companies[companyId] = {
-      id: companyId, name: body.p_name, plan: 'starter', status: 'trial',
+      id: companyId, name: body.p_name, tax_id: null, plan: 'starter', status: 'trial',
       valid_until: new Date(Date.now() + body.p_trial_days * 864e5).toISOString(),
       created_at: new Date().toISOString()
     };
@@ -1421,6 +1421,75 @@ run('שם העסק נכתב לעמודה אחת, ורק לבעלים', function 
         'נשלחו עמודות נוספות מעבר לשם');
       assert(call.query.indexOf('id=eq.' + session.company.id) !== -1,
         'הבקשה אינה מוגבלת לחברה של המשתמש');
+    });
+  });
+});
+
+run('מספר העוסק נשמר לצד השם, ונקרא בחזרה לתוך ההתחברות', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'tax1@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function (session) {
+    /* כפי שלקוח מקליד אותו בפועל: עם רווחים ומקף */
+    return backend.saveCompanyDetails({ name: 'עסק', taxId: ' 51-234 567 8 ' })
+      .then(function () {
+        assertEqual(server.companies[session.company.id].tax_id, '51-2345678',
+          'מספר העוסק לא נוקה לפני השמירה');
+        assertEqual(backend.session().company.taxId, '51-2345678',
+          'ההתחברות אינה נושאת את מספר העוסק');
+        var call = server.calls.filter(function (c) {
+          return c.method === 'PATCH' && c.path.indexOf('companies') !== -1;
+        }).pop();
+        assertEqual(Object.keys(call.body).sort().join(','), 'name,tax_id',
+          'נשלחו עמודות נוספות מעבר לשם ולמספר העוסק');
+      });
+  });
+});
+
+run('מספר עוסק ריק נשמר כ-null, ולא כמחרוזת ריקה', function () {
+  /* על החשבונית שדה ריק ושדה שאינו קיים אינם אותו דבר, ולא לכל
+     לקוח בעולם יש מספר כזה מלכתחילה. */
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'tax2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function (session) {
+    return backend.saveCompanyDetails({ taxId: '   ' }).then(function () {
+      assertEqual(server.companies[session.company.id].tax_id, null,
+        'נשמרה מחרוזת ריקה במקום null');
+      assertEqual(backend.session().company.taxId, '', 'המסך קיבל null במקום שדה ריק');
+    });
+  });
+});
+
+run('שמירת פרטי העסק בלי שינוי אינה שולחת בקשה', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'tax3@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function () {
+    var before = server.calls.length;
+    return backend.saveCompanyDetails({}).then(function () {
+      assertEqual(server.calls.length, before, 'נשלחה בקשה ריקה לשרת');
+    });
+  });
+});
+
+run('שם עסק ריק נדחה לפני שהוא מגיע לשרת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'tax4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function (session) {
+    var before = server.calls.length;
+    return backend.saveCompanyDetails({ name: '   ', taxId: '512345678' }).then(function () {
+      throw new Error('שם ריק התקבל');
+    }, function (err) {
+      assertEqual(err.code, 'invalid', 'קוד שגיאה');
+      assertEqual(server.calls.length, before, 'נשלחה בקשה מיותרת');
+      assertEqual(server.companies[session.company.id].tax_id, null,
+        'מספר העוסק נשמר למרות שהשם נדחה');
     });
   });
 });

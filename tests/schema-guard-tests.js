@@ -49,8 +49,11 @@ test('מצב המנוי והתוקף אינם ניתנים לכתיבה מהדפ
   /* בלי זה כל לקוח מעניק לעצמו מנוי חינם בפקודה אחת */
   has('revoke all on public.companies from authenticated;',
     'companies פתוחה לכתיבה');
-  has('grant update (name) on public.companies to authenticated;',
-    'הרשאת הכתיבה על companies אינה מוגבלת לשם בלבד');
+  /* השם ומספר העוסק הם של הלקוח, והוא עורך אותם בהגדרות.
+     הרשימה סגורה: כל עמודה נוספת כאן היא עמודה שלקוח יכול
+     לכתוב, ולכן השורה נבדקת במלואה ולא בהכלה. */
+  has('grant update (name, tax_id) on public.companies to authenticated;',
+    'הרשאת הכתיבה על companies אינה מוגבלת לשם ולמספר העוסק');
   assert(!/grant update \([^)]*\b(status|plan|valid_until|billing_)/.test(sql),
     'עמודה של מנוי או חיוב ניתנת לכתיבה מהדפדפן');
 });

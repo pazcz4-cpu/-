@@ -268,6 +268,25 @@
 
   <!-- ===== הגדרות ===== -->
   <section class="panel" id="tab-settings">
+    <div id="company-details" class="hidden">
+      <h2 data-i18n="company.title">פרטי העסק</h2>
+      <div class="settings-block">
+        <div class="company-fields">
+          <label class="check"><span data-i18n="company.name">שם העסק</span>
+            <input type="text" id="company-name" class="text-input" maxlength="120" autocomplete="organization"></label>
+          <label class="check"><span data-i18n="company.taxId">ח.פ. / מספר עוסק</span>
+            <input type="text" id="company-tax-id" class="text-input" maxlength="30" dir="ltr" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <div class="row">
+          <button id="save-company-details" class="btn primary" data-i18n="company.save">שמירת פרטי העסק</button>
+        </div>
+        <p class="users-message hidden" id="company-message"></p>
+        <p class="hint" style="margin:0" data-i18n="company.hint">
+          השם הוא מה שהעובדים רואים ומה שמופיע במיילים אליהם. מספר העוסק מופיע על החשבונית שתקבלו על המנוי.
+        </p>
+      </div>
+    </div>
+
     <h2 data-i18n="settings.rules">כללי שיבוץ</h2>
     <div class="settings-block">
       <label class="check"><input type="checkbox" id="opt-one-per-day"> <span data-i18n="settings.onePerDay">עובד משובץ למשמרת אחת ביום לכל היותר</span></label>

@@ -592,6 +592,18 @@
         cannotChangeOwner: 'Der Kontoinhaber kann nicht geändert werden'
       },
 
+      /* פרטי העסק בהגדרות: השם המסחרי ומספר העוסק לחשבונית */
+      company: {
+        title: 'Unternehmensdaten',
+        name: 'Name des Betriebs',
+        taxId: 'Steuernummer / USt-IdNr.',
+        save: 'Unternehmensdaten speichern',
+        hint: 'Den Namen sieht Ihre Belegschaft, und er steht in den E-Mails an sie. Die Steuernummer erscheint auf der Rechnung zum Abo und darf leer bleiben.',
+        saved: 'Unternehmensdaten gespeichert.',
+        saveFailed: 'Die Unternehmensdaten konnten nicht gespeichert werden. Bitte erneut versuchen.',
+        nameRequired: 'Ein Name des Betriebs ist erforderlich.'
+      },
+
       account: {
         open: 'Mein Konto',
         title: 'Mein Konto',
@@ -599,8 +611,8 @@
         myName: 'Mein Name',
         myNameHint: 'So erscheint Ihr Name für Ihre Führungskraft und die Kolleginnen und Kollegen.',
         companyName: 'Name des Betriebs',
-        companyNameHint: 'Der Name, den Ihre Belegschaft sieht und der in den E-Mails an sie steht. Er muss nicht dem Handelsregistereintrag entsprechen.',
         companyOwnerOnly: 'Nur die Kontoinhaberin oder der Kontoinhaber kann den Namen des Betriebs ändern.',
+        companyInSettings: 'Name und Steuernummer des Betriebs werden in den Einstellungen unter „Unternehmensdaten“ bearbeitet.',
         email: 'E-Mail',
         role: 'Rolle',
         save: 'Speichern',

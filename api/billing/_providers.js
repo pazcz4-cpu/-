@@ -363,6 +363,11 @@ const payplus = {
       }
     };
 
+    /* ח.פ. / מספר עוסק על החשבונית. השדה מתועד כ-identification_number
+       (docs/payplus-integration.md, סעיף 17), ונשלח רק כשהלקוח הזין
+       אותו – שדה ריק בבקשה אינו נתון, הוא רק דרך להיכשל. */
+    if (input.taxId) request.customer.identification_number = String(input.taxId);
+
     if (!request.allowed_charge_methods) delete request.allowed_charge_methods;
 
     /* חשבונית מופקת רק כשעבר כסף, ורק אם מודול המסמכים מופעל

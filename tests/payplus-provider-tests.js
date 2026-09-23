@@ -352,6 +352,33 @@ test('אמצעי תשלום אינם נשלחים עד שהוגדרו', function
   });
 });
 
+test('ח.פ. של הלקוח נוסע לספק, ורק כשהוא קיים', function () {
+  /* זה מה שיופיע על החשבונית. שדה ריק בבקשה אינו נתון – הוא רק
+     דרך להיכשל – ולכן הוא נשלח רק כשהלקוח הזין אותו. */
+  ready(true);
+  return withFake(function (fake) {
+    fake.reply(200, { results: { status: 'success' }, data: { payment_page_link: 'x' } });
+    fake.reply(200, { results: { status: 'success' }, data: { payment_page_link: 'x' } });
+  }, function (fake) {
+    return payplus.createCheckout({
+      companyId: 'co-1', companyName: 'קפה מרכז', amount: 199, saveCardOnly: true,
+      email: 'owner@example.com', returnUrl: 'r', cancelUrl: 'c'
+    }).then(function () {
+      var sent = fake.last().body.customer;
+      assertEqual(sent.customer_name, 'קפה מרכז', 'שם העסק לא נשלח');
+      assertEqual(sent.identification_number, undefined,
+        'נשלח שדה ח.פ. ריק ללא צורך');
+      return payplus.createCheckout({
+        companyId: 'co-1', companyName: 'קפה מרכז', taxId: '512345678', amount: 199,
+        saveCardOnly: true, email: 'owner@example.com', returnUrl: 'r', cancelUrl: 'c'
+      });
+    }).then(function () {
+      assertEqual(fake.last().body.customer.identification_number, '512345678',
+        'הח.פ. לא הגיע לספק');
+    });
+  });
+});
+
 test('חיוב מיידי הוא J4 ומנפיק חשבונית', function () {
   ready(true);
   return withFake(function (fake) {

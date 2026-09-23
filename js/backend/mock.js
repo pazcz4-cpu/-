@@ -647,16 +647,27 @@
   /* שם העסק הוא השם המסחרי: מה שהעובדים רואים ומה שמופיע
      במיילים אליהם. בהרשמה נשמר לא פעם שם רשם החברות, ובלי
      האפשרות הזו הוא היה נשאר על המסך לתמיד. הבעלים בלבד. */
-  MockBackend.prototype.renameCompany = function (name) {
+  MockBackend.prototype.saveCompanyDetails = function (details) {
     var session;
     try { session = this._require('company.rename'); } catch (err) { return Promise.reject(err); }
-    var clean = String(name || '').trim();
-    if (!clean) return Promise.reject(this._fail('invalid', t('server.companyNameRequired')));
+    var patch = details || {};
     var company = this.db.companies[session.company.id];
     if (!company) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
-    company.name = clean.slice(0, 120);
+    if ('name' in patch) {
+      var clean = String(patch.name || '').trim();
+      if (!clean) return Promise.reject(this._fail('invalid', t('server.companyNameRequired')));
+      company.name = clean.slice(0, 120);
+    }
+    /* מספר העוסק רשאי להיות ריק: לא לכל לקוח יש אחד, ולא בכל
+       מדינה הוא נדרש */
+    if ('taxId' in patch) company.taxId = Model.normalizeTaxId(patch.taxId);
     this._save();
     return Promise.resolve(clone(company));
+  };
+
+  /* אשף הפתיחה מכיר רק את השם, וזו העטיפה שלו */
+  MockBackend.prototype.renameCompany = function (name) {
+    return this.saveCompanyDetails({ name: name });
   };
 
   /* ===== מנוי ===== */

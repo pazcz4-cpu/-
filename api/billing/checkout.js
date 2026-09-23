@@ -42,6 +42,10 @@ module.exports = endpoint(async function ({ company, user, body, db }) {
   const checkout = await provider.createCheckout({
     companyId: company.id,
     companyName: company.name,
+    /* ח.פ. / מספר עוסק, כפי שהלקוח הזין בהגדרות. הוא מה שצריך
+       להופיע על החשבונית, ולכן הוא נוסע לספק יחד עם השם. ריק
+       נשאר ריק: לא לכל לקוח יש מספר כזה. */
+    taxId: company.tax_id || '',
     email: (user && user.email) || '',
     language: company.language || 'he',
     plan: planId,

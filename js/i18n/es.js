@@ -592,6 +592,18 @@
         cannotChangeOwner: 'El propietario de la cuenta no se puede cambiar'
       },
 
+      /* פרטי העסק בהגדרות: השם המסחרי ומספר העוסק לחשבונית */
+      company: {
+        title: 'Datos del negocio',
+        name: 'Nombre de la empresa',
+        taxId: 'NIF / número de IVA',
+        save: 'Guardar datos del negocio',
+        hint: 'El nombre es lo que ve tu plantilla y lo que aparece en los correos que recibe. El NIF aparece en la factura de la suscripción y puedes dejarlo vacío.',
+        saved: 'Datos del negocio guardados.',
+        saveFailed: 'No hemos podido guardar los datos del negocio. Inténtalo de nuevo.',
+        nameRequired: 'Hace falta un nombre de empresa.'
+      },
+
       account: {
         open: 'Mi cuenta',
         title: 'Mi cuenta',
@@ -599,8 +611,8 @@
         myName: 'Mi nombre',
         myNameHint: 'Así aparece tu nombre ante tu responsable y tus compañeros.',
         companyName: 'Nombre de la empresa',
-        companyNameHint: 'El nombre comercial que ve tu plantilla y el que aparece en los correos que recibe. No tiene por qué ser el nombre registrado.',
         companyOwnerOnly: 'Solo el titular de la cuenta puede cambiar el nombre de la empresa.',
+        companyInSettings: 'El nombre y el NIF de la empresa se editan en Ajustes, en «Datos del negocio».',
         email: 'Correo',
         role: 'Función',
         save: 'Guardar',

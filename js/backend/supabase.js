@@ -100,13 +100,23 @@
   }
 
   /* ===== אחסון האסימונים ===== */
+  /* אחסון האסימון. יש מכשירים שבהם האחסון חסום לגמרי – מצב
+     גלישה פרטית, או "חסימת כל העוגיות" בספארי – ושם setItem זורק.
+     במקרה כזה נופלים לזיכרון: המשתמש לא יישאר מחובר אחרי סגירה,
+     אבל הוא כן ימשיך לעבוד בלשונית שפתוחה.
+
+     הקריאה חייבת לחפש גם בזיכרון, ולא רק באחסון: בלי זה הכתיבה
+     נופלת לזיכרון והקריאה מחזירה null – כלומר אפילו באותה לשונית
+     הוא היה נראה כמי שאינו מחובר. */
   function createStorage(storage) {
     var memory = {};
     return {
       get: function (key) {
         if (storage) {
-          try { var raw = storage.getItem(key); return raw ? JSON.parse(raw) : null; }
-          catch (err) { return null; }
+          try {
+            var raw = storage.getItem(key);
+            if (raw) return JSON.parse(raw);
+          } catch (err) { /* אחסון חסום – ממשיכים לזיכרון */ }
         }
         return memory[key] || null;
       },

@@ -1442,6 +1442,42 @@ run('מנהל שמנסה לשנות את שם העסק מקבל סירוב ול�
   });
 });
 
+/* ===== אחסון חסום =====
+
+   יש מכשירים שבהם אחסון הדפדפן חסום לגמרי: גלישה פרטית, או
+   "חסימת כל העוגיות" בספארי. שם setItem זורק חריגה.
+
+   מה שחייב לקרות: המערכת ממשיכה לעבוד בלשונית שפתוחה, והמשתמש
+   פשוט לא יישאר מחובר אחרי סגירה. מה שאסור שיקרה: שייראה כמי
+   שאינו מחובר כבר באותה לשונית. */
+function blockedStorage() {
+  return {
+    getItem: function () { throw new Error('storage is blocked'); },
+    setItem: function () { throw new Error('storage is blocked'); },
+    removeItem: function () { throw new Error('storage is blocked'); }
+  };
+}
+
+run('אחסון חסום: ההתחברות עובדת, והמצב נשמר בזיכרון', function () {
+  var server = new FakeSupabase();
+  var backend = new Supabase.SupabaseBackend({
+    url: 'https://demo.supabase.co',
+    anonKey: 'anon',
+    fetch: server.fetch.bind(server),
+    storage: blockedStorage()
+  });
+  return backend.signUpCompany({
+    email: 'blocked@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
+  }).then(function (session) {
+    assertEqual(session.company.name, 'עסק', 'ההרשמה נכשלה כשהאחסון חסום');
+    /* אותה לשונית: המשתמש מחובר, והפעולות עובדות */
+    assert(backend.session() !== null, 'המשתמש נראה מנותק באותה לשונית');
+    return backend.saveConfig({ settings: { ok: true } });
+  }).then(function () {
+    assert(backend.session() !== null, 'המשתמש נותק אחרי פעולה');
+  });
+});
+
 chain.then(function () {
   console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed ? 1 : 0);

@@ -569,6 +569,11 @@
   SupabaseBackend.prototype.loadConfig = function () {
     var companyId;
     try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
+    if (this._isEmployee()) {
+      return this._rpc('config_for_me').then(function (config) {
+        return config && Object.keys(config).length ? config : null;
+      });
+    }
     return this._rest('/company_configs?company_id=eq.' + companyId + '&select=config')
       .then(function (rows) {
         var config = rows && rows[0] && rows[0].config;
@@ -589,6 +594,15 @@
 
   /* ===== שבועות ===== */
 
+  /* עובד אינו קורא את הטבלאות ישירות: כללי ההרשאה סגורים בפניו,
+     והוא מגיע דרך פונקציות שמחזירות את הפרוסה שלו בלבד. בלי זה
+     השבוע המלא – כולל הסיבות האישיות שעמיתיו כתבו – היה מגיע
+     לדפדפן שלו, גם אם המסך לא הציג אותו. */
+  SupabaseBackend.prototype._isEmployee = function () {
+    var session = this.session();
+    return !!(session && session.user && session.user.role === 'employee');
+  };
+
   function weekOf(row) {
     if (!row) return null;
     var week = row.week || {};
@@ -608,6 +622,11 @@
   SupabaseBackend.prototype.loadWeek = function (weekKey) {
     var companyId;
     try { companyId = this._companyId(); } catch (err) { return Promise.reject(err); }
+    if (this._isEmployee()) {
+      return this._rpc('week_for_me', { p_week_key: weekKey }).then(function (row) {
+        return weekOf(row);
+      });
+    }
     return this._rest('/company_weeks?company_id=eq.' + companyId +
       '&week_key=eq.' + encodeURIComponent(weekKey) + '&select=week,published,updated_at')
       .then(function (rows) { return weekOf(rows && rows[0]); });

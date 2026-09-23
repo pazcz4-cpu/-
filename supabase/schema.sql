@@ -451,6 +451,10 @@ begin
    where company_id = v_company and week_key = p_week_key
   returning * into v_week;
 
+  -- מה שחוזר לעובד הוא הפרוסה שלו, ולא השבוע כולו. בלי זה כל
+  -- שמירת בקשה הייתה מחזירה לו את הסידור של כולם ואת הסיבות
+  -- שעמיתיו כתבו.
+  v_week.week := public.week_as_seen(v_week);
   return v_week;
 end;
 $$;
@@ -502,6 +506,10 @@ begin
    where company_id = v_company and week_key = p_week_key
   returning * into v_week;
 
+  -- מה שחוזר לעובד הוא הפרוסה שלו, ולא השבוע כולו. בלי זה כל
+  -- שמירת בקשה הייתה מחזירה לו את הסידור של כולם ואת הסיבות
+  -- שעמיתיו כתבו.
+  v_week.week := public.week_as_seen(v_week);
   return v_week;
 end;
 $$;
@@ -695,3 +703,128 @@ drop trigger if exists company_users_role_guard on public.company_users;
 create trigger company_users_role_guard
   before update on public.company_users
   for each row execute function public.guard_user_role();
+
+-- PRIVACY: מה שעובד רואה בפועל
+--
+-- עובד רואה במסך רק את המשמרות שלו ואת הבקשות שלו. עד כאן זה
+-- היה נכון במסך בלבד: כלל ההרשאה על company_weeks פתח את כל
+-- השורה לכל מי שבחברה, ולכן השבוע המלא – כולל השיבוצים של
+-- כולם והסיבות האישיות שעמיתים כתבו לבקשות שלהם ("חתונה של
+-- אחותי") – הגיע לדפדפן שלו. מי שפותח כלי פיתוח רואה הכל.
+--
+-- הפתרון: העובד אינו קורא את הטבלאות ישירות. הוא קורא דרך שתי
+-- פונקציות שמחזירות את הפרוסה שלו בלבד, והכללים נסגרים בפניו.
+
+-- השבוע כפי שעובד אחד רואה אותו: המשמרות שלו, הבקשות שלו,
+-- והחגים והשעות שממילא משותפים. הערת המנהל על השבוע והשיבוץ
+-- הידני של אחרים אינם שלו.
+create or replace function public.week_for_employee(p_week jsonb, p_employee text, p_published boolean)
+returns jsonb language sql immutable set search_path = public as $$
+  select jsonb_build_object(
+    'published',   to_jsonb(coalesce(p_published, false)),
+    'publishedAt', coalesce(p_week->'publishedAt', 'null'::jsonb),
+    'publishedSignature', coalesce(p_week->'publishedSignature', '""'::jsonb),
+    'holidays',    coalesce(p_week->'holidays', '{}'::jsonb),
+    'shabbatEnd',  coalesce(p_week->'shabbatEnd', '""'::jsonb),
+    'generatedAt', coalesce(p_week->'generatedAt', 'null'::jsonb),
+    'note',        '""'::jsonb,
+    'manual',      '{}'::jsonb,
+    -- סידור שטרם פורסם אינו קיים בשביל העובד, גם לא החלק שלו:
+    -- טיוטה שמישהו רואה היא טיוטה שמתווכחים עליה.
+    'assignments', case when coalesce(p_published, false) then coalesce((
+        select jsonb_object_agg(item.key, jsonb_build_array(p_employee))
+          from jsonb_each(coalesce(p_week->'assignments', '{}'::jsonb)) as item(key, value)
+         where p_employee is not null
+           and item.value @> jsonb_build_array(p_employee)
+      ), '{}'::jsonb) else '{}'::jsonb end,
+    -- הבקשות שלו מוצגות לו תמיד, גם לפני פרסום – הוא זה שהגיש
+    -- אותן, והוא צריך לראות מה מצבן.
+    'constraints', coalesce((
+      select jsonb_object_agg(item.key, item.value)
+        from jsonb_each(coalesce(p_week->'constraints', '{}'::jsonb)) as item(key, value)
+       where p_employee is not null and item.key like p_employee || '|%'
+    ), '{}'::jsonb)
+  );
+$$;
+
+-- שורת שבוע כפי שמי שקורא אותה רשאי לראות. מנהל מקבל הכל.
+create or replace function public.week_as_seen(p_row public.company_weeks)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select case when public.is_manager() then coalesce(p_row.week, '{}'::jsonb)
+              else public.week_for_employee(coalesce(p_row.week, '{}'::jsonb),
+                     public.current_employee_id(), p_row.published) end
+$$;
+
+-- מה שהעובד מבקש מהשרת במקום select על הטבלה
+create or replace function public.week_for_me(p_week_key text)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  v_company uuid;
+  v_row     public.company_weeks;
+begin
+  v_company := public.current_company_id();
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  select * into v_row from public.company_weeks
+   where company_id = v_company and week_key = p_week_key;
+  if not found then return null; end if;
+  return jsonb_build_object(
+    'week', public.week_as_seen(v_row),
+    'published', v_row.published,
+    'updated_at', v_row.updated_at);
+end;
+$$;
+
+-- ההגדרות כפי שעובד רואה אותן: המשמרות, הסניפים והכללים של
+-- העסק – והכרטיס שלו בלבד. הכרטיסים של עמיתיו נושאים מייל,
+-- טלפון והערות, וכל אלה אינם שלו.
+create or replace function public.config_for_me()
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  v_company uuid;
+  v_config  jsonb;
+  v_emp     text;
+begin
+  v_company := public.current_company_id();
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  select config into v_config from public.company_configs where company_id = v_company;
+  if v_config is null then return null; end if;
+  if public.is_manager() then return v_config; end if;
+
+  v_emp := public.current_employee_id();
+  return jsonb_build_object(
+    'settings', coalesce(v_config->'settings', '{}'::jsonb),
+    'branches', coalesce(v_config->'branches', '[]'::jsonb),
+    'employees', coalesce((
+      select jsonb_agg(item)
+        from jsonb_array_elements(coalesce(v_config->'employees', '[]'::jsonb)) as item
+       where v_emp is not null and item->>'id' = v_emp
+    ), '[]'::jsonb));
+end;
+$$;
+
+-- הכללים נסגרים: קריאה ישירה של הסידור וההגדרות היא של מנהלים.
+-- עובד מגיע לשתי הפונקציות שלמעלה, ולשום דבר אחר.
+drop policy if exists company_weeks_select on public.company_weeks;
+create policy company_weeks_select on public.company_weeks
+  for select using (company_id = public.current_company_id() and public.is_manager());
+
+drop policy if exists company_configs_select on public.company_configs;
+create policy company_configs_select on public.company_configs
+  for select using (company_id = public.current_company_id() and public.is_manager());
+
+-- ורשימת המשתמשים: עובד רואה את השורה שלו. המיילים של עמיתיו
+-- אינם שלו, וגם לא מי הוזמן ומי טרם נכנס.
+drop policy if exists company_users_select on public.company_users;
+create policy company_users_select on public.company_users
+  for select using (
+    company_id = public.current_company_id()
+    and (public.is_manager() or id = auth.uid()));
+
+grant execute on function public.week_for_employee(jsonb, text, boolean) to authenticated;
+grant execute on function public.week_as_seen(public.company_weeks)      to authenticated;
+grant execute on function public.week_for_me(text)               to authenticated;
+grant execute on function public.config_for_me()                 to authenticated;

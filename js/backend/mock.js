@@ -270,10 +270,58 @@
   /* ===== נתונים – תמיד מוגבלים לחברה של המשתמש המחובר ===== */
 
   /* ההגדרות המשותפות: עובדים, סניפים וכללי שיבוץ */
+  /* ===== מה שעובד רואה =====
+     עובד רואה את המשמרות שלו ואת הבקשות שלו. השרת האמיתי אוכף
+     את זה בפונקציות week_for_me ו-config_for_me; כאן אותו כלל
+     בדיוק, כדי שהבדיקות ירוצו על אותה התנהגות. */
+  MockBackend.prototype._isEmployee = function (session) {
+    return !!(session && session.user && session.user.role === 'employee');
+  };
+
+  MockBackend.prototype._weekSlice = function (session, week) {
+    if (!week) return week;
+    if (!this._isEmployee(session)) return week;
+    var mine = session.user.employeeId || null;
+    var out = clone(week);
+    var assignments = {};
+    /* סידור שטרם פורסם אינו קיים בשביל העובד, גם לא החלק שלו */
+    if (week.published && mine) {
+      Object.keys(week.assignments || {}).forEach(function (slot) {
+        var list = week.assignments[slot] || [];
+        if (list.indexOf(mine) !== -1) assignments[slot] = [mine];
+      });
+    }
+    out.assignments = assignments;
+    var constraints = {};
+    Object.keys(week.constraints || {}).forEach(function (key) {
+      if (mine && key.indexOf(mine + '|') === 0) constraints[key] = week.constraints[key];
+    });
+    out.constraints = constraints;
+    out.manual = {};
+    out.note = '';
+    return out;
+  };
+
+  MockBackend.prototype._configSlice = function (session, config) {
+    if (!config) return config;
+    if (!this._isEmployee(session)) return config;
+    var mine = session.user.employeeId || null;
+    return {
+      settings: config.settings || {},
+      branches: config.branches || [],
+      /* הכרטיסים של עמיתיו נושאים מייל, טלפון והערות – ואלה
+         אינם שלו */
+      employees: (config.employees || []).filter(function (emp) {
+        return mine && emp.id === mine;
+      })
+    };
+  };
+
   MockBackend.prototype.loadConfig = function () {
     var session = this._require();
     var data = this._companyData(session.company.id);
-    return Promise.resolve(data.config ? clone(data.config) : null);
+    if (!data.config) return Promise.resolve(null);
+    return Promise.resolve(this._configSlice(session, clone(data.config)));
   };
 
   MockBackend.prototype.saveConfig = function (config) {
@@ -296,7 +344,8 @@
   MockBackend.prototype.loadWeek = function (weekKey) {
     var session = this._require();
     var weeks = this._companyData(session.company.id).weeks;
-    return Promise.resolve(weeks[weekKey] ? clone(weeks[weekKey]) : null);
+    if (!weeks[weekKey]) return Promise.resolve(null);
+    return Promise.resolve(this._weekSlice(session, clone(weeks[weekKey])));
   };
 
   MockBackend.prototype.saveWeek = function (weekKey, week) {
@@ -358,7 +407,9 @@
 
     this._save();
     this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
-    return Promise.resolve(clone(week));
+    /* מה שחוזר לעובד הוא הפרוסה שלו. בלי זה כל שמירת בקשה הייתה
+       מחזירה לו את הסידור של כולם. */
+    return Promise.resolve(this._weekSlice(session, clone(week)));
   };
 
   /* עדכון הסיבה שהעובד צירף לבקשה. אינו משנה את מה שהתבקש, ולכן
@@ -384,7 +435,7 @@
     week.updatedAt = this.now().toISOString();
     this._save();
     this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
-    return Promise.resolve(clone(week));
+    return Promise.resolve(this._weekSlice(session, clone(week)));
   };
 
   /* אישור או דחייה של בקשת אילוץ. שמור למנהל ולבעלים. */

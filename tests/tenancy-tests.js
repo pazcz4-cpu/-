@@ -75,7 +75,7 @@ console.log('\n== בידוד בין חברות ==');
 asyncTest('חברה אינה רואה את ההגדרות של חברה אחרת', function () {
   var backend = freshBackend();
   return backend.signUpCompany({ companyName: 'חברה א', email: 'a@a.com', password: 'secret1' })
-    .then(function () { return backend.saveConfig({ secret: 'נתוני חברה א' }); })
+    .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה א' } }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
       return backend.signUpCompany({ companyName: 'חברה ב', email: 'b@b.com', password: 'secret1' });
@@ -193,13 +193,13 @@ asyncTest('אימייל שקיים בחברה אחת אינו נגרר לחבר�
 asyncTest('קישור לקביעת סיסמה מכניס לחברה שלו בלבד', function () {
   var backend = freshBackend();
   return backend.signUpCompany({ companyName: 'חברה א', email: 'a8@a.com', password: 'secret1' })
-    .then(function () { return backend.saveConfig({ secret: 'נתוני חברה א' }); })
+    .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה א' } }); })
     .then(function () { return backend.createUser({ email: 'worker8@a.com', role: 'employee' }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
       return backend.signUpCompany({ companyName: 'חברה ב', email: 'b8@b.com', password: 'secret1' });
     })
-    .then(function () { return backend.saveConfig({ secret: 'נתוני חברה ב' }); })
+    .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה ב' } }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
       /* הקישור של עובד חברה א נפתח על אותו דפדפן שבו חברה ב עבדה */
@@ -212,7 +212,9 @@ asyncTest('קישור לקביעת סיסמה מכניס לחברה שלו בל�
       return backend.loadConfig();
     })
     .then(function (config) {
-      assertEqual(config.secret, 'נתוני חברה א',
+      /* ההגדרות שעובד מקבל הן פרוסה: משמרות, סניפים והכרטיס
+         שלו. הסימן נבדק בתוך settings, שהוא מה שעובד באמת רואה. */
+      assertEqual(config.settings.secret, 'נתוני חברה א',
         'העובד קיבל את ההגדרות של החברה השנייה');
     });
 });
@@ -1021,6 +1023,150 @@ asyncTest('שינוי שם אינו חוצה חברות', function () {
     .then(function () {
       assertEqual(backend.db.companies[firstId].name, 'חברה א', 'שם החברה השנייה נדרס');
     });
+});
+
+console.log('\n== מה שעובד רואה ==');
+
+/* מקימים עסק עם שני עובדים, שבוע משובץ, ובקשה עם סיבה אישית של
+   כל אחד מהם – ואז נכנסים בתור אחד מהם ובודקים מה הגיע אליו.
+
+   למה זה קריטי: המסך של העובד הראה תמיד רק את המשמרות שלו, אבל
+   הנתונים שהגיעו לדפדפן היו השבוע המלא. מי שפותח כלי פיתוח היה
+   רואה את הסידור של כולם ואת הסיבות שעמיתיו כתבו. */
+function companyWithTwo() {
+  var backend = freshBackend();
+  var ids = {};
+  return backend.signUpCompany({ companyName: 'עסק', email: 'boss@p.com', password: 'secret1' })
+    .then(function () {
+      return backend.saveConfig({
+        settings: { shifts: [{ id: 'morning', name: 'בוקר' }] },
+        branches: [{ id: 'br-1', name: 'מרכז' }],
+        employees: [
+          { id: 'emp-1', name: 'דנה', email: 'dana@p.com', phone: '050', note: 'פרטי' },
+          { id: 'emp-2', name: 'יוסי', email: 'yossi@p.com', phone: '051', note: 'פרטי' }
+        ]
+      });
+    })
+    .then(function () {
+      return backend.saveWeek('2026-09-20', {
+        assignments: { 'br-1|0|morning': ['emp-1', 'emp-2'], 'br-1|1|morning': ['emp-2'] },
+        constraints: {
+          'emp-1|3': { off: true, note: 'תור לרופא', status: 'pending' },
+          'emp-2|4': { off: true, note: 'חתונה של אחותי', status: 'pending' }
+        },
+        manual: { 'br-1|0|morning': true },
+        note: 'הערה של המנהל'
+      });
+    })
+    .then(function () { return backend.publishWeek('2026-09-20', true); })
+    .then(function () {
+      return backend.createUser({ email: 'dana@p.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-1' });
+    })
+    .then(function (user) { ids.dana = user.id; return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'dana@p.com', password: 'secret1' }); })
+    .then(function () { return backend; });
+}
+
+asyncTest('עובד רואה את המשמרות שלו בלבד', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.loadWeek('2026-09-20').then(function (week) {
+      var slots = Object.keys(week.assignments);
+      assertEqual(slots.length, 1, 'מספר המשמרות שהגיעו');
+      assertEqual(slots[0], 'br-1|0|morning', 'המשמרת שהגיעה');
+      assertEqual(week.assignments[slots[0]].join(','), 'emp-1',
+        'השיבוץ כולל עובדים נוספים');
+      assertEqual(JSON.stringify(week).indexOf('emp-2'), -1,
+        'המזהה של עובד אחר הגיע לדפדפן');
+    });
+  });
+});
+
+asyncTest('הסיבות של עמיתים אינן מגיעות לעובד', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.loadWeek('2026-09-20').then(function (week) {
+      var keys = Object.keys(week.constraints);
+      assertEqual(keys.length, 1, 'מספר הבקשות שהגיעו');
+      assertEqual(keys[0], 'emp-1|3', 'הבקשה שהגיעה');
+      assert(JSON.stringify(week).indexOf('חתונה של אחותי') === -1,
+        'סיבה אישית של עמית הגיעה לדפדפן');
+      assertEqual(week.constraints['emp-1|3'].note, 'תור לרופא',
+        'הסיבה של העובד עצמו נעלמה');
+    });
+  });
+});
+
+asyncTest('הערת המנהל והשיבוץ הידני אינם של העובד', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.loadWeek('2026-09-20').then(function (week) {
+      assertEqual(week.note, '', 'הערת המנהל הגיעה לעובד');
+      assertEqual(Object.keys(week.manual).length, 0, 'סימוני השיבוץ הידני הגיעו');
+    });
+  });
+});
+
+asyncTest('סידור שטרם פורסם אינו מגיע לעובד, והבקשות שלו כן', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.signOut()
+      .then(function () { return backend.signIn({ email: 'boss@p.com', password: 'secret1' }); })
+      .then(function () { return backend.publishWeek('2026-09-20', false); })
+      .then(function () { return backend.signOut(); })
+      .then(function () { return backend.signIn({ email: 'dana@p.com', password: 'secret1' }); })
+      .then(function () { return backend.loadWeek('2026-09-20'); })
+      .then(function (week) {
+        assertEqual(Object.keys(week.assignments).length, 0,
+          'טיוטה שטרם פורסמה הגיעה לעובד');
+        assertEqual(Object.keys(week.constraints).length, 1,
+          'הבקשות של העובד עצמו נעלמו לפני הפרסום');
+      });
+  });
+});
+
+asyncTest('עובד מקבל את הכרטיס שלו בלבד, בלי המיילים של עמיתיו', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.loadConfig().then(function (config) {
+      assertEqual(config.employees.length, 1, 'מספר הכרטיסים שהגיעו');
+      assertEqual(config.employees[0].id, 'emp-1', 'הכרטיס שהגיע');
+      assert(JSON.stringify(config).indexOf('yossi@p.com') === -1,
+        'המייל של עמית הגיע לדפדפן');
+      assertEqual(config.branches.length, 1, 'הסניפים נדרשים לעובד ונעלמו');
+    });
+  });
+});
+
+asyncTest('שמירת בקשה מחזירה לעובד את הפרוסה שלו בלבד', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.signOut()
+      .then(function () { return backend.signIn({ email: 'boss@p.com', password: 'secret1' }); })
+      .then(function () { return backend.publishWeek('2026-09-20', false); })
+      .then(function () { return backend.signOut(); })
+      .then(function () { return backend.signIn({ email: 'dana@p.com', password: 'secret1' }); })
+      .then(function () {
+        return backend.saveOwnConstraint('2026-09-20', 2, { off: true, note: 'משפחה' });
+      })
+      .then(function (week) {
+        assert(JSON.stringify(week).indexOf('חתונה של אחותי') === -1,
+          'התשובה על שמירת בקשה כללה סיבה של עמית');
+        assertEqual(Object.keys(week.constraints).length, 2, 'הבקשות של העובד עצמו');
+      });
+  });
+});
+
+asyncTest('המנהל ממשיך לראות הכל', function () {
+  return companyWithTwo().then(function (backend) {
+    return backend.signOut()
+      .then(function () { return backend.signIn({ email: 'boss@p.com', password: 'secret1' }); })
+      .then(function () { return backend.loadWeek('2026-09-20'); })
+      .then(function (week) {
+        assertEqual(Object.keys(week.assignments).length, 2, 'המנהל איבד משמרות');
+        assertEqual(Object.keys(week.constraints).length, 2, 'המנהל איבד בקשות');
+        assertEqual(week.note, 'הערה של המנהל', 'הערת המנהל נמחקה');
+      })
+      .then(function () { return backend.loadConfig(); })
+      .then(function (config) {
+        assertEqual(config.employees.length, 2, 'המנהל איבד כרטיסי עובדים');
+      });
+  });
 });
 
 queue.then(function () {

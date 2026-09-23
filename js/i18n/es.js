@@ -605,6 +605,29 @@
         nameRequired: 'Hace falta un nombre de empresa.'
       },
 
+      /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      move: {
+        trayTitle: 'Zona de espera',
+        trayHint: 'Turnos sin nadie asignado. Arrastra desde aquí a una persona, o suelta uno aquí para dejarlo libre.',
+        trayEmpty: 'Todos los turnos están cubiertos. Suelta un turno aquí para dejarlo libre.',
+        tray: 'la zona de espera',
+        tileHint: 'Arrastra a otra persona, o haz clic para cogerlo',
+        picked: 'Turno cogido. Haz clic en una persona para colocarlo, o pulsa Esc para cancelar.',
+        moved: 'Movido a {name}',
+        swapped: '{a} y {b} intercambiados',
+        released: 'Vuelve a la zona de espera y queda sin cubrir',
+        refuse: {
+          'target-busy': '{name} ya tiene un turno ese día',
+          'inactive': '{name} está inactivo y no se puede asignar',
+          'already-here': '{name} ya está en este turno',
+          'stale': 'El cuadrante ha cambiado mientras tanto. Revisa la pantalla e inténtalo de nuevo.',
+          'other-day': 'Un turno solo se puede mover dentro de su propio día',
+          'no-employee': 'No se ha encontrado a esa persona',
+          'bad-slot': 'No hemos podido identificar el turno',
+          'nothing-to-do': 'No hay nada que mover'
+        }
+      },
+
       account: {
         open: 'Mi cuenta',
         title: 'Mi cuenta',

@@ -605,6 +605,29 @@
         nameRequired: "Un nom d'entreprise est requis."
       },
 
+      /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      move: {
+        trayTitle: "Zone d'attente",
+        trayHint: "Créneaux sans personne. Faites glisser d'ici vers une personne, ou déposez-en un ici pour le libérer.",
+        trayEmpty: 'Tous les créneaux sont couverts. Déposez un créneau ici pour le libérer.',
+        tray: "la zone d'attente",
+        tileHint: 'Faites glisser vers une autre personne, ou cliquez pour le prendre',
+        picked: 'Créneau pris. Cliquez sur une personne pour le poser, ou Échap pour annuler.',
+        moved: 'Déplacé vers {name}',
+        swapped: '{a} et {b} permutés',
+        released: "De retour dans la zone d'attente, sans personne dessus",
+        refuse: {
+          'target-busy': '{name} a déjà un créneau ce jour-là',
+          'inactive': "{name} est inactif et n'est pas planifié",
+          'already-here': '{name} est déjà sur ce créneau',
+          'stale': "Le planning a changé entre-temps. Vérifiez l'écran et réessayez.",
+          'other-day': 'Un créneau ne se déplace que dans sa propre journée',
+          'no-employee': 'Cette personne est introuvable',
+          'bad-slot': "Nous n'avons pas pu identifier le créneau",
+          'nothing-to-do': 'Rien à déplacer'
+        }
+      },
+
       account: {
         open: 'Mon compte',
         title: 'Mon compte',

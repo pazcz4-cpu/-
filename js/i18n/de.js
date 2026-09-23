@@ -605,6 +605,29 @@
         nameRequired: 'Ein Name des Betriebs ist erforderlich.'
       },
 
+      /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      move: {
+        trayTitle: 'Wartebereich',
+        trayHint: 'Schichten ohne Besetzung. Von hier auf eine Person ziehen, oder eine Schicht hier ablegen, um sie freizugeben.',
+        trayEmpty: 'Alle Schichten sind besetzt. Eine Schicht hier ablegen, um sie freizugeben.',
+        tray: 'den Wartebereich',
+        tileHint: 'Auf eine andere Person ziehen, oder zum Aufnehmen klicken',
+        picked: 'Schicht aufgenommen. Auf eine Person klicken, um sie abzulegen, oder Esc zum Abbrechen.',
+        moved: 'Zu {name} verschoben',
+        swapped: '{a} und {b} getauscht',
+        released: 'Zurück im Wartebereich und unbesetzt',
+        refuse: {
+          'target-busy': '{name} hat an diesem Tag bereits eine Schicht',
+          'inactive': '{name} ist inaktiv und wird nicht eingeteilt',
+          'already-here': '{name} ist bereits in dieser Schicht',
+          'stale': 'Der Plan hat sich zwischenzeitlich geändert. Bitte prüfen und erneut versuchen.',
+          'other-day': 'Eine Schicht lässt sich nur innerhalb ihres Tages verschieben',
+          'no-employee': 'Diese Person wurde nicht gefunden',
+          'bad-slot': 'Die Schicht konnte nicht zugeordnet werden',
+          'nothing-to-do': 'Nichts zu verschieben'
+        }
+      },
+
       account: {
         open: 'Mein Konto',
         title: 'Mein Konto',

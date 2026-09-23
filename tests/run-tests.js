@@ -821,6 +821,178 @@ test('יום חג אינו נספר כיום חופש שהעובד ביקש', fu
     'חג אינו יוצר אזהרת ריבוי ימי חופש');
 });
 
+console.log('\n== גרירת משמרות בין עובדים ==');
+
+/* עסק קטן ומפורש: שני סניפים, שני עובדים, בוקר בלבד ביום ראשון.
+   מצב שנבנה ביד ולא מדוגמה – כך ידוע בדיוק מה אמור לקרות. */
+function movableState(opts) {
+  var settings = (opts || {}).settings || {};
+  var state = Store.blankState();
+  state.settings.onePerDay = settings.onePerDay !== false;
+  state.branches = [
+    { id: 'br-a', name: 'באר שבע', active: true,
+      schedule: { 0: { morning: { need: 1 } } } },
+    { id: 'br-b', name: 'ירושלים', active: true,
+      schedule: { 0: { morning: { need: 1 } } } }
+  ];
+  state.employees = [
+    { id: 'e1', name: 'בן', active: true, maxShifts: 6, branchIds: ['br-a', 'br-b'] },
+    { id: 'e2', name: 'אור', active: true, maxShifts: 6, branchIds: ['br-a', 'br-b'] },
+    { id: 'e3', name: 'פז', active: false, maxShifts: 6, branchIds: ['br-a', 'br-b'] }
+  ];
+  state = Store.migrate(state);
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 0, 'br-a', 'morning', ['e1']);
+  Store.setAssigned(week, 0, 'br-b', 'morning', ['e2']);
+  return { state: state, week: week };
+}
+
+function whoIn(week, branchId) {
+  return Store.getAssigned(week, 0, branchId, 'morning').join(',');
+}
+
+test('גרירה לתא ריק מעבירה את המשמרת', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(out.ok, true, 'הגרירה נדחתה');
+  assertEqual(out.kind, 'move', 'סוג המהלך');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e2', 'המשמרת לא עברה');
+});
+
+test('גרירה לתא תפוס מחליפה בין השניים', function () {
+  /* זה המהלך שביקשו: בן בבאר שבע, אור בירושלים, ולהחליף. */
+  var ctx = movableState();
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(out.ok, true, 'ההחלפה נדחתה');
+  assertEqual(out.kind, 'swap', 'סוג המהלך');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e2', 'באר שבע');
+  assertEqual(whoIn(ctx.week, 'br-b'), 'e1', 'ירושלים');
+});
+
+test('שחרור לשטח ההמתנה משאיר את המשמרת בלי אף אחד', function () {
+  var ctx = movableState();
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: null });
+  assertEqual(out.ok, true, 'השחרור נדחה');
+  assertEqual(out.kind, 'release', 'סוג המהלך');
+  assertEqual(whoIn(ctx.week, 'br-a'), '', 'נשאר מישהו במשמרת');
+  var open = Store.openSlots(ctx.state, ctx.week);
+  assertEqual(open.length, 1, 'המשמרת לא הופיעה כמקום פתוח');
+  assertEqual(open[0].branchId, 'br-a', 'הסניף הפתוח');
+  assertEqual(open[0].missing, 1, 'כמה חסרים');
+});
+
+test('משיכה משטח ההמתנה מאיישת משמרת ריקה', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-a', 'morning', []);
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: null, to: 'e1' });
+  assertEqual(out.ok, true, 'האיוש נדחה');
+  assertEqual(out.kind, 'fill', 'סוג המהלך');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e1', 'המשמרת לא אוישה');
+});
+
+test('שתי משמרות לאותו עובד ביום אחד נחסמות', function () {
+  /* משטח ההמתנה אין את מי להחליף, ולכן זו חסימה ולא החלפה */
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-a', 'morning', []);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: null, to: 'e2' });
+  assertEqual(out.ok, false, 'העובד קיבל משמרת שנייה באותו יום');
+  assertEqual(out.reason, 'target-busy', 'סיבת הדחייה');
+  assertEqual(whoIn(ctx.week, 'br-a'), '', 'המשמרת שובצה בכל זאת');
+});
+
+test('כשהכלל כבוי אפשר לשבץ פעמיים באותו יום', function () {
+  /* יש עסקים שבהם בוקר וערב באותו יום הם נוהל ולא תקלה */
+  var ctx = movableState({ settings: { onePerDay: false } });
+  Store.setAssigned(ctx.week, 0, 'br-a', 'morning', []);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: null, to: 'e2' });
+  assertEqual(out.ok, true, 'הכלל נאכף למרות שכובה');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e2', 'המשמרת לא שובצה');
+});
+
+test('אותו אדם פעמיים באותה משמרת אינו אפשרי', function () {
+  var ctx = movableState({ settings: { onePerDay: false } });
+  Store.setAssigned(ctx.week, 0, 'br-a', 'morning', ['e1', 'e2']);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(out.ok, false, 'התקבלה כפילות');
+  assertEqual(out.reason, 'already-here', 'סיבת הדחייה');
+});
+
+test('עובד מושבת אינו מקבל משמרת בגרירה', function () {
+  /* זו אינה החלטה של המנהל אלא טעות: עובד מושבת אינו עובד כאן */
+  var ctx = movableState();
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e3' });
+  assertEqual(out.ok, false, 'מושבת קיבל משמרת');
+  assertEqual(out.reason, 'inactive', 'סיבת הדחייה');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e1', 'המשמרת זזה בכל זאת');
+});
+
+test('גרירה ממצב ישן נדחית ואינה הורסת נתונים', function () {
+  /* חבר צוות אחר הזיז בינתיים. המסך שלי מציג את מה שהיה. */
+  var ctx = movableState();
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e2', to: 'e1' });
+  assertEqual(out.ok, false, 'גרירה ממצב ישן התקבלה');
+  assertEqual(out.reason, 'stale', 'סיבת הדחייה');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e1', 'באר שבע נפגעה');
+  assertEqual(whoIn(ctx.week, 'br-b'), 'e2', 'ירושלים נפגעה');
+});
+
+test('אילוץ של עובד אינו חוסם גרירה – הוא מסומן', function () {
+  /* המנהל מחליט; הבדיקות מסמנות. חסימה כאן הייתה הופכת
+     "אני מחליט" ל"המערכת לא נותנת". */
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  Store.setConstraint(ctx.week, 'e2', 0, { off: true, blocked: {}, preferred: {}, note: '' });
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(out.ok, true, 'הגרירה נחסמה בגלל אילוץ');
+  var report = Validate.validate(ctx.state, ctx.week);
+  var flagged = report.issues.filter(function (item) {
+    return item.type === 'constraint-off' || item.type === 'constraint-blocked';
+  });
+  assert(flagged.length > 0, 'ההפרה לא סומנה בבדיקות');
+});
+
+test('כל מהלך מסמן את המשמרת כידנית', function () {
+  /* אחרת "בנה סידור אוטומטי" היה דורס בדיוק את מה שהמנהל סידר */
+  var ctx = movableState();
+  Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(!!ctx.week.manual[Store.slotKey(0, 'br-a', 'morning')], true, 'המקור לא סומן');
+  assertEqual(!!ctx.week.manual[Store.slotKey(0, 'br-b', 'morning')], true, 'היעד לא סומן');
+});
+
+test('גרירה על עצמו אינה משנה דבר', function () {
+  var ctx = movableState();
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e1' });
+  assertEqual(out.ok, true, 'נדחתה גרירה תמימה');
+  assertEqual(out.kind, 'none', 'סוג המהלך');
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e1', 'המצב השתנה');
+});
+
+test('בקשה פגומה נדחית בלי לזרוק', function () {
+  var ctx = movableState();
+  [{ dayIdx: 9, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' },
+   { dayIdx: 0, branchId: '', shiftId: 'morning', from: 'e1', to: 'e2' },
+   { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: null, to: null }
+  ].forEach(function (bad) {
+    var out = Store.moveShift(ctx.state, ctx.week, bad);
+    assertEqual(out.ok, false, 'בקשה פגומה התקבלה: ' + JSON.stringify(bad));
+  });
+  assertEqual(whoIn(ctx.week, 'br-a'), 'e1', 'נתונים נפגעו');
+});
+
 console.log('\n== ייצוא לאקסל ==');
 
 function readZipEntries(bytes) {

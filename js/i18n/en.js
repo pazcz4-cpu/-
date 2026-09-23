@@ -611,6 +611,29 @@
         nameRequired: 'A business name is required.'
       },
 
+      /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
+      move: {
+        trayTitle: 'Holding area',
+        trayHint: 'Shifts with nobody on them. Drag from here onto a person, or drop one here to clear it.',
+        trayEmpty: 'Every shift is covered. Drop a shift here to clear it.',
+        tray: 'the holding area',
+        tileHint: 'Drag onto another person, or click to pick up',
+        picked: 'Shift picked up. Click a person to place it, or press Esc to cancel.',
+        moved: 'Moved to {name}',
+        swapped: 'Swapped {a} and {b}',
+        released: 'Back in the holding area and nobody is covering it',
+        refuse: {
+          'target-busy': '{name} already has a shift that day',
+          'inactive': '{name} is inactive and cannot be scheduled',
+          'already-here': '{name} is already on this shift',
+          'stale': 'The schedule changed in the meantime. Check the screen and try again.',
+          'other-day': 'A shift can only move within its own day',
+          'no-employee': 'That person was not found',
+          'bad-slot': "We couldn't identify that shift",
+          'nothing-to-do': 'Nothing to move'
+        }
+      },
+
       account: {
         open: 'My account',
         title: 'My account',

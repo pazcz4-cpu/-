@@ -542,6 +542,284 @@
   }
 
   /* ========== תצוגה לפי עובד ========== */
+
+  /* ===== הזזת משמרות: גרירה, ולחיצה למי שלא גורר ===== */
+
+  /* הקובייה שהורמה בלחיצה, או null. זהו המצב היחיד שנשמר בצד,
+     והוא מזהה ולא אובייקט – כך ציור מחדש אינו משאיר בידנו
+     הפניה לאלמנט שכבר אינו במסך. */
+  var pickedTile = null;
+
+  function tileSpec(node) {
+    if (!node) return null;
+    return {
+      dayIdx: Number(node.dataset.day),
+      branchId: node.dataset.branch,
+      shiftId: node.dataset.shift,
+      empId: node.dataset.emp || null,
+      id: node.dataset.tile
+    };
+  }
+
+  function findTile(id) {
+    if (!id) return null;
+    return tileSpec(document.querySelector('.shift-tile[data-tile="' + cssEscape(id) + '"]'));
+  }
+
+  /* המזהה מורכב משמות שהמשתמש קבע, ולכן הוא עלול להכיל גרש */
+  function cssEscape(value) {
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  function clearPick() {
+    if (!pickedTile) return;
+    pickedTile = null;
+    document.querySelectorAll('.shift-tile.picked').forEach(function (node) {
+      node.classList.remove('picked');
+      node.setAttribute('aria-pressed', 'false');
+    });
+    document.body.classList.remove('moving-shift');
+  }
+
+  function pickTile(node) {
+    var spec = tileSpec(node);
+    if (!spec) return;
+    if (pickedTile === spec.id) { clearPick(); return; }
+    clearPick();
+    pickedTile = spec.id;
+    node.classList.add('picked');
+    node.setAttribute('aria-pressed', 'true');
+    document.body.classList.add('moving-shift');
+    toast(t('move.picked'));
+  }
+
+  /* ביצוע המהלך. כל המסלולים – גרירה, לחיצה, מקלדת – נכנסים לכאן,
+     ולכן החוקים נאכפים פעם אחת ובאותו אופן. */
+  function applyMove(spec, targetEmpId) {
+    if (blocked()) { render(); return; }
+    if (!spec) return;
+    var current = week();
+    var nameOf = function (id) {
+      var emp = id ? Store.byId(state.employees, id) : null;
+      return emp ? emp.name : t('move.tray');
+    };
+    var fromName = nameOf(spec.empId);
+    var toName = nameOf(targetEmpId);
+
+    var out = Store.moveShift(state, current, {
+      dayIdx: spec.dayIdx, branchId: spec.branchId, shiftId: spec.shiftId,
+      from: spec.empId, to: targetEmpId || null
+    });
+
+    if (!out.ok) {
+      clearPick();
+      render();
+      toast(t('move.refuse.' + out.reason, { name: toName }));
+      return;
+    }
+    clearPick();
+    if (out.kind === 'none') { render(); return; }
+    persist();
+    render();
+    if (out.kind === 'swap') { toast(t('move.swapped', { a: fromName, b: toName })); }
+    else if (out.kind === 'release') { toast(t('move.released')); }
+    else { toast(t('move.moved', { name: toName })); }
+  }
+
+  /* היעד שמתחת לנקודה: תא של עובד, או שטח ההמתנה.
+
+     גרירה חוקית היא באותו יום בלבד. משמרת שייכת ליום שלה – "לגרור
+     אותה ליום אחר" אינו אותו דבר, זו משמרת אחרת שצריך לפתוח
+     בסניף. שטח ההמתנה חוצה ימים, כי הוא רק מקום החזקה. */
+  function dropTargetFor(node, spec) {
+    var tray = node.closest('#shift-tray');
+    if (tray) return { empId: null, ok: true };
+    var cell = node.closest('.drop-cell');
+    if (!cell) return null;
+    if (Number(cell.dataset.dropDay) !== spec.dayIdx) return { empId: null, ok: false };
+    return { empId: cell.dataset.dropEmp || null, ok: true };
+  }
+
+  function bindShiftMoves() {
+    var board = $('#schedule-employee');
+    var tray = $('#shift-tray');
+    if (!board) return;
+
+    /* ===== גרירה עם העכבר =====
+       ה-API הטבעי של הדפדפן, ולא מימוש עצמאי: הוא מביא איתו את
+       סמן הגרירה, את תמונת הקובייה ואת ההתנהגות שמשתמשים מכירים
+       מכל תוכנה אחרת. במגע הוא אינו קיים, ולכן קיימת גם הלחיצה. */
+    function onDragStart(event) {
+      var tile = event.target.closest('.shift-tile');
+      if (!tile || viewOnly) return;
+      var spec = tileSpec(tile);
+      draggingSpec = spec;
+      document.body.classList.add('moving-shift');
+      tile.classList.add('dragging');
+      try {
+        event.dataTransfer.effectAllowed = 'move';
+        /* טקסט ולא JSON: יעד חיצוני שיקבל את הגרירה בטעות יקבל
+           שם קריא, ולא מבנה פנימי שלנו. */
+        event.dataTransfer.setData('text/plain', tile.textContent);
+      } catch (err) { /* דפדפנים ישנים */ }
+    }
+
+    function onDragEnd() {
+      draggingSpec = null;
+      document.body.classList.remove('moving-shift');
+      document.querySelectorAll('.dragging').forEach(function (n) { n.classList.remove('dragging'); });
+      document.querySelectorAll('.drop-hot').forEach(function (n) { n.classList.remove('drop-hot'); });
+    }
+
+    function onDragOver(event) {
+      if (!draggingSpec) return;
+      var target = dropTargetFor(event.target, draggingSpec);
+      if (!target || !target.ok) return;
+      event.preventDefault();
+      try { event.dataTransfer.dropEffect = 'move'; } catch (err) { /* אין צורך */ }
+      var zone = event.target.closest('.drop-cell, #shift-tray');
+      document.querySelectorAll('.drop-hot').forEach(function (n) {
+        if (n !== zone) n.classList.remove('drop-hot');
+      });
+      if (zone) zone.classList.add('drop-hot');
+    }
+
+    function onDrop(event) {
+      if (!draggingSpec) return;
+      var target = dropTargetFor(event.target, draggingSpec);
+      if (!target || !target.ok) return;
+      event.preventDefault();
+      var spec = draggingSpec;
+      onDragEnd();
+      applyMove(spec, target.empId);
+    }
+
+    [board, tray].forEach(function (zone) {
+      if (!zone) return;
+      zone.addEventListener('dragstart', onDragStart);
+      zone.addEventListener('dragend', onDragEnd);
+      zone.addEventListener('dragover', onDragOver);
+      zone.addEventListener('drop', onDrop);
+      /* dragleave על המסמך כולו, אחרת ההדגשה נתקעת */
+      zone.addEventListener('dragleave', function (event) {
+        var zoneNode = event.target.closest && event.target.closest('.drop-cell, #shift-tray');
+        if (zoneNode && !zoneNode.contains(event.relatedTarget)) {
+          zoneNode.classList.remove('drop-hot');
+        }
+      });
+    });
+
+    /* ===== לחיצה: להרים, ואז להניח =====
+       זה מה שעובד במגע, במקלדת, ולמי שפשוט לא אוהב לגרור. */
+    function onClick(event) {
+      if (viewOnly) return;
+      var tile = event.target.closest('.shift-tile');
+      if (tile && !pickedTile) { pickTile(tile); return; }
+      if (!pickedTile) return;
+
+      var spec = findTile(pickedTile);
+      if (!spec) { clearPick(); return; }
+
+      /* לחיצה על הקובייה שהורמה מבטלת */
+      if (tile && tile.dataset.tile === pickedTile) { clearPick(); return; }
+
+      var target = dropTargetFor(event.target, spec);
+      if (!target) { return; }
+      if (!target.ok) { toast(t('move.refuse.other-day')); return; }
+      applyMove(spec, target.empId);
+    }
+
+    [board, tray].forEach(function (zone) {
+      if (zone) zone.addEventListener('click', onClick);
+    });
+
+    /* מקלדת: רווח או Enter מרימים ומניחים, Escape מבטל */
+    [board, tray].forEach(function (zone) {
+      if (!zone) return;
+      zone.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') { clearPick(); return; }
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        var tile = event.target.closest('.shift-tile');
+        var cell = event.target.closest('.drop-cell, #shift-tray');
+        if (!tile && !cell) return;
+        event.preventDefault();
+        onClick({ target: event.target, closest: null });
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') clearPick();
+    });
+  }
+
+  var draggingSpec = null;
+
+  /* ===== משמרת כקובייה =====
+
+     במסך "תצוגה לפי עובד" כל משמרת היא קובייה שאפשר להזיז: לגרור
+     עם העכבר, או ללחוץ פעם אחת כדי להרים ופעם שנייה כדי להניח.
+     שני המסלולים נפגשים באותה פעולה, כי מסלול אחד בלבד היה משאיר
+     בחוץ את מי שעובד במגע או במקלדת.
+
+     ה-id של הקובייה נושא את כל מה שצריך כדי לבצע את המהלך: יום,
+     סניף, משמרת ומי יושב שם עכשיו. כך הגרירה אינה תלויה במצב
+     שמור בצד – מצב כזה נשאר ישן בדיוק כשמציירים מחדש. */
+  function tileId(dayIdx, branchId, shiftId, empId) {
+    return dayIdx + '|' + branchId + '|' + shiftId + '|' + (empId || '');
+  }
+
+  function shiftTile(branchId, shiftId, dayIdx, empId, extraClass) {
+    var shift = Store.shiftById(state, shiftId);
+    var name = branchNameOf(branchId) + ' · ' + (shift ? shift.name : shiftId);
+    var id = tileId(dayIdx, branchId, shiftId, empId);
+    var picked = pickedTile === id ? ' picked' : '';
+    return '<span class="emp-chip shift-tile ' + shiftClass(shiftId) + (extraClass || '') + picked +
+      '" draggable="true" tabindex="0" role="button"' +
+      ' data-tile="' + esc(id) + '"' +
+      ' data-day="' + dayIdx + '" data-branch="' + esc(branchId) + '"' +
+      ' data-shift="' + esc(shiftId) + '" data-emp="' + esc(empId || '') + '"' +
+      ' aria-pressed="' + (picked ? 'true' : 'false') + '"' +
+      ' title="' + esc(t('move.tileHint')) + '">' + esc(name) + '</span>';
+  }
+
+  /* שטח ההמתנה: משמרות שאין בהן עובד.
+
+     הוא אינו רק תחנת ביניים לגרירה – הוא גם התשובה לשאלה "מה
+     עוד חסר לי השבוע", ולכן הוא מציג את כל המקומות הפתוחים
+     ומקבץ אותם לפי יום. משמרת שנשארת כאן היא משמרת שלא תאויש,
+     וזה נאמר במפורש ולא נרמז. */
+  function renderTray() {
+    var tray = $('#shift-tray');
+    if (!tray) return;
+    if (view !== 'employee' || viewOnly) { tray.classList.add('hidden'); return; }
+    tray.classList.remove('hidden');
+
+    var open = Store.openSlots(state, week());
+    var html = '<div class="tray-head">' +
+      '<b>' + esc(t('move.trayTitle')) + '</b>' +
+      '<span class="hint">' + esc(open.length ? t('move.trayHint') : t('move.trayEmpty')) + '</span>' +
+      '</div>';
+
+    if (open.length) {
+      html += '<div class="tray-days">';
+      Data.DAYS.forEach(function (day) {
+        var forDay = open.filter(function (slot) { return slot.dayIdx === day.idx; });
+        if (!forDay.length) return;
+        html += '<div class="tray-day"><span class="tray-day-name">' + esc(day.name) + '</span>';
+        forDay.forEach(function (slot) {
+          /* משמרת שחסרים בה שניים מופיעה פעמיים: כל קובייה היא
+             מקום אחד, ואחרת אי אפשר לגרור רק אחד מהם. */
+          for (var i = 0; i < slot.missing; i++) {
+            html += shiftTile(slot.branchId, slot.shiftId, slot.dayIdx, '', ' open-slot');
+          }
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    tray.innerHTML = html;
+  }
+
   function renderEmployeeView(marks) {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
@@ -567,12 +845,14 @@
           }
         } else {
           content = slots.map(function (slot) {
-            var shift = Store.shiftById(state, slot.shiftId);
-            return '<span class="emp-chip ' + shiftClass(slot.shiftId) + (slots.length > 1 ? ' dup' : '') + '">' +
-              esc(branchNameOf(slot.branchId)) + ' · ' + (shift ? shift.name : slot.shiftId) + '</span>';
+            return shiftTile(slot.branchId, slot.shiftId, day.idx, emp.id,
+              slots.length > 1 ? ' dup' : '');
           }).join('');
         }
-        row += '<td class="' + cellClass + '">' + content + '</td>';
+        /* כל תא הוא יעד גרירה, גם ריק. תא ריק הוא בדיוק המקום
+           שאליו רוצים להזיז משמרת. */
+        row += '<td class="' + cellClass + ' drop-cell" data-drop-emp="' + esc(emp.id) +
+          '" data-drop-day="' + day.idx + '">' + content + '</td>';
       });
       row += '<td class="row-head">' + t('ui.outOf', { done: total, total: emp.maxShifts || '-' }) + '</td></tr>';
       html += row;
@@ -1689,6 +1969,7 @@
     renderMobileConstraints();
     renderBranchView(marks);
     renderEmployeeView(marks);
+    renderTray();
     renderWorkload();
     renderAvailability();
     renderPersonalPicker();
@@ -3615,6 +3896,7 @@
     bindEmployeesTab();
     bindBranchesTab();
     bindSettingsTab();
+    bindShiftMoves();
     bindLanguage();
     bindChat();
   }

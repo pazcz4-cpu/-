@@ -595,6 +595,52 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .company-fields .text-input { width: 100%; }
 
 .emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
+
+/* ===== משמרת כקובייה =====
+   בתצוגה לפי עובד כל משמרת נגררת בין עובדים. הקובייה צריכה
+   להיראות כמו משהו שאפשר לתפוס – ולכן סמן, הרמה קלה במעבר,
+   ומסגרת שמופיעה רק אז. במצב צפייה היא חוזרת להיות טקסט. */
+.shift-tile { cursor: grab; user-select: none; border: 1px solid transparent; }
+.shift-tile:hover { border-color: currentColor; transform: translateY(-1px); }
+.shift-tile:active { cursor: grabbing; }
+.shift-tile:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.shift-tile.dragging { opacity: .4; }
+/* הקובייה שהורמה בלחיצה. היא צריכה להיות מזוהה גם בלי צבע,
+   ולכן גם מסגרת וגם הצללה ולא רק גוון. */
+.shift-tile.picked {
+  outline: 2px solid var(--brand); outline-offset: 1px;
+  box-shadow: var(--e2); transform: translateY(-2px);
+}
+.view-only .shift-tile, .view-only .shift-tile:hover {
+  cursor: default; transform: none; border-color: transparent;
+}
+
+/* יעד גרירה. ההדגשה מופיעה רק כשמשהו באוויר, אחרת הטבלה
+   מהבהבת בכל תנועת עכבר. */
+.moving-shift .drop-cell { outline: 1px dashed var(--line); outline-offset: -3px; }
+.drop-cell.drop-hot {
+  outline: 2px solid var(--brand); outline-offset: -3px;
+  background: var(--brand-soft, rgba(47, 95, 224, .08));
+}
+
+/* ===== שטח ההמתנה =====
+   משמרות שאין בהן עובד. הוא גם תחנת ביניים לגרירה וגם התשובה
+   ל"מה עוד חסר לי השבוע", ולכן הוא מקבץ לפי יום ולא ערימה אחת. */
+.shift-tray {
+  border: 1px dashed var(--line); border-radius: var(--r-lg);
+  padding: var(--s3); margin-bottom: var(--s3);
+  background: var(--surface-sunken);
+  min-height: 64px;
+}
+.shift-tray.drop-hot { border-color: var(--brand); border-style: solid; }
+.tray-head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+.tray-head .hint { margin: 0; }
+.tray-days { display: flex; gap: var(--s4); flex-wrap: wrap; margin-top: var(--s2); }
+.tray-day { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tray-day-name { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.tray-day .emp-chip { display: inline-block; margin: 0; }
+/* מקום פתוח נראה כמו חור ולא כמו שיבוץ */
+.shift-tile.open-slot { border-style: dashed; border-color: currentColor; opacity: .9; }
 .emp-chip.dup { outline: 2px solid var(--err); font-weight: 700; }
 .empty-cell { color: var(--muted); font-size: 12px; }
 

@@ -532,6 +532,122 @@
     return out;
   }
 
+
+  /* ===== העברת משמרת בין עובדים =====
+
+     במסך "תצוגה לפי עובד" כל משמרת היא קובייה שאפשר לגרור. הצורך
+     אינו אילוץ של עובד אלא החלטה של העסק: "את הבוקר בבאר שבע
+     שייקח בן, ואת הבוקר בירושלים שייקח אור". עד היום זה דרש מעבר
+     לתצוגת הסניפים, ביטול כאן והוספה שם – ארבע פעולות במקום גרירה
+     אחת, וכל אחת מהן הזדמנות לטעות.
+
+     הכללים כולם כאן ולא במסך, כי הם כללים של הנתונים ולא של
+     הממשק – ואפשר לבדוק אותם בלי דפדפן.
+
+     מה שמכוון את ההחלטות:
+      · המשמרת שייכת ליום שלה. אין "לגרור משמרת ליום אחר" – זה
+        לא אותה משמרת, זו משמרת אחרת שצריך לפתוח.
+      · אותו אדם פעמיים באותה משמרת אינו שיבוץ, הוא טעות.
+      · תא תפוס אינו חסימה אלא החלפה: זה בדיוק המהלך שביקשו.
+      · אילוץ של עובד אינו חוסם גרירה. מנהל שגורר יודע מה הוא
+        עושה, והבדיקות ממילא יסמנו את התא באדום. חסימה כאן הייתה
+        הופכת "אני מחליט" ל"המערכת לא נותנת".
+      · עובד מושבת כן חוסם: זו אינה החלטה, זו טעות. */
+
+  /* מקומות פתוחים בשבוע: משמרת שדורשת אנשים ואין בה מספיק.
+     זה מה שיושב בשטח ההמתנה שמעל הטבלה. */
+  function openSlots(state, week) {
+    var out = [];
+    weekDemands(state, week).forEach(function (demand) {
+      var assigned = getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
+      var missing = demand.need - assigned.length;
+      if (missing > 0) {
+        out.push({
+          dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId,
+          need: demand.need, assigned: assigned.length, missing: missing
+        });
+      }
+    });
+    return out;
+  }
+
+  /* סימון שיבוץ כידני, כדי שבנייה חוזרת לא תדרוס אותו */
+  function markManual(week, dayIdx, branchId, shiftId) {
+    if (!week.manual) week.manual = {};
+    week.manual[slotKey(dayIdx, branchId, shiftId)] = true;
+  }
+
+  /* move = { dayIdx, branchId, shiftId, from, to }
+       from  מי נמצא שם עכשיו, או null אם המשמרת הגיעה משטח ההמתנה
+       to    למי היא עוברת, או null אם היא חוזרת לשטח ההמתנה
+
+     מחזיר { ok: true, kind } או { ok: false, reason }. אינו זורק:
+     גרירה שאינה חוקית היא אירוע רגיל בממשק, לא תקלה. */
+  function moveShift(state, week, move) {
+    var spec = move || {};
+    var dayIdx = Number(spec.dayIdx);
+    var branchId = spec.branchId;
+    var shiftId = spec.shiftId;
+    var from = spec.from || null;
+    var to = spec.to || null;
+
+    if (!(dayIdx >= 0 && dayIdx < 7) || !branchId || !shiftId) {
+      return { ok: false, reason: 'bad-slot' };
+    }
+    if (!from && !to) return { ok: false, reason: 'nothing-to-do' };
+    if (from && from === to) return { ok: true, kind: 'none' };
+
+    var here = getAssigned(week, dayIdx, branchId, shiftId).slice();
+    /* המסך אולי מציג מצב ישן – חבר צוות אחר הזיז בינתיים */
+    if (from && here.indexOf(from) === -1) return { ok: false, reason: 'stale' };
+    if (to && here.indexOf(to) !== -1) return { ok: false, reason: 'already-here' };
+
+    /* שחרור לשטח ההמתנה: המשמרת נשארת, פשוט אין בה אף אחד */
+    if (!to) {
+      setAssigned(week, dayIdx, branchId, shiftId,
+        here.filter(function (id) { return id !== from; }));
+      markManual(week, dayIdx, branchId, shiftId);
+      return { ok: true, kind: 'release' };
+    }
+
+    var target = byId(state.employees, to);
+    if (!target) return { ok: false, reason: 'no-employee' };
+    if (!target.active) return { ok: false, reason: 'inactive' };
+
+    var busy = employeeDayAssignments(state, week, to, dayIdx);
+    var onePerDay = !!(state.settings && state.settings.onePerDay);
+
+    if (busy.length && onePerDay) {
+      /* תא תפוס והכלל "משמרת אחת ביום" דלוק. החלפה היא המהלך
+         הנכון, והיא אפשרית רק כשיש למי להחזיר וכשיש רק משמרת
+         אחת להחליף איתה. */
+      if (!from) return { ok: false, reason: 'target-busy' };
+      if (busy.length > 1) return { ok: false, reason: 'target-busy' };
+
+      var other = busy[0];
+      var otherList = getAssigned(week, dayIdx, other.branchId, other.shiftId).slice();
+      setAssigned(week, dayIdx, other.branchId, other.shiftId,
+        otherList.map(function (id) { return id === to ? from : id; }));
+      setAssigned(week, dayIdx, branchId, shiftId,
+        here.map(function (id) { return id === from ? to : id; }));
+      markManual(week, dayIdx, branchId, shiftId);
+      markManual(week, dayIdx, other.branchId, other.shiftId);
+      return {
+        ok: true, kind: 'swap',
+        swappedWith: { branchId: other.branchId, shiftId: other.shiftId }
+      };
+    }
+
+    if (from) {
+      setAssigned(week, dayIdx, branchId, shiftId,
+        here.map(function (id) { return id === from ? to : id; }));
+    } else {
+      setAssigned(week, dayIdx, branchId, shiftId, here.concat([to]));
+    }
+    markManual(week, dayIdx, branchId, shiftId);
+    return { ok: true, kind: from ? 'move' : 'fill' };
+  }
+
   function employeeWeekCount(state, week, empId) {
     var count = 0;
     for (var day = 0; day < 7; day++) { count += employeeDayAssignments(state, week, empId, day).length; }
@@ -1439,6 +1555,7 @@
     getAssigned: getAssigned,
     setAssigned: setAssigned,
     employeeDayAssignments: employeeDayAssignments,
+    openSlots: openSlots, moveShift: moveShift, markManual: markManual,
     employeeWeekCount: employeeWeekCount,
     shifts: shifts,
     shiftIds: shiftIds,

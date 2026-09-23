@@ -86,5 +86,75 @@ test('אין נכס בודד גדול מדי', function () {
   assert(!big.length, 'נכסים כבדים מדי: ' + big.join(', '));
 });
 
+/* תקרה שלישית, והיא עלתה בשבע פריסות כושלות נוספות: הבנייה רצה
+   בתוך `vercel build`, ובמקביל אליה רצים הבונים של Vercel שסורקים
+   את תיקיית הפרויקט. כל עוד הבנייה מחקה את site/ בהתחלה ובנתה
+   אותה מחדש, נפתח חלון של כשנייה שבו הם החזיקו רשימת קבצים
+   שכוללת קבצים שכבר אינם – ונפלו על
+
+     Error: ENOENT: no such file or directory, open '.../site/sw.js'
+
+   זה מירוץ, ולכן הוא נראה כמו תקלה מקרית: פריסה אחת נפלה,
+   השתיים אחריה עברו, והרביעית נפלה שוב. הבדיקה כאן מודדת את
+   החלון בפועל במקום לחפש דפוס בקוד – תיקון שמזיז את המחיקה
+   למקום אחר יתפס גם הוא. */
+var SERVED_FILE = path.join(__dirname, '..', 'site', 'sw.js');
+
+/* הצופה רץ כתהליך נפרד, והבנייה רצה כאן. ההפך – לולאת דגימה
+   סינכרונית כאן שממתינה לילד – נתקעת: תהליך שהסתיים ולא נאסף
+   נשאר זומבי, ו-kill(pid,0) עליו עדיין מצליח. */
+var WATCHER =
+  'var fs=require("fs");' +
+  'var target=process.argv[1], outFile=process.argv[2];' +
+  'var checks=0, missing=0;' +
+  'var timer=setInterval(function(){checks++;if(!fs.existsSync(target))missing++;},1);' +
+  'function report(){clearInterval(timer);' +
+  '  fs.writeFileSync(outFile, JSON.stringify({checks:checks,missing:missing}));' +
+  '  process.exit(0);}' +
+  'process.on("SIGTERM", report);';
+
+test('בנייה אינה משאירה את תיקיית הפלט חסרה בזמן שהיא רצה', function () {
+  var cp = require('child_process');
+  var os = require('os');
+  var root = path.join(__dirname, '..');
+
+  /* צריך אתר בנוי כדי שיהיה מה להחסיר. בלעדיו הבדיקה חלולה. */
+  if (!fs.existsSync(SERVED_FILE)) {
+    var first = cp.spawnSync('node', ['build-site.js'], { cwd: root, stdio: 'ignore' });
+    assert(first.status === 0, 'הבנייה הראשונה נכשלה');
+    assert(fs.existsSync(SERVED_FILE), 'הבנייה אינה מייצרת את site/sw.js');
+  }
+
+  var resultFile = path.join(os.tmpdir(), 'setshifts-output-window-' + process.pid + '.json');
+  fs.rmSync(resultFile, { force: true });
+
+  var watcher = cp.spawn(process.execPath, ['-e', WATCHER, SERVED_FILE, resultFile],
+    { stdio: 'ignore' });
+  try {
+    var build = cp.spawnSync('node', ['build-site.js'], { cwd: root, stdio: 'ignore' });
+    assert(build.status === 0, 'הבנייה נכשלה');
+  } finally {
+    watcher.kill('SIGTERM');
+  }
+
+  /* המתנה לדוח. הצופה כותב אותו כשהוא מקבל את האות. */
+  var waited = 0;
+  while (!fs.existsSync(resultFile) && waited < 5000) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+    waited += 20;
+  }
+  assert(fs.existsSync(resultFile), 'הצופה לא הספיק לדווח');
+  var seen = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+  fs.rmSync(resultFile, { force: true });
+
+  assert(seen.checks > 50, 'הבנייה הסתיימה מהר מדי מכדי למדוד (' + seen.checks + ' דגימות)');
+  assert(fs.existsSync(SERVED_FILE), 'site/sw.js אינו קיים אחרי הבנייה');
+  assert(seen.missing === 0,
+    'תיקיית הפלט נעלמה באמצע הבנייה ב-' + seen.missing + ' מתוך ' + seen.checks +
+    ' דגימות.\n' +
+    '      זה החלון שבו הבונים של Vercel נופלים על ENOENT. הבנייה\n' +
+    '      צריכה להיכתב לתיקייה זמנית ולהחליף את site/ בסוף.');
+});
+
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

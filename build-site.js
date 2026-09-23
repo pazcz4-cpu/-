@@ -12,7 +12,20 @@ const path = require('path');
 const icons = require('./tools/icons.js');
 
 const root = __dirname;
-const out = path.join(root, 'site');
+
+/* התיקייה שמוגשת בפועל, ומולה תיקיית העבודה.
+
+   הבנייה אינה כותבת ישירות ל-site/, והסיבה אינה אסתטית: הסקריפט
+   הזה רץ בתוך `vercel build`, ובמקביל אליו רצים בוני הפונקציות
+   של Vercel שסורקים את תיקיית הפרויקט. כשמחקנו את site/ בתחילת
+   הבנייה, הם נשארו עם רשימת קבצים שכוללת קבצים שכבר אינם – והם
+   קרסו על ENOENT באמצע קריאה. זה מירוץ, ולכן הוא נראה כמו תקלה
+   מקרית: לפעמים הם הספיקו לקרוא לפני המחיקה ולפעמים לא.
+
+   כאן site/ נשארת שלמה לאורך כל הבנייה, ומוחלפת בסוף בשתי
+   פעולות rename – חלון של אלפיות שנייה במקום שתי שניות. */
+const finalOut = path.join(root, 'site');
+const out = path.join(root, '.site-build');
 
 /* הכתובת הקבועה של האתר. משמשת לקישור הקנוני, לתצוגה המקדימה
    ברשתות ולמפת האתר. אפשר לדרוס דרך PUBLIC_BASE_URL – למשל
@@ -104,6 +117,7 @@ function copyDir(from, to, filter) {
   });
 }
 
+/* רק תיקיית העבודה נמחקת. site/ נשארת על מקומה עד הסוף. */
 rm(out);
 mkdir(out);
 
@@ -422,12 +436,22 @@ write('sitemap.xml',
   '</urlset>\n');
 write('.nojekyll', '');
 
+/* ההחלפה. הישנה מוסטת הצידה, החדשה נכנסת במקומה, והישנה נמחקת –
+   כך אין רגע שבו site/ קיימת אבל חסרים בה קבצים. */
+(function publish() {
+  const previous = finalOut + '.old';
+  rm(previous);
+  if (fs.existsSync(finalOut)) fs.renameSync(finalOut, previous);
+  fs.renameSync(out, finalOut);
+  rm(previous);
+})();
+
 const total = (function size(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).reduce((sum, entry) => {
     const full = path.join(dir, entry.name);
     return sum + (entry.isDirectory() ? size(full) : fs.statSync(full).size);
   }, 0);
-})(out);
+})(finalOut);
 
 console.log('נבנה site/ (' + (total / 1024).toFixed(0) + ' KB)');
 console.log('  /       דף המכירה');

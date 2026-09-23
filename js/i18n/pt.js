@@ -893,6 +893,8 @@
         publishedLocked: 'O horário está publicado – os pedidos desta semana já não podem ser alterados.',
         limitLeft: { one: 'Resta-lhe 1 de {max} pedidos esta semana.', other: 'Restam-lhe {count} de {max} pedidos esta semana.' },
         limitSpent: 'Usou os {max} pedidos desta semana. Cancele um para pedir outro dia.',
+        foldCount: { one: 'um pedido', other: '{count} pedidos' },
+        foldEmpty: 'sem pedidos',
         limitReached: 'O seu gestor permite {max} pedidos por semana. Cancele um para pedir outro dia.',
         notLinked: 'O teu utilizador ainda não está ligado a uma ficha de colaborador. Fala com o teu responsável.',
         noShiftsToday: 'Não há turnos neste dia', holidayNoWork: 'Feriado – não se trabalha'

@@ -1261,6 +1261,42 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 .employee-title { font-size: var(--t-lg); margin: var(--s5) 0 var(--s3); }
 .employee-note { font-size: var(--t-sm); color: var(--muted); margin: 0 0 var(--s3); }
+
+/* ===== מגירת הבקשות =====
+   אחרי הפרסום, מה שהעובד בא לראות הוא המשמרות שלו. שבעה ימים של
+   כפתורים נעולים מתחתיהן דוחפים אותן למעלה ומטשטשים אותן, ולכן
+   הם מתקפלים. הכותרת נשארת כותרת – היא לא הופכת לכפתור שנראה
+   כמו משהו אחר – ורק החץ והרקע העדין אומרים שאפשר לפתוח. */
+.employee-fold { margin: var(--s5) 0 0; }
+.employee-fold-head {
+  display: flex; align-items: center; gap: var(--s2);
+  cursor: pointer; list-style: none;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface);
+}
+/* ספארי מצייר משולש משלו, ומסיר אותו רק דרך הפסאודו-אלמנט הזה */
+.employee-fold-head::-webkit-details-marker { display: none; }
+.employee-fold-head .employee-title { margin: 0; font-size: var(--t-md); }
+.employee-fold-hint {
+  font-size: var(--t-sm); color: var(--muted);
+  margin-inline-start: auto;
+}
+/* החץ מצביע לכיוון הפתיחה, ומסתובב כשהמגירה נפתחת. הוא מסתמך
+   על ההיגיון הלוגי של RTL ולא על "ימינה/שמאלה". */
+.employee-fold-mark {
+  flex: none; transition: transform .18s ease;
+  transform: rotate(90deg);
+}
+.employee-fold[open] .employee-fold-mark { transform: rotate(-90deg); }
+.employee-fold-head:hover { border-color: var(--brand); }
+.employee-fold-head:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+.employee-fold > .employee-note { margin-top: var(--s3); }
+@media (prefers-reduced-motion: reduce) {
+  .employee-fold-mark { transition: none; }
+}
 .employee-flash {
   margin: 0 0 12px; padding: 9px 12px; border-radius: 9px; font-size: 13.5px;
   background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line);

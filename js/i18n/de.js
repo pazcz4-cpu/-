@@ -893,6 +893,8 @@
         publishedLocked: 'Der Plan ist veröffentlicht – Wünsche für diese Woche können nicht mehr geändert werden.',
         limitLeft: { one: 'Sie haben diese Woche noch 1 von {max} Anfragen.', other: 'Sie haben diese Woche noch {count} von {max} Anfragen.' },
         limitSpent: 'Sie haben alle {max} Anfragen dieser Woche genutzt. Ziehen Sie eine zurück, um einen anderen Tag anzufragen.',
+        foldCount: { one: 'eine Anfrage', other: '{count} Anfragen' },
+        foldEmpty: 'keine Anfragen gestellt',
         limitReached: 'Ihre Leitung erlaubt {max} Anfragen pro Woche. Ziehen Sie eine zurück, um einen anderen Tag anzufragen.',
         notLinked: 'Ihr Benutzer ist noch nicht mit einer Mitarbeiterkarte verknüpft. Bitte wenden Sie sich an Ihre Führungskraft.',
         noShiftsToday: 'An diesem Tag keine Schichten', holidayNoWork: 'Feiertag – keine Arbeit'

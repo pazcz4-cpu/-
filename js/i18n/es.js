@@ -893,6 +893,8 @@
         publishedLocked: 'El horario está publicado: ya no se pueden cambiar las solicitudes de esta semana.',
         limitLeft: { one: 'Te queda 1 de {max} solicitudes esta semana.', other: 'Te quedan {count} de {max} solicitudes esta semana.' },
         limitSpent: 'Has usado las {max} solicitudes de esta semana. Cancela una para pedir otro día.',
+        foldCount: { one: 'una solicitud', other: '{count} solicitudes' },
+        foldEmpty: 'sin solicitudes',
         limitReached: 'Tu encargado permite {max} solicitudes por semana. Cancela una para pedir otro día.',
         notLinked: 'Tu usuario aún no está vinculado a una ficha de empleado. Habla con tu responsable.',
         noShiftsToday: 'No hay turnos este día', holidayNoWork: 'Festivo: no se trabaja'

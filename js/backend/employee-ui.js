@@ -51,6 +51,9 @@
     this.state = null;
     this.week = null;
     this.busy = false;
+    /* האם מגירת הבקשות פתוחה. רלוונטי רק אחרי שהסידור פורסם:
+       עד אז הבקשות הן המשימה של העובד והן פתוחות תמיד. */
+    this.requestsOpen = false;
   }
 
   EmployeeUI.prototype.start = function () {
@@ -83,6 +86,14 @@
 
   EmployeeUI.prototype._bind = function () {
     var self = this;
+
+    /* מגירת הבקשות נזכרת בין ציורים. בלי זה כל שמירה או עדכון
+       חי היו סוגרים אותה בדיוק בזמן שהעובד קורא בתוכה.
+       toggle אינו עולה בבועות, ולכן מאזינים בשלב הלכידה. */
+    this.root.addEventListener('toggle', function (event) {
+      var fold = event.target.closest('.employee-fold');
+      if (fold) { self.requestsOpen = fold.open; }
+    }, true);
 
     /* בתצוגה מקדימה מחוברת רק הניווט בין שבועות. כל השאר נצפה. */
     if (this.preview) {
@@ -403,8 +414,35 @@
       html += '<p class="employee-note">' + esc(t('employee.totalWeek', { count: shifts.length })) + '</p>';
     }
 
-    /* האילוצים שלי */
-    html += '<h2 class="employee-title">' + t('employee.myRequests') + '</h2>';
+    /* האילוצים שלי.
+
+       אחרי שהסידור פורסם, מה שהעובד בא לראות הוא המשמרות שלו.
+       הבקשות כבר נעולות – הן היסטוריה, לא משימה – ושבעה ימים של
+       כפתורים מתים מתחת לסידור דוחפים אותו למטה ומטשטשים את מה
+       שכן חשוב. לכן הן מתקפלות, ונפתחות בלחיצה למי שרוצה לראות
+       מה ביקש ומה אושר.
+
+       לפני הפרסום זה הפוך בדיוק: זו כל המשימה של העובד, והמגירה
+       פתוחה. details/summary ולא כפתור עם JS – הוא נגיש מהמקלדת,
+       עובד גם אם סקריפט נכשל, ונקרא נכון בקורא מסך. */
+    var canFold = !!this.week.published;
+    var pendingCount = 0;
+    Data.DAYS.forEach(function (day) {
+      if (self._record(day.idx)) pendingCount++;
+    });
+    if (canFold) {
+      html += '<details class="employee-fold"' + (this.requestsOpen ? ' open' : '') + '>';
+      html += '<summary class="employee-fold-head">' +
+        '<span class="employee-title">' + t('employee.myRequests') + '</span>' +
+        '<span class="employee-fold-hint">' +
+          esc(pendingCount
+            ? tPlural('employee.foldCount', pendingCount)
+            : t('employee.foldEmpty')) + '</span>' +
+        ico('chevron', 'employee-fold-mark') +
+        '</summary>';
+    } else {
+      html += '<h2 class="employee-title">' + t('employee.myRequests') + '</h2>';
+    }
     if (this.week.published) {
       html += '<p class="employee-note">' + t('employee.publishedLocked') + '</p>';
     } else {
@@ -488,7 +526,9 @@
       }
       html += '</div>';
     });
-    html += '</div></div>';
+    html += '</div>';
+    if (canFold) { html += '</details>'; }
+    html += '</div>';
 
     this.root.innerHTML = html;
     this._showFlash();

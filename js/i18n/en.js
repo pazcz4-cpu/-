@@ -899,6 +899,8 @@
         publishedLocked: 'The schedule is published – requests for this week can no longer be changed.',
         limitLeft: { one: 'You have 1 of {max} requests left this week.', other: 'You have {count} of {max} requests left this week.' },
         limitSpent: 'You have used all {max} requests for this week. Cancel one to ask for a different day.',
+        foldCount: { one: 'one request', other: '{count} requests' },
+        foldEmpty: 'no requests sent',
         limitReached: 'Your manager allows {max} requests per week. Cancel one to ask for a different day.',
         notLinked: 'Your user is not linked to a staff card yet. Please contact your manager.',
         noShiftsToday: 'No shifts on this day', holidayNoWork: 'Holiday – no work'

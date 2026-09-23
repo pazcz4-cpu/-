@@ -893,6 +893,8 @@
         publishedLocked: 'Le planning est publié – les demandes pour cette semaine ne peuvent plus être modifiées.',
         limitLeft: { one: 'Il vous reste 1 demande sur {max} cette semaine.', other: 'Il vous reste {count} demandes sur {max} cette semaine.' },
         limitSpent: 'Vous avez utilisé vos {max} demandes de la semaine. Annulez-en une pour demander un autre jour.',
+        foldCount: { one: 'une demande', other: '{count} demandes' },
+        foldEmpty: 'aucune demande',
         limitReached: 'Votre responsable autorise {max} demandes par semaine. Annulez-en une pour demander un autre jour.',
         notLinked: 'Votre utilisateur n’est pas encore lié à une fiche d’employé. Contactez votre responsable.',
         noShiftsToday: 'Aucun service ce jour-là', holidayNoWork: 'Jour férié – pas de travail'

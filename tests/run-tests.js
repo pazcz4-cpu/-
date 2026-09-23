@@ -2432,9 +2432,12 @@ console.log('\n== תקרת בקשות לעובד ==');
 /* בלי תקרה, עובד אחד שמבקש חמישה ימי חופש מוריד את הסידור על
    השאר, והמנהל מגלה את זה רק כשהוא מנסה לשבץ. */
 
-function limitState(max) {
+function limitState(max, countPreferences) {
   var state = freshState();
-  state.settings.constraintLimit = { enabled: true, max: max };
+  state.settings.constraintLimit = {
+    enabled: true, max: max,
+    countPreferences: countPreferences === undefined ? true : countPreferences
+  };
   return state;
 }
 
@@ -2471,10 +2474,55 @@ test('כמה נותרו, ומתי חורגים', function () {
   assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, { off: true }), true, 'יום שלישי');
   /* עריכה של יום שכבר נספר אינה נספרת פעמיים */
   assertEqual(Store.overConstraintLimit(state, week, 'e1', 0, { off: true }), false, 'עריכה');
-  /* מחיקה והעדפה לעולם אינן חורגות */
+  /* מחיקה לעולם אינה חורגת */
   assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, null), false, 'מחיקה');
-  assertEqual(Store.overConstraintLimit(state, week, 'e1', 2, { preferred: { x: 1 } }),
-    false, 'העדפה');
+});
+
+/* מנהל הגביל ל-3, עובד הגיש שש שורות, ובמסך זה נראה כמו באג.
+   שתי תשובות לגיטימיות לאותה שאלה, ולכן זו הגדרה. */
+test('ברירת המחדל: גם העדפה נספרת בתקרה', function () {
+  var state = limitState(3);
+  assertEqual(Store.constraintLimitSettings(state).countPreferences, true, 'ברירת המחדל');
+  var week = weekWith({
+    'e1|0': { off: true },
+    'e1|1': { preferred: { evening: true } },
+    'e1|2': { preferred: { evening: true } }
+  });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 0, 'העדפות לא נספרו');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { preferred: { morning: true } }),
+    true, 'העדפה רביעית התקבלה');
+});
+
+test('עסק שקדם להגדרה מקבל את ברירת המחדל ולא שקט', function () {
+  /* קובץ הגדרות שנשמר לפני שההגדרה נולדה. שינוי גרסה שמשנה בשקט
+     את המשמעות של תקרה אצל לקוח קיים הוא בדיוק סוג הדבר שנראה
+     כמו באג חודשיים אחר כך. */
+  var state = freshState();
+  state.settings.constraintLimit = { enabled: true, max: 3 };
+  assertEqual(Store.constraintLimitSettings(state).countPreferences, true, 'נפל ל"לא נספרות"');
+});
+
+test('מי שמכבה – העדפות חוזרות להיות חופשיות', function () {
+  var state = limitState(3, false);
+  var week = weekWith({
+    'e1|0': { off: true },
+    'e1|1': { preferred: { evening: true } },
+    'e1|2': { preferred: { evening: true } }
+  });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 2, 'העדפות נספרו למרות שכובו');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { preferred: { morning: true } }),
+    false, 'העדפה נחסמה למרות שכובתה');
+  /* ויום חופש עדיין נספר */
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { off: true }), false, 'יש עוד מקום');
+});
+
+test('בקשה שנדחתה אינה נספרת בשום מצב', function () {
+  var state = limitState(2);
+  var week = weekWith({
+    'e1|0': { preferred: { evening: true }, status: 'rejected' },
+    'e1|1': { off: true, status: 'rejected' }
+  });
+  assertEqual(Store.constraintsLeft(state, week, 'e1'), 2, 'בקשה שנדחתה נספרה');
 });
 
 test('תקרה כבויה אינה מגבילה דבר', function () {

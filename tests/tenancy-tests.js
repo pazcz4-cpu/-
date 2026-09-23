@@ -701,9 +701,12 @@ console.log('\n== תקרת בקשות: אכיפה בשרת ==');
 /* התקרה נאכפת בשרת ולא רק במסך. עובד שיפתח את כלי הפיתוח יוכל
    אחרת לשלוח בקשה שלישית כשהמנהל התיר שתיים. */
 
-function withLimit(backend, max) {
+function withLimit(backend, max, countPreferences) {
   return backend.saveConfig({
-    settings: { constraintLimit: { enabled: true, max: max } },
+    settings: { constraintLimit: {
+      enabled: true, max: max,
+      countPreferences: countPreferences === undefined ? true : countPreferences
+    } },
     branches: [], employees: []
   });
 }
@@ -729,7 +732,8 @@ asyncTest('עובד אינו יכול לעבור את התקרה גם בפניי
     });
 });
 
-asyncTest('העדפה ומחיקה אינן נחסמות גם כשהתקרה מלאה', function () {
+asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה מלאה', function () {
+  /* זו ברירת המחדל: מנהל שהגביל ל-1 מצפה לראות שורה אחת */
   var backend = freshBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap2@a.com', password: 'secret1' })
     .then(function () { return withLimit(backend, 1); })
@@ -739,6 +743,24 @@ asyncTest('העדפה ומחיקה אינן נחסמות גם כשהתקרה מ�
     })
     .then(function () { return backend.signOut(); })
     .then(function () { return backend.signIn({ email: 'w2@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
+    .then(function () {
+      return assertRejects(
+        backend.saveOwnConstraint('2026-09-20', 1, { preferred: { morning: true } }),
+        'constraint_limit', 'העדפה עברה את התקרה');
+    });
+});
+
+asyncTest('העדפה ומחיקה אינן נחסמות כשהעדפות אינן נספרות', function () {
+  var backend = freshBackend();
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2b@a.com', password: 'secret1' })
+    .then(function () { return withLimit(backend, 1, false); })
+    .then(function () {
+      return backend.createUser({ email: 'w2b@a.com', password: 'secret1',
+        role: 'employee', employeeId: 'emp-c2' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'w2b@a.com', password: 'secret1' }); })
     .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
     .then(function () {
       /* העדפה אינה מגבילה זמינות, ולכן אינה נספרת */

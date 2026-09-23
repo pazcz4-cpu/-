@@ -1733,6 +1733,20 @@
 
     var unit = $('#limit-unit');
     if (unit) { unit.textContent = tPlural('settings.limitUnit', config.max); }
+
+    var prefs = $('#opt-limit-prefs');
+    if (prefs) {
+      prefs.checked = config.countPreferences;
+      prefs.disabled = viewOnly || !config.enabled;
+    }
+    /* ההסבר משתנה עם ההגדרה. משפט קבוע שאומר "העדפה אינה נספרת"
+       מתחת לתיבה שמסמנת שכן הוא בדיוק מה שגורם למנהל לחשוב
+       שיש באג. */
+    var hint = $('#limit-hint');
+    if (hint) {
+      hint.textContent = t(config.countPreferences
+        ? 'settings.limitHintPrefs' : 'settings.limitHintNoPrefs');
+    }
   }
 
   /* ========== הגדרות ========== */
@@ -3405,6 +3419,11 @@
     $('#opt-limit').addEventListener('change', function (event) {
       saveLimit({ enabled: event.target.checked });
     });
+    if ($('#opt-limit-prefs')) {
+      $('#opt-limit-prefs').addEventListener('change', function (event) {
+        saveLimit({ countPreferences: event.target.checked });
+      });
+    }
     $('#limit-max').addEventListener('change', function (event) {
       var value = Math.round(Number(event.target.value));
       /* אפס או מספר שלילי אינם "בלי הגבלה" אלא "אסור להגיש כלום",

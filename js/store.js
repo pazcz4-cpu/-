@@ -982,11 +982,19 @@
     var max = typeof value.max === 'number' ? value.max : (defaults.max || 2);
     return {
       enabled: !!value.enabled,
-      max: Math.max(1, Math.round(max))
+      max: Math.max(1, Math.round(max)),
+      /* ברירת המחדל היא שכן. ערך שאינו מוגדר כלל – עסק שנפתח
+         לפני שההגדרה הייתה קיימת – מקבל את ברירת המחדל ולא
+         "לא", אחרת שינוי גרסה היה משנה בשקט את המשמעות של
+         התקרה אצל לקוחות קיימים. */
+      countPreferences: value.countPreferences === undefined
+        ? (defaults.countPreferences !== false)
+        : !!value.countPreferences
     };
   }
 
-  /* האם הרשומה מגבילה זמינות בפועל */
+  /* האם הרשומה מגבילה זמינות בפועל. בקשה שנדחתה אינה מגבילה
+     דבר, ולכן היא משחררת מקום. */
   function limitsAvailability(record) {
     if (!record) return false;
     if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return false;
@@ -994,9 +1002,27 @@
     return Object.keys(record.blocked || {}).length > 0;
   }
 
-  /* כמה בקשות מגבילות כבר יש לעובד בשבוע. exceptDay מוחרג, כדי
+  /* העדפה: לא יכול/ה אינה העדפה, ולכן נבדק כאן רק preferred */
+  function isPreference(record) {
+    if (!record) return false;
+    if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return false;
+    return Object.keys(record.preferred || {}).length > 0;
+  }
+
+  /* האם הבקשה הזו נספרת בתקרה, לפי ההגדרה של העסק.
+
+     שתי תשובות לגיטימיות לאותה שאלה, ולכן זו הגדרה ולא החלטה
+     שלנו: יש מנהל שרוצה לראות בדיוק את מספר הבקשות שהגביל, ויש
+     מנהל שרוצה שהעדפות יזרמו בחופשיות כי הן מידע ולא הגבלה. */
+  function countsTowardLimit(state, record) {
+    if (limitsAvailability(record)) return true;
+    if (!constraintLimitSettings(state).countPreferences) return false;
+    return isPreference(record);
+  }
+
+  /* כמה בקשות נספרות כבר יש לעובד בשבוע. exceptDay מוחרג, כדי
      שעריכה של יום קיים לא תיספר פעמיים. */
-  function countLimitingConstraints(week, empId, exceptDay) {
+  function countCountedConstraints(state, week, empId, exceptDay) {
     var records = (week && week.constraints) || {};
     var prefix = empId + '|';
     var count = 0;
@@ -1004,16 +1030,23 @@
       if (key.indexOf(prefix) !== 0) return;
       var dayIdx = Number(key.slice(prefix.length));
       if (exceptDay !== undefined && exceptDay !== null && dayIdx === Number(exceptDay)) return;
-      if (limitsAvailability(records[key])) count++;
+      if (countsTowardLimit(state, records[key])) count++;
     });
     return count;
+  }
+
+  /* הספירה הישנה, של בקשות שמגבילות זמינות בלבד. נשארת כי היא
+     עדיין השאלה הנכונה במקומות שאינם התקרה. */
+  function countLimitingConstraints(week, empId, exceptDay) {
+    return countCountedConstraints({ settings: { constraintLimit: { countPreferences: false } } },
+      week, empId, exceptDay);
   }
 
   /* כמה עוד מותר לו. null כשאין תקרה. */
   function constraintsLeft(state, week, empId) {
     var config = constraintLimitSettings(state);
     if (!config.enabled) return null;
-    return Math.max(0, config.max - countLimitingConstraints(week, empId));
+    return Math.max(0, config.max - countCountedConstraints(state, week, empId));
   }
 
   /* האם ההגשה הזו חורגת מהתקרה. next הוא האילוץ שעומד להישמר
@@ -1021,8 +1054,8 @@
   function overConstraintLimit(state, week, empId, dayIdx, next) {
     var config = constraintLimitSettings(state);
     if (!config.enabled) return false;
-    if (!limitsAvailability(next)) return false;   // העדפה או מחיקה
-    return countLimitingConstraints(week, empId, dayIdx) >= config.max;
+    if (!countsTowardLimit(state, next)) return false;   // אינה נספרת, או מחיקה
+    return countCountedConstraints(state, week, empId, dayIdx) >= config.max;
   }
 
   /* ===== מועד סגירת ההגשות =====
@@ -1508,6 +1541,8 @@
   var API = {
     deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
     constraintLimitSettings: constraintLimitSettings,
+    countsTowardLimit: countsTowardLimit, isPreference: isPreference,
+    countCountedConstraints: countCountedConstraints,
     countLimitingConstraints: countLimitingConstraints,
     constraintsLeft: constraintsLeft,
     overConstraintLimit: overConstraintLimit,

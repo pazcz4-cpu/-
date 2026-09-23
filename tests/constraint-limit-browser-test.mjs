@@ -60,6 +60,33 @@ try {
   check('היחידה נכתבת ברבים',
     (await mgr.locator('#limit-unit').textContent()).trim(), /בקשות בשבוע/);
 
+  /* מנהל שהגביל ל-3 וראה שש שורות על המסך חשב שיש באג. ברירת
+     המחדל היא שכל בקשה נספרת, כולל העדפה, ומי שרוצה מכבה. */
+  check('העדפות נספרות כברירת מחדל',
+    await mgr.locator('#opt-limit-prefs').isChecked(), true);
+  check('וההסבר אומר שכולן נספרות',
+    (await mgr.locator('#limit-hint').textContent()).trim(), /גם העדפה/);
+  await mgr.uncheck('#opt-limit-prefs');
+  await mgr.waitForTimeout(500);
+  check('אחרי כיבוי – ההסבר מתחלף',
+    (await mgr.locator('#limit-hint').textContent()).trim(), /העדפה אינה נספרת/);
+  check('וההגדרה נשמרה בשרת', await mgr.evaluate(() =>
+    window.__backend.loadConfig().then((c) =>
+      c.settings.constraintLimit.countPreferences)), false);
+  await mgr.check('#opt-limit-prefs');
+  await mgr.waitForTimeout(500);
+  check('והדלקה חוזרת נשמרת גם היא', await mgr.evaluate(() =>
+    window.__backend.loadConfig().then((c) =>
+      c.settings.constraintLimit.countPreferences)), true);
+  check('הבחירה נעולה כשהתקרה כבויה', await mgr.evaluate(async () => {
+    document.querySelector('#opt-limit').click();
+    await new Promise((r) => setTimeout(r, 400));
+    const locked = document.querySelector('#opt-limit-prefs').disabled;
+    document.querySelector('#opt-limit').click();
+    await new Promise((r) => setTimeout(r, 400));
+    return locked;
+  }), true);
+
   await mgr.fill('#limit-max', '1');
   await mgr.locator('#limit-max').blur();
   await mgr.waitForTimeout(400);

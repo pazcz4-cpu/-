@@ -227,9 +227,9 @@
           <input type="number" id="limit-max" class="num-input" min="1" max="7" step="1"></label>
         <span class="hint" id="limit-unit" data-i18n="settings.limitUnit">בקשות בשבוע</span>
       </div>
-      <p class="hint" style="margin:0" data-i18n="settings.limitHint">
-        נספרות בקשות שמגבילות זמינות: יום חופש או חסימת משמרת. העדפה אינה נספרת, ובקשה שנדחתה משחררת מקום. מנהל אינו מוגבל.
-      </p>
+      <label class="check"><input type="checkbox" id="opt-limit-prefs">
+        <span data-i18n="settings.limitPrefs">לספור גם "מעדיף/ה" בתקרה</span></label>
+      <p class="hint" style="margin:0" id="limit-hint"></p>
     </div>
 
     <h2 data-i18n="positions.title">תפקידים</h2>

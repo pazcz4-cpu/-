@@ -816,7 +816,17 @@
         starter: 'Pequeño', growth: 'Mediano', business: 'Grande',
         upTo: 'Hasta {count} empleados',
         between: 'De {from} a {to} empleados',
-        from: '{count} empleados o más'
+        from: '{count} empleados o más',
+        upgradeTitle: '¿Añadir al empleado número {count}?',
+        upgradeWhy: 'El plan actual ({plan}) incluye hasta {max} empleados.',
+        upgradeTo: 'Pasar al plan {suggested} — {range} — {price}, IVA incluido.',
+        upgradeWhen: 'Ahora no se cobra nada. El nuevo precio se aplica desde el próximo cobro, el {date}.',
+        upgradeWhenTrial: 'Ahora no se cobra nada. El nuevo precio se aplica al primer cobro, al acabar la prueba.',
+        upgradeYes: 'Subir de plan y añadir',
+        upgradeNo: 'Cancelar',
+        upgraded: 'Plan cambiado a {plan}. El próximo cobro será de {price}.',
+        upgradeFailed: 'No se pudo cambiar el plan.',
+        upgradeOwnerOnly: 'Has llegado al límite del plan. Solo el titular de la cuenta puede subirlo.'
       },
 
       roles: { owner: 'Propietario', manager: 'Responsable', employee: 'Empleado' },

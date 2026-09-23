@@ -816,7 +816,17 @@
         starter: 'صغيرة', growth: 'متوسطة', business: 'كبيرة',
         upTo: 'حتى {count} موظفين',
         between: 'من {from} إلى {to} موظفين',
-        from: '{count} موظفين فأكثر'
+        from: '{count} موظفين فأكثر',
+        upgradeTitle: 'إضافة الموظف رقم {count}؟',
+        upgradeWhy: 'الخطة الحالية ({plan}) تشمل حتى {max} موظفين.',
+        upgradeTo: 'الانتقال إلى خطة {suggested} — {range} — {price}، شاملة الضريبة.',
+        upgradeWhen: 'لا يوجد خصم الآن. يسري السعر الجديد من الفاتورة القادمة، في {date}.',
+        upgradeWhenTrial: 'لا يوجد خصم الآن. يسري السعر الجديد على أول فاتورة، بعد انتهاء فترة التجربة.',
+        upgradeYes: 'الترقية وإضافة الموظف',
+        upgradeNo: 'إلغاء',
+        upgraded: 'تم تحديث الخطة إلى {plan}. الفاتورة القادمة ستكون {price}.',
+        upgradeFailed: 'تعذّرت ترقية الخطة.',
+        upgradeOwnerOnly: 'لقد وصلت إلى حد الخطة. صاحب الحساب وحده يستطيع ترقيتها.'
       },
 
       roles: { owner: 'المالك', manager: 'مدير', employee: 'موظف' },

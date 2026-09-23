@@ -17,6 +17,21 @@ module.exports = endpoint(async function ({ company, user, body, db }) {
     return { status: 400, body: { message: 'Unknown plan' } };
   }
 
+  /* לקוח שכבר יש לו כרטיס שמור אינו צריך להזין אותו שוב כדי
+     לעבור תוכנית. זה המסלול של שדרוג: התוכנית משתנה עכשיו, לא
+     מתבצע חיוב עכשיו, והחיוב הבא – שממילא נגזר מהתוכנית שרשומה
+     על החברה – ייגבה לפי המחיר החדש.
+
+     אין כאן יחסיות (proration) בכוונה: חיוב חלקי באמצע חודש הוא
+     שורה שאיש אינו מבין בחשבונית, ובשביל להרוויח ימים בודדים
+     לא שווה להסביר אותה לכל לקוח. */
+  if (company.billing_subscription_id) {
+    await db('/companies?id=eq.' + encodeURIComponent(company.id), {
+      method: 'PATCH', body: { plan: planId }
+    });
+    return { body: { ok: true, plan: planId, planChanged: true, checkoutUrl: null } };
+  }
+
   const name = process.env.BILLING_PROVIDER || 'mock';
   const provider = providers[name];
   if (!provider || !provider.createCheckout) {

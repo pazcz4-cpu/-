@@ -821,7 +821,17 @@
         starter: 'קטן', growth: 'בינוני', business: 'גדול',
         upTo: 'עד {count} עובדים',
         between: '{from} עד {to} עובדים',
-        from: '{count} עובדים ומעלה'
+        from: '{count} עובדים ומעלה',
+        upgradeTitle: 'להוסיף עובד מספר {count}?',
+        upgradeWhy: 'התוכנית הנוכחית ({plan}) כוללת עד {max} עובדים.',
+        upgradeTo: 'מעבר לתוכנית {suggested} — {range} — {price}, כולל מע״מ.',
+        upgradeWhen: 'אין חיוב עכשיו. המחיר החדש יחול מהחיוב הבא, ב-{date}.',
+        upgradeWhenTrial: 'אין חיוב עכשיו. המחיר החדש יחול בחיוב הראשון, בתום תקופת הניסיון.',
+        upgradeYes: 'שדרוג והוספת העובד',
+        upgradeNo: 'ביטול',
+        upgraded: 'התוכנית עודכנה ל{plan}. החיוב הבא יהיה {price}.',
+        upgradeFailed: 'שדרוג התוכנית נכשל.',
+        upgradeOwnerOnly: 'הגעתם לתקרת התוכנית. רק בעל החשבון יכול לשדרג אותה.'
       },
 
       roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },

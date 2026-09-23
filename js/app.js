@@ -829,6 +829,67 @@
     return String(value || '').trim().toLowerCase();
   }
 
+  /* ===== תקרת התוכנית =====
+
+     מנהל שנתקל בתקרה באמצע הקמת צוות אינו רוצה ללמוד על תוכניות
+     – הוא רוצה להוסיף את העובד. השאלה אומרת בדיוק מה זה עולה
+     ומתי זה ייגבה, ואישור עושה את שני הדברים: משדרג, ומוסיף את
+     העובד שבגללו הכל התחיל.
+
+     מה שאישור כאן אינו עושה: חיוב עכשיו. התוכנית משתנה, והמחיר
+     החדש נכנס לתוקף בחיוב הבא. */
+  function offerUpgrade(check, position, name, email) {
+    var suggested = check.suggested;
+    if (!suggested || !source.upgradePlan) {
+      toast(check.problems.join(' '));
+      if (source.onPlanBlocked) source.onPlanBlocked(check);
+      return;
+    }
+
+    var charge = source.chargeInfo ? source.chargeInfo() : null;
+    var lines = [
+      t('plans.upgradeWhy', {
+        plan: check.plan ? check.plan.name : '',
+        max: check.plan ? check.plan.maxEmployees : ''
+      }),
+      t('plans.upgradeTo', {
+        suggested: suggested.name, range: suggested.range, price: check.price
+      }),
+      (charge && charge.date && !charge.onTrial)
+        ? t('plans.upgradeWhen', { date: charge.date })
+        : t('plans.upgradeWhenTrial')
+    ];
+
+    askUpgrade({
+      title: t('plans.upgradeTitle', { count: position }),
+      lines: lines,
+      confirmLabel: t('plans.upgradeYes'),
+      cancelLabel: t('plans.upgradeNo')
+    }).then(function (yes) {
+      if (!yes) return;
+      source.upgradePlan(suggested.id).then(function () {
+        /* התוכנית כבר התחלפה, ולכן ההוספה השנייה עוברת את אותה
+           בדיקה שחסמה רגע קודם */
+        var created = addEmployee(name, false, email);
+        if (!created) return;
+        render();
+        toast(t('plans.upgraded', { plan: suggested.name, price: check.price }));
+      }, function (err) {
+        toast((err && err.message) || t('plans.upgradeFailed'));
+      });
+    });
+  }
+
+  /* מסך האישור המלא כשהוא קיים, ושאלה של הדפדפן כשאינו – עדיף
+     שאלה פשוטה על שדרוג שקורה בלי לשאול. */
+  function askUpgrade(options) {
+    if (window.ShiftConfirmUI && window.ShiftConfirmUI.ask) {
+      return window.ShiftConfirmUI.ask(options);
+    }
+    return Promise.resolve(window.confirm
+      ? window.confirm(options.title + '\n\n' + options.lines.join('\n')) : false);
+  }
+
   /* מספר טלפון נשמר כפי שנכתב. אין כאן ניחוש של קידומת מדינה:
      המערכת עובדת בכמה מדינות, ומספר ש"תוקן" לפי אחת מהן הוא
      מספר שגוי בכל השאר. */
@@ -1390,7 +1451,15 @@
       var active = state.employees.filter(function (emp) { return emp.active; }).length;
       var check = source.planLimit(active + 1);
       if (!check.ok) {
-        toast(check.problems.join(' '));
+        /* תקרה שנתקלים בה באמצע עבודה צריכה להציע מוצא, ולא רק
+           להודיע. ההצעה מופיעה בהוספה ידנית בלבד: בייבוא של
+           שלושים שורות היא הייתה קופצת שלושים פעם. */
+        if (!defer && source.upgradePlan) {
+          offerUpgrade(check, active + 1, name, email);
+          return null;
+        }
+        toast(source.canUpgrade === false
+          ? t('plans.upgradeOwnerOnly') : check.problems.join(' '));
         if (source.onPlanBlocked) source.onPlanBlocked(check);
         return null;
       }

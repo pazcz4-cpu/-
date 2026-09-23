@@ -13,7 +13,7 @@
   var Model = root.ShiftModel;
 
   /* מקור נתונים שמדבר עם השרת במקום עם הדפדפן */
-  function backendSource(backend, session) {
+  function backendSource(backend, session, billing) {
     var role = session.user.role;
 
     return {
@@ -39,6 +39,30 @@
           return (users || []).map(function (user) { return user.email; });
         }, function () { return []; });
       },
+      /* שדרוג תוכנית מתוך המסך שבו נתקלו בתקרה. רק בעל החשבון
+         יכול – גם השרת אוכף את זה – ולכן מנהל מקבל הודעה שאומרת
+         למי לפנות, ולא כפתור שייכשל. */
+      canUpgrade: Model.can(role, 'billing.manage'),
+      /* מתי ייגבה החיוב הבא, לפי מצב המנוי עכשיו ולא לפי מה
+         שהיה כשהמסך נטען */
+      chargeInfo: function () {
+        var current = backend.session();
+        var company = (current && current.company) || session.company;
+        return {
+          onTrial: company.status === Model.SUBSCRIPTION.TRIAL,
+          date: Model.formatDate(company.validUntil)
+        };
+      },
+      upgradePlan: (billing && Model.can(role, 'billing.manage'))
+        ? function (planId) {
+          return billing.choosePlan(planId).then(function (result) {
+            /* אחרי החלפת התוכנית, מה שהמסך בודק מולו הוא החברה
+               שחזרה מהשרת – ולא זו שהייתה בזיכרון כשנטען. */
+            var updated = backend.session();
+            return updated ? updated.company : (result && result.company) || null;
+          });
+        }
+        : null,
       /* שליחת פרטי כניסה מכרטיס העובד. קיימת רק למי שרשאי לנהל
          משתמשים, ורק כשהשרת יודע לשלוח דואר. */
       sendAccess: (Model.can(role, 'users.manage') && backend.sendEmployeeAccess)
@@ -278,7 +302,14 @@
       (root.ShiftBilling ? new root.ShiftBilling.MockProvider({ backend: backend }) : null);
     Model.setBillingLive(!!(provider && provider.describe && provider.describe().live === true));
 
-    var source = backendSource(backend, session);
+    /* שירות החיוב נבנה כאן ולא בתוך הבלוק של מסך המנוי: גם מסך
+       העובדים צריך אותו, כדי שתקרת התוכנית תוכל להציע שדרוג
+       במקום רק להודיע שנחסמת. */
+    var billing = (root.ShiftBilling && provider)
+      ? new root.ShiftBilling.BillingService({ backend: backend, provider: provider })
+      : null;
+
+    var source = backendSource(backend, session, billing);
 
     return root.ShiftApp.start({ source: source }).then(function () {
       // עדכונים חיים מחברי צוות אחרים באותה חברה
@@ -313,8 +344,7 @@
         identityRefresh = function () { root.ShiftUsersUI.render(); };
       }
 
-      if (root.ShiftBillingUI && root.ShiftBilling) {
-        var billing = new root.ShiftBilling.BillingService({ backend: backend, provider: provider });
+      if (root.ShiftBillingUI && billing) {
         root.ShiftBillingUI.init({
           billing: billing, session: session, getEmployees: getEmployees,
           onChange: function () {

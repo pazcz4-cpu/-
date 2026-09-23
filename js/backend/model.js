@@ -368,14 +368,19 @@
       return { ok: true, problems: [], suggested: null };
     }
     var suggested = planForEmployees(employees);
+    var price = translate('billing.priceMonthly', suggested.priceMonthly + '₪',
+      { amount: suggested.priceMonthly });
     return {
       ok: false,
+      /* התוכנית הנוכחית והמחיר המוצע חוזרים כאן ולא רק בתוך
+         המשפט: המסך שמציע שדרוג צריך את המספרים עצמם, ולא
+         משפט שהוא ינסה לפרק בחזרה. */
+      plan: plan,
       suggested: suggested,
+      price: price,
       problems: [translate('access.overLimit', 'חריגה ממגבלת התוכנית', {
         plan: plan.name, max: plan.maxEmployees, count: employees,
-        suggested: suggested.name, range: suggested.range,
-        price: translate('billing.priceMonthly', suggested.priceMonthly + '₪',
-          { amount: suggested.priceMonthly })
+        suggested: suggested.name, range: suggested.range, price: price
       })]
     };
   }

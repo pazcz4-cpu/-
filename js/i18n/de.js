@@ -816,7 +816,17 @@
         starter: 'Klein', growth: 'Mittel', business: 'Groß',
         upTo: 'Bis zu {count} Mitarbeiter',
         between: '{from} bis {to} Mitarbeiter',
-        from: 'Ab {count} Mitarbeitern'
+        from: 'Ab {count} Mitarbeitern',
+        upgradeTitle: 'Mitarbeiter Nummer {count} hinzufügen?',
+        upgradeWhy: 'Der aktuelle Tarif ({plan}) umfasst bis zu {max} Mitarbeitende.',
+        upgradeTo: 'Wechsel zu {suggested} — {range} — {price}, inkl. MwSt.',
+        upgradeWhen: 'Jetzt wird nichts abgebucht. Der neue Preis gilt ab der nächsten Abbuchung am {date}.',
+        upgradeWhenTrial: 'Jetzt wird nichts abgebucht. Der neue Preis gilt für die erste Abbuchung nach der Testphase.',
+        upgradeYes: 'Upgraden und hinzufügen',
+        upgradeNo: 'Abbrechen',
+        upgraded: 'Tarif auf {plan} geändert. Die nächste Abbuchung beträgt {price}.',
+        upgradeFailed: 'Der Tarif konnte nicht geändert werden.',
+        upgradeOwnerOnly: 'Das Tariflimit ist erreicht. Nur wer das Konto besitzt, kann upgraden.'
       },
 
       roles: { owner: 'Inhaber', manager: 'Führungskraft', employee: 'Mitarbeiter' },

@@ -43,8 +43,11 @@ await page.waitForTimeout(500);
 /* ברירת המחדל היא פיילוט: אין ספק סליקה, ולכן אין מה ללחוץ.
    מסלול החיוב עצמו נבדק כאן על ספק "מחובר", בדיוק כפי שיהיה
    ברגע ש-PayPlus יחובר. */
-console.log('   במצב פיילוט אין כפתורי בחירת תוכנית:',
-  (await page.locator('#billing-panel [data-plan]').count()) === 0);
+/* גם בפיילוט יש מעבר תוכנית: התוכנית היא תקרה ומחיר, והמחיר
+   נגבה בחיוב הבא – מסך שמציג מחירון בלי דרך לעבור משאיר לקוח
+   תקוע בדיוק כשהוא רוצה לשלם יותר. */
+console.log('   גם בפיילוט אפשר לעבור תוכנית:',
+  (await page.locator('#billing-panel [data-plan]').count()) > 0);
 await page.evaluate(() => {
   window.ShiftModel.setBillingLive(true);
   window.ShiftBillingUI.render();
@@ -74,31 +77,49 @@ await page.click('.tab[data-tab="employees"]');
 await page.waitForTimeout(400);
 const before = await page.locator('#employees-list .card').count();
 console.log('3. עובדים כרגע:', before);
-for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 2; i++) {
   await page.click('#add-employee');
   await page.waitForTimeout(400);
 }
 const after = await page.locator('#employees-list .card').count();
-console.log('   אחרי 3 ניסיונות הוספה:', after, '| נעצר על המגבלה:', after === 10);
+console.log('   מילוי עד התקרה:', after, '| זו התקרה של התוכנית הקטנה:', after === 10);
+
+/* העובד ה-11: תקרה שמציעה מוצא, לא רק מודיעה שנחסמת */
+await page.click('#add-employee');
+await page.waitForTimeout(600);
+console.log('4. ההצעה מופיעה:', await page.locator('.confirm-card').isVisible());
+console.log('   ' + (await page.locator('.confirm-card').innerText()).replace(/\n/g, ' · '));
+await page.click('.confirm-card [data-confirm-no]');
+await page.waitForTimeout(400);
+console.log('   ביטול אינו מוסיף ואינו משדרג:',
+  (await page.locator('#employees-list .card').count()) === 10,
+  await page.evaluate(() => window.__backend.session().company.plan));
+
+await page.click('#add-employee');
+await page.waitForTimeout(600);
+await page.click('.confirm-card [data-confirm-yes]');
+await page.waitForTimeout(1400);
+console.log('5. אחרי אישור:',
+  'עובדים', await page.locator('#employees-list .card').count(),
+  '| תוכנית', await page.evaluate(() => window.__backend.session().company.plan));
 console.log('   הודעה:', (await page.locator('#toast').innerText()).trim());
 
-// שדרוג לתוכנית בינוני
 await page.click('.tab[data-tab="billing"]');
-await page.waitForTimeout(500);
-await page.click('.plan-card:not(.current) [data-plan="growth"]');
-await page.waitForTimeout(900);
-console.log('4. אחרי שדרוג:', (await page.locator('#billing-message').innerText()).trim());
+await page.waitForTimeout(600);
 const nowRows = (await page.locator('.billing-row').allInnerTexts()).map(t => t.replace(/\n/g, ': '));
 console.log('   ' + nowRows[1]);
 console.log('   ' + nowRows[0]);
 console.log('   שורת המשתמש:', (await page.locator('#user-bar').innerText()).replace(/\n/g, ' | '));
 
-// עכשיו אפשר להוסיף עוד עובדים
-await page.click('.tab[data-tab="employees"]');
-await page.waitForTimeout(400);
-await page.click('#add-employee');
+/* מעבר תוכנית מתוך מסך המנוי עובר דרך אותה שאלה בדיוק */
+await page.click('.plan-card:not(.current) [data-plan="business"]');
 await page.waitForTimeout(500);
-console.log('5. אחרי השדרוג אפשר להוסיף:', (await page.locator('#employees-list .card').count()) === 11);
+console.log('6. גם מסך המנוי שואל לפני שינוי:',
+  await page.locator('.confirm-card').isVisible());
+await page.click('.confirm-card [data-confirm-yes]');
+await page.waitForTimeout(900);
+console.log('   אחרי שינוי:', (await page.locator('#billing-message').innerText()).trim(),
+  '| תוכנית', await page.evaluate(() => window.__backend.session().company.plan));
 
 // חסימה כשהמנוי פג
 await page.evaluate(() => {
@@ -110,7 +131,7 @@ await page.evaluate(() => {
 });
 await page.reload();
 await page.waitForTimeout(900);
-console.log('6. מנוי שפג – האפליקציה חסומה:', await page.locator('#app-root').isHidden(),
+console.log('7. מנוי שפג – האפליקציה חסומה:', await page.locator('#app-root').isHidden(),
   '| מסך חסימה:', (await page.locator('.auth-blocked h2').innerText()).trim());
 console.log('   הסבר:', (await page.locator('.auth-blocked p').first().innerText()).trim());
 

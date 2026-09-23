@@ -131,7 +131,11 @@
       html += '<div class="plan-range">' + esc(plan.range) + '</div>';
       if (current) { html += '<div class="plan-tag">' + t('billing.currentPlan') + '</div>'; }
       else if (!fits) { html += '<div class="plan-tag warn">' + esc(t('billing.tooSmall', { count: employees })) + '</div>'; }
-      else if (live) { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
+      /* הכפתור אינו מותנה בסליקה חיה. החלפת תוכנית היא שינוי
+         תקרה ומחיר, והמחיר החדש נגבה בחיוב הבא – גם כשהסליקה
+         עוד לא חוברה. מסך שמציג מחירון בלי דרך לעבור תוכנית
+         משאיר את הלקוח תקוע בדיוק ברגע שבו הוא רוצה לשלם יותר. */
+      else { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
       html += '</div>';
     });
     html += '</div>';
@@ -174,6 +178,48 @@
     node.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
   }
 
+  /* השאלה לפני החלפת תוכנית: כמה זה עולה, ומתי זה ייגבה.
+     אותו נוסח בדיוק מופיע גם כשנתקלים בתקרה במסך העובדים, כדי
+     שלקוח לא יראה שני הסברים שונים לאותה פעולה. */
+  function askPlan(planId) {
+    var plan = Model.PLANS[planId];
+    if (!plan) return Promise.resolve(false);
+    var backend = ctx.billing && ctx.billing.backend;
+    var session = backend && backend.session ? backend.session() : null;
+    var company = (session && session.company) || (ctx.session && ctx.session.company) || {};
+    var onTrial = company.status === Model.SUBSCRIPTION.TRIAL;
+    var price = t('billing.priceMonthly', { amount: plan.priceMonthly });
+    var lines = [
+      t('plans.upgradeTo', { suggested: plan.name, range: plan.range, price: price }),
+      (!onTrial && company.validUntil)
+        ? t('plans.upgradeWhen', { date: Model.formatDate(company.validUntil) })
+        : t('plans.upgradeWhenTrial')
+    ];
+    var options = {
+      title: t('billing.choose') + ' — ' + plan.name,
+      lines: lines,
+      confirmLabel: t('billing.choose'),
+      cancelLabel: t('plans.upgradeNo')
+    };
+    if (root.ShiftConfirmUI && root.ShiftConfirmUI.ask) return root.ShiftConfirmUI.ask(options);
+    return Promise.resolve(root.confirm
+      ? root.confirm(options.title + '\n\n' + lines.join('\n')) : false);
+  }
+
+  function applyPlan(button) {
+    button.disabled = true;
+    say('');
+    ctx.billing.choosePlan(button.dataset.plan).then(function (result) {
+      if (result && result.redirectUrl) { root.location.href = result.redirectUrl; return; }
+      render();
+      say(t('billing.planUpdated'));
+      if (ctx.onChange) ctx.onChange();
+    }, function (err) {
+      render();
+      say((err && err.message) || t('billing.updateFailed'), true);
+    });
+  }
+
   function init(options) {
     ctx = options;
     var tab = document.querySelector('.tab[data-tab="billing"]');
@@ -183,16 +229,11 @@
     panel.addEventListener('click', function (event) {
       var choose = event.target.closest('[data-plan]');
       if (choose) {
-        choose.disabled = true;
-        say('');
-        ctx.billing.choosePlan(choose.dataset.plan).then(function (result) {
-          if (result.redirectUrl) { root.location.href = result.redirectUrl; return; }
-          render();
-          say(t('billing.planUpdated'));
-          if (ctx.onChange) ctx.onChange();
-        }, function (err) {
-          render();
-          say((err && err.message) || t('billing.updateFailed'), true);
+        /* החלפת תוכנית היא התחייבות לכסף, ולכן היא עוברת דרך
+           שאלה שאומרת כמה ומתי – ולא דרך כפתור בודד. */
+        askPlan(choose.dataset.plan).then(function (yes) {
+          if (!yes) return;
+          applyPlan(choose);
         });
         return;
       }

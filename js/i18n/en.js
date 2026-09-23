@@ -822,7 +822,17 @@
         starter: 'Small', growth: 'Medium', business: 'Large',
         upTo: 'Up to {count} staff',
         between: '{from} to {to} staff',
-        from: '{count} staff and up'
+        from: '{count} staff and up',
+        upgradeTitle: 'Add staff member number {count}?',
+        upgradeWhy: 'The current plan ({plan}) covers up to {max} staff.',
+        upgradeTo: 'Moving to {suggested} — {range} — {price}, VAT included.',
+        upgradeWhen: 'Nothing is charged now. The new price applies from the next charge, on {date}.',
+        upgradeWhenTrial: 'Nothing is charged now. The new price applies to the first charge, when the trial ends.',
+        upgradeYes: 'Upgrade and add',
+        upgradeNo: 'Cancel',
+        upgraded: 'Plan changed to {plan}. The next charge will be {price}.',
+        upgradeFailed: 'The plan could not be changed.',
+        upgradeOwnerOnly: 'You have reached the plan limit. Only the account owner can upgrade it.'
       },
 
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },

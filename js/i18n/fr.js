@@ -816,7 +816,17 @@
         starter: 'Petite', growth: 'Moyenne', business: 'Grande',
         upTo: 'Jusqu’à {count} employés',
         between: 'De {from} à {to} employés',
-        from: '{count} employés et plus'
+        from: '{count} employés et plus',
+        upgradeTitle: 'Ajouter l’employé numéro {count} ?',
+        upgradeWhy: 'La formule actuelle ({plan}) couvre jusqu’à {max} employés.',
+        upgradeTo: 'Passage à la formule {suggested} — {range} — {price}, TVA comprise.',
+        upgradeWhen: 'Rien n’est prélevé maintenant. Le nouveau tarif s’applique au prochain prélèvement, le {date}.',
+        upgradeWhenTrial: 'Rien n’est prélevé maintenant. Le nouveau tarif s’applique au premier prélèvement, à la fin de l’essai.',
+        upgradeYes: 'Changer de formule et ajouter',
+        upgradeNo: 'Annuler',
+        upgraded: 'Formule passée à {plan}. Le prochain prélèvement sera de {price}.',
+        upgradeFailed: 'Le changement de formule a échoué.',
+        upgradeOwnerOnly: 'Vous avez atteint la limite de la formule. Seul le titulaire du compte peut la changer.'
       },
 
       roles: { owner: 'Propriétaire', manager: 'Responsable', employee: 'Employé' },

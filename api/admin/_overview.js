@@ -128,10 +128,12 @@ module.exports = async function ({ db }) {
         failing: failing,
         canceling: canceling
       },
+      /* quote: לחבילה אין מחיר מחירון. המסך אינו אמור להציג לה
+         ₪0 בעמודת המחיר – זו שורה שנקראת כמו חבילה חינמית. */
       plans: Model.PLAN_ORDER.map(function (id) {
         const plan = Model.PLANS[id];
         const parts = Money.split(plan.priceMonthly);
-        return { id: id, priceMonthly: plan.priceMonthly,
+        return { id: id, priceMonthly: plan.priceMonthly, quote: plan.quote === true,
           net: parts.net, vat: parts.vat, gross: parts.gross };
       })
     }

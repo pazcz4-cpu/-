@@ -96,6 +96,7 @@
         pricingTitle: 'Preço simples, pelo tamanho da equipa',
         pricingSubtitle: 'Lojas ilimitadas em todos os planos. Cancela quando quiseres.',
         pricingCta: 'Começar grátis',
+        quoteMessage: 'Olá, somos uma rede com mais de 100 colaboradores e queremos agendar uma reunião sobre o SetShifts.',
         pricingNote: 'Preços em ILS, por mês, IVA incluído. {days} dias grátis em todos os planos.',
         planPopular: 'O mais escolhido',
         faqTitle: 'Perguntas',
@@ -914,11 +915,16 @@
         expiredKept: 'A subscrição expirou e não foi renovada. Escolher um plano devolve o acesso de imediato, e os teus dados estão guardados.',
         canceled: 'A subscrição foi cancelada. Podes renovar quando quiseres – os teus dados estão guardados.',
         inactive: 'A subscrição não está ativa.',
-        overLimit: 'O plano {plan} cobre até {max} colaboradores. Tens {count} – é preciso o plano {suggested} ({range}, {price}).'
+        overLimit: 'O plano {plan} cobre até {max} colaboradores. Tens {count} – é preciso o plano {suggested} ({range}, {price}).',
+        overLimitQuote: 'O plano {plan} cobre até {max} colaboradores. Têm {count} – nesse tamanho já é uma rede, e o preço define-se numa conversa connosco.'
       },
 
       plans: {
         starter: 'Pequeno', growth: 'Médio', business: 'Grande',
+        enterprise: 'Redes',
+        quotePrice: 'Sob orçamento',
+        quoteCta: 'Agendar uma reunião',
+        quoteNote: 'A partir de {count} colaboradores montamos a proposta em torno da rede: quantas lojas, que turnos, como trabalham. Fale connosco e voltamos com um preço.',
         upTo: 'Até {count} colaboradores',
         between: 'De {from} a {to} colaboradores',
         from: '{count} colaboradores ou mais',

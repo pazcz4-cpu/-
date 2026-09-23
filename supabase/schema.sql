@@ -58,6 +58,22 @@ alter table public.company_users
 alter table public.companies
   add column if not exists tax_id text;
 
+-- מחיר חודשי שסוכם עם הלקוח הזה, וגובר על מחיר התוכנית.
+--
+-- קיים בשביל רשתות: מ-100 עובדים ומעלה אין מחירון, המחיר נסגר
+-- בפגישה, ובלי מקום להחזיק אותו אי אפשר לחייב אותן בכלל.
+--
+-- null = אין מחיר מוסכם, כלומר לך לפי המחירון. בתוכנית שאין בה
+-- מחירון null פירושו "עוד לא סוכם", והחיוב היומי מדלג במקום
+-- לגבות אפס.
+--
+-- נכתב רק מהמשרד האחורי (service_role): grant update למשתמש
+-- מוגבל ל-(name, tax_id) בלבד, ולכן לקוח אינו יכול לקבוע לעצמו
+-- את המחיר.
+alter table public.companies
+  add column if not exists custom_price_monthly integer
+    check (custom_price_monthly is null or custom_price_monthly >= 0);
+
 alter table public.companies
   add column if not exists billing_provider        text,
   add column if not exists billing_customer_id     text,

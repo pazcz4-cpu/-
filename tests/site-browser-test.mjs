@@ -57,8 +57,16 @@ try {
   await page.waitForTimeout(500);
   check('כותרת ראשית מוכרת את התוצאה, לא את התכונה',
     await page.locator('h1').textContent(), /בלחיצה אחת/);
-  check('שלוש תוכניות', await page.locator('.lp-plan').count(), 3);
+  check('ארבע תוכניות', await page.locator('.lp-plan').count(), 4);
   check('המחיר מגיע מהמודל', await page.locator('.lp-plan-price').first().textContent(), /199/);
+  /* חבילת הרשתות היא הצעת מחיר: אין לה מספר, ואין לה קישור
+     להרשמה עצמית – הכפתור שלה מוביל לשיחה. */
+  check('חבילת הרשתות בלי מספר', await page.locator('.lp-plan-quote').count(), 1);
+  check('ובלי הרשמה עצמית',
+    await page.locator('.lp-plan-quote-card a[href*="signup"]').count(), 0);
+  check('אלא עם פנייה אלינו',
+    await page.locator('.lp-plan-quote-card a[href^="mailto:"], ' +
+      '.lp-plan-quote-card a[href^="https://wa.me/"]').count(), 1);
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
   check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
 

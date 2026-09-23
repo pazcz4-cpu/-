@@ -53,7 +53,7 @@
   var TICKET_STATUS = {
     open: 'פתוחה', in_progress: 'בטיפול', answered: 'נענתה', closed: 'נסגרה'
   };
-  var PLAN_LABEL = { starter: 'קטן', growth: 'בינוני', business: 'גדול' };
+  var PLAN_LABEL = { starter: 'קטן', growth: 'בינוני', business: 'גדול', enterprise: 'רשתות' };
 
   function statusPill(status) {
     return '<span class="adm-pill is-' + esc(status) + '">' +
@@ -251,10 +251,14 @@
       '<th>חבילה</th><th class="num">מחיר</th><th class="num">נטו</th>' +
       '<th class="num">מע"מ</th><th class="num">מנויים</th></tr></thead><tbody>';
     view.plans.forEach(function (plan) {
-      html += '<tr><td>' + esc(PLAN_LABEL[plan.id] || plan.id) + '</td>' +
-        '<td class="num">' + esc(moneyExact(plan.priceMonthly)) + '</td>' +
-        '<td class="num">' + esc(moneyExact(plan.net)) + '</td>' +
-        '<td class="num">' + esc(moneyExact(plan.vat)) + '</td>' +
+      /* חבילה שאין לה מחירון: "₪0" בעמודה הזו נקרא כמו חבילה
+         חינמית, וגם נטו ומע"מ שלה הם אפס חסר משמעות. */
+      var cells = plan.quote
+        ? '<td class="num" colspan="3">לפי הצעת מחיר</td>'
+        : '<td class="num">' + esc(moneyExact(plan.priceMonthly)) + '</td>' +
+          '<td class="num">' + esc(moneyExact(plan.net)) + '</td>' +
+          '<td class="num">' + esc(moneyExact(plan.vat)) + '</td>';
+      html += '<tr><td>' + esc(PLAN_LABEL[plan.id] || plan.id) + '</td>' + cells +
         '<td class="num">' + (view.counts.byPlan[plan.id] || 0) + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
@@ -343,6 +347,11 @@
         left === null ? '' : (left >= 0 ? left + ' ימים נותרו' : Math.abs(left) + ' ימים עברו')) +
       tile('שילם עד היום', money(view.payments.gross),
         view.payments.count + ' חיובים · נטו ' + money(view.payments.net)) +
+      tile('מחיר חודשי',
+        c.planPrice ? money(c.planPrice) : 'טרם נקבע',
+        c.customPrice
+          ? ('מחיר מוסכם' + (c.listPrice ? ' · מחירון ' + money(c.listPrice) : ''))
+          : (c.byQuote ? 'חבילת רשתות — לפי הצעת מחיר' : 'לפי המחירון')) +
       tile('אמצעי תשלום', c.hasCard ? 'יש' : 'אין',
         c.billingProvider || 'לא חובר') +
       tile('שימוש', String(view.usage.weeks) + ' שבועות',
@@ -354,6 +363,8 @@
         '">מתן תקופה ללא תשלום</button>' +
       '<button class="adm-btn" data-act="set-plan" data-id="' + esc(c.id) +
         '">שינוי חבילה</button>' +
+      '<button class="adm-btn" data-act="set-price" data-id="' + esc(c.id) +
+        '">מחיר מוסכם</button>' +
       '<button class="adm-btn" data-act="set-status" data-id="' + esc(c.id) +
         '">שינוי מצב מנוי</button>' +
       '<button class="adm-btn" data-act="set-cancel" data-id="' + esc(c.id) + '">' +
@@ -464,10 +475,24 @@
       title: 'שינוי חבילה',
       fields: '<label class="adm-field"><span>חבילה</span>' +
         '<select class="adm-select" id="adm-f-plan">' +
-        '<option value="starter">קטן — 199 ₪</option>' +
-        '<option value="growth">בינוני — 399 ₪</option>' +
-        '<option value="business">גדול — 599 ₪</option>' +
-        '</select></label>'
+        '<option value="starter">קטן — עד 10 עובדים — 199 ₪</option>' +
+        '<option value="growth">בינוני — 11–30 עובדים — 399 ₪</option>' +
+        '<option value="business">גדול — 31–99 עובדים — 599 ₪</option>' +
+        '<option value="enterprise">רשתות — 100+ — לפי הצעת מחיר</option>' +
+        '</select></label>' +
+        '<p class="adm-hint">לחבילת הרשתות אין מחיר מחירון. אחרי המעבר ' +
+        'צריך להזין את המחיר שסוכם ב"מחיר מוסכם", אחרת החיוב החודשי ידלג עליה.</p>'
+    },
+    /* המחיר שסוכם בפגישה. בלעדיו אי אפשר לחייב רשת בכלל, ולכן
+       השדה נשאר גם לחבילות רגילות: לפעמים סוגרים מחיר אחר. */
+    'set-price': {
+      title: 'מחיר חודשי מוסכם',
+      fields: '<label class="adm-field"><span>מחיר לחודש, כולל מע״מ</span>' +
+        '<input class="adm-input" id="adm-f-price" type="number" min="1" step="1" ' +
+        'placeholder="ריק = לפי המחירון"></label>' +
+        '<p class="adm-hint">המחיר הזה גובר על מחיר החבילה וייגבה בחיוב הבא. ' +
+        'השאירו ריק כדי לחזור למחירון. לשימוש ללא תשלום השתמשו ב"מתן תקופה ללא תשלום" ' +
+        'ולא במחיר אפס.</p>'
     },
     'set-status': {
       title: 'שינוי מצב מנוי',
@@ -508,9 +533,13 @@
     var days = document.getElementById('adm-f-days');
     var plan = document.getElementById('adm-f-plan');
     var status = document.getElementById('adm-f-status');
+    var price = document.getElementById('adm-f-price');
     if (days) payload.days = Number(days.value);
     if (plan) payload.plan = plan.value;
     if (status) payload.status = status.value;
+    /* ריק נשלח כריק ולא כאפס: אפס הוא מחיר, ריק הוא "בטל את
+       המחיר המוסכם וחזור למחירון". */
+    if (price) payload.price = price.value.trim() === '' ? null : Number(price.value);
     if (pending.action === 'set-cancel') payload.cancel = !pending.extra.cancelNow;
 
     var button = document.getElementById('adm-modal-ok');

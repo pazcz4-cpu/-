@@ -149,6 +149,19 @@ async function chargeCompany(provider, company, plans, now) {
   const plan = plans[company.plan];
   if (!plan) return { company: company.id, action: 'skipped', reason: 'unknown-plan' };
 
+  /* הסכום שנגבה: מחיר שסוכם עם הלקוח גובר על המחירון. לרשת אין
+     מחירון כלל – המחיר נסגר בפגישה ומוזן במשרד האחורי.
+
+     אם אין מחיר, מדלגים ולא גובים אפס. חיוב על סכום אפס אינו
+     "חינם" אלא בקשה שהספק דוחה, ובמקרה הרע חיוב שמופיע ללקוח
+     על כלום. הדילוג עולה בדוח הריצה כל יום עד שהמחיר יוזן. */
+  const amount = Number(company.custom_price_monthly) > 0
+    ? Math.round(Number(company.custom_price_monthly))
+    : plan.priceMonthly;
+  if (!(amount > 0)) {
+    return { company: company.id, action: 'skipped', reason: 'price-not-set' };
+  }
+
   /* התקופה שעליה משלמים מתחילה בדיוק כשהקודמת נגמרה */
   const periodStart = company.valid_until || now.toISOString();
   const first = company.status === 'trial';
@@ -167,7 +180,7 @@ async function chargeCompany(provider, company, plans, now) {
     result = await provider.charge({
       subscriptionId: company.billing_subscription_id,
       customerId: company.billing_customer_id,
-      amount: plan.priceMonthly,
+      amount: amount,
       currency: 'ILS',
       plan: company.plan,
       /* הספק מקבל את מפתח התקופה – לא את מפתח הניסיון – כדי
@@ -195,7 +208,7 @@ async function chargeCompany(provider, company, plans, now) {
        רק שמשהו נכנס – והמשרד האחורי היה מחשב מחזור מתוך המחירון
        ולא מתוך מה שנגבה. */
     await recordOutcome(attempt.periodId, 'charged', {
-      amount: plan.priceMonthly,
+      amount: amount,
       currency: 'ILS',
       plan: company.plan,
       transaction_id: result.transactionId || null

@@ -312,6 +312,9 @@
     if (meta) meta.setAttribute('content', t(meta.getAttribute('data-i18n-content')));
   }
 
+  /* הקישור לפנייה יושב במודל, לצד שתי הכתובות שהוא בנוי מהן */
+  function quoteHref() { return Model.quoteHref(); }
+
   function renderPlans() {
     var host = document.getElementById('landing-plans');
     if (!host || !Model) return;
@@ -319,15 +322,33 @@
     host.innerHTML = Model.PLAN_ORDER.map(function (id) {
       var plan = Model.PLANS[id];
       var isFeatured = id === featured;
-      return '<div class="lp-plan' + (isFeatured ? ' lp-plan-featured' : '') + '">' +
+
+      /* תוכנית הצעת־מחיר אינה מחירון ואינה נרשמת לבד: אין מספר,
+         אין שורת ניסיון, והכפתור מוביל לשיחה ולא לטופס הרשמה. */
+      var priceHtml = plan.quote
+        ? '<div class="lp-plan-quote">' + esc(t('plans.quotePrice')) + '</div>'
+        : '<div class="lp-plan-price">' +
+            esc(t('billing.priceAmount', { amount: plan.priceMonthly })) + '</div>' +
+          '<div class="lp-plan-per">' + esc(t('billing.perMonth')) + '</div>';
+
+      var ctaHtml = plan.quote
+        ? '<a class="lp-btn lp-btn-primary" href="' + esc(quoteHref()) + '">' +
+            esc(t('plans.quoteCta')) + '</a>'
+        : '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
+            '" href="app/?signup=1&plan=' + esc(plan.id) + '">' +
+            esc(t('landing.pricingCta')) + '</a>';
+
+      return '<div class="lp-plan' + (isFeatured ? ' lp-plan-featured' : '') +
+          (plan.quote ? ' lp-plan-quote-card' : '') + '">' +
         (isFeatured ? '<span class="lp-plan-tag">' + esc(t('landing.planPopular')) + '</span>' : '') +
         '<div class="lp-plan-name">' + esc(plan.name) + '</div>' +
         '<div class="lp-plan-range">' + esc(plan.range) + '</div>' +
-        '<div class="lp-plan-trial">' + esc(t('landing.planTrialLine', { days: Model.TRIAL_DAYS })) + '</div>' +
-        '<div class="lp-plan-price">' + esc(t('billing.priceAmount', { amount: plan.priceMonthly })) + '</div>' +
-        '<div class="lp-plan-per">' + esc(t('billing.perMonth')) + '</div>' +
-        '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
-        '" href="app/?signup=1&plan=' + esc(plan.id) + '">' + esc(t('landing.pricingCta')) + '</a>' +
+        (plan.quote
+          ? '<div class="lp-plan-trial">' +
+              esc(t('plans.quoteNote', { count: plan.minEmployees })) + '</div>'
+          : '<div class="lp-plan-trial">' +
+              esc(t('landing.planTrialLine', { days: Model.TRIAL_DAYS })) + '</div>') +
+        priceHtml + ctaHtml +
         '</div>';
     }).join('');
 

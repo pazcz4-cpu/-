@@ -1497,6 +1497,28 @@
       return;
     }
 
+    /* מעל התקרה של התוכנית הגדולה אין לאן לשדרג בלחיצה: לחבילת
+       הרשתות אין מחיר מחירון, והשרת דוחה מעבר אליה מהמסך.
+
+       בלי הענף הזה המנהל היה לוחץ "שדרוג והוספת העובד" ומקבל
+       שגיאה – ברגע שבו הוא מנסה לשלם לנו יותר. במקום זה מוצע
+       לו בדיוק מה שכן אפשר: לדבר איתנו. */
+    if (check.quote) {
+      askUpgrade({
+        title: t('plans.upgradeTitle', { count: position }),
+        lines: [
+          check.problems.join(' '),
+          t('plans.quoteNote', { count: suggested.minEmployees })
+        ],
+        confirmLabel: t('plans.quoteCta'),
+        cancelLabel: t('plans.upgradeNo')
+      }).then(function (yes) {
+        if (!yes || !check.quoteHref) return;
+        window.open(check.quoteHref, '_blank', 'noopener');
+      });
+      return;
+    }
+
     var charge = source.chargeInfo ? source.chargeInfo() : null;
     var lines = [
       t('plans.upgradeWhy', {

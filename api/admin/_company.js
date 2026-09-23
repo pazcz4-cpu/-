@@ -45,7 +45,11 @@ module.exports = async function ({ body, db }) {
       ok: true,
       company: {
         id: company.id, name: company.name, plan: company.plan,
-        planPrice: plan ? plan.priceMonthly : null,
+        planPrice: Money.monthlyOf(company, Model.PLANS) || null,
+        listPrice: plan ? plan.priceMonthly : null,
+        customPrice: company.custom_price_monthly == null
+          ? null : Number(company.custom_price_monthly),
+        byQuote: !!(plan && plan.quote),
         status: company.status, validUntil: company.valid_until,
         currentPeriodEnd: company.current_period_end,
         cancelAtPeriodEnd: !!company.cancel_at_period_end,

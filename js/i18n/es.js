@@ -96,6 +96,7 @@
         pricingTitle: 'Precio simple, según el tamaño del equipo',
         pricingSubtitle: 'Sucursales ilimitadas en todos los planes. Cancela cuando quieras.',
         pricingCta: 'Empezar gratis',
+        quoteMessage: 'Hola, somos una cadena con más de 100 empleados y queremos agendar una reunión sobre SetShifts.',
         pricingNote: 'Precios en ILS, al mes, IVA incluido. {days} días gratis en todos los planes.',
         planPopular: 'El más elegido',
         faqTitle: 'Preguntas',
@@ -914,11 +915,16 @@
         expiredKept: 'La suscripción caducó y no se renovó. Al elegir un plan se recupera el acceso al instante, y tus datos están a salvo.',
         canceled: 'La suscripción se canceló. Puedes renovarla cuando quieras: tus datos están a salvo.',
         inactive: 'La suscripción no está activa.',
-        overLimit: 'El plan {plan} cubre hasta {max} empleados. Tienes {count}: hace falta el plan {suggested} ({range}, {price}).'
+        overLimit: 'El plan {plan} cubre hasta {max} empleados. Tienes {count}: hace falta el plan {suggested} ({range}, {price}).',
+        overLimitQuote: 'El plan {plan} cubre hasta {max} empleados. Tenéis {count}: a ese tamaño ya es una cadena, y el precio se fija hablando con nosotros.'
       },
 
       plans: {
         starter: 'Pequeño', growth: 'Mediano', business: 'Grande',
+        enterprise: 'Cadenas',
+        quotePrice: 'Según presupuesto',
+        quoteCta: 'Agendar una reunión',
+        quoteNote: 'A partir de {count} empleados preparamos la oferta según la cadena: cuántos locales, qué turnos, cómo trabajáis. Hablamos y os damos un precio.',
         upTo: 'Hasta {count} empleados',
         between: 'De {from} a {to} empleados',
         from: '{count} empleados o más',

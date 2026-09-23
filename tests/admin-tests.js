@@ -553,11 +553,73 @@ test('הארכה בלתי סבירה נדחית', function () {
 
 test('שינוי חבילה לא מוכרת נדחה', function () {
   var fake = sampleWorld(); fake.install();
-  return call(action, { action: 'set-plan', id: 'co-1', plan: 'enterprise',
+  return call(action, { action: 'set-plan', id: 'co-1', plan: 'platinum',
     reason: 'ניסיון' }).then(function (res) {
     assertEqual(res.statusCode, 400, 'חבילה לא מוכרת התקבלה');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
+});
+
+/* ===== מחיר מוסכם לרשת =====
+
+   לחבילת הרשתות אין מחירון: המחיר נסגר בפגישה ומוזן כאן. בלי
+   הפעולה הזו אי אפשר לחייב רשת בכלל, ולכן היא נבדקת כמו כל
+   פעולה שמזיזה כסף – כולל מה שהיא מסרבת לעשות. */
+test('מעבר לחבילת רשתות אפשרי מהמשרד האחורי', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-plan', id: 'co-1', plan: 'enterprise',
+    reason: 'נסגרה עסקה עם רשת של 140 עובדים' }).then(function (res) {
+    assertEqual(res.payload.company.plan, 'enterprise', 'החבילה לא השתנתה');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('מחיר מוסכם נשמר ונרשם ביומן', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', price: 1450,
+    reason: 'סוכם בפגישה מול הרשת' }).then(function (res) {
+    assertEqual(res.payload.company.custom_price_monthly, 1450, 'המחיר לא נשמר');
+    assertEqual(res.payload.detail.to, 1450, 'המחיר החדש לא נרשם ביומן');
+    assertEqual(res.payload.detail.from, null, 'המצב הקודם לא נרשם');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('מחיר ריק מבטל את המחיר המוסכם', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', price: 900, reason: 'סוכם' })
+    .then(function () {
+      return call(action, { action: 'set-price', id: 'co-1', price: '',
+        reason: 'חוזר למחירון' });
+    })
+    .then(function (res) {
+      assertEqual(res.payload.company.custom_price_monthly, null, 'המחיר לא בוטל');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+/* אפס אינו "חינם": הוא היה מייצר לקוח שנראה בדוחות כמשלם ואינו
+   משלם. מי שרוצה לתת שימוש בלי תשלום מאריך תקופה. */
+test('מחיר אפס או שלילי נדחה', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', price: 0, reason: 'חינם' })
+    .then(function (res) {
+      assertEqual(res.statusCode, 400, 'מחיר אפס התקבל');
+      return call(action, { action: 'set-price', id: 'co-1', price: -50, reason: 'טעות' });
+    })
+    .then(function (res) {
+      assertEqual(res.statusCode, 400, 'מחיר שלילי התקבל');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+test('מחיר מוסכם דורש סיבה, כמו כל פעולה', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', price: 1200, reason: '' })
+    .then(function (res) {
+      assertEqual(res.statusCode, 400, 'מחיר נקבע בלי סיבה');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
 });
 
 test('שינוי חבילה תקין עובד ונרשם', function () {

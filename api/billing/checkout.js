@@ -17,6 +17,16 @@ module.exports = endpoint(async function ({ company, user, body, db }) {
     return { status: 400, body: { message: 'Unknown plan' } };
   }
 
+  /* תוכנית הצעת־מחיר אינה נמכרת מהמסך. אין לה מחיר מחירון, ולכן
+     מעבר אליה כאן היה מציב את החברה על תוכנית שעולה אפס – כלומר
+     שימוש חופשי. המסך אינו מציע את הכפתור הזה, אבל המסך אינו
+     ההגנה: בקשה אפשר לשלוח גם בלעדיו.
+
+     המעבר נעשה מהמשרד האחורי, יחד עם המחיר שסוכם. */
+  if (Model.PLANS[planId].quote) {
+    return { status: 400, body: { message: 'This plan is set by quote, not self-serve' } };
+  }
+
   const name = process.env.BILLING_PROVIDER || 'mock';
   const provider = providers[name];
 

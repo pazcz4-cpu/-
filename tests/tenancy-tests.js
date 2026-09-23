@@ -633,13 +633,38 @@ test('מנוי מבוטל חוסם גישה', function () {
 
 console.log('\n== תוכניות ותמחור ==');
 
-test('שלוש התוכניות במחירים ובטווחים שנקבעו', function () {
+test('ארבע התוכניות במחירים ובטווחים שנקבעו', function () {
   assertEqual(Model.PLANS.starter.priceMonthly, 199, 'תוכנית קטן');
   assertEqual(Model.PLANS.starter.maxEmployees, 10, 'עד 10 עובדים');
   assertEqual(Model.PLANS.growth.priceMonthly, 399, 'תוכנית בינוני');
   assertEqual(Model.PLANS.growth.maxEmployees, 30, 'עד 30 עובדים');
   assertEqual(Model.PLANS.business.priceMonthly, 599, 'תוכנית גדול');
-  assertEqual(Model.PLANS.business.maxEmployees, 0, '31 ומעלה – ללא תקרה');
+  assertEqual(Model.PLANS.business.maxEmployees, 99, 'עד 99 עובדים');
+  assertEqual(Model.PLANS.enterprise.minEmployees, 100, 'רשתות – מ-100');
+  assertEqual(Model.PLANS.enterprise.maxEmployees, 0, 'ללא תקרה');
+});
+
+/* לרשת אין מחיר מחירון, והמספר 0 אינו "חינם" אלא "עוד לא סוכם".
+   מי שיטעה בזה יחייב רשת באפס או ייתן לה שימוש חופשי. */
+test('תוכנית הרשתות היא הצעת מחיר ולא מחירון', function () {
+  assert(Model.PLANS.enterprise.quote === true, 'התוכנית אינה מסומנת כהצעת מחיר');
+  assert(!Model.PLANS.starter.quote, 'תוכנית רגילה סומנה בטעות');
+  assertEqual(Model.PLANS.enterprise.priceMonthly, 0, 'אין מחיר מחירון');
+  assertEqual(Model.awaitingQuote({ plan: 'enterprise' }), true, 'המחיר אמור להיחשב כלא נקבע');
+  assertEqual(Model.effectivePrice({ plan: 'enterprise' }), 0, 'אין מה לגבות');
+});
+
+test('מחיר מוסכם גובר על המחירון', function () {
+  assertEqual(Model.effectivePrice({ plan: 'enterprise', customPriceMonthly: 1450 }), 1450,
+    'המחיר שסוכם לא נלקח');
+  assertEqual(Model.awaitingQuote({ plan: 'enterprise', customPriceMonthly: 1450 }), false,
+    'רשת עם מחיר עדיין נחשבת בלי מחיר');
+  assertEqual(Model.effectivePrice({ plan: 'starter', customPriceMonthly: 150 }), 150,
+    'מחיר מוסכם בתוכנית רגילה לא נלקח');
+  assertEqual(Model.effectivePrice({ plan: 'starter' }), 199, 'בלי מחיר מוסכם – המחירון');
+  /* אפס ושלילי אינם מחיר: הם "אין מחיר", ולכן חוזרים למחירון */
+  assertEqual(Model.effectivePrice({ plan: 'starter', customPriceMonthly: 0 }), 199, 'אפס נחשב מחיר');
+  assertEqual(Model.effectivePrice({ plan: 'starter', customPriceMonthly: -5 }), 199, 'שלילי נחשב מחיר');
 });
 
 test('התוכנית המתאימה נבחרת לפי מספר העובדים', function () {
@@ -648,7 +673,9 @@ test('התוכנית המתאימה נבחרת לפי מספר העובדים', 
   assertEqual(Model.planForEmployees(11).id, 'growth', '11 – מעבר לתוכנית הבאה');
   assertEqual(Model.planForEmployees(30).id, 'growth', 'בדיוק 30');
   assertEqual(Model.planForEmployees(31).id, 'business', '31 – התוכנית הגדולה');
-  assertEqual(Model.planForEmployees(500).id, 'business', 'הרבה עובדים');
+  assertEqual(Model.planForEmployees(99).id, 'business', 'בדיוק 99');
+  assertEqual(Model.planForEmployees(100).id, 'enterprise', '100 – כבר רשת');
+  assertEqual(Model.planForEmployees(500).id, 'enterprise', 'הרבה עובדים');
 });
 
 test('מגבלת העובדים נאכפת ומוצעת התוכנית הנכונה', function () {
@@ -660,9 +687,22 @@ test('מגבלת העובדים נאכפת ומוצעת התוכנית הנכו�
   assert(over.problems[0].indexOf('399') !== -1, 'ההודעה כוללת את המחיר');
 });
 
-test('התוכנית הגדולה אינה מוגבלת במספר עובדים', function () {
-  assertEqual(Model.withinPlanLimits({ plan: 'business' }, { employees: 999 }).ok, true, 'ללא תקרה');
-  assertEqual(Model.employeesLeft({ plan: 'business' }, 999), null, 'אין מכסה שנותרה');
+test('התוכנית הגדולה נעצרת ב-99 ומפנה לרשתות', function () {
+  assertEqual(Model.withinPlanLimits({ plan: 'business' }, { employees: 99 }).ok, true, 'בדיוק 99');
+  var over = Model.withinPlanLimits({ plan: 'business' }, { employees: 100 });
+  assertEqual(over.ok, false, '100 עובדים בתוכנית הגדולה');
+  assertEqual(over.suggested.id, 'enterprise', 'לא הוצעה תוכנית הרשתות');
+  assertEqual(over.quote, true, 'לא סומן שזו הצעת מחיר');
+  /* ההודעה חייבת להפנות לשיחה ולא להציג מספר. "0₪" כאן הוא
+     בדיוק המשפט שגורם ללקוח לחשוב שהוא מקבל את זה בחינם. */
+  assert(over.problems[0].indexOf('0') === -1 || over.problems[0].indexOf('0₪') === -1,
+    'ההודעה מציגה מחיר אפס');
+  assert(over.problems[0].indexOf('100') !== -1, 'ההודעה אינה מזכירה את מספר העובדים');
+});
+
+test('תוכנית הרשתות עצמה אינה מוגבלת במספר עובדים', function () {
+  assertEqual(Model.withinPlanLimits({ plan: 'enterprise' }, { employees: 999 }).ok, true, 'ללא תקרה');
+  assertEqual(Model.employeesLeft({ plan: 'enterprise' }, 999), null, 'אין מכסה שנותרה');
 });
 
 test('אין הגבלת סניפים באף תוכנית', function () {

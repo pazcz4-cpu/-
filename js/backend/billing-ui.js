@@ -15,6 +15,9 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  /* הקישור לפנייה יושב במודל, לצד שתי הכתובות שהוא בנוי מהן */
+  function quoteHref() { return Model.quoteHref(); }
+
   function formatDate(iso) {
     if (!iso) return '—';
     var date = new Date(iso);
@@ -53,7 +56,10 @@
     var company = state.company;
     var onTrial = company.status === Model.SUBSCRIPTION.TRIAL;
     var hasCard = Model.hasPaymentMethod(company);
-    var price = t('billing.priceMonthly', { amount: state.plan.priceMonthly });
+    /* לא מחיר התוכנית אלא המחיר של החברה הזו: לרשת המחיר נסגר
+       בפגישה ומוזן ידנית, ותוכנית הצעת־מחיר בלי מחיר אומרת זאת
+       במילים. "0₪ לחודש" על מסך חיוב נקרא כמו חינם. */
+    var price = Model.priceLabel(company);
     var html = '';
 
     /* בתקופת ניסיון הדבר החשוב ביותר על המסך הוא מתי יתבצע החיוב
@@ -124,10 +130,21 @@
     ctx.billing.plans().forEach(function (plan) {
       var current = plan.id === state.plan.id;
       var fits = !plan.maxEmployees || employees <= plan.maxEmployees;
-      html += '<div class="plan-card' + (current ? ' current' : '') + (fits ? '' : ' too-small') + '">';
+      html += '<div class="plan-card' + (current ? ' current' : '') + (fits ? '' : ' too-small') +
+        (plan.quote ? ' quote' : '') + '">';
       html += '<div class="plan-name">' + esc(plan.name) + '</div>';
-      html += '<div class="plan-price">' + plan.priceMonthly +
-        '<small>' + esc(t('billing.priceMonthly', { amount: '' }).trim()) + '</small></div>';
+      /* בתוכנית הצעת־מחיר אין מספר להציג. אם החברה כבר על
+         התוכנית ויש לה מחיר שסוכם – מציגים אותו, כי זה מה
+         שייגבה ממנה בפועל. */
+      if (plan.quote && !(current && !Model.awaitingQuote(company))) {
+        html += '<div class="plan-quote">' + esc(t('plans.quotePrice')) + '</div>';
+      } else if (plan.quote) {
+        html += '<div class="plan-price">' + Model.effectivePrice(company) +
+          '<small>' + esc(t('billing.priceMonthly', { amount: '' }).trim()) + '</small></div>';
+      } else {
+        html += '<div class="plan-price">' + plan.priceMonthly +
+          '<small>' + esc(t('billing.priceMonthly', { amount: '' }).trim()) + '</small></div>';
+      }
       html += '<div class="plan-range">' + esc(plan.range) + '</div>';
       if (current) { html += '<div class="plan-tag">' + t('billing.currentPlan') + '</div>'; }
       else if (!fits) { html += '<div class="plan-tag warn">' + esc(t('billing.tooSmall', { count: employees })) + '</div>'; }
@@ -135,6 +152,13 @@
          תקרה ומחיר, והמחיר החדש נגבה בחיוב הבא – גם כשהסליקה
          עוד לא חוברה. מסך שמציג מחירון בלי דרך לעבור תוכנית
          משאיר את הלקוח תקוע בדיוק ברגע שבו הוא רוצה לשלם יותר. */
+      /* תוכנית הצעת־מחיר אינה נבחרת בלחיצה: אין לה מחיר לגבות,
+         והמעבר אליה הוא שיחה. כפתור "בחירה" כאן היה מעביר את
+         הלקוח לתוכנית שעולה אפס. */
+      else if (plan.quote) {
+        html += '<a class="btn primary" href="' + esc(quoteHref()) + '">' +
+          esc(t('plans.quoteCta')) + '</a>';
+      }
       else { html += '<button class="btn primary" data-plan="' + esc(plan.id) + '">' + t('billing.choose') + '</button>'; }
       html += '</div>';
     });

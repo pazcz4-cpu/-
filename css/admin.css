@@ -172,6 +172,11 @@
 .adm-field { display: block; margin-bottom: var(--s3); }
 .adm-field > span { display: block; font-size: var(--t-sm); color: var(--muted); margin-bottom: var(--s1); }
 .adm-field .adm-input, .adm-field .adm-select { width: 100%; }
+/* הסבר מתחת לשדה: מה הפעולה באמת עושה, במקום שהבעלים ינחש */
+.adm-hint {
+  margin: calc(var(--s2) * -1) 0 var(--s3);
+  font-size: var(--t-sm); line-height: 1.5; color: var(--muted);
+}
 .adm-modal-actions { display: flex; gap: var(--s2); justify-content: flex-start; margin-top: var(--s4); }
 
 @media (max-width: 640px) {

@@ -312,13 +312,18 @@
           self._rpc('mark_self_joined', {}).then(null, function () {});
         }
         return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
-          '&select=id,name,tax_id,plan,status,valid_until,created_at')
+          /* custom_price_monthly: המחיר שסוכם עם הלקוח הזה. בלעדיו
+             מסך המנוי שלו היה מציג את מחיר המחירון – ואצל רשת
+             אין מחירון, ולכן הוא היה מציג אפס. */
+          '&select=id,name,tax_id,plan,status,valid_until,created_at,custom_price_monthly')
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
             var company = {
               id: row.id, name: row.name, taxId: row.tax_id || '',
               plan: row.plan, status: row.status,
+              customPriceMonthly: row.custom_price_monthly == null
+                ? null : Number(row.custom_price_monthly),
               validUntil: row.valid_until, createdAt: row.created_at
             };
             self._session = {

@@ -192,6 +192,47 @@ test('הסכום נגזר מהתוכנית של החברה', function () {
   });
 });
 
+/* ===== רשתות: מחיר שסוכם, ולא מחירון =====
+
+   לתוכנית הרשתות אין מחיר מחירון. בלי המחיר המוסכם אין מה
+   לגבות, והמנוע חייב לדלג ולא לשלוח לספק בקשה על אפס. */
+test('מחיר מוסכם גובר על מחיר התוכנית', function () {
+  var db = new FakeDb([company({
+    id: 'co-chain', plan: 'enterprise', custom_price_monthly: 1450
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'רשת עם מחיר מוסכם לא חויבה');
+    assertEqual(db.charges[0].amount, 1450, 'הסכום אינו המחיר שסוכם');
+    db.restore();
+  });
+});
+
+test('רשת בלי מחיר מוסכם מדולגת ואינה מחויבת באפס', function () {
+  var db = new FakeDb([company({ id: 'co-chain2', plan: 'enterprise' })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נשלח חיוב בלי מחיר מוסכם');
+    var mine = (res.payload.results || []).filter(function (row) {
+      return row.company === 'co-chain2';
+    })[0];
+    assertEqual(mine && mine.action, 'skipped', 'הלקוח לא דולג');
+    assertEqual(mine && mine.reason, 'price-not-set', 'הסיבה לדילוג אינה ברורה בדוח');
+    db.restore();
+  });
+});
+
+test('מחיר מוסכם עובד גם בתוכנית רגילה', function () {
+  var db = new FakeDb([company({
+    id: 'co-deal', plan: 'starter', custom_price_monthly: 150
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 150, 'המחיר שסוכם לא נלקח בתוכנית רגילה');
+    db.restore();
+  });
+});
+
 console.log('\n== מניעת חיוב כפול ==');
 
 test('שתי ריצות באותו יום מחייבות פעם אחת', function () {

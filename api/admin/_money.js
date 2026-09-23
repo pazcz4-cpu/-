@@ -101,6 +101,18 @@ function byMonth(charges, from, to) {
   });
 }
 
+/* המחיר החודשי של חברה אחת, כפי שייגבה בפועל.
+
+   מחיר שסוכם איתה גובר על המחירון – זו הדרך היחידה לחייב רשת,
+   שלתוכנית שלה אין מחיר מחירון כלל. 0 פירושו "עוד לא סוכם",
+   והוא אינו נספר כהכנסה: רשת בלי מחיר אינה לקוח משלם. */
+function monthlyOf(company, plans) {
+  const custom = Number(company && company.custom_price_monthly);
+  if (isFinite(custom) && custom > 0) return Math.round(custom);
+  const plan = plans[company && company.plan];
+  return (plan && plan.priceMonthly) || 0;
+}
+
 /* הכנסה חודשית חוזרת: מה צפוי להיכנס בחודש הבא מהמנויים
    שמשלמים היום. זה המספר שאומר אם העסק גדל, ולא סכום החיובים
    של החודש שעבר – שמושפע מתאריכי חידוש. */
@@ -109,8 +121,7 @@ function recurring(companies, plans) {
     return company.status === 'active' && !company.cancel_at_period_end;
   });
   const total = sum(paying.map(function (company) {
-    const plan = plans[company.plan];
-    return plan ? plan.priceMonthly : 0;
+    return monthlyOf(company, plans);
   }));
   const parts = split(total);
   return {
@@ -120,6 +131,7 @@ function recurring(companies, plans) {
 }
 
 module.exports = {
+  monthlyOf: monthlyOf,
   vatRate: vatRate, pricesIncludeVat: pricesIncludeVat,
   round: round, split: split, sum: sum,
   monthKey: monthKey, monthsBetween: monthsBetween,

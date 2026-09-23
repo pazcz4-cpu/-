@@ -100,6 +100,7 @@
         pricingTitle: 'Simple pricing, by team size',
         pricingSubtitle: 'Unlimited locations on every plan. Cancel any time.',
         pricingCta: 'Start free',
+        quoteMessage: 'Hello, we are a chain with more than 100 staff and would like to book a meeting about SetShifts.',
         pricingNote: 'All prices in ILS, per month, VAT included. {days} days free on every plan.',
         planPopular: 'Most popular',
 
@@ -920,11 +921,16 @@
         expiredKept: 'The subscription expired and was not renewed. Choosing a plan restores access immediately, and your data is safe.',
         canceled: 'The subscription was cancelled. You can renew at any time – your data is safe.',
         inactive: 'The subscription is not active.',
-        overLimit: 'The {plan} plan covers up to {max} staff. You have {count} – the {suggested} plan is needed ({range}, {price}).'
+        overLimit: 'The {plan} plan covers up to {max} staff. You have {count} – the {suggested} plan is needed ({range}, {price}).',
+        overLimitQuote: 'The {plan} plan covers up to {max} staff. You have {count} – at that size it is a chain, and the price is set in a conversation with us.'
       },
 
       plans: {
         starter: 'Small', growth: 'Medium', business: 'Large',
+        enterprise: 'Chains',
+        quotePrice: 'By quote',
+        quoteCta: 'Book a meeting',
+        quoteNote: 'From {count} staff up we build the offer around the chain: how many locations, which shifts, how you work. Talk to us and we will come back with a price.',
         upTo: 'Up to {count} staff',
         between: '{from} to {to} staff',
         from: '{count} staff and up',

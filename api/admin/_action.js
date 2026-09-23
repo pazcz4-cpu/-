@@ -1,10 +1,11 @@
 /* פעולות על לקוח.
 
-   ארבע פעולות, וכולן דרך נקודת קצה אחת – כי כולן צריכות בדיוק
+   חמש פעולות, וכולן דרך נקודת קצה אחת – כי כולן צריכות בדיוק
    את אותם שני דברים: אימות שהמבצע הוא בעל המוצר, ורישום ביומן.
 
      extend-trial   הארכת ניסיון או תקופה, במתנה
      set-plan       שינוי חבילה
+     set-price      מחיר חודשי מוסכם, שגובר על המחירון
      set-status     שינוי מצב מנוי ידנית
      set-cancel     סימון או ביטול "יסתיים בסוף התקופה"
 
@@ -77,6 +78,30 @@ module.exports = async function ({ user, body, db }) {
     detail.from = company.plan;
     detail.to = plan;
 
+  } else if (action === 'set-price') {
+    /* המחיר שסוכם בפגישה. זו הדרך היחידה לחייב רשת, כי לתוכנית
+       שלה אין מחירון – ולכן זו גם פעולה שמזיזה כסף אמיתי
+       ונרשמת ביומן כמו כל פעולה אחרת.
+
+       ריק או null מבטל את המחיר המוסכם וחוזר למחירון; בתוכנית
+       הצעת־מחיר פירושו שהחיוב חוזר לדלג. אפס אינו מתקבל: מי
+       שרוצה לתת שימוש חינם עושה זאת בהארכת תקופה, לא במחיר
+       אפס שנראה בדוחות כמו לקוח משלם. */
+    const raw = body ? body.price : null;
+    if (raw === null || raw === '' || typeof raw === 'undefined') {
+      patch.custom_price_monthly = null;
+    } else {
+      const price = Math.round(Number(raw));
+      if (!isFinite(price) || price <= 0 || price > 1000000) {
+        return { status: 400, body: { message: 'price must be a positive amount, or empty to clear' } };
+      }
+      patch.custom_price_monthly = price;
+    }
+    detail.from = company.custom_price_monthly === null ||
+      typeof company.custom_price_monthly === 'undefined'
+      ? null : Number(company.custom_price_monthly);
+    detail.to = patch.custom_price_monthly;
+
   } else if (action === 'set-status') {
     const status = String((body && body.status) || '');
     if (STATUSES.indexOf(status) === -1) {
@@ -98,8 +123,12 @@ module.exports = async function ({ user, body, db }) {
 
   /* היומן נכתב לפני השינוי. אם השינוי ייכשל, נשארה שורה שאומרת
      שניסינו – וזה עדיף על שינוי בלי שורה. */
+  /* המזהה נושא גם את שם הפעולה וגם רכיב אקראי, ולא חותמת זמן
+     בלבד: שתי פעולות על אותו לקוח באותה מילישנייה קיבלו את אותו
+     מזהה, והשנייה נדחתה ככפילות והוחזרה כשגיאת שרת. */
   const entry = {
-    id: 'admin:' + id + ':' + Date.now(),
+    id: 'admin:' + id + ':' + action + ':' + Date.now() + ':' +
+      Math.random().toString(36).slice(2, 8),
     provider: 'admin',
     company_id: id,
     type: 'admin.' + action,

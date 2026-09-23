@@ -96,6 +96,7 @@
         pricingTitle: 'Un tarif simple, selon la taille de l’équipe',
         pricingSubtitle: 'Sites illimités sur toutes les formules. Résiliable à tout moment.',
         pricingCta: 'Commencer gratuitement',
+        quoteMessage: 'Bonjour, nous sommes un réseau de plus de 100 salariés et souhaitons prendre rendez-vous au sujet de SetShifts.',
         pricingNote: 'Tarifs en ILS, par mois, TVA incluse. {days} jours gratuits sur toutes les formules.',
         planPopular: 'Le plus choisi',
         faqTitle: 'Questions',
@@ -914,11 +915,16 @@
         expiredKept: 'L’abonnement a expiré et n’a pas été renouvelé. Choisir une formule rétablit l’accès immédiatement, et vos données sont conservées.',
         canceled: 'L’abonnement a été résilié. Vous pouvez le renouveler à tout moment – vos données sont conservées.',
         inactive: 'L’abonnement n’est pas actif.',
-        overLimit: 'La formule {plan} couvre jusqu’à {max} employés. Vous en avez {count} – la formule {suggested} est nécessaire ({range}, {price}).'
+        overLimit: 'La formule {plan} couvre jusqu’à {max} employés. Vous en avez {count} – la formule {suggested} est nécessaire ({range}, {price}).',
+        overLimitQuote: 'La formule {plan} couvre jusqu’à {max} salariés. Vous en avez {count} : à cette taille, c’est un réseau, et le prix se fixe lors d’un échange avec nous.'
       },
 
       plans: {
         starter: 'Petite', growth: 'Moyenne', business: 'Grande',
+        enterprise: 'Réseaux',
+        quotePrice: 'Sur devis',
+        quoteCta: 'Prendre rendez-vous',
+        quoteNote: 'À partir de {count} salariés, nous construisons l’offre autour du réseau : nombre de sites, plannings, façon de travailler. Parlons-en et nous revenons avec un prix.',
         upTo: 'Jusqu’à {count} employés',
         between: 'De {from} à {to} employés',
         from: '{count} employés et plus',

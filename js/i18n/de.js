@@ -96,6 +96,7 @@
         pricingTitle: 'Einfacher Preis, nach Teamgröße',
         pricingSubtitle: 'Unbegrenzte Standorte in jedem Tarif. Jederzeit kündbar.',
         pricingCta: 'Gratis starten',
+        quoteMessage: 'Hallo, wir sind eine Kette mit mehr als 100 Mitarbeitenden und möchten einen Termin zu SetShifts vereinbaren.',
         pricingNote: 'Alle Preise in ILS, pro Monat, inkl. MwSt. {days} Tage gratis in jedem Tarif.',
         planPopular: 'Am beliebtesten',
         faqTitle: 'Fragen',
@@ -914,11 +915,16 @@
         expiredKept: 'Das Abonnement ist abgelaufen und wurde nicht verlängert. Mit der Wahl eines Tarifs ist der Zugang sofort wieder da, Ihre Daten bleiben erhalten.',
         canceled: 'Das Abonnement wurde gekündigt. Sie können jederzeit verlängern – Ihre Daten bleiben erhalten.',
         inactive: 'Das Abonnement ist nicht aktiv.',
-        overLimit: 'Der Tarif {plan} deckt bis zu {max} Mitarbeiter ab. Sie haben {count} – nötig ist der Tarif {suggested} ({range}, {price}).'
+        overLimit: 'Der Tarif {plan} deckt bis zu {max} Mitarbeiter ab. Sie haben {count} – nötig ist der Tarif {suggested} ({range}, {price}).',
+        overLimitQuote: 'Der Tarif {plan} deckt bis zu {max} Mitarbeitende ab. Sie haben {count} – ab dieser Größe ist es eine Kette, und der Preis wird im Gespräch mit uns festgelegt.'
       },
 
       plans: {
         starter: 'Klein', growth: 'Mittel', business: 'Groß',
+        enterprise: 'Ketten',
+        quotePrice: 'Auf Anfrage',
+        quoteCta: 'Termin vereinbaren',
+        quoteNote: 'Ab {count} Mitarbeitenden bauen wir das Angebot um die Kette herum: Standorte, Schichten, Arbeitsweise. Sprechen Sie mit uns, wir melden uns mit einem Preis.',
         upTo: 'Bis zu {count} Mitarbeiter',
         between: '{from} bis {to} Mitarbeiter',
         from: 'Ab {count} Mitarbeitern',

@@ -177,11 +177,18 @@
 
   /* התוכניות נקבעות לפי מספר העובדים בלבד. אין הגבלת סניפים.
      maxEmployees ערך 0 = ללא הגבלה. */
-  var PLAN_FALLBACK = { starter: 'קטן', growth: 'בינוני', business: 'גדול' };
+  var PLAN_FALLBACK = {
+    starter: 'קטן', growth: 'בינוני', business: 'גדול', enterprise: 'רשתות'
+  };
+
+  /* quote: אין מחירון. רשת בגודל כזה סוגרת מחיר בפגישה, ולכן
+     אי אפשר להציג לה מספר ואי אפשר לתת לה לבחור את התוכנית
+     לבד – היא פונה, ואנחנו מזינים את המחיר שסוכם. */
   var PLAN_SPEC = [
     { id: 'starter', minEmployees: 1, maxEmployees: 10, priceMonthly: 199 },
     { id: 'growth', minEmployees: 11, maxEmployees: 30, priceMonthly: 399 },
-    { id: 'business', minEmployees: 31, maxEmployees: 0, priceMonthly: 599 }
+    { id: 'business', minEmployees: 31, maxEmployees: 99, priceMonthly: 599 },
+    { id: 'enterprise', minEmployees: 100, maxEmployees: 0, priceMonthly: 0, quote: true }
   ];
 
   /* השם והטווח נקראים בכל גישה, כדי שהחלפת שפה תשתקף מיד */
@@ -189,7 +196,8 @@
   PLAN_SPEC.forEach(function (spec) {
     var plan = {
       id: spec.id, minEmployees: spec.minEmployees,
-      maxEmployees: spec.maxEmployees, priceMonthly: spec.priceMonthly
+      maxEmployees: spec.maxEmployees, priceMonthly: spec.priceMonthly,
+      quote: spec.quote === true
     };
     Object.defineProperty(plan, 'name', {
       enumerable: true,
@@ -202,7 +210,7 @@
     PLANS[spec.id] = plan;
   });
 
-  var PLAN_ORDER = ['starter', 'growth', 'business'];
+  var PLAN_ORDER = ['starter', 'growth', 'business', 'enterprise'];
   var DEFAULT_PLAN = 'starter';
 
   function planOf(company) {
@@ -219,6 +227,42 @@
     }
     return translate('plans.between', plan.minEmployees + '–' + plan.maxEmployees,
       { from: plan.minEmployees, to: plan.maxEmployees });
+  }
+
+  /* לאן פונה לקוח שצריך הצעת מחיר. וואטסאפ אם יש מספר, אחרת
+     מייל – אותו כלל בדיוק כמו במסך התמיכה, כי קישור וואטסאפ בלי
+     מספר הוא קישור שבור.
+
+     נבנה כאן ולא בכל מסך בנפרד: שלושה מסכים מציעים את הפנייה
+     הזו, ושלוש כתובות שונות הן שלוש דרכים לפספס לקוח. */
+  function quoteHref() {
+    var text = translate('landing.quoteMessage', 'SetShifts');
+    if (WHATSAPP_NUMBER) {
+      return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(text);
+    }
+    return 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent(text);
+  }
+
+  /* המחיר שבאמת נגבה מהחברה הזו.
+
+     לרשת עם מאה עובדים ומעלה אין מחירון – המחיר נסגר בפגישה
+     ומוזן ידנית במשרד האחורי. המחיר המותאם גובר גם בתוכנית
+     רגילה, כי לפעמים סוגרים מחיר אחר גם שם, ואם הוא קיים הוא
+     האמת: הוא מה שהלקוח הסכים לשלם.
+
+     מחזיר 0 כשאין מחיר כלל – כלומר "עוד לא סוכם", ולא "חינם".
+     מי שקורא חייב להבדיל בין השניים: אסור לחייב 0. */
+  function effectivePrice(company) {
+    var custom = Number(company && company.customPriceMonthly);
+    if (isFinite(custom) && custom > 0) return Math.round(custom);
+    return planOf(company).priceMonthly || 0;
+  }
+
+  /* האם המחיר של החברה הזו עוד לא נקבע. תוכנית הצעת־מחיר בלי
+     מחיר מוזן היא בדיוק המצב הזה, והחיוב האוטומטי חייב לדלג
+     עליה ולא לנסות לגבות אפס. */
+  function awaitingQuote(company) {
+    return planOf(company).quote === true && effectivePrice(company) <= 0;
   }
 
   /* התוכנית המתאימה למספר עובדים נתון */
@@ -368,20 +412,29 @@
       return { ok: true, problems: [], suggested: null };
     }
     var suggested = planForEmployees(employees);
-    var price = translate('billing.priceMonthly', suggested.priceMonthly + '₪',
-      { amount: suggested.priceMonthly });
+    /* התוכנית המוצעת עשויה להיות תוכנית הצעת־מחיר. אז אין מספר
+       להציג ואין לאן ללחוץ "שדרג" – הפנייה היא אלינו. */
+    var price = suggested.quote
+      ? translate('plans.quotePrice', 'לפי הצעת מחיר')
+      : translate('billing.priceMonthly', suggested.priceMonthly + '₪',
+        { amount: suggested.priceMonthly });
     return {
       ok: false,
+      quote: suggested.quote === true,
+      /* הקישור נבנה כאן כי כאן יושבות שתי הכתובות. המסך שמציג
+         את החסימה אינו צריך לדעת איך פונים אלינו. */
+      quoteHref: suggested.quote ? quoteHref() : null,
       /* התוכנית הנוכחית והמחיר המוצע חוזרים כאן ולא רק בתוך
          המשפט: המסך שמציע שדרוג צריך את המספרים עצמם, ולא
          משפט שהוא ינסה לפרק בחזרה. */
       plan: plan,
       suggested: suggested,
       price: price,
-      problems: [translate('access.overLimit', 'חריגה ממגבלת התוכנית', {
-        plan: plan.name, max: plan.maxEmployees, count: employees,
-        suggested: suggested.name, range: suggested.range, price: price
-      })]
+      problems: [translate(suggested.quote ? 'access.overLimitQuote' : 'access.overLimit',
+        'חריגה ממגבלת התוכנית', {
+          plan: plan.name, max: plan.maxEmployees, count: employees,
+          suggested: suggested.name, range: suggested.range, price: price
+        })]
     };
   }
 
@@ -424,11 +477,15 @@
     return !!(company && company.billingSubscriptionId);
   }
 
-  /* מחיר התוכנית כפי שהוא מוצג ללקוח */
+  /* מחיר התוכנית כפי שהוא מוצג ללקוח. מחיר שסוכם איתו גובר על
+     המחירון, ותוכנית שעוד אין בה מחיר אומרת זאת במילים – מספר
+     אפס על מסך חיוב נקרא כמו "חינם". */
   function priceLabel(company) {
-    var plan = planOf(company);
-    return translate('billing.priceMonthly', plan.priceMonthly + '₪',
-      { amount: plan.priceMonthly });
+    if (awaitingQuote(company)) {
+      return translate('plans.quotePrice', 'לפי הצעת מחיר');
+    }
+    var amount = effectivePrice(company);
+    return translate('billing.priceMonthly', amount + '₪', { amount: amount });
   }
 
   function newTrialCompany(name, now) {
@@ -467,6 +524,8 @@
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
+    effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,
+    quoteHref: quoteHref,
     accessState: accessState, withinPlanLimits: withinPlanLimits,
     newTrialCompany: newTrialCompany, addDays: addDays
   };

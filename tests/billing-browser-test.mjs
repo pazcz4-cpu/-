@@ -57,13 +57,33 @@ await page.waitForTimeout(300);
 const rows = (await page.locator('.billing-row').allInnerTexts()).map(t => t.replace(/\n/g, ': '));
 rows.forEach(r => console.log('   ' + r));
 
+/* לחבילת הרשתות אין .plan-price אלא .plan-quote: אין לה מחיר
+   מחירון להציג. קריאה עיוורת ל-.plan-price הפילה כאן את כל
+   הבדיקה ברגע שנוספה החבילה. */
 const plans = await page.locator('.plan-card').evaluateAll(cards => cards.map(c => ({
   name: c.querySelector('.plan-name').textContent,
-  price: c.querySelector('.plan-price').textContent.replace(/\s+/g, ''),
+  price: (c.querySelector('.plan-price') || c.querySelector('.plan-quote'))
+    .textContent.replace(/\s+/g, ''),
   range: c.querySelector('.plan-range').textContent,
-  current: c.classList.contains('current')
+  current: c.classList.contains('current'),
+  quote: c.classList.contains('quote'),
+  choosable: !!c.querySelector('[data-plan]')
 })));
 console.log('2. תוכניות:', plans.map(p => `${p.name} ${p.price} (${p.range})${p.current ? ' ← נוכחית' : ''}`).join(' | '));
+
+/* חבילת הצעת־מחיר אינה נמכרת מהמסך: אין לה מחיר לגבות, ולחיצה
+   עליה הייתה מעבירה לקוח לתוכנית שעולה אפס. */
+const quoteCard = plans.filter((p) => p.quote);
+if (quoteCard.length !== 1) {
+  throw new Error('ציפינו לחבילת הצעת־מחיר אחת, התקבלו ' + quoteCard.length);
+}
+if (quoteCard[0].choosable) {
+  throw new Error('חבילת הצעת־מחיר הוצעה לבחירה בלחיצה');
+}
+if (/\d/.test(quoteCard[0].price)) {
+  throw new Error('חבילת הצעת־מחיר הציגה מספר: ' + quoteCard[0].price);
+}
+console.log('   חבילת הרשתות: ' + quoteCard[0].price + ' — בלי כפתור בחירה ✓');
 await page.screenshot({ path: OUT + '/billing.png', fullPage: false });
 
 // מגבלת עובדים: חשבון חדש נפתח ריק, ולכן טוענים את עסק הדוגמה

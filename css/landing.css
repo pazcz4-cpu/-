@@ -139,7 +139,12 @@
 .lp-step p { margin: 0; color: var(--muted); font-size: 15px; }
 
 /* ===== תוכניות ===== */
-.lp-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+/* auto-fit ולא מספר קבוע: נוספה חבילה רביעית, ורשימה קשיחה של
+   שלוש עמודות הייתה דוחפת אותה לשורה שנייה לבדה. */
+.lp-plans {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 20px; align-items: stretch;
+}
 .lp-plan {
   background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 26px 22px; display: flex; flex-direction: column; position: relative;
@@ -156,6 +161,9 @@
 .lp-plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 .lp-plan-range { color: var(--muted); font-size: 14.5px; margin-bottom: 16px; }
 .lp-plan-price { font-size: 38px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+/* "לפי הצעת מחיר" הוא משפט, לא מספר. באותו גודל הוא נשבר לשלוש
+   שורות ומושך את העין חזק יותר מהמחירים עצמם. */
+.lp-plan-quote { font-size: 21px; font-weight: 700; line-height: 1.25; }
 .lp-plan-per { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 .lp-plan .lp-btn { margin-top: auto; }
 .lp-pricing-note { color: var(--muted); font-size: 14px; margin: 26px 0 0; text-align: center; }

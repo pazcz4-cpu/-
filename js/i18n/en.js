@@ -558,6 +558,9 @@
 
       server: {
         emailRequired: 'An email address is required',
+        mailNotConfigured: 'Email sending is not set up yet. The mail service still needs to be configured.',
+        mailFailed: 'The account is ready but the email did not go out. Check the mail service and try again.',
+        ownerOwnPassword: 'The account owner sets their own password, through "Forgot password" on the sign-in screen.',
         linkExpired: 'That link is no longer valid. Ask for a new one.',
         rateLimited: 'Too many emails at once. Try again in a minute.',
         invitePending: 'This account was invited and has no password yet. Open the link from the invitation email, or ask for a new one with “Forgot password”.',
@@ -791,6 +794,8 @@
         accessBulkFailed: '{count} did not go out.',
         accessBulkNoEmail: '{count} active staff have no email address.',
         sending: 'Sending… {done} of {total}',
+        accessCardNoEmail: 'This staff member has no email address. Type one here and it is saved on their card too.',
+        noEmailTag: 'no email',
         activeColumn: 'Active',
         created: 'User created for {email}', updated: 'Saved', updateFailed: 'Update failed'
       },

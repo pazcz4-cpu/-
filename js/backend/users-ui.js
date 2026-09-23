@@ -147,18 +147,36 @@
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       say('');
-      var email = String(form.email.value || '').trim().toLowerCase();
+      var typed = String(form.email.value || '').trim().toLowerCase();
       var chosen = form.employeeId.value;
 
       /* בלי עובד ובלי מייל – השליחה היא לכולם. זו הפעולה שמנהל
          עושה פעם אחת, ביום הראשון, לשלושים איש. */
-      if (!email && !chosen) return sendToAll(say);
-      if (!email) { say(t('users.accessNoEmail'), true); return; }
+      if (!typed && !chosen) return sendToAll(say);
+
+      /* המייל נקרא מהכרטיס גם כאן, ולא רק כשבוחרים מהרשימה.
+         בחירה שלא הגיעה כאירוע – מקלדת, מילוי אוטומטי, תוסף
+         בדפדפן – אינה סיבה שהשליחה לא תעבוד, וזה בדיוק מה
+         שקרה בפועל: המייל היה על הכרטיס, התיבה נשארה ריקה,
+         והמסך אמר "צריך לבחור עובד". */
+      var card = employeeById(chosen);
+      var email = typed || (card ? String(card.email || '').trim().toLowerCase() : '');
+      if (!email) {
+        say(chosen ? t('users.accessCardNoEmail') : t('users.accessNoEmail'), true);
+        return;
+      }
 
       var role = form.role.value;
       var link = resolveStaffCard(chosen, email, role);
       var employee = employeeById(link.employeeId);
       var name = (employee && employee.name) || nameFromEmail(email);
+
+      /* מייל שהוקלד לעובד שאין לו אחד – נשמר על הכרטיס. אחרת
+         השליחה הבאה תשאל עליו שוב, וגם השליחה לכולם תדלג עליו. */
+      if (typed && employee && !String(employee.email || '').trim()) {
+        employee.email = typed;
+        if (ctx.persistConfig) ctx.persistConfig();
+      }
 
       var button = document.getElementById('invite-submit');
       if (button) button.disabled = true;
@@ -270,7 +288,9 @@
 
   function employeeById(id) {
     if (!id) return null;
-    return (ctx.getEmployees() || []).filter(function (emp) { return emp.id === id; })[0] || null;
+    return (ctx.getEmployees() || []).filter(function (emp) {
+      return String(emp.id) === String(id);
+    })[0] || null;
   }
 
   /* שם זמני לכרטיס שנפתח ממייל בלבד. המנהל יתקן אותו בשנייה,
@@ -359,9 +379,12 @@
     if (!select || !ctx) return;
     var employees = ctx.getEmployees() || [];
     var current = select.value;
+    /* לכל שם נכתב גם המייל שלו – ומי שאין לו, נכתב עליו שאין.
+       בלי זה "לא נשלח" נראה כמו תקלה, במקום ככרטיס בלי כתובת. */
     select.innerHTML = '<option value="">' + t('users.noLink') + '</option>' + employees.map(function (emp) {
+      var mail = String(emp.email || '').trim();
       return '<option value="' + esc(emp.id) + '">' + esc(emp.name) +
-        (emp.email ? ' – ' + esc(emp.email) : '') + '</option>';
+        ' – ' + esc(mail || t('users.noEmailTag')) + '</option>';
     }).join('');
     if (current) select.value = current;
     updateSubmit();

@@ -552,6 +552,9 @@
 
       server: {
         emailRequired: 'Une adresse e-mail est requise',
+        mailNotConfigured: 'L’envoi d’e-mails n’est pas encore configuré. Le service de messagerie doit être paramétré.',
+        mailFailed: 'Le compte est prêt mais l’e-mail n’est pas parti. Vérifiez le service de messagerie et réessayez.',
+        ownerOwnPassword: 'Le titulaire du compte définit lui-même son mot de passe, via "Mot de passe oublié" sur l’écran de connexion.',
         linkExpired: 'Ce lien n’est plus valide. Demandez-en un nouveau.',
         rateLimited: 'Trop d’e-mails d’un coup. Réessayez dans une minute.',
         invitePending: 'Ce compte a été invité et n’a pas encore de mot de passe. Ouvrez le lien de l’e-mail d’invitation, ou demandez-en un nouveau via « Mot de passe oublié ».',
@@ -785,6 +788,8 @@
         accessBulkFailed: '{count} n’ont pas été envoyés.',
         accessBulkNoEmail: '{count} employés actifs n’ont pas d’adresse e-mail.',
         sending: 'Envoi… {done} sur {total}',
+        accessCardNoEmail: 'Cet employé n’a pas d’adresse e-mail. Saisissez-la ici : elle sera aussi enregistrée sur sa fiche.',
+        noEmailTag: 'sans e-mail',
         activeColumn: 'Actif',
         created: 'Utilisateur créé pour {email}', updated: 'Enregistré', updateFailed: 'Échec de la mise à jour'
       },

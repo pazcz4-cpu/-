@@ -552,6 +552,9 @@
 
       server: {
         emailRequired: 'Eine E-Mail-Adresse ist erforderlich',
+        mailNotConfigured: 'Der E-Mail-Versand ist noch nicht eingerichtet. Der Maildienst muss konfiguriert werden.',
+        mailFailed: 'Das Konto ist bereit, aber die E-Mail ging nicht raus. Prüfe den Maildienst und versuch es erneut.',
+        ownerOwnPassword: 'Wer das Konto besitzt, setzt das Passwort selbst – über "Passwort vergessen" auf der Anmeldeseite.',
         linkExpired: 'Dieser Link ist nicht mehr gültig. Fordern Sie einen neuen an.',
         rateLimited: 'Zu viele E-Mails auf einmal. Versuchen Sie es in einer Minute.',
         invitePending: 'Dieses Konto wurde eingeladen und hat noch kein Passwort. Öffnen Sie den Link aus der Einladungs-E-Mail oder fordern Sie über „Passwort vergessen“ einen neuen an.',
@@ -785,6 +788,8 @@
         accessBulkFailed: '{count} wurden nicht gesendet.',
         accessBulkNoEmail: '{count} aktive Mitarbeitende haben keine E-Mail-Adresse.',
         sending: 'Senden… {done} von {total}',
+        accessCardNoEmail: 'Diese Person hat keine E-Mail-Adresse. Trag sie hier ein – sie wird auch auf der Karte gespeichert.',
+        noEmailTag: 'keine E-Mail',
         activeColumn: 'Aktiv',
         created: 'Benutzer für {email} angelegt', updated: 'Gespeichert', updateFailed: 'Aktualisierung fehlgeschlagen'
       },

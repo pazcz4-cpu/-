@@ -552,6 +552,9 @@
 
       server: {
         emailRequired: 'É necessário um endereço de email',
+        mailNotConfigured: 'O envio de e-mails ainda não está configurado. Falta configurar o serviço de correio.',
+        mailFailed: 'A conta está pronta mas o e-mail não saiu. Verifique o serviço de correio e tente de novo.',
+        ownerOwnPassword: 'O titular da conta define a sua palavra-passe com "Esqueci-me da palavra-passe" no ecrã de entrada.',
         linkExpired: 'Esse link já não é válido. Pede um novo.',
         rateLimited: 'Demasiados emails de uma vez. Tenta dentro de um minuto.',
         invitePending: 'Esta conta foi convidada e ainda não tem palavra-passe. Abre o link do email de convite, ou pede um novo em «Esqueci a palavra-passe».',
@@ -785,6 +788,8 @@
         accessBulkFailed: '{count} não foram enviados.',
         accessBulkNoEmail: '{count} funcionários ativos não têm e-mail.',
         sending: 'A enviar… {done} de {total}',
+        accessCardNoEmail: 'Este funcionário não tem e-mail. Escreva-o aqui e ficará guardado também na ficha.',
+        noEmailTag: 'sem e-mail',
         activeColumn: 'Ativo',
         created: 'Utilizador criado para {email}', updated: 'Guardado', updateFailed: 'Não foi possível atualizar'
       },

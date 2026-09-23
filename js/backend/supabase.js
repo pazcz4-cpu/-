@@ -68,6 +68,17 @@
     if (lower.indexOf('company name') !== -1) {
       return fail('invalid_input', t('server.companyRequired'));
     }
+    /* שליחת פרטי כניסה: שלוש תשובות שהן הגדרה חסרה ולא תקלה,
+       ומגיע להן נוסח שאומר מה לעשות במקום טקסט באנגלית. */
+    if (lower.indexOf('email sending is not configured') !== -1) {
+      return fail('mail_not_configured', t('server.mailNotConfigured'));
+    }
+    if (lower.indexOf('the email was not sent') !== -1) {
+      return fail('mail_failed', t('server.mailFailed'));
+    }
+    if (lower.indexOf('owner sets their own password') !== -1) {
+      return fail('forbidden', t('server.ownerOwnPassword'));
+    }
     /* חסימת קצב של שליחת מיילים. זו התשובה היחידה שבה כדאי לומר
        ללקוח "נסו בעוד רגע" במקום להציג כשל כללי. */
     if (status === 429 || lower.indexOf('rate limit') !== -1 ||

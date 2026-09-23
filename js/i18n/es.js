@@ -552,6 +552,9 @@
 
       server: {
         emailRequired: 'Se necesita una dirección de correo',
+        mailNotConfigured: 'El envío de correo aún no está configurado. Falta configurar el servicio de correo.',
+        mailFailed: 'La cuenta está lista pero el correo no salió. Revisa el servicio de correo e inténtalo de nuevo.',
+        ownerOwnPassword: 'El titular de la cuenta pone su propia contraseña con "He olvidado la contraseña" en la pantalla de acceso.',
         linkExpired: 'Ese enlace ya no es válido. Pide uno nuevo.',
         rateLimited: 'Demasiados correos a la vez. Inténtalo en un minuto.',
         invitePending: 'Esta cuenta fue invitada y todavía no tiene contraseña. Abre el enlace del correo de invitación o pide uno nuevo con «He olvidado la contraseña».',
@@ -785,6 +788,8 @@
         accessBulkFailed: '{count} no se enviaron.',
         accessBulkNoEmail: '{count} empleados activos no tienen correo.',
         sending: 'Enviando… {done} de {total}',
+        accessCardNoEmail: 'Este empleado no tiene correo. Escríbelo aquí y se guardará también en su ficha.',
+        noEmailTag: 'sin correo',
         activeColumn: 'Activo',
         created: 'Usuario creado para {email}', updated: 'Guardado', updateFailed: 'No se pudo actualizar'
       },

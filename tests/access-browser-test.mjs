@@ -108,6 +108,40 @@ try {
   check('המייל התמלא לבד',
     await page.locator('#invite-form input[name="email"]').inputValue(), 'dana@acc.test');
 
+  const noMail = await page.evaluate(() => {
+    const emp = window.ShiftApp.getState().employees.filter((e) => !e.email)[0];
+    return emp ? emp.id : null;
+  });
+  const labels = await page.locator('#invite-form select[name="employeeId"] option')
+    .evaluateAll((nodes) => nodes.map((n) => n.textContent));
+  check('מי שאין לו מייל כתוב עליו שאין',
+    labels.filter((text) => /אין מייל/.test(text)).length > 0, true);
+
+  console.log('\n== בחירה שלא הגיעה כאירוע ==');
+  /* מה שקרה אצל לקוח: העובד נבחר, תיבת המייל נשארה ריקה, והמסך
+     אמר "צריך לבחור עובד". המייל יושב על הכרטיס — השליחה חייבת
+     לקחת אותו משם, בלי להישען על אירוע הבחירה. */
+  await page.evaluate((id) => {
+    const form = document.getElementById('invite-form');
+    form.employeeId.value = id;
+    form.email.value = '';
+  }, withEmail);
+  await page.click('#invite-submit');
+  await page.waitForTimeout(1000);
+  check('נשלח בכל זאת, מהמייל שעל הכרטיס',
+    (await page.locator('#users-message').innerText()).trim(), /נשלחו פרטי כניסה אל dana@acc\.test/);
+
+  console.log('\n== עובד בלי מייל: נאמר מה חסר, ולא "צריך לבחור עובד" ==');
+  await page.evaluate((id) => {
+    const form = document.getElementById('invite-form');
+    form.employeeId.value = id;
+    form.email.value = '';
+  }, noMail);
+  await page.click('#invite-submit');
+  await page.waitForTimeout(600);
+  check('ההודעה מכוונת לכרטיס',
+    (await page.locator('#users-message').innerText()).trim(), /אין כתובת מייל/);
+
   console.log('\n== שליחה לכולם בלחיצה אחת ==');
   /* ממלאים מייל לשני עובדים נוספים, כדי שיהיה למי לשלוח */
   await page.evaluate(() => {
@@ -137,6 +171,22 @@ try {
     return ['dana@acc.test', 'a@acc.test', 'b@acc.test']
       .filter((mail) => users.some((u) => u.email === mail)).length;
   }), 3);
+
+  console.log('\n== מייל שהוקלד נשמר על הכרטיס ==');
+  /* אחרת השליחה הבאה תשאל עליו שוב, וגם "שליחה לכולם" תדלג
+     עליו לנצח. */
+  const stillNone = await page.evaluate(() => {
+    const emp = window.ShiftApp.getState().employees.filter((e) => !e.email)[0];
+    return emp ? emp.id : null;
+  });
+  await page.selectOption('#invite-form select[name="employeeId"]', stillNone);
+  await page.fill('#invite-form input[name="email"]', 'typed@acc.test');
+  await page.click('#invite-submit');
+  await page.waitForTimeout(1000);
+  check('המייל נשמר על הכרטיס', await page.evaluate((id) => {
+    const emp = window.ShiftApp.getState().employees.filter((e) => e.id === id)[0];
+    return emp ? emp.email : null;
+  }, stillNone), 'typed@acc.test');
 
   console.log('\n  שגיאות בדף: ' + (errors.length ? errors.join(' | ') : 'אין'));
   if (errors.length) failures.push('שגיאות בדף');

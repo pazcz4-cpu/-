@@ -304,7 +304,9 @@
           backend: backend, session: session, getEmployees: getEmployees,
           addEmployee: function (name, email) {
             return root.ShiftApp.addEmployee(name, false, email);
-          }
+          },
+          /* מייל שהוקלד בטופס נשמר על הכרטיס של העובד */
+          persistConfig: function () { return root.ShiftApp.persistConfig(); }
         });
         /* המנהל מופיע בטבלת המשתמשים. שינה את שמו – שם ישן בטבלה
            שנייה אחרי שהמסך אמר "נשמר" נראה כאילו לא נשמר. */

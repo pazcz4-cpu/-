@@ -369,6 +369,81 @@
     if (isEmpty) { delete week.constraints[key]; } else { week.constraints[key] = value; }
   }
 
+  /* ===== ימי חופש =====
+
+     "לא עובד ביום שישי" ו"לקח יום חופש" נראים אותו דבר בסידור,
+     והם שני דברים שונים לגמרי בשכר. לכן יום חופש שהמנהל מסמן
+     נושא סוג: בתשלום – יורד מהמכסה של העובד; ללא חיוב – יום
+     שסוכם איתו ואינו נספר.
+
+     הסימון יושב על אותה רשומה של היום החופשי ולא במבנה נפרד:
+     יום שמסומן כחופש והבקשה שלו נמחקת אינו יכול להישאר תלוי
+     במקום אחר ולהיספר לנצח. */
+  var LEAVE = { PAID: 'paid', UNPAID: 'unpaid' };
+
+  function leaveOf(week, empId, dayIdx) {
+    var record = getConstraintRecord(week, empId, dayIdx);
+    if (!record || !record.off) return null;
+    if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return null;
+    return record.leave === LEAVE.PAID || record.leave === LEAVE.UNPAID ? record.leave : null;
+  }
+
+  /* leave = 'paid' | 'unpaid' | null. אפשרי רק על יום שמסומן
+     כחופשי – אין "חופש" על יום עבודה. */
+  function setLeave(week, empId, dayIdx, leave) {
+    var record = getConstraintRecord(week, empId, dayIdx);
+    if (!record || !record.off) return false;
+    if (leave === LEAVE.PAID || leave === LEAVE.UNPAID) record.leave = leave;
+    else delete record.leave;
+    return true;
+  }
+
+  function monthKeyOf(date) {
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1);
+  }
+
+  /* מפתחות השבועות שיש בהם ולו יום אחד מהחודש הזה. שבוע חוצה
+     חודשים, ולכן הספירה נעשית לפי היום ולא לפי השבוע. */
+  function weekKeysForMonth(monthKey) {
+    var parts = String(monthKey || '').split('-');
+    var year = Number(parts[0]);
+    var month = Number(parts[1]);
+    if (!year || !month) return [];
+    var first = new Date(year, month - 1, 1);
+    var last = new Date(year, month, 0);
+    var keys = [];
+    var key = toKey(weekStart(first));
+    var guard = 0;
+    while (guard++ < 10) {
+      keys.push(key);
+      if (dateOfDay(key, 6) >= last) break;
+      key = shiftWeekKey(key, 1);
+    }
+    return keys;
+  }
+
+  /* סיכום ימי החופש בחודש, לפי עובד. נספרים ימים – לא שבועות –
+     ולכן שבוע שחוצה חודשים מתחלק נכון בין השניים. */
+  function leaveSummary(state, monthKey) {
+    var out = {};
+    Object.keys(state.weeks || {}).forEach(function (weekKey) {
+      var current = state.weeks[weekKey];
+      var constraints = (current && current.constraints) || {};
+      Object.keys(constraints).forEach(function (key) {
+        var parts = key.split('|');
+        var empId = parts[0];
+        var dayIdx = Number(parts[1]);
+        if (!(dayIdx >= 0 && dayIdx <= 6)) return;
+        var kind = leaveOf(current, empId, dayIdx);
+        if (!kind) return;
+        if (monthKeyOf(dateOfDay(weekKey, dayIdx)) !== monthKey) return;
+        var bucket = out[empId] || (out[empId] = { paid: 0, unpaid: 0 });
+        if (kind === LEAVE.PAID) bucket.paid++; else bucket.unpaid++;
+      });
+    });
+    return out;
+  }
+
   function getAssigned(week, dayIdx, branchId, shiftId) {
     return week.assignments[slotKey(dayIdx, branchId, shiftId)] || [];
   }
@@ -1270,6 +1345,12 @@
     constraintKey: constraintKey,
     getConstraint: getConstraint,
     getConstraintRecord: getConstraintRecord,
+    LEAVE: LEAVE,
+    leaveOf: leaveOf,
+    setLeave: setLeave,
+    leaveSummary: leaveSummary,
+    weekKeysForMonth: weekKeysForMonth,
+    monthKeyOf: monthKeyOf,
     standingFor: standingFor,
     standingBlocks: standingBlocks,
     hasStanding: hasStanding,

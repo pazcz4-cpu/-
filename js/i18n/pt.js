@@ -197,6 +197,10 @@
       toast: {
         generated: 'Horário construído. {shifts} ficaram por preencher – cada uma tem o seu motivo nos avisos acima.',
         generatedFull: 'Horário gerado – todos os turnos estão preenchidos',
+        generateNothing: 'Ainda não há nada para escalar. Crie um local, defina os horários e adicione pessoas.',
+        generateNoShifts: 'Não há turnos abertos esta semana. Verifique se existe um local ativo com horários.',
+        generateNoStaff: 'Não há pessoas ativas para escalar. Adicione-as no ecrã de pessoas.',
+        cleanupPartial: 'Não foi possível carregar {count} semanas, por isso nada foi eliminado. Verifique a ligação e tente de novo.',
         clearWeekConfirm: 'Limpar todas as atribuições desta semana? Os pedidos são mantidos.',
         cleared: 'Horário limpo',
         copied: 'Horário copiado para a área de transferência',

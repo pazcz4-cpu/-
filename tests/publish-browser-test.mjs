@@ -134,12 +134,29 @@ try {
     () => window.__backend.loadWeek(window.ShiftApp.weekKey()).then((w) => !!w.published)), true);
 
   console.log('\n== שינוי אחרי פרסום ==');
-  await page.evaluate(() => {
+  const dropOne = () => page.evaluate(() => {
     const select = Array.from(document.querySelectorAll('#schedule-branch select.emp-select'))
       .find((node) => node.value);
     select.value = '';
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
+
+  /* שבוע שפורסם נעול: הניסיון הראשון נעצר ומציג אזהרה, והמסך
+     מוחזר למה שבאמת שמור – כדי שלא יישאר על המסך שיבוץ שלא נשמר.
+     זו ההגנה, ולכן היא נבדקת כאן ולא נעקפת. */
+  await dropOne();
+  await page.waitForTimeout(600);
+  check('שבוע מפורסם אינו משתנה בלחיצה אחת',
+    await page.locator('#confirm-overlay .confirm-card').isVisible(), true);
+  check('והשינוי לא נכנס', (await stateOf(page)).cls, /published/);
+
+  /* אישור ראשון – להמשיך; אישור שני – לערוך את המפורסם עצמו
+     (הכפתור השלישי הוא "להחזיר לטיוטה"). */
+  await page.click('[data-confirm-yes]');
+  await page.waitForTimeout(500);
+  await page.click('[data-confirm-alt]');
+  await page.waitForTimeout(800);
+  await dropOne();
   await page.waitForTimeout(900);
   const changed = await stateOf(page);
   check('הסטטוס אומר "שונה מאז הפרסום"', changed.label, /שונה מאז הפרסום ב־\d+\/\d+/);

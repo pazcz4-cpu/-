@@ -197,6 +197,10 @@
       toast: {
         generated: 'Planning construit. {shifts} n’ont pas pu être pourvus – chacun a sa raison dans les alertes au-dessus.',
         generatedFull: 'Planning généré – tous les services sont pourvus',
+        generateNothing: "Il n'y a encore rien à planifier. Créez un site, définissez ses horaires et ajoutez des personnes.",
+        generateNoShifts: "Aucun créneau n'est ouvert cette semaine. Vérifiez qu'un site est actif et a des horaires.",
+        generateNoStaff: "Aucune personne active à planifier. Ajoutez-en dans l'écran des personnes.",
+        cleanupPartial: "Nous n'avons pas pu charger {count} semaines, rien n'a donc été supprimé. Vérifiez la connexion et réessayez.",
         clearWeekConfirm: 'Vider toutes les affectations de cette semaine ? Les demandes sont conservées.',
         cleared: 'Planning vidé',
         copied: 'Planning copié dans le presse-papiers',

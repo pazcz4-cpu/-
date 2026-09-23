@@ -197,6 +197,10 @@
       toast: {
         generated: 'Plan erstellt. {shifts} konnten nicht besetzt werden – zu jeder steht der Grund in den Hinweisen über dem Plan.',
         generatedFull: 'Plan erstellt – alle Schichten sind besetzt',
+        generateNothing: 'Es gibt noch nichts zu planen. Legen Sie einen Standort an, setzen Sie Zeiten und fügen Sie Personen hinzu.',
+        generateNoShifts: 'Diese Woche sind keine Schichten offen. Prüfen Sie, ob ein Standort aktiv ist und Zeiten hat.',
+        generateNoStaff: 'Es gibt keine aktiven Personen zum Einteilen. Fügen Sie sie im Personen-Bildschirm hinzu.',
+        cleanupPartial: 'Wir konnten {count} Wochen nicht laden, daher wurde nichts gelöscht. Bitte Verbindung prüfen und erneut versuchen.',
         clearWeekConfirm: 'Alle Zuweisungen dieser Woche löschen? Die Wünsche bleiben erhalten.',
         cleared: 'Plan geleert',
         copied: 'Plan in die Zwischenablage kopiert',

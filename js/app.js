@@ -115,7 +115,16 @@
     });
   }
 
-  function persist(scope) {
+  /* weekKeys: שבועות נוספים שהשתנו מלבד המוצג.
+
+     מחיקת עובד, סניף או סוג משמרת מנקה את השיבוצים בכל השבועות
+     שבזיכרון – אבל שמירה של השבוע המוצג בלבד החזירה אותם ברענון
+     הבא, כולל בשבועות שכבר פורסמו. התוצאה: משמרת שנראית מאוישת
+     ואיש אינו מגיע אליה, כי העובד שמשובץ בה כבר אינו קיים.
+
+     נשמרים רק השבועות שבאמת נגעו בהם, ולא כל מה שבזיכרון: לחשבון
+     בן שנה יש חמישים שבועות, ומחיקה אחת לא צריכה לכתוב את כולם. */
+  function persist(scope, weekKeys) {
     var failed = function (err) {
       toast(t('errors.notSaved') + (err && err.message ? ': ' + err.message : ''));
     };
@@ -123,10 +132,104 @@
       trackSave(source.saveConfig(state, scope)).catch(failed);
       Platform.pushConfig();
     }
-    if (scope !== 'config') {
-      trackSave(source.saveWeek(state, weekKey)).catch(failed);
-      Platform.pushWeek(weekKey);
+    if (scope === 'config') return;
+
+    var keys = [weekKey];
+    /* המקור המקומי שומר את כל המצב בכתיבה אחת, ולכן אין טעם
+       לחזור עליה לכל שבוע. */
+    if (weekKeys && weekKeys.length && source.mode !== 'local') {
+      weekKeys.forEach(function (key) {
+        if (key && keys.indexOf(key) === -1) keys.push(key);
+      });
     }
+    keys.forEach(function (key) {
+      trackSave(source.saveWeek(state, key)).catch(failed);
+      Platform.pushWeek(key);
+    });
+  }
+
+  /* מחיקת עובד: מהרשימה, ומכל השבועות – שיבוצים ובקשות.
+     נקראת רק מתוך withAllWeeks, כשכל השבועות כבר בזיכרון. */
+  function removeEmployee(emp) {
+    state.employees = state.employees.filter(function (item) { return item.id !== emp.id; });
+    var touched = [];
+    Object.keys(state.weeks).forEach(function (key) {
+      var weekData = state.weeks[key];
+      var changed = false;
+      Object.keys(weekData.assignments || {}).forEach(function (slot) {
+        var before = weekData.assignments[slot].length;
+        weekData.assignments[slot] = weekData.assignments[slot]
+          .filter(function (id) { return id !== emp.id; });
+        if (weekData.assignments[slot].length !== before) changed = true;
+        if (!weekData.assignments[slot].length) delete weekData.assignments[slot];
+      });
+      Object.keys(weekData.constraints || {}).forEach(function (constraintKey) {
+        if (constraintKey.indexOf(emp.id + '|') === 0) {
+          delete weekData.constraints[constraintKey];
+          changed = true;
+        }
+      });
+      if (changed) touched.push(key);
+    });
+    persist('all', touched);
+    render();
+  }
+
+  /* מחיקת סניף: מהרשימה, מכרטיסי העובדים, ומכל השבועות.
+     נקראת רק מתוך withAllWeeks. */
+  function removeBranch(branch) {
+    state.branches = state.branches.filter(function (item) { return item.id !== branch.id; });
+    state.employees.forEach(function (emp) {
+      emp.branches = emp.branches.filter(function (id) { return id !== branch.id; });
+    });
+    var touched = [];
+    Object.keys(state.weeks).forEach(function (key) {
+      var weekData = state.weeks[key];
+      var changed = false;
+      Object.keys(weekData.assignments || {}).forEach(function (slot) {
+        if (slot.split('|')[1] === branch.id) {
+          delete weekData.assignments[slot];
+          changed = true;
+        }
+      });
+      if (changed) touched.push(key);
+    });
+    persist('all', touched);
+    render();
+  }
+
+  /* ===== מחיקה שנוגעת בכל השבועות =====
+
+     שבועות נטענים לזיכרון רק כשצופים בהם: בעלייה קיימים רק
+     המפתחות, והתוכן ריק. לכן ניקוי שעובר על state.weeks ניקה רק
+     את מה שהמנהל במקרה פתח באותה ישיבה – ובכל שאר השבועות נשאר
+     שיבוץ לעובד או לסניף שכבר אינם קיימים.
+
+     זה לא נראה במסך: השבוע המוצג היה נקי, והבאג ישב בשבוע אחר,
+     בשרת. משמרת כזו נראית מאוישת, ואיש אינו מגיע אליה.
+
+     לכן טוענים הכל לפני שנוגעים. זה איטי יותר, וזו מחיקה מאושרת
+     שקורית פעם בכמה שבועות – מחיר סביר לנתון נכון. */
+  function withAllWeeks(run) {
+    var keys = Object.keys(state.weeks);
+    var missed = [];
+    var chain = keys.reduce(function (previous, key) {
+      return previous.then(function () {
+        return Promise.resolve(source.ensureWeek(state, key))
+          .catch(function () { missed.push(key); });
+      });
+    }, Promise.resolve());
+
+    return chain.then(function () {
+      /* שבוע שלא נטען יישאר עם שיבוץ מת. עדיף לעצור ולומר, מאשר
+         לנקות חצי ולהשאיר את המנהל בטוח שסיים. */
+      if (missed.length) {
+        toast(t('toast.cleanupPartial', { count: missed.length }));
+        return false;
+      }
+      run();
+      return true;
+    });
   }
 
   function currentRole() { return source.role || 'owner'; }
@@ -1539,8 +1642,9 @@
           (open ? 'true' : 'false') + '" data-i18n-title="employees.toggleCard" title="' +
           esc(t('employees.toggleCard')) + '">' + (open ? '▾' : '▸') + '</button>' +
         '<input class="name" data-field="name" value="' + esc(emp.name) + '">' +
-        '<button class="btn icon danger" data-action="delete-emp" title="' +
-          esc(t('common.delete')) + '">🗑</button></div>';
+        '<button class="btn icon danger" data-action="delete-emp" aria-label="' +
+          esc(t('common.delete')) + '" title="' + esc(t('common.delete')) + '">' +
+          ico('trash') + '</button></div>';
       html += '<button class="card-summary" data-action="toggle-card">' +
         esc(employeeSummary(emp)) + '</button>';
 
@@ -1774,7 +1878,9 @@
         (branch.active ? ' checked' : '') + '> ' + t('branches.active') + '</label>' +
         '<button class="btn ghost small" data-action="reset-branch" title="' +
           esc(t('branches.resetTitle')) + '">' + esc(t('branches.resetWeek')) + '</button>' +
-        '<button class="btn icon danger" data-action="delete-branch" title="' + t('common.delete') + '">🗑</button></div>';
+        '<button class="btn icon danger" data-action="delete-branch" aria-label="' +
+          esc(t('common.delete')) + '" title="' + esc(t('common.delete')) + '">' +
+          ico('trash') + '</button></div>';
 
       html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">' +
         t('branches.day') + '</th>';
@@ -1994,8 +2100,9 @@
         '<button class="btn icon" data-move="-1" title="' + t('common.moveUp') + '"' + (index === 0 ? ' disabled' : '') + '>↑</button>' +
         '<button class="btn icon" data-move="1" title="' + t('common.moveDown') + '"' +
         (index === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
-        '<button class="btn icon danger" data-remove="1" title="' + t('common.delete') + '"' +
-        (list.length === 1 ? ' disabled' : '') + '>🗑</button>' +
+        '<button class="btn icon danger" data-remove="1" aria-label="' +
+        esc(t('common.delete')) + '" title="' + esc(t('common.delete')) + '"' +
+        (list.length === 1 ? ' disabled' : '') + '>' + ico('trash') + '</button>' +
         '</div>';
       html += '</div>';
     });
@@ -2655,6 +2762,23 @@
     $('#generate').addEventListener('click', function () {
       if (weekBlocked()) return;
       var current = week();
+
+      /* אין מה לשבץ: אין משמרות פתוחות, או אין עובדים פעילים.
+
+         בלי הבדיקה הזו המנוע רץ על ריק ומחזיר אפס חוסרים, והמסך
+         אומר "כל המשמרות מאוישות" – משפט נכון טכנית שמשקר ללקוח
+         חדש שעוד לא הגדיר דבר. הוא מסיק שהמוצר לא עובד.
+
+         ויוצאים לפני השמירה ולא אחריה: מי שכיבה בטעות את כל
+         הסניפים לא אמור לאבד את השיבוץ שכבר היה. */
+      var demands = Store.weekDemands(state, current);
+      var staff = state.employees.filter(function (emp) { return emp.active; }).length;
+      if (!demands.length || !staff) {
+        toast(t(!demands.length && !staff ? 'toast.generateNothing'
+          : (!demands.length ? 'toast.generateNoShifts' : 'toast.generateNoStaff')));
+        return;
+      }
+
       var keepManual = $('#keep-manual').checked;
       var result = Scheduler.generate(state, current, { keepManual: keepManual, seed: Date.now() % 100000 });
       if (!keepManual) { current.manual = {}; }
@@ -2985,19 +3109,7 @@
 
       if (action === 'delete-emp') {
         if (!confirm(t('employees.deleteConfirm', { name: emp.name }))) return;
-        state.employees = state.employees.filter(function (item) { return item.id !== emp.id; });
-        Object.keys(state.weeks).forEach(function (key) {
-          var weekData = state.weeks[key];
-          Object.keys(weekData.assignments || {}).forEach(function (slot) {
-            weekData.assignments[slot] = weekData.assignments[slot].filter(function (id) { return id !== emp.id; });
-            if (!weekData.assignments[slot].length) delete weekData.assignments[slot];
-          });
-          Object.keys(weekData.constraints || {}).forEach(function (constraintKey) {
-            if (constraintKey.indexOf(emp.id + '|') === 0) delete weekData.constraints[constraintKey];
-          });
-        });
-        persist('all');
-        render();
+        withAllWeeks(function () { removeEmployee(emp); });
         return;
       }
       if (action === 'send-access') {
@@ -3226,23 +3338,14 @@
         return;
       }
 
-      if (event.target.dataset.action !== 'delete-branch') return;
-      var card = event.target.closest('.card');
+      var action = event.target.closest('[data-action]');
+      if (!action || action.dataset.action !== 'delete-branch') return;
+      var card = action.closest('.card');
       var branch = Store.byId(state.branches, card.dataset.branch);
       if (!branch) return;
       if (!confirm(t('branches.deleteConfirm', { name: branch.name }))) return;
-      state.branches = state.branches.filter(function (item) { return item.id !== branch.id; });
-      state.employees.forEach(function (emp) {
-        emp.branches = emp.branches.filter(function (id) { return id !== branch.id; });
-      });
-      Object.keys(state.weeks).forEach(function (key) {
-        var weekData = state.weeks[key];
-        Object.keys(weekData.assignments || {}).forEach(function (slot) {
-          if (slot.split('|')[1] === branch.id) delete weekData.assignments[slot];
-        });
-      });
-      persist('all');
-      render();
+      withAllWeeks(function () { removeBranch(branch); });
+      return;
     });
 
     list.addEventListener('change', function (event) {
@@ -3421,12 +3524,16 @@
           usage: used ? t('toast.deleteShiftUsed', { count: used }) : t('toast.deleteShiftUnused')
         }))) return;
 
-        var removed = Store.removeShift(state, found.shift.id);
-        persist('all');
-        render();
-        toast(t('toast.shiftDeleted', {
-          removed: removed.assignments ? t('toast.shiftRemovedCount', { count: removed.assignments }) : ''
-        }));
+        withAllWeeks(function () {
+          var removed = Store.removeShift(state, found.shift.id);
+          persist('all', removed.weeks);
+          render();
+          toast(t('toast.shiftDeleted', {
+            removed: removed.assignments
+              ? t('toast.shiftRemovedCount', { count: removed.assignments }) : ''
+          }));
+        });
+        return;
       }
     });
 

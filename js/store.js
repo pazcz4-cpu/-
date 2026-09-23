@@ -1375,8 +1375,10 @@
   }
 
   /* הסרת סוג משמרת: מנקה אותו מלוחות הסניפים ומכרטיסי העובדים */
+  /* מחזיר גם weeks: אילו שבועות נגעו בהם. מי שקורא חייב לשמור
+     אותם, אחרת השינוי קיים בזיכרון בלבד וחוזר ברענון הבא. */
   function removeShift(state, shiftId) {
-    var removed = { slots: 0, employees: 0, assignments: 0 };
+    var removed = { slots: 0, employees: 0, assignments: 0, weeks: [] };
     state.settings.shifts = (state.settings.shifts || []).filter(function (shift) {
       return shift.id !== shiftId;
     });
@@ -1405,17 +1407,26 @@
 
     Object.keys(state.weeks || {}).forEach(function (weekKey) {
       var week = state.weeks[weekKey];
+      var changed = false;
       Object.keys(week.assignments || {}).forEach(function (key) {
         if (key.split('|')[2] === shiftId) {
           delete week.assignments[key];
           removed.assignments++;
+          changed = true;
         }
       });
       Object.keys(week.constraints || {}).forEach(function (key) {
         var record = week.constraints[key];
-        if (record.blocked) delete record.blocked[shiftId];
-        if (record.preferred) delete record.preferred[shiftId];
+        if (record.blocked && record.blocked[shiftId]) {
+          delete record.blocked[shiftId];
+          changed = true;
+        }
+        if (record.preferred && record.preferred[shiftId]) {
+          delete record.preferred[shiftId];
+          changed = true;
+        }
       });
+      if (changed) removed.weeks.push(weekKey);
     });
 
     return removed;

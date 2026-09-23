@@ -367,6 +367,10 @@ h2 { font-size: var(--t-lg); margin: var(--s5) 0 var(--s3); line-height: var(--l
 .ico {
   width: 1.15em; height: 1.15em; flex: 0 0 auto;
   fill: none; stroke: currentColor; vertical-align: -.16em;
+  /* אייקון הוא קישוט. בלי השורה הזו הלחיצה נרשמת על ה-svg, וכל
+     מאזין שקורא את event.target עצמו – ולא את הכפתור שמעליו –
+     פשוט מתעלם ממנה. זה נראה כמו כפתור שלא מגיב, בלי שום שגיאה. */
+  pointer-events: none;
 }
 .ico-lg { width: 1.5em; height: 1.5em; }
 

@@ -204,6 +204,10 @@
       toast: {
         generated: 'Schedule built. {shifts} could not be filled – each one has its reason in the alerts above the schedule.',
         generatedFull: 'Schedule built – every shift is covered',
+        generateNothing: 'There is nothing to schedule yet. Add a location, set its hours, and add people.',
+        generateNoShifts: 'No shifts are open this week. Check that a location is active and has hours.',
+        generateNoStaff: 'There are no active people to schedule. Add them on the People screen.',
+        cleanupPartial: "We couldn't load {count} weeks, so nothing was deleted. Check your connection and try again.",
         clearWeekConfirm: 'Clear every assignment for this week? Requests are kept.',
         cleared: 'Schedule cleared',
         copied: 'Schedule copied to clipboard',

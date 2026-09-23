@@ -197,6 +197,10 @@
       toast: {
         generated: 'Cuadrante creado. {shifts} no se pudieron cubrir; cada una tiene su motivo en los avisos de arriba.',
         generatedFull: 'Horario generado: todos los turnos están cubiertos',
+        generateNothing: 'Todavía no hay nada que planificar. Crea una sede, define sus horas y añade personas.',
+        generateNoShifts: 'No hay turnos abiertos esta semana. Comprueba que haya una sede activa con horario.',
+        generateNoStaff: 'No hay personas activas para asignar. Añádelas en la pantalla de personas.',
+        cleanupPartial: 'No hemos podido cargar {count} semanas, así que no se ha borrado nada. Comprueba la conexión e inténtalo de nuevo.',
         clearWeekConfirm: '¿Vaciar todas las asignaciones de esta semana? Las solicitudes se mantienen.',
         cleared: 'Horario vaciado',
         copied: 'Horario copiado al portapapeles',

@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { clickTool, openMenuFor } from './_menu.mjs';
+import { loadSample } from './_sample.mjs';
 import { skipWizard } from './_wizard.mjs';
 import { url } from './_serve.mjs';
 
@@ -62,6 +63,11 @@ async function signUp(page, email) {
   await page.fill('input[name="password"]', 'secret123');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1200);
+  /* חשבון שנפתח עכשיו הוא ריק: אין סניפים, אין עובדים, ואין משמרות
+     פתוחות. "שבץ" על עסק כזה אינו משבץ דבר ואינו שומר דבר – וזו
+     ההתנהגות הנכונה. הבדיקה כאן היא על מחוון השמירה, ולכן היא
+     צריכה עסק שבאמת יש בו מה לשמור. */
+  await loadSample(page);
 }
 
 const stateOf = (page) => page.evaluate(() => {

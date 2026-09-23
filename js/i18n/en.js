@@ -793,6 +793,7 @@
         createUser: 'Send the invitation',
         role: 'Role', staffCard: 'Staff card', none: 'None', noLink: 'No link',
         sendAccess: 'Send sign-in details',
+        guideLink: 'Staff guide — one page to send to the team',
         sendAccessAll: 'Send to all {count} active staff',
         accessSent: 'Sign-in details sent to {email}.',
         accessFailed: 'Could not send the sign-in details.',
@@ -866,6 +867,7 @@
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },
 
       employee: {
+        guideLink: 'How this works',
         prevWeek: '▶ Previous week', nextWeek: 'Next week ◀',
         loadFailed: 'Could not load the data: {message}',
         saveFailed: 'Saving failed', reasonSaveFailed: 'Could not save the reason',

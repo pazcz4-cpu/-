@@ -787,6 +787,7 @@
         createUser: 'إرسال الدعوة',
         role: 'الدور', staffCard: 'بطاقة موظف', none: 'بدون', noLink: 'بدون ربط',
         sendAccess: 'إرسال تفاصيل الدخول',
+        guideLink: 'دليل الموظفين — صفحة واحدة لإرسالها للمجموعة',
         sendAccessAll: 'إرسال إلى جميع الموظفين النشطين ({count})',
         accessSent: 'أُرسلت تفاصيل الدخول إلى {email}.',
         accessFailed: 'تعذّر إرسال تفاصيل الدخول.',
@@ -860,6 +861,7 @@
       roles: { owner: 'المالك', manager: 'مدير', employee: 'موظف' },
 
       employee: {
+        guideLink: 'كيف يعمل هذا',
         prevWeek: '▶ الأسبوع السابق', nextWeek: 'الأسبوع التالي ◀',
         loadFailed: 'تعذّر تحميل البيانات: {message}',
         saveFailed: 'فشل الحفظ', reasonSaveFailed: 'تعذّر حفظ السبب',

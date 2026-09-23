@@ -1509,6 +1509,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .employee-logo { display: block; flex: 0 0 auto; }
 .employee-logo .brand-img { width: 148px; max-width: 46vw; }
 .employee-company { font-size: 14px; font-weight: 500; color: var(--muted); }
+/* קישור למדריך. שקט, אבל קיים: עובד שנתקע בשמונה בערב לא ישלח
+   הודעה למנהל – הוא פשוט לא יגיש. */
+.employee-guide {
+  margin-inline-start: auto; font-size: 12.5px; color: var(--brand);
+  text-decoration: none; border-bottom: 1px solid transparent;
+}
+.employee-guide:hover { border-bottom-color: currentColor; }
 
 /* ===== עין להצגת הסיסמה =====
    העין יושבת בתוך השדה ולא לצידו, אחרת היא דוחפת את השדה

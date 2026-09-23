@@ -45,6 +45,15 @@
     try { root.localStorage.setItem(KEY, chosen); } catch (err) { /* לא קריטי */ }
   }
 
+  /* הדפסה / שמירה כ-PDF. אין כאן ספריית PDF: הדפדפן יודע לשמור
+     כ-PDF בעצמו, וזה גם מה שמאפשר לשלוח את הדף בוואטסאפ. */
+  document.addEventListener('click', function (event) {
+    var print = event.target.closest('[data-print]');
+    if (!print) return;
+    event.preventDefault();
+    root.print();
+  });
+
   document.addEventListener('click', function (event) {
     var button = event.target.closest('[data-legal-lang]');
     if (!button) return;

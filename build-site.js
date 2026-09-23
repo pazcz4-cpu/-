@@ -348,6 +348,10 @@ LEGAL_PAGES.forEach((item) => {
   page(item.file, item.dir + '/index.html', { canonical: '/' + item.dir + '/' });
 });
 
+/* מדריך לעובד. עמוד ציבורי בכוונה: מנהל שולח את הקישור לקבוצת
+   העובדים, ומי שפותח אותו עוד לא התחבר לשום דבר. */
+page('guide.html', 'guide/index.html', { canonical: '/guide/' });
+
 /* הגדרות החיבור לשרת, נכתבות מחדש לכל פריסה.
    המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
    שפותח את האתר. הבידוד בין חברות נאכף ב-supabase/schema.sql,
@@ -413,6 +417,8 @@ write('sitemap.xml',
   LEGAL_PAGES.map((item) =>
     '  <url><loc>' + SITE_URL + '/' + item.dir + '/</loc>' +
     '<changefreq>yearly</changefreq><priority>0.3</priority></url>\n').join('') +
+  '  <url><loc>' + SITE_URL + '/guide/</loc>' +
+  '<changefreq>monthly</changefreq><priority>0.4</priority></url>\n' +
   '</urlset>\n');
 write('.nojekyll', '');
 

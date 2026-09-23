@@ -326,3 +326,31 @@
   .lp-video-play:hover .lp-video-mark { transform: translate(-50%, -50%); }
   [dir="rtl"] .lp-video-play:hover .lp-video-mark { transform: translate(50%, -50%); }
 }
+
+
+/* ===== מדריך לעובד =====
+   דף אחד שמנהל שולח לקבוצת העובדים. הוא נועד גם להדפסה, ולכן
+   הלוגו יושב בתוך התוכן ולא רק בסרגל שנעלם בהדפסה. */
+.guide-head { margin-bottom: 18px; }
+.guide-logo { width: 168px; height: auto; }
+.guide-logo-light { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .guide-logo-dark { display: none; }
+  :root:not([data-theme="light"]) .guide-logo-light { display: block; }
+}
+.guide-lead { font-size: 17px; line-height: 1.7; }
+.guide-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 8px; }
+.guide table td { vertical-align: top; }
+.guide table td:first-child { white-space: nowrap; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #ffffff; color: #000000; }
+  .landing-wrap { max-width: none; padding: 0; }
+  .legal { padding-block: 0; }
+  .guide-logo-light { display: none !important; }
+  .guide-logo-dark { display: block !important; }
+  .guide h2 { break-after: avoid; }
+  .guide ul, .guide ol, .guide table { break-inside: avoid; }
+  a { color: #000000; text-decoration: none; }
+}

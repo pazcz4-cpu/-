@@ -787,6 +787,7 @@
         createUser: 'Enviar o convite',
         role: 'Função', staffCard: 'Ficha de colaborador', none: 'Nenhuma', noLink: 'Sem ligação',
         sendAccess: 'Enviar dados de acesso',
+        guideLink: 'Guia para a equipa — uma página para enviar ao grupo',
         sendAccessAll: 'Enviar aos {count} funcionários ativos',
         accessSent: 'Dados de acesso enviados para {email}.',
         accessFailed: 'Não foi possível enviar os dados de acesso.',
@@ -860,6 +861,7 @@
       roles: { owner: 'Proprietário', manager: 'Responsável', employee: 'Colaborador' },
 
       employee: {
+        guideLink: 'Como funciona',
         prevWeek: '◀ Semana anterior', nextWeek: 'Semana seguinte ▶',
         loadFailed: 'Não foi possível carregar os dados: {message}',
         saveFailed: 'Não foi possível guardar', reasonSaveFailed: 'Não foi possível guardar o motivo',

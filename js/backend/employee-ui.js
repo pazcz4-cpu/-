@@ -298,6 +298,10 @@
     html += '<header class="employee-head">' +
       '<span class="employee-logo">' + brandLockup() + '</span>' +
       '<span class="employee-company">' + esc(this.session.company.name) + '</span>' +
+      /* מדריך בדף אחד. עובד שנתקע בשמונה בערב לא ישלח הודעה
+         למנהל – הוא פשוט לא יגיש. */
+      '<a class="employee-guide" href="/guide/" target="_blank" rel="noopener">' +
+      esc(t('employee.guideLink')) + '</a>' +
       '</header>';
 
     if (this.preview) {

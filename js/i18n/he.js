@@ -792,6 +792,7 @@
         createUser: 'שליחת הזמנה',
         role: 'תפקיד', staffCard: 'כרטיס עובד', none: 'ללא', noLink: 'ללא קישור',
         sendAccess: 'שליחת פרטי כניסה',
+        guideLink: 'דף הסבר לעובדים — לשליחה בקבוצת העובדים',
         sendAccessAll: 'שליחה לכל {count} העובדים הפעילים',
         accessSent: 'נשלחו פרטי כניסה אל {email}.',
         accessFailed: 'שליחת פרטי הכניסה נכשלה.',
@@ -865,6 +866,7 @@
       roles: { owner: 'בעלים', manager: 'מנהל/ת', employee: 'עובד/ת' },
 
       employee: {
+        guideLink: 'איך זה עובד',
         prevWeek: '▶ שבוע קודם', nextWeek: 'שבוע הבא ◀',
         loadFailed: 'לא ניתן לטעון את הנתונים: {message}',
         saveFailed: 'השמירה נכשלה', reasonSaveFailed: 'שמירת הסיבה נכשלה',

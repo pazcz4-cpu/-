@@ -787,6 +787,7 @@
         createUser: 'Envoyer l’invitation',
         role: 'Rôle', staffCard: 'Fiche d’employé', none: 'Aucune', noLink: 'Aucun lien',
         sendAccess: 'Envoyer les identifiants',
+        guideLink: 'Guide employé — une page à envoyer au groupe',
         sendAccessAll: 'Envoyer aux {count} employés actifs',
         accessSent: 'Identifiants envoyés à {email}.',
         accessFailed: 'Impossible d’envoyer les identifiants.',
@@ -860,6 +861,7 @@
       roles: { owner: 'Propriétaire', manager: 'Responsable', employee: 'Employé' },
 
       employee: {
+        guideLink: 'Comment ça marche',
         prevWeek: '◀ Semaine précédente', nextWeek: 'Semaine suivante ▶',
         loadFailed: 'Impossible de charger les données : {message}',
         saveFailed: 'Échec de l’enregistrement', reasonSaveFailed: 'Impossible d’enregistrer le motif',

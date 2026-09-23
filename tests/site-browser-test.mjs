@@ -290,6 +290,32 @@ try {
     check('  וחוזר לעברית', await page.getAttribute('html', 'dir'), 'rtl');
   }
 
+  console.log('\n== המדריך לעובד ==');
+
+  /* המנהל שולח את הקישור הזה לקבוצת העובדים, ולכן הוא חייב
+     לעלות בלי התחברות, להיות קריא בשתי שפות, ולהיות ניתן
+     להדפסה או לשמירה כ-PDF. */
+  {
+    const response = await page.goto(BASE + '/guide/');
+    check('/guide/ עולה', response.status(), 200);
+    check('  יש כותרת', (await page.locator('h1:visible').textContent()).trim().length > 2, true);
+    check('  גרסה אחת גלויה', await page.locator('article[data-legal]:visible').count(), 1);
+    check('  יש לוגו בתוך התוכן',
+      await page.locator('article[data-legal]:visible .guide-logo').count() > 0, true);
+    check('  יש כפתור הדפסה', await page.locator('[data-print]:visible').count(), 1);
+    check('  יש קישור למערכת',
+      await page.locator('article[data-legal]:visible a[href="/app/"]').count(), 1);
+    check('  נמצא במפת האתר',
+      sitemap.indexOf('<loc>' + DOMAIN + '/guide/</loc>') !== -1, true);
+    check('  הכתובת של התמיכה הוחלפה',
+      (await page.content()).indexOf('{{') === -1, true);
+    await page.click('[data-legal-lang="en"]');
+    await page.waitForTimeout(150);
+    check('  ואנגלית עובדת', await page.getAttribute('html', 'dir'), 'ltr');
+    await page.click('[data-legal-lang="he"]');
+    await page.waitForTimeout(150);
+  }
+
   console.log('\n== הקישורים מדף המכירה ==');
   await page.goto(BASE + '/');
   await page.waitForTimeout(400);

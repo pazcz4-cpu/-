@@ -129,24 +129,47 @@
       });
     });
 
+    /* בחירת עובד מהרשימה ממלאת את המייל שלו. השם כבר יושב על
+       הכרטיס, ולכן אין סיבה להקליד אותו שוב. */
+    form.addEventListener('change', function (event) {
+      if (event.target === form.employeeId) {
+        var employee = employeeById(form.employeeId.value);
+        /* ממלאים, לא מוחקים. עובד שאין על הכרטיס שלו מייל אינו
+           סיבה למחוק כתובת שהמנהל בדיוק הקליד. */
+        if (employee && employee.email) form.email.value = employee.email;
+      }
+      updateSubmit();
+    });
+    form.addEventListener('input', function (event) {
+      if (event.target === form.email) updateSubmit();
+    });
+
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       say('');
-      var name = String(form.name.value || '').trim();
-      var role = form.role.value;
-      var link = resolveStaffCard(form.employeeId.value, name, role);
+      var email = String(form.email.value || '').trim().toLowerCase();
+      var chosen = form.employeeId.value;
 
-      ctx.backend.createUser({
-        name: name,
-        email: form.email.value,
-        role: role,
-        employeeId: link.employeeId
+      /* בלי עובד ובלי מייל – השליחה היא לכולם. זו הפעולה שמנהל
+         עושה פעם אחת, ביום הראשון, לשלושים איש. */
+      if (!email && !chosen) return sendToAll(say);
+      if (!email) { say(t('users.accessNoEmail'), true); return; }
+
+      var role = form.role.value;
+      var link = resolveStaffCard(chosen, email, role);
+      var employee = employeeById(link.employeeId);
+      var name = (employee && employee.name) || nameFromEmail(email);
+
+      var button = document.getElementById('invite-submit');
+      if (button) button.disabled = true;
+      ctx.backend.sendEmployeeAccess({
+        name: name, email: email, role: role, employeeId: link.employeeId
       }).then(function (user) {
+        if (button) button.disabled = false;
         form.reset();
         refreshEmployeeOptions();
-        var message = user.invited === false
-          ? t('users.created', { email: user.email })
-          : t('users.invited', { email: user.email });
+        updateSubmit();
+        var message = t('users.accessSent', { email: user.email || email });
         if (link.createdName) {
           message += ' ' + t('users.cardCreated', { name: link.createdName });
         } else if (link.matchedName) {
@@ -155,9 +178,105 @@
         say(message);
         render();
       }, function (err) {
-        say((err && err.message) || t('users.createFailed'), true);
+        if (button) button.disabled = false;
+        say((err && err.message) || t('users.accessFailed'), true);
       });
     });
+
+    updateSubmit();
+  }
+
+  /* ===== שליחה לכולם =====
+     אחד אחרי השני, ולא שלושים בקשות בבת אחת: ספק הדואר חוסם
+     לפי קצב, וחצי מהעובדים שלא קיבלו מייל הם תקלה שאיש לא
+     יראה עד שהם לא יגישו אילוצים. */
+  var BULK_GAP = 350;
+
+  function activeWithEmail() {
+    return (ctx.getEmployees() || []).filter(function (emp) {
+      return emp.active !== false && String(emp.email || '').trim();
+    });
+  }
+
+  function sendToAll(say) {
+    var targets = activeWithEmail();
+    var missing = (ctx.getEmployees() || []).filter(function (emp) {
+      return emp.active !== false && !String(emp.email || '').trim();
+    }).length;
+
+    if (!targets.length) {
+      say(missing ? t('users.accessBulkNoEmail', { count: missing }) : t('users.accessNone'), true);
+      return;
+    }
+    ask({
+      title: t('users.sendAccessAll', { count: targets.length }),
+      lines: [t('users.accessBulkConfirm', { count: targets.length })],
+      confirmLabel: t('users.sendAccess'),
+      cancelLabel: t('users.cancelNo')
+    }).then(function (yes) { if (yes) runBulk(targets, missing, say); });
+  }
+
+  function runBulk(targets, missing, say) {
+    var button = document.getElementById('invite-submit');
+    if (button) button.disabled = true;
+
+    var sent = 0;
+    var failed = [];
+
+    function step(index) {
+      if (index >= targets.length) {
+        if (button) button.disabled = false;
+        var lines = [t('users.accessBulkDone', { sent: sent })];
+        if (failed.length) lines.push(t('users.accessBulkFailed', { count: failed.length }));
+        if (missing) lines.push(t('users.accessBulkNoEmail', { count: missing }));
+        say(lines.join(' '), failed.length > 0);
+        refreshEmployeeOptions();
+        render();
+        return;
+      }
+      var employee = targets[index];
+      say(t('users.sending', { done: index + 1, total: targets.length }));
+      ctx.backend.sendEmployeeAccess({
+        name: employee.name,
+        email: String(employee.email).trim().toLowerCase(),
+        role: 'employee',
+        employeeId: employee.id
+      }).then(function () { sent++; }, function () { failed.push(employee.name); })
+        .then(function () {
+          if (index + 1 >= targets.length) return step(index + 1);
+          root.setTimeout(function () { step(index + 1); }, BULK_GAP);
+        });
+    }
+
+    step(0);
+  }
+
+  /* מה כתוב על הכפתור תלוי במה שמולא: עובד אחד, או כולם.
+     כפתור שאומר "שליחה לכל 24 העובדים" אינו יכול להפתיע. */
+  function updateSubmit() {
+    var form = document.getElementById('invite-form');
+    var button = document.getElementById('invite-submit');
+    if (!form || !button || !ctx) return;
+    var single = String(form.email.value || '').trim() || form.employeeId.value;
+    if (single) {
+      button.textContent = t('users.sendAccess');
+      button.removeAttribute('data-i18n');
+      return;
+    }
+    var count = activeWithEmail().length;
+    button.textContent = t('users.sendAccessAll', { count: count });
+    button.removeAttribute('data-i18n');
+  }
+
+  function employeeById(id) {
+    if (!id) return null;
+    return (ctx.getEmployees() || []).filter(function (emp) { return emp.id === id; })[0] || null;
+  }
+
+  /* שם זמני לכרטיס שנפתח ממייל בלבד. המנהל יתקן אותו בשנייה,
+     וזה עדיף על כרטיס בלי שם בכלל. */
+  function nameFromEmail(email) {
+    return String(email || '').split('@')[0].replace(/[._-]+/g, ' ').trim() || email;
   }
 
   /* שליחה חוזרת. אותו קישור משרת גם הזמנה שפגה וגם עובד ששכח,
@@ -212,24 +331,25 @@
       ? root.confirm(options.title + '\n\n' + options.lines.join('\n')) : false);
   }
 
-  function sameName(a, b) {
-    return String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') ===
-      String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
-  }
-
   /* עובד שאין לו כרטיס אינו רואה משמרות ואינו יכול להגיש אילוצים,
      ולכן הזמנה בלי כרטיס היא הזמנה שלא עובדת. אם המנהל לא בחר
      כרטיס: מחפשים כרטיס באותו שם, ואם אין – פותחים אחד. */
-  function resolveStaffCard(chosen, name, role) {
+  function resolveStaffCard(chosen, email, role) {
     if (chosen) return { employeeId: chosen };
-    if (role !== 'employee' || !name) return { employeeId: null };
+    if (role !== 'employee' || !email) return { employeeId: null };
 
+    /* התאמה לפי המייל שעל הכרטיס. השם יכול להיכתב בשתי צורות
+       ("ד. כהן" ו-"דנה כהן"), המייל לא. */
     var employees = ctx.getEmployees() || [];
-    var match = employees.filter(function (emp) { return sameName(emp.name, name); })[0];
+    var match = employees.filter(function (emp) {
+      return String(emp.email || '').trim().toLowerCase() === email;
+    })[0];
     if (match) return { employeeId: match.id, matchedName: match.name };
 
     if (!ctx.addEmployee) return { employeeId: null };
-    var created = ctx.addEmployee(name);
+    /* המייל נשמר על הכרטיס שנפתח, אחרת השליחה הבאה הייתה פותחת
+       לו כרטיס שני */
+    var created = ctx.addEmployee(nameFromEmail(email), email);
     if (!created) return { employeeId: null };   // מגבלת התוכנית חסמה
     return { employeeId: created.id, createdName: created.name };
   }
@@ -238,9 +358,13 @@
     var select = document.querySelector('#invite-form select[name="employeeId"]');
     if (!select || !ctx) return;
     var employees = ctx.getEmployees() || [];
+    var current = select.value;
     select.innerHTML = '<option value="">' + t('users.noLink') + '</option>' + employees.map(function (emp) {
-      return '<option value="' + esc(emp.id) + '">' + esc(emp.name) + '</option>';
+      return '<option value="' + esc(emp.id) + '">' + esc(emp.name) +
+        (emp.email ? ' – ' + esc(emp.email) : '') + '</option>';
     }).join('');
+    if (current) select.value = current;
+    updateSubmit();
   }
 
   function init(options) {
@@ -250,7 +374,11 @@
     bind();
     refreshEmployeeOptions();
     render();
-    if (root.I18n) { root.I18n.onChange(render); }
+    /* גם הכפתור מתורגם מחדש: הוא נכתב בקוד ולא דרך data-i18n,
+       כי מה שכתוב עליו תלוי במה שמולא בטופס. */
+    if (root.I18n) {
+      root.I18n.onChange(function () { render(); updateSubmit(); });
+    }
 
     document.getElementById('tabs').addEventListener('click', function (event) {
       var button = event.target.closest('.tab[data-tab="users"]');

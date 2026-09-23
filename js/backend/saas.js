@@ -39,6 +39,17 @@
           return (users || []).map(function (user) { return user.email; });
         }, function () { return []; });
       },
+      /* שליחת פרטי כניסה מכרטיס העובד. קיימת רק למי שרשאי לנהל
+         משתמשים, ורק כשהשרת יודע לשלוח דואר. */
+      sendAccess: (Model.can(role, 'users.manage') && backend.sendEmployeeAccess)
+        ? function (employee) {
+          return backend.sendEmployeeAccess({
+            employeeId: employee.id,
+            email: employee.email,
+            name: employee.name
+          });
+        }
+        : null,
       decideConstraint: function (weekKey, employeeId, dayIdx, decision) {
         return backend.decideConstraint(weekKey, employeeId, dayIdx, decision, '');
       },
@@ -291,7 +302,9 @@
            נכנס למערכת ולא רואה בה כלום. */
         root.ShiftUsersUI.init({
           backend: backend, session: session, getEmployees: getEmployees,
-          addEmployee: function (name) { return root.ShiftApp.addEmployee(name); }
+          addEmployee: function (name, email) {
+            return root.ShiftApp.addEmployee(name, false, email);
+          }
         });
         /* המנהל מופיע בטבלת המשתמשים. שינה את שמו – שם ישן בטבלה
            שנייה אחרי שהמסך אמר "נשמר" נראה כאילו לא נשמר. */

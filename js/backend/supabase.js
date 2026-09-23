@@ -759,6 +759,26 @@
     });
   };
 
+  /* שליחת פרטי כניסה לעובד: החשבון נוצר אם עוד אין, מוגרלת לו
+     סיסמה חדשה, ונשלח אליו מייל עם שם המשתמש, הסיסמה והוראות
+     להוספת המערכת למסך הבית.
+
+     הסיסמה אינה חוזרת לכאן בכוונה. סיסמה שעוברת דרך המסך של
+     המנהל נשארת אצלו – בצילום מסך, בהודעה, לנצח – ואז אין שום
+     משמעות לשאלה מי הגיש את הבקשה. */
+  SupabaseBackend.prototype.sendEmployeeAccess = function (input) {
+    var data = input || {};
+    return this._server(this.adminEndpoint, {
+      mode: 'access',
+      email: String(data.email || '').trim().toLowerCase(),
+      name: String(data.name || '').trim(),
+      role: data.role === 'manager' ? 'manager' : 'employee',
+      employeeId: data.employeeId || null,
+      /* השפה של המסך היא השפה של העסק, וזו השפה שהעובד מדבר */
+      lang: (root.I18n && root.I18n.code) ? root.I18n.code() : 'he'
+    });
+  };
+
   /* ===== זהות: השם שלי, ושם העסק ===== */
 
   /* company_users_update דורש is_manager(), ולכן עובד לא יכול היה

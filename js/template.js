@@ -41,7 +41,7 @@
       name: t('importData.sheetStaff'),
       selected: true,
       freeze: { row: 1, col: 0 },
-      cols: [22, 24, 22, 20, 14, 26, 26, 10],
+      cols: [22, 24, 22, 20, 14, 26, 18, 26, 10],
       rows: [
         { cells: Import.columnLabels().map(head), height: 24 }
       ]
@@ -81,6 +81,7 @@
       ['colRoles', no, 'helpRoles', exampleRole],
       ['colMax', no, 'helpMax', '5'],
       ['colEmail', no, 'helpEmail', 'dana@example.com'],
+      ['colPhone', no, 'helpPhone', '050-0000000'],
       ['colNote', no, 'helpNote', ''],
       ['colActive', no, 'helpActive', '']
     ];

@@ -129,7 +129,6 @@ try {
   console.log('\n== מה העובד עצמו רואה ==');
   await mgr.click('.tab[data-tab="users"]');
   await mgr.waitForTimeout(500);
-  await mgr.fill('#invite-form input[name="name"]', 'דני');
   await mgr.fill('#invite-form input[name="email"]', 'dani@standing.test');
   await mgr.click('#invite-form button[type="submit"]');
   await mgr.waitForTimeout(900);

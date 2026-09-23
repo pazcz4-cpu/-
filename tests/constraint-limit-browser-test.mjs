@@ -88,7 +88,6 @@ try {
   console.log('\n== הזמנת עובד ==');
   await mgr.click('.tab[data-tab="users"]');
   await mgr.waitForTimeout(400);
-  await mgr.fill('#invite-form input[name="name"]', 'דני');
   await mgr.fill('#invite-form input[name="email"]', 'dani@cap.test');
   await mgr.click('#invite-form button[type="submit"]');
   await mgr.waitForTimeout(800);
@@ -165,7 +164,10 @@ try {
   await mgr.click('.tab[data-tab="constraints"]');
   await mgr.waitForTimeout(800);
   const empId = await mgr.evaluate(() => {
-    const emp = window.ShiftApp.getState().employees.find(e => e.name === 'דני');
+    /* הכרטיס נפתח מתוך שליחת פרטי הכניסה, ולכן הוא מזוהה לפי
+       המייל ולא לפי שם שהמנהל כבר אינו מקליד */
+    const emp = window.ShiftApp.getState().employees
+      .find(e => e.email === 'dani@cap.test');
     return emp && emp.id;
   });
   check('כרטיס העובד נמצא', !!empId, true);

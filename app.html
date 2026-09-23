@@ -201,8 +201,8 @@
       <h3 data-i18n="users.add">הזמנת משתמש</h3>
       <p class="hint" data-i18n="users.inviteHint">המשתמש מקבל קישור במייל וקובע סיסמה בעצמו.</p>
       <div class="invite-row">
-        <label><span data-i18n="users.nameColumn">שם</span><input type="text" name="name" class="text-input"></label>
-        <label><span data-i18n="users.emailColumn">אימייל</span><input type="email" name="email" class="text-input" required></label>
+        <label><span data-i18n="users.staffCard">כרטיס עובד</span><select name="employeeId" class="text-input"></select></label>
+        <label><span data-i18n="users.emailColumn">אימייל</span><input type="email" name="email" class="text-input" dir="ltr"></label>
       </div>
       <div class="invite-row">
         <label><span data-i18n="users.role">תפקיד</span>
@@ -211,8 +211,7 @@
             <option value="manager" data-i18n="roles.manager">מנהל/ת</option>
           </select>
         </label>
-        <label><span data-i18n="users.staffCard">כרטיס עובד</span><select name="employeeId" class="text-input"></select></label>
-        <button type="submit" class="btn primary" data-i18n="users.sendInvite">שליחת הזמנה</button>
+        <button type="submit" id="invite-submit" class="btn primary" data-i18n="users.sendAccess">שליחת פרטי כניסה</button>
       </div>
       <p id="users-message" class="users-message hidden"></p>
     </form>

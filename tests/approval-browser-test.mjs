@@ -62,7 +62,6 @@ await page.click('.tab[data-tab="users"]');
 await page.waitForTimeout(600);
 const opts = await page.locator('#invite-form select[name="employeeId"] option')
   .evaluateAll(o => o.map(x => ({ v: x.value, t: x.textContent })).filter(x => x.v));
-await page.fill('#invite-form input[name="name"]', 'רונית');
 await page.fill('#invite-form input[name="email"]', 'ronit@ap.co.il');
 await page.selectOption('#invite-form select[name="employeeId"]', opts[0].v);
 await page.click('#invite-form button[type="submit"]');

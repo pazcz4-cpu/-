@@ -57,7 +57,6 @@ try {
   await page.waitForTimeout(600);
   const opts = await page.locator('#invite-form select[name="employeeId"] option')
     .evaluateAll(o => o.map(x => x.value).filter(Boolean));
-  await page.fill('#invite-form input[name="name"]', 'רונית');
   await page.fill('#invite-form input[name="email"]', 'ronit@emp.test');
   await page.selectOption('#invite-form select[name="employeeId"]', opts[0]);
   await page.click('#invite-form button[type="submit"]');

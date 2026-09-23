@@ -82,6 +82,8 @@
       'תפקיד', 'תפקידים', 'עמדה', 'תפקוד'],
     maxShifts: ['max', 'maxshifts', 'quota', 'limit', 'מכסה', 'מקסימום', 'מכסה שבועית'],
     email: ['email', 'mail', 'e-mail', 'address', 'מייל', 'אימייל', 'דואר', 'דוא"ל', 'כתובת מייל'],
+    phone: ['phone', 'mobile', 'cell', 'tel', 'telephone', 'phonenumber',
+      'טלפון', 'נייד', 'פלאפון', 'סלולרי', 'מספר טלפון'],
     note: ['note', 'notes', 'comment', 'הערה', 'הערות'],
     active: ['active', 'status', 'פעיל', 'סטטוס']
   };
@@ -101,6 +103,7 @@
     roles: 'importData.colRoles',
     maxShifts: 'importData.colMax',
     email: 'importData.colEmail',
+    phone: 'importData.colPhone',
     note: 'importData.colNote',
     active: 'importData.colActive'
   };
@@ -127,7 +130,8 @@
   }
 
   /* שמות הטורים כפי שהם נכתבים בתבנית, לפי הסדר בקובץ */
-  var COLUMNS = ['name', 'branches', 'shifts', 'roles', 'maxShifts', 'email', 'note', 'active'];
+  var COLUMNS = ['name', 'branches', 'shifts', 'roles', 'maxShifts', 'email', 'phone',
+    'note', 'active'];
 
   function columnLabels() {
     return COLUMNS.map(function (field) { return t(FIELD_KEYS[field]); });
@@ -152,7 +156,8 @@
      בקובץ עם שורת כותרות הסדר לא משנה ממילא. */
   /* הסדר בקובץ בלי שורת כותרות. התפקידים נוספו בסוף בכוונה:
      קובץ שנבנה לפני שהם היו קיימים ממשיך להיקרא נכון. */
-  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email', 'roles'];
+  var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email', 'roles',
+    'phone'];
 
   /* ===== פענוח תא ===== */
 
@@ -175,6 +180,15 @@
   }
 
   function normalizeEmail(value) { return String(value || '').trim().toLowerCase(); }
+
+  /* מספר טלפון נשמר כפי שנכתב, בלי תווים שנכנסים מאקסל: גרש
+     מוביל שמונע מהמספר להפוך למספר, ורווחים כפולים. אין כאן
+     ניחוש של קידומת מדינה – המערכת עובדת בכמה מדינות, ומספר
+     ש"תוקן" לפי ישראל הוא מספר שגוי בכל השאר. */
+  function normalizePhone(value) {
+    return String(value == null ? '' : value)
+      .replace(/^['\u2019]+/, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  }
 
   /* לא ולידציה מלאה של RFC – היא דוחה כתובות אמיתיות. מספיק
      לתפוס את מה שקורה בפועל: שם בלי @, רווח באמצע, סיומת חסרה. */
@@ -341,6 +355,7 @@
         line: lineNumber,
         name: name,
         email: email,
+        phone: normalizePhone(cell(row, 'phone')),
         branchNames: missing,
         branchIds: branchIds,
         roles: roleIds,
@@ -398,6 +413,7 @@
       employee.maxShifts = row.maxShifts;
       employee.note = row.note;
       employee.email = row.email || '';
+      employee.phone = row.phone || '';
       employee.active = row.active;
       created.employees.push(employee);
     });

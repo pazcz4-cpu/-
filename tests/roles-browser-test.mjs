@@ -47,7 +47,6 @@ await mgr.waitForTimeout(500);
 // מזמין עובד ומקשר לכרטיס עובד
 const empOptions = await mgr.locator('#invite-form select[name="employeeId"] option').evaluateAll(o => o.map(x => ({v:x.value,t:x.textContent})));
 console.log('   כרטיסי עובד בבורר:', empOptions.length - 1);
-await mgr.fill('#invite-form input[name="name"]', 'דני');
 await mgr.fill('#invite-form input[name="email"]', 'dani@x.co.il');
 await mgr.selectOption('#invite-form select[name="employeeId"]', empOptions[1].v);
 await mgr.click('#invite-form button[type="submit"]');

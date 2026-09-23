@@ -481,6 +481,50 @@
     return Promise.resolve(out);
   };
 
+  /* שליחת פרטי כניסה. אין כאן שרת דואר – הסיסמה נקבעת והשליחה
+     נרשמת, כדי שהמסך והבדיקות יעברו את אותו מסלול כמו באמת. */
+  MockBackend.prototype.sendEmployeeAccess = function (input) {
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var data = input || {};
+    var email = normalizeEmail(data.email);
+    if (!email) {
+      return Promise.reject(this._fail('invalid_input', t('server.emailRequired')));
+    }
+    var existing = this._findUserByEmail(email);
+    if (existing && existing.companyId !== session.company.id) {
+      return Promise.reject(this._fail('email_taken', t('server.emailTaken')));   // בידוד
+    }
+    if (existing && existing.role === 'owner') {
+      return Promise.reject(this._fail('forbidden', t('server.cannotChangeOwner')));
+    }
+    var now = this.now().toISOString();
+    var password = 'pw-' + Math.random().toString(36).slice(2, 10);
+    var created = false;
+    var user = existing;
+    if (!user) {
+      var userId = newId('user');
+      user = this.db.users[userId] = {
+        id: userId, email: email, password: password,
+        name: String(data.name || '').trim() || email,
+        companyId: session.company.id,
+        role: data.role === 'manager' ? 'manager' : 'employee',
+        employeeId: data.employeeId || null, active: true,
+        createdAt: now, invitedAt: now, joinedAt: null
+      };
+      created = true;
+    } else {
+      user.password = password;
+      if (data.employeeId && !user.employeeId) user.employeeId = data.employeeId;
+      user.invitedAt = now;
+    }
+    this._save();
+    var out = publicUser(user);
+    out.created = created;
+    out.sent = true;
+    return Promise.resolve(out);
+  };
+
   MockBackend.prototype.updateUser = function (userId, patch) {
     var session;
     try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }

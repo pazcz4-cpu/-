@@ -57,7 +57,6 @@ const chipOf = (email) => page.evaluate((mail) => {
 }, email);
 
 console.log('\n== הזמנה שנשלחה ==');
-await page.fill('#invite-form input[name="name"]', 'דני');
 await page.fill('#invite-form input[name="email"]', 'dani@x.co.il');
 await page.click('#invite-form button[type="submit"]');
 await page.waitForTimeout(700);
@@ -116,7 +115,6 @@ check('נאמר למנהל שההזמנה בוטלה',
 
 console.log('\n== הצטרפות ==');
 /* אותה כתובת פנויה שוב – זה כל הטעם בביטול */
-await page.fill('#invite-form input[name="name"]', 'דני');
 await page.fill('#invite-form input[name="email"]', 'dani@x.co.il');
 await page.click('#invite-form button[type="submit"]');
 await page.waitForTimeout(700);

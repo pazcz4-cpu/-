@@ -2,13 +2,27 @@
    יצירת משתמש דורשת את מפתח הניהול של Supabase, ומפתח כזה אסור
    שיגיע לדפדפן: מי שמחזיק בו יכול לקרוא ולשנות הכל בכל החברות.
 
+   שני מסלולים יוצאים מכאן:
+
+   1. הזמנה (ברירת המחדל) – המשתמש נוצר בלי סיסמה ומקבל קישור
+      לקביעת אחת. אף סיסמה אינה עוברת דרך המנהל.
+
+   2. שליחת פרטי כניסה (mode: 'access') – המערכת מגרילה סיסמה,
+      קובעת אותה, ושולחת לעובד מייל עם שם המשתמש, הסיסמה והוראות
+      להוספת המערכת למסך הבית. הסיסמה אינה חוזרת לדפדפן של
+      המנהל: היא נולדת בשרת, הולכת לדואר, ונשכחת.
+
    משתני סביבה נדרשים (Vercel → Settings → Environment Variables):
      SUPABASE_URL              כתובת הפרויקט
      SUPABASE_SERVICE_ROLE_KEY מפתח service_role  (סודי!)
+     RESEND_API_KEY, MAIL_FROM  לשליחת פרטי כניסה (ראו api/_mail.js)
+     APP_URL                   לא חובה. כתובת המערכת במייל לעובד.
 */
 'use strict';
 
 const { projectUrl } = require('./_supabase.js');
+const mail = require('./_mail.js');
+const accessMail = require('./_access-email.js');
 
 const ROLES = ['manager', 'employee'];
 
@@ -33,6 +47,144 @@ async function callSupabase(url, path, key, options) {
   let body = null;
   if (text) { try { body = JSON.parse(text); } catch (err) { body = { message: text }; } }
   return { ok: response.ok, status: response.status, body };
+}
+
+
+/* ===== שליחת פרטי כניסה =====
+
+   הכתובת שבמייל נגזרת בשרת ולא מגיעה מהדפדפן: קישור שהמנהל
+   שולט בו, שיוצא מהדומיין שלנו ולידו סיסמה אמיתית, הוא דף דיוג
+   מוכן מראש. */
+function appUrl(req) {
+  const fromEnv = String(process.env.APP_URL || '').trim();
+  if (/^https?:\/\//.test(fromEnv)) return fromEnv.replace(/\/+$/, '') + '/';
+  const raw = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const host = String(raw).split(',')[0].trim();
+  if (!host) return 'https://www.setshifts.com/app/';
+  const local = /^(localhost|127\.|\[?::1)/.test(host);
+  return (local ? 'http://' : 'https://') + host + '/app/';
+}
+
+function logoUrl(app) {
+  try { return new URL('/brand/logo-lockup.png', app).toString(); }
+  catch (err) { return ''; }
+}
+
+async function sendAccess(req, res, input, ctx) {
+  const { url, serviceKey, caller } = ctx;
+  const email = String(input.email).trim().toLowerCase();
+
+  if (!mail.ready()) {
+    return send(res, 503, { message: 'Email sending is not configured' });
+  }
+
+  /* שם העסק מגיע מהשרת. הוא מופיע במייל כשולח, ומנהל שיכול
+     לכתוב אותו בעצמו יכול לשלוח מייל בשם עסק אחר. */
+  const company = await callSupabase(url,
+    '/rest/v1/companies?id=eq.' + encodeURIComponent(caller.company_id) + '&select=name',
+    serviceKey, {});
+  const companyName = (company.ok && company.body && company.body[0] &&
+    company.body[0].name) || 'SetShifts';
+
+  /* האם כבר יש למייל הזה חשבון בחברה הזו. חיפוש מוגבל לחברה של
+     הקורא: מנהל אינו יכול לאפס סיסמה של מישהו בעסק אחר. */
+  const existing = await callSupabase(url,
+    '/rest/v1/company_users?company_id=eq.' + encodeURIComponent(caller.company_id) +
+    '&email=eq.' + encodeURIComponent(email) +
+    '&select=id,role,employee_id,name,active', serviceKey, {});
+  const found = existing.ok && existing.body && existing.body[0];
+
+  if (found && found.role === 'owner') {
+    /* הבעלים מחליף סיסמה בעצמו, דרך "שכחתי סיסמה". מנהל שמאפס
+       את הסיסמה של הבעלים משתלט על החשבון. */
+    return send(res, 403, { message: 'The account owner sets their own password' });
+  }
+
+  const password = accessMail.newPassword();
+  const name = String(input.name || '').trim() || (found && found.name) || email;
+  const role = ROLES.includes(input.role) ? input.role : 'employee';
+  let userId = found ? found.id : null;
+  let created = false;
+
+  if (found) {
+    const updated = await callSupabase(url,
+      '/auth/v1/admin/users/' + encodeURIComponent(found.id), serviceKey, {
+        method: 'PUT',
+        body: { password: password, email_confirm: true }
+      });
+    if (!updated.ok) {
+      return send(res, updated.status || 500, {
+        message: (updated.body && (updated.body.msg || updated.body.message)) ||
+          'Could not set a password'
+      });
+    }
+  } else {
+    const fresh = await callSupabase(url, '/auth/v1/admin/users', serviceKey, {
+      method: 'POST',
+      body: {
+        email: email, password: password, email_confirm: true,
+        user_metadata: { name: name }
+      }
+    });
+    if (!fresh.ok || !fresh.body || !fresh.body.id) {
+      const message = (fresh.body && (fresh.body.msg || fresh.body.message)) ||
+        'Could not create the user';
+      return send(res, fresh.status === 422 ? 409 : fresh.status || 500, { message });
+    }
+    userId = fresh.body.id;
+    created = true;
+
+    const linked = await callSupabase(url, '/rest/v1/company_users', serviceKey, {
+      method: 'POST', headers: { Prefer: 'return=representation' },
+      body: [{
+        id: userId, company_id: caller.company_id, email: email, name: name,
+        role: role, employee_id: input.employeeId || null, active: true,
+        invited_at: new Date().toISOString()
+      }]
+    });
+    if (!linked.ok) {
+      await callSupabase(url, '/auth/v1/admin/users/' + userId, serviceKey,
+        { method: 'DELETE' });
+      return send(res, 500, {
+        message: (linked.body && linked.body.message) || 'Could not link the user'
+      });
+    }
+  }
+
+  /* הקישור לכרטיס העובד נשמר גם למי שכבר היה קיים: בלי כרטיס
+     הוא נכנס למערכת ולא רואה בה כלום. */
+  if (!created) {
+    const patch = { invited_at: new Date().toISOString() };
+    if (input.employeeId && !found.employee_id) patch.employee_id = input.employeeId;
+    await callSupabase(url,
+      '/rest/v1/company_users?id=eq.' + encodeURIComponent(userId) +
+      '&company_id=eq.' + encodeURIComponent(caller.company_id), serviceKey,
+      { method: 'PATCH', body: patch });
+  }
+
+  const app = appUrl(req);
+  const letter = accessMail.build({
+    lang: input.lang, name: name, company: companyName,
+    email: email, password: password, appUrl: app, logoUrl: logoUrl(app)
+  });
+  const sent = await mail.send({
+    to: email, subject: letter.subject, html: letter.html, text: letter.text
+  });
+
+  if (!sent.ok) {
+    /* החשבון כבר קיים והסיסמה כבר נקבעה, ולכן אי אפשר לבטל –
+       אבל אפשר להגיד את זה בדיוק, ושליחה חוזרת מגרילה סיסמה
+       חדשה ממילא. */
+    return send(res, 502, {
+      message: 'The account is ready but the email was not sent: ' + (sent.message || '')
+    });
+  }
+
+  return send(res, 200, {
+    id: userId, email: email, name: name, role: role,
+    employeeId: input.employeeId || (found && found.employee_id) || null,
+    created: created, sent: true
+  });
 }
 
 module.exports = async function handler(req, res) {
@@ -75,6 +227,12 @@ module.exports = async function handler(req, res) {
   const caller = profile.ok && profile.body && profile.body[0];
   if (!caller || !caller.active || !['owner', 'manager'].includes(caller.role)) {
     return send(res, 403, { message: 'not allowed' });
+  }
+
+  /* שליחת פרטי כניסה היא מסלול נפרד: היא מגרילה סיסמה, שולחת
+     אותה בדואר, ואינה מחזירה אותה לדפדפן. */
+  if (input.mode === 'access') {
+    return sendAccess(req, res, input, { url, serviceKey, caller });
   }
 
   const role = ROLES.includes(input.role) ? input.role : 'employee';

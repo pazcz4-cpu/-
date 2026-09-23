@@ -162,7 +162,6 @@ try {
   await boss.waitForTimeout(600);
   const opts = await boss.locator('#invite-form select[name="employeeId"] option')
     .evaluateAll(o => o.map(x => x.value).filter(Boolean));
-  await boss.fill('#invite-form input[name="name"]', 'רונית');
   await boss.fill('#invite-form input[name="email"]', 'ronit@wiz.test');
   if (opts.length) await boss.selectOption('#invite-form select[name="employeeId"]', opts[0]);
   await boss.click('#invite-form button[type="submit"]');

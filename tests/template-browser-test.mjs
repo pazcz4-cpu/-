@@ -57,8 +57,9 @@ try {
   });
   check('שם הקובץ', built.fileName, /\.xlsx$/);
   check('הטור הראשון הוא השם', built.headers[0], 'שם');
-  check('שמונה טורים', built.headers.length, 8);
+  check('תשעה טורים', built.headers.length, 9);
   check('יש טור תפקידים', built.headers.indexOf('תפקידים') > 0, true);
+  check('ויש טור טלפון', built.headers.indexOf('טלפון') > 0, true);
   /* שורת דוגמה בגיליון הנתונים הייתה נכנסת כעובד אמיתי אצל כל
      מי ששכח למחוק אותה */
   check('גיליון הנתונים מכיל כותרות בלבד', built.rowCount, 1);

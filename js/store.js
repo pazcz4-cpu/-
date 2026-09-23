@@ -1008,6 +1008,9 @@
       /* כתובת מייל אופציונלית על הכרטיס. היא לא נדרשת לשיבוץ,
          אבל היא מה שמבדיל בין שני עובדים עם שם דומה בייבוא. */
       if (typeof emp.email !== 'string') emp.email = '';
+      /* טלפון: לא נדרש לשיבוץ, אבל מנהל שצריך לתפוס מישהו
+         בבוקר של משמרת שנפלה מחפש אותו בדיוק כאן. */
+      if (typeof emp.phone !== 'string') emp.phone = '';
       if (typeof emp.active !== 'boolean') emp.active = true;
     });
     state.branches.forEach(function (branch) {

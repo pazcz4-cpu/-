@@ -58,13 +58,14 @@ try {
     await page.locator('#invite-form input[name="password"]').count(), 0);
 
   const before = await page.evaluate(() => window.ShiftApp.getState().employees.length);
-  await page.fill('#invite-form input[name="name"]', 'רותם חדשה');
   await page.fill('#invite-form input[name="email"]', 'rotem@pw.test');
   await page.click('#invite-form button[type="submit"]');
   await page.waitForTimeout(900);
   const message = (await page.locator('#users-message').innerText()).trim();
-  check('נאמר שנשלחה הזמנה', message, /נשלחה הזמנה/);
-  check('ונפתח כרטיס עובד אוטומטית', message, /נפתח כרטיס עובד בשם רותם חדשה/);
+  check('נאמר שנשלחו פרטי כניסה', message, /נשלחו פרטי כניסה/);
+  /* אין שדה שם בטופס: כרטיס שנפתח ממייל בלבד מקבל שם זמני
+     מתוך הכתובת, והמנהל מתקן אותו בכרטיס עצמו. */
+  check('ונפתח כרטיס עובד אוטומטית', message, /נפתח כרטיס עובד בשם rotem/);
   check('הכרטיס באמת נוסף',
     await page.evaluate(() => window.ShiftApp.getState().employees.length), before + 1);
   check('והמשתמש קושר אליו', await page.evaluate(async () => {
@@ -73,13 +74,20 @@ try {
     const employees = window.ShiftApp.getState().employees;
     const card = employees.filter((e) => e.id === user.employeeId)[0];
     return card ? card.name : null;
-  }), 'רותם חדשה');
+  }), 'rotem');
+  check('והמייל נשמר על הכרטיס', await page.evaluate(() => {
+    const card = window.ShiftApp.getState().employees
+      .filter((e) => e.email === 'rotem@pw.test')[0];
+    return card ? true : false;
+  }), true);
 
-  console.log('\n== הזמנה שנייה מתחברת לכרטיס קיים ==');
-  const existing = await page.evaluate(
-    () => window.ShiftApp.getState().employees[0].name);
+  console.log('\n== שליחה שנייה מתחברת לכרטיס קיים לפי המייל ==');
+  /* הקישור נעשה לפי המייל שעל הכרטיס ולא לפי השם: "ד. כהן"
+     ו-"דנה כהן" הם אותה עובדת, והמייל הוא מה שמבדיל באמת. */
+  await page.evaluate(() => {
+    window.ShiftApp.getState().employees[0].email = 'existing@pw.test';
+  });
   const count = await page.evaluate(() => window.ShiftApp.getState().employees.length);
-  await page.fill('#invite-form input[name="name"]', existing);
   await page.fill('#invite-form input[name="email"]', 'existing@pw.test');
   await page.click('#invite-form button[type="submit"]');
   await page.waitForTimeout(900);
@@ -89,6 +97,13 @@ try {
     await page.evaluate(() => window.ShiftApp.getState().employees.length), count);
 
   console.log('\n== מוזמן שטרם קבע סיסמה אינו יכול להתחבר ==');
+  /* שליחת פרטי כניסה קובעת סיסמה, ולכן היא אינה מגיעה למצב הזה.
+     המצב עדיין קיים בהזמנה בקישור, והמסך חייב להמשיך להסביר
+     אותו – מוזמן שרואה "סיסמה שגויה" מנסה שוב ושוב את מה שלא
+     קיבל מעולם. */
+  await page.evaluate(() => window.__backend.createUser({
+    name: 'נועה הזמנה', email: 'noa@pw.test', role: 'employee'
+  }));
   const invitee = await newPage();
   await skipWizard(invitee);
   await invitee.goto(APP);
@@ -96,7 +111,7 @@ try {
   await invitee.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await invitee.reload();
   await invitee.waitForTimeout(500);
-  await invitee.fill('input[name="email"]', 'rotem@pw.test');
+  await invitee.fill('input[name="email"]', 'noa@pw.test');
   await invitee.fill('input[name="password"]', 'guess123');
   await invitee.click('#signin-form button[type="submit"]');
   await invitee.waitForTimeout(700);
@@ -104,7 +119,7 @@ try {
     (await invitee.locator('.auth-error').innerText()).trim(), /הוזמן וטרם נקבעה/);
 
   console.log('\n== קישור ההזמנה: קביעת סיסמה וכניסה ==');
-  await invitee.evaluate(() => window.__backend.followLink('rotem@pw.test', 'invite'));
+  await invitee.evaluate(() => window.__backend.followLink('noa@pw.test', 'invite'));
   await invitee.reload();
   await invitee.waitForTimeout(600);
   check('מוצג מסך בחירת סיסמה', await invitee.locator('#password-form').isVisible(), true);
@@ -123,7 +138,7 @@ try {
   await invitee.waitForTimeout(1200);
   check('נכנס למערכת', await invitee.locator('#employee-root').isVisible(), true);
   check('והוא באמת העובד שהוזמן',
-    await invitee.locator('#user-bar .user-name').textContent(), /רותם חדשה/);
+    await invitee.locator('#user-bar .user-name').textContent(), /נועה הזמנה/);
 
   console.log('\n== שכחתי סיסמה ==');
   const forgot = await newPage();

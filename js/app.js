@@ -829,6 +829,31 @@
     return String(value || '').trim().toLowerCase();
   }
 
+  /* מספר טלפון נשמר כפי שנכתב. אין כאן ניחוש של קידומת מדינה:
+     המערכת עובדת בכמה מדינות, ומספר ש"תוקן" לפי אחת מהן הוא
+     מספר שגוי בכל השאר. */
+  function normalizePhone(value) {
+    return String(value == null ? '' : value)
+      .replace(/^['\u2019]+/, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  }
+
+  /* שליחת פרטי כניסה לעובד. הסיסמה נולדת בשרת והולכת לדואר של
+     העובד – היא אינה חוזרת למסך הזה. סיסמה שעוברת דרך המנהל
+     נשארת אצלו: בצילום מסך, בוואטסאפ, לנצח. */
+  function sendAccessTo(emp, button) {
+    if (!source.sendAccess || blocked()) return;
+    if (!emp.email) { toast(t('employees.accessNoEmail')); return; }
+    if (!confirm(t('employees.sendAccessConfirm', { name: emp.name, email: emp.email }))) return;
+    if (button) button.disabled = true;
+    source.sendAccess(emp).then(function () {
+      if (button) button.disabled = false;
+      toast(t('employees.accessSent', { email: emp.email }));
+    }, function (err) {
+      if (button) button.disabled = false;
+      toast((err && err.message) || t('employees.accessFailed'));
+    });
+  }
+
   function visibleEmployees() {
     var text = normalizeSearch(empFilter.text);
     return state.employees.filter(function (emp) {
@@ -980,6 +1005,19 @@
       html += '<div class="field"><label class="title">' + t('employees.email') + '</label>' +
         '<input class="text-input" type="email" dir="ltr" data-field="email" ' +
         'value="' + esc(emp.email || '') + '"></div>';
+      /* הטלפון אינו משמש את השיבוץ. הוא כאן כי כשמשמרת נופלת
+         בשבע בבוקר, מחפשים מספר – ולא במחברת. */
+      html += '<div class="field"><label class="title">' + t('employees.phone') + '</label>' +
+        '<input class="text-input" type="tel" dir="ltr" data-field="phone" ' +
+        'value="' + esc(emp.phone || '') + '"></div>';
+      /* שליחת פרטי כניסה. קיימת רק כשיש שרת שיודע לשלוח דואר –
+         בכלי המקומי אין למי לשלוח ואין ממה. */
+      if (source.sendAccess) {
+        html += '<div class="field access-field">' +
+          '<button class="btn ghost small" data-action="send-access">' +
+          esc(t('employees.sendAccess')) + '</button>' +
+          '<p class="hint">' + esc(t('employees.sendAccessHint')) + '</p></div>';
+      }
       html += '<div class="field"><label class="title">' + t('employees.note') + '</label>' +
         '<input class="text-input" data-field="note" value="' + esc(emp.note || '') + '"></div>';
       html += '</div></div>';
@@ -1347,7 +1385,7 @@
 
      קיים גם כפונקציה בשם, ולא רק בתוך המאזין של הכפתור, כי הזמנת
      עובד למערכת צריכה ליצור לו כרטיס באותה הדרך בדיוק. */
-  function addEmployee(name, defer) {
+  function addEmployee(name, defer, email) {
     if (source.planLimit) {
       var active = state.employees.filter(function (emp) { return emp.active; }).length;
       var check = source.planLimit(active + 1);
@@ -1360,7 +1398,11 @@
     var employee = {
       id: Store.newId('emp'), name: String(name || '').trim() || t('employees.newName'),
       active: true, branches: [], shifts: Store.shiftIds(state).slice(),
-      maxShifts: 6, note: '', email: ''
+      maxShifts: 6, note: '', phone: '',
+      /* כרטיס שנפתח מתוך שליחת פרטי כניסה נולד עם המייל שלו,
+         בכתיבה אחת. כתיבה שנייה מיד אחרי הראשונה נדרסת על ידי
+         התשובה של הראשונה. */
+      email: String(email || '').trim().toLowerCase()
     };
     state.employees.push(employee);
     /* כרטיס שנוסף ביד נפתח מיד – בשביל זה לחצו על הכפתור. בייבוא
@@ -2225,6 +2267,10 @@
         render();
         return;
       }
+      if (action === 'send-access') {
+        sendAccessTo(emp, event.target.closest('button'));
+        return;
+      }
       if (action === 'toggle-branch') {
         var branchId = event.target.dataset.branch;
         var index = emp.branches.indexOf(branchId);
@@ -2279,6 +2325,7 @@
       if (field === 'active') emp.active = event.target.checked;
       else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
       else if (field === 'email') emp.email = String(event.target.value || '').trim().toLowerCase();
+      else if (field === 'phone') emp.phone = normalizePhone(event.target.value);
       else emp[field] = event.target.value;
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();

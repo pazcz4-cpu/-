@@ -38,6 +38,11 @@ function safeEqual(a, b) {
    חותם ב-HMAC-SHA256 על גוף הבקשה, בדיוק כמו ספקים אמיתיים,
    כדי שנתיב האימות ייבדק באמת ולא יעקוף. */
 const mock = {
+  /* ספק מדומה אינו סליקה. מי ששואל "אפשר לפתוח דף תשלום?" צריך
+     לקבל כאן לא, גם בסביבת פיתוח – אחרת לקוח היה מופנה לדף
+     תשלום שאינו מחייב כלום. */
+  live: function () { return false; },
+
   verify: function (raw, headers, secret) {
     if (!secret) return false;
     const sent = headers['x-mock-signature'] || '';
@@ -202,6 +207,15 @@ function payplusOutcome(value) {
 }
 
 const payplus = {
+  /* האם אפשר באמת לפתוח דף תשלום עכשיו. שלושה תנאים, ולא דגל
+     אחד: מי שהדליק PAYPLUS_READY בלי מפתחות או בלי עמוד תשלום
+     מקבל אותה תוצאה כמו מי שלא הדליק כלום – ולקוח אינו נשלח
+     לדף שייפול. */
+  live: function () {
+    return payplusReady() && !payplusKeysMissing() &&
+      !!process.env.PAYPLUS_PAYMENT_PAGE_UID;
+  },
+
   /* אימות ההודעה החוזרת.
      שני מחסומים: user-agent בשם PayPlus, ואז HMAC-SHA256 בבסיס 64
      על הגוף. הראשון זול ורק מסנן רעש; השני הוא ההגנה האמיתית.

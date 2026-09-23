@@ -563,6 +563,7 @@
         emailRequired: 'Une adresse e-mail est requise',
         mailNotConfigured: 'L’envoi d’e-mails n’est pas encore configuré. Le service de messagerie doit être paramétré.',
         mailFailed: 'Le compte est prêt mais l’e-mail n’est pas parti. Vérifiez le service de messagerie et réessayez.',
+        checkoutFailed: "Nous n'avons pas pu ouvrir la page de paiement. Réessayez dans un instant ; si cela persiste, écrivez-nous et nous nous en occuperons.",
         ownerOwnPassword: 'Le titulaire du compte définit lui-même son mot de passe, via "Mot de passe oublié" sur l’écran de connexion.',
         linkExpired: 'Ce lien n’est plus valide. Demandez-en un nouveau.',
         rateLimited: 'Trop d’e-mails d’un coup. Réessayez dans une minute.',

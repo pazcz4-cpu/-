@@ -569,6 +569,7 @@
         emailRequired: 'An email address is required',
         mailNotConfigured: 'Email sending is not set up yet. The mail service still needs to be configured.',
         mailFailed: 'The account is ready but the email did not go out. Check the mail service and try again.',
+        checkoutFailed: "We couldn't open the payment page. Try again in a moment, and if it keeps happening, write to us and we'll sort it out.",
         ownerOwnPassword: 'The account owner sets their own password, through "Forgot password" on the sign-in screen.',
         linkExpired: 'That link is no longer valid. Ask for a new one.',
         rateLimited: 'Too many emails at once. Try again in a minute.',

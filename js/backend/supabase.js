@@ -76,6 +76,11 @@
     if (lower.indexOf('the email was not sent') !== -1) {
       return fail('mail_failed', t('server.mailFailed'));
     }
+    /* דף תשלום שלא נפתח. הסיבה האמיתית נרשמת ביומן השרת – ללקוח
+       אין בה שימוש, והיא מגיעה אליו באנגלית באמצע מסך בעברית. */
+    if (lower.indexOf('payment page could not be opened') !== -1) {
+      return fail('checkout_failed', t('server.checkoutFailed'));
+    }
     if (lower.indexOf('owner sets their own password') !== -1) {
       return fail('forbidden', t('server.ownerOwnPassword'));
     }

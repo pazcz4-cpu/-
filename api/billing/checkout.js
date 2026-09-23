@@ -17,46 +17,65 @@ module.exports = endpoint(async function ({ company, user, body, db }) {
     return { status: 400, body: { message: 'Unknown plan' } };
   }
 
-  /* לקוח שכבר יש לו כרטיס שמור אינו צריך להזין אותו שוב כדי
-     לעבור תוכנית. זה המסלול של שדרוג: התוכנית משתנה עכשיו, לא
-     מתבצע חיוב עכשיו, והחיוב הבא – שממילא נגזר מהתוכנית שרשומה
-     על החברה – ייגבה לפי המחיר החדש.
+  const name = process.env.BILLING_PROVIDER || 'mock';
+  const provider = providers[name];
+
+  /* שני מקרים שונים לגמרי שמסתיימים באותו דבר: החלפת תוכנית בלי
+     דף תשלום.
+
+     1. ללקוח כבר יש כרטיס שמור. אין מה להזין שוב.
+     2. אין עדיין סליקה מחוברת – תקופת הפיילוט. כאן זה קריטי:
+        החלפת תוכנית היא שינוי תקרה ומחיר, והכסף נגבה בחיוב הבא.
+        בלי המסלול הזה לקוח שרוצה לפתוח עובד אחד-עשר נחסם, ובמקום
+        הודעה הוא קיבל את הערת המפתחים של הספק – באנגלית, על
+        משתנה סביבה. זו הודעה אלינו, לא אליו.
+
+     בשני המקרים לא מתבצע חיוב עכשיו, והחיוב הבא – שממילא נגזר
+     מהתוכנית שרשומה על החברה – ייגבה לפי המחיר החדש.
 
      אין כאן יחסיות (proration) בכוונה: חיוב חלקי באמצע חודש הוא
-     שורה שאיש אינו מבין בחשבונית, ובשביל להרוויח ימים בודדים
-     לא שווה להסביר אותה לכל לקוח. */
-  if (company.billing_subscription_id) {
+     שורה שאיש אינו מבין בחשבונית. */
+  const clearingLive = !!(provider && provider.live && provider.live() === true);
+  if (company.billing_subscription_id || !clearingLive) {
     await db('/companies?id=eq.' + encodeURIComponent(company.id), {
       method: 'PATCH', body: { plan: planId }
     });
     return { body: { ok: true, plan: planId, planChanged: true, checkoutUrl: null } };
   }
 
-  const name = process.env.BILLING_PROVIDER || 'mock';
-  const provider = providers[name];
-  if (!provider || !provider.createCheckout) {
+  if (!provider.createCheckout) {
     return { status: 501, body: { message: 'Billing provider cannot open a checkout: ' + name } };
   }
 
   const base = process.env.PUBLIC_BASE_URL || '';
-  const checkout = await provider.createCheckout({
-    companyId: company.id,
-    companyName: company.name,
-    /* ח.פ. / מספר עוסק, כפי שהלקוח הזין בהגדרות. הוא מה שצריך
-       להופיע על החשבונית, ולכן הוא נוסע לספק יחד עם השם. ריק
-       נשאר ריק: לא לכל לקוח יש מספר כזה. */
-    taxId: company.tax_id || '',
-    email: (user && user.email) || '',
-    language: company.language || 'he',
-    plan: planId,
-    amount: Model.PLANS[planId].priceMonthly,
-    currency: 'ILS',
-    /* הכרטיס נשמר עכשיו, החיוב יגיע בתום הניסיון */
-    saveCardOnly: company.status === 'trial',
-    returnUrl: base + '/app/?billing=done',
-    failureUrl: base + '/app/?billing=failed',
-    cancelUrl: base + '/app/?billing=canceled'
-  });
+  /* כל כישלון של הספק חוזר כהודעה אחת יציבה שהדפדפן יודע לתרגם.
+     ההסבר המדויק – מפתח חסר, עמוד תשלום שלא הוגדר, רשת שנפלה –
+     הוא מידע שלנו, לא של הלקוח: הוא אינו יכול לעשות איתו דבר,
+     והוא מגיע אליו באנגלית באמצע מסך בעברית. */
+  let checkout;
+  try {
+    checkout = await provider.createCheckout({
+      companyId: company.id,
+      companyName: company.name,
+      /* ח.פ. / מספר עוסק, כפי שהלקוח הזין בהגדרות. הוא מה שצריך
+         להופיע על החשבונית, ולכן הוא נוסע לספק יחד עם השם. ריק
+         נשאר ריק: לא לכל לקוח יש מספר כזה. */
+      taxId: company.tax_id || '',
+      email: (user && user.email) || '',
+      language: company.language || 'he',
+      plan: planId,
+      amount: Model.PLANS[planId].priceMonthly,
+      currency: 'ILS',
+      /* הכרטיס נשמר עכשיו, החיוב יגיע בתום הניסיון */
+      saveCardOnly: company.status === 'trial',
+      returnUrl: base + '/app/?billing=done',
+      failureUrl: base + '/app/?billing=failed',
+      cancelUrl: base + '/app/?billing=canceled'
+    });
+  } catch (err) {
+    console.error('checkout failed:', (err && err.message) || err);
+    return { status: 502, body: { message: 'the payment page could not be opened' } };
+  }
 
   /* התוכנית נשמרת רק אחרי שדף התשלום נפתח. אחרת ספק שנפל משאיר
      את הלקוח עם תוכנית שהוא לא הספיק לאשר – ובתקופה הבאה הוא

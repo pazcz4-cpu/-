@@ -552,6 +552,115 @@ test('מפתח חסר נאמר בשמו, בלי לחשוף את הערך של ה
     });
 });
 
+/* הכותרת נכנסת לתור, כמו הבדיקות עצמן – אחרת היא מודפסת
+   בטעינת הקובץ ומופיעה מעל בדיקות שרצות אחריה. */
+queue = queue.then(function () {
+  console.log('\n== שדרוג תוכנית כשאין עדיין סליקה ==');
+});
+
+/* למה הבדיקה הזו קיימת: לקוח בפיילוט ניסה לפתוח עובד אחד-עשר,
+   אישר את השדרוג, וקיבל על המסך
+
+     "PayPlus is not configured yet – set PAYPLUS_READY=true
+      once the staging smoke test passes"
+
+   הודעת מפתחים, באנגלית, על משתנה סביבה – באמצע מסך בעברית,
+   בדיוק ברגע שבו הוא רצה לשלם לנו יותר.
+
+   החלפת תוכנית אינה דורשת סליקה: היא שינוי תקרה ומחיר, והכסף
+   נגבה בחיוב הבא. */
+
+/* טוענים את נקודת הקצה בלי השרת: מחליפים את _shared.js במטמון
+   של require לפני הטעינה, כך ש-endpoint מחזיר את הפונקציה עצמה
+   ואפשר לקרוא לה עם חברה מזויפת. */
+function loadCheckout() {
+  var sharedPath = require.resolve('../api/billing/_shared.js');
+  var checkoutPath = require.resolve('../api/billing/checkout.js');
+  var writes = [];
+  var realShared = require.cache[sharedPath];
+  require.cache[sharedPath] = {
+    id: sharedPath, filename: sharedPath, loaded: true, exports: {
+      endpoint: function (handle) { return handle; },
+      db: function (path, options) {
+        writes.push({ path: path, options: options });
+        return Promise.resolve([]);
+      },
+      send: function () {}, requireOwner: function () {}, readBody: function () {}
+    }
+  };
+  delete require.cache[checkoutPath];
+  var handler = require('../api/billing/checkout.js');
+  delete require.cache[checkoutPath];
+  if (realShared) require.cache[sharedPath] = realShared;
+  else delete require.cache[sharedPath];
+  return { handler: handler, writes: writes };
+}
+
+function runCheckout(company, plan) {
+  var loaded = loadCheckout();
+  return loaded.handler({
+    company: company, user: { email: 'boss@test.co.il' },
+    body: { plan: plan },
+    db: function (path, options) {
+      loaded.writes.push({ path: path, options: options });
+      return Promise.resolve([]);
+    }
+  }).then(function (result) {
+    return { result: result, writes: loaded.writes };
+  });
+}
+
+var TRIAL = { id: 'co-1', name: 'קפה מרכז', status: 'trial', plan: 'starter' };
+
+test('בלי סליקה מחוברת – התוכנית מתחלפת, ואין דף תשלום', function () {
+  ready(false);
+  process.env.BILLING_PROVIDER = 'payplus';
+  return runCheckout(TRIAL, 'growth').then(function (out) {
+    assertEqual(out.result.status || 200, 200, 'קוד תשובה');
+    assertEqual(out.result.body.planChanged, true, 'התוכנית לא סומנה כמוחלפת');
+    assertEqual(out.result.body.plan, 'growth', 'התוכנית שהוחזרה');
+    assertEqual(out.result.body.checkoutUrl, null, 'נשלח דף תשלום למרות שאין סליקה');
+    var patch = out.writes.filter(function (w) {
+      return w.options && w.options.method === 'PATCH';
+    }).pop();
+    assert(!!patch, 'התוכנית לא נשמרה בשרת');
+    assertEqual(JSON.stringify(patch.options.body), '{"plan":"growth"}',
+      'נכתבו עמודות נוספות מעבר לתוכנית');
+    delete process.env.BILLING_PROVIDER;
+  }, function (err) { delete process.env.BILLING_PROVIDER; throw err; });
+});
+
+test('גם ספק מדומה אינו נחשב סליקה', function () {
+  /* אחרת לקוח היה מופנה לדף תשלום שאינו מחייב כלום */
+  process.env.BILLING_PROVIDER = 'mock';
+  return runCheckout(TRIAL, 'business').then(function (out) {
+    assertEqual(out.result.body.planChanged, true, 'התוכנית לא הוחלפה');
+    assertEqual(out.result.body.checkoutUrl, null, 'נפתח דף תשלום מדומה');
+    delete process.env.BILLING_PROVIDER;
+  }, function (err) { delete process.env.BILLING_PROVIDER; throw err; });
+});
+
+test('הערת המפתחים של הספק אינה מגיעה ללקוח', function () {
+  /* הנוסח המדויק שהלקוח ראה. הוא אינו אמור להופיע באף תשובה. */
+  ready(false);
+  process.env.BILLING_PROVIDER = 'payplus';
+  return runCheckout(TRIAL, 'growth').then(function (out) {
+    var body = JSON.stringify(out.result.body);
+    assert(body.indexOf('PAYPLUS_READY') === -1, 'שם משתנה הסביבה דלף ללקוח');
+    assert(body.indexOf('smoke test') === -1, 'הערת הפיתוח דלפה ללקוח');
+    delete process.env.BILLING_PROVIDER;
+  }, function (err) { delete process.env.BILLING_PROVIDER; throw err; });
+});
+
+test('כרטיס שמור ממשיך לעבוד כמו קודם', function () {
+  process.env.BILLING_PROVIDER = 'mock';
+  var withCard = Object.assign({}, TRIAL, { billing_subscription_id: 'tok-1' });
+  return runCheckout(withCard, 'growth').then(function (out) {
+    assertEqual(out.result.body.planChanged, true, 'התוכנית לא הוחלפה');
+    delete process.env.BILLING_PROVIDER;
+  }, function (err) { delete process.env.BILLING_PROVIDER; throw err; });
+});
+
 queue.then(function () {
   ready(false);
   console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

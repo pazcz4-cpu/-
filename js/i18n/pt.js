@@ -563,6 +563,7 @@
         emailRequired: 'É necessário um endereço de email',
         mailNotConfigured: 'O envio de e-mails ainda não está configurado. Falta configurar o serviço de correio.',
         mailFailed: 'A conta está pronta mas o e-mail não saiu. Verifique o serviço de correio e tente de novo.',
+        checkoutFailed: 'Não foi possível abrir a página de pagamento. Tente novamente daqui a pouco e, se persistir, escreva-nos e nós tratamos disso.',
         ownerOwnPassword: 'O titular da conta define a sua palavra-passe com "Esqueci-me da palavra-passe" no ecrã de entrada.',
         linkExpired: 'Esse link já não é válido. Pede um novo.',
         rateLimited: 'Demasiados emails de uma vez. Tenta dentro de um minuto.',

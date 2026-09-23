@@ -563,6 +563,7 @@
         emailRequired: 'Eine E-Mail-Adresse ist erforderlich',
         mailNotConfigured: 'Der E-Mail-Versand ist noch nicht eingerichtet. Der Maildienst muss konfiguriert werden.',
         mailFailed: 'Das Konto ist bereit, aber die E-Mail ging nicht raus. Prüfe den Maildienst und versuch es erneut.',
+        checkoutFailed: 'Die Zahlungsseite konnte nicht geöffnet werden. Bitte in einem Moment erneut versuchen; wenn es weiterhin auftritt, schreiben Sie uns und wir kümmern uns darum.',
         ownerOwnPassword: 'Wer das Konto besitzt, setzt das Passwort selbst – über "Passwort vergessen" auf der Anmeldeseite.',
         linkExpired: 'Dieser Link ist nicht mehr gültig. Fordern Sie einen neuen an.',
         rateLimited: 'Zu viele E-Mails auf einmal. Versuchen Sie es in einer Minute.',

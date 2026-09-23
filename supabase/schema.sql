@@ -836,3 +836,41 @@ grant execute on function public.week_for_employee(jsonb, text, boolean) to auth
 grant execute on function public.week_as_seen(public.company_weeks)      to authenticated;
 grant execute on function public.week_for_me(text)               to authenticated;
 grant execute on function public.config_for_me()                 to authenticated;
+
+-- ACCESS LINKS: קישור אישי קבוע לעובד
+--
+-- למה זה קיים: יש עובדים שהדפדפן שלהם חוסם אחסון לגמרי (גלישה
+-- פרטית, "חסימת כל העוגיות" בספארי). אצלם אסימון ההתחברות אינו
+-- שורד סגירת לשונית, ולכן כל פתיחה דורשת הקלדת סיסמה מחדש. עובד
+-- שמגיש אילוץ פעם בשבוע לא יעשה את זה, והוא פשוט לא יגיש.
+--
+-- הקישור הוא ההזדהות: המנהל מייצר אותו פעם אחת, העובד שומר אותו
+-- במסך הבית, וכל פתיחה מנפיקה לו התחברות טרייה בשרת. אין סיסמה
+-- לזכור ואין תלות באחסון הדפדפן.
+--
+-- מה שומר על זה:
+--  · הטבלה סגורה לחלוטין בפני הדפדפן. רק השרת, עם מפתח הניהול,
+--    כותב וקורא ממנה – ולכן גם מנהל אינו יכול לשלוף קישור של
+--    עובד דרך ה-API.
+--  · נשמר גיבוב (sha256) ולא האסימון עצמו. דליפה של הטבלה אינה
+--    דליפה של קישורים.
+--  · קישור לעובד בלבד. השרת מסרב להנפיק אחד לבעלים או למנהל,
+--    כי שם המחיר של קישור שדלף גבוה בהרבה.
+--  · שורה אחת לעובד: הנפקה מחדש דורסת את הקודמת, ולכן "ייצור
+--    קישור חדש" הוא גם ביטול הישן.
+create table if not exists public.access_links (
+  user_id      uuid primary key references public.company_users(id) on delete cascade,
+  company_id   uuid not null references public.companies(id) on delete cascade,
+  token_hash   text not null unique,
+  created_at   timestamptz not null default now(),
+  last_used_at timestamptz
+);
+
+create index if not exists access_links_company_idx
+  on public.access_links (company_id);
+
+alter table public.access_links enable row level security;
+
+-- אין כאן policy בכוונה: RLS בלי policy חוסם הכל. השרת עובד עם
+-- service_role, שעוקף RLS, ולכן הוא היחיד שמגיע לטבלה.
+revoke all on public.access_links from authenticated, anon;

@@ -20,6 +20,7 @@
 */
 'use strict';
 
+const crypto = require('crypto');
 const { projectUrl } = require('./_supabase.js');
 const mail = require('./_mail.js');
 const accessMail = require('./_access-email.js');
@@ -187,6 +188,154 @@ async function sendAccess(req, res, input, ctx) {
   });
 }
 
+/* ===== קישור אישי קבוע לעובד =====
+
+   הבעיה שזה פותר: יש עובדים שהדפדפן שלהם חוסם אחסון לגמרי
+   (גלישה פרטית, "חסימת כל העוגיות" בספארי). אצלם אסימון
+   ההתחברות אינו שורד סגירת לשונית, וכל פתיחה דורשת סיסמה מחדש.
+   עובד שמגיש אילוץ פעם בשבוע פשוט יפסיק להגיש.
+
+   כאן הקישור הוא ההזדהות: המנהל מנפיק אותו פעם אחת, העובד שומר
+   אותו במסך הבית, וכל פתיחה מנפיקה התחברות טרייה בשרת.
+
+   מה שומר על זה:
+    · בשרת נשמר גיבוב ולא האסימון. דליפה של הטבלה אינה דליפה
+      של קישורים, והאסימון חוזר למנהל פעם אחת בלבד.
+    · לעובד בלבד. קישור לבעלים או למנהל הוא מפתח לכל העסק,
+      והשרת מסרב להנפיק אחד כזה.
+    · שורה אחת לעובד: הנפקה מחדש דורסת, ולכן קישור חדש הוא גם
+      ביטול של הישן.
+    · השבתת עובד מנתקת גם את הקישור שלו. */
+
+/* 32 בתים אקראיים. base64url ולא hex, כדי שהקישור יישאר קצר
+   מספיק לוואטסאפ בלי להישבר לשתי שורות. */
+function newLinkToken() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+function hashLinkToken(token) {
+  return crypto.createHash('sha256').update(String(token), 'utf8').digest('hex');
+}
+
+async function redeemLink(req, res, input, ctx) {
+  const { url, serviceKey } = ctx;
+  const token = String(input.token || '').trim();
+  /* אותה תשובה לאסימון פגום, מבוטל, או של עובד מושבת. פירוט כאן
+     הופך את נקודת הקצה לכלי לבדוק אילו קישורים קיימים. */
+  const refuse = () => send(res, 401, { message: 'link is not valid' });
+  if (!token || token.length < 20) return refuse();
+
+  const found = await callSupabase(url,
+    '/rest/v1/access_links?token_hash=eq.' + encodeURIComponent(hashLinkToken(token)) +
+    '&select=user_id,company_id', serviceKey, {});
+  const link = found.ok && found.body && found.body[0];
+  if (!link) return refuse();
+
+  const profile = await callSupabase(url,
+    '/rest/v1/company_users?id=eq.' + encodeURIComponent(link.user_id) +
+    '&select=id,email,role,active', serviceKey, {});
+  const user = profile.ok && profile.body && profile.body[0];
+  if (!user || !user.active || user.role !== 'employee' || !user.email) return refuse();
+
+  /* התחברות בלי סיסמה: מייצרים קוד חד-פעמי דרך מפתח הניהול
+     ופודים אותו מיד. הקוד אינו יוצא מהשרת הזה. */
+  const generated = await callSupabase(url, '/auth/v1/admin/generate_link', serviceKey, {
+    method: 'POST', body: { type: 'magiclink', email: user.email }
+  });
+  const otp = generated.ok && generated.body &&
+    (generated.body.email_otp || (generated.body.properties || {}).email_otp);
+  if (!otp) return send(res, 502, { message: 'could not open a session for this link' });
+
+  const verified = await callSupabase(url, '/auth/v1/verify', serviceKey, {
+    method: 'POST', body: { type: 'magiclink', email: user.email, token: otp }
+  });
+  if (!verified.ok || !verified.body || !verified.body.access_token) {
+    return send(res, 502, { message: 'could not open a session for this link' });
+  }
+
+  /* מתי השתמשו לאחרונה. זה מה שעונה למנהל "הוא בכלל נכנס?",
+     וכישלון כאן אינו סיבה למנוע כניסה. */
+  try {
+    await callSupabase(url,
+      '/rest/v1/access_links?user_id=eq.' + encodeURIComponent(link.user_id), serviceKey,
+      { method: 'PATCH', body: { last_used_at: new Date().toISOString() } });
+  } catch (err) { /* הכניסה חשובה יותר מהסטטיסטיקה */ }
+
+  res.setHeader('Cache-Control', 'no-store');
+  return send(res, 200, {
+    ok: true,
+    access_token: verified.body.access_token,
+    refresh_token: verified.body.refresh_token,
+    expires_in: verified.body.expires_in
+  });
+}
+
+async function createLink(req, res, input, ctx) {
+  const { url, serviceKey, caller } = ctx;
+  const userId = String(input.userId || '').trim();
+  if (!userId) return send(res, 400, { message: 'userId is required' });
+
+  /* מוגבל לחברה של הקורא, ולעובדים בלבד */
+  const profile = await callSupabase(url,
+    '/rest/v1/company_users?id=eq.' + encodeURIComponent(userId) +
+    '&company_id=eq.' + encodeURIComponent(caller.company_id) +
+    '&select=id,name,email,role,active', serviceKey, {});
+  const user = profile.ok && profile.body && profile.body[0];
+  if (!user) return send(res, 404, { message: 'user not found' });
+  if (user.role !== 'employee') {
+    return send(res, 403, { message: 'a personal link is for employees only' });
+  }
+  if (!user.active) return send(res, 403, { message: 'this user is not active' });
+
+  const token = newLinkToken();
+  /* upsert לפי user_id: הנפקה מחדש דורסת את הקודמת */
+  const saved = await callSupabase(url, '/rest/v1/access_links', serviceKey, {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: {
+      user_id: user.id, company_id: caller.company_id,
+      token_hash: hashLinkToken(token),
+      created_at: new Date().toISOString(),
+      last_used_at: null
+    }
+  });
+  if (!saved.ok) return send(res, 502, { message: 'could not save the link' });
+
+  /* האסימון חוזר כאן פעם אחת ויחידה. בשרת נשאר רק הגיבוב. */
+  res.setHeader('Cache-Control', 'no-store');
+  return send(res, 200, {
+    ok: true, userId: user.id, name: user.name,
+    url: appUrl(req) + '?k=' + token
+  });
+}
+
+async function revokeLink(req, res, input, ctx) {
+  const { url, serviceKey, caller } = ctx;
+  const userId = String(input.userId || '').trim();
+  if (!userId) return send(res, 400, { message: 'userId is required' });
+  const gone = await callSupabase(url,
+    '/rest/v1/access_links?user_id=eq.' + encodeURIComponent(userId) +
+    '&company_id=eq.' + encodeURIComponent(caller.company_id), serviceKey,
+    { method: 'DELETE' });
+  if (!gone.ok) return send(res, 502, { message: 'could not revoke the link' });
+  return send(res, 200, { ok: true, userId: userId });
+}
+
+async function listLinks(req, res, input, ctx) {
+  const { url, serviceKey, caller } = ctx;
+  const rows = await callSupabase(url,
+    '/rest/v1/access_links?company_id=eq.' + encodeURIComponent(caller.company_id) +
+    '&select=user_id,created_at,last_used_at', serviceKey, {});
+  if (!rows.ok) return send(res, 502, { message: 'could not read the links' });
+  /* בלי token_hash: למסך אין בו שימוש, ומה שלא נשלח לא דולף. */
+  return send(res, 200, {
+    ok: true,
+    links: (rows.body || []).map((row) => ({
+      userId: row.user_id, createdAt: row.created_at, lastUsedAt: row.last_used_at
+    }))
+  });
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { return send(res, 405, { message: 'Method not allowed' }); }
 
@@ -196,13 +345,25 @@ module.exports = async function handler(req, res) {
     return send(res, 500, { message: 'Server is not configured' });
   }
 
+  let input = req.body;
+  if (typeof input === 'string') { try { input = JSON.parse(input); } catch (err) { input = null; } }
+  if (!input || typeof input !== 'object') input = {};
+
+  /* פדיון קישור אישי, ראשון ולבד. זו הפעולה היחידה בקובץ הזה
+     שאינה דורשת הזדהות – האסימון שבקישור הוא ההזדהות – ולכן היא
+     יוצאת מכאן ב-return ואינה נוגעת בשורה של קורא מזוהה. */
+  if (input.mode === 'link' && input.op === 'redeem') {
+    try { return await redeemLink(req, res, input, { url, serviceKey }); }
+    catch (err) { return send(res, 502, { message: 'link check failed' }); }
+  }
+
   const auth = req.headers.authorization || '';
   const callerToken = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!callerToken) { return send(res, 401, { message: 'not signed in' }); }
 
-  let input = req.body;
-  if (typeof input === 'string') { try { input = JSON.parse(input); } catch (err) { input = null; } }
-  if (!input || !input.email) {
+  /* כתובת מייל נדרשת לפתיחת משתמש ולשליחת פרטי כניסה. פעולות
+     הקישור מזהות את העובד לפי מזהה, ולכן הן פטורות ממנה. */
+  if (input.mode !== 'link' && !input.email) {
     return send(res, 400, { message: 'An email address is required' });
   }
   /* סיסמה אינה נדרשת: ברירת המחדל היא הזמנה בדואר, והמשתמש קובע
@@ -233,6 +394,20 @@ module.exports = async function handler(req, res) {
      אותה בדואר, ואינה מחזירה אותה לדפדפן. */
   if (input.mode === 'access') {
     return sendAccess(req, res, input, { url, serviceKey, caller });
+  }
+
+  /* הנפקה, ביטול ורשימה של קישורים אישיים. למנהל בלבד – הפדיון
+     כבר יצא מכאן הרבה למעלה. */
+  if (input.mode === 'link') {
+    const ctx = { url, serviceKey, caller };
+    try {
+      if (input.op === 'create') return await createLink(req, res, input, ctx);
+      if (input.op === 'revoke') return await revokeLink(req, res, input, ctx);
+      if (input.op === 'list') return await listLinks(req, res, input, ctx);
+    } catch (err) {
+      return send(res, 502, { message: 'the link service failed' });
+    }
+    return send(res, 400, { message: 'unknown link op' });
   }
 
   const role = ROLES.includes(input.role) ? input.role : 'employee';

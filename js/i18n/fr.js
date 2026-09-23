@@ -609,6 +609,34 @@
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
       /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      /* קישור אישי קבוע לעובד, בלי סיסמה */
+      link: {
+        column: 'Lien personnel',
+        none: 'Aucun lien',
+        create: 'Créer un lien',
+        renew: 'Nouveau lien',
+        revoke: 'Révoquer',
+        active: 'Lien actif · {date}',
+        usedAt: 'Dernière utilisation {date}',
+        neverUsed: 'Jamais utilisé',
+        copy: 'Copier',
+        whatsapp: 'Envoyer sur WhatsApp',
+        urlLabel: 'Le lien personnel',
+        onceOnly: "C'est la seule fois où le lien est affiché. Copiez-le maintenant ; ensuite vous ne pourrez qu'en créer un nouveau.",
+        created: 'Lien personnel créé pour {name}',
+        createFailed: "Nous n'avons pas pu créer le lien. Réessayez.",
+        revoked: 'Le lien de {name} a été révoqué',
+        revokeFailed: "Nous n'avons pas pu révoquer le lien.",
+        revokeConfirm: 'Révoquer le lien de {name} ? Il cesse de fonctionner immédiatement.',
+        renewConfirm: "Créer un nouveau lien pour {name} révoque l'ancien, qui cesse aussitôt de fonctionner. Continuer ?",
+        copied: 'Lien copié',
+        copyManual: 'La copie a été bloquée. Le lien est sélectionné — copiez-le à la main.',
+        whatsappText: "Bonjour {name}, voici ton lien personnel vers le planning. Enregistre-le sur l'écran d'accueil : il te connecte sans mot de passe : {url}",
+        invalid: "Ce lien n'est pas valide. Demandez-en un nouveau.",
+        employeesOnly: 'Un lien personnel est réservé aux équipes.',
+        inactive: 'Cette personne est inactive et ne reçoit pas de lien.'
+      },
+
       locked: {
         factPeople: 'personnes planifiées',
         factShifts: 'créneaux',

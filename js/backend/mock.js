@@ -202,10 +202,26 @@
   };
 
   MockBackend.prototype.restore = function () {
+    var self = this;
+    /* קישור אישי קודם לכל: מי שהגיע איתו מתכוון להיכנס כמוהו,
+       גם אם במכשיר הזה שמור חיבור ישן של מישהו אחר. */
+    var token = linkTokenFromUrl();
+    if (token) {
+      stripLinkToken();
+      return this.redeemAccessLink(token).catch(function (err) {
+        self._linkError = (err && err.message) || t('link.invalid');
+        self.storage.remove(SESSION_KEY);
+        return null;
+      });
+    }
     return Promise.resolve(this.session());
   };
 
-  MockBackend.prototype.takeLinkError = function () { return ''; };
+  MockBackend.prototype.takeLinkError = function () {
+    var message = this._linkError || '';
+    this._linkError = null;
+    return message;
+  };
 
   MockBackend.prototype.setPassword = function (password) {
     var next = String(password || '');
@@ -625,6 +641,99 @@
     delete this.db.users[userId];
     this._save();
     return Promise.resolve({ id: userId, cancelled: true });
+  };
+
+
+  /* האסימון יושב בשאילתת הכתובת, ונמחק ממנה מיד אחרי הקריאה:
+     כתובת שנשארת עם אסימון נשמרת בהיסטוריה ונשלחת הלאה בטעות. */
+  function linkTokenFromUrl() {
+    if (!root.location || !root.location.search) return '';
+    var match = /[?&]k=([^&]+)/.exec(root.location.search);
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]); } catch (err) { return match[1]; }
+  }
+
+  function stripLinkToken() {
+    if (!root.history || !root.history.replaceState || !root.location) return;
+    try {
+      root.history.replaceState(null, '', root.location.pathname +
+        root.location.search.replace(/([?&])k=[^&]*/, '$1').replace(/[?&]$/, '') +
+        root.location.hash);
+    } catch (err) { /* לא קריטי */ }
+  }
+
+  /* ===== קישור אישי קבוע לעובד =====
+
+     השרת האמיתי שומר גיבוב של האסימון ולא את האסימון עצמו. כאן
+     נשמר האסימון כפי שהוא, כי זה שרת מדומה שרץ בדפדפן של אותו
+     משתמש – אין בו סוד שאפשר להדליף למישהו אחר. מה שכן מדומה
+     במדויק הן ההרשאות והחוקים, כי אלה מה שהבדיקות בודקות. */
+  MockBackend.prototype.createAccessLink = function (userId) {
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var user = this.db.users[userId];
+    if (!user || user.companyId !== session.company.id) {
+      return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    }
+    if (user.role !== 'employee') {
+      return Promise.reject(this._fail('forbidden', t('link.employeesOnly')));
+    }
+    if (!user.active) {
+      return Promise.reject(this._fail('forbidden', t('link.inactive')));
+    }
+    var token = 'lnk-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    this.db.links = this.db.links || {};
+    /* שורה אחת לעובד: יצירה מחדש דורסת, ולכן היא גם ביטול */
+    this.db.links[userId] = {
+      userId: userId, companyId: session.company.id, token: token,
+      createdAt: this.now().toISOString(), lastUsedAt: null
+    };
+    this._save();
+    var base = (root.location && root.location.origin && root.location.pathname)
+      ? root.location.origin + root.location.pathname : '';
+    return Promise.resolve({ ok: true, userId: userId, name: user.name,
+      url: base + '?k=' + token });
+  };
+
+  MockBackend.prototype.revokeAccessLink = function (userId) {
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var links = this.db.links || {};
+    if (links[userId] && links[userId].companyId === session.company.id) {
+      delete links[userId];
+      this._save();
+    }
+    return Promise.resolve({ ok: true, userId: userId });
+  };
+
+  MockBackend.prototype.listAccessLinks = function () {
+    var session;
+    try { session = this._require('users.manage'); } catch (err) { return Promise.reject(err); }
+    var links = this.db.links || {};
+    return Promise.resolve(Object.keys(links)
+      .filter(function (id) { return links[id].companyId === session.company.id; })
+      .map(function (id) {
+        /* בלי האסימון: למסך אין בו שימוש, ומה שלא נשלח לא דולף */
+        return { userId: id, createdAt: links[id].createdAt, lastUsedAt: links[id].lastUsedAt };
+      }));
+  };
+
+  MockBackend.prototype.redeemAccessLink = function (token) {
+    var links = this.db.links || {};
+    var found = null;
+    Object.keys(links).forEach(function (id) {
+      if (links[id].token === token) found = links[id];
+    });
+    /* אותה תשובה לאסימון פגום, מבוטל או של עובד מושבת */
+    var refuse = this._fail('bad_link', t('link.invalid'));
+    if (!found) return Promise.reject(refuse);
+    var user = this.db.users[found.userId];
+    if (!user || !user.active || user.role !== 'employee') return Promise.reject(refuse);
+    found.lastUsedAt = this.now().toISOString();
+    this.storage.set(SESSION_KEY, { userId: user.id, at: this.now().toISOString() });
+    if (!user.joinedAt) { user.joinedAt = this.now().toISOString(); }
+    this._save();
+    return Promise.resolve(this.session());
   };
 
   /* ===== זהות: השם שלי, ושם העסק ===== */

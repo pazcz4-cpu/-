@@ -609,6 +609,34 @@
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
       /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      /* קישור אישי קבוע לעובד, בלי סיסמה */
+      link: {
+        column: 'Enlace personal',
+        none: 'Sin enlace',
+        create: 'Crear enlace',
+        renew: 'Enlace nuevo',
+        revoke: 'Revocar',
+        active: 'Enlace activo · {date}',
+        usedAt: 'Último uso {date}',
+        neverUsed: 'Aún sin usar',
+        copy: 'Copiar',
+        whatsapp: 'Enviar por WhatsApp',
+        urlLabel: 'El enlace personal',
+        onceOnly: 'Es la única vez que se muestra el enlace. Cópialo ahora; después solo podrás crear uno nuevo.',
+        created: 'Enlace personal creado para {name}',
+        createFailed: 'No hemos podido crear el enlace. Inténtalo de nuevo.',
+        revoked: 'Se ha revocado el enlace de {name}',
+        revokeFailed: 'No hemos podido revocar el enlace.',
+        revokeConfirm: '¿Revocar el enlace de {name}? Dejará de funcionar de inmediato.',
+        renewConfirm: 'Crear un enlace nuevo para {name} revoca el anterior, que dejará de funcionar de inmediato. ¿Continuar?',
+        copied: 'Enlace copiado',
+        copyManual: 'Se ha bloqueado la copia. El enlace está seleccionado: cópialo a mano.',
+        whatsappText: 'Hola {name}, este es tu enlace personal al cuadrante. Guárdalo en la pantalla de inicio: te identifica sin contraseña: {url}',
+        invalid: 'Este enlace no es válido. Pide uno nuevo a tu responsable.',
+        employeesOnly: 'El enlace personal es solo para la plantilla.',
+        inactive: 'Esta persona está inactiva y no recibe enlace.'
+      },
+
       locked: {
         factPeople: 'personas en el cuadrante',
         factShifts: 'turnos',

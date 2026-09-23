@@ -609,6 +609,34 @@
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
       /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      /* קישור אישי קבוע לעובד, בלי סיסמה */
+      link: {
+        column: 'Persönlicher Link',
+        none: 'Kein Link',
+        create: 'Link erstellen',
+        renew: 'Neuer Link',
+        revoke: 'Widerrufen',
+        active: 'Aktiver Link · {date}',
+        usedAt: 'Zuletzt genutzt {date}',
+        neverUsed: 'Noch nie genutzt',
+        copy: 'Kopieren',
+        whatsapp: 'Per WhatsApp senden',
+        urlLabel: 'Der persönliche Link',
+        onceOnly: 'Nur jetzt wird der Link angezeigt. Kopieren Sie ihn jetzt — danach lässt sich nur ein neuer erstellen.',
+        created: 'Persönlicher Link für {name} erstellt',
+        createFailed: 'Der Link konnte nicht erstellt werden. Bitte erneut versuchen.',
+        revoked: 'Der Link von {name} wurde widerrufen',
+        revokeFailed: 'Der Link konnte nicht widerrufen werden.',
+        revokeConfirm: 'Den Link von {name} widerrufen? Er funktioniert sofort nicht mehr.',
+        renewConfirm: 'Ein neuer Link für {name} widerruft den alten, der sofort nicht mehr funktioniert. Fortfahren?',
+        copied: 'Link kopiert',
+        copyManual: 'Das Kopieren wurde blockiert. Der Link ist markiert — bitte manuell kopieren.',
+        whatsappText: 'Hallo {name}, hier ist dein persönlicher Link zum Schichtplan. Auf den Startbildschirm legen — er meldet dich ohne Passwort an: {url}',
+        invalid: 'Dieser Link ist nicht gültig. Bitten Sie um einen neuen.',
+        employeesOnly: 'Ein persönlicher Link ist nur für Mitarbeitende.',
+        inactive: 'Diese Person ist inaktiv und erhält keinen Link.'
+      },
+
       locked: {
         factPeople: 'eingeteilte Personen',
         factShifts: 'Schichten',

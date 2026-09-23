@@ -609,6 +609,34 @@
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
       /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      /* קישור אישי קבוע לעובד, בלי סיסמה */
+      link: {
+        column: 'Ligação pessoal',
+        none: 'Sem ligação',
+        create: 'Criar ligação',
+        renew: 'Nova ligação',
+        revoke: 'Revogar',
+        active: 'Ligação ativa · {date}',
+        usedAt: 'Última utilização {date}',
+        neverUsed: 'Ainda não utilizada',
+        copy: 'Copiar',
+        whatsapp: 'Enviar por WhatsApp',
+        urlLabel: 'A ligação pessoal',
+        onceOnly: 'Esta é a única vez que a ligação é mostrada. Copie-a agora — depois só poderá criar uma nova.',
+        created: 'Ligação pessoal criada para {name}',
+        createFailed: 'Não foi possível criar a ligação. Tente novamente.',
+        revoked: 'A ligação de {name} foi revogada',
+        revokeFailed: 'Não foi possível revogar a ligação.',
+        revokeConfirm: 'Revogar a ligação de {name}? Deixa de funcionar de imediato.',
+        renewConfirm: 'Criar uma nova ligação para {name} revoga a anterior, que deixa de funcionar de imediato. Continuar?',
+        copied: 'Ligação copiada',
+        copyManual: 'A cópia foi bloqueada. A ligação está selecionada — copie-a à mão.',
+        whatsappText: 'Olá {name}, esta é a tua ligação pessoal para a escala. Guarda-a no ecrã principal — entra sem palavra-passe: {url}',
+        invalid: 'Esta ligação não é válida. Peça uma nova à chefia.',
+        employeesOnly: 'A ligação pessoal é só para a equipa.',
+        inactive: 'Esta pessoa está inativa e não recebe ligação.'
+      },
+
       locked: {
         factPeople: 'pessoas na escala',
         factShifts: 'turnos',

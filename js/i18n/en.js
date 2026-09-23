@@ -615,6 +615,34 @@
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
       /* שבוע מפורסם נעול: אזהרה, ואז בחירה אמיתית */
+      /* קישור אישי קבוע לעובד, בלי סיסמה */
+      link: {
+        column: 'Personal link',
+        none: 'No link',
+        create: 'Create link',
+        renew: 'New link',
+        revoke: 'Revoke',
+        active: 'Active link · {date}',
+        usedAt: 'Last used {date}',
+        neverUsed: 'Never used yet',
+        copy: 'Copy',
+        whatsapp: 'Send on WhatsApp',
+        urlLabel: 'The personal link',
+        onceOnly: 'This is the only time the link is shown. Copy it now — afterwards you can only create a new one.',
+        created: 'Personal link created for {name}',
+        createFailed: "We couldn't create a link. Please try again.",
+        revoked: "{name}'s link was revoked",
+        revokeFailed: "We couldn't revoke the link.",
+        revokeConfirm: "Revoke {name}'s link? It stops working immediately.",
+        renewConfirm: 'Creating a new link for {name} revokes the old one, which stops working immediately. Continue?',
+        copied: 'Link copied',
+        copyManual: 'Copying was blocked. The link is selected — copy it manually.',
+        whatsappText: 'Hi {name}, here is your personal link to the shift schedule. Save it to your home screen — it signs you in without a password: {url}',
+        invalid: 'This link is not valid. Ask your manager for a new one.',
+        employeesOnly: 'A personal link is for employees only.',
+        inactive: 'This person is inactive and cannot get a link.'
+      },
+
       locked: {
         factPeople: 'people scheduled',
         factShifts: 'shifts',

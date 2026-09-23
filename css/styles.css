@@ -626,6 +626,18 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 /* ===== שטח ההמתנה =====
    משמרות שאין בהן עובד. הוא גם תחנת ביניים לגרירה וגם התשובה
    ל"מה עוד חסר לי השבוע", ולכן הוא מקבץ לפי יום ולא ערימה אחת. */
+/* ===== קישור אישי =====
+   האסימון מוצג פעם אחת בלבד, ולכן הרגע הזה צריך להיות ברור:
+   תיבה שאפשר לסמן ביד ולא רק כפתור העתקה, ומשפט שאומר במפורש
+   שלא תהיה הזדמנות שנייה. */
+.link-fresh {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--s2); border: 1px solid var(--brand); border-radius: var(--r-md);
+  background: var(--surface);
+}
+.link-fresh .text-input { font-size: 12px; direction: ltr; text-align: left; }
+.link-fresh .hint { margin: 0; font-size: 12px; }
+
 /* ===== עריכה בסידור חי =====
    הבאנר נשאר על המסך כל עוד עורכים שבוע מפורסם. הוא לא נסגר
    בלחיצה על X: מי ששכח שהוא בתוך סידור שהעובדים כבר רואים לא

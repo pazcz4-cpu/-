@@ -53,9 +53,129 @@
   }
 
 
+  /* ===== קישור אישי =====
+
+     האסימון חוזר מהשרת פעם אחת בלבד – שם נשמר רק גיבוב – ולכן
+     אין "הצגת הקישור שוב". מה שיש כאן הוא מצב: האם קיים קישור,
+     מתי נוצר, ומתי העובד השתמש בו לאחרונה. הקישור עצמו מוצג
+     מיד אחרי היצירה, ורק אז. */
+  var links = {};        /* userId -> {createdAt, lastUsedAt} */
+  var freshLink = null;  /* {userId, url} – הקישור שנוצר עכשיו */
+
+  function linkCell(user) {
+    if (!ctx.backend.createAccessLink || user.role !== 'employee') return '—';
+    var link = links[user.id];
+    var html = '<div class="invite-cell">';
+    if (freshLink && freshLink.userId === user.id && !freshLink.shown) {
+      /* הרגע היחיד שבו הכתובת על המסך. היא בתיבה שאפשר לסמן,
+         ולא רק בכפתור העתקה: מי שההעתקה נכשלה אצלו צריך משהו
+         לסמן ביד. */
+      html += '<div class="link-fresh">' +
+        '<input type="text" class="text-input" readonly value="' + esc(freshLink.url) + '"' +
+        ' data-link-url aria-label="' + esc(t('link.urlLabel')) + '">' +
+        '<div class="invite-actions">' +
+        '<button class="btn primary small" data-action="link-copy">' +
+          esc(t('link.copy')) + '</button>';
+      if (user.phone || (freshLink.phone || '')) {
+        html += '<button class="btn ghost small" data-action="link-whatsapp">' +
+          esc(t('link.whatsapp')) + '</button>';
+      }
+      html += '</div>' +
+        '<p class="hint">' + esc(t('link.onceOnly')) + '</p>' +
+        '</div>';
+    } else if (link) {
+      html += '<span class="invite-chip ok">' +
+        esc(t('link.active', { date: Model.formatDate(link.createdAt) })) + '</span>' +
+        '<span class="hint">' + esc(link.lastUsedAt
+          ? t('link.usedAt', { date: Model.formatDate(link.lastUsedAt) })
+          : t('link.neverUsed')) + '</span>';
+    } else {
+      html += '<span class="invite-chip">' + esc(t('link.none')) + '</span>';
+    }
+    html += '<span class="invite-actions">' +
+      '<button class="btn ghost small" data-action="link-create" data-user="' + esc(user.id) +
+      '" data-name="' + esc(user.name || user.email) + '">' +
+      esc(link ? t('link.renew') : t('link.create')) + '</button>';
+    if (link) {
+      html += '<button class="btn ghost small danger" data-action="link-revoke" data-user="' +
+        esc(user.id) + '" data-name="' + esc(user.name || user.email) + '">' +
+        esc(t('link.revoke')) + '</button>';
+    }
+    return html + '</span></div>';
+  }
+
+  function loadLinks() {
+    if (!ctx.backend.listAccessLinks) return Promise.resolve();
+    return ctx.backend.listAccessLinks().then(function (list) {
+      links = {};
+      (list || []).forEach(function (item) { links[item.userId] = item; });
+    }, function () { links = {}; });
+  }
+
+  /* יצירה מחדש דורסת את הקישור הקודם, ולכן היא גם ביטול שלו.
+     זה נאמר לפני, ולא אחרי: מנהל שלחץ "קישור חדש" כדי לראות את
+     הישן היה מנתק בטעות עובד שכבר שמר אותו. */
+  function createLink(button, say) {
+    var name = button.dataset.name || '';
+    var exists = !!links[button.dataset.user];
+    if (exists && !window.confirm(t('link.renewConfirm', { name: name }))) return;
+    button.disabled = true;
+    say('');
+    ctx.backend.createAccessLink(button.dataset.user).then(function (result) {
+      freshLink = { userId: button.dataset.user, url: (result && result.url) || '', name: name };
+      say(t('link.created', { name: name }));
+      render();
+    }, function (err) {
+      button.disabled = false;
+      say((err && err.message) || t('link.createFailed'), true);
+    });
+  }
+
+  function revokeLink(button, say) {
+    var name = button.dataset.name || '';
+    if (!window.confirm(t('link.revokeConfirm', { name: name }))) return;
+    button.disabled = true;
+    ctx.backend.revokeAccessLink(button.dataset.user).then(function () {
+      if (freshLink && freshLink.userId === button.dataset.user) freshLink = null;
+      say(t('link.revoked', { name: name }));
+      render();
+    }, function (err) {
+      button.disabled = false;
+      say((err && err.message) || t('link.revokeFailed'), true);
+    });
+  }
+
+  function copyLink(say) {
+    var field = document.querySelector('[data-link-url]');
+    if (!field) return;
+    field.select();
+    var done = function () { say(t('link.copied')); };
+    if (root.navigator && root.navigator.clipboard && root.navigator.clipboard.writeText) {
+      root.navigator.clipboard.writeText(field.value).then(done, function () {
+        /* הדפדפן סירב. הטקסט כבר מסומן, ולכן יש מה להעתיק ביד. */
+        say(t('link.copyManual'), true);
+      });
+      return;
+    }
+    say(t('link.copyManual'), true);
+  }
+
+  /* וואטסאפ פותח חלון עם הטקסט מוכן. המספר אינו נדרש – מי
+     שאין לו טלפון שמור יבחר נמען בעצמו. */
+  function sendLinkOnWhatsApp() {
+    if (!freshLink) return;
+    var text = t('link.whatsappText', {
+      name: freshLink.name || '', url: freshLink.url
+    });
+    var phone = String(freshLink.phone || '').replace(/[^0-9]/g, '');
+    var url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text);
+    if (root.open) root.open(url, '_blank', 'noopener');
+  }
+
   function render() {
     var container = document.getElementById('users-list');
     if (!container || !ctx) return;
+    loadLinks().then(function () {
     ctx.backend.listUsers().then(function (users) {
       var employees = ctx.getEmployees() || [];
       var html = '<table><thead><tr>' +
@@ -64,7 +184,8 @@
         '<th>' + t('users.role') + '</th>' +
         '<th>' + t('users.staffCard') + '</th>' +
         '<th>' + t('users.activeColumn') + '</th>' +
-        '<th>' + t('users.inviteColumn') + '</th></tr></thead><tbody>';
+        '<th>' + t('users.inviteColumn') + '</th>' +
+        '<th>' + t('link.column') + '</th></tr></thead><tbody>';
 
       users.forEach(function (user) {
         var isOwner = user.role === 'owner';
@@ -88,11 +209,20 @@
           :
           '<input type="checkbox" data-field="active"' + (user.active ? ' checked' : '') + '>') + '</td>';
         html += '<td>' + (isOwner ? '—' : inviteCell(user)) + '</td>';
+        html += '<td>' + (isOwner ? '—' : linkCell(user)) + '</td>';
         html += '</tr>';
       });
 
       html += '</tbody></table>';
       container.innerHTML = html;
+      /* הכתובת מוצגת בציור אחד בלבד. הציור הבא – מעבר מסך, עדכון
+         משתמש, כל דבר – כבר לא מחזיר אותה, כי בשרת יש רק גיבוב
+         ואין מה להחזיר. */
+      if (freshLink) {
+        if (freshLink.shown) freshLink = null;
+        else freshLink.shown = true;
+      }
+    });
     });
   }
 
@@ -111,6 +241,12 @@
       if (resend) return sendAgain(resend, say);
       var cancel = event.target.closest('[data-action="cancel-invite"]');
       if (cancel) return cancelInvite(cancel, say);
+      var make = event.target.closest('[data-action="link-create"]');
+      if (make) return createLink(make, say);
+      var drop = event.target.closest('[data-action="link-revoke"]');
+      if (drop) return revokeLink(drop, say);
+      if (event.target.closest('[data-action="link-copy"]')) return copyLink(say);
+      if (event.target.closest('[data-action="link-whatsapp"]')) return sendLinkOnWhatsApp();
     });
 
     list.addEventListener('change', function (event) {

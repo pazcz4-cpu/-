@@ -470,6 +470,19 @@
 
   SupabaseBackend.prototype.restore = function () {
     var self = this;
+    /* קישור אישי קודם לכל: מי שהגיע איתו מתכוון להיכנס כמוהו,
+       גם אם במכשיר הזה שמור אסימון ישן של מישהו אחר. */
+    var token = linkTokenFromUrl();
+    if (token) {
+      stripLinkToken();
+      return this.redeemAccessLink(token)
+        .then(function () { return self._loadSession(); })
+        .catch(function (err) {
+          self._linkError = (err && err.message) || t('link.invalid');
+          self._clearTokens();
+          return null;
+        });
+    }
     this.adoptUrlTokens();
     if (!this.tokens) return Promise.resolve(null);
     var run = this._expired() ? this._refresh() : Promise.resolve();
@@ -824,6 +837,76 @@
       lang: (root.I18n && root.I18n.code) ? root.I18n.code() : 'he'
     });
   };
+
+
+  /* ===== קישור אישי קבוע לעובד =====
+
+     יש עובדים שהדפדפן שלהם חוסם אחסון לגמרי, ואצלם אסימון
+     ההתחברות אינו שורד סגירת לשונית. הקישור הוא ההזדהות: העובד
+     שומר אותו במסך הבית, וכל פתיחה מנפיקה התחברות טרייה בשרת.
+
+     האסימון חוזר מהשרת פעם אחת בלבד – בשרת נשמר רק גיבוב – ולכן
+     "הצגת הקישור שוב" אינה אפשרית, ויצירה מחדש היא גם ביטול
+     של הקודם. */
+  SupabaseBackend.prototype.createAccessLink = function (userId) {
+    return this._server(this.adminEndpoint,
+      { mode: 'link', op: 'create', userId: userId });
+  };
+
+  SupabaseBackend.prototype.revokeAccessLink = function (userId) {
+    return this._server(this.adminEndpoint,
+      { mode: 'link', op: 'revoke', userId: userId });
+  };
+
+  SupabaseBackend.prototype.listAccessLinks = function () {
+    return this._server(this.adminEndpoint, { mode: 'link', op: 'list' })
+      .then(function (body) { return (body && body.links) || []; });
+  };
+
+  /* פדיון הקישור. אין כאן אסימון קיים, ולכן זו אינה קריאה דרך
+     _server – היא יוצאת בלי הזדהות, והאסימון שבכתובת הוא
+     ההזדהות. */
+  SupabaseBackend.prototype.redeemAccessLink = function (token) {
+    var self = this;
+    return this.fetchImpl(this.adminEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'link', op: 'redeem', token: token })
+    }).then(function (response) {
+      return response.text().then(function (text) {
+        var body = null;
+        if (text) { try { body = JSON.parse(text); } catch (err) { body = null; } }
+        if (!response.ok || !body || !body.access_token) {
+          throw fail('bad_link', t('link.invalid'));
+        }
+        self._storeTokens(body);
+        return self.tokens;
+      });
+    }, function (err) {
+      if (err && err.code) throw err;
+      throw fail('network', (err && err.message) || 'network error');
+    });
+  };
+
+  /* האסימון יושב בשאילתת הכתובת ולא ב-fragment, כי הוא נשלח
+     לשרת. הוא נמחק מהכתובת מיד אחרי הקריאה: כתובת שנשארת עם
+     אסימון נשמרת בהיסטוריה ונשלחת הלאה בטעות. */
+  function linkTokenFromUrl() {
+    if (!root.location || !root.location.search) return '';
+    var match = /[?&]k=([^&]+)/.exec(root.location.search);
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]); } catch (err) { return match[1]; }
+  }
+
+  function stripLinkToken() {
+    if (!root.history || !root.history.replaceState || !root.location) return;
+    try {
+      var clean = root.location.pathname +
+        root.location.search.replace(/([?&])k=[^&]*/, '$1').replace(/[?&]$/, '') +
+        root.location.hash;
+      root.history.replaceState(null, '', clean);
+    } catch (err) { /* לא קריטי */ }
+  }
 
   /* ===== זהות: השם שלי, ושם העסק ===== */
 

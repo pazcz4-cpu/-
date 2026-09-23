@@ -38,6 +38,7 @@
     "brand": "node tools/logo.js",
     "test:support": "node tests/support-browser-test.mjs",
     "test:access": "node tests/access-browser-test.mjs",
+    "test:leave": "node tests/leave-browser-test.mjs",
     "test:confirm": "node tests/confirm-email-browser-test.mjs",
     "test:lang": "node tests/language-browser-test.mjs",
     "test:i18n": "node tests/i18n-tests.js",

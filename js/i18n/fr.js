@@ -422,6 +422,11 @@
         title: 'Succursales', add: '+ Ajouter une succursale', active: 'Active', newName: 'Nouvelle succursale',
         hint: 'Chaque succursale a ses propres jours, horaires et effectifs par service. ' +
           'Mettre 0 personne ferme ce service ce jour-là. Affecter plus que le nombre prévu est signalé comme un sureffectif.',
+        resetWeek: 'Vider la semaine',
+        resetTitle: 'Retirer toutes les affectations de ce site pour la semaine affichée',
+        resetConfirm: 'Vider les affectations de {name} pour la semaine du {week} ? {count} affectations seront retirées. Les autres sites ne bougent pas.',
+        resetEmpty: 'Aucune affectation à {name} cette semaine.',
+        resetDone: '{count} affectations retirées à {name}.',
         peopleLabel: 'Personnes', closed: 'Fermé', day: 'Jour',
         copyFrom: 'Copier les jours et horaires d’une autre succursale', chooseBranch: 'Choisir une succursale…',
         copyConfirm: 'Copier les jours et horaires de {from} vers {to} ?',
@@ -827,6 +832,25 @@
         upgraded: 'Formule passée à {plan}. Le prochain prélèvement sera de {price}.',
         upgradeFailed: 'Le changement de formule a échoué.',
         upgradeOwnerOnly: 'Vous avez atteint la limite de la formule. Seul le titulaire du compte peut la changer.'
+      },
+
+      leave: {
+        paid: 'Payé',
+        unpaid: 'Non décompté',
+        paidTitle: 'Congé payé – déduit du solde de l’employé',
+        unpaidTitle: 'Jour de repos non décompté – ne réduit pas le solde',
+        summaryTitle: 'Récapitulatif des congés',
+        summaryHint: 'Les jours marqués payés sont déduits du solde. Les jours non décomptés sont comptés à part.',
+        month: 'Mois',
+        export: 'Exporter vers Excel',
+        none: 'Aucun jour de congé marqué ce mois-ci.',
+        columnName: 'Employé',
+        columnPaid: 'Payé',
+        columnUnpaid: 'Non décompté',
+        columnTotal: 'Total',
+        totalRow: 'Total',
+        sheetName: 'Congés',
+        fileName: 'conges'
       },
 
       roles: { owner: 'Propriétaire', manager: 'Responsable', employee: 'Employé' },

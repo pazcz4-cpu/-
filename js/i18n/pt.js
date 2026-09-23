@@ -422,6 +422,11 @@
         title: 'Filiais', add: '+ Adicionar filial', active: 'Ativa', newName: 'Filial nova',
         hint: 'Cada filial tem os seus dias, horas e número de pessoas por turno. ' +
           'Pôr 0 pessoas fecha esse turno nesse dia. Atribuir mais do que o número definido é assinalado como excesso de pessoal.',
+        resetWeek: 'Limpar a semana',
+        resetTitle: 'Retirar todas as atribuições desta loja na semana mostrada',
+        resetConfirm: 'Limpar as atribuições de {name} na semana de {week}? Serão retiradas {count} atribuições. As outras lojas não são tocadas.',
+        resetEmpty: 'Não há atribuições em {name} esta semana.',
+        resetDone: 'Retiradas {count} atribuições em {name}.',
         peopleLabel: 'Pessoas', closed: 'Fechado', day: 'Dia',
         copyFrom: 'Copiar dias e horas de outra filial', chooseBranch: 'Escolhe uma filial…',
         copyConfirm: 'Copiar os dias e as horas de {from} para {to}?',
@@ -827,6 +832,25 @@
         upgraded: 'Plano alterado para {plan}. A próxima cobrança será de {price}.',
         upgradeFailed: 'Não foi possível alterar o plano.',
         upgradeOwnerOnly: 'Chegou ao limite do plano. Só o titular da conta o pode alterar.'
+      },
+
+      leave: {
+        paid: 'Pago',
+        unpaid: 'Sem desconto',
+        paidTitle: 'Férias pagas – descontam do saldo do funcionário',
+        unpaidTitle: 'Dia de folga sem desconto – não retira do saldo',
+        summaryTitle: 'Resumo de férias',
+        summaryHint: 'Os dias marcados como pagos descontam do saldo. Os dias sem desconto são contados à parte.',
+        month: 'Mês',
+        export: 'Exportar para Excel',
+        none: 'Não foram marcados dias de férias este mês.',
+        columnName: 'Funcionário',
+        columnPaid: 'Pago',
+        columnUnpaid: 'Sem desconto',
+        columnTotal: 'Total',
+        totalRow: 'Total',
+        sheetName: 'Férias',
+        fileName: 'ferias'
       },
 
       roles: { owner: 'Proprietário', manager: 'Responsável', employee: 'Colaborador' },

@@ -422,6 +422,11 @@
         title: 'Sucursales', add: '+ Añadir sucursal', active: 'Activa', newName: 'Sucursal nueva',
         hint: 'Cada sucursal tiene sus propios días, horas y número de personas por turno. ' +
           'Poner 0 personas cierra ese turno ese día. Asignar más de lo indicado se marca como exceso de personal.',
+        resetWeek: 'Vaciar la semana',
+        resetTitle: 'Quitar todas las asignaciones de esta sede en la semana mostrada',
+        resetConfirm: '¿Vaciar las asignaciones de {name} en la semana del {week}? Se quitarán {count} asignaciones. Las demás sedes no se tocan.',
+        resetEmpty: 'No hay asignaciones en {name} esta semana.',
+        resetDone: 'Se quitaron {count} asignaciones en {name}.',
         peopleLabel: 'Personas', closed: 'Cerrado', day: 'Día',
         copyFrom: 'Copiar días y horas de otra sucursal', chooseBranch: 'Elige una sucursal…',
         copyConfirm: '¿Copiar los días y las horas de {from} a {to}?',
@@ -827,6 +832,25 @@
         upgraded: 'Plan cambiado a {plan}. El próximo cobro será de {price}.',
         upgradeFailed: 'No se pudo cambiar el plan.',
         upgradeOwnerOnly: 'Has llegado al límite del plan. Solo el titular de la cuenta puede subirlo.'
+      },
+
+      leave: {
+        paid: 'Pagado',
+        unpaid: 'Sin descontar',
+        paidTitle: 'Vacaciones pagadas: se descuentan del saldo del empleado',
+        unpaidTitle: 'Día libre sin descontar: no se resta del saldo',
+        summaryTitle: 'Resumen de vacaciones',
+        summaryHint: 'Los días marcados como pagados se descuentan del saldo. Los días sin descontar se cuentan aparte.',
+        month: 'Mes',
+        export: 'Exportar a Excel',
+        none: 'Este mes no se marcaron días de vacaciones.',
+        columnName: 'Empleado',
+        columnPaid: 'Pagado',
+        columnUnpaid: 'Sin descontar',
+        columnTotal: 'Total',
+        totalRow: 'Total',
+        sheetName: 'Vacaciones',
+        fileName: 'vacaciones'
       },
 
       roles: { owner: 'Propietario', manager: 'Responsable', employee: 'Empleado' },

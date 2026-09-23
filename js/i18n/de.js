@@ -422,6 +422,11 @@
         title: 'Filialen', add: '+ Filiale hinzufügen', active: 'Aktiv', newName: 'Neue Filiale',
         hint: 'Jede Filiale hat eigene Tage, Zeiten und Personalstärke pro Schicht. ' +
           '0 Personen schließt diese Schicht an diesem Tag. Mehr Einteilungen als vorgesehen gelten als Überbesetzung.',
+        resetWeek: 'Woche leeren',
+        resetTitle: 'Alle Einteilungen dieser Filiale in der gezeigten Woche entfernen',
+        resetConfirm: 'Die Einteilungen bei {name} für die Woche {week} leeren? {count} Einteilungen werden entfernt. Andere Filialen bleiben unberührt.',
+        resetEmpty: 'Bei {name} gibt es diese Woche keine Einteilungen.',
+        resetDone: '{count} Einteilungen bei {name} entfernt.',
         peopleLabel: 'Personen', closed: 'Geschlossen', day: 'Tag',
         copyFrom: 'Tage und Zeiten aus einer anderen Filiale kopieren', chooseBranch: 'Filiale auswählen…',
         copyConfirm: 'Tage und Zeiten von {from} nach {to} kopieren?',
@@ -827,6 +832,25 @@
         upgraded: 'Tarif auf {plan} geändert. Die nächste Abbuchung beträgt {price}.',
         upgradeFailed: 'Der Tarif konnte nicht geändert werden.',
         upgradeOwnerOnly: 'Das Tariflimit ist erreicht. Nur wer das Konto besitzt, kann upgraden.'
+      },
+
+      leave: {
+        paid: 'Bezahlt',
+        unpaid: 'Ohne Abzug',
+        paidTitle: 'Bezahlter Urlaub – geht vom Guthaben ab',
+        unpaidTitle: 'Freier Tag ohne Abzug – geht nicht vom Guthaben ab',
+        summaryTitle: 'Urlaubsübersicht',
+        summaryHint: 'Als bezahlt markierte Tage gehen vom Guthaben ab. Tage ohne Abzug werden getrennt gezählt.',
+        month: 'Monat',
+        export: 'Nach Excel exportieren',
+        none: 'Diesen Monat wurden keine Urlaubstage markiert.',
+        columnName: 'Mitarbeitende',
+        columnPaid: 'Bezahlt',
+        columnUnpaid: 'Ohne Abzug',
+        columnTotal: 'Gesamt',
+        totalRow: 'Gesamt',
+        sheetName: 'Urlaub',
+        fileName: 'urlaub'
       },
 
       roles: { owner: 'Inhaber', manager: 'Führungskraft', employee: 'Mitarbeiter' },

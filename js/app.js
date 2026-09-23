@@ -386,7 +386,9 @@
       html += '<button class="cstate ' + (constraint.off ? 'off-day' : 'free') +
         '" data-emp="' + esc(emp.id) + '" data-day="' + mobileDay + '" data-off="1">' +
         (constraint.off ? '✓ ' : '') + t('constraints.dayOff') + '</button>';
-      html += '</div></div>';
+      html += '</div>';
+      html += leaveChips(emp.id, mobileDay);
+      html += '</div>';
     });
     $('#constraints-mobile').innerHTML = html;
   }
@@ -756,6 +758,138 @@
   }
 
   /* ========== לוח האילוצים ========== */
+  /* ===== סוג היום החופשי =====
+
+     יום שהעובד לא עובד בו נראה אותו דבר בסידור בין אם לקח חופש
+     ובין אם זה יום שסוכם איתו – ובשכר אלה שני דברים שונים.
+     לכן על כל יום שמסומן כחופשי יושבות שתי אפשרויות: בתשלום,
+     שיורד מהמכסה שלו, או ללא חיוב.
+
+     שום דבר אינו ברירת מחדל: יום בלי סימון אינו נספר בשום צד,
+     כי ניחוש כאן הוא טעות בתלוש. */
+  function leaveChips(empId, dayIdx) {
+    var record = Store.getConstraintRecord(week(), empId, dayIdx);
+    if (!record || !record.off) return '';
+    if (Store.constraintStatus(record) === Store.CONSTRAINT_STATUS.REJECTED) return '';
+    var current = Store.leaveOf(week(), empId, dayIdx);
+    function chip(kind, key) {
+      return '<button class="leave-chip ' + kind + (current === kind ? ' on' : '') +
+        '" data-emp="' + esc(empId) + '" data-day="' + dayIdx +
+        '" data-leave="' + kind + '" title="' + esc(t('leave.' + key + 'Title')) + '">' +
+        esc(t('leave.' + key)) + '</button>';
+    }
+    return '<div class="leave-chips">' + chip(Store.LEAVE.PAID, 'paid') +
+      chip(Store.LEAVE.UNPAID, 'unpaid') + '</div>';
+  }
+
+  /* ===== סיכום ימי החופש בחודש =====
+
+     מה שמנהל עושה בסוף החודש הוא לשלוח לחשבונאות מספר אחד לכל
+     עובד. עד עכשיו הוא היה סופר אותו ביד מתוך ארבעה מסכי שבוע,
+     וזה בדיוק המקום שבו נופלים ימים. */
+  function leaveMonth() {
+    var input = $('#leave-month');
+    if (input && input.value) return input.value;
+    return Store.monthKeyOf(Store.dateOfDay(weekKey, 0));
+  }
+
+  function leaveRows(monthKey) {
+    var summary = Store.leaveSummary(state, monthKey);
+    return state.employees.filter(function (emp) {
+      return summary[emp.id] && (summary[emp.id].paid || summary[emp.id].unpaid);
+    }).map(function (emp) {
+      return { name: emp.name, paid: summary[emp.id].paid, unpaid: summary[emp.id].unpaid };
+    });
+  }
+
+  function renderLeaveSummary() {
+    var container = $('#leave-summary');
+    if (!container) return;
+    var monthKey = leaveMonth();
+    var input = $('#leave-month');
+    if (input && !input.value) input.value = monthKey;
+
+    var rows = leaveRows(monthKey);
+    if (!rows.length) {
+      container.innerHTML = '<p class="list-empty">' + esc(t('leave.none')) + '</p>';
+      return;
+    }
+    var totalPaid = 0, totalUnpaid = 0;
+    var html = '<table><thead><tr>' +
+      '<th class="row-head">' + esc(t('leave.columnName')) + '</th>' +
+      '<th>' + esc(t('leave.columnPaid')) + '</th>' +
+      '<th>' + esc(t('leave.columnUnpaid')) + '</th>' +
+      '<th>' + esc(t('leave.columnTotal')) + '</th></tr></thead><tbody>';
+    rows.forEach(function (row) {
+      totalPaid += row.paid;
+      totalUnpaid += row.unpaid;
+      html += '<tr><td class="row-head">' + esc(row.name) + '</td>' +
+        '<td>' + row.paid + '</td><td>' + row.unpaid + '</td>' +
+        '<td><b>' + (row.paid + row.unpaid) + '</b></td></tr>';
+    });
+    html += '</tbody><tfoot><tr><td class="row-head">' + esc(t('leave.totalRow')) + '</td>' +
+      '<td><b>' + totalPaid + '</b></td><td><b>' + totalUnpaid + '</b></td>' +
+      '<td><b>' + (totalPaid + totalUnpaid) + '</b></td></tr></tfoot></table>';
+    container.innerHTML = html;
+  }
+
+  /* השבועות של החודש נטענים לפי דרישה: המסך מחזיק רק את השבוע
+     שרואים, וסיכום חודשי צריך את כולם. */
+  function loadLeaveMonth() {
+    var keys = Store.weekKeysForMonth(leaveMonth());
+    var chain = Promise.resolve();
+    keys.forEach(function (key) {
+      chain = chain.then(function () {
+        return Promise.resolve(source.ensureWeek(state, key));
+      });
+    });
+    return chain.then(renderLeaveSummary, renderLeaveSummary);
+  }
+
+  function exportLeave() {
+    var monthKey = leaveMonth();
+    var rows = leaveRows(monthKey);
+    if (!rows.length) { toast(t('leave.none')); return; }
+    var S = Xlsx.STYLE;
+    var sheet = {
+      name: t('leave.sheetName'),
+      cols: [26, 14, 14, 12],
+      rows: [
+        { cells: [{ v: t('leave.summaryTitle') + ' · ' + monthKey, s: S.TITLE }], height: 24 },
+        [],
+        {
+          cells: [t('leave.columnName'), t('leave.columnPaid'),
+            t('leave.columnUnpaid'), t('leave.columnTotal')].map(function (value) {
+            return { v: value, s: S.HEADER };
+          }),
+          height: 22
+        }
+      ]
+    };
+    var totalPaid = 0, totalUnpaid = 0;
+    rows.forEach(function (row) {
+      totalPaid += row.paid;
+      totalUnpaid += row.unpaid;
+      sheet.rows.push([
+        { v: row.name, s: S.ROW_HEAD },
+        { v: row.paid, s: S.PLAIN },
+        { v: row.unpaid, s: S.PLAIN },
+        { v: row.paid + row.unpaid, s: S.PLAIN }
+      ]);
+    });
+    sheet.rows.push([
+      { v: t('leave.totalRow'), s: S.ROW_HEAD },
+      { v: totalPaid, s: S.TOTAL },
+      { v: totalUnpaid, s: S.TOTAL },
+      { v: totalPaid + totalUnpaid, s: S.TOTAL }
+    ]);
+    var blob = new Blob([Xlsx.build([sheet])], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    saveFile(t('leave.fileName') + '-' + monthKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
   function renderConstraints() {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
@@ -805,6 +939,7 @@
           '"' + (standingDay.off ? ' disabled data-locked-always="1" title="' + esc(t('standing.cellTitle')) + '"' : '') +
           ' data-emp="' + esc(emp.id) + '" data-day="' + day.idx + '" data-off="1">' +
           (constraint.off ? '✓ ' : '') + t('constraints.dayOff') + '</button>';
+        html += leaveChips(emp.id, day.idx);
         html += cellTag + '</td>';
       });
       html += '</tr>';
@@ -1205,6 +1340,8 @@
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
         '<label class="check"><input type="checkbox" data-field="active"' +
         (branch.active ? ' checked' : '') + '> ' + t('branches.active') + '</label>' +
+        '<button class="btn ghost small" data-action="reset-branch" title="' +
+          esc(t('branches.resetTitle')) + '">' + esc(t('branches.resetWeek')) + '</button>' +
         '<button class="btn icon danger" data-action="delete-branch" title="' + t('common.delete') + '">🗑</button></div>';
 
       html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">' +
@@ -1510,6 +1647,7 @@
     renderAvailability();
     renderPersonalPicker();
     renderConstraints();
+    renderLeaveSummary();
     renderPending();
     renderEmployees();
     renderBranches();
@@ -1938,6 +2076,9 @@
       document.querySelectorAll('.panel').forEach(function (panel) { panel.classList.remove('active'); });
       button.classList.add('active');
       $('#tab-' + button.dataset.tab).classList.add('active');
+      /* הסיכום החודשי צריך את כל שבועות החודש, ולכן הם נטענים
+         כשנכנסים ללשונית ולא בכל ציור. */
+      if (button.dataset.tab === 'constraints') { loadLeaveMonth(); }
     });
   }
 
@@ -2242,8 +2383,32 @@
       render();
     }
 
+    function onLeaveClick(event) {
+      var chip = event.target.closest('[data-leave]');
+      if (!chip) return;
+      if (blocked()) return;
+      var empId = chip.dataset.emp;
+      var dayIdx = Number(chip.dataset.day);
+      var kind = chip.dataset.leave;
+      /* לחיצה על מה שכבר מסומן מסירה את הסימון. יום חופש שסומן
+         בטעות צריך דרך חזרה, ולא רק דרך שנייה קדימה. */
+      var next = Store.leaveOf(week(), empId, dayIdx) === kind ? null : kind;
+      if (!Store.setLeave(week(), empId, dayIdx, next)) return;
+      persist();
+      render();
+    }
+
+    var leaveInput = $('#leave-month');
+    if (leaveInput) {
+      leaveInput.addEventListener('change', function () { loadLeaveMonth(); });
+    }
+    var leaveExport = $('#leave-export');
+    if (leaveExport) { leaveExport.addEventListener('click', exportLeave); }
+
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);
+    $('#constraints-grid').addEventListener('click', onLeaveClick);
+    $('#constraints-mobile').addEventListener('click', onLeaveClick);
 
     $('#pending-constraints').addEventListener('click', function (event) {
       var button = event.target.closest('[data-decision]');
@@ -2508,6 +2673,40 @@
         render();
         return;
       }
+      /* איפוס סניף לשבוע הזה: כל השיבוצים של הסניף בשבוע שמוצג
+         יורדים בלחיצה אחת. שאר הסניפים ושאר השבועות אינם נוגעים.
+
+         זה לא מוחק את ההגדרה של הסניף – הימים, השעות וכמות
+         האנשים נשארים. רק מי שובץ. */
+      var reset = event.target.closest('[data-action="reset-branch"]');
+      if (reset) {
+        if (blocked()) return;
+        var resetCard = reset.closest('.card');
+        var resetBranch = Store.byId(state.branches, resetCard.dataset.branch);
+        if (!resetBranch) return;
+        var current = week();
+        var slots = Object.keys(current.assignments || {}).filter(function (slot) {
+          return slot.split('|')[1] === resetBranch.id;
+        });
+        var count = slots.reduce(function (sum, slot) {
+          return sum + (current.assignments[slot] || []).length;
+        }, 0);
+        if (!count) { toast(t('branches.resetEmpty', { name: resetBranch.name })); return; }
+        if (!confirm(t('branches.resetConfirm', {
+          name: resetBranch.name, count: count,
+          week: Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
+            Store.formatDate(Store.dateOfDay(weekKey, 6))
+        }))) return;
+        slots.forEach(function (slot) {
+          delete current.assignments[slot];
+          if (current.manual) delete current.manual[slot];
+        });
+        persist();
+        render();
+        toast(t('branches.resetDone', { count: count, name: resetBranch.name }));
+        return;
+      }
+
       if (event.target.dataset.action !== 'delete-branch') return;
       var card = event.target.closest('.card');
       var branch = Store.byId(state.branches, card.dataset.branch);

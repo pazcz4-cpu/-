@@ -428,6 +428,11 @@
         title: 'Locations', add: '+ Add location', active: 'Active', newName: 'New location',
         hint: 'Each location has its own days, hours and headcount per shift. ' +
           'Setting the required staff to 0 closes that shift on that day. Assigning more people than that is flagged as overstaffing.',
+        resetWeek: 'Clear this week',
+        resetTitle: 'Remove every assignment in this branch for the week shown',
+        resetConfirm: 'Clear the assignments at {name} for the week of {week}? {count} assignments will be removed. Other branches are untouched.',
+        resetEmpty: 'No assignments at {name} this week.',
+        resetDone: 'Removed {count} assignments at {name}.',
         peopleLabel: 'Required staff', closed: 'Closed', day: 'Day',
         copyFrom: 'Copy days and hours from another location', chooseBranch: 'Choose a location…',
         copyConfirm: 'Copy the days and hours from {from} to {to}?',
@@ -833,6 +838,25 @@
         upgraded: 'Plan changed to {plan}. The next charge will be {price}.',
         upgradeFailed: 'The plan could not be changed.',
         upgradeOwnerOnly: 'You have reached the plan limit. Only the account owner can upgrade it.'
+      },
+
+      leave: {
+        paid: 'Paid',
+        unpaid: 'Not charged',
+        paidTitle: 'Paid leave – comes off the staff member’s balance',
+        unpaidTitle: 'Day off, not charged – does not come off the balance',
+        summaryTitle: 'Leave summary',
+        summaryHint: 'Days marked paid come off the staff member’s balance. Days marked not charged are counted separately and do not.',
+        month: 'Month',
+        export: 'Export to Excel',
+        none: 'No leave days were marked this month.',
+        columnName: 'Staff',
+        columnPaid: 'Paid',
+        columnUnpaid: 'Not charged',
+        columnTotal: 'Total',
+        totalRow: 'Total',
+        sheetName: 'Leave',
+        fileName: 'leave'
       },
 
       roles: { owner: 'Owner', manager: 'Manager', employee: 'Staff' },

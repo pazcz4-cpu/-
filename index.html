@@ -143,6 +143,19 @@
     <nav id="constraints-day-nav" class="day-nav mobile-only"></nav>
     <div id="constraints-mobile" class="mobile-only"></div>
     <div id="constraints-grid" class="table-wrap desktop-only"></div>
+
+    <div class="settings-block no-print" id="leave-panel">
+      <h3 data-i18n="leave.summaryTitle">סיכום ימי חופש</h3>
+      <p class="hint" data-i18n="leave.summaryHint">
+        ימי חופש שסומנו בתשלום יורדים מהמכסה של העובד. ימים ללא חיוב נספרים בנפרד ואינם יורדים ממנה.
+      </p>
+      <div class="list-tools">
+        <label class="inline-field"><span data-i18n="leave.month">חודש</span>
+          <input type="month" id="leave-month" class="text-input"></label>
+        <button id="leave-export" class="btn ghost small" data-i18n="leave.export">ייצוא לאקסל</button>
+      </div>
+      <div id="leave-summary" class="table-wrap"></div>
+    </div>
   </section>
 
   <!-- ===== עובדים ===== -->

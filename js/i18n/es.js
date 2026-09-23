@@ -924,6 +924,8 @@
         enterprise: 'Cadenas',
         quotePrice: 'Según presupuesto',
         quoteCta: 'Agendar una reunión',
+        quoteLine: 'Una llamada breve y luego una oferta',
+        quotePer: 'A la medida de vuestra cadena',
         quoteNote: 'A partir de {count} empleados preparamos la oferta según la cadena: cuántos locales, qué turnos, cómo trabajáis. Hablamos y os damos un precio.',
         upTo: 'Hasta {count} empleados',
         between: 'De {from} a {to} empleados',

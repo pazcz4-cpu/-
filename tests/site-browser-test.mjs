@@ -67,8 +67,46 @@ try {
   check('אלא עם פנייה אלינו',
     await page.locator('.lp-plan-quote-card a[href^="mailto:"], ' +
       '.lp-plan-quote-card a[href^="https://wa.me/"]').count(), 1);
+
+  /* ארבעת הכרטיסים חולקים שלד אחד, ולכן הם חייבים להתיישר.
+     כשההסבר הארוך של חבילת הרשתות נדחס לתווית שנבנתה למשפט קצר,
+     הכרטיס נראה שבור – וזה נראה על המסך בלי ששום בדיקה נפלה. */
+  {
+    const row = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.lp-plan')];
+      const tops = cards.map((c) => Math.round(c.getBoundingClientRect().top));
+      const heights = cards.map((c) => Math.round(c.getBoundingClientRect().height));
+      const buttons = cards.map((c) =>
+        Math.round(c.querySelector('.lp-btn').getBoundingClientRect().top));
+      return {
+        sameRow: new Set(tops).size === 1,
+        sameHeight: new Set(heights).size === 1,
+        buttonsAligned: new Set(buttons).size === 1,
+        clipped: cards.some((c) => c.scrollWidth > c.clientWidth + 1)
+      };
+    });
+    check('כל הכרטיסים בשורה אחת', row.sameRow, true);
+    check('ובאותו גובה', row.sameHeight, true);
+    check('והכפתורים מתיישרים', row.buttonsAligned, true);
+    check('ואין טקסט חתוך', row.clipped, false);
+  }
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
   check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
+
+  /* גלילה הצידה בטלפון: הסרגל העליון גלש מהמסך, וכל העמוד נגלל
+     איתו. זה לא נראה בשום בדיקה קודמת כי כולן רצו במסך רחב. */
+  for (const width of [390, 360]) {
+    const narrow = await browser.newContext({
+      viewport: { width: width, height: 780 }, locale: 'he-IL'
+    });
+    const np = await narrow.newPage();
+    await np.goto(BASE + '/');
+    await np.waitForTimeout(500);
+    const over = await np.evaluate(() =>
+      document.documentElement.scrollWidth - window.innerWidth);
+    check(width + 'px: העמוד אינו נגלל הצידה', over <= 0, true);
+    await narrow.close();
+  }
 
   console.log('\n== "למה דווקא הוא" בדף המכירה ==');
   check('יש סקשן ייעודי', await page.locator('#why').isVisible(), true);

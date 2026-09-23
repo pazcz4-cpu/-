@@ -153,6 +153,26 @@
 .lp-plan-featured {
   border-color: var(--brand); box-shadow: var(--shadow);
 }
+/* כרטיס הרשתות נשאר כרטיס רגיל בשורה, ומסומן דרך התוכן: תווית
+   שקטה, משפט במקום מספר, וכפתור מתאר. רקע או מסגרת משלו היו
+   מתחרים בכרטיס הנבחר על אותה עין, ובשורה של ארבעה מספיק
+   שדבר אחד בולט.
+
+   שורת התווית אינה הבטחת ניסיון אלא תיאור תהליך, ולכן אינה
+   גלולה ירוקה אלא כיתוב שקט. הריפוד נשמר כדי שהשורה תתפוס בדיוק
+   את אותו גובה ושאר הכרטיסים לא יזוזו ביחס אליה; הריפוד הצדדי
+   יורד כדי שהיא תתיישר עם שם התוכנית שמעליה. */
+.lp-plan-trial.is-quote {
+  color: var(--muted); background: transparent; border-color: transparent;
+  font-weight: 500; padding-inline: 0;
+}
+/* כפתור מתאר: נוכח כמו כפתור ראשי, בלי למלא צבע שני בשורה */
+.lp-btn-outline {
+  background: transparent; border-color: var(--brand); color: var(--brand);
+  font-weight: 700;
+}
+.lp-btn-outline:hover { background: var(--c2-bg); }
+
 .lp-plan-tag {
   position: absolute; top: -12px; inset-inline-start: 22px;
   background: var(--brand); color: var(--brand-ink);
@@ -161,9 +181,13 @@
 .lp-plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 .lp-plan-range { color: var(--muted); font-size: 14.5px; margin-bottom: 16px; }
 .lp-plan-price { font-size: 38px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-/* "לפי הצעת מחיר" הוא משפט, לא מספר. באותו גודל הוא נשבר לשלוש
-   שורות ומושך את העין חזק יותר מהמחירים עצמם. */
-.lp-plan-quote { font-size: 21px; font-weight: 700; line-height: 1.25; }
+/* "לפי הצעת מחיר" יושב במקום שבו יושב מחיר, ולכן הוא לוקח את
+   אותו משקל – אבל לא את אותו גודל: משפט ב-38px נשבר לשתי שורות
+   ומזיז את כל הכרטיס ביחס לשכניו. */
+.lp-plan-quote {
+  font-size: 26px; font-weight: 700; letter-spacing: -.015em; line-height: 1.15;
+  text-wrap: balance;
+}
 .lp-plan-per { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 .lp-plan .lp-btn { margin-top: auto; }
 .lp-pricing-note { color: var(--muted); font-size: 14px; margin: 26px 0 0; text-align: center; }
@@ -235,6 +259,38 @@
   /* בעברית שמות הכפתורים ארוכים יותר, והסרגל העליון גלש מהמסך בטלפון */
   .lp-nav .lp-btn { padding: 9px 12px; font-size: 14px; }
   .lp-lang { padding: 5px 7px; font-size: 12.5px; }
+}
+
+/* בטלפון צר הסרגל העליון עדיין גלש, והעמוד כולו נגלל הצידה.
+   במקום להקטין עוד את הטקסט, "התחברות" הופך לקישור טקסט: בטלפון
+   הפעולה הראשית היא להתחיל, והכניסה ללקוח קיים אינה צריכה כפתור
+   מתאר משלה. הקישור נשאר במקומו ובגודל מגע תקין. */
+@media (max-width: 440px) {
+  .lp-nav .lp-btn-ghost {
+    background: transparent; border-color: transparent;
+    padding-inline: 2px; font-weight: 600;
+  }
+  .lp-logo { height: 22px; }
+  .lp-nav-inner { gap: 6px; }
+  /* שוליים של 16px ולא 24px – עדיין שוליים אמיתיים, ועוד 16px
+     לרוחב הם ההבדל בין סרגל שנכנס לעמוד שנגלל הצידה. */
+  .landing-wrap { padding-inline: var(--s4); }
+}
+
+/* 360px הוא רוחב אמיתי של אנדרואידים רבים, ושם הסרגל עדיין גלש
+   ב-25 פיקסלים. הגובה למגע (44px) נשאר כפי שהוא – מצטמצם רק מה
+   שרוחבי: הלוגו, הריפוד והרווחים. */
+@media (max-width: 400px) {
+  .lp-logo { height: 20px; }
+  .lp-nav-inner { gap: 4px; }
+  .lp-nav .lp-btn { padding-inline: 10px; font-size: 13.5px; }
+  /* בורר השפה מתרחב לרוחב האפשרות הארוכה ביותר ברשימה
+     ("Português"), ולא לרוחב השפה שנבחרה. בטלפון זה 87 פיקסלים
+     בשביל להציג את המילה "עברית", והם מה שדחף את הסרגל החוצה. */
+  .lp-lang {
+    padding: 4px 5px; font-size: 12px;
+    max-width: 68px; text-overflow: ellipsis;
+  }
 }
 
 /* שורת תקופת הניסיון בכרטיס התוכנית */

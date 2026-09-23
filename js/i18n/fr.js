@@ -924,6 +924,8 @@
         enterprise: 'Réseaux',
         quotePrice: 'Sur devis',
         quoteCta: 'Prendre rendez-vous',
+        quoteLine: 'Un court échange, puis une offre',
+        quotePer: 'Adapté à votre réseau',
         quoteNote: 'À partir de {count} salariés, nous construisons l’offre autour du réseau : nombre de sites, plannings, façon de travailler. Parlons-en et nous revenons avec un prix.',
         upTo: 'Jusqu’à {count} employés',
         between: 'De {from} à {to} employés',

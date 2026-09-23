@@ -924,6 +924,8 @@
         enterprise: 'Ketten',
         quotePrice: 'Auf Anfrage',
         quoteCta: 'Termin vereinbaren',
+        quoteLine: 'Ein kurzes Gespräch, dann ein Angebot',
+        quotePer: 'Auf Ihre Kette zugeschnitten',
         quoteNote: 'Ab {count} Mitarbeitenden bauen wir das Angebot um die Kette herum: Standorte, Schichten, Arbeitsweise. Sprechen Sie mit uns, wir melden uns mit einem Preis.',
         upTo: 'Bis zu {count} Mitarbeiter',
         between: '{from} bis {to} Mitarbeiter',

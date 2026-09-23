@@ -924,6 +924,8 @@
         enterprise: 'Redes',
         quotePrice: 'Sob orçamento',
         quoteCta: 'Agendar uma reunião',
+        quoteLine: 'Uma conversa curta e depois uma proposta',
+        quotePer: 'À medida da vossa rede',
         quoteNote: 'A partir de {count} colaboradores montamos a proposta em torno da rede: quantas lojas, que turnos, como trabalham. Fale connosco e voltamos com um preço.',
         upTo: 'Até {count} colaboradores',
         between: 'De {from} a {to} colaboradores',

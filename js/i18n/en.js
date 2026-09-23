@@ -930,6 +930,8 @@
         enterprise: 'Chains',
         quotePrice: 'By quote',
         quoteCta: 'Book a meeting',
+        quoteLine: 'A short call, then an offer',
+        quotePer: 'Sized to your chain',
         quoteNote: 'From {count} staff up we build the offer around the chain: how many locations, which shifts, how you work. Talk to us and we will come back with a price.',
         upTo: 'Up to {count} staff',
         between: '{from} to {to} staff',

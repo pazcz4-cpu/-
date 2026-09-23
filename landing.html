@@ -323,16 +323,28 @@
       var plan = Model.PLANS[id];
       var isFeatured = id === featured;
 
-      /* תוכנית הצעת־מחיר אינה מחירון ואינה נרשמת לבד: אין מספר,
-         אין שורת ניסיון, והכפתור מוביל לשיחה ולא לטופס הרשמה. */
+      /* ארבעת הכרטיסים חולקים שלד אחד – שם, טווח, שורת תווית,
+         מחיר, שורת משנה, כפתור – כדי שהשורות יתיישרו ביניהם.
+         לתוכנית הצעת־מחיר משתנה מה שכתוב בכל שלב, לא המבנה.
+
+         ההסבר הארוך אינו כאן: הוא נדחס לתוך תווית שנבנתה למשפט
+         קצר, ונראה כמו תקלה. מקומו בחלון שנפתח למי שמתעניין. */
+      var tagLine = plan.quote
+        ? t('plans.quoteLine')
+        : t('landing.planTrialLine', { days: Model.TRIAL_DAYS });
+
       var priceHtml = plan.quote
-        ? '<div class="lp-plan-quote">' + esc(t('plans.quotePrice')) + '</div>'
+        ? '<div class="lp-plan-quote">' + esc(t('plans.quotePrice')) + '</div>' +
+          '<div class="lp-plan-per">' + esc(t('plans.quotePer')) + '</div>'
         : '<div class="lp-plan-price">' +
             esc(t('billing.priceAmount', { amount: plan.priceMonthly })) + '</div>' +
           '<div class="lp-plan-per">' + esc(t('billing.perMonth')) + '</div>';
 
+      /* כפתור מלא אחד בשורה – זה של התוכנית הנבחרת. הכרטיס של
+         הרשתות בולט דרך הרקע והמסגרת שלו, ולא דרך כפתור שני
+         שמתחרה בו על אותה עין. */
       var ctaHtml = plan.quote
-        ? '<a class="lp-btn lp-btn-primary" href="' + esc(quoteHref()) + '">' +
+        ? '<a class="lp-btn lp-btn-outline" href="' + esc(quoteHref()) + '">' +
             esc(t('plans.quoteCta')) + '</a>'
         : '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
             '" href="app/?signup=1&plan=' + esc(plan.id) + '">' +
@@ -343,11 +355,8 @@
         (isFeatured ? '<span class="lp-plan-tag">' + esc(t('landing.planPopular')) + '</span>' : '') +
         '<div class="lp-plan-name">' + esc(plan.name) + '</div>' +
         '<div class="lp-plan-range">' + esc(plan.range) + '</div>' +
-        (plan.quote
-          ? '<div class="lp-plan-trial">' +
-              esc(t('plans.quoteNote', { count: plan.minEmployees })) + '</div>'
-          : '<div class="lp-plan-trial">' +
-              esc(t('landing.planTrialLine', { days: Model.TRIAL_DAYS })) + '</div>') +
+        '<div class="lp-plan-trial' + (plan.quote ? ' is-quote' : '') + '">' +
+          esc(tagLine) + '</div>' +
         priceHtml + ctaHtml +
         '</div>';
     }).join('');

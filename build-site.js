@@ -187,6 +187,33 @@ write('tool/manifest.webmanifest', manifest({
   startUrl: '/tool/'
 }));
 
+/* ===== קישור האפליקציה לאנדרואיד (Digital Asset Links) =====
+
+   אפליקציית TWA היא ה-PWA עצמו, במסך מלא ובלי סרגל כתובת של
+   כרום. מה שמוחק את סרגל הכתובת הוא הקובץ הזה: הוא מצהיר
+   שהאפליקציה החתומה בטביעת האצבע הזו רשאית לייצג את הדומיין.
+   בלעדיו האפליקציה נפתחת עם סרגל — כלומר נראית בדיוק כמו מה
+   שהיא, אתר בתוך מסגרת.
+
+   נכתב רק כששני המשתנים מוגדרים, מפני שטביעת האצבע נוצרת
+   בעת יצירת מפתח החתימה — כלומר אחרי שנפתח חשבון המפתח.
+   קובץ עם ערך מדומה גרוע מקובץ שאינו קיים: הוא נראה מוגדר. */
+const androidPackage = String(process.env.ANDROID_PACKAGE || '').trim();
+const androidFingerprint = String(process.env.ANDROID_FINGERPRINT || '').trim();
+if (androidPackage && androidFingerprint) {
+  write('.well-known/assetlinks.json', JSON.stringify([{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: {
+      namespace: 'android_app',
+      package_name: androidPackage,
+      /* אפשר יותר מטביעה אחת: מפתח ההעלאה ומפתח החתימה של
+         Google Play אינם אותו מפתח, ושניהם צריכים להופיע. */
+      sha256_cert_fingerprints: androidFingerprint.split(',')
+        .map((value) => value.trim()).filter(Boolean)
+    }
+  }], null, 2));
+}
+
 /* ===== Service Worker ===== */
 /* קובץ אחד בשורש, כדי שהיקף השליטה שלו יכסה גם /app וגם /tool */
 fs.copyFileSync(path.join(root, 'sw.js'), path.join(out, 'sw.js'));

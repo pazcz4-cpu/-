@@ -76,6 +76,19 @@ test('נשאר מרווח לפני התקרה', function () {
 /* תקרה שנייה שקל ליפול בה: Vercel מגביל את גודל הפריסה, וקובץ
    וידאו אחד יכול לקחת את רובה בלי שאיש ישים לב. */
 var MAX_ASSET_MB = 25;
+/* קובץ שנכתב רק כשיש הגדרה — ולכן קל לשבור אותו בלי לשים לב,
+   מפני שבבנייה רגילה הוא בכלל אינו נוצר. */
+test('קישור האפליקציה לאנדרואיד נכתב רק כשיש טביעת אצבע', function () {
+  var build = path.join(__dirname, '..', 'build-site.js');
+  var source = fs.readFileSync(build, 'utf8');
+  assert(source.indexOf('.well-known/assetlinks.json') !== -1,
+    'הבנייה אינה יודעת לכתוב את הקובץ בכלל');
+  assert(source.indexOf('ANDROID_FINGERPRINT') !== -1,
+    'הקובץ אינו תלוי בטביעת האצבע');
+  assert(source.indexOf('if (androidPackage && androidFingerprint)') !== -1,
+    'הקובץ נכתב גם בלי הגדרה – קובץ עם ערך מדומה נראה מוגדר');
+});
+
 test('אין נכס בודד גדול מדי', function () {
   var assets = path.join(__dirname, '..', 'assets');
   var big = [];

@@ -350,10 +350,85 @@ try {
   check('כל מה שעובר על עובד הוא מזהה ושם',
     JSON.stringify(fields), '["id","name"]');
 
+  console.log('\n== ועכשיו עובד אמיתי, ולא תצוגה מקדימה ==');
+  /* כל מה שנבדק עד כאן נבדק דרך "תצוגה מקדימה", כלומר בסשן של
+     המנהל. זה מה שהחמיץ את התקלה: השרת חותך לעובד את השיבוצים
+     של עמיתיו, ולכן המגירה הייתה מלאה אצל המנהל וריקה אצל מי
+     שהיא נבנתה בשבילו. מכאן ואילך נכנסים באמת. */
+  await backToManager();
+  await page.click('.tab[data-tab="users"]');
+  await page.waitForTimeout(700);
+  const cards = await page.locator('#invite-form select[name="employeeId"] option')
+    .evaluateAll((list) => list.map((o) => o.value).filter(Boolean));
+  /* בחירת העובד קודמת למילוי הכתובת, ולא להפך: הטופס ממלא את
+     הכתובת מכרטיס העובד ברגע שבוחרים אותו, ודורס מה שהוקלד. */
+  await page.selectOption('#invite-form select[name="employeeId"]', cards[0]);
+  await page.waitForTimeout(200);
+  await page.fill('#invite-form input[name="email"]', 'ronit@team.test');
+  await page.click('#invite-form button[type="submit"]');
+  await page.waitForTimeout(900);
+  await page.evaluate(async () => {
+    window.__backend.followLink('ronit@team.test', 'invite');
+    await window.__backend.setPassword('secret123');
+  });
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.fill('#signin-form input[name="email"]', 'ronit@team.test');
+  await page.fill('#signin-form input[name="password"]', 'secret123');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(1800);
+
+  check('המגירה קיימת גם בכניסה אמיתית', await page.locator('.team-fold').count(), 1);
+  await page.locator('.team-fold summary').click();
+  await page.waitForTimeout(500);
+  check('ויש בה משמרות', await page.locator('.team-slot').count() > 0, true);
+  check('ושמות של יותר מאדם אחד', await page.evaluate(() => {
+    const names = new Set();
+    document.querySelectorAll('.team-person').forEach((n) => names.add(n.textContent.trim()));
+    return names.size;
+  }) > 1, true);
+  check('והעובד עצמו מסומן', await page.locator('.team-me').count() > 0, true);
+
+  /* מה שהגיע לדפדפן שלו, ולא רק מה שהמסך הציג: עמית מגיע כשם
+     ומזהה, והכרטיס שלו – מייל, טלפון והערה – אינו מגיע כלל. */
+  /* לא מה שהמסך הציג אלא מה שהשרת שלח: הפרוסה של העובד עצמו,
+     כפי שהדפדפן שלו קיבל אותה. שם נמצאת התקלה אם היא חוזרת. */
+  const fromServer = await page.evaluate(async () => {
+    const config = await window.__backend.loadConfig();
+    const mine = window.__backend.session().user.employeeId;
+    const others = (config.employees || []).filter((emp) => emp.id !== mine);
+    return {
+      cards: (config.employees || []).length,
+      others: others.length,
+      fields: others.length ? Object.keys(others[0]).sort().join(',') : '',
+      /* על הכרטיס של העובד עצמו הערכים האלה אמורים להגיע —
+         הם שלו. מה שנבדק כאן הוא מה שהגיע על עמיתיו. */
+      leakedMail: JSON.stringify(others).indexOf('zzmail') !== -1,
+      leakedNote: JSON.stringify(others).indexOf('zznote-secret') !== -1,
+      ownCardIntact: (config.employees || []).some(
+        (emp) => emp.id === mine && /^zzmail/.test(emp.email || ''))
+    };
+  });
+  check('הגיעו כרטיסים של הצוות ולא רק שלו', fromServer.others > 0, true);
+  check('ומהעמיתים עברו מזהה, שם ופעילות בלבד', fromServer.fields, 'active,id,name');
+  check('אף מייל של עמית לא הגיע לדפדפן', fromServer.leakedMail, false);
+  check('ואף הערה שהמנהל כתב', fromServer.leakedNote, false);
+  check('והכרטיס של העובד עצמו הגיע שלם', fromServer.ownCardIntact, true);
+
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.fill('#signin-form input[name="email"]', 'boss@team.test');
+  await page.fill('#signin-form input[name="password"]', 'secret123');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(1600);
+
   console.log('\n== עסק עם סניף אחד ==');
   /* שורת סניפים שכל הכפתורים בה אומרים את אותו דבר היא רעש.
-     כאן מושארים בעסק סניף אחד, והשורה צריכה להיעלם לגמרי. */
-  await backToManager();
+     כאן מושארים בעסק סניף אחד, והשורה צריכה להיעלם לגמרי.
+     (חזרנו לסשן של המנהל בהתחברות ולא מתצוגה מקדימה, ולכן אין
+     כאן יציאה ממנה.) */
   await page.evaluate(() => {
     const state = window.ShiftApp.getState();
     state.branches = state.branches.slice(0, 1);

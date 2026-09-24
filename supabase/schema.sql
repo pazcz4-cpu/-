@@ -755,7 +755,23 @@ create trigger company_users_role_guard
 -- השבוע כפי שעובד אחד רואה אותו: המשמרות שלו, הבקשות שלו,
 -- והחגים והשעות שממילא משותפים. הערת המנהל על השבוע והשיבוץ
 -- הידני של אחרים אינם שלו.
-create or replace function public.week_for_employee(p_week jsonb, p_employee text, p_published boolean)
+-- האם המנהל פתח את הסידור לכל הצוות. היעדר ההגדרה נקרא כסגור:
+-- עסק שנפתח לפני שההגדרה קיימת אינו אמור להיפתח בשקט בעדכון.
+create or replace function public.team_shifts_on()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((
+    select config->'settings'->'teamVisibility'->>'shifts' = 'true'
+      from public.company_configs
+     where company_id = public.current_company_id()), false)
+$$;
+
+-- החתימה הישנה (שלושה פרמטרים) נמחקת ולא נשארת לצדה: create or
+-- replace עם פרמטר נוסף יוצר עומס ולא מחליף, ואז week_as_seen
+-- הייתה יכולה להמשיך לקרוא לגרסה שאינה יודעת על תצוגת הצוות.
+drop function if exists public.week_for_employee(jsonb, text, boolean);
+
+create or replace function public.week_for_employee(
+  p_week jsonb, p_employee text, p_published boolean, p_team_shifts boolean default false)
 returns jsonb language sql immutable set search_path = public as $$
   select jsonb_build_object(
     'published',   to_jsonb(coalesce(p_published, false)),
@@ -768,12 +784,17 @@ returns jsonb language sql immutable set search_path = public as $$
     'manual',      '{}'::jsonb,
     -- סידור שטרם פורסם אינו קיים בשביל העובד, גם לא החלק שלו:
     -- טיוטה שמישהו רואה היא טיוטה שמתווכחים עליה.
-    'assignments', case when coalesce(p_published, false) then coalesce((
+    -- וכשהמנהל פתח את הסידור לכל הצוות, עוברים השיבוצים המלאים.
+    -- רק הם: הבקשות, הסיבות וההערות נחתכות כרגיל גם אז.
+    'assignments', case
+      when not coalesce(p_published, false) then '{}'::jsonb
+      when coalesce(p_team_shifts, false) then coalesce(p_week->'assignments', '{}'::jsonb)
+      else coalesce((
         select jsonb_object_agg(item.key, jsonb_build_array(p_employee))
           from jsonb_each(coalesce(p_week->'assignments', '{}'::jsonb)) as item(key, value)
          where p_employee is not null
            and item.value @> jsonb_build_array(p_employee)
-      ), '{}'::jsonb) else '{}'::jsonb end,
+      ), '{}'::jsonb) end,
     -- הבקשות שלו מוצגות לו תמיד, גם לפני פרסום – הוא זה שהגיש
     -- אותן, והוא צריך לראות מה מצבן.
     'constraints', coalesce((
@@ -789,7 +810,8 @@ create or replace function public.week_as_seen(p_row public.company_weeks)
 returns jsonb language sql stable security definer set search_path = public as $$
   select case when public.is_manager() then coalesce(p_row.week, '{}'::jsonb)
               else public.week_for_employee(coalesce(p_row.week, '{}'::jsonb),
-                     public.current_employee_id(), p_row.published) end
+                     public.current_employee_id(), p_row.published,
+                     public.team_shifts_on()) end
 $$;
 
 -- מה שהעובד מבקש מהשרת במקום select על הטבלה
@@ -832,13 +854,21 @@ begin
   if public.is_manager() then return v_config; end if;
 
   v_emp := public.current_employee_id();
+  -- כשהמנהל פתח את הסידור לכל הצוות, מה שנדרש כדי להציג "מי
+  -- איתי במשמרת" הוא מזהה ושם. לכן עמיתיו עוברים מצומצמים
+  -- לשלושה שדות, והכרטיס – מייל, טלפון, הערות ומכסות – לא.
   return jsonb_build_object(
     'settings', coalesce(v_config->'settings', '{}'::jsonb),
     'branches', coalesce(v_config->'branches', '[]'::jsonb),
     'employees', coalesce((
-      select jsonb_agg(item)
+      select jsonb_agg(case when item->>'id' = v_emp then item
+                            else jsonb_build_object(
+                              'id', item->'id',
+                              'name', coalesce(item->'name', '""'::jsonb),
+                              'active', coalesce(item->'active', 'true'::jsonb)) end)
         from jsonb_array_elements(coalesce(v_config->'employees', '[]'::jsonb)) as item
-       where v_emp is not null and item->>'id' = v_emp
+       where v_emp is not null
+         and (item->>'id' = v_emp or public.team_shifts_on())
     ), '[]'::jsonb));
 end;
 $$;
@@ -861,7 +891,8 @@ create policy company_users_select on public.company_users
     company_id = public.current_company_id()
     and (public.is_manager() or id = auth.uid()));
 
-grant execute on function public.week_for_employee(jsonb, text, boolean) to authenticated;
+grant execute on function public.team_shifts_on()                 to authenticated;
+grant execute on function public.week_for_employee(jsonb, text, boolean, boolean) to authenticated;
 grant execute on function public.week_as_seen(public.company_weeks)      to authenticated;
 grant execute on function public.week_for_me(text)               to authenticated;
 grant execute on function public.config_for_me()                 to authenticated;

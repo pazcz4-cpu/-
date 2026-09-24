@@ -294,6 +294,16 @@
     return !!(session && session.user && session.user.role === 'employee');
   };
 
+  /* האם המנהל פתח את הסידור לכל הצוות. ברירת המחדל סגורה, וגם
+     היעדר ההגדרה נקרא כסגור: עסק שנפתח לפני שההגדרה קיימת אינו
+     אמור להיפתח בשקט בעדכון גרסה. */
+  MockBackend.prototype._teamShifts = function (companyId) {
+    var config = this._companyData(companyId).config || {};
+    var settings = config.settings || {};
+    var value = settings.teamVisibility || {};
+    return value.shifts === true;
+  };
+
   MockBackend.prototype._weekSlice = function (session, week) {
     if (!week) return week;
     if (!this._isEmployee(session)) return week;
@@ -301,7 +311,12 @@
     var out = clone(week);
     var assignments = {};
     /* סידור שטרם פורסם אינו קיים בשביל העובד, גם לא החלק שלו */
-    if (week.published && mine) {
+    if (week.published && this._teamShifts(session.company.id)) {
+      /* המנהל פתח את הסידור לכולם: עוברים השיבוצים המלאים.
+         מה שעדיין אינו עובר הוא כל השאר – הבקשות, הסיבות
+         וההערות של עמיתיו נחתכות כרגיל מתחת לזה. */
+      assignments = clone(week.assignments || {});
+    } else if (week.published && mine) {
       Object.keys(week.assignments || {}).forEach(function (slot) {
         var list = week.assignments[slot] || [];
         if (list.indexOf(mine) !== -1) assignments[slot] = [mine];
@@ -322,14 +337,21 @@
     if (!config) return config;
     if (!this._isEmployee(session)) return config;
     var mine = session.user.employeeId || null;
+    var team = this._teamShifts(session.company.id);
+    var employees = [];
+    (config.employees || []).forEach(function (emp) {
+      if (mine && emp.id === mine) { employees.push(emp); return; }
+      /* הכרטיסים של עמיתיו נושאים מייל, טלפון והערות – ואלה
+         אינם שלו. כשהמנהל פותח את הסידור לכולם, מה שנדרש כדי
+         להציג "מי איתי במשמרת" הוא מזהה ושם, ולכן רק הם עוברים
+         ולא הכרטיס. */
+      if (!team) return;
+      employees.push({ id: emp.id, name: emp.name || '', active: emp.active !== false });
+    });
     return {
       settings: config.settings || {},
       branches: config.branches || [],
-      /* הכרטיסים של עמיתיו נושאים מייל, טלפון והערות – ואלה
-         אינם שלו */
-      employees: (config.employees || []).filter(function (emp) {
-        return mine && emp.id === mine;
-      })
+      employees: employees
     };
   };
 

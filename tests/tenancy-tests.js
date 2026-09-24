@@ -1118,17 +1118,21 @@ console.log('\n== מה שעובד רואה ==');
    למה זה קריטי: המסך של העובד הראה תמיד רק את המשמרות שלו, אבל
    הנתונים שהגיעו לדפדפן היו השבוע המלא. מי שפותח כלי פיתוח היה
    רואה את הסידור של כולם ואת הסיבות שעמיתיו כתבו. */
-function companyWithTwo() {
+function companyWithTwo(options) {
   var backend = freshBackend();
   var ids = {};
+  var team = !!(options && options.team);
   return backend.signUpCompany({ companyName: 'עסק', email: 'boss@p.com', password: 'secret1' })
     .then(function () {
       return backend.saveConfig({
-        settings: { shifts: [{ id: 'morning', name: 'בוקר' }] },
+        settings: {
+          shifts: [{ id: 'morning', name: 'בוקר' }],
+          teamVisibility: { shifts: team }
+        },
         branches: [{ id: 'br-1', name: 'מרכז' }],
         employees: [
-          { id: 'emp-1', name: 'דנה', email: 'dana@p.com', phone: '050', note: 'פרטי' },
-          { id: 'emp-2', name: 'יוסי', email: 'yossi@p.com', phone: '051', note: 'פרטי' }
+          { id: 'emp-1', name: 'דנה', email: 'dana@p.com', phone: '050', note: 'הערה על דנה' },
+          { id: 'emp-2', name: 'יוסי', email: 'yossi@p.com', phone: '051', note: 'הערה על יוסי' }
         ]
       });
     })
@@ -1250,6 +1254,75 @@ asyncTest('המנהל ממשיך לראות הכל', function () {
       .then(function () { return backend.loadConfig(); })
       .then(function (config) {
         assertEqual(config.employees.length, 2, 'המנהל איבד כרטיסי עובדים');
+      });
+  });
+});
+
+console.log('\n== כשהמנהל פותח את הסידור לכל הצוות ==');
+
+/* ההגדרה הזו מרחיבה את מה שעובר לעובד, ולכן היא נבדקת בשרת ולא
+   רק במסך: מסך שאינו מציג נתון שהגיע לדפדפן אינו הגנה. ומה
+   שהיא מרחיבה הוא בדיוק דבר אחד – מי עובד מתי. */
+
+asyncTest('השיבוצים של כל הצוות מגיעים לעובד', function () {
+  return companyWithTwo({ team: true }).then(function (backend) {
+    return backend.loadWeek('2026-09-20').then(function (week) {
+      assertEqual(Object.keys(week.assignments).length, 2, 'מספר המשמרות שהגיעו');
+      assertEqual((week.assignments['br-1|0|morning'] || []).join(','), 'emp-1,emp-2',
+        'המשמרת המשותפת הגיעה חסרה');
+      assertEqual((week.assignments['br-1|1|morning'] || []).join(','), 'emp-2',
+        'משמרת שאין בה העובד עצמו לא הגיעה');
+    });
+  });
+});
+
+asyncTest('ועמיתיו מגיעים כשם ומזהה, ולא ככרטיס', function () {
+  return companyWithTwo({ team: true }).then(function (backend) {
+    return backend.loadConfig().then(function (config) {
+      assertEqual(config.employees.length, 2, 'מספר הכרטיסים שהגיעו');
+      var other = config.employees.filter(function (emp) { return emp.id === 'emp-2'; })[0];
+      assert(other, 'העמית לא הגיע כלל');
+      assertEqual(other.name, 'יוסי', 'השם של העמית לא הגיע');
+      assertEqual(Object.keys(other).sort().join(','), 'active,id,name',
+        'מהעמית עבר יותר מאשר מזהה, שם ופעילות');
+      /* וזו הבדיקה שבאמת חשובה */
+      assert(JSON.stringify(config).indexOf('yossi@p.com') === -1,
+        'המייל של העמית הגיע לדפדפן');
+      assert(JSON.stringify(config).indexOf('051') === -1,
+        'הטלפון של העמית הגיע לדפדפן');
+      assert(JSON.stringify(config).indexOf('הערה על יוסי') === -1,
+        'ההערה שהמנהל כתב על העמית הגיעה לדפדפן');
+      /* והכרטיס של העובד עצמו לא נפגע */
+      var mine = config.employees.filter(function (emp) { return emp.id === 'emp-1'; })[0];
+      assertEqual(mine.email, 'dana@p.com', 'העובד איבד את הכרטיס של עצמו');
+    });
+  });
+});
+
+asyncTest('וגם אז – הבקשות והסיבות של עמיתיו נשארות מחוץ לתמונה', function () {
+  return companyWithTwo({ team: true }).then(function (backend) {
+    return backend.loadWeek('2026-09-20').then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 1, 'מספר הבקשות שהגיעו');
+      assertEqual(Object.keys(week.constraints)[0], 'emp-1|3', 'הבקשה שהגיעה');
+      assert(JSON.stringify(week).indexOf('חתונה של אחותי') === -1,
+        'סיבה אישית של עמית הגיעה לדפדפן');
+      assertEqual(week.note, '', 'הערת המנהל הגיעה לעובד');
+      assertEqual(Object.keys(week.manual).length, 0, 'סימוני השיבוץ הידני הגיעו');
+    });
+  });
+});
+
+asyncTest('סידור שטרם פורסם נשאר סגור גם כשההגדרה דלוקה', function () {
+  return companyWithTwo({ team: true }).then(function (backend) {
+    return backend.signOut()
+      .then(function () { return backend.signIn({ email: 'boss@p.com', password: 'secret1' }); })
+      .then(function () { return backend.publishWeek('2026-09-20', false); })
+      .then(function () { return backend.signOut(); })
+      .then(function () { return backend.signIn({ email: 'dana@p.com', password: 'secret1' }); })
+      .then(function () { return backend.loadWeek('2026-09-20'); })
+      .then(function (week) {
+        assertEqual(Object.keys(week.assignments).length, 0,
+          'טיוטה שטרם פורסמה הגיעה לעובד');
       });
   });
 });

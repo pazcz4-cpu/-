@@ -142,6 +142,43 @@ try {
   check('והעובד עצמו מסומן ברשימה',
     await page.locator('.team-me').count() > 0, true);
 
+  console.log('\n== לשוניות הימים ==');
+  check('שבע לשוניות', await page.locator('.team-tab').count(), 7);
+  check('אחת ויחידה נבחרת', await page.locator('.team-tab.is-on').count(), 1);
+  /* ברירת המחדל אינה "ראשון" אלא היום — זה מה שהעובד מחפש */
+  const todayIdx = await page.evaluate(() => new Date().getDay());
+  check('והיא של היום', await page.evaluate(() =>
+    Number(document.querySelector('.team-tab.is-on').dataset.teamDay)), todayIdx);
+  /* נקודה על יום שבו אני עובד, כך שהשבוע שלי נקרא מהלשוניות */
+  check('ימים שאני עובד בהם מסומנים',
+    await page.locator('.team-tab.has-mine').count() > 0, true);
+
+  /* מוצג יום אחד, ולא כל השבוע: זו כל הנקודה של הלשוניות */
+  const shownDays = await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    const week = state.weeks[window.ShiftApp.weekKey()];
+    const idx = Number(document.querySelector('.team-tab.is-on').dataset.teamDay);
+    return {
+      onScreen: document.querySelectorAll('.team-slot').length,
+      thatDay: window.ShiftStore.dayRoster(state, week, idx).length
+    };
+  });
+  check('מספר המשמרות על המסך הוא של יום אחד',
+    shownDays.onScreen, shownDays.thatDay);
+
+  console.log('\n== החלפת יום ==');
+  const otherIdx = (todayIdx + 2) % 7;
+  const before = await page.locator('.team-panel').innerText();
+  await page.click('.team-tab[data-team-day="' + otherIdx + '"]');
+  await page.waitForTimeout(500);
+  check('הלשונית החדשה נבחרה', await page.evaluate(() =>
+    Number(document.querySelector('.team-tab.is-on').dataset.teamDay)), otherIdx);
+  check('והתוכן התחלף', (await page.locator('.team-panel').innerText()) !== before, true);
+  /* המגירה נשארת פתוחה אחרי ציור מחדש — אחרת כל לחיצה על יום
+     סוגרת בדיוק את מה שהעובד פתח כדי לקרוא. */
+  check('והמגירה נשארה פתוחה',
+    await page.evaluate(() => document.querySelector('.team-fold').open), true);
+
   console.log('\n== ומה שעדיין לא נחשף ==');
   /* זו הבדיקה שבאמת חשובה. גם כשההגדרה דלוקה, מה שעובר למסך
      הוא שמות ומשמרות — ולא כרטיס העובד. */

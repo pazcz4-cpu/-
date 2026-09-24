@@ -54,6 +54,9 @@
     /* האם מגירת הבקשות פתוחה. רלוונטי רק אחרי שהסידור פורסם:
        עד אז הבקשות הן המשימה של העובד והן פתוחות תמיד. */
     this.requestsOpen = false;
+    /* null = טרם נבחר, ואז נבחר ברירת מחדל חכמה בכל ציור */
+    this.teamDay = null;
+    this.teamOpen = false;
   }
 
   EmployeeUI.prototype.start = function () {
@@ -95,6 +98,21 @@
       if (fold) { self.requestsOpen = fold.open; }
     }, true);
 
+    /* לשוניות הצוות ומצב המגירה. רשומים לפני היציאה המוקדמת של
+       מצב התצוגה המקדימה: הם החלפת תצוגה ולא עריכה, והמנהל
+       שבודק מה העובד רואה צריך להיות מסוגל להחליף יום. */
+    this.root.addEventListener('toggle', function (event) {
+      var fold = event.target.closest('.team-fold');
+      if (fold) { self.teamOpen = fold.open; }
+    }, true);
+
+    this.root.addEventListener('click', function (event) {
+      var tab = event.target.closest('[data-team-day]');
+      if (!tab) return;
+      self.teamDay = Number(tab.dataset.teamDay);
+      self.render();
+    });
+
     /* בתצוגה מקדימה מחוברת רק הניווט בין שבועות. כל השאר נצפה. */
     if (this.preview) {
       this.root.addEventListener('click', function (event) {
@@ -122,6 +140,24 @@
       var button = event.target.closest('.cstate');
       if (button) { self._toggle(button); }
     });
+  };
+
+  /* איזה יום מוצג בלשוניות הצוות.
+
+     ברירת המחדל אינה "ראשון" אלא מה שהעובד כנראה מחפש: היום,
+     אם השבוע המוצג הוא השבוע הנוכחי; אחרת היום הראשון שבו הוא
+     עצמו עובד; ורק אם אין כזה — תחילת השבוע. */
+  EmployeeUI.prototype._teamDay = function (myDays) {
+    if (this.teamDay !== null && this.teamDay >= 0 && this.teamDay <= 6) {
+      return this.teamDay;
+    }
+    /* השבוע מתחיל ביום ראשון, ולכן getDay() הוא גם מדד היום
+       בתוך השבוע. currentWeekKey מחזיר את מפתח השבוע של היום. */
+    if (this.weekKey === Store.currentWeekKey()) {
+      return new Date().getDay();
+    }
+    for (var i = 0; i <= 6; i++) { if (myDays && myDays[i]) return i; }
+    return 0;
   };
 
   EmployeeUI.prototype._employeeId = function () {
@@ -420,41 +456,95 @@
        הוא עובד. וקיים רק אחרי פרסום — סידור בטיוטה משתנה, ועובד
        שראה בו את עצמו ביום שלישי לא אמור לגלות שזה היה זמני.
 
+       יום אחד בכל פעם, ולא כל השבוע ברצף. שבוע שלם של כל הסניפים
+       וכל המשמרות הוא חמישים שורות: בטלפון זה קיר שאי אפשר לסרוק,
+       ובדיוק בו קבור מה שהעובד בא לחפש — מי איתו במשמרת, ומי עובד
+       מחר. לשוניות הימים הופכות את זה לשאלה אחת עם תשובה אחת.
+
        מה שנחשף כאן הוא שמות ומשמרות בלבד. האילוצים, ההערות,
        המיילים והמכסות של שאר העובדים אינם עוברים לכאן בכלל —
        לא כי המסך מסתיר אותם, אלא כי Store.dayRoster אינו
        מחזיר אותם. */
     if (Store.teamVisibility(this.state).shifts && this.week.published) {
       var myId = this._employeeId();
-      html += '<details class="employee-fold team-fold">';
+
+      /* באילו ימים אני עובד. משמש גם לנקודה על הלשונית וגם
+         לבחירת היום שנפתח כברירת מחדל. */
+      var myDays = {};
+      Data.DAYS.forEach(function (day) {
+        if (Store.employeeDayAssignments(self.state, self.week, myId, day.idx).length) {
+          myDays[day.idx] = true;
+        }
+      });
+
+      var dayIdx = this._teamDay(myDays);
+      var roster = Store.dayRoster(this.state, this.week, dayIdx);
+      var headcount = 0;
+      roster.forEach(function (slot) { headcount += slot.people.length; });
+
+      html += '<details class="employee-fold team-fold"' +
+        (this.teamOpen ? ' open' : '') + '>';
       html += '<summary class="employee-fold-head">' +
         '<span class="employee-title">' + esc(t('employee.teamTitle')) + '</span>' +
         '<span class="employee-fold-hint">' + esc(t('employee.teamHint')) + '</span>' +
         '</summary>';
-      html += '<div class="team-days">';
+
+      /* לשוניות הימים. כפתורים ולא קישורים — הם מחליפים תצוגה
+         ואינם מנווטים לשום מקום. */
+      html += '<div class="team-tabs" role="tablist">';
       Data.DAYS.forEach(function (day) {
-        var roster = Store.dayRoster(self.state, self.week, day.idx);
-        if (!roster.length) return;
-        html += '<div class="team-day"><h3>' + esc(day.name) + ' · ' +
-          esc(Store.formatDate(Store.dateOfDay(self.weekKey, day.idx))) + '</h3>';
+        var on = day.idx === dayIdx;
+        html += '<button type="button" class="team-tab' + (on ? ' is-on' : '') +
+            (myDays[day.idx] ? ' has-mine' : '') + '"' +
+          ' role="tab" aria-selected="' + (on ? 'true' : 'false') + '"' +
+          ' data-team-day="' + day.idx + '">' +
+          '<b>' + esc(day.short || day.name) + '</b>' +
+          '<span>' + esc(Store.formatDate(Store.dateOfDay(self.weekKey, day.idx))) + '</span>' +
+          '</button>';
+      });
+      html += '</div>';
+
+      html += '<div class="team-panel">';
+      if (!roster.length) {
+        html += '<p class="employee-note">' + esc(t('employee.teamNobody')) + '</p>';
+      } else {
+        html += '<p class="team-count">' +
+          esc(tPlural('employee.teamCount', headcount)) + '</p>';
+        /* מקובץ לפי סניף: עובד חושב "מי איתי בסניף", ולא
+           "מי עובד בוקר בכל הרשת". */
+        var byBranch = {};
+        var order = [];
         roster.forEach(function (slot) {
-          var branch = Store.byId(self.state.branches, slot.branchId) || {};
-          var shift = Store.shiftById(self.state, slot.shiftId);
-          html += '<div class="team-slot sh sh-' +
-              Store.shiftColor(self.state, slot.shiftId) + '">' +
-            '<b>' + esc(branch.name || '') + ' · ' +
+          if (!byBranch[slot.branchId]) { byBranch[slot.branchId] = []; order.push(slot.branchId); }
+          byBranch[slot.branchId].push(slot);
+        });
+        order.forEach(function (branchId) {
+          var branch = Store.byId(self.state.branches, branchId) || {};
+          html += '<div class="team-branch">';
+          html += '<h4>' + esc(branch.name || '') + '</h4>';
+          byBranch[branchId].forEach(function (slot) {
+            var shift = Store.shiftById(self.state, slot.shiftId);
+            var mine = slot.people.some(function (p) { return p.id === myId; });
+            html += '<div class="team-slot sh sh-' +
+                Store.shiftColor(self.state, slot.shiftId) +
+                (mine ? ' is-mine' : '') + '">';
+            html += '<div class="team-slot-head"><b>' +
               esc(shift ? shift.name : slot.shiftId) + '</b>' +
-            '<span>' + slot.people.map(function (person) {
+              (mine ? '<span class="team-badge">' +
+                esc(t('employee.teamMine')) + '</span>' : '') +
+              '</div>';
+            html += '<div class="team-people">' + slot.people.map(function (person) {
               /* "זה אני" מסומן, ולא מושמט: רשימה שבה כולם חוץ
                  ממך היא רשימה שקשה להבין בה מה מקומך. */
-              return person.id === myId
-                ? '<em class="team-me">' + esc(person.name) + '</em>'
-                : esc(person.name);
-            }).join(', ') + '</span>' +
-            '</div>';
+              return '<span class="team-person' +
+                (person.id === myId ? ' team-me' : '') + '">' +
+                esc(person.name) + '</span>';
+            }).join('') + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
         });
-        html += '</div>';
-      });
+      }
       html += '</div></details>';
     }
 

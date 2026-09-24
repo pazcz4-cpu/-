@@ -1986,6 +1986,39 @@
     var team = $('#opt-team-shifts');
     if (team) team.checked = Store.teamVisibility(state).shifts;
 
+    /* שעון הנוכחות ובקרת השעות הנוספות. מוצגים גם כשהם כבויים,
+       מאותה סיבה שהתקרה מוצגת: מנהל שמחפש תכונה ולא מוצא אותה
+       מניח שהיא לא קיימת. */
+    var clockToggle = $('#opt-clock');
+    if (clockToggle) {
+      var clock = Store.timeclock(state);
+      clockToggle.checked = clock.enabled;
+      clockToggle.disabled = viewOnly;
+      var mode = $('#clock-mode');
+      if (mode) {
+        mode.value = clock.mode;
+        mode.disabled = viewOnly || !clock.enabled;
+      }
+    }
+    var overtimeToggle = $('#opt-overtime');
+    if (overtimeToggle) {
+      var rule = Store.overtimeRule(state);
+      overtimeToggle.checked = rule.enabled;
+      overtimeToggle.disabled = viewOnly;
+      var daily = $('#overtime-daily');
+      var weekly = $('#overtime-weekly');
+      /* נשמר בדקות ומוצג בשעות: 516 דקות הן 8.6 שעות, וזה
+         המספר שהמנהל מכיר מההסכם. */
+      if (daily) {
+        daily.value = Math.round(rule.dailyMinutes / 6) / 10;
+        daily.disabled = viewOnly || !rule.enabled;
+      }
+      if (weekly) {
+        weekly.value = Math.round(rule.weeklyMinutes / 6) / 10;
+        weekly.disabled = viewOnly || !rule.enabled;
+      }
+    }
+
     var config = Store.constraintLimitSettings(state);
     var max = $('#limit-max');
 
@@ -3721,6 +3754,57 @@
         render();
       });
     }
+
+    /* שעון הנוכחות. ההגדרה היא של העסק כולו: "לחלק מהצוות יש
+       שעון" הוא מצב שאי אפשר להסביר לאף אחד מהם, ולכן מה שמשתנה
+       הוא איך מדווחים ולא מי מדווח. */
+    if ($('#opt-clock')) {
+      $('#opt-clock').addEventListener('change', function (event) {
+        var current = Store.timeclock(state);
+        state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
+          enabled: event.target.checked, mode: current.mode, devices: current.devices
+        });
+        persist('config');
+        render();
+      });
+    }
+    if ($('#clock-mode')) {
+      $('#clock-mode').addEventListener('change', function (event) {
+        var current = Store.timeclock(state);
+        state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
+          enabled: current.enabled, mode: event.target.value, devices: current.devices
+        });
+        persist('config');
+        render();
+      });
+    }
+
+    /* שעות נוספות. הסף נשמר בדקות ומוזן בשעות. */
+    function saveOvertime(patch) {
+      var current = Store.overtimeRule(state);
+      state.settings.overtime = Object.assign({}, current, patch);
+      persist('config');
+      render();
+    }
+    if ($('#opt-overtime')) {
+      $('#opt-overtime').addEventListener('change', function (event) {
+        saveOvertime({ enabled: event.target.checked });
+      });
+    }
+    function overtimeInput(selector, key, max) {
+      if (!$(selector)) return;
+      $(selector).addEventListener('change', function (event) {
+        var hours = Number(event.target.value);
+        /* אפס אינו "בלי סף" אלא "הכול שעות נוספות". כיבוי נעשה
+           בתיבת הסימון, ולא בהזנת מספר שנראה כמו טעות. */
+        if (!(hours > 0) || hours > max) { toast(t('settings.overtimeRange')); render(); return; }
+        var patch = {};
+        patch[key] = Math.round(hours * 60);
+        saveOvertime(patch);
+      });
+    }
+    overtimeInput('#overtime-daily', 'dailyMinutes', 24);
+    overtimeInput('#overtime-weekly', 'weeklyMinutes', 120);
 
     $('#default-shabbat').addEventListener('change', function (event) {
       var normalized = Store.normalizeTimeInput(event.target.value);

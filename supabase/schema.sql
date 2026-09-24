@@ -549,6 +549,99 @@ begin
 end;
 $$;
 
+-- TIMECLOCK: דיווח שעון של העובד על עצמו
+--
+-- שלושה דברים נקבעים כאן ולא בדפדפן, וכל אחד מהם הוא הסיבה
+-- שהפונקציה קיימת בכלל:
+--   · מי    – מהסשן, לא מהבקשה. אחרת אפשר לדווח בשם אחר.
+--   · מתי   – משעון השרת, לא משעון הטלפון. שעון טלפון ניתן
+--             לשינוי בהגדרות, וזה הדבר הראשון שמישהו ינסה.
+--   · האם   – רק כשהמנהל הדליק את השעון והתיר דיווח מהטלפון.
+--
+-- גם כיוון הדיווח נגזר בשרת ולא מתקבל מהבקשה: כפתור שנלחץ
+-- פעמיים ברשת איטית לא ייצור יציאה לפני כניסה.
+create or replace function public.save_own_punch(p_week_key text)
+returns public.company_weeks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company  uuid := public.current_company_id();
+  v_employee text := public.current_employee_id();
+  v_config   jsonb;
+  v_mode     text;
+  v_week     public.company_weeks;
+  v_punches  jsonb;
+  v_last     jsonb;
+  v_kind     text;
+  v_now      timestamptz := now();
+begin
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  if coalesce(v_employee, '') = '' then
+    raise exception 'user is not linked to a staff card' using errcode = '22023';
+  end if;
+
+  select config into v_config from public.company_configs where company_id = v_company;
+  v_mode := coalesce(v_config->'settings'->'timeclock'->>'mode', 'phone');
+  if coalesce(v_config->'settings'->'timeclock'->>'enabled', 'false') <> 'true'
+     or v_mode not in ('phone', 'both') then
+    raise exception 'time clock is off' using errcode = '55000';
+  end if;
+
+  -- שורת שבוע נוצרת אם אין: עובד שדיווח בשבוע שהמנהל טרם נגע
+  -- בו אינו אמור לקבל שגיאה.
+  insert into public.company_weeks (company_id, week_key, week, published)
+  values (v_company, p_week_key, '{}'::jsonb, false)
+  on conflict (company_id, week_key) do nothing;
+
+  select * into v_week from public.company_weeks
+   where company_id = v_company and week_key = p_week_key for update;
+
+  v_punches := coalesce(v_week.week->'punches', '[]'::jsonb);
+
+  -- הדיווח האחרון של העובד הזה. החותמות נשמרות כ-ISO ב-UTC,
+  -- ולכן מיון טקסטואלי הוא גם מיון כרונולוגי.
+  select item into v_last
+    from jsonb_array_elements(v_punches) as item
+   where item->>'empId' = v_employee
+   order by item->>'at' desc
+   limit 1;
+
+  v_kind := case when coalesce(v_last->>'kind', 'out') = 'in' then 'out' else 'in' end;
+
+  -- חלון כפילות: לחיצה כפולה או שליחה חוזרת אינן דיווח שני,
+  -- ולכן הוא חוסם כל דיווח נוסף של אותו עובד ולא רק באותו
+  -- כיוון — אחרת הלחיצה השנייה הייתה נרשמת כיציאה מיידית,
+  -- והעובד היה מגלה בסוף החודש שעבד דקה. נבלע בשקט, והמסך
+  -- מראה את המצב הנכון.
+  if v_last is not null
+     and abs(extract(epoch from (v_now - (v_last->>'at')::timestamptz))) <= 90 then
+    v_week.week := public.week_as_seen(v_week);
+    return v_week;
+  end if;
+
+  v_punches := v_punches || jsonb_build_array(jsonb_build_object(
+    'id',    'pch-' || gen_random_uuid()::text,
+    'empId', v_employee,
+    'kind',  v_kind,
+    'at',    to_char(v_now at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    'src',   'phone'));
+
+  update public.company_weeks
+     set week = jsonb_set(coalesce(week, '{}'::jsonb), array['punches'], v_punches, true),
+         updated_at = now()
+   where company_id = v_company and week_key = p_week_key
+  returning * into v_week;
+
+  -- מה שחוזר לעובד הוא הפרוסה שלו, ולא השבוע כולו.
+  v_week.week := public.week_as_seen(v_week);
+  return v_week;
+end;
+$$;
+
 -- אישור או דחייה של בקשה. שמור למנהל ולבעלים.
 create or replace function public.decide_constraint(
   p_week_key text, p_employee_id text, p_day_idx int, p_decision text, p_note text default '')
@@ -599,6 +692,7 @@ $$;
 grant execute on function public.create_company(text, text, int)                 to authenticated;
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
+grant execute on function public.save_own_punch(text)                            to authenticated;
 grant execute on function public.decide_constraint(text, text, int, text, text)  to authenticated;
 grant execute on function public.current_company_id()                            to authenticated;
 grant execute on function public.current_role_name()                             to authenticated;
@@ -795,6 +889,14 @@ returns jsonb language sql immutable set search_path = public as $$
          where p_employee is not null
            and item.value @> jsonb_build_array(p_employee)
       ), '{}'::jsonb) end,
+    -- דיווחי השעון שלו בלבד. מתי עמית נכנס ומתי יצא אינו חלק
+    -- מ"מי עובד איתי" גם כשהמנהל פתח את הסידור: שעת הגעה היא
+    -- נתון שנכנס לתלוש, ולא לוח המשמרות.
+    'punches', coalesce((
+      select jsonb_agg(item order by item->>'at')
+        from jsonb_array_elements(coalesce(p_week->'punches', '[]'::jsonb)) as item
+       where p_employee is not null and item->>'empId' = p_employee
+    ), '[]'::jsonb),
     -- הבקשות שלו מוצגות לו תמיד, גם לפני פרסום – הוא זה שהגיש
     -- אותן, והוא צריך לראות מה מצבן.
     'constraints', coalesce((

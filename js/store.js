@@ -97,7 +97,7 @@
 
   function emptyWeek() {
     return {
-      constraints: {}, assignments: {}, manual: {}, holidays: {},
+      constraints: {}, assignments: {}, manual: {}, holidays: {}, punches: [],
       shabbatEnd: '', note: '', generatedAt: null,
       published: false, publishedAt: null, publishedSignature: ''
     };
@@ -110,6 +110,7 @@
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
     if (!w.holidays) w.holidays = {};
+    if (!Array.isArray(w.punches)) w.punches = [];
     return w;
   }
 
@@ -506,6 +507,326 @@
       });
     });
     return out;
+  }
+
+
+  /* ===== שעון נוכחות =====
+
+     עד כאן המערכת ידעה מה מתוכנן. כאן מתחיל מה שקרה בפועל.
+
+     דיווח אחד הוא רגע אחד: מי, מתי, נכנס או יצא, ומאיפה הגיע
+     הדיווח. שעות אינן נשמרות – הן מחושבות מזוגות, כי דיווח הוא
+     עובדה ושעה היא פרשנות שלה, ופרשנות שנשמרה פעם אחת אי אפשר
+     לתקן כשמתברר שהייתה שגויה.
+
+     הזמן נשמר כ-ISO ב-UTC. עסק בישראל עובר שעון קיץ פעמיים
+     בשנה, ושמירת "08:00" מקומי הופכת את הלילה שבו השעון זז
+     למריבה על שעה. */
+  var PUNCH = { IN: 'in', OUT: 'out' };
+
+  /* מאיפה הגיע הדיווח. נשמר, ומוצג בדוח, כי "המנהל תיקן" הוא
+     מידע שהעובד זכאי לראות ולא פרט טכני. */
+  var PUNCH_SRC = { PHONE: 'phone', DEVICE: 'device', MANAGER: 'manager' };
+
+  /* חלון כפילות. שתי סיבות, ושתיהן שכיחות:
+
+       · מכשיר חומרה ששלח אצווה ולא קיבל אישור שולח אותה שוב,
+         וזה תקין מבחינתו. בלי החלון הזה כל ניתוק רשת בסניף
+         היה מייצר לעובד משמרת כפולה.
+       · ואדם שמעביר כרטיס פעמיים כי לא שמע ביפ. הכיוון אצלנו
+         נגזר מהדיווח הקודם, ולכן ההעברה השנייה הייתה נרשמת
+         כיציאה מיידית – והעובד היה מגלה בסוף החודש שעבד דקה.
+
+     לכן החלון חוסם כל דיווח נוסף של אותו עובד, ולא רק דיווח
+     באותו כיוון. משמרת בת דקה אינה משמרת. */
+  var PUNCH_DEDUPE_MS = 90 * 1000;
+
+  function punchList(week) {
+    return Array.isArray(week && week.punches) ? week.punches : [];
+  }
+
+  function punchTime(punch) {
+    var value = punch && punch.at ? Date.parse(punch.at) : NaN;
+    return isNaN(value) ? 0 : value;
+  }
+
+  function sortPunches(list) {
+    return list.sort(function (a, b) {
+      var diff = punchTime(a) - punchTime(b);
+      if (diff) return diff;
+      /* שתי חותמות זהות: כניסה קודמת ליציאה, אחרת משמרת באורך
+         אפס הייתה נקראת כמשמרת פתוחה. */
+      return (a.kind === PUNCH.IN ? 0 : 1) - (b.kind === PUNCH.IN ? 0 : 1);
+    });
+  }
+
+  /* הוספת דיווח. מחזיר { ok, reason, punch }.
+
+     reason = 'duplicate' כשהדיווח נבלע בחלון הכפילות. זו אינה
+     שגיאה: המכשיר עשה את הדבר הנכון, ואנחנו לא סופרים פעמיים. */
+  function addPunch(week, input) {
+    if (!week) return { ok: false, reason: 'no_week' };
+    var empId = String((input && input.empId) || '');
+    var kind = (input && input.kind) === PUNCH.OUT ? PUNCH.OUT : PUNCH.IN;
+    var at = (input && input.at) || new Date().toISOString();
+    if (!empId) return { ok: false, reason: 'no_employee' };
+    if (isNaN(Date.parse(at))) return { ok: false, reason: 'bad_time' };
+
+    if (!Array.isArray(week.punches)) week.punches = [];
+    var stamp = Date.parse(at);
+    var duplicate = null;
+    /* force – תיקון של המנהל. הוא רואה את מה שכבר רשום ויודע
+       מה הוא מוסיף, ולכן החלון אינו חוסם אותו. */
+    if (!input.force) {
+      week.punches.forEach(function (existing) {
+        if (existing.empId !== empId) return;
+        if (Math.abs(punchTime(existing) - stamp) <= PUNCH_DEDUPE_MS) duplicate = existing;
+      });
+    }
+    if (duplicate) return { ok: false, reason: 'duplicate', punch: duplicate };
+
+    var punch = {
+      id: newId('pch'),
+      empId: empId,
+      kind: kind,
+      at: new Date(stamp).toISOString(),
+      src: input.src === PUNCH_SRC.DEVICE ? PUNCH_SRC.DEVICE
+        : (input.src === PUNCH_SRC.MANAGER ? PUNCH_SRC.MANAGER : PUNCH_SRC.PHONE)
+    };
+    if (input.branchId) punch.branchId = String(input.branchId);
+    if (input.deviceSn) punch.deviceSn = String(input.deviceSn);
+    if (input.by) punch.by = String(input.by);
+    if (input.note) punch.note = String(input.note).slice(0, 200);
+    week.punches.push(punch);
+    sortPunches(week.punches);
+    return { ok: true, punch: punch };
+  }
+
+  function removePunch(week, punchId) {
+    if (!week || !Array.isArray(week.punches)) return false;
+    var before = week.punches.length;
+    week.punches = week.punches.filter(function (punch) { return punch.id !== punchId; });
+    return week.punches.length !== before;
+  }
+
+  function punchesOf(week, empId) {
+    return punchList(week).filter(function (punch) { return punch.empId === empId; });
+  }
+
+  /* האם העובד נמצא בפנים כרגע. זה מה שקובע איזה כפתור מוצג לו,
+     ולכן הוא נגזר מהדיווח האחרון ולא נשמר כדגל: דגל שנשמר יכול
+     לסתור את הדיווחים, והדיווחים הם האמת. */
+  function punchState(week, empId) {
+    var list = punchesOf(week, empId);
+    if (!list.length) return PUNCH.OUT;
+    return list[list.length - 1].kind === PUNCH.IN ? PUNCH.IN : PUNCH.OUT;
+  }
+
+  /* זוגות כניסה–יציאה, לפי סדר הזמן.
+
+     משמרת שחוצה חצות היא המקרה הרגיל ולא הקצה: כניסה ב-22:00
+     ויציאה ב-02:00 הן זוג אחד, והיום שאליו הוא נזקף הוא יום
+     הכניסה – כך רואה את זה גם העובד וגם התלוש.
+
+     כניסה בלי יציאה נשארת פתוחה ואינה נספרת כשעות. לא מנחשים
+     מתי הוא יצא: ניחוש כזה נכנס לתלוש. */
+  function punchSessions(week, empId) {
+    var out = [];
+    var open = null;
+    punchesOf(week, empId).forEach(function (punch) {
+      if (punch.kind === PUNCH.IN) {
+        /* כניסה על כניסה: הראשונה נשארת פתוחה, וזו מתחילה
+           מחדש. המנהל יראה את הפתוחה ויתקן. */
+        if (open) out.push({ inAt: open.at, outAt: null, minutes: 0, open: true, punchIn: open });
+        open = punch;
+        return;
+      }
+      if (!open) {
+        /* יציאה בלי כניסה – לרוב מכשיר שהותקן באמצע יום.
+           נרשמת כיתומה כדי שתהיה גלויה, ואינה מייצרת שעות. */
+        out.push({ inAt: null, outAt: punch.at, minutes: 0, orphan: true, punchOut: punch });
+        return;
+      }
+      out.push({
+        inAt: open.at,
+        outAt: punch.at,
+        minutes: Math.max(0, Math.round((punchTime(punch) - punchTime(open)) / 60000)),
+        open: false,
+        punchIn: open,
+        punchOut: punch
+      });
+      open = null;
+    });
+    if (open) out.push({ inAt: open.at, outAt: null, minutes: 0, open: true, punchIn: open });
+    return out;
+  }
+
+  /* ===== שעות נוספות =====
+
+     החוק בישראל סופר יום ושבוע, ולכן שניהם כאן. הסף נשמר
+     בהגדרות ולא מקודד כאן: יש עסקים עם הסכם קיבוצי אחר, ומספר
+     שקבוע בקוד הוא מספר שלא ניתן לתקן ללקוח. */
+  function overtimeRule(state) {
+    var value = (state && state.settings && state.settings.overtime) || {};
+    return {
+      enabled: value.enabled === true,
+      dailyMinutes: Math.max(0, Math.round(Number(value.dailyMinutes) || 0)) || 516,
+      weeklyMinutes: Math.max(0, Math.round(Number(value.weeklyMinutes) || 0)) || 2520
+    };
+  }
+
+  function timeclock(state) {
+    var value = (state && state.settings && state.settings.timeclock) || {};
+    return {
+      enabled: value.enabled === true,
+      /* phone – העובד מדווח מהטלפון. device – רק שעון בסניף.
+         both – שניהם, וכל סניף בוחר בפועל מה יש לו. */
+      mode: value.mode === 'device' || value.mode === 'both' ? value.mode : 'phone',
+      devices: Array.isArray(value.devices) ? value.devices : []
+    };
+  }
+
+  function allowsPhonePunch(state) {
+    var clock = timeclock(state);
+    return clock.enabled && (clock.mode === 'phone' || clock.mode === 'both');
+  }
+
+  /* דקות מתוכננות לעובד ביום, לפי שעות המשמרת שאליה שובץ.
+     זה הצד השני של הדוח: מה היה אמור לקרות. */
+  function plannedMinutes(state, week, empId, dayIdx) {
+    var total = 0;
+    employeeDayAssignments(state, week, empId, dayIdx).forEach(function (slot) {
+      var shift = shiftById(state, slot.shiftId);
+      if (!shift) return;
+      total += shiftLengthMinutes(shift);
+    });
+    return total;
+  }
+
+  function parseClock(value) {
+    var parts = String(value || '').split(':');
+    var hours = Number(parts[0]);
+    var minutes = Number(parts[1]);
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    return hours * 60 + minutes;
+  }
+
+  /* משמרת ערב שנגמרת ב-02:00 אינה באורך מינוס עשרים שעות */
+  function shiftLengthMinutes(shift) {
+    var from = parseClock(shift && shift.from);
+    var to = parseClock(shift && shift.to);
+    if (from === null || to === null) return 0;
+    var length = to - from;
+    if (length <= 0) length += 24 * 60;
+    return length;
+  }
+
+  /* ===== הדוח החודשי =====
+
+     מה שנשלח לחשב שכר. לכן הוא נבנה מהיום ולא מהשבוע: שבוע
+     שחוצה חודשים מתחלק בין השניים, ועובד שעבד ב-31 וב-1 אינו
+     מקבל את שניהם באותו חודש.
+
+     מוחזר לכל עובד: דקות בפועל, דקות מתוכננות, שעות נוספות,
+     ימי חופשה בתשלום ושלא בתשלום, ומשמרות פתוחות – כי דוח עם
+     משמרת פתוחה הוא דוח שאסור לשלוח לחשב שכר לפני שמתקנים. */
+  function monthlyReport(state, monthKey) {
+    var rule = overtimeRule(state);
+    var byEmployee = {};
+    function bucket(empId) {
+      if (!byEmployee[empId]) {
+        byEmployee[empId] = {
+          empId: empId, minutes: 0, plannedMinutes: 0, days: 0,
+          overtimeMinutes: 0, dailyOvertimeMinutes: 0, weeklyOvertimeMinutes: 0,
+          paidLeaveDays: 0, unpaidLeaveDays: 0, openSessions: 0, orphanPunches: 0,
+          byDay: {}
+        };
+      }
+      return byEmployee[empId];
+    }
+
+    /* דקות לפי עובד וליום קלנדרי, כדי לספור יום ושבוע בנפרד */
+    var weekKeys = weekKeysForMonth(monthKey);
+    weekKeys.forEach(function (weekKey) {
+      var week = (state.weeks || {})[weekKey];
+      if (!week) return;
+      var seen = {};
+      punchList(week).forEach(function (punch) { seen[punch.empId] = true; });
+      Object.keys(seen).forEach(function (empId) {
+        punchSessions(week, empId).forEach(function (session) {
+          /* היום שאליו נזקפת המשמרת הוא יום הכניסה, וגם משמרת
+             שנפתחה ב-30 בחודש ונסגרה ב-1 בבא שייכת כולה לחודש
+             שנפתחה בו. חצייה אינה מקרה קצה אלא משמרת ערב.
+
+             שורה נפתחת רק אחרי הסינון הזה: דוח אוקטובר שמופיע
+             בו עובד עם אפס שעות, רק מפני שעבד בספטמבר באותו
+             שבוע, הוא דוח שקשה להאמין לו. */
+          var stamp = Date.parse(session.inAt || session.outAt);
+          if (isNaN(stamp)) return;
+          var start = new Date(stamp);
+          if (monthKeyOf(start) !== monthKey) return;
+          var row = bucket(empId);
+          if (session.orphan) { row.orphanPunches++; return; }
+          if (session.open) { row.openSessions++; return; }
+          var dayKey = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());
+          var day = row.byDay[dayKey] || (row.byDay[dayKey] = { minutes: 0, weekKey: weekKey });
+          day.minutes += session.minutes;
+          row.minutes += session.minutes;
+        });
+      });
+
+      /* המתוכנן נספר מהשיבוצים, ולכן הוא קיים גם לעובד שלא
+         דיווח כלל – וזה בדיוק מה שהמנהל מחפש בדוח. */
+      (state.employees || []).forEach(function (emp) {
+        for (var dayIdx = 0; dayIdx <= 6; dayIdx++) {
+          var date = dateOfDay(weekKey, dayIdx);
+          if (monthKeyOf(date) !== monthKey) continue;
+          var planned = plannedMinutes(state, week, emp.id, dayIdx);
+          if (planned) bucket(emp.id).plannedMinutes += planned;
+        }
+      });
+    });
+
+    /* חופשות: נספרות מהבקשות שאושרו, ולא מהדיווחים. יום חופשה
+       הוא יום שלא דיווחו בו, ולכן הוא חייב להגיע ממקור אחר. */
+    var leave = leaveSummary(state, monthKey);
+    Object.keys(leave).forEach(function (empId) {
+      var row = bucket(empId);
+      row.paidLeaveDays = leave[empId].paid;
+      row.unpaidLeaveDays = leave[empId].unpaid;
+    });
+
+    Object.keys(byEmployee).forEach(function (empId) {
+      var row = byEmployee[empId];
+      var perWeek = {};
+      Object.keys(row.byDay).forEach(function (dayKey) {
+        var day = row.byDay[dayKey];
+        row.days++;
+        if (rule.enabled && day.minutes > rule.dailyMinutes) {
+          row.dailyOvertimeMinutes += day.minutes - rule.dailyMinutes;
+        }
+        perWeek[day.weekKey] = (perWeek[day.weekKey] || 0) + day.minutes;
+      });
+      if (rule.enabled) {
+        Object.keys(perWeek).forEach(function (weekKey) {
+          if (perWeek[weekKey] > rule.weeklyMinutes) {
+            row.weeklyOvertimeMinutes += perWeek[weekKey] - rule.weeklyMinutes;
+          }
+        });
+        /* לא מחברים יומי ושבועי: שעה אחת אינה נוספת פעמיים.
+           הגבוה מביניהם הוא מה שהחוק מכיר בו כשעות נוספות. */
+        row.overtimeMinutes = Math.max(row.dailyOvertimeMinutes, row.weeklyOvertimeMinutes);
+      }
+    });
+
+    return byEmployee;
+  }
+
+  /* שעות ודקות, לתצוגה. 512 דקות הן 8:32 ולא 8.53 – תלוש שכר
+     מדבר בשעות ודקות, והמנהל משווה מול התלוש. */
+  function formatMinutes(minutes) {
+    var total = Math.max(0, Math.round(Number(minutes) || 0));
+    return Math.floor(total / 60) + ':' + pad(total % 60);
   }
 
   function getAssigned(week, dayIdx, branchId, shiftId) {
@@ -1381,6 +1702,16 @@
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
       if (typeof weekData.published !== 'boolean') weekData.published = false;
       if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
+      /* דיווחי שעון. שבוע ישן אינו נושא אותם, ורשימה פגומה
+         מתאפסת ולא מפילה את המסך: דיווח בלי מזהה או בלי זמן
+         אינו נתון, והוא גם לא יהפוך לשעות. */
+      if (!Array.isArray(weekData.punches)) weekData.punches = [];
+      else {
+        weekData.punches = weekData.punches.filter(function (punch) {
+          return punch && punch.empId && punch.at && !isNaN(Date.parse(punch.at));
+        });
+        sortPunches(weekData.punches);
+      }
     });
     return state;
   }
@@ -1619,6 +1950,21 @@
     leaveOf: leaveOf,
     setLeave: setLeave,
     leaveSummary: leaveSummary,
+    PUNCH: PUNCH,
+    PUNCH_SRC: PUNCH_SRC,
+    addPunch: addPunch,
+    removePunch: removePunch,
+    punchList: punchList,
+    punchesOf: punchesOf,
+    punchState: punchState,
+    punchSessions: punchSessions,
+    timeclock: timeclock,
+    allowsPhonePunch: allowsPhonePunch,
+    overtimeRule: overtimeRule,
+    plannedMinutes: plannedMinutes,
+    shiftLengthMinutes: shiftLengthMinutes,
+    monthlyReport: monthlyReport,
+    formatMinutes: formatMinutes,
     weekKeysForMonth: weekKeysForMonth,
     monthKeyOf: monthKeyOf,
     standingFor: standingFor,

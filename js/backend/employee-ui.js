@@ -149,9 +149,49 @@
         self.load();
         return;
       }
+      var punch = event.target.closest('[data-punch]');
+      if (punch) { self._punch(); return; }
       var button = event.target.closest('.cstate');
       if (button) { self._toggle(button); }
     });
+  };
+
+  /* דיווח שעון. הכפתור אינו יודע אם זו כניסה או יציאה – השרת
+     קובע, מהמצב שנרשם אצלו. כך לחיצה כפולה ברשת איטית לא
+     תייצר יציאה לפני כניסה, ושעון טלפון שהוזז לא ישנה דבר. */
+  EmployeeUI.prototype._punch = function () {
+    var self = this;
+    if (this.busy) return;
+    if (!this.backend || typeof this.backend.savePunch !== 'function') return;
+    this.busy = true;
+    this.backend.savePunch(this.weekKey).then(function (week) {
+      self.busy = false;
+      self.week = week;
+      self.state.weeks[self.weekKey] = week;
+      self._flash(t('employee.clockSaved'));
+      self.render();
+    }, function (err) {
+      self.busy = false;
+      self._flash((err && err.message) || t('employee.clockFailed'));
+      self.render();
+    });
+  };
+
+  /* כמה דקות נצברו היום, מזוגות שנסגרו. משמרת שעדיין פתוחה
+     אינה נספרת כאן אלא מוצגת כ"בפנים מאז": מונה שרץ הוא מספר
+     שמשתנה בזמן שקוראים אותו, וקשה להשוות אותו לתלוש. */
+  EmployeeUI.prototype._todayMinutes = function (sessions) {
+    var today = new Date();
+    var total = 0;
+    sessions.forEach(function (session) {
+      if (session.open || session.orphan || !session.inAt) return;
+      var start = new Date(Date.parse(session.inAt));
+      if (start.getFullYear() !== today.getFullYear() ||
+          start.getMonth() !== today.getMonth() ||
+          start.getDate() !== today.getDate()) return;
+      total += session.minutes;
+    });
+    return total;
   };
 
   /* איזה יום מוצג בלשוניות הצוות.
@@ -423,6 +463,40 @@
     });
     var cap = Store.constraintLimitSettings(this.state);
     var left = cap.enabled ? this._left() : null;
+
+    /* ===== שעון הנוכחות =====
+
+       ראשון במסך, לפני שלושת המספרים: בשמונה בבוקר העובד פותח
+       את האפליקציה כדי ללחוץ על הכפתור הזה, ולא כדי לקרוא כמה
+       בקשות נשארו לו.
+
+       מוצג רק בשבוע הנוכחי. דיווח כניסה על השבוע הבא אינו דבר
+       שקיים, וכפתור שמופיע שם הוא הזמנה לטעות. */
+    if (Store.allowsPhonePunch(this.state) && this.weekKey === Store.currentWeekKey()) {
+      var sessions = Store.punchSessions(this.week, this._employeeId());
+      var inside = Store.punchState(this.week, this._employeeId()) === Store.PUNCH.IN;
+      var openSession = null;
+      sessions.forEach(function (session) { if (session.open) openSession = session; });
+      var todayMinutes = this._todayMinutes(sessions);
+
+      html += '<div class="m-card punch-card' + (inside ? ' is-in' : '') + '">';
+      html += '<div class="punch-state">';
+      html += '<b>' + esc(inside && openSession
+        ? t('employee.clockInside', { time: pad2(new Date(Date.parse(openSession.inAt))) })
+        : t('employee.clockOutside')) + '</b>';
+      if (todayMinutes) {
+        html += '<span>' + esc(t('employee.clockToday',
+          { hours: Store.formatMinutes(todayMinutes) })) + '</span>';
+      }
+      html += '</div>';
+      html += '<button type="button" class="btn punch-btn ' +
+        (inside ? 'ghost' : 'primary') + '" data-punch="1"' +
+        (this.preview ? ' disabled' : '') + '>' +
+        ico(inside ? 'checkCircle' : 'clock') +
+        '<span>' + esc(t(inside ? 'employee.clockOut' : 'employee.clockIn')) + '</span>' +
+        '</button>';
+      html += '</div>';
+    }
 
     html += '<div class="employee-summary">';
     html += '<div class="sum-tile' + (this.week.published && shifts.length ? ' strong' : '') + '">' +

@@ -183,11 +183,12 @@ function seed(teamShifts) {
 
 /* שואלים את המסד שאלה אחת ומקבלים שורה אחת, כדי שההשוואה כאן
    תהיה על ערך ולא על פלט מעוצב. */
-function ask(teamShifts, expression) {
+function ask(teamShifts, expression, extraSql) {
   /* התשובה נעטפת בסימון, ולא נלקחת כ"השורה האחרונה שאינה ריקה":
      גם לפקודות הזריעה יש פלט, ותשובה שהיא מחרוזת ריקה – למשל
      הערת מנהל שנחתכה – הייתה גורמת לקרוא אחת מהן כתשובה. */
   var body = '\\pset tuples_only on\n\\pset format unaligned\n' + seed(teamShifts) +
+    '\n' + (extraSql || '') +
     "\nselect '<<' || coalesce((" + expression + "), '') || '>>';\nrollback;\n";
   var out = psqlFile(sqlFile(body, 'ask.sql'));
   var match = /<<([\s\S]*)>>/.exec(out);
@@ -237,6 +238,97 @@ check('והבקשות של עמיתיו נשארות מחוץ לתמונה', fun
 check('והערת המנהל אינה עוברת', function () {
   assertEqual(ask(true, "coalesce(public.week_for_me('2026-09-20')->'week'->>'note', '')"),
     '', 'הערת המנהל');
+});
+
+console.log('\n== שעון הנוכחות, בשאילתה אמיתית ==');
+
+/* הזריעה מגיעה עם שעון כבוי, ולכן כל בדיקה כאן מדליקה אותו
+   במפורש — וזו גם הבדיקה הראשונה: כבוי פירושו מסורב. */
+/* הזריעה עוברת לתפקיד authenticated, ומשם כתיבה ישירה לטבלאות
+   חסומה — זו בדיוק ההגנה שנבדקת כאן. לכן כל הכנה שדורשת הרשאות
+   נעשית בחזרה קצרה לתפקיד המקורי, וחוזרת מיד. */
+function asAdmin(sql) {
+  return 'reset role;\n' + sql + '\nset local role authenticated;';
+}
+function clockOn(mode) {
+  return asAdmin("update public.company_configs set config = jsonb_set(config, " +
+    "'{settings,timeclock}', '{\"enabled\": true, \"mode\": \"" + mode + "\"}'::jsonb, true) " +
+    "where company_id = '" + CO + "';");
+}
+var CLOCK_ON = clockOn('phone');
+var CLOCK_DEVICE = clockOn('device');
+
+function punchCount(extra) {
+  return ask(false,
+    "jsonb_array_length(coalesce(public.week_for_me('2026-09-20')->'week'->'punches', '[]'::jsonb))::text",
+    extra);
+}
+
+check('שעון כבוי – דיווח מסורב', function () {
+  var out = ask(false, "'x'", "do $d$ begin\n" +
+    "  begin perform public.save_own_punch('2026-09-20');\n" +
+    "  exception when others then raise notice 'refused'; end;\nend $d$;");
+  assertEqual(out, 'x', 'השאילתה נפלה במקום שהחריגה תיתפס');
+  assertEqual(punchCount(''), '0', 'נשמר דיווח כששעון כבוי');
+});
+
+check('מצב "מכשיר בלבד" אינו מתיר דיווח מהטלפון', function () {
+  assertEqual(punchCount(CLOCK_DEVICE + "\ndo $d$ begin\n" +
+    "  begin perform public.save_own_punch('2026-09-20');\n" +
+    "  exception when others then null; end;\nend $d$;"), '0', 'מספר הדיווחים');
+});
+
+check('דיווח ראשון הוא כניסה', function () {
+  var kind = ask(false,
+    "(public.week_for_me('2026-09-20')->'week'->'punches'->0->>'kind')",
+    CLOCK_ON + "\nselect public.save_own_punch('2026-09-20');");
+  assertEqual(kind, 'in', 'סוג הדיווח הראשון');
+});
+
+check('והזמן נקבע בשרת, לא בבקשה', function () {
+  /* הפער בין החותמת ל-now() נמדד בשניות. דיווח שהגיע עם זמן
+     משלו היה מייצר כאן פער של שעות. */
+  var drift = ask(false,
+    "trunc(abs(extract(epoch from (now() - " +
+    "((public.week_for_me('2026-09-20')->'week'->'punches'->0->>'at')::timestamptz)))))::text",
+    CLOCK_ON + "\nselect public.save_own_punch('2026-09-20');");
+  assert(Number(drift) <= 5, 'החותמת רחוקה משעון השרת: ' + drift);
+});
+
+check('לחיצה כפולה אינה דיווח שני', function () {
+  assertEqual(punchCount(CLOCK_ON +
+    "\nselect public.save_own_punch('2026-09-20');" +
+    "\nselect public.save_own_punch('2026-09-20');"), '1', 'מספר הדיווחים');
+});
+
+check('ואחרי שעבר חלון הכפילות – הדיווח הבא הוא יציאה', function () {
+  /* החותמת נדחפת עשר דקות אחורה במקום להמתין: מה שנבדק הוא
+     החלון, לא הסבלנות של מי שמריץ את הבדיקה. */
+  var rewind = CLOCK_ON +
+    "\nselect public.save_own_punch('2026-09-20');\n" +
+    asAdmin("update public.company_weeks set week = jsonb_set(week, '{punches,0,at}', " +
+      "to_jsonb(to_char((now() - interval '10 minutes') at time zone 'utc', " +
+      "'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'))) where company_id = '" + CO + "' " +
+      "and week_key = '2026-09-20';") +
+    "\nselect public.save_own_punch('2026-09-20');";
+  assertEqual(ask(false,
+    "(public.week_for_me('2026-09-20')->'week'->'punches'->1->>'kind')", rewind),
+    'out', 'סוג הדיווח השני');
+});
+
+check('ועובד רואה את הדיווחים שלו בלבד', function () {
+  var mine = CLOCK_ON +
+    "\nselect public.save_own_punch('2026-09-20');\n" +
+    asAdmin("update public.company_weeks set week = jsonb_set(week, '{punches}', " +
+      "week->'punches' || jsonb_build_array(jsonb_build_object('id','pch-x','empId','emp-2'," +
+      "'kind','in','at','2026-09-20T05:00:00Z','src','device'))) " +
+      "where company_id = '" + CO + "' and week_key = '2026-09-20';");
+  assertEqual(ask(false,
+    "jsonb_array_length(public.week_for_me('2026-09-20')->'week'->'punches')::text", mine),
+    '1', 'מספר הדיווחים שהגיעו לעובד');
+  assertEqual(ask(true,
+    "jsonb_array_length(public.week_for_me('2026-09-20')->'week'->'punches')::text", mine),
+    '1', 'גם כשהסידור פתוח לכל הצוות');
 });
 
 stop();

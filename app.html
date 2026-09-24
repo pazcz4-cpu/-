@@ -345,6 +345,36 @@
       <p class="hint" style="margin:0" data-i18n="settings.teamHint">כבוי: כל עובד רואה את המשמרות שלו בלבד. דלוק: הוא רואה גם מי עובד איתו בכל משמרת. האילוצים, ההערות ופרטי הקשר של כל עובד נשארים סגורים בשני המצבים.</p>
     </div>
 
+    <h2 data-i18n="settings.clockTitle">שעון נוכחות</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-clock">
+        <span data-i18n="settings.clockEnable">להפעיל שעון נוכחות – דיווח כניסה ויציאה</span></label>
+      <div class="row">
+        <label class="check"><span data-i18n="settings.clockMode">איך מדווחים</span>
+          <select id="clock-mode" class="num-input">
+            <option value="phone" data-i18n="settings.clockPhone">מהטלפון</option>
+            <option value="device" data-i18n="settings.clockDevice">שעון בסניף</option>
+            <option value="both" data-i18n="settings.clockBoth">מהטלפון ומהשעון</option>
+          </select></label>
+      </div>
+      <p class="hint" style="margin:0" data-i18n="settings.clockHint">הסידור הוא מה שתוכנן; השעון הוא מה שקרה. בסוף החודש אפשר להוציא דוח שעות לפי הדיווחים.</p>
+    </div>
+
+    <h2 data-i18n="settings.overtimeTitle">שעות נוספות</h2>
+    <div class="settings-block">
+      <label class="check"><input type="checkbox" id="opt-overtime">
+        <span data-i18n="settings.overtimeEnable">לסמן שעות נוספות בדוח החודשי</span></label>
+      <div class="row">
+        <label class="check"><span data-i18n="settings.overtimeDaily">מעל</span>
+          <input type="number" id="overtime-daily" class="num-input" min="1" max="24" step="0.1"></label>
+        <span class="hint" data-i18n="settings.overtimeUnitDay">שעות ביום</span>
+        <label class="check"><span data-i18n="settings.overtimeWeekly">ומעל</span>
+          <input type="number" id="overtime-weekly" class="num-input" min="1" max="120" step="0.5"></label>
+        <span class="hint" data-i18n="settings.overtimeUnitWeek">שעות בשבוע</span>
+      </div>
+      <p class="hint" style="margin:0" data-i18n="settings.overtimeHint">ברירת המחדל היא המקובל בישראל: 8.6 שעות ליום ו-42 שעות לשבוע. שעה אחת אינה נספרת פעמיים – בדוח מופיע הגבוה מבין היומי לשבועי.</p>
+    </div>
+
     <h2 data-i18n="positions.title">תפקידים</h2>
     <div class="settings-block">
       <p class="hint" style="margin:0" data-i18n="positions.hint">

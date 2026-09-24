@@ -330,6 +330,12 @@
     out.constraints = constraints;
     out.manual = {};
     out.note = '';
+    /* דיווחי השעון של העובד עצמו בלבד. מתי עמית נכנס ומתי יצא
+       אינו חלק מ"מי עובד איתי", גם כשהמנהל פתח את הסידור: שעת
+       הגעה היא נתון שנכנס לתלוש, ולא לוח המשמרות. */
+    out.punches = (Array.isArray(week.punches) ? week.punches : []).filter(function (punch) {
+      return mine && punch.empId === mine;
+    });
     return out;
   };
 
@@ -447,6 +453,58 @@
     this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
     /* מה שחוזר לעובד הוא הפרוסה שלו. בלי זה כל שמירת בקשה הייתה
        מחזירה לו את הסידור של כולם. */
+    return Promise.resolve(this._weekSlice(session, clone(week)));
+  };
+
+  /* דיווח שעון של העובד על עצמו.
+
+     שלושה דברים נקבעים כאן ולא בדפדפן, וכל אחד מהם הוא הסיבה
+     שהפונקציה קיימת בכלל:
+
+       · מי – מהסשן, לא מהבקשה. אחרת אפשר לדווח בשם אחר.
+       · מתי – מהשעון של השרת, לא של הטלפון. שעון טלפון ניתן
+         לשינוי בהגדרות, וזה הדבר הראשון שמישהו ינסה.
+       · האם בכלל – רק כשהמנהל הדליק את השעון והתיר דיווח
+         מהטלפון. עסק שבחר שעון בסניף בלבד לא ביקש שיעקפו אותו.
+
+     כיוון הדיווח (כניסה או יציאה) גם הוא נגזר בשרת מהמצב
+     הנוכחי, ולא מתקבל מהבקשה: כפתור שנלחץ פעמיים ברשת איטית
+     לא ייצור יציאה לפני כניסה. */
+  MockBackend.prototype.savePunch = function (weekKey) {
+    var session;
+    try { session = this._require('timeclock.punchOwn'); } catch (err) { return Promise.reject(err); }
+    if (!session.user.employeeId) {
+      return Promise.reject(this._fail('no_employee_link', t('server.notLinked')));
+    }
+    var data = this._companyData(session.company.id);
+    var settings = (data.config && data.config.settings) || {};
+    if (!Store.allowsPhonePunch({ settings: settings })) {
+      return Promise.reject(this._fail('timeclock_off', t('server.timeclockOff')));
+    }
+
+    if (!data.weeks[weekKey]) {
+      data.weeks[weekKey] = { constraints: {}, assignments: {}, manual: {}, holidays: {},
+        punches: [], shabbatEnd: '', note: '' };
+    }
+    var week = data.weeks[weekKey];
+    if (!Array.isArray(week.punches)) week.punches = [];
+
+    var kind = Store.punchState(week, session.user.employeeId) === Store.PUNCH.IN
+      ? Store.PUNCH.OUT : Store.PUNCH.IN;
+    var result = Store.addPunch(week, {
+      empId: session.user.employeeId,
+      kind: kind,
+      at: this.now().toISOString(),
+      src: Store.PUNCH_SRC.PHONE
+    });
+    /* לחיצה כפולה תוך פחות מדקה וחצי אינה שגיאה ואינה דיווח
+       שני. היא נבלעת, והמסך פשוט מראה את המצב הנכון. */
+    if (!result.ok && result.reason !== 'duplicate') {
+      return Promise.reject(this._fail('invalid_input', t('server.punchFailed')));
+    }
+    week.updatedAt = this.now().toISOString();
+    this._save();
+    this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
     return Promise.resolve(this._weekSlice(session, clone(week)));
   };
 

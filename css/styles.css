@@ -1953,3 +1953,25 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
   border-style: dashed; border-width: 2px;
 }
 .cstate[disabled] { opacity: .8; }
+
+/* ===== שעון הנוכחות במסך העובד =====
+   כרטיס אחד, ובו מה שהעובד צריך לדעת ומה שהוא בא לעשות.
+   הכפתור גדול בכוונה: הוא נלחץ בעמידה, ביד אחת, לפני משמרת. */
+.punch-card {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); flex-wrap: wrap;
+  padding: var(--s4); margin-bottom: var(--s4);
+}
+.punch-card.is-in { border-inline-start: 4px solid var(--ok); }
+.punch-state { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.punch-state b { font-size: var(--t-md); }
+.punch-state span { font-size: var(--t-sm); color: var(--muted); }
+.punch-btn {
+  min-height: 52px; min-width: 132px;
+  font-size: var(--t-md); font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+}
+@media (max-width: 420px) {
+  .punch-card { flex-direction: column; align-items: stretch; }
+  .punch-btn { width: 100%; }
+}

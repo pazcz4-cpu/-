@@ -690,6 +690,12 @@
     }).then(weekOf);
   };
 
+  /* דיווח שעון. אין כאן מה לשלוח מלבד השבוע: מי, מתי ולאיזה
+     כיוון נקבעים כולם בשרת. */
+  SupabaseBackend.prototype.savePunch = function (weekKey) {
+    return this._rpc('save_own_punch', { p_week_key: weekKey }).then(weekOf);
+  };
+
   SupabaseBackend.prototype.saveOwnNote = function (weekKey, dayIdx, note) {
     return this._rpc('save_own_note', {
       p_week_key: weekKey, p_day_idx: Number(dayIdx), p_note: String(note || '')

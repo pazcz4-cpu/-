@@ -33,19 +33,22 @@
       'schedule.edit': true, 'schedule.generate': true, 'schedule.publish': true,
       'config.edit': true, 'constraints.editAny': true, 'constraints.editOwn': true,
       'users.manage': true, 'billing.manage': true, 'data.export': true, 'data.import': true,
-      'company.rename': true
+      'company.rename': true, 'timeclock.punchOwn': true, 'leave.requestOwn': true
     },
     manager: {
       'schedule.edit': true, 'schedule.generate': true, 'schedule.publish': true,
       'config.edit': true, 'constraints.editAny': true, 'constraints.editOwn': true,
       'users.manage': true, 'billing.manage': false, 'data.export': true, 'data.import': true,
-      'company.rename': false
+      'company.rename': false, 'timeclock.punchOwn': true, 'leave.requestOwn': true
     },
     employee: {
       'schedule.edit': false, 'schedule.generate': false, 'schedule.publish': false,
       'config.edit': false, 'constraints.editAny': false, 'constraints.editOwn': true,
       'users.manage': false, 'billing.manage': false, 'data.export': false, 'data.import': false,
-      'company.rename': false
+      'company.rename': false,
+      /* דיווח שעון ובקשת חופשה הם על עצמו בלבד. מי העובד נקבע
+         בשרת מהסשן ולא מהבקשה, ולכן אין כאן "על מי". */
+      'timeclock.punchOwn': true, 'leave.requestOwn': true
     }
   };
 

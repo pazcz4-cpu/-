@@ -2064,6 +2064,21 @@
     if (!shown.length) {
       html = '<p class="list-empty">' + esc(t(state.employees.length
         ? 'employees.noMatch' : 'employees.none')) + '</p>';
+      /* עסק חדש פותח את המסך הזה בדיוק ברגע שבו הוא צריך את
+         התבנית — ועד כה היא ישבה שתי לחיצות עמוק, בתוך חלון
+         הייבוא. מי שלא ידע שהיא שם התחיל להקליד שלושים עובדים
+         ביד. כאן היא במקום שבו מחפשים אותה.
+
+         רק כשאין עובדים בכלל: חיפוש שלא מצא התאמה אינו עסק ריק,
+         ושם הכפתורים האלה רק מבלבלים. */
+      if (!state.employees.length && window.ShiftImportUI) {
+        html += '<div class="list-empty-actions">' +
+          '<button class="btn ghost small" id="empty-import">' +
+            esc(t('importData.open')) + '</button>' +
+          '<button class="btn ghost small" id="empty-template">' +
+            esc(t('importData.template')) + '</button>' +
+          '</div>';
+      }
     }
     $('#employees-list').innerHTML = html;
 
@@ -3795,35 +3810,50 @@
        כדי שהכלי המקומי לא ייפול על כפתור שאין לו מסך. */
     var importButton = $('#import-employees');
     if (importButton && window.ShiftImportUI) {
-      importButton.addEventListener('click', function () {
-        if (blocked()) return;
-        window.ShiftImportUI.open({
-          getState: function () { return state; },
-          /* התבנית להורדה, וההודעות – דרך אותם עוזרים שכל שאר
-             המסך משתמש בהם */
-          saveFile: saveFile,
-          toast: toast,
-          createEmployee: function (name) { return addEmployee(name, true); },
-          createBranch: function (name) { return addBranch(name, true); },
-          /* כתיבה אחת בסוף, אחרי כל הכרטיסים */
-          commit: function () { persist('config'); render(); },
-          /* כתובות שכבר יש להן חשבון בחברה. הן יושבות בשרת ולא
-             במצב, ולכן נטענות כשהמסך נפתח. */
-          loadEmails: source.listUserEmails || null,
-          /* ייבוא שגוי הוא שלושים כרטיסים למחיקה ביד. ביטול מסיר
-             בדיוק את מה שנוצר, כולל סניפים ושיבוצים שנגררו. */
-          undo: function (created) {
-            var removed = Store.removeImported(state, created);
-            persist('config');
-            render();
-            toast(t('importData.undone', { count: removed.employees }));
-          },
-          toast: toast
-        });
+      importButton.addEventListener('click', openImport);
+      /* אותם שני כפתורים מופיעים גם במסך הריק, והוא נבנה מחדש
+         בכל ציור — ולכן האזנה על המכל ולא על הכפתור עצמו. */
+      $('#employees-list').addEventListener('click', function (event) {
+        if (event.target.closest('#empty-import')) { openImport(); return; }
+        if (event.target.closest('#empty-template')) {
+          if (blocked()) return;
+          window.ShiftImportUI.template(importContext());
+        }
       });
     } else if (importButton) {
       importButton.classList.add('hidden');
     }
+  }
+
+  /* ההקשר שחלון הייבוא והורדת התבנית פועלים בתוכו: קריאת המצב,
+     שמירת קובץ והודעות — דרך אותם עוזרים שכל שאר המסך משתמש
+     בהם. */
+  function importContext() {
+    return {
+      getState: function () { return state; },
+      saveFile: saveFile,
+      toast: toast,
+      createEmployee: function (name) { return addEmployee(name, true); },
+      createBranch: function (name) { return addBranch(name, true); },
+      /* כתיבה אחת בסוף, אחרי כל הכרטיסים */
+      commit: function () { persist('config'); render(); },
+      /* כתובות שכבר יש להן חשבון בחברה. הן יושבות בשרת ולא
+         במצב, ולכן נטענות כשהמסך נפתח. */
+      loadEmails: source.listUserEmails || null,
+      /* ייבוא שגוי הוא שלושים כרטיסים למחיקה ביד. ביטול מסיר
+         בדיוק את מה שנוצר, כולל סניפים ושיבוצים שנגררו. */
+      undo: function (created) {
+        var removed = Store.removeImported(state, created);
+        persist('config');
+        render();
+        toast(t('importData.undone', { count: removed.employees }));
+      }
+    };
+  }
+
+  function openImport() {
+    if (blocked()) return;
+    window.ShiftImportUI.open(importContext());
   }
 
   function bindBranchesTab() {

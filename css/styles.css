@@ -1735,8 +1735,14 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .pw-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 .pw-toggle[aria-pressed="true"] { color: var(--brand); }
 
-/* הצעת נתוני הדוגמה במסך ריק: הצעה, לא פעולה ראשית */
-.list-empty-actions { justify-content: center; margin-top: 4px; }
+/* הפעולות שמתחת להודעת "אין כאן כלום": הצעה, לא פעולה ראשית.
+   מגדיר גם display, ולא מסתמך על מחלקת flex של ההורה — כלל
+   שתלוי בהורה שכבר אינו קיים הוא בדיוק סוג הכלל שנשאר יתום
+   ותופס אלמנט אחר. */
+.list-empty-actions {
+  display: flex; flex-wrap: wrap; gap: var(--s2);
+  justify-content: flex-start; margin-top: var(--s2);
+}
 
 /* ===================== אשף הפתיחה ===================== */
 .onboarding { position: fixed; inset: 0; z-index: 80; display: flex; }

@@ -266,6 +266,39 @@ try {
   await clickTool(page, '#view-only-toggle');
   await page.waitForTimeout(300);
 
+  /* המסך הריק הוא הרגע היחיד שבו לקוח חדש באמת צריך את
+     התבנית — והיא ישבה עד כה שתי לחיצות עמוק, בתוך חלון
+     הייבוא. מי שלא ידע שהיא שם התחיל להקליד שלושים עובדים ביד.
+     נבדק אחרון, כי הוא מרוקן את רשימת העובדים. */
+  console.log('\n== המסך הריק מציע את התבנית ==');
+  await page.evaluate(() => {
+    const app = window.ShiftApp;
+    app.getState().employees = [];
+    app.render();
+  });
+  await page.click('.tab[data-tab="employees"]');
+  await page.waitForTimeout(400);
+  check('כפתור הייבוא על המסך הריק', await page.locator('#empty-import').count(), 1);
+  check('וגם הורדת התבנית', await page.locator('#empty-template').count(), 1);
+
+  const download = page.waitForEvent('download', { timeout: 8000 });
+  await page.click('#empty-template');
+  check('הלחיצה מורידה קובץ', !!(await download), true);
+
+  /* חיפוש שלא מצא התאמה אינו עסק ריק. שם ההצעה מבלבלת: יש
+     עובדים, הם פשוט לא תואמים למה שהוקלד. */
+  await page.evaluate(() => {
+    const app = window.ShiftApp;
+    app.addEmployee('רונית לוי');
+    app.render();
+  });
+  await page.fill('#emp-search', 'שם שאינו קיים');
+  await page.waitForTimeout(400);
+  check('בחיפוש ללא התאמה ההצעה אינה מוצגת',
+    await page.locator('#empty-template').count(), 0);
+  await page.fill('#emp-search', '');
+  await page.waitForTimeout(300);
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

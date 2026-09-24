@@ -40,12 +40,19 @@
 
   /* ===== התבנית להורדה ===== */
 
-  function downloadTemplate() {
-    if (!Template || !ctx || !ctx.saveFile) return;
-    var bytes = Template.build(ctx.getState());
-    ctx.saveFile(Template.fileName(), new Blob([bytes], { type: XLSX_MIME }), XLSX_MIME);
-    if (ctx.toast) ctx.toast(t('importData.templateDone'));
+  /* מקבל הקשר במפורש, כדי שאפשר יהיה להוריד את התבנית גם בלי
+     לפתוח קודם את חלון הייבוא. המסך הריק של "עובדים" עושה בדיוק
+     את זה: שם צריך את הקובץ, ולא את החלון. */
+  function template(context) {
+    var use = context || ctx;
+    if (!Template || !use || !use.saveFile) return false;
+    var bytes = Template.build(use.getState());
+    use.saveFile(Template.fileName(), new Blob([bytes], { type: XLSX_MIME }), XLSX_MIME);
+    if (use.toast) use.toast(t('importData.templateDone'));
+    return true;
   }
+
+  function downloadTemplate() { return template(ctx); }
 
   function isWorkbook(file) {
     return /\.xlsx$/i.test(file.name || '') || file.type === XLSX_MIME;
@@ -377,7 +384,7 @@
     return true;
   }
 
-  var API = { open: open, close: close };
+  var API = { open: open, close: close, template: template };
   root.ShiftImportUI = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

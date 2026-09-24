@@ -190,7 +190,7 @@ async function loadWeek(companyId, weekKey) {
   const result = await rest('/company_weeks?company_id=eq.' + encodeURIComponent(companyId) +
     '&week_key=eq.' + encodeURIComponent(weekKey) + '&select=week,published');
   if (!result.ok || !Array.isArray(result.body) || !result.body.length) return null;
-  return result.body[0].week || {};
+  return { week: result.body[0].week || {}, published: !!result.body[0].published };
 }
 
 async function saveWeek(companyId, weekKey, week, published) {
@@ -234,7 +234,7 @@ async function storePunches(context, rows) {
   for (let i = 0; i < keys.length; i++) {
     const weekKey = keys[i];
     const remote = await loadWeek(context.companyId, weekKey);
-    const week = remote || {};
+    const week = remote ? remote.week : {};
     if (!Array.isArray(week.punches)) week.punches = [];
     /* מיון לפי זמן לפני הכתיבה: הכיוון (כניסה או יציאה) נגזר
        מהדיווח הקודם, ואצווה שהגיעה בסדר אחר הייתה הופכת את
@@ -252,7 +252,10 @@ async function storePunches(context, rows) {
       else if (result.reason === 'duplicate') duplicate++;
       else bad++;
     });
-    await saveWeek(context.companyId, weekKey, week, remote ? undefined : false);
+    /* מצב הפרסום נשמר כפי שהיה. השמירה דורסת את השורה, ולכן
+       כתיבת דיווח לשבוע מפורסם הייתה מבטלת את הפרסום שלו —
+       הסידור היה נעלם מהמסכים של כל הצוות באמצע השבוע. */
+    await saveWeek(context.companyId, weekKey, week, remote ? remote.published : false);
   }
   return { stored: stored, unknown: unknown, duplicate: duplicate, bad: bad };
 }

@@ -120,6 +120,7 @@ console.log('\n== המסלול המלא, מול שרת מדומה ==');
 function fakeServer(options) {
   var opts = options || {};
   var weeks = {};
+  var published = {};
   var config = {
     settings: {
       shifts: [{ id: 'morning', name: 'בוקר', from: '08:00', to: '16:00' }],
@@ -157,16 +158,20 @@ function fakeServer(options) {
     if (path.indexOf('/company_weeks') !== -1 && method === 'GET') {
       var match = decodeURIComponent(path).match(/week_key=eq\.([\d-]+)/);
       var key = match ? match[1] : '';
-      return reply(weeks[key] ? [{ week: weeks[key], published: false }] : []);
+      return reply(weeks[key]
+        ? [{ week: weeks[key], published: !!published[key] }] : []);
     }
     if (path.indexOf('/company_weeks') !== -1 && method === 'POST') {
       var rows = JSON.parse(init.body);
-      rows.forEach(function (row) { weeks[row.week_key] = row.week; });
+      rows.forEach(function (row) {
+        weeks[row.week_key] = row.week;
+        published[row.week_key] = row.published;
+      });
       return reply([], 201);
     }
     return reply([], 404);
   };
-  return { weeks: weeks, config: config };
+  return { weeks: weeks, published: published, config: config };
 }
 
 function call(options) {
@@ -295,6 +300,21 @@ asyncTest('שתי משמרות בשני שבועות נכתבות לשתי שו�
   }).then(function () {
     assert(server.weeks['2026-09-20'], 'השבוע הראשון לא נכתב');
     assert(server.weeks['2026-09-27'], 'השבוע השני לא נכתב');
+  });
+});
+
+asyncTest('דיווח לשבוע מפורסם אינו מבטל את הפרסום שלו', function () {
+  /* השמירה דורסת את השורה. בלי שמירת מצב הפרסום, העברת כרטיס
+     אחת באמצע השבוע הייתה מעלימה את הסידור מכל הצוות. */
+  var server = fakeServer();
+  server.weeks['2026-09-20'] = { assignments: {}, constraints: {}, punches: [] };
+  server.published['2026-09-20'] = true;
+  return call({
+    method: 'POST', query: { action: 'cdata', SN: 'SN-1', table: 'ATTLOG' },
+    body: '1\t2026-09-24 08:00:00\t0\t1'
+  }).then(function () {
+    assertEqual(server.published['2026-09-20'], true, 'מצב הפרסום אחרי הדיווח');
+    assertEqual(server.weeks['2026-09-20'].punches.length, 1, 'הדיווח נשמר');
   });
 });
 

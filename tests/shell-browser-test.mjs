@@ -125,6 +125,94 @@ try {
   await page.waitForTimeout(600);
   check('החיבור חזר והפס נעלם', await page.locator('#shell-net').isVisible(), false);
 
+  console.log('\n== עובד: ארבע לשוניות, והמסך מתחלף ==');
+  {
+    /* מסך העובד הוא רצף אחד ארוך. באפליקציה זו לא תצוגה אחת
+       אלא ארבע, והלשונית התחתונה היא זו שמחליפה ביניהן —
+       אחרת הלשוניות מצביעות כולן על אותו מסך, וזה לא ניווט. */
+    await tapTab('settings');
+    await page.waitForTimeout(400);
+    await page.check('#opt-clock');
+    await page.waitForTimeout(600);
+    await tapTab('schedule');
+    await page.waitForTimeout(500);
+    await page.click('#generate');
+    await page.waitForTimeout(1800);
+    const busiest = await page.evaluate(() => {
+      const app = window.ShiftApp;
+      const week = app.getState().weeks[app.weekKey()] || {};
+      const count = {};
+      Object.keys(week.assignments || {}).forEach((key) => {
+        (week.assignments[key] || []).forEach((id) => { count[id] = (count[id] || 0) + 1; });
+      });
+      return Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+    });
+    await tapTab('users');
+    await page.waitForTimeout(600);
+    /* בוחרים עובד ורק אז ממלאים מייל: הבחירה דורסת את השדה. */
+    await page.selectOption('#invite-form select[name="employeeId"]', busiest);
+    await page.fill('#invite-form input[name="email"]', 'ronit@shell.test');
+    await page.click('#invite-form button[type="submit"]');
+    await page.waitForTimeout(900);
+    await page.evaluate(async () => {
+      window.__backend.followLink('ronit@shell.test', 'invite');
+      await window.__backend.setPassword('secret123');
+    });
+    await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+    await page.goto(url('app.html') + '?shell=1');
+    await page.waitForTimeout(800);
+    await page.fill('input[name="email"]', 'ronit@shell.test');
+    await page.fill('input[name="password"]', 'secret123');
+    await page.click('#signin-form button[type="submit"]');
+    await page.waitForTimeout(2000);
+
+    check('הלשוניות של העובד — ולא של המנהל',
+      (await page.locator('.shell-tab').allTextContents()).join('|'),
+      'המשמרות שלי|אילוצים|שעון|חופשה');
+
+    /* סופר כמה בלוקים מכל סוג באמת מצוירים על המסך */
+    const shown = () => page.evaluate(() => {
+      const out = {};
+      document.querySelectorAll('.employee-screen > [data-emp-part]').forEach((node) => {
+        const part = node.dataset.empPart;
+        out[part] = out[part] || 0;
+        if (getComputedStyle(node).display !== 'none') out[part]++;
+      });
+      return out;
+    });
+
+    const first = await shown();
+    check('בפתיחה מוצגות המשמרות', first.shifts > 0, true);
+    check('והשעון לא', first.clock || 0, 0);
+
+    for (const view of ['constraints', 'clock', 'leave']) {
+      await page.click('.shell-tab[data-shell-tab="' + view + '"]');
+      await page.waitForTimeout(600);
+      const now = await shown();
+      const others = Object.keys(now).filter((k) => k !== view)
+        .reduce((sum, k) => sum + now[k], 0);
+      check('תצוגת ' + view + ': מוצגת', now[view] > 0, true);
+      check('תצוגת ' + view + ': ושום דבר אחר לא', others, 0);
+    }
+  }
+
+  console.log('\n== הנעילה הביומטרית היא העדפה של המכשיר ==');
+  {
+    /* בדפדפן אין חיישן, ולכן אין מה לנעול — וחשוב שזה יישאר
+       כך: אפליקציה שננעלת בלי דרך להיפתח היא תקלה, לא אבטחה. */
+    check('אינה נתמכת בדפדפן',
+      await page.evaluate(() => window.ShiftShell.lockSupported()), false);
+    check('וברירת המחדל אינה לנעול',
+      await page.evaluate(() => window.ShiftShell.lockEnabled()), false);
+    check('ואין מסך נעילה על המסך',
+      await page.locator('#shell-lock').count(), 0);
+    check('גם אחרי שההעדפה נדלקה, כי אין חיישן', await page.evaluate(() => {
+      window.ShiftShell.setLockEnabled(true);
+      return window.ShiftShell.locked();
+    }), false);
+    await page.evaluate(() => window.ShiftShell.setLockEnabled(false));
+  }
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

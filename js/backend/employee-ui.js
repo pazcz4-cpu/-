@@ -496,7 +496,7 @@
       sessions.forEach(function (session) { if (session.open) openSession = session; });
       var todayMinutes = this._todayMinutes(sessions);
 
-      html += '<div class="m-card punch-card' + (inside ? ' is-in' : '') + '">';
+      html += '<div class="m-card punch-card' + (inside ? ' is-in' : '') + '" data-emp-part="clock">';
       html += '<div class="punch-state">';
       html += '<b>' + esc(inside && openSession
         ? t('employee.clockInside', { time: pad2(new Date(Date.parse(openSession.inAt))) })
@@ -515,7 +515,7 @@
       html += '</div>';
     }
 
-    html += '<div class="employee-summary">';
+    html += '<div class="employee-summary" data-emp-part="shifts">';
     html += '<div class="sum-tile' + (this.week.published && shifts.length ? ' strong' : '') + '">' +
       ico('clock', 'ico-lg') +
       '<b>' + (this.week.published ? shifts.length : '—') + '</b>' +
@@ -532,13 +532,13 @@
     }
     html += '</div>';
 
-    html += '<h2 class="employee-title">' + t('employee.myShifts') + '</h2>';
+    html += '<h2 class="employee-title" data-emp-part="shifts">' + t('employee.myShifts') + '</h2>';
     if (!this.week.published) {
-      html += '<p class="employee-note">' + t('employee.notPublished') + '</p>';
+      html += '<p class="employee-note" data-emp-part="shifts">' + t('employee.notPublished') + '</p>';
     } else if (!shifts.length) {
-      html += '<p class="employee-note">' + t('employee.noShifts') + '</p>';
+      html += '<p class="employee-note" data-emp-part="shifts">' + t('employee.noShifts') + '</p>';
     } else {
-      html += '<div class="employee-shifts">';
+      html += '<div class="employee-shifts" data-emp-part="shifts">';
       shifts.forEach(function (item) {
         /* צבע לפי סוג המשמרת של העסק, ולא לפי שלושת השמות
            הישנים – עסק שהגדיר "לילה" קיבל קודם כרטיס בלי צבע. */
@@ -550,7 +550,7 @@
           '</div>';
       });
       html += '</div>';
-      html += '<p class="employee-note">' + esc(t('employee.totalWeek', { count: shifts.length })) + '</p>';
+      html += '<p class="employee-note" data-emp-part="shifts">' + esc(t('employee.totalWeek', { count: shifts.length })) + '</p>';
     }
 
     /* הסידור של כל הצוות, כשהמנהל אפשר אותו.
@@ -585,7 +585,7 @@
       var headcount = 0;
       roster.forEach(function (slot) { headcount += slot.people.length; });
 
-      html += '<details class="employee-fold team-fold"' +
+      html += '<details class="employee-fold team-fold" data-emp-part="shifts"' +
         (this.teamOpen ? ' open' : '') + '>';
       html += '<summary class="employee-fold-head">' +
         '<span class="employee-title">' + esc(t('employee.teamTitle')) + '</span>' +
@@ -713,7 +713,7 @@
       if (self._record(day.idx)) pendingCount++;
     });
     if (canFold) {
-      html += '<details class="employee-fold requests-fold"' +
+      html += '<details class="employee-fold requests-fold" data-emp-part="constraints"' +
         (this.requestsOpen ? ' open' : '') + '>';
       html += '<summary class="employee-fold-head">' +
         '<span class="employee-title">' + t('employee.myRequests') + '</span>' +
@@ -724,7 +724,7 @@
         ico('chevron', 'employee-fold-mark') +
         '</summary>';
     } else {
-      html += '<h2 class="employee-title">' + t('employee.myRequests') + '</h2>';
+      html += '<h2 class="employee-title" data-emp-part="constraints">' + t('employee.myRequests') + '</h2>';
     }
     if (this.week.published) {
       html += '<p class="employee-note">' + t('employee.publishedLocked') + '</p>';
@@ -739,14 +739,14 @@
          שהמערכת תקולה, ולא שיש כלל. המספר כבר באריח שלמעלה;
          כאן הניסוח המלא, שאומר גם מה קורה כשהיא נגמרת. */
       if (cap.enabled) {
-        html += '<p class="employee-note limit-note' + (left === 0 ? ' spent' : '') + '">' +
+        html += '<p class="employee-note limit-note' + (left === 0 ? ' spent' : '') + '" data-emp-part="constraints">' +
           esc(left === 0
             ? t('employee.limitSpent', { max: cap.max })
             : tPlural('employee.limitLeft', left, { max: cap.max })) + '</p>';
       }
     }
 
-    html += '<div class="employee-days">';
+    html += '<div class="employee-days" data-emp-part="constraints">';
     Data.DAYS.forEach(function (day) {
       var constraint = self._constraint(day.idx);
       var shiftIds = Store.activeShiftsForDay(self.state, day.idx, self.week);
@@ -831,7 +831,7 @@
     if (this.preview) return '';
     if (!this.backend || typeof this.backend.requestLeave !== 'function') return '';
     var self = this;
-    var html = '<details class="employee-fold leave-fold"' +
+    var html = '<details class="employee-fold leave-fold" data-emp-part="leave"' +
       (this.leaveOpen ? ' open' : '') + '>';
     html += '<summary class="employee-fold-head">' +
       '<span class="employee-title">' + esc(t('leaveRequest.title')) + '</span>' +

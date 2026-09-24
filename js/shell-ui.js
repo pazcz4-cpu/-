@@ -55,7 +55,70 @@
     { id: 'more', label: 'shell.tabMore', icon: 'dots', sheet: true }
   ];
 
-  var state = { role: null, active: null, mounted: false };
+  var state = { role: null, active: null, mounted: false, locked: false };
+
+  /* ===== נעילה ביומטרית =====
+
+     נועלת את האפליקציה, לא את החשבון. מי שמאבד את הטלפון לא
+     מאבד גישה למערכת — הוא נכנס ממכשיר אחר. מה שזה כן מונע
+     הוא שמי שמרים את הטלפון מהדלפק רואה את הסידור, את השכר
+     ואת פרטי העובדים.
+
+     ההעדפה היא של המכשיר ולא של החשבון, ולכן היא נשמרת מקומית:
+     אותו עובד בטלפון פרטי ובטאבלט משותף ירצה שתי תשובות שונות.
+     אם האחסון חסום — ברירת המחדל היא לא לנעול, כי אפליקציה
+     שננעלת ולא יודעת להיפתח גרועה מאפליקציה שאינה ננעלת. */
+
+  var LOCK_KEY = 'setshifts-biolock';
+
+  function lockWanted() {
+    try { return root.localStorage.getItem(LOCK_KEY) === '1'; }
+    catch (err) { return false; }
+  }
+
+  function setLockWanted(on) {
+    try { root.localStorage.setItem(LOCK_KEY, on ? '1' : '0'); }
+    catch (err) { /* חלון פרטי, אחסון חסום — לא נורא */ }
+  }
+
+  function lockOverlay() {
+    if (doc.getElementById('shell-lock')) return;
+    var node = doc.createElement('div');
+    node.id = 'shell-lock';
+    node.className = 'shell-lock';
+    var mark = root.ShiftBrand && root.ShiftBrand.markImg
+      ? root.ShiftBrand.markImg('SetShifts') : '';
+    node.innerHTML =
+      '<div class="shell-lock-card">' +
+      '<span class="shell-lock-mark">' + mark + '</span>' +
+      '<p class="shell-lock-title">' + esc(t('shell.lockTitle')) + '</p>' +
+      '<button type="button" class="btn primary" id="shell-unlock">' +
+      esc(t('shell.lockAction')) + '</button>' +
+      '</div>';
+    doc.body.appendChild(node);
+    node.addEventListener('click', function (event) {
+      if (event.target.closest('#shell-unlock')) tryUnlock();
+    });
+  }
+
+  function tryUnlock() {
+    if (!Native) return;
+    Native.biometricUnlock(t('shell.lockReason')).then(function (ok) {
+      if (!ok) return;
+      state.locked = false;
+      var node = doc.getElementById('shell-lock');
+      if (node) node.parentNode.removeChild(node);
+      if (Native.haptic) Native.haptic('light');
+    });
+  }
+
+  function lock() {
+    if (state.locked || !state.role) return;
+    if (!Native || !Native.isNative() || !lockWanted()) return;
+    state.locked = true;
+    lockOverlay();
+    tryUnlock();
+  }
 
   function host() { return doc && doc.getElementById('app-shell'); }
 
@@ -199,6 +262,10 @@
       state.mounted = true;
       netBar(Native.online());
       Native.on('online', netBar);
+      /* חזרה מהרקע היא הרגע שבו הטלפון עבר יד. נעילה בהפעלה
+         בלבד מגינה רק על הפעם הראשונה. */
+      Native.on('resume', lock);
+      lock();
       if (root.I18n && root.I18n.onChange) root.I18n.onChange(render);
     }
     return true;
@@ -214,7 +281,21 @@
     closeSheet();
   }
 
-  var API = { mount: mount, unmount: unmount, go: go, active: function () { return state.active; } };
+  /* המתג עצמו מוצג רק באפליקציה שבה יש חיישן. באתר אין מה
+     להציע — וגם אין מה לנעול, כי דפדפן אינו מחזיק את המסך. */
+  function lockSupported() {
+    if (!Native || !Native.isNative()) return Promise.resolve(false);
+    return Native.biometricAvailable();
+  }
+
+  var API = {
+    mount: mount, unmount: unmount, go: go,
+    active: function () { return state.active; },
+    lockSupported: lockSupported,
+    lockEnabled: lockWanted,
+    setLockEnabled: setLockWanted,
+    locked: function () { return state.locked; }
+  };
   root.ShiftShell = API;
   if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
 })(typeof window !== 'undefined' ? window : globalThis);

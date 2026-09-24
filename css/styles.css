@@ -2068,6 +2068,39 @@ body.has-shell-tabs .user-bar { display: none; }
    שמסגיר אתר שנארז מחדש. */
 body.has-shell-tabs .tabs { display: none; }
 
+/* תצוגות העובד.
+
+   מסך העובד הוא רצף אחד ארוך: שעון, סיכום, המשמרות שלי, הצוות,
+   אילוצים, בקשות וחופשה. בדפדפן זה נכון — גוללים. באפליקציה
+   זה מסך שאין לו סוף, ולשוניות תחתונות שמצביעות על אותו מסך
+   אינן ניווט.
+
+   כאן כל בלוק נושא data-emp-part, והלשונית הפעילה קובעת מה
+   מוצג. מה שאינו בתצוגה מוסתר — ולא נמחק: הוא עדיין בעץ,
+   ולכן המצב שלו (מגירה פתוחה, טופס שמולא למחצה) נשמר במעבר
+   בין לשוניות.
+
+   הכותרת, ניווט השבוע וההודעות אינם נושאים את המאפיין, ולכן
+   הם נשארים בכל תצוגה. */
+body[data-emp-view="shifts"] .employee-screen > [data-emp-part]:not([data-emp-part="shifts"]),
+body[data-emp-view="constraints"] .employee-screen > [data-emp-part]:not([data-emp-part="constraints"]),
+body[data-emp-view="clock"] .employee-screen > [data-emp-part]:not([data-emp-part="clock"]),
+body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-part="leave"]) {
+  display: none !important;
+}
+
+/* מסך הנעילה. אטום לגמרי: מסך נעילה שקוף למחצה שמראה את
+   הסידור מבעד לו אינו נועל דבר. */
+.shell-lock {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  padding: var(--s5);
+}
+.shell-lock-card { display: grid; justify-items: center; gap: var(--s4); text-align: center; }
+.shell-lock-mark img { width: 84px; height: auto; }
+.shell-lock-title { margin: 0; font-size: 17px; font-weight: 600; color: var(--text); }
+
 /* גיליון "עוד": מה שלא נכנס לחמש הלשוניות */
 .shell-sheet { position: fixed; inset: 0; z-index: 95; }
 .shell-sheet-back { position: absolute; inset: 0; background: rgb(0 0 0 / .38); }

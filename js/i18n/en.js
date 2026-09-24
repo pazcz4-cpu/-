@@ -1244,6 +1244,23 @@
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
         yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'
+      },
+
+      shell: {
+        offline: 'No internet connection. Showing the last saved data.',
+        online: 'Back online.',
+        lockTitle: 'SetShifts is locked',
+        lockReason: 'Unlock SetShifts',
+        lockAction: 'Unlock',
+        tabShifts: 'My shifts',
+        tabConstraints: 'Availability',
+        tabClock: 'Clock',
+        tabLeave: 'Leave',
+        tabSchedule: 'Roster',
+        tabRequests: 'Requests',
+        tabHours: 'Hours',
+        tabTeam: 'Team',
+        tabMore: 'More'
       }
     }
   });

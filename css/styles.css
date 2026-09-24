@@ -2018,3 +2018,84 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
 .hours-punches { width: auto; margin-bottom: var(--s3); }
 .hours-punches td { padding: 4px var(--s3); }
 .hours-add { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: flex-end; }
+
+
+/* ===================== המעטפת המקומית =====================
+
+   מופיעה רק כשהאפליקציה רצה בתוך Capacitor. באתר עצמו שני
+   האלמנטים קיימים וריקים, ולכן שום דבר כאן אינו נוגע בממשק
+   שכבר נבדק.
+
+   safe-area: באייפון עם מחוון הבית, סרגל שצמוד ל-0 יושב מתחת
+   למחוון ואי אפשר ללחוץ על הלשונית התחתונה. הריפוד מתווסף
+   לריפוד של הסרגל עצמו, ולא מחליף אותו. */
+
+.shell-net {
+  position: fixed; inset-inline: 0; top: 0; z-index: 90; margin: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) var(--s3) 6px;
+  background: var(--warn); color: #3a2a00;
+  font-size: 13px; font-weight: 600; text-align: center;
+}
+body.is-offline { padding-top: 34px; }
+
+.app-shell {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 90;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 14px rgb(0 0 0 / .06);
+}
+.shell-tabs { display: flex; align-items: stretch; }
+.shell-tab {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 8px 4px 7px; border: 0; background: none;
+  color: var(--muted); font: inherit; font-size: 11px; cursor: pointer;
+  /* יעד מגע של 44 נקודות – זה מה שאפל מבקשת, וזה גם מה
+     שמבדיל לשונית שאפשר ללחוץ עליה מלשונית שמפספסים. */
+  min-height: 52px;
+}
+.shell-tab-ico { width: 22px; height: 22px; }
+.shell-tab-label { line-height: 1.1; }
+.shell-tab.is-on { color: var(--brand); }
+.shell-tab.is-on .shell-tab-ico { stroke-width: 2.1; }
+.shell-tab:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+
+/* מקום לסרגל, כדי שהתוכן האחרון לא ייחתך מאחוריו */
+body.has-shell-tabs { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+body.has-shell-tabs .user-bar { display: none; }
+
+/* במעטפת הניווט הוא הסרגל התחתון. שורת הלשוניות העליונה היא
+   ניווט שני לאותם מסכים — כפילות שמבלבלת, והיא גם בדיוק מה
+   שמסגיר אתר שנארז מחדש. */
+body.has-shell-tabs .tabs { display: none; }
+
+/* גיליון "עוד": מה שלא נכנס לחמש הלשוניות */
+.shell-sheet { position: fixed; inset: 0; z-index: 95; }
+.shell-sheet-back { position: absolute; inset: 0; background: rgb(0 0 0 / .38); }
+.shell-sheet-card {
+  position: absolute; inset-inline: 0; bottom: 0;
+  background: var(--surface);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: var(--s2) 0 calc(var(--s3) + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -6px 26px rgb(0 0 0 / .18);
+}
+.shell-sheet-grip {
+  width: 38px; height: 4px; margin: 0 auto var(--s2);
+  border-radius: var(--r-pill); background: var(--line);
+}
+.shell-sheet-list { list-style: none; margin: 0; padding: 0; }
+.shell-sheet-item {
+  display: block; width: 100%; padding: 14px var(--s4);
+  border: 0; background: none; color: var(--text);
+  font: inherit; font-size: 16px; text-align: start; cursor: pointer;
+}
+.shell-sheet-item:active { background: var(--c2-bg); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell-sheet-card { animation: shell-rise .18s ease-out; }
+}
+@keyframes shell-rise { from { transform: translateY(100%); } to { transform: none; } }
+
+@media (prefers-color-scheme: dark) {
+  .app-shell { box-shadow: 0 -2px 14px rgb(0 0 0 / .4); }
+  .shell-sheet-card { box-shadow: 0 -6px 26px rgb(0 0 0 / .5); }
+}

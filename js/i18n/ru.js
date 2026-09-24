@@ -1238,6 +1238,23 @@
         moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
         save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', close: 'Закрыть',
         yes: 'Да', no: 'Нет', all: 'Все', and: 'и', more: 'и ещё {count}'
+      },
+
+      shell: {
+        offline: 'Нет подключения к интернету. Показаны последние сохранённые данные.',
+        online: 'Связь восстановлена.',
+        lockTitle: 'SetShifts заблокирован',
+        lockReason: 'Разблокировать SetShifts',
+        lockAction: 'Разблокировать',
+        tabShifts: 'Мои смены',
+        tabConstraints: 'Доступность',
+        tabClock: 'Учёт времени',
+        tabLeave: 'Отпуск',
+        tabSchedule: 'График',
+        tabRequests: 'Заявки',
+        tabHours: 'Часы',
+        tabTeam: 'Команда',
+        tabMore: 'Ещё'
       }
     }
   });

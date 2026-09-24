@@ -1243,6 +1243,23 @@
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
         save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',
         yes: 'כן', no: 'לא', all: 'הכל', and: 'וגם', more: 'ועוד {count}'
+      },
+
+      shell: {
+        offline: 'אין חיבור לאינטרנט. מוצג המידע האחרון שנשמר.',
+        online: 'החיבור חזר.',
+        lockTitle: 'SetShifts נעול',
+        lockReason: 'פתיחת SetShifts',
+        lockAction: 'פתיחה',
+        tabShifts: 'המשמרות שלי',
+        tabConstraints: 'אילוצים',
+        tabClock: 'שעון',
+        tabLeave: 'חופשה',
+        tabSchedule: 'סידור',
+        tabRequests: 'בקשות',
+        tabHours: 'שעות',
+        tabTeam: 'צוות',
+        tabMore: 'עוד'
       }
     }
   });

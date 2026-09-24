@@ -1238,6 +1238,23 @@
         moveUp: 'رفع', moveDown: 'خفض', timePlaceholder: 'سس:دد',
         save: 'حفظ', cancel: 'إلغاء', delete: 'حذف', close: 'إغلاق',
         yes: 'نعم', no: 'لا', all: 'الكل', and: 'و', more: 'و{count} آخرين'
+      },
+
+      shell: {
+        offline: 'لا يوجد اتصال بالإنترنت. يتم عرض آخر البيانات المحفوظة.',
+        online: 'عاد الاتصال.',
+        lockTitle: 'SetShifts مقفل',
+        lockReason: 'فتح SetShifts',
+        lockAction: 'فتح',
+        tabShifts: 'ورديّاتي',
+        tabConstraints: 'التوفّر',
+        tabClock: 'الساعة',
+        tabLeave: 'إجازة',
+        tabSchedule: 'الجدول',
+        tabRequests: 'الطلبات',
+        tabHours: 'الساعات',
+        tabTeam: 'الفريق',
+        tabMore: 'المزيد'
       }
     }
   });

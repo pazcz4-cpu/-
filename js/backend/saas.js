@@ -332,6 +332,15 @@
     }
     root.ShiftPreview = { start: startPreview, exit: exitPreview };
 
+    /* המעטפת המקומית. התפקיד נגזר מהחשבון ולא נבחר בכניסה:
+       אותו מסך התחברות לכולם, וניווט שונה למי שנכנס. מסך שמציע
+       "כניסה כמנהל" הוא הזמנה לנסות, וגם שאלה מיותרת לבודק של
+       אפל. באתר עצמו mount מחזיר false ושום דבר לא מצויר. */
+    if (root.ShiftNative && root.ShiftShell) {
+      root.ShiftNative.start();
+      root.ShiftShell.mount(session.user.role);
+    }
+
     /* עובד מקבל מסך משלו ולא את מערכת הניהול */
     if (session.user.role === 'employee') {
       document.getElementById('manager-root').classList.add('hidden');

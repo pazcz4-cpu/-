@@ -1238,6 +1238,23 @@
         moveUp: 'Subir', moveDown: 'Descer', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Fechar',
         yes: 'Sim', no: 'Não', all: 'Tudo', and: 'e', more: 'e mais {count}'
+      },
+
+      shell: {
+        offline: 'Sem ligação à internet. A mostrar os últimos dados guardados.',
+        online: 'Ligação restabelecida.',
+        lockTitle: 'O SetShifts está bloqueado',
+        lockReason: 'Desbloquear o SetShifts',
+        lockAction: 'Desbloquear',
+        tabShifts: 'Os meus turnos',
+        tabConstraints: 'Disponibilidade',
+        tabClock: 'Relógio',
+        tabLeave: 'Férias',
+        tabSchedule: 'Escala',
+        tabRequests: 'Pedidos',
+        tabHours: 'Horas',
+        tabTeam: 'Equipa',
+        tabMore: 'Mais'
       }
     }
   });

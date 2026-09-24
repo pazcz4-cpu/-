@@ -97,9 +97,11 @@ try {
   await page.waitForTimeout(800);
   check('ועדיין אין בקשות', await page.locator('.leave-item').count(), 0);
 
+  /* אין תיבת "בתשלום": בקשה מראש היא בקשה לחופשה בתשלום,
+     ותיבה שאפשר להוריד אומרת לעובד שיש לו מה להפסיד בלחיצה. */
+  check('אין תיבת סימון "בתשלום"', await page.locator('#leave-paid').count(), 0);
   await page.fill('#leave-from', range.from);
   await page.fill('#leave-to', range.to);
-  await page.check('#leave-paid');
   await page.fill('#leave-note', 'חתונה של אחי');
   await page.click('[data-leave-send]');
   await page.waitForTimeout(1500);
@@ -107,7 +109,22 @@ try {
   check('והיא מופיעה כממתינה',
     await page.locator('.leave-item').innerText(), /ממתינה/);
   check('חמישה ימים', await page.locator('.leave-item').innerText(), /5 ימים/);
-  check('ובתשלום', await page.locator('.leave-item').innerText(), /בתשלום/);
+  check('והיא בתשלום בלי שנדרש לסמן דבר',
+    await page.locator('.leave-item').innerText(), /בתשלום/);
+  check('וכך היא נשמרה בשרת', await page.evaluate(() => {
+    const db = window.__backend.db;
+    const kinds = [];
+    Object.keys(db.data).forEach((companyId) => {
+      const weeks = db.data[companyId].weeks || {};
+      Object.keys(weeks).forEach((key) => {
+        Object.keys(weeks[key].constraints || {}).forEach((slot) => {
+          const record = weeks[key].constraints[slot];
+          if (record.requestId) kinds.push(record.leave || '-');
+        });
+      });
+    });
+    return [...new Set(kinds)].join(',');
+  }), 'paid');
   /* חמישה ימים = חמש רשומות, עם מזהה בקשה אחד */
   const stored = await page.evaluate(async () => {
     const db = window.__backend.db;

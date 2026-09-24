@@ -1026,10 +1026,9 @@
         title: 'Solicitud de vacaciones',
         managerTitle: 'Solicitudes de vacaciones',
         managerHint: 'Una solicitud puede abarcar varios días y cruzar semanas. Aprobarla o rechazarla se aplica a todos sus días.',
-        hint: 'Varios días, con antelación',
+        hint: 'Varios días pagados, con antelación',
         from: 'Desde',
         to: 'Hasta',
-        paid: 'Vacaciones pagadas',
         note: 'Motivo (opcional)',
         send: 'Enviar solicitud',
         none: 'Todavía no has pedido vacaciones.',
@@ -1047,7 +1046,6 @@
       },
 
       leave: {
-        paid: 'Pagado',
         unpaid: 'Sin pago',
         paidTitle: 'Día de vacaciones pagado',
         unpaidTitle: 'Día libre sin pago: es lo predeterminado',

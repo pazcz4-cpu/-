@@ -1026,10 +1026,9 @@
         title: 'Demande de congé',
         managerTitle: 'Demandes de congé',
         managerHint: 'Une demande peut couvrir plusieurs jours et plusieurs semaines. L’accepter ou la refuser s’applique à tous ses jours.',
-        hint: 'Plusieurs jours, à l’avance',
+        hint: 'Plusieurs jours payés, à l’avance',
         from: 'Du',
         to: 'Au',
-        paid: 'Congé payé',
         note: 'Motif (facultatif)',
         send: 'Envoyer la demande',
         none: 'Vous n’avez pas encore demandé de congé.',
@@ -1047,7 +1046,6 @@
       },
 
       leave: {
-        paid: 'Payé',
         unpaid: 'Non payé',
         paidTitle: 'Jour de congé payé',
         unpaidTitle: 'Jour de repos non payé — c’est la valeur par défaut',

@@ -539,8 +539,10 @@
     }
 
     var data = this._companyData(session.company.id);
+    /* בקשה מראש היא תמיד בקשה לחופשה בתשלום. אין כאן פרמטר
+       שאפשר לשלוח אחרת: מה שאין בו בחירה אי אפשר גם לעקוף. */
     var record = Store.leaveRecord({
-      paid: !!request.paid, note: request.note,
+      note: request.note,
       from: request.from, to: request.to, at: today.toISOString()
     });
     var touched = [];

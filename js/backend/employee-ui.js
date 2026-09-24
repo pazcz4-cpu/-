@@ -66,7 +66,6 @@
     this.leaveLoaded = false;
     this.leaveFrom = '';
     this.leaveTo = '';
-    this.leavePaid = false;
     this.leaveNote = '';
   }
 
@@ -846,9 +845,6 @@
     html += '<label class="leave-field"><span>' + esc(t('leaveRequest.to')) + '</span>' +
       '<input type="date" class="text-input" id="leave-to" value="' +
       esc(this.leaveTo || '') + '"></label>';
-    html += '<label class="check leave-paid"><input type="checkbox" id="leave-paid"' +
-      (this.leavePaid ? ' checked' : '') + '>' +
-      '<span>' + esc(t('leaveRequest.paid')) + '</span></label>';
     html += '<label class="leave-field leave-note"><span>' + esc(t('leaveRequest.note')) + '</span>' +
       '<input type="text" class="text-input" id="leave-note" maxlength="300" value="' +
       esc(this.leaveNote || '') + '"></label>';
@@ -916,7 +912,6 @@
     if (this.busy) return;
     var from = (this.root.querySelector('#leave-from') || {}).value || '';
     var to = (this.root.querySelector('#leave-to') || {}).value || '';
-    var paid = !!(this.root.querySelector('#leave-paid') || {}).checked;
     var note = (this.root.querySelector('#leave-note') || {}).value || '';
     if (!from || !to) { this._flash(t('leaveRequest.needDates')); return; }
     /* נבדק כאן ולא רק בשרת, כדי שהלחיצה לא תראה כאילו עבדה
@@ -925,9 +920,12 @@
     if (!days) { this._flash(t('leaveRequest.badRange')); return; }
 
     this.busy = true;
-    this.leavePaid = paid;
     this.leaveNote = note;
-    this.backend.requestLeave({ from: from, to: to, paid: paid, note: note })
+    /* אין כאן שאלה אם החופשה בתשלום: בקשת חופשה מראש היא בקשה
+       לחופשה בתשלום, וזהו. תיבת סימון שאפשר להוריד הייתה אומרת
+       לעובד שיש לו מה להפסיד בלחיצה עליה. מה שהמנהל מחליט על
+       יום מסוים נשאר אצלו, בלוח האילוצים. */
+    this.backend.requestLeave({ from: from, to: to, note: note })
       .then(function () {
         self.busy = false;
         self.leaveFrom = '';

@@ -1032,10 +1032,9 @@
         title: 'Leave request',
         managerTitle: 'Leave requests',
         managerHint: 'A single request can span several days and cross weeks. Approving or declining applies to all of its days.',
-        hint: 'A few days, in advance',
+        hint: 'A few paid days, in advance',
         from: 'From',
         to: 'To',
-        paid: 'Paid leave',
         note: 'Reason (optional)',
         send: 'Send request',
         none: 'You have not requested leave yet.',
@@ -1053,7 +1052,6 @@
       },
 
       leave: {
-        paid: 'Paid',
         unpaid: 'Unpaid',
         paidTitle: 'Paid leave day',
         unpaidTitle: 'Unpaid day off — this is the default',

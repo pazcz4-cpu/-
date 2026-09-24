@@ -1026,10 +1026,9 @@
         title: 'Urlaubsantrag',
         managerTitle: 'Urlaubsanträge',
         managerHint: 'Ein Antrag kann mehrere Tage umfassen und über Wochen gehen. Genehmigung oder Ablehnung gilt für alle seine Tage.',
-        hint: 'Mehrere Tage, im Voraus',
+        hint: 'Mehrere bezahlte Tage, im Voraus',
         from: 'Von',
         to: 'Bis',
-        paid: 'Bezahlter Urlaub',
         note: 'Grund (optional)',
         send: 'Antrag senden',
         none: 'Du hast noch keinen Urlaub beantragt.',
@@ -1047,7 +1046,6 @@
       },
 
       leave: {
-        paid: 'Bezahlt',
         unpaid: 'Unbezahlt',
         paidTitle: 'Bezahlter Urlaubstag',
         unpaidTitle: 'Unbezahlter freier Tag — das ist die Voreinstellung',

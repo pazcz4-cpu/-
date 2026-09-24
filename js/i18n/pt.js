@@ -1026,10 +1026,9 @@
         title: 'Pedido de férias',
         managerTitle: 'Pedidos de férias',
         managerHint: 'Um pedido pode abranger vários dias e atravessar semanas. Aprovar ou recusar aplica-se a todos os seus dias.',
-        hint: 'Alguns dias, com antecedência',
+        hint: 'Alguns dias pagos, com antecedência',
         from: 'De',
         to: 'Até',
-        paid: 'Férias pagas',
         note: 'Motivo (opcional)',
         send: 'Enviar pedido',
         none: 'Ainda não pediu férias.',
@@ -1047,7 +1046,6 @@
       },
 
       leave: {
-        paid: 'Pago',
         unpaid: 'Sem pagamento',
         paidTitle: 'Dia de férias pago',
         unpaidTitle: 'Dia de folga sem pagamento — é o predefinido',

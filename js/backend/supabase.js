@@ -697,12 +697,12 @@
   };
 
   /* בקשת חופשה. הטווח נשלח, והשרת כותב רשומה יומית לכל יום בו
-     עם מזהה בקשה משותף. */
+     עם מזהה בקשה משותף. אין פרמטר "בתשלום": בקשה מראש היא
+     תמיד בקשה לחופשה בתשלום. */
   SupabaseBackend.prototype.requestLeave = function (input) {
     var request = input || {};
     return this._rpc('request_leave', {
-      p_from: request.from, p_to: request.to,
-      p_paid: !!request.paid, p_note: String(request.note || '')
+      p_from: request.from, p_to: request.to, p_note: String(request.note || '')
     });
   };
 

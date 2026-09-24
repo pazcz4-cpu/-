@@ -656,8 +656,13 @@ $$;
 -- שבוע שכבר פורסם אינו חוסם כאן, בשונה מבקשת אילוץ רגילה:
 -- אילוץ משנה זמינות לסידור שטרם נבנה, ובקשת חופשה היא בקשה
 -- לאדם. המנהל יראה אותה ויחליט אם לשנות את הסידור.
+-- החתימה הקודמת קיבלה p_paid. היא נמחקת ולא נשארת לצדה, כי
+-- create or replace עם פרמטרים אחרים יוצר עומס ולא מחליף —
+-- ואז הייתה נשארת דרך לבקש חופשה שאינה בתשלום.
+drop function if exists public.request_leave(date, date, boolean, text);
+
 create or replace function public.request_leave(
-  p_from date, p_to date, p_paid boolean default false, p_note text default '')
+  p_from date, p_to date, p_note text default '')
 returns jsonb
 language plpgsql
 security definer
@@ -701,11 +706,10 @@ begin
     'managerNote', '',
     'requestId', v_request,
     'leaveFrom', to_char(p_from, 'YYYY-MM-DD'),
-    'leaveTo', to_char(p_to, 'YYYY-MM-DD'));
-  -- "ללא תשלום" נשמר כהיעדר סימון, כמו בכל מקום אחר
-  if coalesce(p_paid, false) then
-    v_record := v_record || jsonb_build_object('leave', 'paid');
-  end if;
+    'leaveTo', to_char(p_to, 'YYYY-MM-DD'),
+    -- בקשה מראש היא תמיד בקשה לחופשה בתשלום. אין פרמטר שאפשר
+    -- לשלוח אחרת, ולכן אין גם מה לעקוף.
+    'leave', 'paid');
 
   v_day := p_from;
   while v_day <= p_to loop
@@ -784,7 +788,7 @@ grant execute on function public.create_company(text, text, int)                
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
 grant execute on function public.save_own_punch(text)                            to authenticated;
-grant execute on function public.request_leave(date, date, boolean, text)        to authenticated;
+grant execute on function public.request_leave(date, date, text)                 to authenticated;
 grant execute on function public.decide_constraint(text, text, int, text, text)  to authenticated;
 grant execute on function public.current_company_id()                            to authenticated;
 grant execute on function public.current_role_name()                             to authenticated;

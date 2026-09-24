@@ -68,7 +68,11 @@ const LEGAL_ENV = {
   DATA_REGION: 'DATA_REGION',
   PAYMENT_PROVIDER: 'PAYMENT_PROVIDER',
   JURISDICTION: 'LEGAL_JURISDICTION',
-  JURISDICTION_COURT: 'LEGAL_COURT'
+  JURISDICTION_COURT: 'LEGAL_COURT',
+  /* רכז נגישות. התקנות דורשות שם וטלפון של אדם שאפשר להגיע
+     אליו — לא כתובת כללית. שדות נפרדים כדי שלא ייבלעו זה בזה. */
+  A11Y_CONTACT: 'A11Y_CONTACT_NAME',
+  A11Y_PHONE: 'A11Y_CONTACT_PHONE'
 };
 
 const LEGAL = {
@@ -84,7 +88,10 @@ Object.keys(LEGAL_ENV).forEach((key) => {
 const legalMissing = [];
 
 function fillLegal(html) {
-  return html.replace(/\{\{([A-Z_]+)\}\}/g, (match, key) => {
+  /* גם ספרות. שם סימון כמו A11Y_CONTACT עבר כאן בשקט בלי
+     החלפה ובלי אזהרה, כי הביטוי קיבל אותיות וקו תחתון בלבד —
+     וסימון שאינו מוחלף ואינו מתריע הוא בדיוק מה שמגיע לאוויר. */
+  return html.replace(/\{\{([A-Z0-9_]+)\}\}/g, (match, key) => {
     if (!(key in LEGAL)) return match;
     if (!LEGAL[key]) {
       if (legalMissing.indexOf(key) === -1) legalMissing.push(key);
@@ -388,6 +395,7 @@ const PROSE_PAGES = [
   { file: 'privacy.html', dir: 'privacy', label: 'עמוד משפטי' },
   { file: 'terms.html', dir: 'terms', label: 'עמוד משפטי' },
   { file: 'security.html', dir: 'security', label: 'עמוד משפטי' },
+  { file: 'accessibility.html', dir: 'accessibility', label: 'עמוד משפטי' },
   /* עמודי התוכן. ל"שאלות נפוצות" יש עדיפות גבוהה יותר במפת
      האתר ולא במקרה: מי שמחפש "תוכנה לסידור עבודה כמה עולה"
      מגיע בדיוק לשם, וזה תנועה שמתחילה בשאלה אמיתית. */

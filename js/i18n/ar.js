@@ -120,6 +120,7 @@
         privacy: 'الخصوصية',
         terms: 'شروط الاستخدام',
         security: 'الأمان',
+        accessibility: 'إتاحة الوصول',
         footerTagline: 'جدولة ورديات للسلاسل.'
       },
       tabs: {

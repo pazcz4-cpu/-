@@ -12,6 +12,10 @@
 <link rel="stylesheet" href="css/landing.css">
 </head>
 <body class="landing">
+<!-- דילוג לתוכן: הקישור הראשון במסמך, נסתר עד שמקבל
+     מיקוד. מי שגולש במקלדת אינו צריך לעבור על הלוגו,
+     בורר השפה, שני הכפתורים וארבע הלשוניות בכל עמוד. -->
+<a class="skip-link" href="#main">דילוג לתוכן הראשי</a>
 
 <nav class="lp-nav">
   <div class="landing-wrap lp-nav-inner">
@@ -36,6 +40,10 @@
   </nav>
 </div>
 </nav>
+
+<!-- כל התוכן בתוך main, כדי שקורא מסך יוכל לקפוץ אליו ישירות
+     ושכפתור "דילוג לתוכן" יהיה לו יעד. -->
+<main id="main" tabindex="-1">
 
 <!-- ===== גיבור ===== -->
 <header class="lp-hero">
@@ -274,6 +282,8 @@
   </div>
 </div>
 
+</main>
+
 <footer class="lp-footer">
   <div class="landing-wrap lp-footer-inner">
     <span id="footer-brand"></span>
@@ -287,6 +297,7 @@
     <a href="privacy/" data-i18n="landing.privacy">מדיניות פרטיות</a>
     <a href="terms/" data-i18n="landing.terms">תנאי שימוש</a>
     <a href="security/" data-i18n="landing.security">אבטחה</a>
+    <a href="accessibility/" data-i18n="landing.accessibility">הצהרת נגישות</a>
     <span data-i18n="landing.footerTagline"></span>
   </div>
 </footer>

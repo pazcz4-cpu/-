@@ -125,6 +125,7 @@
         privacy: 'מדיניות פרטיות',
         terms: 'תנאי שימוש',
         security: 'אבטחה',
+        accessibility: 'הצהרת נגישות',
         footerTagline: 'סידור משמרות לרשתות.'
       },
 

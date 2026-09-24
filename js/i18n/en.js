@@ -126,6 +126,7 @@
         privacy: 'Privacy',
         terms: 'Terms',
         security: 'Security',
+        accessibility: 'Accessibility',
         footerTagline: 'Shift scheduling for chains.'
       },
 

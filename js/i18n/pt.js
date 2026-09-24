@@ -120,6 +120,7 @@
         privacy: 'Privacidade',
         terms: 'Termos',
         security: 'Segurança',
+        accessibility: 'Acessibilidade',
         footerTagline: 'Planeamento de turnos para cadeias.'
       },
       tabs: {

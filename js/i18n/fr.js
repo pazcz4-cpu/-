@@ -120,6 +120,7 @@
         privacy: 'Confidentialité',
         terms: 'Conditions',
         security: 'Sécurité',
+        accessibility: 'Accessibilité',
         footerTagline: 'Planification des équipes pour les réseaux.'
       },
       tabs: {

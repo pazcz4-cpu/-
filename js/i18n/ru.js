@@ -120,6 +120,7 @@
         privacy: 'Конфиденциальность',
         terms: 'Условия',
         security: 'Безопасность',
+        accessibility: 'Доступность',
         footerTagline: 'Расписание смен для сетей.'
       },
       tabs: {

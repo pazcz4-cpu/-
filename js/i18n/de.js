@@ -120,6 +120,7 @@
         privacy: 'Datenschutz',
         terms: 'Nutzungsbedingungen',
         security: 'Sicherheit',
+        accessibility: 'Barrierefreiheit',
         footerTagline: 'Dienstplanung für Filialbetriebe.'
       },
       tabs: {

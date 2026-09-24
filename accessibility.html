@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>הצהרת נגישות · SetShifts</title>
+<meta name="description" content="הצהרת הנגישות של SetShifts: רמת ההתאמה, מה נבדק, מה עדיין לא נגיש, ואיך מדווחים על תקלת נגישות.">
+<!-- styles.css ראשון: הוא מגדיר את הטוקנים (צבעים, מרווחים,
+     פינות) ש-landing.css משתמש בהם. בלעדיו כל var(--...)
+     בעמוד ריק, והעמוד מוצג בשחור על לבן בלי שום עיצוב. -->
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="legal-body">
+<!-- דילוג לתוכן: הקישור הראשון במסמך, נסתר עד שמקבל
+     מיקוד. מי שגולש במקלדת אינו צריך לעבור על הלוגו,
+     בורר השפה, שני הכפתורים וארבע הלשוניות בכל עמוד. -->
+<a class="skip-link" href="#main">דילוג לתוכן הראשי</a>
+
+<nav class="lp-nav">
+  <div class="landing-wrap lp-nav-inner">
+    <a class="lp-brand" href="/"><img class="lp-logo lp-logo-dark" src="brand/logo-lockup.png" alt="SetShifts" width="960" height="255"><img class="lp-logo lp-logo-light" src="brand/logo-lockup-light.png" alt="" aria-hidden="true" width="960" height="255"></a>
+    <div class="lp-nav-spacer"></div>
+    <div class="legal-langs" role="group">
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="he" lang="he">עברית</button>
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="en" lang="en">English</button>
+    </div>
+  </div>
+<!-- לשוניות האתר. שורה שנייה ולא באותה שורה עם הלוגו:
+     בעברית השמות ארוכים, ועם הלוגו, בורר השפה ושני הכפתורים
+     אין מקום לארבע לשוניות באף טלפון. -->
+<div class="lp-tabs-wrap">
+  <nav class="landing-wrap lp-tabs" aria-label="ניווט באתר">
+    <a href="/about/"><span data-legal="he">מי אנחנו</span><span data-legal="en" hidden>About</span></a>
+    <a href="/stories/"><span data-legal="he">איפה זה עוזר</span><span data-legal="en" hidden>Where it helps</span></a>
+    <a href="/faq/"><span data-legal="he">שאלות נפוצות</span><span data-legal="en" hidden>FAQ</span></a>
+    <a href="/contact/"><span data-legal="he">צור קשר</span><span data-legal="en" hidden>Contact</span></a>
+  </nav>
+</div>
+</nav>
+
+<main id="main" tabindex="-1" class="landing-wrap legal">
+
+<article data-legal="he" lang="he" dir="rtl">
+  <h1>הצהרת נגישות</h1>
+  <p class="legal-date">עודכן ב־{{EFFECTIVE_DATE}}</p>
+
+  <p>SetShifts היא מערכת שעובדים משתמשים בה כדי לראות את המשמרות
+  שלהם ולהגיש בקשות. עובד שאינו יכול להשתמש בה אינו יכול לעשות
+  את העבודה שלו, ולכן נגישות כאן אינה סעיף בתקנון – היא חלק
+  מהמוצר.</p>
+
+  <h2>רמת ההתאמה</h2>
+  <p>האתר והמערכת נבנו לפי הנחיות <b>WCAG 2.1 ברמה AA</b>, שהן
+  הבסיס לתקן הישראלי <b>ת"י 5568</b>.</p>
+
+  <h2>מה נעשה בפועל</h2>
+  <ul>
+    <li><b>ניווט מלא במקלדת.</b> כל פעולה במערכת אפשרית בלי עכבר,
+    ולכל אלמנט שמקבל מיקוד יש סימון מיקוד נראה.</li>
+    <li><b>קישור "דילוג לתוכן"</b> ראשון בכל עמוד, כדי שלא צריך
+    לעבור על הניווט מחדש בכל מעבר.</li>
+    <li><b>ניגודיות צבעים</b> של 4.5:1 לפחות לטקסט רגיל ו־3:1
+    לטקסט גדול. נבדק אוטומטית על כל עמוד בכל בנייה.</li>
+    <li><b>מבנה סמנטי</b> – כותרות בסדר היררכי, אזורי דף מסומנים
+    (<code>main</code>, <code>nav</code>, <code>footer</code>),
+    וטפסים שבהם לכל שדה יש תווית מקושרת.</li>
+    <li><b>טקסט חלופי</b> לכל תמונה שנושאת מידע.</li>
+    <li><b>לא צבע בלבד.</b> מצב של משמרת או של בקשה מסומן גם
+    בטקסט או בצורה, ולא רק בגוון – כך שגם מי שאינו מבחין בין
+    צבעים מסוימים רואה את אותו מידע.</li>
+    <li><b>כיווניות מלאה</b> לעברית ולערבית, ולא תרגום על גבי
+    פריסה שנבנתה משמאל לימין.</li>
+    <li><b>כיבוד העדפת הפחתת תנועה</b> של מערכת ההפעלה.</li>
+    <li><b>התאמה להגדלת טקסט</b> עד 200% בלי אובדן תוכן.</li>
+  </ul>
+
+  <h2>איך זה נבדק</h2>
+  <p>הבדיקות רצות אוטומטית בכל בנייה של האתר, על כל עמוד: ניגודיות,
+  מבנה כותרות, שמות נגישים לכפתורים ולקישורים, תוויות לשדות טופס,
+  וקיום קישור הדילוג. בנוסף נבדק ידנית מעבר מלא במקלדת.</p>
+
+  <h2>מה עדיין לא נגיש</h2>
+  <p>הצהרה שאומרת "הכל נגיש" אינה הצהרה. אלה הפערים הידועים לנו
+  היום:</p>
+  <ul>
+    <li><b>לא בוצע סקר נגישות על ידי מורשה נגישות מוסמך.</b> הבדיקות
+    שלנו אוטומטיות וידניות, ואינן תחליף לבדיקה מקצועית. הסקר
+    מתוכנן.</li>
+    <li><b>גרירת משמרות בעכבר</b> במסך הסידור היא קיצור דרך למנהל.
+    לכל פעולה שאפשר לעשות בגרירה יש חלופה מלאה בתפריט ובמקלדת,
+    אבל הגרירה עצמה אינה נגישה.</li>
+    <li><b>קובצי אקסל שמיוצאים מהמערכת</b> אינם עוברים התאמת
+    נגישות. המידע שבהם זמין במלואו גם במסך.</li>
+    <li><b>סרטון ההדגמה</b> בדף הבית – כתוביות בעבודה.</li>
+  </ul>
+
+  <h2>לא התקנו רכיב נגישות חיצוני, ובכוונה</h2>
+  <p>יש תוספים שמוסיפים לאתר כפתור צף עם סרגל אפשרויות. הם נראים
+  כמו פתרון, אבל הם אינם הופכים אתר לנגיש: הם מכסים על בעיות
+  במקום לתקן אותן, ולעיתים אף מפריעים לקוראי מסך שהמשתמש כבר
+  מפעיל. במקום זה בנינו את הנגישות לתוך האתר עצמו, כך שהיא עובדת
+  עם הכלים שכבר יש למשתמש.</p>
+
+  <h2>רכז הנגישות</h2>
+  <p>אחראי הנגישות שלנו זמין לכל פנייה, שאלה או דיווח על תקלה:</p>
+  <ul>
+    <li><b>שם:</b> {{A11Y_CONTACT}}</li>
+    <li><b>טלפון:</b> {{A11Y_PHONE}}</li>
+    <li><b>דוא"ל:</b> <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></li>
+  </ul>
+
+  <h2>נתקלתם בבעיה?</h2>
+  <p>ספרו לנו מה ניסיתם לעשות, באיזה עמוד, ובאיזה כלי עזר אם יש –
+  זה מה שמאפשר לשחזר ולתקן. אנחנו מתייחסים לדיווח נגישות כאל תקלה
+  לכל דבר, לא כאל בקשה.</p>
+
+  <p class="legal-foot">דיווח על תקלת נגישות:
+  <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></p>
+</article>
+
+<article data-legal="en" lang="en" dir="ltr">
+  <h1>Accessibility statement</h1>
+  <p class="legal-date">Last updated {{EFFECTIVE_DATE}}</p>
+
+  <p>SetShifts is what staff use to see their shifts and send requests.
+  Someone who cannot use it cannot do their job, so accessibility here
+  is part of the product, not a clause in the terms.</p>
+
+  <h2>Conformance level</h2>
+  <p>The site and the app are built to <b>WCAG 2.1 level AA</b>, which
+  is the basis of the Israeli standard <b>IS 5568</b>.</p>
+
+  <h2>What is in place</h2>
+  <ul>
+    <li><b>Full keyboard operation.</b> Every action works without a
+    mouse, and everything focusable has a visible focus indicator.</li>
+    <li><b>A "skip to content" link</b> first on every page.</li>
+    <li><b>Colour contrast</b> of at least 4.5:1 for body text and 3:1
+    for large text, checked automatically on every page at build time.</li>
+    <li><b>Semantic structure</b> — ordered headings, page landmarks,
+    and form fields with associated labels.</li>
+    <li><b>Alternative text</b> for every image that carries meaning.</li>
+    <li><b>Never colour alone.</b> Shift and request states are also
+    conveyed in text or shape.</li>
+    <li><b>Real bidirectional support</b> for Hebrew and Arabic, not a
+    translation dropped onto a left-to-right layout.</li>
+    <li><b>Reduced-motion preference</b> is honoured.</li>
+    <li><b>Text scaling</b> to 200% without loss of content.</li>
+  </ul>
+
+  <h2>Known gaps</h2>
+  <p>A statement that says "everything is accessible" is not a
+  statement. These are the gaps we know about:</p>
+  <ul>
+    <li><b>No audit by a certified accessibility professional yet.</b>
+    Our checks are automated and manual, and are not a substitute. The
+    audit is planned.</li>
+    <li><b>Drag and drop</b> in the roster is a shortcut for managers.
+    Everything it does is also available from menus and the keyboard,
+    but the dragging itself is not accessible.</li>
+    <li><b>Exported Excel files</b> are not accessibility-remediated.
+    The same information is fully available on screen.</li>
+    <li><b>The demo video</b> — captions are in progress.</li>
+  </ul>
+
+  <h2>Why there is no accessibility overlay</h2>
+  <p>Floating accessibility widgets look like a solution but do not make
+  a site accessible. They mask problems instead of fixing them, and can
+  interfere with the assistive technology a visitor already uses. We
+  built accessibility into the site itself instead.</p>
+
+  <h2>Accessibility coordinator</h2>
+  <ul>
+    <li><b>Name:</b> {{A11Y_CONTACT}}</li>
+    <li><b>Phone:</b> {{A11Y_PHONE}}</li>
+    <li><b>Email:</b> <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></li>
+  </ul>
+
+  <h2>Found a problem?</h2>
+  <p>Tell us what you were trying to do, on which page, and with which
+  assistive tool if any — that is what lets us reproduce and fix it. We
+  treat an accessibility report as a defect, not a request.</p>
+
+  <p class="legal-foot">Report an accessibility problem:
+  <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></p>
+</article>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="landing-wrap lp-footer-inner">
+    <span>SetShifts</span>
+    <span class="lp-nav-spacer"></span>
+    <a href="/privacy/">מדיניות פרטיות</a>
+    <a href="/terms/">תנאי שימוש</a>
+    <a href="/security/">אבטחה</a>
+    <a href="/accessibility/">הצהרת נגישות</a>
+  </div>
+</footer>
+
+<script src="js/legal.js"></script>
+<script src="js/talk.js"></script>
+</body>
+</html>

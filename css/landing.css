@@ -587,3 +587,27 @@
 @media (prefers-reduced-motion: no-preference) {
   .lp-talk { transition: background .15s ease; }
 }
+
+
+/* ===== דילוג לתוכן =====
+
+   הקישור הראשון במסמך, ומחוץ למסך עד שהוא מקבל מיקוד. גולש
+   מקלדת שמגיע לעמוד חדש עובר אחרת על הלוגו, בורר השפה, שני
+   הכפתורים וארבע הלשוניות — בכל עמוד מחדש.
+
+   לא display:none ולא visibility:hidden: שניהם מוציאים את
+   הקישור מסדר המיקוד, וקישור שאי אפשר להגיע אליו במקלדת הוא
+   בדיוק ההפך ממה שהוא נועד לעשות. */
+.skip-link {
+  position: absolute; inset-inline-start: var(--s3); top: -100px;
+  z-index: 200;
+  padding: 12px 18px; border-radius: 0 0 var(--r-md) var(--r-md);
+  background: var(--brand); color: #fff;
+  font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { top: 0; }
+.skip-link:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* main מקבל tabindex="-1" כדי שהדילוג יעביר אליו מיקוד באמת,
+   ולא רק יגלול. המסגרת שהדפדפן מצייר סביבו אז מיותרת. */
+main[tabindex="-1"]:focus { outline: none; }

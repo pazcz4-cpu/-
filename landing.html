@@ -51,22 +51,22 @@
       <p class="lp-hero-note" id="hero-note"></p>
     </div>
 
-    <!-- הדגמה של לוח הסידור, מצוירת ב-CSS כדי שלא יידרשו תמונות -->
-    <div class="lp-shot" aria-hidden="true">
-      <div class="lp-shot-head">
-        <span class="lp-shot-dot"></span><span class="lp-shot-dot"></span><span class="lp-shot-dot"></span>
-        <span class="lp-shot-title" data-i18n="excel.byBranch">לפי סניף</span>
-      </div>
-      <div class="lp-grid-demo">
-        <span class="lp-c0"></span><span class="lp-c1"></span><span class="lp-c2"></span><span class="lp-c0"></span>
-        <span class="lp-c1"></span><span class="lp-empty"></span><span class="lp-c2"></span>
-        <span class="lp-c1"></span><span class="lp-c2"></span><span class="lp-c0"></span><span class="lp-c3"></span>
-        <span class="lp-c2"></span><span class="lp-c0"></span><span class="lp-empty"></span>
-        <span class="lp-c2"></span><span class="lp-c3"></span><span class="lp-c1"></span><span class="lp-c2"></span>
-        <span class="lp-c0"></span><span class="lp-c1"></span><span class="lp-c3"></span>
-      </div>
-      <div class="lp-shot-alert"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg><span data-i18n="alerts.allGood">הסידור תקין</span></div>
-    </div>
+    <!-- התמונה הראשית: צילום מהמערכת עצמה, לא איור.
+
+         עד כה כאן ישב מוק מצויר ב-CSS, כדי שלא יידרשו תמונות.
+         זו הייתה החלטה נכונה כשלא היו צילומים — אבל מלבנים
+         צבעוניים אינם מראים מוצר, ומי שמגיע לדף מכירה של מערכת
+         סידור בא לראות סידור. התמונה נוצרת ב-npm run store:shots
+         מאותה מערכת, ולכן היא אינה מתיישנת בשקט.
+
+         loading ו-fetchpriority: זו התמונה הראשונה שנראית, ולכן
+         היא נטענת ראשונה ולא נדחית. -->
+    <figure class="lp-hero-shot">
+      <img src="assets/landing/hero-schedule.png"
+           width="2360" height="1520"
+           alt="מסך הסידור השבועי: שבוע מלא לכל הסניפים, כל משמרת מאוישת, והודעה שהסידור תקין"
+           loading="eager" fetchpriority="high" decoding="async">
+    </figure>
   </div>
 </header>
 
@@ -308,6 +308,7 @@
      קבוע – והופך לשקר ביום שהסליקה נדלקת. -->
 <script>window.SHIFT_BILLING_LIVE = false;</script>
 <script src="js/backend/model.js"></script>
+<script src="js/talk.js"></script>
 <script>
 (function () {
   'use strict';

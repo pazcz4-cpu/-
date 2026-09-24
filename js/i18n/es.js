@@ -44,7 +44,7 @@
         startLong: 'Empezar gratis – {days} días',
         heroBadge: 'Planificación con IA para negocios con varias sucursales',
         heroTitle: 'Todo tu negocio, planificado en un clic.',
-        heroSubtitle: 'La IA de SetShifts crea sola el cuadrante de cada ubicación: según la disponibilidad del equipo, las solicitudes que envían, el límite semanal de turnos de cada persona, los puestos y tus propias reglas. Y de cada asignación te dice por qué esa persona. Tú apruebas; no construyes.',
+        heroSubtitle: 'Una semana entera, todas las ubicaciones: según disponibilidad, solicitudes y el cupo de turnos de cada persona. Cada asignación explica por qué esa persona.',
         heroNote: '{days} días gratis en todos los planes, cancela cuando quieras.',
         faq6ACard: 'Introduces una tarjeta al registrarte y los primeros {days} días no cuestan nada. El primer cobro se hace al terminar la prueba y luego es mensual hasta que canceles. Si cancelas dentro de los {days} días no se te cobra nada: tus datos se conservan y siempre puedes exportarlos.',
         heroSecondary: 'Cómo funciona',

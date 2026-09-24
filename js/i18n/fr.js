@@ -44,7 +44,7 @@
         startLong: 'Commencer gratuitement – {days} jours',
         heroBadge: 'Planification par IA pour les entreprises multi-sites',
         heroTitle: 'Toute votre activité, planifiée en un clic.',
-        heroSubtitle: 'L’IA de SetShifts construit seule le planning de chaque site : d’après les disponibilités de vos équipes, les demandes qu’elles déposent, le nombre de services hebdomadaire de chacun, les postes et vos propres règles. Et pour chaque affectation, elle vous dit pourquoi cette personne. Vous validez, vous ne construisez pas.',
+        heroSubtitle: 'Une semaine entière, tous les sites — selon disponibilités, demandes et le quota de créneaux de chacun. Chaque affectation explique pourquoi cette personne.',
         heroNote: '{days} jours gratuits sur toutes les formules, résiliable à tout moment.',
         faq6ACard: 'Vous saisissez une carte à l’inscription, et les {days} premiers jours ne coûtent rien. Le premier prélèvement a lieu à la fin de l’essai, puis chaque mois jusqu’à l’annulation. Si vous annulez dans les {days} jours, rien n’est prélevé — vos données restent et vous pouvez toujours les exporter.',
         heroSecondary: 'Comment ça marche',

@@ -44,7 +44,7 @@
         startLong: 'Gratis starten – {days} Tage',
         heroBadge: 'KI-Dienstplanung für Unternehmen mit mehreren Standorten',
         heroTitle: 'Ihr ganzer Betrieb, in einem Klick geplant.',
-        heroSubtitle: 'Die KI von SetShifts erstellt den Dienstplan für jeden Standort selbst – aus der Verfügbarkeit Ihrer Mitarbeitenden, ihren Wünschen, dem wöchentlichen Schichtkontingent jeder Person, Rollen und Ihren eigenen Regeln. Und zu jeder Zuteilung sagt sie Ihnen, warum diese Person. Sie geben frei, Sie bauen nicht.',
+        heroSubtitle: 'Eine ganze Woche, alle Standorte – nach Verfügbarkeit, Wünschen und dem Schichtkontingent jeder Person. Zu jeder Zuteilung steht, warum genau diese Person.',
         heroNote: '{days} Tage gratis in jedem Tarif, jederzeit kündbar.',
         faq6ACard: 'Sie hinterlegen bei der Anmeldung eine Karte, und die ersten {days} Tage kosten nichts. Die erste Abbuchung erfolgt am Ende der Testphase, danach monatlich bis zur Kündigung. Wer innerhalb der {days} Tage kündigt, zahlt nie – die Daten bleiben und lassen sich jederzeit exportieren.',
         heroSecondary: 'So funktioniert es',

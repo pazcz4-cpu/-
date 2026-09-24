@@ -44,7 +44,7 @@
         startLong: 'Começar grátis – {days} dias',
         heroBadge: 'Planeamento com IA para negócios com várias lojas',
         heroTitle: 'Todo o teu negócio, planeado num clique.',
-        heroSubtitle: 'A IA do SetShifts constrói sozinha o horário de cada local — a partir da disponibilidade da equipa, dos pedidos que enviam, do limite semanal de turnos de cada pessoa, das funções e das tuas próprias regras. E em cada colocação diz-te porquê aquela pessoa. Tu aprovas; não constróis.',
+        heroSubtitle: 'Uma semana inteira, todos os locais — por disponibilidade, pedidos e a quota de turnos de cada pessoa. Cada atribuição explica porquê aquela pessoa.',
         heroNote: '{days} dias grátis em todos os planos, cancela quando quiseres.',
         faq6ACard: 'Introduzes um cartão no registo e os primeiros {days} dias não custam nada. A primeira cobrança acontece no fim do período e depois é mensal até cancelares. Se cancelares dentro dos {days} dias nunca és cobrado — os dados ficam e podes sempre exportá-los.',
         heroSecondary: 'Como funciona',

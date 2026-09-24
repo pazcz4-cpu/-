@@ -35,7 +35,11 @@ const APP = url('app.html');
 const DEVICES = [
   { key: 'ios-iphone-6.9', width: 440, height: 956, scale: 3, label: 'אייפון 6.9" — 1320x2868' },
   { key: 'ios-ipad-13', width: 1032, height: 1376, scale: 2, label: 'אייפד 13" — 2064x2752' },
-  { key: 'android-phone', width: 360, height: 640, scale: 3, label: 'אנדרואיד — 1080x1920' }
+  { key: 'android-phone', width: 360, height: 640, scale: 3, label: 'אנדרואיד — 1080x1920' },
+  /* התמונה הגדולה בפתיחת דף המכירה. לא מכשיר — יחס רחב
+     שיושב יפה לצד הכותרת, ובו המסך שבשבילו אנשים באים. */
+  { key: 'landing', width: 1180, height: 760, scale: 2, label: 'דף המכירה — 2360x1520',
+    landing: true }
 ];
 
 const results = [];
@@ -185,6 +189,21 @@ try {
     page.on('dialog', async (d) => { await d.accept(); });
 
     await seed(page);
+
+    /* דף המכירה צריך תמונה אחת בלבד, ולא מערכה. */
+    if (device.landing) {
+      const out = path.join(here, '..', 'assets', 'landing');
+      fs.mkdirSync(out, { recursive: true });
+      /* שטח ההמתנה הוא אזור גרירה, והוא ריק בהגדרה כשכל
+         המשמרות מאוישות — כלומר תמיד בצילום. מלבן מקווקו ריק
+         באמצע התמונה הראשית אינו אומר דבר על המוצר. הוא מוסתר
+         כאן בלבד; במערכת הוא מופיע ברגע שגוררים אליו משמרת. */
+      await page.addStyleTag({ content: '#shift-tray{display:none !important}' });
+      await page.waitForTimeout(200);
+      await capture(page, out, 'hero-schedule');
+      await ctx.close();
+      continue;
+    }
 
     await capture(page, dir, '1-schedule');
 

@@ -43,7 +43,7 @@
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
         heroBadge: 'AI employee scheduling for multi-location businesses',
         heroTitle: 'Your entire operation, scheduled in one click.',
-        heroSubtitle: 'SetShifts AI builds the schedule for every location by itself — from your staff\'s availability, the requests they submit, each person\'s weekly shift limit, roles and your own rules. And for every assignment it tells you why that person. You approve it. You don\'t build it.',
+        heroSubtitle: 'A whole week, every location — from availability, requests and each person\'s shift limit. Every assignment says why that person.',
         heroNote: '{days} days free on every plan, cancel any time.',
         faq6ACard: 'You enter a card at signup, and the first {days} days cost nothing. The first charge happens when the trial ends, then monthly until you cancel. Cancel within the {days} days and you are never charged — your data stays and you can always export it.',
         heroSecondary: 'See how it works',

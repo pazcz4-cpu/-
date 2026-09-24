@@ -1,0 +1,112 @@
+# בנייה בענן — בלי Mac.
+#
+# למה זה כאן ולא ב-mobile/: Codemagic מחפש את הקובץ בשורש
+# המאגר. הפרויקט המקומי עצמו יושב ב-mobile/.
+#
+# מה צריך להגדיר ב-Codemagic לפני ההרצה הראשונה, ו**רק שם**
+# — לא בקובץ הזה ולא במאגר:
+#   - App Store Connect API key (אפל)
+#   - קבוצת משתנים בשם setshifts עם משתני הסביבה של האתר
+# סודות אינם נכנסים לקובץ שנדחף. זה הכלל שחל כאן כמו על
+# מפתח Supabase ועל מפתח Resend.
+
+workflows:
+  ios:
+    name: SetShifts · iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      groups:
+        - setshifts          # משתני הסביבה של האתר
+        - appstore           # APP_STORE_CONNECT_* ו-CERTIFICATE_PRIVATE_KEY
+      vars:
+        BUNDLE_ID: "com.setshifts.app"
+        XCODE_WORKSPACE: "mobile/ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+      node: 20
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: "ios-*"
+          include: true
+    scripts:
+      - name: בדיקות המערכת
+        script: |
+          npm ci || npm install
+          npm test
+          npm run test:i18n
+      - name: בניית האתר
+        script: node build-site.js
+      - name: התקנה וסנכרון
+        script: |
+          cd mobile
+          npm install
+          npx cap add ios || true
+          npx cap sync ios
+      - name: חתימה
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: בנייה
+        script: |
+          cd mobile/ios/App
+          xcode-project build-ipa \
+            --workspace "App.xcworkspace" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - mobile/ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # TestFlight בלבד. הגשה לפרסום נעשית ידנית, אחרי שבדקנו
+        # את הבנייה על מכשיר אמיתי — הסבב הראשון הוא היקר ביותר.
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  android:
+    name: SetShifts · Android
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      groups:
+        - setshifts
+        - googleplay         # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS ו-CM_KEYSTORE*
+      vars:
+        PACKAGE_NAME: "com.setshifts.app"
+      node: 20
+      java: 17
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: "android-*"
+          include: true
+    scripts:
+      - name: בדיקות המערכת
+        script: |
+          npm ci || npm install
+          npm test
+          npm run test:i18n
+      - name: בניית האתר
+        script: node build-site.js
+      - name: התקנה וסנכרון
+        script: |
+          cd mobile
+          npm install
+          npx cap add android || true
+          npx cap sync android
+      - name: בנייה
+        script: |
+          cd mobile/android
+          ./gradlew bundleRelease
+    artifacts:
+      - mobile/android/app/build/outputs/bundle/release/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

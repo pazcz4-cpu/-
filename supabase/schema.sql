@@ -1146,3 +1146,91 @@ alter table public.access_links enable row level security;
 -- אין כאן policy בכוונה: RLS בלי policy חוסם הכל. השרת עובד עם
 -- service_role, שעוקף RLS, ולכן הוא היחיד שמגיע לטבלה.
 revoke all on public.access_links from authenticated, anon;
+
+-- ===== אסימוני התראות דחיפה =====
+--
+-- מה נשמר כאן: אסימון המכשיר שאפל או גוגל נתנו לאפליקציה.
+-- הוא מזהה התקנה, לא אדם — אותו עובד בשני טלפונים הוא שתי
+-- שורות, וזה נכון: הודעה צריכה להגיע לשניהם.
+--
+-- ולמה השורה נמחקת ולא מסומנת: אסימון שפג הוא אסימון שנשלחות
+-- אליו הודעות שאיש לא מקבל, והוא גם מה שגורם לספק לסמן את
+-- השולח. אסימון מת אינו היסטוריה — הוא זבל.
+
+create table if not exists public.push_tokens (
+  token text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  company_id uuid not null references public.companies(id) on delete cascade,
+  platform text not null check (platform in ('ios', 'android')),
+  created_at timestamptz not null default now(),
+  seen_at timestamptz not null default now()
+);
+
+create index if not exists push_tokens_user on public.push_tokens (user_id);
+create index if not exists push_tokens_company on public.push_tokens (company_id);
+
+alter table public.push_tokens enable row level security;
+
+-- אין policy במכוון. אסימון של עובד אחד אינו עניינו של אחר,
+-- וגם לא של המנהל: מי שקורא אסימון יכול לשלוח בשמנו הודעה
+-- למכשיר. השרת בלבד, עם service_role.
+revoke all on public.push_tokens from authenticated, anon;
+
+-- הדרך היחידה של האפליקציה לכתוב אסימון. security definer, כי
+-- הטבלה סגורה — והפונקציה כותבת רק את מי שקרא לה.
+create or replace function public.save_push_token(p_token text, p_platform text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company uuid;
+begin
+  if p_token is null or length(trim(p_token)) = 0 then
+    raise exception 'token is required';
+  end if;
+  if p_platform not in ('ios', 'android') then
+    raise exception 'platform must be ios or android';
+  end if;
+
+  /* דרך אותו עוזר שכל שאר הקובץ משתמש בו, ולא בשאילתה משלי:
+     הוא כבר יודע שהמזהה הוא id ולא user_id, ושמשתמש מושבת
+     אינו שייך לעסק. */
+  v_company := public.current_company_id();
+
+  if v_company is null then
+    raise exception 'no company for this user';
+  end if;
+
+  -- אותו אסימון יכול לעבור בין משתמשים: מכשיר שהוחלף בין
+  -- עובדים. הבעלות עוברת, ולא נוצרת שורה שנייה שתשלח לאדם
+  -- הלא נכון.
+  insert into public.push_tokens (token, user_id, company_id, platform)
+  values (trim(p_token), auth.uid(), v_company, p_platform)
+  on conflict (token) do update
+    set user_id = excluded.user_id,
+        company_id = excluded.company_id,
+        platform = excluded.platform,
+        seen_at = now();
+end;
+$$;
+
+revoke all on function public.save_push_token(text, text) from public;
+grant execute on function public.save_push_token(text, text) to authenticated;
+
+-- יציאה מהחשבון מסירה את האסימון של המכשיר הזה, ולא את כולם.
+create or replace function public.forget_push_token(p_token text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.push_tokens
+  where token = trim(p_token) and user_id = auth.uid();
+end;
+$$;
+
+revoke all on function public.forget_push_token(text) from public;
+grant execute on function public.forget_push_token(text) to authenticated;

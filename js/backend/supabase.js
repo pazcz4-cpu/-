@@ -706,6 +706,19 @@
     });
   };
 
+  /* אסימון ההתראות של ההתקנה הזאת. הטבלה סגורה בפני המשתמש
+     המחובר — אסימון שאפשר לקרוא הוא אסימון שאפשר לשלוח בשמו
+     הודעה למכשיר של אחר — ולכן הכתיבה היא דרך פונקציה בלבד. */
+  SupabaseBackend.prototype.savePushToken = function (token, platform) {
+    return this._rpc('save_push_token', {
+      p_token: String(token || ''), p_platform: String(platform || '')
+    });
+  };
+
+  SupabaseBackend.prototype.forgetPushToken = function (token) {
+    return this._rpc('forget_push_token', { p_token: String(token || '') });
+  };
+
   SupabaseBackend.prototype.saveOwnNote = function (weekKey, dayIdx, note) {
     return this._rpc('save_own_note', {
       p_week_key: weekKey, p_day_idx: Number(dayIdx), p_note: String(note || '')

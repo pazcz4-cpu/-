@@ -339,6 +339,26 @@
     if (root.ShiftNative && root.ShiftShell) {
       root.ShiftNative.start();
       root.ShiftShell.mount(session.user.role);
+      registerPush();
+    }
+
+    /* ===== אסימון ההתראות =====
+
+       נרשם אחרי ההתחברות, כי רק אז יש משתמש לשייך אליו. האסימון
+       הוא של ההתקנה ולא של האדם: אותו עובד בשני טלפונים הוא
+       שתי שורות, וזה נכון — הודעה צריכה להגיע לשניהם.
+
+       כישלון כאן אינו מפיל דבר. אפליקציה שלא נרשמה להתראות
+       עובדת במלואה; היא רק לא תצלצל. */
+    function registerPush() {
+      if (!root.ShiftNative.isNative()) return;
+      root.ShiftNative.registerPush().then(function (token) {
+        if (!token) return;
+        var platform = root.ShiftNative.platform();
+        if (platform !== 'ios' && platform !== 'android') return;
+        if (typeof backend.savePushToken !== 'function') return;
+        return backend.savePushToken(token, platform);
+      }).catch(function () { /* אין התראות. המוצר עובד. */ });
     }
 
     /* עובד מקבל מסך משלו ולא את מערכת הניהול */

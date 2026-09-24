@@ -1,0 +1,17 @@
+{
+  "appId": "com.setshifts.app",
+  "appName": "SetShifts",
+  "webDir": "../site",
+  "bundledWebRuntime": false,
+  "ios": { "contentInset": "always", "scheme": "SetShifts" },
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#1b3bd6",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+  }
+}

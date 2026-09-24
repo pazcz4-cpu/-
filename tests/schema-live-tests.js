@@ -417,6 +417,79 @@ check('בקשה שחוצה שבוע נכתבת לשתי שורות שבוע', fu
   assert(Number(weeks) >= 2, 'הבקשה נכתבה לשבוע אחד בלבד: ' + weeks);
 });
 
+console.log('\n== אסימוני התראות דחיפה ==');
+
+/* הטבלה סגורה בפני authenticated במכוון, ולכן הקריאה הסופית
+   של כל בדיקה כאן חייבת reset role — בדיוק כמו שאר הבדיקות
+   שקוראות טבלאות ישירות. */
+
+check('אסימון נשמר ומשויך לעובד ולעסק שלו', function () {
+  var row = ask(false,
+    "(select user_id::text || '|' || company_id::text || '|' || platform " +
+    " from public.push_tokens where token = 'tok-a')",
+    "select public.save_push_token('tok-a', 'ios');\nreset role;");
+  assertEqual(row, DANA + '|' + CO + '|ios', 'השורה שנכתבה');
+});
+
+check('רווחים נחתכים, כי אסימון עם רווח אינו נמצא בשליחה', function () {
+  assertEqual(ask(false,
+    "(select count(*)::text from public.push_tokens where token = 'tok-b')",
+    "select public.save_push_token('  tok-b  ', 'android');\nreset role;"), '1');
+});
+
+check('פלטפורמה שאינה ios או android נדחית', function () {
+  assertEqual(ask(false,
+    "(select count(*)::text from public.push_tokens)",
+    "do $$ begin\n" +
+    "  begin perform public.save_push_token('tok-c', 'windows');\n" +
+    "  exception when others then null; end;\nend $$;\nreset role;"), '0');
+});
+
+check('אסימון ריק נדחה', function () {
+  assertEqual(ask(false,
+    "(select count(*)::text from public.push_tokens)",
+    "do $$ begin\n" +
+    "  begin perform public.save_push_token('   ', 'ios');\n" +
+    "  exception when others then null; end;\nend $$;\nreset role;"), '0');
+});
+
+check('מכשיר שעבר בין עובדים משנה בעלים ולא מייצר שורה שנייה', function () {
+  /* אותו אסימון, פעמיים, כשבפעם השנייה קורא משתמש אחר. שתי
+     שורות כאן פירושן הודעה שנשלחת לאדם הלא נכון. */
+  var out = ask(false,
+    "(select count(*)::text || '|' || max(user_id::text) " +
+    " from public.push_tokens where token = 'tok-d')",
+    "select public.save_push_token('tok-d', 'ios');\n" +
+    "select set_config('request.jwt.claim.sub','" + BOSS + "', true);\n" +
+    "select public.save_push_token('tok-d', 'android');\nreset role;");
+  assertEqual(out, '1|' + BOSS, 'מספר השורות והבעלים');
+});
+
+check('יציאה מסירה את האסימון של המכשיר הזה בלבד', function () {
+  assertEqual(ask(false,
+    "(select string_agg(token, ',' order by token) from public.push_tokens)",
+    "select public.save_push_token('tok-e', 'ios');\n" +
+    "select public.save_push_token('tok-f', 'ios');\n" +
+    "select public.forget_push_token('tok-e');\nreset role;"), 'tok-f');
+});
+
+check('עובד אינו יכול למחוק אסימון של אחר', function () {
+  assertEqual(ask(false,
+    "(select count(*)::text from public.push_tokens where token = 'tok-g')",
+    "select public.save_push_token('tok-g', 'ios');\n" +
+    "select set_config('request.jwt.claim.sub','" + BOSS + "', true);\n" +
+    "select public.forget_push_token('tok-g');\nreset role;"), '1');
+});
+
+check('הטבלה סגורה בפני המשתמש המחובר', function () {
+  /* אסימון שאפשר לקרוא הוא אסימון שאפשר לשלוח בשמו הודעה
+     למכשיר של מישהו אחר. הפונקציות בלבד. */
+  var can = ask(false,
+    "(select has_table_privilege('authenticated','public.push_tokens','select')::text)",
+    'reset role;');
+  assertEqual(can, 'false', 'הרשאת קריאה ל-authenticated');
+});
+
 stop();
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

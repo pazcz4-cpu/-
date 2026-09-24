@@ -36,14 +36,37 @@
 :root[data-theme="dark"] .lp-logo-dark { display: none; }
 :root[data-theme="dark"] .lp-logo-light { display: block; }
 .lp-nav-spacer { flex: 1; }
-/* קישור טקסט בסרגל: נוכח, ולא כפתור שלישי שמתחרה על העין */
-.lp-nav-link {
-  color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 600;
-  padding: 6px 4px; white-space: nowrap;
+
+/* ===== לשוניות האתר =====
+
+   שורה שנייה מתחת ללוגו, ולא באותה שורה איתו: בעברית שמות
+   הלשוניות ארוכים, ולצד הלוגו, בורר השפה ושני הכפתורים אין להן
+   מקום באף טלפון. במסך צר השורה נגללת לרוחב במקום להישבר או
+   להסתתר מאחורי תפריט המבורגר — ארבע לשוניות אינן מצדיקות אותו. */
+.lp-tabs-wrap { border-top: 1px solid var(--line); }
+.lp-tabs {
+  display: flex; gap: var(--s1);
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
-.lp-nav-link:hover { color: var(--ink); }
-/* במסך צר הסרגל צפוף ממילא, ו"צור קשר" קיים בתחתית כל עמוד */
-@media (max-width: 720px) { .lp-nav-link { display: none; } }
+.lp-tabs::-webkit-scrollbar { display: none; }
+.lp-tabs a {
+  flex: 0 0 auto;
+  padding: 11px var(--s3) 9px;
+  color: var(--muted); text-decoration: none;
+  font-size: 14.5px; font-weight: 600; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.lp-tabs a:hover { color: var(--ink); }
+.lp-tabs a:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+/* העמוד הנוכחי מסומן גם בצבע וגם בקו: מי שאינו מבחין בצבע
+   עדיין רואה איפה הוא נמצא. */
+.lp-tabs a[aria-current="page"] {
+  color: var(--brand); border-bottom-color: var(--brand);
+}
+@media (max-width: 440px) {
+  .lp-tabs a { padding-inline: var(--s2); font-size: 14px; }
+}
 .lp-lang {
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
   color: inherit; font: inherit; font-size: 13.5px; padding: 6px 9px;

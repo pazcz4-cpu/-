@@ -176,13 +176,65 @@ try {
   check('בלי מספר – אין בלוק',
     await page.locator('#contact-whatsapp').isVisible(), hasNumber);
 
+  console.log('\n== לשוניות בראש כל עמוד ==');
+  for (const [file, slug, label] of [['about.html', 'about', 'מי אנחנו'],
+    ['stories.html', 'stories', 'סיפורי שימוש'], ['faq.html', 'faq', 'שאלות נפוצות'],
+    ['contact.html', 'contact', 'צור קשר'], ['privacy.html', 'privacy', null]]) {
+    await page.goto(url(file));
+    await page.waitForTimeout(400);
+    check(slug + ': ארבע לשוניות', await page.locator('.lp-tabs a').count(), 4);
+    const current = await page.locator('.lp-tabs a[aria-current="page"]');
+    if (label) {
+      check(slug + ': הלשונית הנוכחית מסומנת', await current.count(), 1);
+      check(slug + ': והיא הנכונה', (await current.innerText()).trim(), label);
+      /* הסימון אינו בצבע בלבד: מי שאינו מבחין בצבע רואה את הקו */
+      check(slug + ': הסימון אינו רק צבע', await current.evaluate((n) =>
+        getComputedStyle(n).borderBottomWidth), '2px');
+    } else {
+      /* עמוד שאינו אחת מהלשוניות אינו מסמן אף אחת מהן */
+      check(slug + ': אין לשונית מסומנת', await current.count(), 0);
+    }
+  }
+
+  console.log('\n== הלשוניות בטלפון: נגללות, ולא נחתכות מהמסך ==');
+  {
+    const phone = await browser.newContext({ viewport: { width: 360, height: 700 }, locale: 'he-IL' });
+    const pp = await phone.newPage();
+    for (const file of ['about.html', 'stories.html', 'faq.html', 'contact.html']) {
+      await pp.goto(url(file));
+      await pp.waitForTimeout(400);
+      const seen = await pp.evaluate(() => {
+        const a = document.querySelector('.lp-tabs a[aria-current="page"]');
+        const strip = document.querySelector('.lp-tabs');
+        const ar = a.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+        return {
+          visible: ar.left >= sr.left - 1 && ar.right <= sr.right + 1,
+          overflow: document.documentElement.scrollWidth - window.innerWidth
+        };
+      });
+      /* הלשונית של העמוד הנוכחי גלויה בפתיחה, גם כשהיא האחרונה
+         בשורה שנגללת — אחרת המבקר אינו רואה איפה הוא נמצא. */
+      check(file + ': הלשונית הנוכחית נראית', seen.visible, true);
+      check(file + ': והעמוד אינו נגלל הצידה', seen.overflow <= 0, true);
+    }
+    await phone.close();
+  }
+
   console.log('\n== הקישורים בין העמודים עובדים ==');
   await page.goto(url('landing.html'));
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(900);
   for (const dir of ['about', 'stories', 'faq', 'contact']) {
     check('דף המכירה מקשר אל /' + dir + '/',
       await page.locator('a[href="' + dir + '/"]').count() > 0, true);
   }
+  check('ויש בו שורת לשוניות', await page.locator('.lp-tabs a').count(), 4);
+  /* בדף המכירה הלשוניות עוברות במערכת התרגום המלאה */
+  check('שהתוויות בה מתורגמות ולא מפתחות',
+    /landing\./.test(await page.locator('.lp-tabs').innerText()), false);
+  await page.selectOption('#landing-language', 'en');
+  await page.waitForTimeout(400);
+  check('והן מתחלפות עם השפה',
+    (await page.locator('.lp-tabs a').first().innerText()).trim(), 'About');
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

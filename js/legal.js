@@ -62,4 +62,14 @@
   });
 
   show(preferred());
+
+  /* שורת הלשוניות נגללת לרוחב בטלפון, והלשונית של העמוד הנוכחי
+     יכולה להתחיל מחוץ למסך — כך שהמבקר אינו רואה איפה הוא נמצא.
+     inline בלבד: block היה מגלגל גם את העמוד עצמו כלפי מטה. */
+  (function showCurrentTab() {
+    var current = document.querySelector('.lp-tabs a[aria-current="page"]');
+    if (!current || !current.scrollIntoView) return;
+    try { current.scrollIntoView({ inline: 'center', block: 'nearest' }); }
+    catch (err) { /* דפדפן ישן – הלשונית פשוט נשארת במקומה */ }
+  })();
 })(typeof window !== 'undefined' ? window : globalThis);

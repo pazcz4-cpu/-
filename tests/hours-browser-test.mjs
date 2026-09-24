@@ -179,6 +179,28 @@ try {
     return count;
   }), 1);
 
+  /* הדוח הזה נקרא בעיניים ומועתק לחשב שכר, ולכן יישור העמודות
+     הוא לא קישוט. פעם אחת כלל CSS יתום בשם .hours-row — שריד
+     של עורך שעות שהוסר — תפס את שורות הטבלה והפך כל <tr>
+     ל-flex. הכותרות נשארו פרוסות על הרוחב, הערכים נדחסו לצד,
+     ושום מספר לא עמד מתחת לכותרת שלו. הבדיקה הזו קיימת כדי
+     שזה לא יחזור בשקט. */
+  console.log('\n== הדוח נשאר טבלה ==');
+  const layout = await page.evaluate(() => {
+    const row = document.querySelector('#hours-table tbody tr');
+    const cell = row && row.querySelector('td');
+    const head = document.querySelector('#hours-table thead tr');
+    return {
+      row: row ? getComputedStyle(row).display : 'אין שורה',
+      cell: cell ? getComputedStyle(cell).display : 'אין תא',
+      columns: head ? head.children.length : 0,
+      cells: row ? row.children.length : 0
+    };
+  });
+  check('השורה היא שורת טבלה', layout.row, 'table-row');
+  check('והתא הוא תא טבלה', layout.cell, 'table-cell');
+  check('ומספר התאים שווה למספר הכותרות', layout.cells, layout.columns);
+
   console.log('\n== כיבוי בקרת השעות הנוספות ==');
   const columns = async () => page.locator('#hours-table thead th').allInnerTexts();
   check('עמודת שעות נוספות קיימת', (await columns()).join('|'), /שעות נוספות/);

@@ -72,7 +72,9 @@
     "test:clockui": "node tests/timeclock-browser-test.mjs",
     "test:hours": "node tests/hours-browser-test.mjs",
     "test:leavereq": "node tests/leave-request-browser-test.mjs",
-    "test:deploy": "node tests/deploy-readiness-tests.js"
+    "test:deploy": "node tests/deploy-readiness-tests.js",
+    "store:assets": "node tools/store-assets.js",
+    "store:shots": "node tools/store-shots.mjs"
   },
   "license": "MIT"
 }

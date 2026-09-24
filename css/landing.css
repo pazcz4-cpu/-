@@ -611,3 +611,55 @@
 /* main מקבל tabindex="-1" כדי שהדילוג יעביר אליו מיקוד באמת,
    ולא רק יגלול. המסגרת שהדפדפן מצייר סביבו אז מיותרת. */
 main[tabindex="-1"]:focus { outline: none; }
+
+
+/* ===== למי זה מתאים =====
+
+   רשימה ולא כרטיסים: אלה תגיות קטגוריה, לא יכולות. מסגרת וצל
+   סביב כל אחת היו אומרים "כל אחד מאלה הוא משהו שאפשר ללחוץ
+   עליו", וזה לא המצב. */
+.lp-industries {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: var(--s4);
+  grid-template-columns: repeat(4, 1fr);
+}
+.lp-industry {
+  display: grid; justify-items: center; gap: var(--s2);
+  text-align: center; font-size: 15px; font-weight: 600; color: var(--ink);
+}
+.lp-industry-icon {
+  display: grid; place-items: center;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--c2-bg); border: 1px solid var(--c2-line);
+  color: var(--brand);
+}
+.lp-industry-icon .ico { width: 26px; height: 26px; }
+.lp-industries-more { margin: var(--s5) 0 0; text-align: center; font-size: 15px; }
+
+/* שתי עמודות בטלפון. ארבע היו מכווצות כל תווית לשתי שורות
+   שבורות, ורשימה שצריך לפענח אינה עונה על "זה בשבילי?". */
+@media (max-width: 700px) {
+  .lp-industries { grid-template-columns: repeat(2, 1fr); gap: var(--s4) var(--s3); }
+  .lp-industry { font-size: 14px; }
+  .lp-industry-icon { width: 48px; height: 48px; }
+}
+
+
+/* ===== קפיצה לעוגן מתחת לסרגל הדביק =====
+
+   שורת הניווט דביקה בראש העמוד, ולכן קישור פנימי כמו #pricing
+   מגלל את המקטע אל מתחתיה — והכותרת שלו, כלומר בדיוק מה שהקישור
+   הבטיח, נשארת מוסתרת. הכלל הזה שומר לה מקום.
+
+   scroll-margin ולא padding: הוא משפיע רק על יעד הגלילה ואינו
+   מזיז דבר בפריסה. */
+.lp-section, .lp-hero, #main { scroll-margin-top: 112px; }
+
+@media (min-width: 900px) {
+  .lp-section, .lp-hero, #main { scroll-margin-top: 124px; }
+}
+
+/* גלילה חלקה, למי שלא ביקש להפחית תנועה */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}

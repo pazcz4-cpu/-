@@ -984,6 +984,8 @@
         teamNobody: 'В этот день никто не работает',
         teamCount: { one: '1 человек в этот день', other: '{count} чел. в этот день' },
         teamMine: 'Я',
+        teamAllBranches: 'Все точки',
+        teamNobodyBranch: 'В этот день на этой точке никто не работает',
         requestsLeftShort: 'Заявок осталось',
         notPublished: 'График этой недели ещё не опубликован.',
         noShifts: 'На этой неделе у вас нет смен.',

@@ -984,6 +984,8 @@
         teamNobody: 'لا أحد يعمل في هذا اليوم',
         teamCount: { one: 'موظف واحد في هذا اليوم', other: '{count} موظفين في هذا اليوم' },
         teamMine: 'أنا',
+        teamAllBranches: 'كل الفروع',
+        teamNobodyBranch: 'لا أحد يعمل في هذا الفرع في هذا اليوم',
         requestsLeftShort: 'طلبات متبقية',
         notPublished: 'لم يُنشر جدول هذا الأسبوع بعد.',
         noShifts: 'لا توجد لك مناوبات هذا الأسبوع.',

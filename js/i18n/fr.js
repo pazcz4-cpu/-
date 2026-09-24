@@ -984,6 +984,8 @@
         teamNobody: 'Personne ne travaille ce jour',
         teamCount: { one: '1 personne ce jour', other: '{count} personnes ce jour' },
         teamMine: 'Moi',
+        teamAllBranches: 'Tous les sites',
+        teamNobodyBranch: 'Personne ne travaille sur ce site ce jour',
         requestsLeftShort: 'Demandes restantes',
         notPublished: 'Le planning de cette semaine n’est pas encore publié.',
         noShifts: 'Vous n’avez aucun service cette semaine.',

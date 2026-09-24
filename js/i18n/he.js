@@ -989,6 +989,8 @@
         teamNobody: 'אף אחד לא עובד ביום הזה',
         teamCount: { one: 'עובד/ת אחד/ת ביום הזה', other: '{count} עובדים ביום הזה' },
         teamMine: 'אני',
+        teamAllBranches: 'כל הסניפים',
+        teamNobodyBranch: 'אף אחד לא עובד בסניף הזה ביום הזה',
         requestsLeftShort: 'בקשות נותרו',
         notPublished: 'הסידור לשבוע הזה עדיין לא פורסם.',
         noShifts: 'אין לך משמרות בשבוע הזה.',

@@ -984,6 +984,8 @@
         teamNobody: 'Ninguém trabalha neste dia',
         teamCount: { one: '1 pessoa neste dia', other: '{count} pessoas neste dia' },
         teamMine: 'Eu',
+        teamAllBranches: 'Todas as lojas',
+        teamNobodyBranch: 'Ninguém trabalha nesta loja neste dia',
         requestsLeftShort: 'Pedidos restantes',
         notPublished: 'O horário desta semana ainda não foi publicado.',
         noShifts: 'Não tens turnos esta semana.',

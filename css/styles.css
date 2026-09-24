@@ -1390,6 +1390,24 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .team-tab.is-on.has-mine::after { background: var(--brand-ink); }
 
+/* לשוניות הסניפים: משניות לימים, ולכן שקטות מהן — גלולות
+   טקסט ולא כפתורים מלאים. קודם "מתי", אחר כך "איפה". */
+.team-branches {
+  display: flex; flex-wrap: wrap; gap: var(--s1);
+  padding-bottom: var(--s2);
+}
+.team-branch-tab {
+  font: inherit; font-size: var(--t-sm); font-weight: 600; cursor: pointer;
+  padding: 3px var(--s3); border-radius: var(--r-pill);
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--line);
+}
+.team-branch-tab:hover { color: var(--ink); }
+.team-branch-tab:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.team-branch-tab.is-on {
+  background: var(--c2-bg); border-color: var(--brand); color: var(--brand-dark);
+}
+
 .team-panel { padding-top: var(--s1); }
 .team-count { margin: 0 0 var(--s3); font-size: var(--t-sm); color: var(--muted); }
 .team-branch { margin-bottom: var(--s4); }

@@ -990,6 +990,8 @@
         teamNobody: 'Nobody works this day',
         teamCount: { one: '1 person this day', other: '{count} people this day' },
         teamMine: 'Me',
+        teamAllBranches: 'All locations',
+        teamNobodyBranch: 'Nobody works at this location this day',
         requestsLeftShort: 'Requests left',
         notPublished: 'The schedule for this week has not been published yet.',
         noShifts: 'You have no shifts this week.',

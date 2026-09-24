@@ -79,6 +79,37 @@ try {
   await page.click('[data-confirm-yes]');
   await page.waitForTimeout(1200);
 
+  /* יום אחד שבו סניף אחד סגור. בעסק הדוגמה כל הסניפים מאוישים
+     כל יום, ולכן המצב הזה – שבו הסינון של העובד מוביל למסך ריק –
+     לא היה נבדק אף פעם. כאן הוא נבנה במפורש, ישירות במאגר של
+     שרת הבדיקות ולא דרך המצב שבזיכרון: העותק שמסך העובד קורא
+     ממנו הוא זה, והוא נטען פעם אחת בעליית הדף. */
+  const CLOSED_BRANCH = 'br-center';
+  const closedDay = (new Date().getDay() + 3) % 7;
+  const cleared = await page.evaluate(({ branchId, dayIdx }) => {
+    const key = window.ShiftMockBackend.STORE_KEY;
+    const db = JSON.parse(window.localStorage.getItem(key));
+    let removed = 0;
+    Object.keys(db.data).forEach((companyId) => {
+      const weeks = db.data[companyId].weeks || {};
+      Object.keys(weeks).forEach((weekKey) => {
+        const assignments = weeks[weekKey].assignments || {};
+        Object.keys(assignments).forEach((slot) => {
+          const parts = slot.split('|');
+          if (Number(parts[0]) === dayIdx && parts[1] === branchId) {
+            removed += assignments[slot].length;
+            delete assignments[slot];
+          }
+        });
+      });
+    });
+    window.localStorage.setItem(key, JSON.stringify(db));
+    return removed;
+  }, { branchId: CLOSED_BRANCH, dayIdx: closedDay });
+  check('רוקנו סניף אחד ליום אחד', cleared > 0, true);
+  await page.reload();
+  await page.waitForTimeout(1500);
+
   const openEmployee = async () => {
     await page.click('#user-preview');
     await page.waitForTimeout(400);
@@ -179,6 +210,112 @@ try {
   check('והמגירה נשארה פתוחה',
     await page.evaluate(() => document.querySelector('.team-fold').open), true);
 
+  console.log('\n== לשוניות הסניפים ==');
+  /* עסק הדוגמה הוא שלושה סניפים, ולכן יש מה לסנן. בעסק עם סניף
+     אחד השורה הזו לא אמורה להופיע כלל, וזה נבדק בהמשך.
+
+     השיבוץ מוגרל, ויש ימים שבהם במקרה עובד רק סניף אחד. לכן
+     היום נבחר לפי הנתונים ולא לפי מספר קבוע: בדיקה שנופלת פעם
+     בכמה הרצות היא בדיקה שמפסיקים להאמין לה. */
+  const multiDay = await page.evaluate((closed) => {
+    const state = window.ShiftApp.getState();
+    const week = state.weeks[window.ShiftApp.weekKey()];
+    for (let i = 0; i <= 6; i++) {
+      if (i === closed) continue;
+      const branches = new Set(window.ShiftStore.dayRoster(state, week, i)
+        .map((slot) => slot.branchId));
+      if (branches.size > 1 && branches.has('br-center')) return i;
+    }
+    return -1;
+  }, closedDay);
+  check('יש יום שעובדים בו כמה סניפים', multiDay >= 0, true);
+  await page.click('.team-tab[data-team-day="' + multiDay + '"]');
+  await page.waitForTimeout(500);
+
+  const branchIds = await page.evaluate(() =>
+    [...document.querySelectorAll('.team-branch-tab')].map((b) => b.dataset.teamBranch));
+  check('יש שורת סניפים', branchIds.length > 1, true);
+  check('הראשונה היא "כל הסניפים"', branchIds[0], '');
+  check('והיא הנבחרת כברירת מחדל', await page.evaluate(() =>
+    document.querySelector('.team-branch-tab').classList.contains('is-on')), true);
+  /* הלשוניות הן הסניפים שעובדים ביום הזה, לא כל סניפי העסק:
+     לשונית שמובילה למסך ריק היא לשונית שלא הייתה צריכה להיות. */
+  check('הלשוניות הן בדיוק הסניפים שעובדים היום', await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    const week = state.weeks[window.ShiftApp.weekKey()];
+    const idx = Number(document.querySelector('.team-tab.is-on').dataset.teamDay);
+    const real = new Set(window.ShiftStore.dayRoster(state, week, idx)
+      .map((slot) => slot.branchId));
+    const tabs = [...document.querySelectorAll('.team-branch-tab')]
+      .map((b) => b.dataset.teamBranch).filter((v) => v !== '');
+    return tabs.length === real.size && tabs.every((id) => real.has(id));
+  }), true);
+
+  const pickedBranch = CLOSED_BRANCH;
+  check('הסניף שנבדק נמצא בשורה', branchIds.indexOf(pickedBranch) > 0, true);
+  const allSlots = await page.locator('.team-slot').count();
+  await page.click('.team-branch-tab[data-team-branch="' + pickedBranch + '"]');
+  await page.waitForTimeout(500);
+  check('הסניף שנבחר מסומן', await page.evaluate(() =>
+    document.querySelector('.team-branch-tab.is-on').dataset.teamBranch), pickedBranch);
+  check('"כל הסניפים" כבר לא מסומן', await page.evaluate(() =>
+    document.querySelector('.team-branch-tab').classList.contains('is-on')), false);
+  check('נשארה קבוצת סניף אחת', await page.locator('.team-branch').count(), 1);
+  const narrowed = await page.locator('.team-slot').count();
+  check('והרשימה הצטמצמה', narrowed > 0 && narrowed < allSlots, true);
+  /* לא רק שפחות מוצג — מה שמוצג הוא של הסניף הנכון, וגם המניין
+     שמעליו הוא של הסניף ולא של כל היום. */
+  const inBranch = await page.evaluate((id) => {
+    const state = window.ShiftApp.getState();
+    const week = state.weeks[window.ShiftApp.weekKey()];
+    const idx = Number(document.querySelector('.team-tab.is-on').dataset.teamDay);
+    const mine = window.ShiftStore.dayRoster(state, week, idx)
+      .filter((slot) => slot.branchId === id);
+    return {
+      slots: mine.length,
+      people: mine.reduce((sum, slot) => sum + slot.people.length, 0),
+      onScreenSlots: document.querySelectorAll('.team-slot').length,
+      onScreenPeople: document.querySelectorAll('.team-person').length
+    };
+  }, pickedBranch);
+  check('כל המשמרות שעל המסך הן של הסניף שנבחר',
+    inBranch.onScreenSlots, inBranch.slots);
+  check('וגם האנשים', inBranch.onScreenPeople, inBranch.people);
+
+  /* עובד שסינן לסניף שלו ומדלג בין ימים רוצה להישאר בו */
+  const thirdIdx = (todayIdx + 4) % 7;
+  await page.click('.team-tab[data-team-day="' + thirdIdx + '"]');
+  await page.waitForTimeout(500);
+  check('הסינון שורד החלפת יום', await page.evaluate(() => {
+    const on = document.querySelector('.team-branch-tab.is-on');
+    return on ? on.dataset.teamBranch : null;
+  }), pickedBranch);
+
+  /* יום שבו הסניף שנבחר ריק: הסינון נשאר, המסך אומר זאת,
+     והלשונית נשארת כדי שיהיה מאיפה לצאת. */
+  await page.click('.team-tab[data-team-day="' + closedDay + '"]');
+  await page.waitForTimeout(500);
+  check('ביום שבו הסניף סגור אין משמרות על המסך',
+    await page.locator('.team-slot').count(), 0);
+  check('והמסך אומר שאין אף אחד בסניף הזה', await page.evaluate(() => {
+    const note = document.querySelector('.team-panel .employee-note');
+    return note ? note.textContent : '';
+  }), /סניף/);
+  /* בלי הלשונית הזו העובד נשאר עם מסך ריק ובלי דרך לצאת ממנו */
+  check('ולשונית הסניף עדיין שם כדי לצאת ממנה', await page.evaluate((id) =>
+    !!document.querySelector('.team-branch-tab[data-team-branch="' + id + '"]'),
+    pickedBranch), true);
+  check('ויש מה ללחוץ כדי לראות את שאר הסניפים',
+    await page.locator('.team-branch-tab[data-team-branch=""]').count(), 1);
+
+  /* חזרה ל"כל הסניפים" מחזירה את התצוגה המלאה של אותו יום */
+  await page.click('.team-tab[data-team-day="' + multiDay + '"]');
+  await page.waitForTimeout(400);
+  await page.click('.team-branch-tab[data-team-branch=""]');
+  await page.waitForTimeout(500);
+  check('ביטול הסינון מחזיר את כל הסניפים',
+    await page.locator('.team-slot').count(), allSlots);
+
   console.log('\n== ומה שעדיין לא נחשף ==');
   /* זו הבדיקה שבאמת חשובה. גם כשההגדרה דלוקה, מה שעובר למסך
      הוא שמות ומשמרות — ולא כרטיס העובד. */
@@ -212,6 +349,25 @@ try {
   });
   check('כל מה שעובר על עובד הוא מזהה ושם',
     JSON.stringify(fields), '["id","name"]');
+
+  console.log('\n== עסק עם סניף אחד ==');
+  /* שורת סניפים שכל הכפתורים בה אומרים את אותו דבר היא רעש.
+     כאן מושארים בעסק סניף אחד, והשורה צריכה להיעלם לגמרי. */
+  await backToManager();
+  await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    state.branches = state.branches.slice(0, 1);
+    window.ShiftApp.applyRemoteConfig({
+      settings: state.settings, branches: state.branches, employees: state.employees
+    });
+    window.ShiftApp.persistConfig();
+  });
+  await page.waitForTimeout(700);
+  await openEmployee();
+  await page.locator('.team-fold summary').click();
+  await page.waitForTimeout(400);
+  check('לשוניות הימים נשארו', await page.locator('.team-tab').count(), 7);
+  check('ושורת הסניפים אינה מוצגת', await page.locator('.team-branch-tab').count(), 0);
 
   console.log('\n== כיבוי מחזיר את המסך לסגור ==');
   await backToManager();

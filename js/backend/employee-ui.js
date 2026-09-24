@@ -57,6 +57,9 @@
     /* null = טרם נבחר, ואז נבחר ברירת מחדל חכמה בכל ציור */
     this.teamDay = null;
     this.teamOpen = false;
+    /* null = כל הסניפים. נשמר בין החלפות יום, כי עובד שסינן
+       לסניף שלו רוצה להישאר בו גם כשהוא מדלג בין ימים. */
+    this.teamBranch = null;
   }
 
   EmployeeUI.prototype.start = function () {
@@ -108,9 +111,18 @@
 
     this.root.addEventListener('click', function (event) {
       var tab = event.target.closest('[data-team-day]');
-      if (!tab) return;
-      self.teamDay = Number(tab.dataset.teamDay);
-      self.render();
+      if (tab) {
+        self.teamDay = Number(tab.dataset.teamDay);
+        self.render();
+        return;
+      }
+      var branchTab = event.target.closest('[data-team-branch]');
+      if (branchTab) {
+        /* מחרוזת ריקה = כל הסניפים */
+        var value = branchTab.dataset.teamBranch;
+        self.teamBranch = value === '' ? null : value;
+        self.render();
+      }
     });
 
     /* בתצוגה מקדימה מחוברת רק הניווט בין שבועות. כל השאר נצפה. */
@@ -504,9 +516,54 @@
       });
       html += '</div>';
 
+      /* לשוניות סניפים, רק כשיש יותר מאחד. בעסק עם סניף אחד הן
+         שורה שכל הכפתורים בה אומרים את אותו דבר.
+
+         משניות לימים ולא באותה שורה: קודם "מתי", אחר כך "איפה".
+         השאלה הראשונה היא תמיד היום, וסניף הוא צמצום שלה. */
+      var branchesToday = [];
+      var seenBranch = {};
+      roster.forEach(function (slot) {
+        if (seenBranch[slot.branchId]) return;
+        seenBranch[slot.branchId] = true;
+        branchesToday.push(slot.branchId);
+      });
+
+      /* סניף שנבחר ואין בו איש ביום הזה — הסינון נשאר, והמסך
+         אומר זאת. איפוס שקט לכל הסניפים היה נראה כמו תקלה.
+
+         והלשונית שלו נשארת ברשימה גם ביום שבו הוא ריק: בלעדיה
+         היה נעלם גם הסימון שמראה איזה סינון פעיל וגם הדרך
+         לצאת ממנו, והעובד היה נתקע במסך ריק בלי להבין למה. */
+      var picked = this.teamBranch;
+      if (picked !== null && !seenBranch[picked]) { branchesToday.push(picked); }
+      if (branchesToday.length > 1) {
+        html += '<div class="team-branches" role="tablist">';
+        html += '<button type="button" class="team-branch-tab' +
+          (picked === null ? ' is-on' : '') + '"' +
+          ' role="tab" aria-selected="' + (picked === null ? 'true' : 'false') + '"' +
+          ' data-team-branch="">' + esc(t('employee.teamAllBranches')) + '</button>';
+        branchesToday.forEach(function (branchId) {
+          var branch = Store.byId(self.state.branches, branchId) || {};
+          var on = picked === branchId;
+          html += '<button type="button" class="team-branch-tab' + (on ? ' is-on' : '') + '"' +
+            ' role="tab" aria-selected="' + (on ? 'true' : 'false') + '"' +
+            ' data-team-branch="' + esc(branchId) + '">' +
+            esc(branch.name || '') + '</button>';
+        });
+        html += '</div>';
+      }
+
+      if (picked !== null) {
+        roster = roster.filter(function (slot) { return slot.branchId === picked; });
+        headcount = 0;
+        roster.forEach(function (slot) { headcount += slot.people.length; });
+      }
+
       html += '<div class="team-panel">';
       if (!roster.length) {
-        html += '<p class="employee-note">' + esc(t('employee.teamNobody')) + '</p>';
+        html += '<p class="employee-note">' + esc(t(picked !== null
+          ? 'employee.teamNobodyBranch' : 'employee.teamNobody')) + '</p>';
       } else {
         html += '<p class="team-count">' +
           esc(tPlural('employee.teamCount', headcount)) + '</p>';

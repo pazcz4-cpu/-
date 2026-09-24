@@ -984,6 +984,8 @@
         teamNobody: 'An diesem Tag arbeitet niemand',
         teamCount: { one: '1 Person an diesem Tag', other: '{count} Personen an diesem Tag' },
         teamMine: 'Ich',
+        teamAllBranches: 'Alle Standorte',
+        teamNobodyBranch: 'An diesem Tag arbeitet niemand an diesem Standort',
         requestsLeftShort: 'Anfragen übrig',
         notPublished: 'Der Plan für diese Woche ist noch nicht veröffentlicht.',
         noShifts: 'Sie haben diese Woche keine Schichten.',

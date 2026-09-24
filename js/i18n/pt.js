@@ -114,7 +114,7 @@
         ctaBody: 'Configura as lojas, constrói uma semana e vê a diferença. Leva uma tarde.',
         footerRights: 'Todos os direitos reservados.',
         about: 'Quem somos',
-        stories: 'Casos de uso',
+        stories: 'Onde ajuda',
         faq: 'Perguntas frequentes',
         contact: 'Contacto',
         privacy: 'Privacidade',

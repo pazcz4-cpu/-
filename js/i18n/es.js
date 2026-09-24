@@ -114,7 +114,7 @@
         ctaBody: 'Configura tus sucursales, crea una semana y nota la diferencia. Es cuestión de una tarde.',
         footerRights: 'Todos los derechos reservados.',
         about: 'Quiénes somos',
-        stories: 'Casos de uso',
+        stories: 'Dónde ayuda',
         faq: 'Preguntas frecuentes',
         contact: 'Contacto',
         privacy: 'Privacidad',

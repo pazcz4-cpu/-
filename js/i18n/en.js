@@ -120,7 +120,7 @@
         ctaBody: 'Set up your locations, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
         about: 'About',
-        stories: 'Use stories',
+        stories: 'Where it helps',
         faq: 'FAQ',
         contact: 'Contact',
         privacy: 'Privacy',

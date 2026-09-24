@@ -1,4 +1,4 @@
-/* עמודי התוכן: מי אנחנו, סיפורי שימוש, שאלות נפוצות, צור קשר.
+/* עמודי התוכן: מי אנחנו, איפה זה עוזר, שאלות נפוצות, צור קשר.
 
    מה שנבדק כאן ולמה:
 
@@ -8,8 +8,10 @@
       הדרך הבטוחה ביותר לאבד לקוח שכבר רצה לדבר.
    3. ההגנות של הטופס. הפיתיון והבדיקות המקומיות הם מה שמונע
       מנקודת קצה ציבורית ששולחת דואר להפוך לכלי ספאם.
-   4. שקיפות הדוגמאות. עמוד "סיפורי שימוש" חייב לומר שהעסקים בו
-      אינם לקוחות — עדות בדויה שמוצגת כאמיתית היא הטעיה.
+   4. עמוד "איפה זה עוזר" מתאר סוגי עסקים ולא לקוחות. אין בו שם
+      של חברה, שם של אדם או ציטוט, והוא כתוב בהווה — כך שהוא
+      אינו נקרא כמקרה שקרה אצל מישהו. זה מה שמחזיק אותו נכון
+      בלי הבהרה בראשו, ולכן זה נבדק.
 
    הרצה: npm run test:pages */
 import { createRequire } from 'node:module';
@@ -44,7 +46,7 @@ try {
   });
 
   console.log('\n== ארבעת העמודים עולים, בשתי שפות ==');
-  for (const [name, file] of [['מי אנחנו', 'about.html'], ['סיפורי שימוש', 'stories.html'],
+  for (const [name, file] of [['מי אנחנו', 'about.html'], ['איפה זה עוזר', 'stories.html'],
     ['שאלות נפוצות', 'faq.html'], ['צור קשר', 'contact.html']]) {
     await page.goto(url(file));
     await page.waitForTimeout(400);
@@ -66,17 +68,29 @@ try {
     await page.waitForTimeout(250);
   }
 
-  console.log('\n== סיפורי שימוש אומר שאלה דוגמאות ==');
+  console.log('\n== "איפה זה עוזר" מתאר סוגי עסקים, לא לקוחות ==');
   await page.goto(url('stories.html'));
   await page.waitForTimeout(400);
-  const callout = await page.locator('article[data-legal="he"] .legal-callout').innerText();
-  check('ההבהרה קיימת ובולטת', callout.length > 40, true);
-  check('ונאמר במפורש שאינם לקוחות', /דוגמאות, לא לקוחות/.test(callout), true);
-  await page.click('[data-legal-lang="en"]');
+  for (const lang of ['he', 'en']) {
+    await page.click('[data-legal-lang="' + lang + '"]');
+    await page.waitForTimeout(250);
+    /* מה שהופך תיאור לעדות הוא ציטוט מיוחס: blockquote, cite,
+       או שם של אדם וחברה. מרכאות על צירוף ("ארבעה אנשים") הן
+       הדגשה ולא ציטוט, ולכן אינן נבדקות כאן. */
+    const article = 'article[data-legal="' + lang + '"] ';
+    check(lang + ': אין ציטוט מיוחס',
+      await page.locator(article + 'blockquote, ' + article + 'cite, ' +
+        article + 'q').count(), 0);
+    check(lang + ': ואין הבהרה בראש העמוד',
+      await page.locator('article[data-legal="' + lang + '"] .legal-callout').count(), 0);
+  }
+  await page.click('[data-legal-lang="he"]');
   await page.waitForTimeout(250);
-  check('וגם באנגלית',
-    /examples, not customers/.test(
-      await page.locator('article[data-legal="en"] .legal-callout').innerText()), true);
+  /* הווה ולא עבר: "כל סניף בונה" מתאר עסק כזה, "כל סניף בנה"
+     מתאר מקרה שקרה — ואת זה קורא הקורא כעדות. */
+  const scenarios = await page.locator('article[data-legal="he"]').innerText();
+  check('התיאור בהווה ולא בעבר', /כל סניף בונה/.test(scenarios), true);
+  check('ואין בו ניסוח של מקרה שקרה', /כל סניף בנה/.test(scenarios), false);
 
   console.log('\n== טופס יצירת הקשר באמת שולח ==');
   await page.goto(url('contact.html'));
@@ -178,7 +192,7 @@ try {
 
   console.log('\n== לשוניות בראש כל עמוד ==');
   for (const [file, slug, label] of [['about.html', 'about', 'מי אנחנו'],
-    ['stories.html', 'stories', 'סיפורי שימוש'], ['faq.html', 'faq', 'שאלות נפוצות'],
+    ['stories.html', 'stories', 'איפה זה עוזר'], ['faq.html', 'faq', 'שאלות נפוצות'],
     ['contact.html', 'contact', 'צור קשר'], ['privacy.html', 'privacy', null]]) {
     await page.goto(url(file));
     await page.waitForTimeout(400);

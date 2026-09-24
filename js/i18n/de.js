@@ -114,7 +114,7 @@
         ctaBody: 'Standorte einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
         footerRights: 'Alle Rechte vorbehalten.',
         about: 'Über uns',
-        stories: 'Anwendungsfälle',
+        stories: 'Wo es hilft',
         faq: 'FAQ',
         contact: 'Kontakt',
         privacy: 'Datenschutz',

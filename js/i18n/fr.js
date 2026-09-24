@@ -114,7 +114,7 @@
         ctaBody: 'Configurez vos sites, construisez une semaine et voyez la différence. Une après-midi suffit.',
         footerRights: 'Tous droits réservés.',
         about: 'À propos',
-        stories: 'Cas d\'usage',
+        stories: 'Où ça aide',
         faq: 'Questions fréquentes',
         contact: 'Contact',
         privacy: 'Confidentialité',

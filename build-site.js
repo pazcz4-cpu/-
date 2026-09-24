@@ -365,7 +365,7 @@ const PROSE_PAGES = [
      האתר ולא במקרה: מי שמחפש "תוכנה לסידור עבודה כמה עולה"
      מגיע בדיוק לשם, וזה תנועה שמתחילה בשאלה אמיתית. */
   { file: 'about.html', dir: 'about', label: 'מי אנחנו', priority: '0.6' },
-  { file: 'stories.html', dir: 'stories', label: 'סיפורי שימוש', priority: '0.6' },
+  { file: 'stories.html', dir: 'stories', label: 'איפה זה עוזר', priority: '0.6' },
   { file: 'faq.html', dir: 'faq', label: 'שאלות נפוצות',
     priority: '0.7', changefreq: 'monthly' },
   { file: 'contact.html', dir: 'contact', label: 'צור קשר', priority: '0.6' }

@@ -183,7 +183,12 @@ Project → **Settings** → **Environment Variables**. שלושתם
 | `RESEND_API_KEY` | המפתח מ-Resend | כן |
 | `MAIL_FROM` | `SetShifts <no-reply@setshifts.com>` | כן |
 | `MAIL_REPLY_TO` | לאן ילכו תשובות של עובדים | לא |
+| `CONTACT_TO` | לאן מגיעות פניות מטופס "צור קשר" | לא** |
 | `APP_URL` | `https://www.setshifts.com/app/` | לא* |
+
+\*\* ברירת המחדל היא `support@setshifts.com`. הגדירו אותו רק אם
+פניות מהאתר צריכות להגיע לתיבה אחרת מקריאות השירות. תשובה לפנייה
+כזו חוזרת אל מי שפנה ולא אלינו, בלי קשר למה שמוגדר ב-`MAIL_REPLY_TO`.
 
 \* בלעדיו הקישור במייל נגזר מהדומיין שממנו רצה הבקשה, וזה נכון
 ברוב המקרים. כדאי להגדיר אותו כדי שגם מייל שנשלח מסביבת Preview

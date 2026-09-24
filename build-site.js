@@ -351,14 +351,26 @@ page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', 
    ההגנה היא PLATFORM_OWNER_EMAILS בשרת – אבל אין סיבה לפרסם. */
 page('admin.html', 'admin/index.html', { noindex: true, noServiceWorker: true });
 
-/* העמודים המשפטיים. הם כן נכנסים למנועי החיפוש: עסק שמחפש "האם
-   אפשר לסמוך עליהם" מגיע בדיוק לשם. */
-const LEGAL_PAGES = [
-  { file: 'privacy.html', dir: 'privacy' },
-  { file: 'terms.html', dir: 'terms' },
-  { file: 'security.html', dir: 'security' }
+/* עמודי הפרוזה. כולם נכנסים למנועי החיפוש בכוונה: עסק שמחפש
+   "האם אפשר לסמוך עליהם" או "כמה זה עולה" מגיע בדיוק לשם.
+
+   כולם כתובים באותה תבנית — שתי שפות מלאות ובורר ביניהן, ולא
+   דרך מערכת התרגום של המוצר. עמוד שיווקי שמתורגם לשמונה שפות
+   בלי שאיש קרא אותן הוא שמונה הזדמנויות להבטיח משהו שאינו נכון. */
+const PROSE_PAGES = [
+  { file: 'privacy.html', dir: 'privacy', label: 'עמוד משפטי' },
+  { file: 'terms.html', dir: 'terms', label: 'עמוד משפטי' },
+  { file: 'security.html', dir: 'security', label: 'עמוד משפטי' },
+  /* עמודי התוכן. ל"שאלות נפוצות" יש עדיפות גבוהה יותר במפת
+     האתר ולא במקרה: מי שמחפש "תוכנה לסידור עבודה כמה עולה"
+     מגיע בדיוק לשם, וזה תנועה שמתחילה בשאלה אמיתית. */
+  { file: 'about.html', dir: 'about', label: 'מי אנחנו', priority: '0.6' },
+  { file: 'stories.html', dir: 'stories', label: 'סיפורי שימוש', priority: '0.6' },
+  { file: 'faq.html', dir: 'faq', label: 'שאלות נפוצות',
+    priority: '0.7', changefreq: 'monthly' },
+  { file: 'contact.html', dir: 'contact', label: 'צור קשר', priority: '0.6' }
 ];
-LEGAL_PAGES.forEach((item) => {
+PROSE_PAGES.forEach((item) => {
   page(item.file, item.dir + '/index.html', { canonical: '/' + item.dir + '/' });
 });
 
@@ -428,9 +440,10 @@ write('sitemap.xml',
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
   '  <url><loc>' + SITE_URL + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n' +
-  LEGAL_PAGES.map((item) =>
+  PROSE_PAGES.map((item) =>
     '  <url><loc>' + SITE_URL + '/' + item.dir + '/</loc>' +
-    '<changefreq>yearly</changefreq><priority>0.3</priority></url>\n').join('') +
+    '<changefreq>' + (item.changefreq || 'yearly') + '</changefreq>' +
+    '<priority>' + (item.priority || '0.3') + '</priority></url>\n').join('') +
   '  <url><loc>' + SITE_URL + '/guide/</loc>' +
   '<changefreq>monthly</changefreq><priority>0.4</priority></url>\n' +
   '</urlset>\n');
@@ -457,8 +470,8 @@ console.log('נבנה site/ (' + (total / 1024).toFixed(0) + ' KB)');
 console.log('  /       דף המכירה');
 console.log('  /app/   המערכת עם ההתחברות');
 console.log('  /tool/  הכלי המקומי לעסק אחד');
-LEGAL_PAGES.forEach((item) => {
-  console.log(('  /' + item.dir + '/').padEnd(10, ' ') + ' עמוד משפטי');
+PROSE_PAGES.forEach((item) => {
+  console.log(('  /' + item.dir + '/').padEnd(10, ' ') + ' ' + (item.label || ''));
 });
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {

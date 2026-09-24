@@ -692,12 +692,34 @@ run('כשהחיוב לא חובר מתקבלת הודעה ברורה ולא שג
   });
 });
 
-run('ביטול מנוי פונה לנקודת הקצה של הביטול', function () {
+/* ביטול וחידוש חולקים נקודת קצה אחת ונבדלים ב-op. הבדיקה מוודאת
+   שהכיוון באמת נשלח: op שגוי פירושו לקוח שביקש לבטל וחודש לו. */
+run('ביטול מנוי פונה לנקודת הקצה של המנוי עם op ביטול', function () {
   return signedIn().then(function (ctx) {
-    ctx.server.serverRoutes = { '/api/billing/cancel': { status: 200, body: { ok: true } } };
+    ctx.server.serverRoutes = {
+      '/api/billing/subscription': { status: 200, body: { ok: true } }
+    };
     return ctx.backend.setSubscription({ action: 'cancel' }).then(function () {
-      var cancel = ctx.server.calls.filter(function (c) { return c.path === '/api/billing/cancel'; });
-      assertEqual(cancel.length, 1, 'בקשת הביטול לא נשלחה');
+      var calls = ctx.server.calls.filter(function (c) {
+        return c.path === '/api/billing/subscription';
+      });
+      assertEqual(calls.length, 1, 'בקשת הביטול לא נשלחה');
+      assertEqual(calls[0].body && calls[0].body.op, 'cancel', 'נשלח op שגוי');
+    });
+  });
+});
+
+run('חידוש פונה לאותה נקודת קצה עם op חידוש', function () {
+  return signedIn().then(function (ctx) {
+    ctx.server.serverRoutes = {
+      '/api/billing/subscription': { status: 200, body: { ok: true } }
+    };
+    return ctx.backend.setSubscription({ action: 'resume' }).then(function () {
+      var calls = ctx.server.calls.filter(function (c) {
+        return c.path === '/api/billing/subscription';
+      });
+      assertEqual(calls.length, 1, 'בקשת החידוש לא נשלחה');
+      assertEqual(calls[0].body && calls[0].body.op, 'resume', 'נשלח op שגוי');
     });
   });
 });

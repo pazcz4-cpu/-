@@ -36,6 +36,14 @@
 :root[data-theme="dark"] .lp-logo-dark { display: none; }
 :root[data-theme="dark"] .lp-logo-light { display: block; }
 .lp-nav-spacer { flex: 1; }
+/* קישור טקסט בסרגל: נוכח, ולא כפתור שלישי שמתחרה על העין */
+.lp-nav-link {
+  color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 600;
+  padding: 6px 4px; white-space: nowrap;
+}
+.lp-nav-link:hover { color: var(--ink); }
+/* במסך צר הסרגל צפוף ממילא, ו"צור קשר" קיים בתחתית כל עמוד */
+@media (max-width: 720px) { .lp-nav-link { display: none; } }
 .lp-lang {
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
   color: inherit; font: inherit; font-size: 13.5px; padding: 6px 9px;
@@ -327,6 +335,70 @@
   margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line);
   color: var(--muted);
 }
+/* ===== עמודי תוכן: מי אנחנו, סיפורי שימוש, שאלות, צור קשר ===== */
+.legal h3 { font-size: 17px; margin: 22px 0 6px; }
+.legal h3 + p { margin-top: 0; }
+
+/* הבהרה שצריך לקרוא לפני שאר העמוד, ולכן היא אינה עוד פסקה */
+.legal-callout {
+  background: var(--c2-bg); border: 1px solid var(--c2-line);
+  border-radius: 12px; padding: 14px 16px; margin: 0 0 26px;
+  font-size: 14.5px;
+}
+
+/* ערוץ פנייה ישיר: התווית, הערך, ולידו פעולה אם יש */
+.contact-direct {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 12px;
+}
+/* display:flex גובר על כלל ברירת המחדל של הדפדפן ל-[hidden],
+   ובלי השורה הזו בלוק הוואטסאפ היה מוצג כקופסה ריקה כל עוד אין
+   מספר — בדיוק המצב שהוא אמור למנוע. */
+.contact-direct[hidden] { display: none; }
+.contact-direct > div { flex: 1; min-width: 0; }
+.contact-label {
+  display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 2px;
+}
+/* הכתובת יכולה להיות ארוכה מהכרטיס במסך צר, ולכן היא נשברת
+   ולא נחתכת: כתובת חתוכה היא כתובת שאי אפשר להעתיק ביד. */
+.contact-value {
+  font-size: 16px; font-weight: 600; word-break: break-word;
+  unicode-bidi: plaintext;
+}
+
+.contact-field { display: block; margin-bottom: 14px; }
+.contact-field > span {
+  display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px;
+}
+.contact-field > span b { color: var(--brand); }
+.contact-field input, .contact-field textarea {
+  /* border-box יושב ב-styles.css, שעמודי הפרוזה אינם טוענים.
+     בלי השורה הזו width:100% ועוד ריפוד יוצאים מהמסך, והעמוד
+     נגלל הצידה בטלפון. */
+  box-sizing: border-box;
+  width: 100%; font: inherit; font-size: 15px;
+  color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 12px; min-height: 44px;
+}
+.contact-field textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+.contact-field input:focus-visible, .contact-field textarea:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand);
+}
+
+/* פיתיון לבוטים: מוסתר מבני אדם ומקוראי מסך, וקיים ב-DOM.
+   לא display:none – חלק מהבוטים מדלגים על מה שמוסתר כך. */
+.contact-trap {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.contact-note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+.contact-status { margin: 10px 0 0; font-size: 14.5px; min-height: 1.3em; }
+.contact-status.is-ok { color: var(--ok); font-weight: 600; }
+.contact-status.is-error { color: var(--err); }
+
 .legal-langs { display: flex; gap: 6px; }
 .legal-langs .is-active { border-color: var(--brand); color: var(--brand); font-weight: 600; }
 .lp-footer-inner a { color: inherit; }

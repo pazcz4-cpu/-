@@ -470,8 +470,8 @@ node tools/payplus-smoke.js
 אוטומטי. זיכוי חד-פעמי נעשה מלוח הבקרה של PayPlus.
 
 **מה כן עובד כבר עכשיו בלי PayPlus:** ביטול וחידוש מנוי
-(`/api/billing/cancel`, `/api/billing/resume`), כי בתכנון הזה הם
-רק מסמנים דגל ואינם דורשים את הספק.
+(`/api/billing/subscription` עם `op` של `cancel` או `resume`), כי
+בתכנון הזה הם רק מסמנים דגל ואינם דורשים את הספק.
 
 **משתני סביבה ב-Vercel:**
 

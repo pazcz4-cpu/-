@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>צור קשר · SetShifts</title>
+<meta name="description" content="שלחו לנו הודעה ואדם יחזור אליכם תוך 48 שעות. אפשר גם ישירות במייל.">
+<!-- styles.css ראשון: הוא מגדיר את הטוקנים (צבעים, מרווחים,
+     פינות) ש-landing.css משתמש בהם. בלעדיו כל var(--...)
+     בעמוד ריק, והעמוד מוצג בשחור על לבן בלי שום עיצוב. -->
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="legal-body">
+
+<nav class="lp-nav">
+  <div class="landing-wrap lp-nav-inner">
+    <a class="lp-brand" href="/"><img class="lp-logo lp-logo-dark" src="brand/logo-lockup.png" alt="SetShifts" width="960" height="255"><img class="lp-logo lp-logo-light" src="brand/logo-lockup-light.png" alt="" aria-hidden="true" width="960" height="255"></a>
+    <div class="lp-nav-spacer"></div>
+    <div class="legal-langs" role="group">
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="he" lang="he">עברית</button>
+      <button class="lp-btn lp-btn-ghost" data-legal-lang="en" lang="en">English</button>
+    </div>
+  </div>
+</nav>
+
+<main class="landing-wrap legal">
+
+<article data-legal="he" lang="he" dir="rtl">
+  <h1>צור קשר</h1>
+  <p class="legal-date">אדם קורא ועונה, תוך 48 שעות</p>
+
+  <p>שאלה על המוצר, בקשה להדגמה, רשת שצריכה הצעת מחיר, או משהו
+  שלא עובד — הכול מגיע לאותה תיבה, ואנחנו עונים.</p>
+
+  <!-- כתובת המייל מוצגת כטקסט ולא רק כקישור: קישור mailto אינו
+       עובד בכל סביבה, וכתובת שאי אפשר להעתיק היא כתובת שלא
+       יפנו אליה. -->
+  <div class="contact-direct">
+    <div>
+      <span class="contact-label">מייל</span>
+      <a class="contact-value" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>
+    </div>
+    <button type="button" class="lp-btn lp-btn-ghost" id="copy-mail"
+      data-copy="{{SUPPORT_EMAIL}}" data-done="הועתק">העתקה</button>
+  </div>
+
+  <!-- מוצג רק כשהוגדר מספר. קישור וואטסאפ בלי מספר הוא קישור
+       שבור, וכאן הוא שבור מול מי שרצה לדבר איתנו. -->
+  <div class="contact-direct" id="contact-whatsapp" hidden>
+    <div>
+      <span class="contact-label">וואטסאפ עסקי</span>
+      <a class="contact-value" id="contact-whatsapp-link" href="#"></a>
+    </div>
+  </div>
+
+  <h2>לשלוח הודעה</h2>
+  <form id="contact-form" novalidate>
+    <label class="contact-field">
+      <span>שם <b aria-hidden="true">*</b></span>
+      <input id="contact-name" name="name" type="text" autocomplete="name"
+        maxlength="120" required>
+    </label>
+    <label class="contact-field">
+      <span>אימייל <b aria-hidden="true">*</b></span>
+      <input id="contact-email" name="email" type="email" autocomplete="email"
+        maxlength="200" required dir="ltr">
+    </label>
+    <label class="contact-field">
+      <span>שם העסק</span>
+      <input id="contact-company" name="company" type="text"
+        autocomplete="organization" maxlength="160">
+    </label>
+    <label class="contact-field">
+      <span>טלפון</span>
+      <input id="contact-phone" name="phone" type="tel" autocomplete="tel"
+        maxlength="40" dir="ltr">
+    </label>
+    <label class="contact-field">
+      <span>ההודעה <b aria-hidden="true">*</b></span>
+      <textarea id="contact-message" name="message" rows="6" maxlength="4000"
+        required placeholder="כמה עובדים, כמה סניפים, ומה הכי מציק בסידור היום?"></textarea>
+    </label>
+
+    <!-- פיתיון לבוטים. אינו מוצג ואינו נגיש למקלדת או לקורא מסך. -->
+    <div class="contact-trap" aria-hidden="true">
+      <label>אל תמלאו שדה זה
+        <input id="contact-website" name="website" type="text" tabindex="-1"
+          autocomplete="off"></label>
+    </div>
+
+    <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg" id="contact-send">שליחה</button>
+    <p class="contact-note">הפרטים משמשים לענות לך בלבד. לא נרשמים
+    לשום רשימת תפוצה. ראו <a href="/privacy/">מדיניות פרטיות</a>.</p>
+    <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+  </form>
+
+  <p class="legal-foot">לקוח קיים שמשהו לא עובד אצלו — יש אזור
+  קריאות שירות בתוך המערכת, והוא מגיע אלינו עם פרטי החשבון
+  ונענה מהר יותר.</p>
+</article>
+
+<article data-legal="en" lang="en" dir="ltr" hidden>
+  <h1>Contact us</h1>
+  <p class="legal-date">A person reads and replies, within 48 hours</p>
+
+  <p>A question about the product, a demo request, a chain that needs a
+  quote, or something that isn't working — it all reaches the same
+  inbox, and we answer.</p>
+
+  <div class="contact-direct">
+    <div>
+      <span class="contact-label">Email</span>
+      <a class="contact-value" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>
+    </div>
+    <button type="button" class="lp-btn lp-btn-ghost" data-copy="{{SUPPORT_EMAIL}}"
+      data-done="Copied">Copy</button>
+  </div>
+
+  <div class="contact-direct" id="contact-whatsapp-en" hidden>
+    <div>
+      <span class="contact-label">WhatsApp for business</span>
+      <a class="contact-value" id="contact-whatsapp-link-en" href="#"></a>
+    </div>
+  </div>
+
+  <h2>Send a message</h2>
+  <form id="contact-form-en" novalidate>
+    <label class="contact-field">
+      <span>Name <b aria-hidden="true">*</b></span>
+      <input id="contact-name-en" name="name" type="text" autocomplete="name"
+        maxlength="120" required>
+    </label>
+    <label class="contact-field">
+      <span>Email <b aria-hidden="true">*</b></span>
+      <input id="contact-email-en" name="email" type="email" autocomplete="email"
+        maxlength="200" required>
+    </label>
+    <label class="contact-field">
+      <span>Business name</span>
+      <input id="contact-company-en" name="company" type="text"
+        autocomplete="organization" maxlength="160">
+    </label>
+    <label class="contact-field">
+      <span>Phone</span>
+      <input id="contact-phone-en" name="phone" type="tel" autocomplete="tel"
+        maxlength="40">
+    </label>
+    <label class="contact-field">
+      <span>Message <b aria-hidden="true">*</b></span>
+      <textarea id="contact-message-en" name="message" rows="6" maxlength="4000"
+        required placeholder="How many staff, how many locations, and what hurts most about scheduling today?"></textarea>
+    </label>
+
+    <div class="contact-trap" aria-hidden="true">
+      <label>Leave this field empty
+        <input id="contact-website-en" name="website" type="text" tabindex="-1"
+          autocomplete="off"></label>
+    </div>
+
+    <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg" id="contact-send-en">Send</button>
+    <p class="contact-note">Your details are used only to reply to you.
+    You are not added to any mailing list. See our
+    <a href="/privacy/">privacy policy</a>.</p>
+    <p class="contact-status" id="contact-status-en" role="status" aria-live="polite"></p>
+  </form>
+
+  <p class="legal-foot">If you're already a customer and something is
+  broken — there's a support area inside the system. It reaches us with
+  your account details attached and gets answered faster.</p>
+</article>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="landing-wrap lp-footer-inner">
+    <span>SetShifts</span>
+    <span class="lp-nav-spacer"></span>
+    <a href="/about/">מי אנחנו</a>
+    <a href="/stories/">סיפורי שימוש</a>
+    <a href="/faq/">שאלות נפוצות</a>
+    <a href="/contact/">צור קשר</a>
+    <a href="/privacy/">מדיניות פרטיות</a>
+    <a href="/terms/">תנאי שימוש</a>
+    <a href="/security/">אבטחה</a>
+  </div>
+</footer>
+
+<script src="js/legal.js"></script>
+<script src="js/backend/model.js"></script>
+<script src="js/contact.js"></script>
+</body>
+</html>

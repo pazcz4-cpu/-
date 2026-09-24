@@ -40,7 +40,9 @@ async function send(message) {
     html: String(message.html || ''),
     text: String(message.text || '')
   };
-  var replyTo = String(process.env.MAIL_REPLY_TO || '').trim();
+  /* message.replyTo גובר על ברירת המחדל: בפנייה מהאתר התשובה
+     צריכה לחזור אל מי שפנה, ולא אל תיבת ברירת המחדל שלנו. */
+  var replyTo = String(message.replyTo || process.env.MAIL_REPLY_TO || '').trim();
   if (replyTo) body.reply_to = replyTo;
 
   var response;

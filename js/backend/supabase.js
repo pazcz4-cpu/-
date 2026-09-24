@@ -1030,7 +1030,18 @@
 
     /* הפעולה נקבעת בשכבת החיוב, ולא מנוחשת מתוך הנתונים */
     var action = (patch && patch.action) || 'checkout';
-    return this._server(this.billingEndpoint + '/' + action, { plan: patch && patch.plan })
+
+    /* ביטול וחידוש יושבים באותה נקודת קצה, ונבדלים ב-op. שתיהן
+       הופכות אותו ערך בוליאני אחד, ומגבלת הפונקציות של Vercel
+       יקרה מכדי לבזבז אותה על שתי נקודות קצה זהות. */
+    var path = action;
+    var payload = { plan: patch && patch.plan };
+    if (action === 'cancel' || action === 'resume') {
+      path = 'subscription';
+      payload = { op: action };
+    }
+
+    return this._server(this.billingEndpoint + '/' + path, payload)
       .then(function (result) {
         /* הספק עשוי להחזיר כתובת תשלום. אם כן – שולחים לשם. */
         if (result && result.checkoutUrl) {

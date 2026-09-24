@@ -376,6 +376,42 @@ try {
     await page.waitForTimeout(150);
   }
 
+  /* ===== הטוקנים של העיצוב =====
+
+     landing.css משתמש בכ-100 הפניות var(--...) ואינו מגדיר אף
+     אחת מהן; ההגדרות יושבות ב-styles.css. עמוד פרוזה שטוען רק
+     את landing.css נראה שחור על לבן בלי שום עיצוב — וכך בדיוק
+     נראו מדיניות הפרטיות, התנאים והאבטחה, שהן העמודים שלקוח
+     נכנס אליהם כדי להחליט אם לסמוך עלינו. */
+  console.log('\n== עמודי הפרוזה מקבלים את טוקני העיצוב ==');
+  for (const dir of ['privacy', 'terms', 'security', 'about', 'stories', 'faq', 'contact']) {
+    await page.goto(BASE + '/' + dir + '/');
+    await page.waitForTimeout(300);
+    const paint = await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      const body = getComputedStyle(document.body);
+      return {
+        brand: root.getPropertyValue('--brand').trim(),
+        /* רקע שקוף פירושו שהעמוד לא צבע כלום בעצמו */
+        opaque: body.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+          body.backgroundColor !== 'transparent'
+      };
+    });
+    check('/' + dir + '/ הצבעים מוגדרים', paint.brand.length > 0, true);
+    check('/' + dir + '/ ויש רקע', paint.opaque, true);
+  }
+
+  console.log('\n== עמודי התוכן באתר הבנוי ==');
+  for (const dir of ['about', 'stories', 'faq', 'contact']) {
+    const response = await page.goto(BASE + '/' + dir + '/');
+    check('/' + dir + '/ עולה', response.status(), 200);
+    /* תבנית שלא הוחלפה היא בדיוק מה שהלקוח רואה ואנחנו לא:
+       "מופעל על ידי {{LEGAL_ENTITY}}" על עמוד חי. */
+    const body = await page.locator('body').innerText();
+    check('/' + dir + '/ בלי תבנית שנשארה', /\{\{[A-Z_]+\}\}/.test(body), false);
+    check('/' + dir + '/ שתי שפות', await page.locator('article[data-legal]').count(), 2);
+  }
+
   console.log('\n== הקישורים מדף המכירה ==');
   await page.goto(BASE + '/');
   await page.waitForTimeout(400);

@@ -195,6 +195,33 @@ try {
   check('ומוצג סיכום השעות של היום',
     await page.locator('.punch-state span').innerText(), /0:1[0-9]/);
 
+  console.log('\n== שמירת הסידור אינה מוחקת שעות ==');
+  /* המטען שנשלח לשרת נבנה שדה-שדה, ולכן שדה שנשכח בו אינו
+     "לא נשמר" אלא נמחק: השמירה דורסת את השורה. זו הבדיקה
+     שתופסת את זה — חודש של שעות שנעלם בפרסום הסידור הבא. */
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.fill('#signin-form input[name="email"]', 'boss@clock.test');
+  await page.fill('#signin-form input[name="password"]', 'secret123');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(1600);
+  await page.click('#generate');
+  await page.waitForTimeout(2200);
+  await page.click('#publish-week');
+  await page.waitForTimeout(400);
+  await page.click('[data-confirm-yes]');
+  await page.waitForTimeout(1500);
+  check('הדיווחים שרדו את בניית הסידור והפרסום', await page.evaluate(() => {
+    const db = window.__backend.db;
+    let total = 0;
+    Object.keys(db.data).forEach((companyId) => {
+      const weeks = db.data[companyId].weeks || {};
+      Object.keys(weeks).forEach((key) => { total += (weeks[key].punches || []).length; });
+    });
+    return total;
+  }), 2);
+
   console.log('\n== כיבוי מסיר את הכפתור ==');
   await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await page.reload();

@@ -176,6 +176,11 @@
           return backend.saveWeek(weekKey, {
             constraints: week.constraints, assignments: week.assignments,
             manual: week.manual, holidays: week.holidays,
+            /* דיווחי השעון. המטען נבנה שדה-שדה, ולכן שדה שנשכח
+               כאן אינו "לא נשמר" אלא נמחק: השמירה דורסת את
+               השורה בשרת. חודש של שעות היה נעלם בפרסום הסידור
+               הבא. */
+            punches: Array.isArray(week.punches) ? week.punches : [],
             shabbatEnd: week.shabbatEnd, note: week.note, published: week.published,
             publishedAt: week.publishedAt, publishedSignature: week.publishedSignature
           });

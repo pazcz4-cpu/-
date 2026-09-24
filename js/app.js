@@ -1475,6 +1475,9 @@
 
      חופשות בתשלום מגיעות מהבקשות שאושרו ולא מהדיווחים, מפני
      שיום חופשה הוא יום שלא דיווחו בו. */
+  /* איזה עובד פתוח לתיקון בדוח השעות. null = אף אחד. */
+  var hoursEditEmp = null;
+
   function hoursMonth() {
     var input = $('#hours-month');
     if (input && input.value) return input.value;
@@ -1490,6 +1493,7 @@
     }).map(function (emp) {
       var row = report[emp.id];
       return {
+        empId: emp.id,
         name: emp.name,
         days: row.days,
         minutes: row.minutes,
@@ -1502,9 +1506,73 @@
     });
   }
 
+  /* ===== תיקון דיווחים =====
+
+     דוח מסמן משמרת פתוחה ואומר שהוא אינו מוכן לשליחה — ואם אין
+     דרך לתקן אותה, הסימון הזה הוא מבוי סתום. כאן המנהל רואה את
+     הדיווחים של עובד בחודש, מוחק דיווח שגוי ומוסיף את מה שחסר.
+
+     כל תיקון נרשם כ"מנהל" ולא כ"טלפון": העובד זכאי לראות שמה
+     שכתוב בדוח שלו לא הגיע ממנו. */
+  function punchRowsOf(empId, monthKey) {
+    var out = [];
+    Store.weekKeysForMonth(monthKey).forEach(function (weekKey) {
+      var current = (state.weeks || {})[weekKey];
+      if (!current) return;
+      Store.punchesOf(current, empId).forEach(function (punch) {
+        var at = new Date(Date.parse(punch.at));
+        if (Store.monthKeyOf(at) !== monthKey) return;
+        out.push({ weekKey: weekKey, punch: punch, at: at });
+      });
+    });
+    return out.sort(function (a, b) { return a.at - b.at; });
+  }
+
+  function twoDigits(value) { return (value < 10 ? '0' : '') + value; }
+
+  function hoursEditor(empId, monthKey) {
+    var rows = punchRowsOf(empId, monthKey);
+    var html = '<div class="hours-editor">';
+    html += '<p class="hint">' + esc(t('hours.fixHint')) + '</p>';
+    if (!rows.length) {
+      html += '<p class="list-empty">' + esc(t('hours.fixNone')) + '</p>';
+    } else {
+      html += '<table class="hours-punches"><tbody>';
+      rows.forEach(function (row) {
+        html += '<tr><td>' + esc(Store.formatDate(row.at)) + '</td>' +
+          '<td>' + twoDigits(row.at.getHours()) + ':' + twoDigits(row.at.getMinutes()) + '</td>' +
+          '<td>' + esc(t(row.punch.kind === Store.PUNCH.IN
+            ? 'employee.clockIn' : 'employee.clockOut')) + '</td>' +
+          '<td>' + esc(t('hours.src_' + (row.punch.src || 'phone'))) + '</td>' +
+          '<td><button class="btn ghost small" data-punch-remove="' + esc(row.punch.id) + '"' +
+          ' data-week="' + esc(row.weekKey) + '"' + (viewOnly ? ' disabled' : '') + '>' +
+          ico('trash') + '<span>' + esc(t('hours.fixRemove')) + '</span></button></td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    html += '<div class="hours-add">' +
+      '<label class="inline-field"><span>' + esc(t('hours.fixDate')) + '</span>' +
+      '<input type="date" class="text-input" id="punch-date"></label>' +
+      '<label class="inline-field"><span>' + esc(t('hours.fixTime')) + '</span>' +
+      '<input type="time" class="text-input" id="punch-time"></label>' +
+      '<label class="inline-field"><span>' + esc(t('hours.fixKind')) + '</span>' +
+      '<select class="text-input" id="punch-kind">' +
+      '<option value="in">' + esc(t('employee.clockIn')) + '</option>' +
+      '<option value="out">' + esc(t('employee.clockOut')) + '</option>' +
+      '</select></label>' +
+      '<button class="btn primary small" data-punch-add="' + esc(empId) + '"' +
+      (viewOnly ? ' disabled' : '') + '>' + esc(t('hours.fixAdd')) + '</button>' +
+      '</div>';
+    return html + '</div>';
+  }
+
   function renderHours() {
     var container = $('#hours-table');
     if (!container) return;
+    /* הדוח סורק את כל השבועות שנטענו, לכל עובד ולכל יום. הוא
+       נבנה מחדש בכל ציור, ולכן לעסק שאין לו שעון — כלומר אין
+       לו גם לשונית — הוא לא נבנה בכלל. */
+    if (!Store.timeclock(state).enabled) { container.innerHTML = ''; return; }
     var monthKey = hoursMonth();
     var input = $('#hours-month');
     if (input && !input.value) input.value = monthKey;
@@ -1525,6 +1593,7 @@
       '<th>' + esc(t('hours.columnPaidLeave')) + '</th>' +
       '<th>' + esc(t('hours.columnUnpaidLeave')) + '</th>' +
       '<th>' + esc(t('hours.columnOpen')) + '</th>' +
+      '<th></th>' +
       '</tr></thead><tbody>';
     rows.forEach(function (row) {
       totals.days += row.days;
@@ -1534,7 +1603,8 @@
       totals.paid += row.paidLeaveDays;
       totals.unpaid += row.unpaidLeaveDays;
       totals.open += row.openSessions;
-      html += '<tr><td class="row-head">' + esc(row.name) + '</td>' +
+      html += '<tr class="hours-row" data-hours-emp="' + esc(row.empId) + '">' +
+        '<td class="row-head">' + esc(row.name) + '</td>' +
         '<td>' + row.days + '</td>' +
         '<td><b>' + Store.formatMinutes(row.minutes) + '</b></td>' +
         '<td>' + Store.formatMinutes(row.plannedMinutes) + '</td>' +
@@ -1544,7 +1614,13 @@
         '<td>' + (row.unpaidLeaveDays || '—') + '</td>' +
         '<td>' + (row.openSessions
           ? '<span class="hours-open">' + row.openSessions + '</span>' : '—') + '</td>' +
+        '<td><button class="btn ghost small" data-hours-edit="' + esc(row.empId) + '"' +
+        (viewOnly ? ' disabled' : '') + '>' + esc(t('hours.fix')) + '</button></td>' +
         '</tr>';
+      if (hoursEditEmp === row.empId) {
+        html += '<tr class="hours-edit-row"><td colspan="' + (overtimeOn ? 9 : 8) + '">' +
+          hoursEditor(row.empId, monthKey) + '</td></tr>';
+      }
     });
     html += '</tbody><tfoot><tr><td class="row-head">' + esc(t('hours.totalRow')) + '</td>' +
       '<td><b>' + totals.days + '</b></td>' +
@@ -1554,6 +1630,7 @@
       '<td><b>' + totals.paid + '</b></td>' +
       '<td><b>' + totals.unpaid + '</b></td>' +
       '<td><b>' + totals.open + '</b></td>' +
+      '<td></td>' +
       '</tr></tfoot></table>';
     if (totals.open) {
       html += '<p class="hint hours-warn">' + esc(t('hours.openWarning')) + '</p>';
@@ -3389,6 +3466,60 @@
     }
     var hoursExport = $('#hours-export');
     if (hoursExport) { hoursExport.addEventListener('click', exportHours); }
+
+    /* פתיחה, מחיקה והוספה של דיווחים. הכתיבה היא של המנהל,
+       ולכן היא עוברת בשמירת השבוע הרגילה — ולא בפונקציה של
+       העובד, שמחשבת את הכיוון בעצמה. */
+    if ($('#hours-table')) {
+      $('#hours-table').addEventListener('click', function (event) {
+        var open = event.target.closest('[data-hours-edit]');
+        if (open) {
+          var empId = open.dataset.hoursEdit;
+          hoursEditEmp = hoursEditEmp === empId ? null : empId;
+          renderHours();
+          return;
+        }
+
+        var remove = event.target.closest('[data-punch-remove]');
+        if (remove) {
+          var weekKey = remove.dataset.week;
+          var target = (state.weeks || {})[weekKey];
+          if (!target) return;
+          if (!Store.removePunch(target, remove.dataset.punchRemove)) return;
+          persist(null, [weekKey]);
+          renderHours();
+          toast(t('hours.fixRemoved'));
+          return;
+        }
+
+        var add = event.target.closest('[data-punch-add]');
+        if (add) {
+          var date = ($('#punch-date') || {}).value || '';
+          var time = ($('#punch-time') || {}).value || '';
+          if (!date || !time) { toast(t('hours.fixNeedTime')); return; }
+          var parts = date.split('-');
+          var clock = time.split(':');
+          var when = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]),
+            Number(clock[0]), Number(clock[1]));
+          if (isNaN(when.getTime())) { toast(t('hours.fixNeedTime')); return; }
+          var key = Store.currentWeekKey(when);
+          var week = Store.getWeek(state, key);
+          var result = Store.addPunch(week, {
+            empId: add.dataset.punchAdd,
+            kind: ($('#punch-kind') || {}).value === 'out' ? Store.PUNCH.OUT : Store.PUNCH.IN,
+            at: when.toISOString(),
+            src: Store.PUNCH_SRC.MANAGER,
+            /* תיקון של המנהל אינו נחסם בחלון הכפילות: הוא רואה
+               את מה שכבר רשום ויודע מה הוא מוסיף. */
+            force: true
+          });
+          if (!result.ok) { toast(t('hours.fixFailed')); return; }
+          persist(null, [key]);
+          renderHours();
+          toast(t('hours.fixAdded'));
+        }
+      });
+    }
 
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);

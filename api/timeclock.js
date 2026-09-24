@@ -257,8 +257,26 @@ async function storePunches(context, rows) {
   return { stored: stored, unknown: unknown, duplicate: duplicate, bad: bad };
 }
 
+/* פרמטרים של הבקשה.
+
+   הסביבה מספקת req.query, אבל לא בכל מסלול ולא בכל גרסה —
+   ונקודת קצה שמדברת עם מכשיר בסניף של לקוח היא המקום הגרוע
+   ביותר לגלות בו הבדל כזה. לכן מה שחסר מושלם מהכתובת עצמה. */
+function queryOf(req) {
+  const out = Object.assign({}, req.query || {});
+  const raw = String(req.url || '');
+  const mark = raw.indexOf('?');
+  if (mark !== -1) {
+    const params = new URLSearchParams(raw.slice(mark + 1));
+    params.forEach(function (value, key) {
+      if (out[key] === undefined) out[key] = value;
+    });
+  }
+  return out;
+}
+
 module.exports = async function handler(req, res) {
-  const query = req.query || {};
+  const query = queryOf(req);
   const action = String(query.action || '').replace(/\.(aspx|asp|php)$/i, '').toLowerCase();
   const sn = String(query.SN || query.sn || '').trim();
 
@@ -312,5 +330,6 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports._internals = {
-  zonedToUtc: zonedToUtc, parseAttlog: parseAttlog, handshake: handshake
+  zonedToUtc: zonedToUtc, parseAttlog: parseAttlog, handshake: handshake,
+  queryOf: queryOf
 };

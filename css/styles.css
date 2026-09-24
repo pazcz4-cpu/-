@@ -2016,3 +2016,9 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
   .leave-note { flex: 0 0 auto; }
   .leave-form .btn { width: 100%; }
 }
+
+/* תיקון דיווחי שעון בדוח */
+.hours-editor { padding: var(--s3); background: var(--c2-bg); border-radius: var(--r-sm); }
+.hours-punches { width: auto; margin-bottom: var(--s3); }
+.hours-punches td { padding: 4px var(--s3); }
+.hours-add { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: flex-end; }

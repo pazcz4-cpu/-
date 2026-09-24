@@ -67,21 +67,33 @@ try {
   const seeded = await page.evaluate(() => {
     const key = window.ShiftMockBackend.STORE_KEY;
     const db = JSON.parse(localStorage.getItem(key));
-    const weekKey = window.ShiftStore.currentWeekKey();
     const now = new Date();
-    /* היום השלישי בחודש: בתוך החודש בוודאות, ורחוק מגבולותיו */
-    const day = (n, h, m) => new Date(now.getFullYear(), now.getMonth(), n, h, m).toISOString();
-    let punches = [];
+    /* מהיום השלישי בחודש: בתוך החודש בוודאות, ורחוק מגבולותיו */
+    const at = (n, h, m) => new Date(now.getFullYear(), now.getMonth(), n, h, m);
+    const punches = [];
     for (let d = 0; d < 3; d++) {
-      punches.push({ id: 'a' + d, empId: 'emp-1', kind: 'in', at: day(3 + d, 8, 0), src: 'device' });
-      punches.push({ id: 'b' + d, empId: 'emp-1', kind: 'out', at: day(3 + d, 16, 0), src: 'device' });
+      punches.push({ id: 'a' + d, empId: 'emp-1', kind: 'in', when: at(3 + d, 8, 0), src: 'device' });
+      punches.push({ id: 'b' + d, empId: 'emp-1', kind: 'out', when: at(3 + d, 16, 0), src: 'device' });
     }
-    punches.push({ id: 'c1', empId: 'emp-2', kind: 'in', at: day(3, 8, 0), src: 'phone' });
-    punches.push({ id: 'c2', empId: 'emp-2', kind: 'out', at: day(3, 18, 0), src: 'phone' });
-    punches.push({ id: 'd1', empId: 'emp-3', kind: 'in', at: day(4, 9, 0), src: 'phone' });
+    punches.push({ id: 'c1', empId: 'emp-2', kind: 'in', when: at(3, 8, 0), src: 'phone' });
+    punches.push({ id: 'c2', empId: 'emp-2', kind: 'out', when: at(3, 18, 0), src: 'phone' });
+    punches.push({ id: 'd1', empId: 'emp-3', kind: 'in', when: at(4, 9, 0), src: 'phone' });
+
+    /* כל דיווח נכתב לשורת השבוע של התאריך שלו — כך זה עובד
+       בשני המסלולים האמיתיים, ובדיקה שמניחה אחרת בודקת מצב
+       שלא קיים. */
     Object.keys(db.data).forEach((companyId) => {
-      const weeks = db.data[companyId].weeks || {};
-      if (weeks[weekKey]) weeks[weekKey].punches = punches;
+      const weeks = db.data[companyId].weeks || (db.data[companyId].weeks = {});
+      punches.forEach((punch) => {
+        const weekKey = window.ShiftStore.currentWeekKey(punch.when);
+        if (!weeks[weekKey]) {
+          weeks[weekKey] = { constraints: {}, assignments: {}, manual: {},
+            holidays: {}, punches: [], shabbatEnd: '', note: '' };
+        }
+        if (!Array.isArray(weeks[weekKey].punches)) weeks[weekKey].punches = [];
+        weeks[weekKey].punches.push({ id: punch.id, empId: punch.empId, kind: punch.kind,
+          at: punch.when.toISOString(), src: punch.src });
+      });
     });
     localStorage.setItem(key, JSON.stringify(db));
     return punches.length;
@@ -114,6 +126,58 @@ try {
   check('והיא נספרת כפתוחה', third[7], '1');
   check('והמסך אומר את זה במפורש',
     await page.locator('.hours-warn').innerText(), /לא נסגרו/);
+
+  console.log('\n== תיקון משמרת פתוחה ==');
+  /* דוח שמסמן משמרת פתוחה ואומר שהוא אינו מוכן לשליחה, ואין בו
+     דרך לתקן אותה, הוא מבוי סתום. זה מה שנבדק כאן. */
+  await page.click('.hours-row[data-hours-emp="emp-3"] [data-hours-edit]');
+  await page.waitForTimeout(600);
+  check('נפתח אזור תיקון', await page.locator('.hours-editor').count(), 1);
+  check('ובו הדיווח שנרשם', await page.locator('.hours-punches tbody tr').count(), 1);
+  check('עם מקור הדיווח',
+    await page.locator('.hours-punches tbody tr').innerText(), /טלפון/);
+
+  /* היציאה החסרה נוספת ידנית */
+  const openDay = await page.evaluate(() => {
+    const now = new Date();
+    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-04';
+  });
+  await page.fill('#punch-date', openDay);
+  await page.fill('#punch-time', '17:00');
+  await page.selectOption('#punch-kind', 'out');
+  await page.click('[data-punch-add]');
+  await page.waitForTimeout(900);
+  const fixed = await row('עובד/ת 3');
+  check('המשמרת נסגרה', fixed[7], '—');
+  check('והשעות נכנסו לדוח', fixed[2], '8:00');
+  check('והתיקון מסומן כשל המנהל', await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    const mine = [];
+    Object.keys(state.weeks).forEach((key) => {
+      (state.weeks[key].punches || []).forEach((punch) => {
+        if (punch.empId === 'emp-3') mine.push(punch);
+      });
+    });
+    mine.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+    return mine.map((p) => p.src).join(',');
+  }), 'phone,manager');
+
+  /* ומחיקה של דיווח שגוי. אזור התיקון נשאר פתוח אחרי ההוספה —
+     מנהל שמתקן עושה לרוב יותר מתיקון אחד. */
+  check('אזור התיקון נשאר פתוח', await page.locator('.hours-editor').count(), 1);
+  check('ובו שני הדיווחים', await page.locator('.hours-punches tbody tr').count(), 2);
+  await page.locator('[data-punch-remove]').first().click();
+  await page.waitForTimeout(800);
+  check('דיווח שנמחק נעלם מהדוח', await page.evaluate(() => {
+    const state = window.ShiftApp.getState();
+    let count = 0;
+    Object.keys(state.weeks).forEach((key) => {
+      (state.weeks[key].punches || []).forEach((punch) => {
+        if (punch.empId === 'emp-3') count++;
+      });
+    });
+    return count;
+  }), 1);
 
   console.log('\n== כיבוי בקרת השעות הנוספות ==');
   const columns = async () => page.locator('#hours-table thead th').allInnerTexts();

@@ -90,6 +90,21 @@ test('חותמת שאינה נקראת מחזירה null ולא תאריך שג�
   assertEqual(internals.zonedToUtc('מתישהו', 'Asia/Jerusalem'), null, 'טקסט חופשי');
 });
 
+console.log('\n== קריאת הפרמטרים ==');
+
+test('פרמטרים נקראים גם כשהסביבה לא פענחה אותם', function () {
+  var query = internals.queryOf({ url: '/api/timeclock?action=cdata&SN=ABC&table=ATTLOG' });
+  assertEqual(query.action, 'cdata', 'הפעולה');
+  assertEqual(query.SN, 'ABC', 'המספר הסידורי');
+  assertEqual(query.table, 'ATTLOG', 'הטבלה');
+});
+
+test('ומה שהסביבה כן פענחה גובר', function () {
+  var query = internals.queryOf({ query: { SN: 'FROM-ENV' }, url: '/x?SN=FROM-URL&table=ATTLOG' });
+  assertEqual(query.SN, 'FROM-ENV', 'המספר הסידורי');
+  assertEqual(query.table, 'ATTLOG', 'הושלם מהכתובת');
+});
+
 console.log('\n== לחיצת היד ==');
 
 test('בלוק התצורה כולל את מה שגורם לדחיפה מיידית', function () {
@@ -163,7 +178,8 @@ function call(options) {
   };
   var req = {
     method: opts.method || 'GET',
-    query: opts.query || {},
+    query: opts.query,
+    url: opts.url,
     body: opts.body === undefined ? '' : opts.body
   };
   return Promise.resolve(handler(req, res)).then(function () { return res; });
@@ -174,6 +190,14 @@ asyncTest('בדיקת חיבור עונה גם בלי מספר סידורי', fu
   return call({ query: { action: 'test' } }).then(function (res) {
     assertEqual(res.statusCode, 200, 'קוד התשובה');
     assertEqual(res.body, 'OK', 'גוף התשובה');
+  });
+});
+
+asyncTest('לחיצת יד עובדת גם כשהפרמטרים רק בכתובת', function () {
+  fakeServer();
+  return call({ url: '/api/timeclock?action=cdata&SN=SN-1&options=all' }).then(function (res) {
+    assertEqual(res.statusCode, 200, 'קוד התשובה');
+    assert(res.body.indexOf('Realtime=1') !== -1, 'התצורה לא חזרה');
   });
 });
 

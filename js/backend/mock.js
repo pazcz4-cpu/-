@@ -508,6 +508,64 @@
     return Promise.resolve(this._weekSlice(session, clone(week)));
   };
 
+  /* ===== בקשת חופשה עתידית =====
+
+     נכתבת כרשומה יומית על כל יום בטווח, עם requestId משותף.
+     שלושה דברים נאכפים כאן ולא במסך:
+
+       · מי — מהסשן. אחרת אפשר לבקש חופשה בשם אחר.
+       · מתי — טווח בעבר אינו בקשה אלא תיקון, וזה של המנהל.
+       · כמה — תקרה על אורך הטווח, כדי שבקשה אחת לא תכתוב
+         מאות רשומות.
+
+     שבוע שכבר פורסם אינו חוסם כאן, בשונה מבקשת אילוץ רגילה:
+     אילוץ משנה את הזמינות לסידור שטרם נבנה, ובקשת חופשה היא
+     בקשה לאדם. המנהל יראה אותה, ויחליט אם לשנות את הסידור. */
+  MockBackend.prototype.requestLeave = function (input) {
+    var session;
+    try { session = this._require('leave.requestOwn'); } catch (err) { return Promise.reject(err); }
+    if (!session.user.employeeId) {
+      return Promise.reject(this._fail('no_employee_link', t('server.notLinked')));
+    }
+    var request = input || {};
+    var days = Store.leaveDays(request.from, request.to);
+    if (!days || !days.length) {
+      return Promise.reject(this._fail('invalid_input', t('server.leaveRange')));
+    }
+    var today = this.now();
+    var startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (days[0].date < startOfToday) {
+      return Promise.reject(this._fail('invalid_input', t('server.leavePast')));
+    }
+
+    var data = this._companyData(session.company.id);
+    var record = Store.leaveRecord({
+      paid: !!request.paid, note: request.note,
+      from: request.from, to: request.to, at: today.toISOString()
+    });
+    var touched = [];
+    days.forEach(function (day) {
+      if (!data.weeks[day.weekKey]) {
+        data.weeks[day.weekKey] = { constraints: {}, assignments: {}, manual: {},
+          holidays: {}, punches: [], shabbatEnd: '', note: '' };
+      }
+      var week = data.weeks[day.weekKey];
+      if (!week.constraints) week.constraints = {};
+      week.constraints[session.user.employeeId + '|' + day.dayIdx] = clone(record);
+      week.updatedAt = today.toISOString();
+      if (touched.indexOf(day.weekKey) === -1) touched.push(day.weekKey);
+    });
+    this._save();
+    var self = this;
+    touched.forEach(function (weekKey) {
+      self._notify(session.company.id, { type: 'week', weekKey: weekKey,
+        week: clone(data.weeks[weekKey]) });
+    });
+    return Promise.resolve({
+      requestId: record.requestId, days: days.length, weeks: touched
+    });
+  };
+
   /* עדכון הסיבה שהעובד צירף לבקשה. אינו משנה את מה שהתבקש, ולכן
      אינו מחזיר בקשה שאושרה למצב המתנה. */
   MockBackend.prototype.saveOwnNote = function (weekKey, dayIdx, note) {

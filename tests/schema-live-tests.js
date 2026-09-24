@@ -331,6 +331,82 @@ check('ועובד רואה את הדיווחים שלו בלבד', function () {
     '1', 'גם כשהסידור פתוח לכל הצוות');
 });
 
+console.log('\n== בקשת חופשה, בשאילתה אמיתית ==');
+
+/* התאריכים נגזרים מהיום ולא קבועים: בקשה חייבת להיות עתידית,
+   ובדיקה עם תאריך קבוע הופכת ללא רלוונטית ביום שאחרי. */
+/* הקריאה נעשית כעובד; הבדיקה עצמה קוראת מהטבלה, וזו קריאה
+   שהכללים חוסמים בפני עובד — ולכן חוזרים לתפקיד המקורי לפני
+   השאילתה. החסימה הזו היא בדיוק מה שנבדק במקום אחר. */
+var LEAVE_CALL = "select public.request_leave((current_date + 10), (current_date + 12), true, 'חתונה');\nreset role;";
+
+check('שלושה ימים נכתבים כשלוש רשומות', function () {
+  var count = ask(false,
+    "(select count(*)::text from public.company_weeks w, " +
+    " jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    LEAVE_CALL);
+  assertEqual(count, '3', 'מספר הרשומות');
+});
+
+check('וכולן נושאות אותו מזהה בקשה', function () {
+  var distinct = ask(false,
+    "(select count(distinct item.value->>'requestId')::text from public.company_weeks w, " +
+    " jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    LEAVE_CALL);
+  assertEqual(distinct, '1', 'מספר הבקשות');
+});
+
+check('הבקשה ממתינה לאישור, ומסומנת כבתשלום', function () {
+  var row = ask(false,
+    "(select item.value->>'status' || '/' || coalesce(item.value->>'leave', '-') " +
+    " from public.company_weeks w, jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null limit 1)",
+    LEAVE_CALL);
+  assertEqual(row, 'pending/paid', 'מצב הרשומה');
+});
+
+check('והיא נרשמת על העובד המחובר, ולא על מי שביקשו', function () {
+  var keys = ask(false,
+    "(select string_agg(distinct split_part(item.key, '|', 1), ',') " +
+    " from public.company_weeks w, jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    LEAVE_CALL);
+  assertEqual(keys, 'emp-1', 'מזהה העובד ברשומות');
+});
+
+check('טווח בעבר נדחה', function () {
+  var count = ask(false,
+    "(select count(*)::text from public.company_weeks w, " +
+    " jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    "do $d$ begin\n" +
+    "  begin perform public.request_leave((current_date - 5), (current_date - 1), true, '');\n" +
+    "  exception when others then null; end;\nend $d$;\nreset role;");
+  assertEqual(count, '0', 'נכתבו רשומות לטווח שבעבר');
+});
+
+check('וטווח ארוך משישים יום נדחה', function () {
+  var count = ask(false,
+    "(select count(*)::text from public.company_weeks w, " +
+    " jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    "do $d$ begin\n" +
+    "  begin perform public.request_leave((current_date + 1), (current_date + 90), true, '');\n" +
+    "  exception when others then null; end;\nend $d$;\nreset role;");
+  assertEqual(count, '0', 'נכתבו רשומות לטווח ארוך מדי');
+});
+
+check('בקשה שחוצה שבוע נכתבת לשתי שורות שבוע', function () {
+  var weeks = ask(false,
+    "(select count(distinct w.week_key)::text from public.company_weeks w, " +
+    " jsonb_each(coalesce(w.week->'constraints', '{}'::jsonb)) as item " +
+    " where w.company_id = '" + CO + "' and item.value->>'requestId' is not null)",
+    "select public.request_leave((current_date + 7), (current_date + 16), false, '');\nreset role;");
+  assert(Number(weeks) >= 2, 'הבקשה נכתבה לשבוע אחד בלבד: ' + weeks);
+});
+
 stop();
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

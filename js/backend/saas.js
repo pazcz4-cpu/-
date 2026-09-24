@@ -223,16 +223,36 @@
         out.push({ tag: 'published', title: t('notify.published'),
           body: t('notify.publishedBody') });
       }
+      /* בקשת חופשה היא כמה ימים עם אותו requestId. החלטה עליה
+         היא הודעה אחת ולא חמש: עובד שמקבל חמש התראות זהות
+         מכבה התראות. */
+      var seenRequests = {};
       Object.keys(afterConstraints).forEach(function (key) {
         if (key.split('|')[0] !== employeeId) return;
         var now = afterConstraints[key];
         var was = beforeConstraints[key];
         var dayName = (Data.DAYS[Number(key.split('|')[1])] || {}).name || '';
-        if (Store.constraintStatus(now) === Store.constraintStatus(was)) return;
-        if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.APPROVED) {
+        var status = Store.constraintStatus(now);
+        if (status === Store.constraintStatus(was)) return;
+        var requestId = now && now.requestId;
+        if (requestId) {
+          if (seenRequests[requestId]) return;
+          seenRequests[requestId] = true;
+          var range = (now.leaveFrom || '') + ' – ' + (now.leaveTo || '');
+          if (status === Store.CONSTRAINT_STATUS.APPROVED) {
+            out.push({ tag: 'leave-' + requestId, title: t('notify.leaveApproved'),
+              body: t('notify.leaveApprovedBody', { range: range }) });
+          } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
+            out.push({ tag: 'leave-' + requestId, title: t('notify.leaveRejected'),
+              body: t('notify.leaveRejectedBody', { range: range }) +
+                (now.managerNote ? ': ' + now.managerNote : '.') });
+          }
+          return;
+        }
+        if (status === Store.CONSTRAINT_STATUS.APPROVED) {
           out.push({ tag: 'decision-' + key, title: t('notify.requestApproved'),
             body: t('notify.requestApprovedBody', { day: dayName }) });
-        } else if (Store.constraintStatus(now) === Store.CONSTRAINT_STATUS.REJECTED) {
+        } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
           out.push({ tag: 'decision-' + key, title: t('notify.requestRejected'),
             body: t('notify.requestRejectedBody', { day: dayName }) +
               (now.managerNote ? ': ' + now.managerNote : '.') });
@@ -243,12 +263,20 @@
 
     /* מנהל – בקשות חדשות שממתינות לו */
     var fresh = [];
+    var freshRequests = {};
     Object.keys(afterConstraints).forEach(function (key) {
       var now = afterConstraints[key];
       if (Store.constraintStatus(now) !== Store.CONSTRAINT_STATUS.PENDING) return;
       var was = beforeConstraints[key];
       if (was && Store.constraintStatus(was) === Store.CONSTRAINT_STATUS.PENDING &&
         JSON.stringify(was) === JSON.stringify(now)) return;
+      /* חופשה של חמישה ימים היא בקשה אחת שממתינה למנהל, ולא
+         חמש. "5 בקשות חדשות" על אדם אחד שנוסע לחופשה הוא מספר
+         שמלמד אותו להתעלם מהמספר. */
+      if (now && now.requestId) {
+        if (freshRequests[now.requestId]) return;
+        freshRequests[now.requestId] = true;
+      }
       fresh.push(key);
     });
     if (fresh.length) {

@@ -478,7 +478,7 @@ begin
            'note', left(coalesce(p_constraint->>'note', ''), 300))
       - 'decidedAt' - 'decidedBy';
     v_week.week := jsonb_set(
-      coalesce(v_week.week, '{}'::jsonb), array['constraints', v_key], v_record, true);
+      public.week_with_constraints(v_week.week), array['constraints', v_key], v_record, true);
   end if;
 
   update public.company_weeks
@@ -642,6 +642,97 @@ begin
 end;
 $$;
 
+-- LEAVE: בקשת חופשה עתידית
+--
+-- נכתבת כרשומה יומית על כל יום בטווח, עם requestId משותף. כך
+-- היא יורשת את כל מה שכבר קיים ליום בודד — סטטוס, אישור, הערת
+-- מנהל, התראה לעובד, וספירה בדוח החודשי — ואין מבנה שני שצריך
+-- להישאר מסונכרן איתו.
+--
+-- שלושה דברים נאכפים כאן ולא במסך: מי (מהסשן), מתי (טווח בעבר
+-- אינו בקשה אלא תיקון, וזה של המנהל), וכמה (תקרה על האורך, כדי
+-- שבקשה אחת לא תכתוב מאות רשומות).
+--
+-- שבוע שכבר פורסם אינו חוסם כאן, בשונה מבקשת אילוץ רגילה:
+-- אילוץ משנה זמינות לסידור שטרם נבנה, ובקשת חופשה היא בקשה
+-- לאדם. המנהל יראה אותה ויחליט אם לשנות את הסידור.
+create or replace function public.request_leave(
+  p_from date, p_to date, p_paid boolean default false, p_note text default '')
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company   uuid := public.current_company_id();
+  v_employee  text := public.current_employee_id();
+  v_request   text;
+  v_record    jsonb;
+  v_day       date;
+  v_week_key  text;
+  v_day_idx   int;
+  v_days      int := 0;
+  v_weeks     text[] := '{}';
+begin
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  if coalesce(v_employee, '') = '' then
+    raise exception 'user is not linked to a staff card' using errcode = '22023';
+  end if;
+  if p_from is null or p_to is null or p_to < p_from then
+    raise exception 'invalid leave range' using errcode = '22023';
+  end if;
+  if p_to - p_from > 59 then
+    raise exception 'leave range too long' using errcode = '22023';
+  end if;
+  if p_from < current_date then
+    raise exception 'leave must start today or later' using errcode = '22023';
+  end if;
+
+  v_request := 'lv-' || gen_random_uuid()::text;
+  v_record := jsonb_build_object(
+    'off', true,
+    'blocked', '{}'::jsonb,
+    'preferred', '{}'::jsonb,
+    'note', left(coalesce(p_note, ''), 300),
+    'status', 'pending',
+    'requestedAt', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    'managerNote', '',
+    'requestId', v_request,
+    'leaveFrom', to_char(p_from, 'YYYY-MM-DD'),
+    'leaveTo', to_char(p_to, 'YYYY-MM-DD'));
+  -- "ללא תשלום" נשמר כהיעדר סימון, כמו בכל מקום אחר
+  if coalesce(p_paid, false) then
+    v_record := v_record || jsonb_build_object('leave', 'paid');
+  end if;
+
+  v_day := p_from;
+  while v_day <= p_to loop
+    -- השבוע מתחיל ביום ראשון, ולכן extract(dow) הוא גם מדד היום
+    v_day_idx := extract(dow from v_day)::int;
+    v_week_key := to_char(v_day - v_day_idx, 'YYYY-MM-DD');
+
+    insert into public.company_weeks (company_id, week_key, week, published)
+    values (v_company, v_week_key, '{}'::jsonb, false)
+    on conflict (company_id, week_key) do nothing;
+
+    update public.company_weeks
+       set week = jsonb_set(public.week_with_constraints(week),
+             array['constraints', v_employee || '|' || v_day_idx::text], v_record, true),
+           updated_at = now()
+     where company_id = v_company and week_key = v_week_key;
+
+    if not (v_week_key = any(v_weeks)) then v_weeks := v_weeks || v_week_key; end if;
+    v_days := v_days + 1;
+    v_day := v_day + 1;
+  end loop;
+
+  return jsonb_build_object('requestId', v_request, 'days', v_days,
+    'weeks', to_jsonb(v_weeks));
+end;
+$$;
+
 -- אישור או דחייה של בקשה. שמור למנהל ולבעלים.
 create or replace function public.decide_constraint(
   p_week_key text, p_employee_id text, p_day_idx int, p_decision text, p_note text default '')
@@ -693,6 +784,7 @@ grant execute on function public.create_company(text, text, int)                
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
 grant execute on function public.save_own_punch(text)                            to authenticated;
+grant execute on function public.request_leave(date, date, boolean, text)        to authenticated;
 grant execute on function public.decide_constraint(text, text, int, text, text)  to authenticated;
 grant execute on function public.current_company_id()                            to authenticated;
 grant execute on function public.current_role_name()                             to authenticated;
@@ -849,6 +941,19 @@ create trigger company_users_role_guard
 -- השבוע כפי שעובד אחד רואה אותו: המשמרות שלו, הבקשות שלו,
 -- והחגים והשעות שממילא משותפים. הערת המנהל על השבוע והשיבוץ
 -- הידני של אחרים אינם שלו.
+-- שבוע שנוצר ריק אינו מכיל עדיין את המפתח constraints, ו-jsonb_set
+-- עם נתיב בן שני חלקים אינו יוצר את ההורה החסר — הוא פשוט מחזיר
+-- את המקור בלי שינוי. עד שהשעון ובקשות החופשה התחילו ליצור שורות
+-- שבוע בעצמן זה לא קרה בפועל, כי השורה תמיד נוצרה מהדפדפן עם
+-- constraints ריק. מכאן ואילך מוודאים את ההורה לפני כל כתיבה.
+create or replace function public.week_with_constraints(p_week jsonb)
+returns jsonb language sql immutable set search_path = public as $$
+  select case when coalesce(p_week, '{}'::jsonb) ? 'constraints'
+              then coalesce(p_week, '{}'::jsonb)
+              else coalesce(p_week, '{}'::jsonb) || jsonb_build_object('constraints', '{}'::jsonb)
+         end
+$$;
+
 -- האם המנהל פתח את הסידור לכל הצוות. היעדר ההגדרה נקרא כסגור:
 -- עסק שנפתח לפני שההגדרה קיימת אינו אמור להיפתח בשקט בעדכון.
 create or replace function public.team_shifts_on()
@@ -994,6 +1099,7 @@ create policy company_users_select on public.company_users
     and (public.is_manager() or id = auth.uid()));
 
 grant execute on function public.team_shifts_on()                 to authenticated;
+grant execute on function public.week_with_constraints(jsonb)     to authenticated;
 grant execute on function public.week_for_employee(jsonb, text, boolean, boolean) to authenticated;
 grant execute on function public.week_as_seen(public.company_weeks)      to authenticated;
 grant execute on function public.week_for_me(text)               to authenticated;

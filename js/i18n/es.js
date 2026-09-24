@@ -605,6 +605,8 @@
 
       server: {
         emailRequired: 'Se necesita una dirección de correo',
+        leaveRange: 'El rango de fechas no es válido o es demasiado largo.',
+        leavePast: 'Solo se pueden pedir vacaciones a partir de hoy.',
         timeclockOff: 'El reloj de fichaje no admite fichajes desde el teléfono.',
         punchFailed: 'No se guardó el fichaje. Inténtalo de nuevo.',
         mailNotConfigured: 'El envío de correo aún no está configurado. Falta configurar el servicio de correo.',
@@ -804,6 +806,10 @@
       },
 
       notify: {
+        leaveApproved: 'Vacaciones aprobadas',
+        leaveApprovedBody: 'Se aprobaron los días {range}.',
+        leaveRejected: 'Solicitud rechazada',
+        leaveRejectedBody: 'No se aprobaron los días {range}',
         published: 'Horario publicado',
         publishedBody: 'El horario de la nueva semana ya está listo. Puedes ver tus turnos.',
         requestApproved: 'Tu solicitud ha sido aprobada',
@@ -999,6 +1005,30 @@
         openWarning: 'Hay turnos abiertos que nunca se cerraron. Hasta corregirlos, las horas del informe están incompletas.',
         sheetName: 'Informe de horas',
         fileName: 'informe-horas',
+      },
+
+      leaveRequest: {
+        title: 'Solicitud de vacaciones',
+        managerTitle: 'Solicitudes de vacaciones',
+        managerHint: 'Una solicitud puede abarcar varios días y cruzar semanas. Aprobarla o rechazarla se aplica a todos sus días.',
+        hint: 'Varios días, con antelación',
+        from: 'Desde',
+        to: 'Hasta',
+        paid: 'Vacaciones pagadas',
+        note: 'Motivo (opcional)',
+        send: 'Enviar solicitud',
+        none: 'Todavía no has pedido vacaciones.',
+        sent: 'Solicitud enviada. Tu responsable la aprobará o la rechazará.',
+        failed: 'No se envió la solicitud. Inténtalo de nuevo.',
+        needDates: 'Elige fecha de inicio y de fin.',
+        badRange: 'El rango de fechas no es válido o es demasiado largo.',
+        isPaid: 'Pagadas',
+        isUnpaid: 'Sin sueldo',
+        status_pending: 'Pendiente',
+        status_approved: 'Aprobada',
+        status_rejected: 'Rechazada',
+        status_mixed: 'Aprobada en parte',
+        days: { one: 'un día', other: '{count} días' },
       },
 
       leave: {

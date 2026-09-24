@@ -1984,3 +1984,35 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
   font-weight: 700; font-size: var(--t-sm);
 }
 .hours-warn { color: var(--err); margin-top: var(--s3); }
+
+/* ===== בקשת חופשה במסך העובד ===== */
+.leave-form {
+  display: flex; flex-wrap: wrap; gap: var(--s3);
+  align-items: flex-end; padding: var(--s3) 0;
+}
+.leave-field { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+.leave-field > span { font-size: var(--t-sm); color: var(--muted); }
+.leave-note { flex: 1 1 220px; }
+.leave-paid { align-self: center; }
+.leave-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.leave-item {
+  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); align-items: baseline;
+  padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.leave-item > span { font-size: var(--t-sm); color: var(--muted); }
+.leave-status { font-weight: 700; }
+/* מצב הבקשה נקרא גם בלי צבע: הוא כתוב במילים, והצבע מוסיף. */
+.leave-item.is-approved { border-inline-start: 4px solid var(--ok); }
+.leave-item.is-rejected { border-inline-start: 4px solid var(--err); }
+.leave-item.is-pending { border-inline-start: 4px solid var(--brand); }
+.leave-item.is-mixed { border-inline-start: 4px solid var(--warn); }
+.leave-note-text { flex-basis: 100%; }
+.leave-list { margin-top: var(--s3); }
+@media (max-width: 420px) {
+  .leave-form { flex-direction: column; align-items: stretch; }
+  .leave-field { min-width: 0; }
+  /* בטור, flex-grow על שדה ההערה מותח אותו על כל המקום הפנוי
+     ודוחף את הכפתור לתחתית המסך. */
+  .leave-note { flex: 0 0 auto; }
+  .leave-form .btn { width: 100%; }
+}

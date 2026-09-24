@@ -1273,6 +1273,61 @@
     container.innerHTML = html;
   }
 
+  /* ===== בקשות חופשה אצל המנהל =====
+
+     בקשה יכולה להימשך כמה ימים ולחצות שבועות, ולכן היא אינה
+     יכולה לשבת בלוח של שבוע אחד. היא מוצגת כאן כשורה אחת,
+     והאישור חל על כל ימיה — מנהל שמאשר חופשה מאשר חופשה, ולא
+     חמש בקשות זהות בזו אחר זו. */
+  function renderLeaveRequests() {
+    var panel = $('#leave-requests-panel');
+    var container = $('#leave-requests');
+    if (!panel || !container) return;
+    var requests = Store.leaveRequests(state, null).filter(function (request) {
+      return request.status === Store.CONSTRAINT_STATUS.PENDING;
+    });
+    panel.classList.toggle('hidden', !requests.length);
+    if (!requests.length) { container.innerHTML = ''; return; }
+
+    var html = '<div class="pending-list">';
+    requests.forEach(function (request) {
+      var label = request.from && request.to
+        ? Store.formatDate(new Date(request.from.replace(/-/g, '/'))) + ' – ' +
+          Store.formatDate(new Date(request.to.replace(/-/g, '/')))
+        : '';
+      html += '<div class="pending-item" data-leave-request="' + esc(request.requestId) + '">';
+      html += '<div class="pending-info"><b>' + esc(empNameOf(request.empId)) + '</b>' +
+        '<span>' + esc(label) + '</span>' +
+        '<em>' + esc(tPlural('leaveRequest.days', request.days.length)) + ' · ' +
+        esc(t(request.paid ? 'leaveRequest.isPaid' : 'leaveRequest.isUnpaid')) + '</em>' +
+        (request.note ? '<small>' + esc(request.note) + '</small>' : '') +
+        '</div>';
+      html += '<div class="pending-actions">' +
+        '<button class="btn small approve" data-leave-decision="approved"' +
+        (viewOnly ? ' disabled' : '') + '>' + esc(t('constraints.approve')) + '</button>' +
+        '<button class="btn small ghost reject" data-leave-decision="rejected"' +
+        (viewOnly ? ' disabled' : '') + '>' + esc(t('constraints.reject')) + '</button>' +
+        '</div></div>';
+    });
+    container.innerHTML = html + '</div>';
+  }
+
+  /* השבועות שהבקשות יושבות בהם. הלוח מחזיק שבוע אחד, וחופשה
+     נמצאת קדימה — ולכן נטענים גם השבועות הבאים. התקרה זהה
+     לתקרת אורך הבקשה: מה שאי אפשר לבקש, אי אפשר גם לפספס. */
+  function loadLeaveWeeks() {
+    var keys = [];
+    var key = Store.currentWeekKey();
+    for (var i = 0; i < 10; i++) { keys.push(key); key = Store.shiftWeekKey(key, 1); }
+    var chain = Promise.resolve();
+    keys.forEach(function (weekKey) {
+      chain = chain.then(function () {
+        return Promise.resolve(source.ensureWeek(state, weekKey));
+      });
+    });
+    return chain.then(renderLeaveRequests, renderLeaveRequests);
+  }
+
   /* ========== לוח האילוצים ========== */
   /* ===== סוג היום החופשי =====
 
@@ -2525,6 +2580,7 @@
     renderAvailability();
     renderPersonalPicker();
     renderConstraints();
+    renderLeaveRequests();
     renderLeaveSummary();
     renderPending();
     renderEmployees();
@@ -2970,7 +3026,7 @@
       $('#tab-' + button.dataset.tab).classList.add('active');
       /* הסיכום החודשי צריך את כל שבועות החודש, ולכן הם נטענים
          כשנכנסים ללשונית ולא בכל ציור. */
-      if (button.dataset.tab === 'constraints') { loadLeaveMonth(); }
+      if (button.dataset.tab === 'constraints') { loadLeaveMonth(); loadLeaveWeeks(); }
       if (button.dataset.tab === 'hours') { loadHoursMonth(); }
     });
   }
@@ -3368,6 +3424,60 @@
       render();
       done();
     });
+
+    /* אישור או דחייה של בקשת חופשה שלמה. הלולאה כאן ולא בשרת:
+       כל יום הוא רשומה עם סטטוס משלו, וזה מה שמאפשר למנהל גם
+       לשנות יום בודד אחר כך בלוח. */
+    if ($('#leave-requests')) {
+      $('#leave-requests').addEventListener('click', function (event) {
+        var button = event.target.closest('[data-leave-decision]');
+        if (!button) return;
+        var item = button.closest('[data-leave-request]');
+        if (!item) return;
+        var requestId = item.dataset.leaveRequest;
+        var decision = button.dataset.leaveDecision;
+        var request = Store.leaveRequests(state, null).filter(function (entry) {
+          return entry.requestId === requestId;
+        })[0];
+        if (!request) { render(); return; }
+
+        var buttons = item.querySelectorAll('button');
+        Array.prototype.forEach.call(buttons, function (node) { node.disabled = true; });
+
+        var done = function () {
+          toast(t(decision === 'approved' ? 'toast.requestApproved' : 'toast.requestRejected'));
+          renderLeaveRequests();
+          render();
+        };
+
+        if (source.decideConstraint) {
+          var chain = Promise.resolve();
+          request.days.forEach(function (day) {
+            chain = chain.then(function () {
+              return source.decideConstraint(day.weekKey, request.empId, day.dayIdx, decision)
+                .then(function (updated) {
+                  if (updated) { applyRemoteWeek(day.weekKey, updated); }
+                });
+            });
+          });
+          chain.then(done, function (err) {
+            toast((err && err.message) || t('toast.updateFailed'));
+            render();
+          });
+          return;
+        }
+
+        var touched = [];
+        request.days.forEach(function (day) {
+          var target = state.weeks[day.weekKey];
+          if (!target) return;
+          Store.setConstraintStatus(target, request.empId, day.dayIdx, decision, '');
+          if (touched.indexOf(day.weekKey) === -1) touched.push(day.weekKey);
+        });
+        persist(null, touched);
+        done();
+      });
+    }
 
     $('#clear-constraints').addEventListener('click', function () {
       if (!confirm(t('toast.clearConstraintsConfirm'))) return;

@@ -60,6 +60,14 @@
     /* null = כל הסניפים. נשמר בין החלפות יום, כי עובד שסינן
        לסניף שלו רוצה להישאר בו גם כשהוא מדלג בין ימים. */
     this.teamBranch = null;
+    /* מגירת החופשה: מצבה, מה הוקלד בה, והאם השבועות שהיא
+       מציגה כבר נטענו. */
+    this.leaveOpen = false;
+    this.leaveLoaded = false;
+    this.leaveFrom = '';
+    this.leaveTo = '';
+    this.leavePaid = false;
+    this.leaveNote = '';
   }
 
   EmployeeUI.prototype.start = function () {
@@ -97,6 +105,14 @@
        חי היו סוגרים אותה בדיוק בזמן שהעובד קורא בתוכה.
        toggle אינו עולה בבועות, ולכן מאזינים בשלב הלכידה. */
     this.root.addEventListener('toggle', function (event) {
+      var leaveFold = event.target.closest('.leave-fold');
+      if (leaveFold) {
+        self.leaveOpen = leaveFold.open;
+        /* השבועות נטענים בפתיחה ולא בכל ציור: חופשה נמצאת
+           קדימה, והמסך מחזיק שבוע אחד. */
+        if (leaveFold.open) { self._loadLeaveWeeks(); }
+        return;
+      }
       var fold = event.target.closest('.employee-fold');
       if (fold) { self.requestsOpen = fold.open; }
     }, true);
@@ -151,6 +167,8 @@
       }
       var punch = event.target.closest('[data-punch]');
       if (punch) { self._punch(); return; }
+      var leave = event.target.closest('[data-leave-send]');
+      if (leave) { self._sendLeave(); return; }
       var button = event.target.closest('.cstate');
       if (button) { self._toggle(button); }
     });
@@ -696,7 +714,8 @@
       if (self._record(day.idx)) pendingCount++;
     });
     if (canFold) {
-      html += '<details class="employee-fold"' + (this.requestsOpen ? ' open' : '') + '>';
+      html += '<details class="employee-fold requests-fold"' +
+        (this.requestsOpen ? ' open' : '') + '>';
       html += '<summary class="employee-fold-head">' +
         '<span class="employee-title">' + t('employee.myRequests') + '</span>' +
         '<span class="employee-fold-hint">' +
@@ -793,10 +812,134 @@
     });
     html += '</div>';
     if (canFold) { html += '</details>'; }
+
+    html += this._leaveSection();
     html += '</div>';
 
     this.root.innerHTML = html;
     this._showFlash();
+  };
+
+  /* ===== חופשה =====
+
+     יום חופש בודד לשבוע הקרוב הוא בקשת אילוץ, והוא כבר למעלה.
+     כאן מבקשים חופשה: כמה ימים, חודשיים מראש, ועם השאלה שחשובה
+     לעובד יותר מהכול — אם היא בתשלום.
+
+     מגירה ולא מסך: רוב הפעמים שעובד פותח את האפליקציה הוא לא
+     מבקש חופשה, ושני שדות תאריך פתוחים תמיד הם רעש. */
+  EmployeeUI.prototype._leaveSection = function () {
+    if (this.preview) return '';
+    if (!this.backend || typeof this.backend.requestLeave !== 'function') return '';
+    var self = this;
+    var html = '<details class="employee-fold leave-fold"' +
+      (this.leaveOpen ? ' open' : '') + '>';
+    html += '<summary class="employee-fold-head">' +
+      '<span class="employee-title">' + esc(t('leaveRequest.title')) + '</span>' +
+      '<span class="employee-fold-hint">' + esc(t('leaveRequest.hint')) + '</span>' +
+      '</summary>';
+
+    html += '<div class="leave-form">';
+    html += '<label class="leave-field"><span>' + esc(t('leaveRequest.from')) + '</span>' +
+      '<input type="date" class="text-input" id="leave-from" value="' +
+      esc(this.leaveFrom || '') + '"></label>';
+    html += '<label class="leave-field"><span>' + esc(t('leaveRequest.to')) + '</span>' +
+      '<input type="date" class="text-input" id="leave-to" value="' +
+      esc(this.leaveTo || '') + '"></label>';
+    html += '<label class="check leave-paid"><input type="checkbox" id="leave-paid"' +
+      (this.leavePaid ? ' checked' : '') + '>' +
+      '<span>' + esc(t('leaveRequest.paid')) + '</span></label>';
+    html += '<label class="leave-field leave-note"><span>' + esc(t('leaveRequest.note')) + '</span>' +
+      '<input type="text" class="text-input" id="leave-note" maxlength="300" value="' +
+      esc(this.leaveNote || '') + '"></label>';
+    html += '<button type="button" class="btn primary" data-leave-send="1">' +
+      esc(t('leaveRequest.send')) + '</button>';
+    html += '</div>';
+
+    /* הבקשות שכבר הוגשו. נטענות מהשבועות שהמסך מחזיק, ולכן
+       המגירה טוענת אותם בפתיחתה — בלי זה בקשה לעוד חודשיים
+       הייתה נעלמת מהרשימה ברענון. */
+    var requests = Store.leaveRequests(this.state, this._employeeId());
+    if (requests.length) {
+      html += '<ul class="leave-list">';
+      requests.forEach(function (request) {
+        var label = request.from && request.to
+          ? Store.formatDate(new Date(request.from.replace(/-/g, '/'))) + ' – ' +
+            Store.formatDate(new Date(request.to.replace(/-/g, '/')))
+          : '';
+        html += '<li class="leave-item is-' + esc(request.status) + '">' +
+          '<b>' + esc(label) + '</b>' +
+          '<span>' + esc(tPlural('leaveRequest.days', request.days.length)) + ' · ' +
+          esc(t(request.paid ? 'leaveRequest.isPaid' : 'leaveRequest.isUnpaid')) + '</span>' +
+          '<span class="leave-status">' +
+          esc(t('leaveRequest.status_' + request.status)) + '</span>' +
+          (request.managerNote
+            ? '<span class="leave-note-text">' + esc(request.managerNote) + '</span>' : '') +
+          '</li>';
+      });
+      html += '</ul>';
+    } else {
+      html += '<p class="employee-note">' + esc(t('leaveRequest.none')) + '</p>';
+    }
+    html += '</details>';
+    return html;
+  };
+
+  /* השבועות שהבקשות יושבות בהם. המסך מחזיק שבוע אחד, וחופשה
+     נמצאת קדימה — ולכן היא נטענת בפתיחת המגירה בלבד, ופעם אחת. */
+  EmployeeUI.prototype._loadLeaveWeeks = function (force) {
+    var self = this;
+    if (this.leaveLoaded && !force) return Promise.resolve();
+    this.leaveLoaded = true;
+    var keys = [];
+    var key = Store.currentWeekKey();
+    for (var i = 0; i < 10; i++) { keys.push(key); key = Store.shiftWeekKey(key, 1); }
+    var chain = Promise.resolve();
+    keys.forEach(function (weekKey) {
+      chain = chain.then(function () {
+        /* אחרי שליחה טוענים מחדש גם שבוע שכבר נטען: הבקשה
+           החדשה נמצאת בדיוק בו, ודילוג עליו היה מציג רשימה
+           בלי מה שזה עתה נשלח. */
+        if (!force && self.state.weeks[weekKey] && self.state.weeks[weekKey]._loaded) return null;
+        return self.backend.loadWeek(weekKey).then(function (week) {
+          var loaded = week || Store.emptyWeek();
+          loaded._loaded = true;
+          self.state.weeks[weekKey] = loaded;
+        }, function () { /* שבוע שלא נטען אינו מפיל את המגירה */ });
+      });
+    });
+    return chain.then(function () { self.render(); });
+  };
+
+  EmployeeUI.prototype._sendLeave = function () {
+    var self = this;
+    if (this.busy) return;
+    var from = (this.root.querySelector('#leave-from') || {}).value || '';
+    var to = (this.root.querySelector('#leave-to') || {}).value || '';
+    var paid = !!(this.root.querySelector('#leave-paid') || {}).checked;
+    var note = (this.root.querySelector('#leave-note') || {}).value || '';
+    if (!from || !to) { this._flash(t('leaveRequest.needDates')); return; }
+    /* נבדק כאן ולא רק בשרת, כדי שהלחיצה לא תראה כאילו עבדה
+       ואז תתהפך. השרת חוסם את זה שוב ממילא. */
+    var days = Store.leaveDays(from, to);
+    if (!days) { this._flash(t('leaveRequest.badRange')); return; }
+
+    this.busy = true;
+    this.leavePaid = paid;
+    this.leaveNote = note;
+    this.backend.requestLeave({ from: from, to: to, paid: paid, note: note })
+      .then(function () {
+        self.busy = false;
+        self.leaveFrom = '';
+        self.leaveTo = '';
+        self.leaveNote = '';
+        self._flash(t('leaveRequest.sent'));
+        return self._loadLeaveWeeks(true);
+      }, function (err) {
+        self.busy = false;
+        self._flash((err && err.message) || t('leaveRequest.failed'));
+        self.render();
+      });
   };
 
   var API = { EmployeeUI: EmployeeUI };

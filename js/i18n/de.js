@@ -605,6 +605,8 @@
 
       server: {
         emailRequired: 'Eine E-Mail-Adresse ist erforderlich',
+        leaveRange: 'Der Zeitraum ist ungültig oder zu lang.',
+        leavePast: 'Urlaub kann nur ab heute beantragt werden.',
         timeclockOff: 'Die Zeiterfassung ist für Handy-Buchungen nicht freigegeben.',
         punchFailed: 'Die Buchung wurde nicht gespeichert. Bitte erneut versuchen.',
         mailNotConfigured: 'Der E-Mail-Versand ist noch nicht eingerichtet. Der Maildienst muss konfiguriert werden.',
@@ -804,6 +806,10 @@
       },
 
       notify: {
+        leaveApproved: 'Urlaub genehmigt',
+        leaveApprovedBody: '{range} wurde genehmigt.',
+        leaveRejected: 'Urlaubsantrag abgelehnt',
+        leaveRejectedBody: '{range} wurde nicht genehmigt',
         published: 'Plan veröffentlicht',
         publishedBody: 'Der Plan für die neue Woche steht bereit. Sie können Ihre Schichten sehen.',
         requestApproved: 'Ihr Wunsch wurde genehmigt',
@@ -999,6 +1005,30 @@
         openWarning: 'Einige Schichten wurden geöffnet und nie beendet. Bis zur Korrektur sind die Stunden unvollständig.',
         sheetName: 'Stundenbericht',
         fileName: 'stundenbericht',
+      },
+
+      leaveRequest: {
+        title: 'Urlaubsantrag',
+        managerTitle: 'Urlaubsanträge',
+        managerHint: 'Ein Antrag kann mehrere Tage umfassen und über Wochen gehen. Genehmigung oder Ablehnung gilt für alle seine Tage.',
+        hint: 'Mehrere Tage, im Voraus',
+        from: 'Von',
+        to: 'Bis',
+        paid: 'Bezahlter Urlaub',
+        note: 'Grund (optional)',
+        send: 'Antrag senden',
+        none: 'Du hast noch keinen Urlaub beantragt.',
+        sent: 'Antrag gesendet. Die Leitung genehmigt oder lehnt ihn ab.',
+        failed: 'Der Antrag wurde nicht gesendet. Bitte erneut versuchen.',
+        needDates: 'Start- und Enddatum wählen.',
+        badRange: 'Der Zeitraum ist ungültig oder zu lang.',
+        isPaid: 'Bezahlt',
+        isUnpaid: 'Unbezahlt',
+        status_pending: 'Offen',
+        status_approved: 'Genehmigt',
+        status_rejected: 'Abgelehnt',
+        status_mixed: 'Teilweise genehmigt',
+        days: { one: 'ein Tag', other: '{count} Tage' },
       },
 
       leave: {

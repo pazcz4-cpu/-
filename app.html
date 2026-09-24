@@ -169,6 +169,16 @@
     <div id="constraints-mobile" class="mobile-only"></div>
     <div id="constraints-grid" class="table-wrap desktop-only"></div>
 
+    <!-- בקשות חופשה: חוצות שבועות, ולכן אינן יכולות לשבת
+         בלוח של שבוע אחד. -->
+    <div class="settings-block no-print hidden" id="leave-requests-panel">
+      <h3 data-i18n="leaveRequest.managerTitle">בקשות חופשה</h3>
+      <p class="hint" data-i18n="leaveRequest.managerHint">
+        בקשה אחת יכולה להימשך כמה ימים ולחצות שבועות. אישור או דחייה חלים על כל ימיה.
+      </p>
+      <div id="leave-requests"></div>
+    </div>
+
     <div class="settings-block no-print" id="leave-panel">
       <h3 data-i18n="leave.summaryTitle">סיכום ימי חופש</h3>
       <p class="hint" data-i18n="leave.summaryHint">

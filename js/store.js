@@ -463,6 +463,121 @@
     return true;
   }
 
+  /* ===== בקשת חופשה עתידית =====
+
+     יום חופש בודד לשבוע הקרוב נשמר כבקשת אילוץ רגילה. חופשה
+     היא משהו אחר: היא נמשכת כמה ימים, היא מבוקשת חודשיים
+     מראש, ולעובד חשוב אם היא בתשלום.
+
+     ובכל זאת היא נשמרת כאותן רשומות יומיות, ולא כמבנה נפרד.
+     הסיבה אינה עצלנות: ליום יש כבר סטטוס, אישור, הערת מנהל
+     והתראה לעובד, והוא כבר נספר בדוח החודשי ובסיכום החופשות.
+     מבנה נפרד היה מחייב לשכפל את כל אלה, ולשמור על שניהם
+     מסונכרנים — כלומר להמציא דרך חדשה שבה חופשה מאושרת אינה
+     מופיעה בדוח.
+
+     מה שמחבר את הימים הוא requestId משותף: המסך מציג אותם
+     כבקשה אחת, והמנהל מאשר את כולה בלחיצה אחת. */
+  var LEAVE_MAX_DAYS = 60;
+
+  function parseDateKey(value) {
+    var parts = String(value || '').split('-');
+    if (parts.length !== 3) return null;
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    if (isNaN(date.getTime())) return null;
+    return date;
+  }
+
+  /* הימים שבטווח, כל אחד עם מפתח השבוע ומדד היום בתוכו.
+     מחזיר null כשהטווח אינו תקין — קריאה שמייצרת אפס ימים היא
+     שגיאה של הקורא, ולא תשובה. */
+  function leaveDays(from, to) {
+    var start = parseDateKey(from);
+    var end = parseDateKey(to);
+    if (!start || !end) return null;
+    if (end < start) return null;
+    var out = [];
+    var cursor = new Date(start.getTime());
+    while (cursor <= end) {
+      out.push({
+        date: new Date(cursor.getTime()),
+        weekKey: currentWeekKey(cursor),
+        dayIdx: cursor.getDay()
+      });
+      if (out.length > LEAVE_MAX_DAYS) return null;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return out;
+  }
+
+  /* הרשומה שנכתבת על כל יום בטווח */
+  function leaveRecord(input) {
+    var record = {
+      off: true,
+      blocked: {},
+      preferred: {},
+      note: String((input && input.note) || '').slice(0, 300),
+      status: CONSTRAINT_STATUS.PENDING,
+      requestedAt: (input && input.at) || new Date().toISOString(),
+      managerNote: '',
+      requestId: (input && input.requestId) || newId('lv'),
+      leaveFrom: (input && input.from) || '',
+      leaveTo: (input && input.to) || ''
+    };
+    /* "ללא תשלום" נשמר כהיעדר סימון, כמו בכל מקום אחר: כך יום
+       ישן שלא נגעו בו מתנהג בדיוק כמו יום שסומן במפורש. */
+    if (input && input.paid) record.leave = LEAVE.PAID;
+    return record;
+  }
+
+  /* הבקשות של עובד, מקובצות. מיועד למסך: יום בודד שהוגש כרגיל
+     אינו בקשת חופשה ואינו מופיע כאן. */
+  function leaveRequests(state, empId) {
+    var groups = {};
+    var order = [];
+    Object.keys(state.weeks || {}).forEach(function (weekKey) {
+      var constraints = (state.weeks[weekKey] || {}).constraints || {};
+      Object.keys(constraints).forEach(function (key) {
+        var parts = key.split('|');
+        /* empId ריק = כל העובדים. זה מה שהמנהל רואה. */
+        if (empId && parts[0] !== empId) return;
+        var record = constraints[key];
+        if (!record || !record.requestId) return;
+        var group = groups[record.requestId];
+        if (!group) {
+          group = groups[record.requestId] = {
+            requestId: record.requestId,
+            empId: parts[0],
+            from: record.leaveFrom || '',
+            to: record.leaveTo || '',
+            paid: record.leave === LEAVE.PAID,
+            note: record.note || '',
+            managerNote: record.managerNote || '',
+            days: [],
+            statuses: {}
+          };
+          order.push(record.requestId);
+        }
+        group.days.push({ weekKey: weekKey, dayIdx: Number(parts[1]), record: record });
+        var status = constraintStatus(record);
+        group.statuses[status] = (group.statuses[status] || 0) + 1;
+        if (record.managerNote && !group.managerNote) group.managerNote = record.managerNote;
+      });
+    });
+    return order.map(function (id) {
+      var group = groups[id];
+      /* בקשה שחלק מימיה אושר וחלק נדחה אינה "מאושרת": היא
+         מוצגת כמעורבת, כי זה מה שקרה בפועל. */
+      var kinds = Object.keys(group.statuses);
+      group.status = kinds.length === 1 ? kinds[0] : 'mixed';
+      group.days.sort(function (a, b) {
+        if (a.weekKey === b.weekKey) return a.dayIdx - b.dayIdx;
+        return a.weekKey < b.weekKey ? -1 : 1;
+      });
+      return group;
+    });
+  }
+
   function monthKeyOf(date) {
     return date.getFullYear() + '-' + pad(date.getMonth() + 1);
   }
@@ -1993,6 +2108,10 @@
     getConstraint: getConstraint,
     getConstraintRecord: getConstraintRecord,
     LEAVE: LEAVE,
+    LEAVE_MAX_DAYS: LEAVE_MAX_DAYS,
+    leaveDays: leaveDays,
+    leaveRecord: leaveRecord,
+    leaveRequests: leaveRequests,
     leaveOf: leaveOf,
     setLeave: setLeave,
     leaveSummary: leaveSummary,

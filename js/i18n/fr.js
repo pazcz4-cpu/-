@@ -605,6 +605,8 @@
 
       server: {
         emailRequired: 'Une adresse e-mail est requise',
+        leaveRange: 'La période n’est pas valide ou est trop longue.',
+        leavePast: 'Un congé ne peut être demandé qu’à partir d’aujourd’hui.',
         timeclockOff: 'La pointeuse n’accepte pas les pointages depuis le téléphone.',
         punchFailed: 'Le pointage n’a pas été enregistré. Réessayez.',
         mailNotConfigured: 'L’envoi d’e-mails n’est pas encore configuré. Le service de messagerie doit être paramétré.',
@@ -804,6 +806,10 @@
       },
 
       notify: {
+        leaveApproved: 'Congé accepté',
+        leaveApprovedBody: 'Les jours {range} ont été acceptés.',
+        leaveRejected: 'Demande de congé refusée',
+        leaveRejectedBody: 'Les jours {range} n’ont pas été acceptés',
         published: 'Planning publié',
         publishedBody: 'Le planning de la nouvelle semaine est prêt. Vous pouvez voir vos services.',
         requestApproved: 'Votre demande a été approuvée',
@@ -999,6 +1005,30 @@
         openWarning: 'Des postes ont été ouverts sans être clôturés. Tant qu’ils ne sont pas corrigés, les heures du relevé sont incomplètes.',
         sheetName: 'Relevé d’heures',
         fileName: 'releve-heures',
+      },
+
+      leaveRequest: {
+        title: 'Demande de congé',
+        managerTitle: 'Demandes de congé',
+        managerHint: 'Une demande peut couvrir plusieurs jours et plusieurs semaines. L’accepter ou la refuser s’applique à tous ses jours.',
+        hint: 'Plusieurs jours, à l’avance',
+        from: 'Du',
+        to: 'Au',
+        paid: 'Congé payé',
+        note: 'Motif (facultatif)',
+        send: 'Envoyer la demande',
+        none: 'Vous n’avez pas encore demandé de congé.',
+        sent: 'Demande envoyée. Le responsable l’acceptera ou la refusera.',
+        failed: 'La demande n’a pas été envoyée. Réessayez.',
+        needDates: 'Choisissez une date de début et de fin.',
+        badRange: 'La période n’est pas valide ou est trop longue.',
+        isPaid: 'Payé',
+        isUnpaid: 'Sans solde',
+        status_pending: 'En attente',
+        status_approved: 'Acceptée',
+        status_rejected: 'Refusée',
+        status_mixed: 'Acceptée en partie',
+        days: { one: 'un jour', other: '{count} jours' },
       },
 
       leave: {

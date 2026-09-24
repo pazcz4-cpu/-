@@ -605,6 +605,8 @@
 
       server: {
         emailRequired: 'É necessário um endereço de email',
+        leaveRange: 'O intervalo de datas não é válido ou é demasiado longo.',
+        leavePast: 'Só é possível pedir férias a partir de hoje.',
         timeclockOff: 'O relógio de ponto não aceita registos pelo telemóvel.',
         punchFailed: 'O registo não foi guardado. Tente novamente.',
         mailNotConfigured: 'O envio de e-mails ainda não está configurado. Falta configurar o serviço de correio.',
@@ -804,6 +806,10 @@
       },
 
       notify: {
+        leaveApproved: 'Férias aprovadas',
+        leaveApprovedBody: 'Os dias {range} foram aprovados.',
+        leaveRejected: 'Pedido de férias recusado',
+        leaveRejectedBody: 'Os dias {range} não foram aprovados',
         published: 'Horário publicado',
         publishedBody: 'O horário da nova semana está pronto. Já podes ver os teus turnos.',
         requestApproved: 'O teu pedido foi aprovado',
@@ -999,6 +1005,30 @@
         openWarning: 'Há turnos abertos que nunca foram fechados. Até serem corrigidos, as horas do relatório estão incompletas.',
         sheetName: 'Relatório de horas',
         fileName: 'relatorio-horas',
+      },
+
+      leaveRequest: {
+        title: 'Pedido de férias',
+        managerTitle: 'Pedidos de férias',
+        managerHint: 'Um pedido pode abranger vários dias e atravessar semanas. Aprovar ou recusar aplica-se a todos os seus dias.',
+        hint: 'Alguns dias, com antecedência',
+        from: 'De',
+        to: 'Até',
+        paid: 'Férias pagas',
+        note: 'Motivo (opcional)',
+        send: 'Enviar pedido',
+        none: 'Ainda não pediu férias.',
+        sent: 'Pedido enviado. A chefia vai aprovar ou recusar.',
+        failed: 'O pedido não foi enviado. Tente novamente.',
+        needDates: 'Escolha uma data de início e de fim.',
+        badRange: 'O intervalo de datas não é válido ou é demasiado longo.',
+        isPaid: 'Pagas',
+        isUnpaid: 'Sem vencimento',
+        status_pending: 'Pendente',
+        status_approved: 'Aprovado',
+        status_rejected: 'Recusado',
+        status_mixed: 'Aprovado em parte',
+        days: { one: 'um dia', other: '{count} dias' },
       },
 
       leave: {

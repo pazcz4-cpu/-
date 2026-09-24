@@ -100,7 +100,7 @@ try {
 
   console.log('\n== לפני הפרסום: הבקשות הן המשימה, והן פתוחות ==');
   await asEmployee();
-  check('אין מגירה', await page.locator('.employee-fold').count(), 0);
+  check('אין מגירה', await page.locator('.requests-fold').count(), 0);
   check('ימי הבקשות גלויים',
     await page.locator('.employee-days .m-card').first().isVisible(), true);
 
@@ -116,24 +116,24 @@ try {
   await asEmployee();
   check('הסידור הגיע לעובדת',
     await page.locator('.employee-shift').count() > 0, true);
-  check('נוצרה מגירה', await page.locator('.employee-fold').count(), 1);
-  check('והיא סגורה', await page.locator('.employee-fold[open]').count(), 0);
+  check('נוצרה מגירה', await page.locator('.requests-fold').count(), 1);
+  check('והיא סגורה', await page.locator('.requests-fold[open]').count(), 0);
   check('ימי הבקשות מוסתרים',
     await page.locator('.employee-days .m-card').first().isVisible(), false);
   check('הכותרת אומרת מה יש בפנים',
-    await page.locator('.employee-fold-head').innerText(), /בקש/);
+    await page.locator('.requests-fold .employee-fold-head').innerText(), /בקש/);
 
   /* המשמרות חייבות להיות מעל המגירה. זה כל הרעיון. */
   check('הסידור מוצג לפני הבקשות', await page.evaluate(() => {
     const shift = document.querySelector('.employee-shift').getBoundingClientRect().top;
-    const fold = document.querySelector('.employee-fold').getBoundingClientRect().top;
+    const fold = document.querySelector('.requests-fold').getBoundingClientRect().top;
     return shift < fold;
   }), true);
 
   console.log('\n== ומי שרוצה – פותח ==');
-  await page.click('.employee-fold-head');
+  await page.click('.requests-fold .employee-fold-head');
   await page.waitForTimeout(400);
-  check('נפתחה', await page.locator('.employee-fold[open]').count(), 1);
+  check('נפתחה', await page.locator('.requests-fold[open]').count(), 1);
   check('ימי הבקשות גלויים',
     await page.locator('.employee-days .m-card').first().isVisible(), true);
 
@@ -144,7 +144,7 @@ try {
   await page.waitForTimeout(900);
   await page.locator('[data-week-step]').last().click();
   await page.waitForTimeout(900);
-  check('נשארה פתוחה', await page.locator('.employee-fold[open]').count(), 1);
+  check('נשארה פתוחה', await page.locator('.requests-fold[open]').count(), 1);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

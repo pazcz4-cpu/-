@@ -696,6 +696,16 @@
     return this._rpc('save_own_punch', { p_week_key: weekKey }).then(weekOf);
   };
 
+  /* בקשת חופשה. הטווח נשלח, והשרת כותב רשומה יומית לכל יום בו
+     עם מזהה בקשה משותף. */
+  SupabaseBackend.prototype.requestLeave = function (input) {
+    var request = input || {};
+    return this._rpc('request_leave', {
+      p_from: request.from, p_to: request.to,
+      p_paid: !!request.paid, p_note: String(request.note || '')
+    });
+  };
+
   SupabaseBackend.prototype.saveOwnNote = function (weekKey, dayIdx, note) {
     return this._rpc('save_own_note', {
       p_week_key: weekKey, p_day_idx: Number(dayIdx), p_note: String(note || '')

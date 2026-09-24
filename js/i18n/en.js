@@ -611,6 +611,8 @@
 
       server: {
         emailRequired: 'An email address is required',
+        leaveRange: 'The date range is not valid, or is too long.',
+        leavePast: 'Leave can only be requested from today onwards.',
         timeclockOff: 'The time clock is not open for phone punches.',
         punchFailed: 'The punch was not saved. Please try again.',
         mailNotConfigured: 'Email sending is not set up yet. The mail service still needs to be configured.',
@@ -810,6 +812,10 @@
       },
 
       notify: {
+        leaveApproved: 'Leave approved',
+        leaveApprovedBody: '{range} was approved.',
+        leaveRejected: 'Leave declined',
+        leaveRejectedBody: '{range} was not approved',
         published: 'Schedule published',
         publishedBody: 'The schedule for the new week is ready. You can see your shifts.',
         requestApproved: 'Your request was approved',
@@ -1005,6 +1011,30 @@
         openWarning: 'Some shifts were opened and never closed. Until they are fixed, the hours here are incomplete.',
         sheetName: 'Hours report',
         fileName: 'hours-report',
+      },
+
+      leaveRequest: {
+        title: 'Leave request',
+        managerTitle: 'Leave requests',
+        managerHint: 'A single request can span several days and cross weeks. Approving or declining applies to all of its days.',
+        hint: 'A few days, in advance',
+        from: 'From',
+        to: 'To',
+        paid: 'Paid leave',
+        note: 'Reason (optional)',
+        send: 'Send request',
+        none: 'You have not requested leave yet.',
+        sent: 'Request sent. Your manager will approve or decline it.',
+        failed: 'The request was not sent. Please try again.',
+        needDates: 'Pick a start and an end date.',
+        badRange: 'The date range is not valid, or is too long.',
+        isPaid: 'Paid',
+        isUnpaid: 'Unpaid',
+        status_pending: 'Pending',
+        status_approved: 'Approved',
+        status_rejected: 'Declined',
+        status_mixed: 'Partly approved',
+        days: { one: 'one day', other: '{count} days' },
       },
 
       leave: {

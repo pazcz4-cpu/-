@@ -130,6 +130,7 @@
       },
 
       tabs: {
+        hours: 'Hours',
         support: 'Support',
         schedule: 'Schedule', constraints: 'Availability', employees: 'Staff',
         branches: 'Locations', users: 'Users', billing: 'Subscription', settings: 'Settings'
@@ -970,6 +971,26 @@
         upgraded: 'Plan changed to {plan}. The next charge will be {price}.',
         upgradeFailed: 'The plan could not be changed.',
         upgradeOwnerOnly: 'You have reached the plan limit. Only the account owner can upgrade it.'
+      },
+
+      hours: {
+        title: 'Monthly hours report',
+        month: 'Month',
+        export: 'Export to Excel',
+        hint: 'Actual hours come from the time clock. A shift that was opened and never closed produces no hours and is flagged — a report with an open shift is not ready for payroll.',
+        none: 'No punches recorded for this month yet.',
+        columnName: 'Employee',
+        columnDays: 'Days',
+        columnActual: 'Actual',
+        columnPlanned: 'Planned',
+        columnOvertime: 'Overtime',
+        columnPaidLeave: 'Paid leave',
+        columnUnpaidLeave: 'Unpaid leave',
+        columnOpen: 'Open',
+        totalRow: 'Total',
+        openWarning: 'Some shifts were opened and never closed. Until they are fixed, the hours here are incomplete.',
+        sheetName: 'Hours report',
+        fileName: 'hours-report',
       },
 
       leave: {

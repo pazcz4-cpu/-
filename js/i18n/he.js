@@ -129,6 +129,7 @@
       },
 
       tabs: {
+        hours: 'דוח שעות',
         support: 'תמיכה',
         schedule: 'סידור שבועי', constraints: 'אילוצים', employees: 'עובדים',
         branches: 'סניפים', users: 'משתמשים', billing: 'מנוי', settings: 'הגדרות'
@@ -969,6 +970,26 @@
         upgraded: 'התוכנית עודכנה ל{plan}. החיוב הבא יהיה {price}.',
         upgradeFailed: 'שדרוג התוכנית נכשל.',
         upgradeOwnerOnly: 'הגעתם לתקרת התוכנית. רק בעל החשבון יכול לשדרג אותה.'
+      },
+
+      hours: {
+        title: 'דוח שעות חודשי',
+        month: 'חודש',
+        export: 'ייצוא לאקסל',
+        hint: 'השעות בפועל מגיעות מדיווחי השעון. משמרת שנפתחה ולא נסגרה אינה נספרת כשעות, והיא מסומנת — דוח עם משמרת פתוחה אינו מוכן לשליחה לחשב שכר.',
+        none: 'אין עדיין דיווחי שעון בחודש הזה.',
+        columnName: 'עובד/ת',
+        columnDays: 'ימים',
+        columnActual: 'בפועל',
+        columnPlanned: 'מתוכנן',
+        columnOvertime: 'שעות נוספות',
+        columnPaidLeave: 'חופשה בתשלום',
+        columnUnpaidLeave: 'חופשה ללא תשלום',
+        columnOpen: 'פתוחות',
+        totalRow: 'סה״כ',
+        openWarning: 'יש משמרות שנפתחו ולא נסגרו. עד שיתוקנו, השעות בדוח חסרות.',
+        sheetName: 'דוח שעות',
+        fileName: 'דוח-שעות',
       },
 
       leave: {

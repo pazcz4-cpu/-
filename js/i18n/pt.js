@@ -123,6 +123,7 @@
         footerTagline: 'Planeamento de turnos para cadeias.'
       },
       tabs: {
+        hours: 'Horas',
         support: 'Apoio',
         schedule: 'Horário', constraints: 'Pedidos', employees: 'Equipa',
         branches: 'Filiais', users: 'Utilizadores', billing: 'Subscrição', settings: 'Definições'
@@ -964,6 +965,26 @@
         upgraded: 'Plano alterado para {plan}. A próxima cobrança será de {price}.',
         upgradeFailed: 'Não foi possível alterar o plano.',
         upgradeOwnerOnly: 'Chegou ao limite do plano. Só o titular da conta o pode alterar.'
+      },
+
+      hours: {
+        title: 'Relatório mensal de horas',
+        month: 'Mês',
+        export: 'Exportar para Excel',
+        hint: 'As horas reais vêm do relógio de ponto. Um turno aberto e nunca fechado não gera horas e fica assinalado — um relatório com um turno aberto não está pronto para o processamento salarial.',
+        none: 'Ainda não há registos de ponto neste mês.',
+        columnName: 'Colaborador/a',
+        columnDays: 'Dias',
+        columnActual: 'Real',
+        columnPlanned: 'Previsto',
+        columnOvertime: 'Horas extra',
+        columnPaidLeave: 'Férias pagas',
+        columnUnpaidLeave: 'Falta sem vencimento',
+        columnOpen: 'Abertos',
+        totalRow: 'Total',
+        openWarning: 'Há turnos abertos que nunca foram fechados. Até serem corrigidos, as horas do relatório estão incompletas.',
+        sheetName: 'Relatório de horas',
+        fileName: 'relatorio-horas',
       },
 
       leave: {

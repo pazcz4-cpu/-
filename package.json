@@ -69,6 +69,7 @@
     "test:sql": "node tests/schema-live-tests.js",
     "test:clock": "node tests/timeclock-tests.js",
     "test:clockui": "node tests/timeclock-browser-test.mjs",
+    "test:hours": "node tests/hours-browser-test.mjs",
     "test:deploy": "node tests/deploy-readiness-tests.js"
   },
   "license": "MIT"

@@ -123,6 +123,7 @@
         footerTagline: 'Planification des équipes pour les réseaux.'
       },
       tabs: {
+        hours: 'Heures',
         support: 'Assistance',
         schedule: 'Planning', constraints: 'Demandes', employees: 'Personnel',
         branches: 'Succursales', users: 'Utilisateurs', billing: 'Abonnement', settings: 'Réglages'
@@ -964,6 +965,26 @@
         upgraded: 'Formule passée à {plan}. Le prochain prélèvement sera de {price}.',
         upgradeFailed: 'Le changement de formule a échoué.',
         upgradeOwnerOnly: 'Vous avez atteint la limite de la formule. Seul le titulaire du compte peut la changer.'
+      },
+
+      hours: {
+        title: 'Relevé d’heures mensuel',
+        month: 'Mois',
+        export: 'Exporter vers Excel',
+        hint: 'Les heures réelles proviennent de la pointeuse. Un poste ouvert et jamais clôturé ne produit aucune heure et reste signalé : un relevé comportant un poste ouvert n’est pas prêt pour la paie.',
+        none: 'Aucun pointage pour ce mois pour l’instant.',
+        columnName: 'Personne',
+        columnDays: 'Jours',
+        columnActual: 'Réel',
+        columnPlanned: 'Prévu',
+        columnOvertime: 'Heures supp.',
+        columnPaidLeave: 'Congé payé',
+        columnUnpaidLeave: 'Congé sans solde',
+        columnOpen: 'Ouverts',
+        totalRow: 'Total',
+        openWarning: 'Des postes ont été ouverts sans être clôturés. Tant qu’ils ne sont pas corrigés, les heures du relevé sont incomplètes.',
+        sheetName: 'Relevé d’heures',
+        fileName: 'releve-heures',
       },
 
       leave: {

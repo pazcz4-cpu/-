@@ -123,6 +123,7 @@
         footerTagline: 'Dienstplanung für Filialbetriebe.'
       },
       tabs: {
+        hours: 'Stunden',
         support: 'Support',
         schedule: 'Dienstplan', constraints: 'Wünsche', employees: 'Team',
         branches: 'Filialen', users: 'Benutzer', billing: 'Abonnement', settings: 'Einstellungen'
@@ -964,6 +965,26 @@
         upgraded: 'Tarif auf {plan} geändert. Die nächste Abbuchung beträgt {price}.',
         upgradeFailed: 'Der Tarif konnte nicht geändert werden.',
         upgradeOwnerOnly: 'Das Tariflimit ist erreicht. Nur wer das Konto besitzt, kann upgraden.'
+      },
+
+      hours: {
+        title: 'Monatlicher Stundenbericht',
+        month: 'Monat',
+        export: 'Nach Excel exportieren',
+        hint: 'Die Ist-Stunden stammen aus der Zeiterfassung. Eine Schicht, die geöffnet und nie beendet wurde, ergibt keine Stunden und wird markiert – ein Bericht mit offener Schicht ist nicht abrechnungsreif.',
+        none: 'Für diesen Monat liegen noch keine Buchungen vor.',
+        columnName: 'Mitarbeiter/in',
+        columnDays: 'Tage',
+        columnActual: 'Ist',
+        columnPlanned: 'Soll',
+        columnOvertime: 'Überstunden',
+        columnPaidLeave: 'Bezahlter Urlaub',
+        columnUnpaidLeave: 'Unbezahlter Urlaub',
+        columnOpen: 'Offen',
+        totalRow: 'Gesamt',
+        openWarning: 'Einige Schichten wurden geöffnet und nie beendet. Bis zur Korrektur sind die Stunden unvollständig.',
+        sheetName: 'Stundenbericht',
+        fileName: 'stundenbericht',
       },
 
       leave: {

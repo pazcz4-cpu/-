@@ -1406,6 +1406,158 @@
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   }
 
+  /* ===== דוח השעות החודשי =====
+
+     מה שנשלח לחשב שכר. שלוש עמודות שאינן "כמה שעות" והן בדיוק
+     מה שהופך אותו לדוח ולא לטבלה:
+
+       · מתוכנן מול בפועל — הפער הוא מה שהמנהל מחפש. עובד עם
+         שלושים שעות פער אינו שאלה של דיוק אלא של סידור.
+       · שעות נוספות — לפי הסף שהעסק הגדיר.
+       · משמרות פתוחות — כניסה בלי יציאה. הדוח אינו מנחש מתי
+         היא נגמרה, והוא גם אינו שותק על כך: דוח עם משמרת
+         פתוחה אינו מוכן לשליחה.
+
+     חופשות בתשלום מגיעות מהבקשות שאושרו ולא מהדיווחים, מפני
+     שיום חופשה הוא יום שלא דיווחו בו. */
+  function hoursMonth() {
+    var input = $('#hours-month');
+    if (input && input.value) return input.value;
+    return Store.monthKeyOf(Store.dateOfDay(weekKey, 0));
+  }
+
+  function hoursRows(monthKey) {
+    var report = Store.monthlyReport(state, monthKey);
+    return state.employees.filter(function (emp) {
+      var row = report[emp.id];
+      return row && (row.minutes || row.plannedMinutes || row.openSessions ||
+        row.paidLeaveDays || row.unpaidLeaveDays);
+    }).map(function (emp) {
+      var row = report[emp.id];
+      return {
+        name: emp.name,
+        days: row.days,
+        minutes: row.minutes,
+        plannedMinutes: row.plannedMinutes,
+        overtimeMinutes: row.overtimeMinutes,
+        paidLeaveDays: row.paidLeaveDays,
+        unpaidLeaveDays: row.unpaidLeaveDays,
+        openSessions: row.openSessions + row.orphanPunches
+      };
+    });
+  }
+
+  function renderHours() {
+    var container = $('#hours-table');
+    if (!container) return;
+    var monthKey = hoursMonth();
+    var input = $('#hours-month');
+    if (input && !input.value) input.value = monthKey;
+
+    var rows = hoursRows(monthKey);
+    if (!rows.length) {
+      container.innerHTML = '<p class="list-empty">' + esc(t('hours.none')) + '</p>';
+      return;
+    }
+    var overtimeOn = Store.overtimeRule(state).enabled;
+    var totals = { days: 0, minutes: 0, planned: 0, overtime: 0, paid: 0, unpaid: 0, open: 0 };
+    var html = '<table><thead><tr>' +
+      '<th class="row-head">' + esc(t('hours.columnName')) + '</th>' +
+      '<th>' + esc(t('hours.columnDays')) + '</th>' +
+      '<th>' + esc(t('hours.columnActual')) + '</th>' +
+      '<th>' + esc(t('hours.columnPlanned')) + '</th>' +
+      (overtimeOn ? '<th>' + esc(t('hours.columnOvertime')) + '</th>' : '') +
+      '<th>' + esc(t('hours.columnPaidLeave')) + '</th>' +
+      '<th>' + esc(t('hours.columnUnpaidLeave')) + '</th>' +
+      '<th>' + esc(t('hours.columnOpen')) + '</th>' +
+      '</tr></thead><tbody>';
+    rows.forEach(function (row) {
+      totals.days += row.days;
+      totals.minutes += row.minutes;
+      totals.planned += row.plannedMinutes;
+      totals.overtime += row.overtimeMinutes;
+      totals.paid += row.paidLeaveDays;
+      totals.unpaid += row.unpaidLeaveDays;
+      totals.open += row.openSessions;
+      html += '<tr><td class="row-head">' + esc(row.name) + '</td>' +
+        '<td>' + row.days + '</td>' +
+        '<td><b>' + Store.formatMinutes(row.minutes) + '</b></td>' +
+        '<td>' + Store.formatMinutes(row.plannedMinutes) + '</td>' +
+        (overtimeOn ? '<td>' + (row.overtimeMinutes
+          ? '<b>' + Store.formatMinutes(row.overtimeMinutes) + '</b>' : '—') + '</td>' : '') +
+        '<td>' + (row.paidLeaveDays || '—') + '</td>' +
+        '<td>' + (row.unpaidLeaveDays || '—') + '</td>' +
+        '<td>' + (row.openSessions
+          ? '<span class="hours-open">' + row.openSessions + '</span>' : '—') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody><tfoot><tr><td class="row-head">' + esc(t('hours.totalRow')) + '</td>' +
+      '<td><b>' + totals.days + '</b></td>' +
+      '<td><b>' + Store.formatMinutes(totals.minutes) + '</b></td>' +
+      '<td><b>' + Store.formatMinutes(totals.planned) + '</b></td>' +
+      (overtimeOn ? '<td><b>' + Store.formatMinutes(totals.overtime) + '</b></td>' : '') +
+      '<td><b>' + totals.paid + '</b></td>' +
+      '<td><b>' + totals.unpaid + '</b></td>' +
+      '<td><b>' + totals.open + '</b></td>' +
+      '</tr></tfoot></table>';
+    if (totals.open) {
+      html += '<p class="hint hours-warn">' + esc(t('hours.openWarning')) + '</p>';
+    }
+    container.innerHTML = html;
+  }
+
+  function loadHoursMonth() {
+    var keys = Store.weekKeysForMonth(hoursMonth());
+    var chain = Promise.resolve();
+    keys.forEach(function (key) {
+      chain = chain.then(function () {
+        return Promise.resolve(source.ensureWeek(state, key));
+      });
+    });
+    return chain.then(renderHours, renderHours);
+  }
+
+  function exportHours() {
+    var monthKey = hoursMonth();
+    var rows = hoursRows(monthKey);
+    if (!rows.length) { toast(t('hours.none')); return; }
+    var overtimeOn = Store.overtimeRule(state).enabled;
+    var S = Xlsx.STYLE;
+    /* השעות מיוצאות כטקסט "8:32" ולא כמספר עשרוני: זה מה
+       שמופיע בתלוש, וזה מה שמשווים מולו. */
+    var head = [t('hours.columnName'), t('hours.columnDays'), t('hours.columnActual'),
+      t('hours.columnPlanned')];
+    if (overtimeOn) head.push(t('hours.columnOvertime'));
+    head.push(t('hours.columnPaidLeave'), t('hours.columnUnpaidLeave'), t('hours.columnOpen'));
+    var sheet = {
+      name: t('hours.sheetName'),
+      cols: [26, 10, 12, 12, 12, 12, 14, 12],
+      rows: [
+        { cells: [{ v: t('hours.title') + ' · ' + monthKey, s: S.TITLE }], height: 24 },
+        [],
+        { cells: head.map(function (value) { return { v: value, s: S.HEADER }; }), height: 22 }
+      ]
+    };
+    rows.forEach(function (row) {
+      var cells = [
+        { v: row.name, s: S.ROW_HEAD },
+        { v: row.days, s: S.PLAIN },
+        { v: Store.formatMinutes(row.minutes), s: S.PLAIN },
+        { v: Store.formatMinutes(row.plannedMinutes), s: S.PLAIN }
+      ];
+      if (overtimeOn) cells.push({ v: Store.formatMinutes(row.overtimeMinutes), s: S.PLAIN });
+      cells.push({ v: row.paidLeaveDays, s: S.PLAIN });
+      cells.push({ v: row.unpaidLeaveDays, s: S.PLAIN });
+      cells.push({ v: row.openSessions, s: S.PLAIN });
+      sheet.rows.push(cells);
+    });
+    var blob = new Blob([Xlsx.build([sheet])], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    saveFile(t('hours.fileName') + '-' + monthKey + '.xlsx', blob,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
   function renderConstraints() {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
@@ -2190,6 +2342,26 @@
     '#reset-all'
   ];
 
+  /* לשונית דוח השעות מוצגת רק לעסק שהדליק שעון. בעסק שלא
+     הדליק היא לשונית ריקה שמבקשת הסבר. */
+  function applyHoursTab() {
+    var tab = document.querySelector('.tab[data-tab="hours"]');
+    if (!tab) return;
+    var show = Store.timeclock(state).enabled;
+    tab.classList.toggle('hidden', !show);
+    if (!show && tab.classList.contains('active')) {
+      /* כובה בזמן שעמדנו עליה: חוזרים לסידור ולא נשארים מול
+         מסך שאין לו יותר לשונית. */
+      tab.classList.remove('active');
+      var panel = $('#tab-hours');
+      if (panel) panel.classList.remove('active');
+      var schedule = document.querySelector('.tab[data-tab="schedule"]');
+      if (schedule) schedule.classList.add('active');
+      var schedulePanel = $('#tab-schedule');
+      if (schedulePanel) schedulePanel.classList.add('active');
+    }
+  }
+
   function applyViewOnly() {
     document.body.classList.toggle('view-only', viewOnly);
     $('#view-only-banner').classList.toggle('hidden', !viewOnly);
@@ -2293,6 +2465,8 @@
     renderBranches();
     renderSettings();
     renderSaveState();
+    renderHours();
+    applyHoursTab();
     applyView();
     applyViewOnly();
   }
@@ -2731,6 +2905,7 @@
       /* הסיכום החודשי צריך את כל שבועות החודש, ולכן הם נטענים
          כשנכנסים ללשונית ולא בכל ציור. */
       if (button.dataset.tab === 'constraints') { loadLeaveMonth(); }
+      if (button.dataset.tab === 'hours') { loadHoursMonth(); }
     });
   }
 
@@ -3085,6 +3260,13 @@
     }
     var leaveExport = $('#leave-export');
     if (leaveExport) { leaveExport.addEventListener('click', exportLeave); }
+
+    var hoursInput = $('#hours-month');
+    if (hoursInput) {
+      hoursInput.addEventListener('change', function () { loadHoursMonth(); });
+    }
+    var hoursExport = $('#hours-export');
+    if (hoursExport) { hoursExport.addEventListener('click', exportHours); }
 
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);
@@ -4192,6 +4374,7 @@
     target.constraints = remote.constraints || {};
     target.assignments = remote.assignments || {};
     target.manual = remote.manual || {};
+    target.punches = Array.isArray(remote.punches) ? remote.punches : [];
     target.note = remote.note || '';
     Store.save(state);
     if (key === weekKey) render();

@@ -1975,3 +1975,12 @@ button.wiz-option:hover { border-color: var(--brand); background: var(--bg); }
   .punch-card { flex-direction: column; align-items: stretch; }
   .punch-btn { width: 100%; }
 }
+
+/* משמרת פתוחה בדוח השעות: מספר שקורא לטיפול, ולא רק צבע —
+   דוח עם משמרת פתוחה אינו מוכן לשליחה לחשב שכר. */
+.hours-open {
+  display: inline-block; min-width: 22px; padding: 0 6px;
+  border-radius: var(--r-pill); background: var(--err); color: #fff;
+  font-weight: 700; font-size: var(--t-sm);
+}
+.hours-warn { color: var(--err); margin-top: var(--s3); }

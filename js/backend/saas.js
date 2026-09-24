@@ -146,6 +146,9 @@
             target.assignments = remote.assignments || {};
             target.manual = remote.manual || {};
             target.holidays = remote.holidays || {};
+            /* דיווחי השעון. בלעדיהם דוח השעות היה מראה אפס לכל
+               עובד — הנתונים בשרת, והמסך פשוט לא היה מביא אותם. */
+            target.punches = Array.isArray(remote.punches) ? remote.punches : [];
             target.shabbatEnd = remote.shabbatEnd || '';
             target.note = remote.note || '';
             target.published = !!remote.published;

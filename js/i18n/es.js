@@ -123,6 +123,7 @@
         footerTagline: 'Planificación de turnos para cadenas.'
       },
       tabs: {
+        hours: 'Horas',
         support: 'Soporte',
         schedule: 'Horario', constraints: 'Solicitudes', employees: 'Personal',
         branches: 'Sucursales', users: 'Usuarios', billing: 'Suscripción', settings: 'Ajustes'
@@ -964,6 +965,26 @@
         upgraded: 'Plan cambiado a {plan}. El próximo cobro será de {price}.',
         upgradeFailed: 'No se pudo cambiar el plan.',
         upgradeOwnerOnly: 'Has llegado al límite del plan. Solo el titular de la cuenta puede subirlo.'
+      },
+
+      hours: {
+        title: 'Informe mensual de horas',
+        month: 'Mes',
+        export: 'Exportar a Excel',
+        hint: 'Las horas reales vienen del reloj de fichaje. Un turno abierto y nunca cerrado no genera horas y queda marcado: un informe con un turno abierto no está listo para nóminas.',
+        none: 'Todavía no hay fichajes en este mes.',
+        columnName: 'Persona',
+        columnDays: 'Días',
+        columnActual: 'Real',
+        columnPlanned: 'Previsto',
+        columnOvertime: 'Horas extra',
+        columnPaidLeave: 'Vacaciones pagadas',
+        columnUnpaidLeave: 'Ausencia sin sueldo',
+        columnOpen: 'Abiertos',
+        totalRow: 'Total',
+        openWarning: 'Hay turnos abiertos que nunca se cerraron. Hasta corregirlos, las horas del informe están incompletas.',
+        sheetName: 'Informe de horas',
+        fileName: 'informe-horas',
       },
 
       leave: {

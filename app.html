@@ -35,6 +35,7 @@
     <button class="tab hidden" data-tab="users" data-i18n="tabs.users">משתמשים</button>
     <button class="tab hidden" data-tab="billing" data-i18n="tabs.billing">מנוי</button>
     <button class="tab hidden" data-tab="support" data-i18n="tabs.support">תמיכה</button>
+    <button class="tab hidden" data-tab="hours" data-i18n="tabs.hours">דוח שעות</button>
     <button class="tab" data-tab="settings" data-i18n="tabs.settings">הגדרות</button>
   </nav>
 </header>
@@ -277,6 +278,22 @@
   </section>
 
   <!-- ===== הגדרות ===== -->
+  <!-- ===== דוח שעות חודשי ===== -->
+  <section class="panel" id="tab-hours">
+    <div class="toolbar no-print">
+      <div class="week-label"><strong data-i18n="hours.title">דוח שעות חודשי</strong></div>
+      <div class="actions">
+        <label class="inline-field"><span data-i18n="hours.month">חודש</span>
+          <input type="month" id="hours-month" class="text-input"></label>
+        <button id="hours-export" class="btn ghost" data-i18n="hours.export">ייצוא לאקסל</button>
+      </div>
+    </div>
+    <p class="hint" data-i18n="hours.hint">
+      השעות בפועל מגיעות מדיווחי השעון. משמרת שנפתחה ולא נסגרה אינה נספרת כשעות, והיא מסומנת — דוח עם משמרת פתוחה אינו מוכן לשליחה לחשב שכר.
+    </p>
+    <div id="hours-table" class="table-wrap"></div>
+  </section>
+
   <section class="panel" id="tab-settings">
     <div id="company-details" class="hidden">
       <h2 data-i18n="company.title">פרטי העסק</h2>

@@ -691,6 +691,52 @@
     return clock.enabled && (clock.mode === 'phone' || clock.mode === 'both');
   }
 
+  /* ===== המספר של העובד במכשיר =====
+
+     מכשיר חומרה אינו מכיר מזהים כמו "emp-7". הוא מכיר מספר
+     משתמש, והמנהל מקליד אותו במכשיר בעת רישום הכרטיס. לכן לכל
+     עובד יש מספר קצר וקבוע, והמסך מציג אותו.
+
+     המספרים מוקצים אוטומטית ולא מוקלדים: מנהל שמקליד מספרים
+     בשתי מערכות שונות יטעה, וטעות כאן פירושה ששעות של אחד
+     נרשמות על השני. הם גם אינם ממוחזרים אחרי מחיקת עובד, כדי
+     שדיווח ישן שיגיע באיחור לא ייפול על מי שקיבל את מספרו. */
+  function clockIdOf(emp) {
+    var value = Number(emp && emp.clockId);
+    return value > 0 ? Math.floor(value) : null;
+  }
+
+  function nextClockId(state) {
+    var max = 0;
+    (state.employees || []).forEach(function (emp) {
+      var value = clockIdOf(emp);
+      if (value && value > max) max = value;
+    });
+    return max + 1;
+  }
+
+  /* מחזיר את העובדים שקיבלו מספר עכשיו. מי שקורא חייב לשמור. */
+  function assignClockIds(state) {
+    var added = [];
+    var next = nextClockId(state);
+    (state.employees || []).forEach(function (emp) {
+      if (clockIdOf(emp)) return;
+      emp.clockId = next++;
+      added.push(emp);
+    });
+    return added;
+  }
+
+  function employeeByClockId(state, clockId) {
+    var wanted = Number(clockId);
+    if (!(wanted > 0)) return null;
+    var list = state.employees || [];
+    for (var i = 0; i < list.length; i++) {
+      if (clockIdOf(list[i]) === Math.floor(wanted)) return list[i];
+    }
+    return null;
+  }
+
   /* דקות מתוכננות לעובד ביום, לפי שעות המשמרת שאליה שובץ.
      זה הצד השני של הדוח: מה היה אמור לקרות. */
   function plannedMinutes(state, week, empId, dayIdx) {
@@ -1960,6 +2006,10 @@
     punchSessions: punchSessions,
     timeclock: timeclock,
     allowsPhonePunch: allowsPhonePunch,
+    clockIdOf: clockIdOf,
+    nextClockId: nextClockId,
+    assignClockIds: assignClockIds,
+    employeeByClockId: employeeByClockId,
     overtimeRule: overtimeRule,
     plannedMinutes: plannedMinutes,
     shiftLengthMinutes: shiftLengthMinutes,

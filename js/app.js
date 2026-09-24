@@ -1983,6 +1983,9 @@
   function renderLimit() {
     var toggle = $('#opt-limit');
     if (!toggle) return;
+    var team = $('#opt-team-shifts');
+    if (team) team.checked = Store.teamVisibility(state).shifts;
+
     var config = Store.constraintLimitSettings(state);
     var max = $('#limit-max');
 
@@ -3705,6 +3708,19 @@
       if (!(value >= 1)) { toast(t('settings.limitMin')); render(); return; }
       saveLimit({ max: Math.min(7, value) });
     });
+
+    /* מה עובד רואה מלבד עצמו. הגדרה של העסק כולו, ולא לעובד
+       בודד: "לחלק מהצוות מותר לראות" הוא כלל שאי אפשר להסביר
+       לאף אחד מהם. */
+    if ($('#opt-team-shifts')) {
+      $('#opt-team-shifts').addEventListener('change', function (event) {
+        var current = Store.teamVisibility(state);
+        state.settings.teamVisibility =
+          Object.assign({}, current, { shifts: event.target.checked });
+        persist('config');
+        render();
+      });
+    }
 
     $('#default-shabbat').addEventListener('change', function (event) {
       var normalized = Store.normalizeTimeInput(event.target.value);

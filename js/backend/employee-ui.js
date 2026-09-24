@@ -414,6 +414,50 @@
       html += '<p class="employee-note">' + esc(t('employee.totalWeek', { count: shifts.length })) + '</p>';
     }
 
+    /* הסידור של כל הצוות, כשהמנהל אפשר אותו.
+
+       מתחת למשמרות שלי ולא מעליהן: מה שהעובד בא לראות הוא מתי
+       הוא עובד. וקיים רק אחרי פרסום — סידור בטיוטה משתנה, ועובד
+       שראה בו את עצמו ביום שלישי לא אמור לגלות שזה היה זמני.
+
+       מה שנחשף כאן הוא שמות ומשמרות בלבד. האילוצים, ההערות,
+       המיילים והמכסות של שאר העובדים אינם עוברים לכאן בכלל —
+       לא כי המסך מסתיר אותם, אלא כי Store.dayRoster אינו
+       מחזיר אותם. */
+    if (Store.teamVisibility(this.state).shifts && this.week.published) {
+      var myId = this._employeeId();
+      html += '<details class="employee-fold team-fold">';
+      html += '<summary class="employee-fold-head">' +
+        '<span class="employee-title">' + esc(t('employee.teamTitle')) + '</span>' +
+        '<span class="employee-fold-hint">' + esc(t('employee.teamHint')) + '</span>' +
+        '</summary>';
+      html += '<div class="team-days">';
+      Data.DAYS.forEach(function (day) {
+        var roster = Store.dayRoster(self.state, self.week, day.idx);
+        if (!roster.length) return;
+        html += '<div class="team-day"><h3>' + esc(day.name) + ' · ' +
+          esc(Store.formatDate(Store.dateOfDay(self.weekKey, day.idx))) + '</h3>';
+        roster.forEach(function (slot) {
+          var branch = Store.byId(self.state.branches, slot.branchId) || {};
+          var shift = Store.shiftById(self.state, slot.shiftId);
+          html += '<div class="team-slot sh sh-' +
+              Store.shiftColor(self.state, slot.shiftId) + '">' +
+            '<b>' + esc(branch.name || '') + ' · ' +
+              esc(shift ? shift.name : slot.shiftId) + '</b>' +
+            '<span>' + slot.people.map(function (person) {
+              /* "זה אני" מסומן, ולא מושמט: רשימה שבה כולם חוץ
+                 ממך היא רשימה שקשה להבין בה מה מקומך. */
+              return person.id === myId
+                ? '<em class="team-me">' + esc(person.name) + '</em>'
+                : esc(person.name);
+            }).join(', ') + '</span>' +
+            '</div>';
+        });
+        html += '</div>';
+      });
+      html += '</div></details>';
+    }
+
     /* האילוצים שלי.
 
        אחרי שהסידור פורסם, מה שהעובד בא לראות הוא המשמרות שלו.

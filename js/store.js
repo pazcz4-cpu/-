@@ -993,6 +993,44 @@
     };
   }
 
+  /* ===== מה עובד רואה מלבד עצמו =====
+
+     ברירת המחדל היא שרואים רק את עצמך. מנהל שרוצה צוות שמתאם
+     ביניהו מדליק, וזה חל על כל העובדים בעסק.
+
+     ערך שאינו מוגדר כלל — עסק שנפתח לפני שההגדרה קיימת — מקבל
+     סגור. שינוי גרסה לא אמור לפתוח בשקט את הסידור של כולם
+     לכולם אצל לקוח קיים. */
+  function teamVisibility(state) {
+    var value = (state && state.settings && state.settings.teamVisibility) || {};
+    return { shifts: value.shifts === true };
+  }
+
+  /* כל מי שעובד באותו יום, לפי סניף ומשמרת.
+
+     מחזיר גם את העובד עצמו: המסך מסמן אותו, ולא משמיט אותו —
+     רשימה שבה כולם חוץ ממך היא רשימה שקשה להבין בה מה מקומך. */
+  function dayRoster(state, week, dayIdx) {
+    var out = [];
+    (state.branches || []).forEach(function (branch) {
+      shiftIds(state).forEach(function (shiftId) {
+        var list = getAssigned(week, dayIdx, branch.id, shiftId);
+        if (!list.length) return;
+        out.push({
+          branchId: branch.id,
+          shiftId: shiftId,
+          /* שמות בלבד. מזהה מוחזר כדי שהמסך יסמן "זה אני",
+             ושום שדה אחר מכרטיס העובד אינו עובר כאן. */
+          people: list.map(function (id) {
+            var emp = byId(state.employees || [], id) || {};
+            return { id: id, name: emp.name || '' };
+          })
+        });
+      });
+    });
+    return out;
+  }
+
   /* האם הרשומה מגבילה זמינות בפועל. בקשה שנדחתה אינה מגבילה
      דבר, ולכן היא משחררת מקום. */
   function limitsAvailability(record) {
@@ -1552,6 +1590,7 @@
   var API = {
     deadlineSettings: deadlineSettings, deadlineFor: deadlineFor,
     constraintLimitSettings: constraintLimitSettings,
+    teamVisibility: teamVisibility, dayRoster: dayRoster,
     countsTowardLimit: countsTowardLimit, isPreference: isPreference,
     countCountedConstraints: countCountedConstraints,
     countLimitingConstraints: countLimitingConstraints,

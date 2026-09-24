@@ -1355,6 +1355,25 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 /* ספארי מצייר משולש משלו, ומסיר אותו רק דרך הפסאודו-אלמנט הזה */
 .employee-fold-head::-webkit-details-marker { display: none; }
 .employee-fold-head .employee-title { margin: 0; font-size: var(--t-md); }
+
+/* ===== הסידור של כל הצוות =====
+   מגירה נפרדת, סגורה כברירת מחדל: מה שהעובד בא לראות הוא מתי
+   הוא עובד, וזו תוספת למי שרוצה לדעת מי איתו. */
+.team-days { display: grid; gap: var(--s4); padding: var(--s3) var(--s1) 0; }
+.team-day h3 {
+  margin: 0 0 var(--s2); font-size: var(--t-sm); color: var(--muted);
+  font-weight: 600;
+}
+.team-slot {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s2);
+  padding: var(--s2) var(--s3); margin-bottom: var(--s2);
+  border-radius: var(--r-sm); border-inline-start: 3px solid transparent;
+}
+.team-slot b { font-size: var(--t-sm); font-weight: 600; }
+.team-slot span { font-size: var(--t-sm); color: var(--muted); }
+/* השם שלי מודגש ברשימה. בלי זה עובד סורק שמונה שמות כדי למצוא
+   את עצמו, וזו בדיוק הפעולה שהוא בא לעשות. */
+.team-me { font-style: normal; font-weight: 700; color: var(--ink); }
 .employee-fold-hint {
   font-size: var(--t-sm); color: var(--muted);
   margin-inline-start: auto;

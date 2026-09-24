@@ -111,6 +111,9 @@ test('בלוק התצורה כולל את מה שגורם לדחיפה מייד�
   var body = internals.handshake('ABC123');
   assert(body.indexOf('GET OPTION FROM: ABC123') === 0, 'שורת הפתיחה');
   assert(body.indexOf('Realtime=1') !== -1, 'דחיפה מיידית');
+  /* שמות השדות משתנים בין גרסאות קושחה, ולכן שתי הצורות */
+  assert(body.indexOf('Stamp=') !== -1 && body.indexOf('ATTLOGStamp=') !== -1,
+    'רק אחת משתי צורות ה-Stamp נשלחת');
 });
 
 console.log('\n== המסלול המלא, מול שרת מדומה ==');

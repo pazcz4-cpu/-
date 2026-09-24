@@ -147,16 +147,23 @@ function parseAttlog(body) {
 /* בלוק התצורה שהמכשיר מצפה לו בלחיצת היד. Realtime=1 הוא מה
    שגורם לו לדחוף כל העברת כרטיס מיד, ולא אחת לכמה דקות. */
 function handshake(sn) {
+  /* שמות השדות משתנים מעט בין גרסאות קושחה: יש שקוראות
+     Stamp ויש שקוראות ATTLOGStamp. שתיהן נשלחות, כי מה שהמכשיר
+     אינו מכיר הוא פשוט מתעלם ממנו — ומה שהוא כן מכיר ולא קיבל
+     יגרום לו לא לדחוף. */
   return [
     'GET OPTION FROM: ' + sn,
     'Stamp=9999',
     'OpStamp=9999',
+    'ATTLOGStamp=9999',
+    'OPERLOGStamp=9999',
     'ErrorDelay=60',
     'Delay=30',
     'TransTimes=00:00;14:05',
     'TransInterval=1',
     'TransFlag=1111000000',
     'Realtime=1',
+    'ServerVer=3.0.1',
     'Encrypt=0'
   ].join('\n');
 }

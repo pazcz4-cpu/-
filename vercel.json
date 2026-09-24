@@ -4,6 +4,10 @@
   "outputDirectory": "site",
   "framework": null,
   "trailingSlash": true,
+  "rewrites": [
+    { "source": "/iclock/:action", "destination": "/api/timeclock?action=:action" },
+    { "source": "/iclock/:action/", "destination": "/api/timeclock?action=:action" }
+  ],
   "headers": [
     {
       "source": "/(css|js)/(.*)",

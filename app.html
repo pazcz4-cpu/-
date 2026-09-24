@@ -375,6 +375,29 @@
           </select></label>
       </div>
       <p class="hint" style="margin:0" data-i18n="settings.clockHint">הסידור הוא מה שתוכנן; השעון הוא מה שקרה. בסוף החודש אפשר להוציא דוח שעות לפי הדיווחים.</p>
+
+      <!-- מכשירי החומרה. מוצגים רק כשהעסק בחר לעבוד עם שעון
+           בסניף: לעסק שמדווח מהטלפון זו שורה שמבקשת הסבר. -->
+      <div id="clock-devices" class="hidden">
+        <h3 data-i18n="settings.devicesTitle">מכשירים בסניפים</h3>
+        <p class="hint" style="margin:0" data-i18n="settings.devicesHint">
+          במכשיר: Menu ואז Comm ואז Cloud Server. כתובת השרת: setshifts.com, פורט 443. אחרי ההגדרה יש להזין כאן את המספר הסידורי שמופיע על מדבקה בגב המכשיר.
+        </p>
+        <div id="device-list" class="table-wrap"></div>
+        <div class="row">
+          <label class="inline-field"><span data-i18n="settings.deviceSn">מספר סידורי</span>
+            <input type="text" id="device-sn" class="text-input" maxlength="40" dir="ltr"></label>
+          <label class="inline-field"><span data-i18n="settings.deviceBranch">סניף</span>
+            <select id="device-branch" class="text-input"></select></label>
+          <button id="device-add" class="btn primary" data-i18n="settings.deviceAdd">הוספת מכשיר</button>
+        </div>
+
+        <h3 data-i18n="settings.clockNumbersTitle">מספרי העובדים במכשיר</h3>
+        <p class="hint" style="margin:0" data-i18n="settings.clockNumbersHint">
+          במכשיר: Menu ואז User Mgt ואז New User. יש להזין לכל עובד את המספר שמופיע כאן, ואז להעביר את הכרטיס שלו מול הקורא.
+        </p>
+        <div id="clock-numbers" class="table-wrap"></div>
+      </div>
     </div>
 
     <h2 data-i18n="settings.overtimeTitle">שעות נוספות</h2>

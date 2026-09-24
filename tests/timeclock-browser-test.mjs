@@ -77,6 +77,45 @@ try {
   check('שינוי בשעות נשמר בדקות', await page.evaluate(() =>
     window.ShiftStore.overtimeRule(window.ShiftApp.getState()).dailyMinutes), 540);
 
+  console.log('\n== רישום מכשיר חומרה ==');
+  check('במצב "מהטלפון" אין אזור מכשירים',
+    await page.locator('#clock-devices').isHidden(), true);
+  await page.selectOption('#clock-mode', 'both');
+  await page.waitForTimeout(800);
+  check('ובמצב משולב הוא נפתח', await page.locator('#clock-devices').isVisible(), true);
+  /* בלי מספר לכל עובד אי אפשר לרשום לו כרטיס במכשיר, ולכן
+     המספרים מוקצים ברגע שהעסק עובר לעבוד עם חומרה. */
+  check('לכל עובד הוקצה מספר במכשיר', await page.evaluate(() =>
+    window.ShiftApp.getState().employees.every((emp) => emp.clockId > 0)), true);
+  check('והמספרים ייחודיים', await page.evaluate(() => {
+    const ids = window.ShiftApp.getState().employees.map((e) => e.clockId);
+    return new Set(ids).size === ids.length;
+  }), true);
+  check('והם מוצגים למתקין', await page.locator('#clock-numbers tbody tr').count() > 0, true);
+
+  await page.fill('#device-sn', 'ZK-TEST-1');
+  await page.click('#device-add');
+  await page.waitForTimeout(800);
+  check('המכשיר נרשם', await page.evaluate(() =>
+    window.ShiftStore.timeclock(window.ShiftApp.getState()).devices.length), 1);
+  check('עם שיוך לסניף', await page.evaluate(() =>
+    !!window.ShiftStore.timeclock(window.ShiftApp.getState()).devices[0].branchId), true);
+  /* מספר סידורי הוא המפתח שמזהה מכשיר. רישום כפול שלו היה
+     מייצר שני שיוכים לאותו מכשיר, ואחד מהם היה נשאר תלוי. */
+  await page.fill('#device-sn', 'ZK-TEST-1');
+  await page.click('#device-add');
+  await page.waitForTimeout(700);
+  check('ואותו מספר אינו נרשם פעמיים', await page.evaluate(() =>
+    window.ShiftStore.timeclock(window.ShiftApp.getState()).devices.length), 1);
+  await page.click('[data-device-remove]');
+  await page.waitForTimeout(700);
+  check('והסרה עובדת', await page.evaluate(() =>
+    window.ShiftStore.timeclock(window.ShiftApp.getState()).devices.length), 0);
+
+  /* חזרה לדיווח מהטלפון, כי זה מה שנבדק בהמשך */
+  await page.selectOption('#clock-mode', 'phone');
+  await page.waitForTimeout(800);
+
   console.log('\n== עובד אמיתי מדווח ==');
   await page.click('.tab[data-tab="users"]');
   await page.waitForTimeout(700);

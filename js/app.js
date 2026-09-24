@@ -2130,6 +2130,70 @@
       : '';
   }
 
+  /* ===== מכשירי השעון =====
+
+     מכשיר מזוהה אצלנו לפי המספר הסידורי שלו, ולכן הרישום הוא
+     הקלדה אחת של המספר שעל המדבקה. מספר שלא נרשם אינו קשור
+     לשום עסק, וזה מה שמונע ממישהו לדחוף דיווחים בשם לקוח אחר.
+
+     לצדו מוצגים מספרי העובדים במכשיר — כי זה מה שהמתקין צריך
+     בידו בזמן שהוא עומד מול המכשיר ורושם כרטיסים. */
+  function renderClockDevices() {
+    var block = $('#clock-devices');
+    if (!block) return;
+    var clock = Store.timeclock(state);
+    var show = clock.enabled && (clock.mode === 'device' || clock.mode === 'both');
+    block.classList.toggle('hidden', !show);
+    if (!show) return;
+
+    var list = $('#device-list');
+    if (list) {
+      if (!clock.devices.length) {
+        list.innerHTML = '<p class="list-empty">' + esc(t('settings.devicesNone')) + '</p>';
+      } else {
+        var html = '<table><thead><tr>' +
+          '<th class="row-head">' + esc(t('settings.deviceSn')) + '</th>' +
+          '<th>' + esc(t('settings.deviceBranch')) + '</th>' +
+          '<th></th></tr></thead><tbody>';
+        clock.devices.forEach(function (device) {
+          var branch = Store.byId(state.branches, device.branchId) || {};
+          html += '<tr><td class="row-head" dir="ltr">' + esc(device.sn) + '</td>' +
+            '<td>' + esc(branch.name || t('settings.deviceNoBranch')) + '</td>' +
+            '<td><button class="btn ghost small" data-device-remove="' + esc(device.sn) + '"' +
+            (viewOnly ? ' disabled' : '') + '>' +
+            ico('trash') + '<span>' + esc(t('settings.deviceRemove')) + '</span></button></td></tr>';
+        });
+        list.innerHTML = html + '</tbody></table>';
+      }
+    }
+
+    var branchSelect = $('#device-branch');
+    if (branchSelect) {
+      var current = branchSelect.value;
+      branchSelect.innerHTML = state.branches.map(function (branch) {
+        return '<option value="' + esc(branch.id) + '">' + esc(branch.name) + '</option>';
+      }).join('');
+      if (current) branchSelect.value = current;
+    }
+
+    var numbers = $('#clock-numbers');
+    if (numbers) {
+      var active = (state.employees || []).filter(function (emp) { return emp.active !== false; });
+      if (!active.length) {
+        numbers.innerHTML = '<p class="list-empty">' + esc(t('employees.none')) + '</p>';
+      } else {
+        var rows = '<table><thead><tr>' +
+          '<th class="row-head">' + esc(t('hours.columnName')) + '</th>' +
+          '<th>' + esc(t('settings.clockNumber')) + '</th></tr></thead><tbody>';
+        active.forEach(function (emp) {
+          rows += '<tr><td class="row-head">' + esc(emp.name) + '</td>' +
+            '<td><b>' + (Store.clockIdOf(emp) || '—') + '</b></td></tr>';
+        });
+        numbers.innerHTML = rows + '</tbody></table>';
+      }
+    }
+  }
+
   /* תקרת הבקשות. מוצגת גם כשהיא כבויה, כדי שמנהל שמחפש אותה
      ימצא אותה במקום לנחש שהיא לא קיימת. */
   function renderLimit() {
@@ -2170,6 +2234,8 @@
         weekly.disabled = viewOnly || !rule.enabled;
       }
     }
+
+    renderClockDevices();
 
     var config = Store.constraintLimitSettings(state);
     var max = $('#limit-max');
@@ -3955,6 +4021,52 @@
         var current = Store.timeclock(state);
         state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
           enabled: current.enabled, mode: event.target.value, devices: current.devices
+        });
+        /* מעבר לעבודה עם מכשיר: לכל עובד מוקצה מספר, כי זה מה
+           שהמתקין צריך מול המכשיר. */
+        if (event.target.value === 'device' || event.target.value === 'both') {
+          Store.assignClockIds(state);
+        }
+        persist('config');
+        render();
+      });
+    }
+
+    /* רישום מכשיר. המספר הסידורי הוא מה שמזהה אותו, ולכן
+       מספר שכבר רשום אינו נרשם פעמיים — גם לא לעסק הזה. */
+    if ($('#device-add')) {
+      $('#device-add').addEventListener('click', function () {
+        var input = $('#device-sn');
+        var sn = String((input && input.value) || '').trim();
+        if (!sn) { toast(t('settings.deviceSnRequired')); return; }
+        var clock = Store.timeclock(state);
+        var exists = clock.devices.some(function (device) { return device.sn === sn; });
+        if (exists) { toast(t('settings.deviceExists')); return; }
+        var branchSelect = $('#device-branch');
+        var devices = clock.devices.concat([{
+          sn: sn, branchId: (branchSelect && branchSelect.value) || ''
+        }]);
+        state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
+          enabled: clock.enabled, mode: clock.mode, devices: devices
+        });
+        /* מכשיר ראשון: לכל עובד מוקצה מספר, כי בלעדיו אי אפשר
+           לרשום לו כרטיס. מוקצה ולא מוקלד, כדי שלא ייווצר מצב
+           שבו שעות של אחד נרשמות על השני. */
+        Store.assignClockIds(state);
+        if (input) input.value = '';
+        persist('config');
+        render();
+        toast(t('settings.deviceAdded'));
+      });
+    }
+    if ($('#device-list')) {
+      $('#device-list').addEventListener('click', function (event) {
+        var button = event.target.closest('[data-device-remove]');
+        if (!button) return;
+        var sn = button.dataset.deviceRemove;
+        var clock = Store.timeclock(state);
+        state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
+          devices: clock.devices.filter(function (device) { return device.sn !== sn; })
         });
         persist('config');
         render();

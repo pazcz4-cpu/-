@@ -88,6 +88,12 @@
         feature5Body: 'Export the whole week, or send each person only their own shifts – as a personal sheet or ready-to-paste text.',
         feature6Title: 'Live on every device',
         feature6Body: 'Manager edits on a computer, staff see their shifts on their phone. Everyone sees the same schedule, instantly.',
+        feature7Title: 'Clock in from a phone',
+        feature7Body: 'Staff clock in and out from their own device, on site or in the field. A shift left open is flagged, never silently dropped.',
+        feature8Title: 'Hours report for payroll',
+        feature8Body: 'At month end: actual versus planned hours, overtime by the threshold you set, and an Excel export. A bad punch is corrected by hand, and the correction is logged.',
+        feature9Title: 'Paid leave',
+        feature9Body: 'Staff request time off in advance, a manager approves or declines, and the days appear in the monthly report without anyone counting them.',
 
         howTitle: 'Up and running in an afternoon',
         how1Title: 'Add locations and staff',

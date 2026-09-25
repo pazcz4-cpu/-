@@ -418,13 +418,25 @@
        שני שמות באותה שורה נראים כמו שני חשבונות פתוחים; אחד מעל
        השני, עם הראשון בולט והשני משני, נקראים כ"העסק, ובתוכו
        אני". לחיצה פותחת את המקום שבו משנים כל אחד מהם בנפרד. */
+    /* בעלים רבים ממלאים את אותו שם בשני השדות בהרשמה – שם העסק
+       גם בשדה "שם מלא". אז השורה השנייה חזרה על הראשונה, והכפתור
+       הציג את שם העסק פעמיים. במקרה כזה מוותרים על השם ומשאירים
+       את התפקיד בלבד: הוא מה שמוסיף מידע. */
+    var roleName = Model.ROLE_NAMES[session.user.role] || session.user.role;
+    function sameText(a, b) {
+      return String(a == null ? '' : a).trim().toLowerCase() ===
+        String(b == null ? '' : b).trim().toLowerCase();
+    }
+    var personLine = (!session.user.name || sameText(session.user.name, session.company.name))
+      ? roleName
+      : session.user.name + ' · ' + roleName;
+
     var identity =
       '<button type="button" id="user-account" class="user-id" ' +
         'aria-expanded="' + (this.accountOpen ? 'true' : 'false') + '" ' +
         'aria-controls="account-panel" title="' + esc(t('account.open')) + '">' +
         '<span class="user-company">' + esc(session.company.name) + '</span>' +
-        '<span class="user-name">' + esc(session.user.name) +
-          ' · ' + esc(Model.ROLE_NAMES[session.user.role] || session.user.role) + '</span>' +
+        '<span class="user-name">' + esc(personLine) + '</span>' +
       '</button>';
 
     bar.innerHTML = identity +

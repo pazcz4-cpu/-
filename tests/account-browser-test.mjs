@@ -190,6 +190,29 @@ try {
   });
   check('עובדת אינה יכולה לשנות את שם העסק גם בקריאה ישירה', denied, 'forbidden');
 
+  /* ===== אותו שם בשני השדות =====
+     בעלים רבים ממלאים את שם העסק גם בשדה "שם מלא", ואז הכפתור
+     הציג את אותו שם פעמיים, זה מעל זה. */
+  console.log('\n== שם עסק זהה לשם המשתמש אינו מופיע פעמיים ==');
+  const twin = await mk();
+  await skipWizard(twin);
+  await twin.goto(APP);
+  await twin.waitForTimeout(400);
+  await twin.click('[data-auth-mode="signup"]');
+  await twin.waitForTimeout(200);
+  await twin.fill('input[name="companyName"]', 'סטשיפטס בעמ');
+  await twin.fill('input[name="name"]', 'סטשיפטס בעמ');
+  await twin.fill('input[name="email"]', 'twin@id.test');
+  await twin.fill('input[name="password"]', 'secret123');
+  await twin.click('#signup-form button[type="submit"]');
+  await twin.waitForTimeout(1300);
+  check('שם העסק מופיע פעם אחת בלבד', await twin.evaluate(() => {
+    const text = document.querySelector('#user-account').innerText;
+    return (text.match(/סטשיפטס בעמ/g) || []).length;
+  }), 1);
+  check('ובשורה השנייה נשאר התפקיד',
+    await twin.locator('#user-bar .user-name').innerText(), 'בעלים');
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

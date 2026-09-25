@@ -523,7 +523,7 @@
       preview: {
         open: 'Vista de empleado',
         title: '¿Qué pantalla quieres ver?',
-        hint: 'Caja, reposición, cocina, sala — lo que tu negocio necesite. Una persona puede tener varias funciones, y un turno puede pedir varias funciones a la vez.',
+        hint: 'Esto es exactamente lo que la persona ve en su teléfono. Solo lectura: no se puede cambiar nada en su nombre, y vuelves a la gestión cuando quieras.',
         banner: 'Estás viendo la pantalla de {name}',
         exit: 'Volver a gestión',
         noEmployees: 'Todavía no hay personal activo.'

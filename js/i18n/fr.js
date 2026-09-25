@@ -523,7 +523,7 @@
       preview: {
         open: 'Vue employé',
         title: 'Quel écran voulez-vous voir ?',
-        hint: 'Caisse, rayon, cuisine, salle — ce dont votre entreprise a besoin. Une personne peut porter plusieurs rôles, et un poste peut en demander plusieurs à la fois.',
+        hint: 'C’est exactement ce que la personne voit sur son téléphone. Consultation seule : rien ne peut être modifié en son nom, et vous revenez à la gestion à tout moment.',
         banner: 'Vous consultez l’écran de {name}',
         exit: 'Retour à la gestion',
         noEmployees: 'Aucun employé actif pour l’instant.'

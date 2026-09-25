@@ -523,7 +523,7 @@
       preview: {
         open: 'Mitarbeiteransicht',
         title: 'Wessen Bildschirm möchten Sie sehen?',
-        hint: 'Kasse, Regal, Küche, Service — was Ihr Betrieb braucht. Eine Person kann mehrere Rollen haben, und eine Schicht kann mehrere Rollen zugleich verlangen.',
+        hint: 'Genau das sieht die Person auf ihrem Telefon. Nur ansehen — in ihrem Namen lässt sich nichts ändern — und Sie kehren jederzeit zur Verwaltung zurück.',
         banner: 'Sie sehen den Bildschirm von {name}',
         exit: 'Zurück zur Verwaltung',
         noEmployees: 'Noch keine aktiven Mitarbeiter.'

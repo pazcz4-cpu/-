@@ -523,7 +523,7 @@
       preview: {
         open: 'Vista do colaborador',
         title: 'Que ecrã queres ver?',
-        hint: 'Caixa, reposição, cozinha, salão — o que o seu negócio precisar. Uma pessoa pode ter várias funções, e um turno pode pedir várias funções de uma vez.',
+        hint: 'É exatamente o que a pessoa vê no telemóvel dela. Apenas consulta — nada pode ser alterado em nome dela — e volta à gestão quando quiser.',
         banner: 'Estás a ver o ecrã de {name}',
         exit: 'Voltar à gestão',
         noEmployees: 'Ainda não há colaboradores ativos.'

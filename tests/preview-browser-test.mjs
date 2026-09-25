@@ -52,6 +52,13 @@ try {
   check('הכפתור בשורת המשתמש', await page.locator('#user-preview').isVisible(), true);
   await page.click('#user-preview');
   await page.waitForTimeout(300);
+  /* ההסבר בחלון הזה היה פעם הסבר על תפקידים – "קופאי, סדרן,
+     מטבח" – שהועתק לכאן מהגדרות התפקידים ולא אמר דבר על מה
+     שהחלון עושה. הוא צריך לענות על השאלה שהמנהל שואל כאן. */
+  const dialogText = await page.locator('.why-card').innerText();
+  check('ההסבר אינו הסבר על תפקידים', /קופאי|סדרן|מטבח/.test(dialogText), false);
+  check('וההסבר אומר שזו צפייה בלבד', /צפייה בלבד/.test(dialogText), true);
+
   const picks = await page.locator('.preview-pick').count();
   check('רשימת העובדים נפתחה', picks > 3, true);
   const firstName = await page.locator('.preview-pick').first().textContent();

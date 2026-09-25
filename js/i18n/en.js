@@ -529,7 +529,7 @@
       preview: {
         open: 'Employee view',
         title: 'Whose screen do you want to see?',
-        hint: 'Cashier, stocker, kitchen, waiter — whatever your business needs. One person can hold several roles, and one shift can ask for several roles at once.',
+        hint: 'This is exactly what the employee sees on their phone. View only — nothing can be changed in their name — and you can go back to management at any moment.',
         banner: 'You are viewing the screen of {name}',
         exit: 'Back to management',
         noEmployees: 'No active staff yet.'

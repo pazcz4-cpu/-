@@ -42,9 +42,9 @@
         signIn: 'Entrar',
         start: 'Começar grátis',
         startLong: 'Começar grátis – {days} dias',
-        heroBadge: 'Planeamento com IA para negócios com várias lojas',
+        heroBadge: 'Planeamento com IA — de uma loja a toda uma rede',
         heroTitle: 'Todo o teu negócio, planeado num clique.',
-        heroSubtitle: 'Uma semana inteira, todos os locais — por disponibilidade, pedidos e a quota de turnos de cada pessoa. Cada atribuição explica porquê aquela pessoa.',
+        heroSubtitle: 'Uma semana inteira para toda a equipa — numa loja ou em todas — por disponibilidade, pedidos e a quota de turnos de cada pessoa. Cada atribuição explica porquê aquela pessoa.',
         heroNote: '{days} dias grátis em todos os planos, cancela quando quiseres.',
         faq6ACard: 'Introduzes um cartão no registo e os primeiros {days} dias não custam nada. A primeira cobrança acontece no fim do período e depois é mensal até cancelares. Se cancelares dentro dos {days} dias nunca és cobrado — os dados ficam e podes sempre exportá-los.',
         heroSecondary: 'Como funciona',
@@ -128,7 +128,7 @@
         faq5Q: 'Que idiomas são suportados?',
         faq5A: 'Hebraico, inglês, espanhol, francês, alemão, português, russo e árabe — incluindo idiomas lidos da direita para a esquerda. Cada pessoa escolhe o seu.',
         ctaTitle: 'Experimenta no horário da próxima semana',
-        ctaBody: 'Configura as lojas, constrói uma semana e vê a diferença. Leva uma tarde.',
+        ctaBody: 'Configura a equipa, constrói uma semana e vê a diferença. Leva uma tarde.',
         footerRights: 'Todos os direitos reservados.',
         about: 'Quem somos',
         stories: 'Onde ajuda',
@@ -138,7 +138,7 @@
         terms: 'Termos',
         security: 'Segurança',
         accessibility: 'Acessibilidade',
-        footerTagline: 'Planeamento de turnos para cadeias.'
+        footerTagline: 'Planeamento de turnos para qualquer negócio que trabalhe por turnos.'
       },
       tabs: {
         hours: 'Horas',

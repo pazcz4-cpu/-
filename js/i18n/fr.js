@@ -40,11 +40,11 @@
         faq6Q: 'Quand suis-je débité exactement ?',
         faq6A: 'Vous vous inscrivez sans carte bancaire, et les {days} premiers jours sont gratuits. Pour continuer après l’essai, vous ajoutez un moyen de paiement sur l’écran d’abonnement, et c’est ensuite mensuel jusqu’à résiliation. Si vous n’ajoutez rien, cela s’arrête simplement à la fin de l’essai : vos données sont conservées et vous pouvez toujours les exporter.',
         signIn: 'Connexion',
-        start: 'Commencer gratuitement',
-        startLong: 'Commencer gratuitement – {days} jours',
-        heroBadge: 'Planification par IA pour les entreprises multi-sites',
+        start: 'Essai gratuit',
+        startLong: 'Essai gratuit – {days} jours',
+        heroBadge: 'Planification par IA — d\'un seul site à tout un réseau',
         heroTitle: 'Toute votre activité, planifiée en un clic.',
-        heroSubtitle: 'Une semaine entière, tous les sites — selon disponibilités, demandes et le quota de créneaux de chacun. Chaque affectation explique pourquoi cette personne.',
+        heroSubtitle: 'Une semaine entière pour toute l\'équipe — sur un seul site ou sur tous — selon disponibilités, demandes et le quota de créneaux de chacun. Chaque affectation explique pourquoi cette personne.',
         heroNote: '{days} jours gratuits sur toutes les formules, résiliable à tout moment.',
         faq6ACard: 'Vous saisissez une carte à l’inscription, et les {days} premiers jours ne coûtent rien. Le premier prélèvement a lieu à la fin de l’essai, puis chaque mois jusqu’à l’annulation. Si vous annulez dans les {days} jours, rien n’est prélevé — vos données restent et vous pouvez toujours les exporter.',
         heroSecondary: 'Comment ça marche',
@@ -128,7 +128,7 @@
         faq5Q: 'Quelles langues sont prises en charge ?',
         faq5A: 'Hébreu, anglais, espagnol, français, allemand, portugais, russe et arabe — y compris les langues qui se lisent de droite à gauche. Chacun choisit la sienne.',
         ctaTitle: 'Essayez-le sur le planning de la semaine prochaine',
-        ctaBody: 'Configurez vos sites, construisez une semaine et voyez la différence. Une après-midi suffit.',
+        ctaBody: 'Configurez votre équipe, construisez une semaine et voyez la différence. Une après-midi suffit.',
         footerRights: 'Tous droits réservés.',
         about: 'À propos',
         stories: 'Où ça aide',
@@ -138,7 +138,7 @@
         terms: 'Conditions',
         security: 'Sécurité',
         accessibility: 'Accessibilité',
-        footerTagline: 'Planification des équipes pour les réseaux.'
+        footerTagline: 'Planification des équipes pour toute entreprise qui tourne en équipes.'
       },
       tabs: {
         hours: 'Heures',

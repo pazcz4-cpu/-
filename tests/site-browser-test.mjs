@@ -494,6 +494,24 @@ try {
   }
   await page.setViewportSize({ width: 1280, height: 900 });
 
+  /* אותו דף בשמונה שפות, ברוחב אמיתי של אנדרואיד.
+     הסרגל העליון כוונן בשעתו לעברית, ובגרמנית, בצרפתית
+     וברוסית — שבהן "התחלה חינם" הוא מילה ארוכה במידה
+     אחת — הוא דחף את העמוד הצידה. עמוד שנגלל לרוחב
+     בטלפון נראה שבור, וזה הרושם הראשון מהמוצר. */
+  await page.setViewportSize({ width: 360, height: 740 });
+  for (const code of ['he', 'en', 'ar', 'de', 'es', 'fr', 'pt', 'ru']) {
+    const wide = await page.evaluate((lang) => {
+      window.I18n.use(lang);
+      const doc = document.documentElement;
+      return doc.scrollWidth - doc.clientWidth;
+    }, code);
+    await page.waitForTimeout(120);
+    check('360 ב-' + code + ': בלי גלילה אופקית', wide, 0);
+  }
+  await page.evaluate(() => window.I18n.use('he'));
+  await page.setViewportSize({ width: 1280, height: 900 });
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

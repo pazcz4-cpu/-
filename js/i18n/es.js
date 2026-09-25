@@ -42,9 +42,9 @@
         signIn: 'Entrar',
         start: 'Empezar gratis',
         startLong: 'Empezar gratis – {days} días',
-        heroBadge: 'Planificación con IA para negocios con varias sucursales',
+        heroBadge: 'Planificación con IA: de una sola sucursal a toda una cadena',
         heroTitle: 'Todo tu negocio, planificado en un clic.',
-        heroSubtitle: 'Una semana entera, todas las ubicaciones: según disponibilidad, solicitudes y el cupo de turnos de cada persona. Cada asignación explica por qué esa persona.',
+        heroSubtitle: 'Una semana entera para todo el equipo, en una sucursal o en todas: según disponibilidad, solicitudes y el cupo de turnos de cada persona. Cada asignación explica por qué esa persona.',
         heroNote: '{days} días gratis en todos los planes, cancela cuando quieras.',
         faq6ACard: 'Introduces una tarjeta al registrarte y los primeros {days} días no cuestan nada. El primer cobro se hace al terminar la prueba y luego es mensual hasta que canceles. Si cancelas dentro de los {days} días no se te cobra nada: tus datos se conservan y siempre puedes exportarlos.',
         heroSecondary: 'Cómo funciona',
@@ -128,7 +128,7 @@
         faq5Q: '¿Qué idiomas admite?',
         faq5A: 'Hebreo, inglés, español, francés, alemán, portugués, ruso y árabe, incluidos los idiomas que se leen de derecha a izquierda. Cada persona elige el suyo.',
         ctaTitle: 'Pruébalo con el cuadrante de la semana que viene',
-        ctaBody: 'Configura tus sucursales, crea una semana y nota la diferencia. Es cuestión de una tarde.',
+        ctaBody: 'Configura tu equipo, crea una semana y nota la diferencia. Es cuestión de una tarde.',
         footerRights: 'Todos los derechos reservados.',
         about: 'Quiénes somos',
         stories: 'Dónde ayuda',
@@ -138,7 +138,7 @@
         terms: 'Términos',
         security: 'Seguridad',
         accessibility: 'Accesibilidad',
-        footerTagline: 'Planificación de turnos para cadenas.'
+        footerTagline: 'Planificación de turnos para cualquier negocio con turnos.'
       },
       tabs: {
         hours: 'Horas',

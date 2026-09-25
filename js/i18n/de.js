@@ -42,9 +42,9 @@
         signIn: 'Anmelden',
         start: 'Gratis starten',
         startLong: 'Gratis starten – {days} Tage',
-        heroBadge: 'KI-Dienstplanung für Unternehmen mit mehreren Standorten',
+        heroBadge: 'KI-Dienstplanung — vom einzelnen Standort bis zur ganzen Kette',
         heroTitle: 'Ihr ganzer Betrieb, in einem Klick geplant.',
-        heroSubtitle: 'Eine ganze Woche, alle Standorte – nach Verfügbarkeit, Wünschen und dem Schichtkontingent jeder Person. Zu jeder Zuteilung steht, warum genau diese Person.',
+        heroSubtitle: 'Eine ganze Woche für das ganze Team – an einem Standort oder an allen – nach Verfügbarkeit, Wünschen und dem Schichtkontingent jeder Person. Zu jeder Zuteilung steht, warum genau diese Person.',
         heroNote: '{days} Tage gratis in jedem Tarif, jederzeit kündbar.',
         faq6ACard: 'Sie hinterlegen bei der Anmeldung eine Karte, und die ersten {days} Tage kosten nichts. Die erste Abbuchung erfolgt am Ende der Testphase, danach monatlich bis zur Kündigung. Wer innerhalb der {days} Tage kündigt, zahlt nie – die Daten bleiben und lassen sich jederzeit exportieren.',
         heroSecondary: 'So funktioniert es',
@@ -128,7 +128,7 @@
         faq5Q: 'Welche Sprachen werden unterstützt?',
         faq5A: 'Hebräisch, Englisch, Spanisch, Französisch, Deutsch, Portugiesisch, Russisch und Arabisch – auch Sprachen, die von rechts nach links gelesen werden. Jede Person wählt ihre eigene.',
         ctaTitle: 'Probieren Sie es am Plan für nächste Woche',
-        ctaBody: 'Standorte einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
+        ctaBody: 'Team einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
         footerRights: 'Alle Rechte vorbehalten.',
         about: 'Über uns',
         stories: 'Wo es hilft',
@@ -138,7 +138,7 @@
         terms: 'Nutzungsbedingungen',
         security: 'Sicherheit',
         accessibility: 'Barrierefreiheit',
-        footerTagline: 'Dienstplanung für Filialbetriebe.'
+        footerTagline: 'Dienstplanung für jeden Betrieb mit Schichten.'
       },
       tabs: {
         hours: 'Stunden',

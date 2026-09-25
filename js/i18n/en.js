@@ -41,9 +41,9 @@
         faq6Q: 'When exactly am I charged?',
         faq6A: 'You sign up without a credit card, and the first {days} days are free. To continue after the trial you add a payment method on the subscription screen, and from then it is monthly until you cancel. If you add nothing, it simply stops at the end of the trial — your data is kept, and you can always export it.',
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
-        heroBadge: 'AI employee scheduling for multi-location businesses',
+        heroBadge: 'AI employee scheduling — from one location to a whole chain',
         heroTitle: 'Your entire operation, scheduled in one click.',
-        heroSubtitle: 'A whole week, every location — from availability, requests and each person\'s shift limit. Every assignment says why that person.',
+        heroSubtitle: 'A whole week for your whole team — one location or all of them — from availability, requests and each person\'s shift limit. Every assignment says why that person.',
         heroNote: '{days} days free on every plan, cancel any time.',
         faq6ACard: 'You enter a card at signup, and the first {days} days cost nothing. The first charge happens when the trial ends, then monthly until you cancel. Cancel within the {days} days and you are never charged — your data stays and you can always export it.',
         heroSecondary: 'See how it works',
@@ -134,7 +134,7 @@
         faq5A: 'Hebrew, English, Spanish, French, German, Portuguese, Russian and Arabic – including right-to-left layouts. Each person picks their own.',
 
         ctaTitle: 'Try it on next week’s schedule',
-        ctaBody: 'Set up your locations, build one week, and see the difference. It takes an afternoon.',
+        ctaBody: 'Set up your team, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
         about: 'About',
         stories: 'Where it helps',
@@ -144,7 +144,7 @@
         terms: 'Terms',
         security: 'Security',
         accessibility: 'Accessibility',
-        footerTagline: 'Shift scheduling for chains.'
+        footerTagline: 'Shift scheduling for every business that runs on shifts.'
       },
 
       tabs: {

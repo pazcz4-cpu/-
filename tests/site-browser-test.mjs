@@ -446,6 +446,54 @@ try {
     await page.locator('#demo-banner').isVisible(), true);
   build({ SUPABASE_URL: BUILD_URL, SUPABASE_ANON_KEY: BUILD_KEY });
 
+  /* ===== התמונה הראשית =====
+
+     היא אמורה להיות הדבר הראשון בעמוד ולהגיע משפה לשפה. פס
+     רקע של שישה עשר פיקסלים משני הצדדים הופך אותה מפתיחה של
+     עמוד לקובייה שהודבקה עליו, והוא מגיע מכלל של main
+     ב-styles.css שנכתב למסך הניהול. */
+  console.log('\n== התמונה הראשית ==');
+  await page.goto(BASE + '/');
+  await page.waitForLoadState('networkidle');
+  const measure = () => page.evaluate(() => {
+    const fig = document.querySelector('.lp-hero-shot');
+    const img = fig && fig.querySelector('img');
+    if (!img) return null;
+    const box = fig.getBoundingClientRect();
+    const rect = img.getBoundingClientRect();
+    const title = document.querySelector('.lp-hero h1').getBoundingClientRect();
+    return {
+      complete: img.complete && img.naturalWidth > 0,
+      figLeft: Math.round(box.left),
+      figRight: Math.round(window.innerWidth - box.right),
+      aboveTitle: rect.bottom <= title.top,
+      /* חיתוך היה גוזר את גגות הסניפים מהאיור */
+      fit: getComputedStyle(img).objectFit,
+      /* יחס הגובה-רוחב שנשמר בפועל, מול זה של הקובץ */
+      ratio: Math.round((rect.width / rect.height) * 100) / 100,
+      natural: Math.round((img.naturalWidth / img.naturalHeight) * 100) / 100,
+      overflowX: document.documentElement.scrollWidth > window.innerWidth
+    };
+  });
+
+  const wide = await measure();
+  check('התמונה נטענה', wide && wide.complete, true);
+  check('ויושבת מעל הכותרת', wide.aboveTitle, true);
+
+  /* מקצה לקצה נבדק על המסגרת ולא על התמונה: במסך רחב מאוד
+     האיור נעצר ברוחב שלו והרקע שלו נמשך הלאה, כדי שלא ייחתך.
+     מה שחייב להגיע לקצוות הוא מה שנראה — כלומר המסגרת. */
+  for (const [w, h] of [[360, 740], [768, 1024], [1280, 900], [1920, 1080]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(250);
+    const m = await measure();
+    check(w + ': נוגעת בשני הקצוות', m.figLeft === 0 && m.figRight === 0, true);
+    check(w + ': בלי גלילה אופקית', m.overflowX, false);
+    check(w + ': האיור אינו נחתך', m.fit, 'fill');
+    check(w + ': והיחס נשמר', Math.abs(m.ratio - m.natural) < 0.02, true);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

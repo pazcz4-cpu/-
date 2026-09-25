@@ -90,7 +90,15 @@
 .lp-btn-lg { padding: 14px 26px; font-size: 16.5px; border-radius: 13px; }
 
 /* ===== גיבור ===== */
-.lp-hero { padding: 64px 0 52px; }
+/* styles.css נותן ל-main ריפוד ותקרת רוחב של 1500 פיקסלים, כי
+   שם הוא מסך הניהול. בדף המכירה הרוחב נקבע ב-landing-wrap, וכל
+   מקטע שרוצה להגיע לקצה המסך — מגיע. בלי האיפוס הזה נשאר פס
+   רקע משני צדי התמונה הראשית, והיא נראית כמו קובייה. */
+.lp-main { padding: 0; max-width: none; }
+
+/* הריווח העליון עבר לתוך ה-wrap: התמונה יושבת צמודה לסרגל
+   העליון, והרווח מתחיל אחריה. */
+.lp-hero { padding: 0 0 52px; }
 
 /* פריסה מוערמת ולא שתי עמודות.
 
@@ -98,11 +106,12 @@
    סידור בחצי רוחב הוא טבלה שאי אפשר לקרוא בה מילה. כאן
    הכותרת והכפתורים יושבים למעלה במרכז, והצילום מתחתיהם בכל
    רוחב המכל — בגודל שבו באמת רואים את המוצר. */
-.lp-hero-grid { display: grid; gap: 40px; justify-items: center; text-align: center; }
+.lp-hero-grid { display: grid; gap: 40px; justify-items: center; text-align: center;
+  padding-top: 46px; }
 .lp-hero-grid > div:first-child { max-width: 46rem; }
 .lp-hero-grid .lp-hero-actions { justify-content: center; }
 .lp-hero-grid .lp-lead { margin-inline: auto; }
-.lp-hero-shot { width: 100%; }
+
 .lp-badge {
   display: inline-block; font-size: 13px; font-weight: 600;
   color: var(--brand-dark); background: var(--c2-bg);
@@ -117,19 +126,46 @@
 .lp-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .lp-hero-note { font-size: 13.5px; color: var(--muted); margin: 16px 0 0; }
 
-/* התמונה הראשית.
+/* ===== התמונה הראשית =====
 
-   בלי מסגרת ובלי צל: אלה היו שם כשכאן ישב צילום מסך, והם מה
-   שהפריד בין הצילום לבין הדף. האיור יושב על רקע תכלת משלו,
-   ומסגרת סביבו הייתה גוזרת אותו מהדף במקום לחבר אותו אליו.
+   על כל רוחב המסך, ראשונה בעמוד. בלי מסגרת, בלי צל ובלי פינות
+   מעוגלות: כל אחד מהם מצייר קופסה, ואיור שיושב בקופסה באמצע
+   הדף נראה כמו תמונה שהודבקה ולא כמו הפתיחה של העמוד.
 
    aspect-ratio לפי המידות האמיתיות של הקובץ, כדי שהמקום יישמר
-   עוד לפני שהתמונה נטענה — אחרת הכותרת קופצת כשהיא מגיעה. */
-.lp-hero-shot { margin: 0; }
+   עוד לפני שהתמונה נטענה — אחרת כל הדף קופץ כשהיא מגיעה.
+
+   בלי חיתוך: ניסיתי תקרת גובה כדי שהכותרת לא תידחף למטה במסך
+   רחב, והיא חתכה את הסניף התחתון. האיור הוא קומפוזיציה אחת —
+   שלושה סניפים סביב לוח — וסניף חתוך הורס אותה. */
+.lp-hero-shot {
+  margin: 0;
+  width: 100%;
+}
 .lp-hero-shot img {
   display: block; width: 100%; height: auto;
   aspect-ratio: 1672 / 941;
-  border-radius: 16px;
+}
+
+/* ===== מסכים רחבים =====
+
+   איור של 16:9 שנמתח על כל הרוחב הוא מסך שלם של תמונה: ב-1920
+   הוא לבדו 1081 פיקסלים, והכותרת יורדת מתחת לקיפול.
+
+   ניסיתי קודם תקרת גובה עם חיתוך, וזה גזר את גגות שני הסניפים
+   העליונים ואת הבסיס של התחתון. האיור הוא קומפוזיציה אחת,
+   וסניף חתוך הורס אותה.
+
+   לכן במסך רחב האיור נעצר ברוחב שלו, והרקע שלו נמשך עד לקצוות:
+   הגרדיאנט כאן לקוח מצבעי הקצה של הקובץ עצמו (#d8e9fd משמאל,
+   #e3f1fc מימין), ולכן אין תפר בין התמונה להמשך. הדף עדיין
+   נראה מקצה לקצה, והאיור נשאר שלם. */
+.lp-hero-shot {
+  background: linear-gradient(to right, #d8e9fd, #e3f1fc);
+}
+
+@media (min-width: 1500px) {
+  .lp-hero-shot img { max-width: 1500px; margin-inline: auto; }
 }
 
 /* ===== מקטעים ===== */
@@ -281,7 +317,11 @@
 
   .lp-hero-grid { grid-template-columns: 1fr; gap: 34px; }
   .lp-cards, .lp-steps, .lp-plans { grid-template-columns: 1fr; }
-  .lp-hero { padding: 40px 0 34px; }
+  .lp-hero { padding: 0 0 34px; }
+  .lp-hero-grid { padding-top: 30px; }
+  /* בטלפון אין מה לחתוך: האיור נמוך ממילא, והתקרה רק הייתה
+     גוזרת ממנו סניף. */
+  .lp-hero-shot img { max-height: none; }
   .lp-section { padding: 42px 0; }
 }
 @media (max-width: 560px) {

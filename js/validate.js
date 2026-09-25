@@ -75,7 +75,8 @@
       eligible.push(emp);
 
       if (Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx).length) { busy.push(emp.name); return; }
-      if (Store.employeeWeekCount(state, week, emp.id) >= (emp.maxShifts || 99)) { atMax.push(emp.name); return; }
+      if (Store.employeeWeekCount(state, week, emp.id) >=
+        Store.effectiveMaxShifts(week, emp)) { atMax.push(emp.name); return; }
       /* מנוחה בין משמרות, לפי הפער בשעות ולשני הכיוונים */
       if (Store.restRule(state).enabled) {
         var tooClose = false;
@@ -395,7 +396,7 @@
         }
 
         var workable = Store.workableDays(state, week, emp).length;
-        var expected = Math.min(emp.maxShifts || 99, workable);
+        var expected = Math.min(Store.effectiveMaxShifts(week, emp), workable);
         if (daysOff.length === 1 && total < expected && total > 0) {
           issues.push(issue('info', 'below-target',
             t('alerts.belowTarget', {
@@ -405,9 +406,14 @@
         }
       }
 
-      if (emp.active && total > (emp.maxShifts || 99)) {
+      /* המספר בהודעה הוא המכסה שנבדקה בפועל, ולא זו שבכרטיס:
+         עובד שלקח יום חופש בתשלום נבדק מול מכסה קטנה יותר,
+         והודעה שאומרת "6" בזמן שהחריגה נמדדה מול 5 נראית
+         כמו באג. */
+      var effectiveMax = Store.effectiveMaxShifts(week, emp);
+      if (emp.active && total > effectiveMax) {
         issues.push(issue('warning', 'over-max',
-          t('alerts.overMax', { name: emp.name, total: total, max: emp.maxShifts }),
+          t('alerts.overMax', { name: emp.name, total: total, max: effectiveMax }),
           { empId: emp.id }));
       }
       if (emp.active && total === 0 && Store.weekDemands(state, week).length) {

@@ -394,6 +394,9 @@
         left: '{verb} {shifts} left · free on {days}',
         leftNoDays: '{verb} {shifts} left, but no free day this week',
         full: 'fully used ({assigned} of {max})',
+        fullWithLeave: 'fully used ({assigned} of {max}, including {leave})',
+        paidLeaveOne: 'one paid day off',
+        paidLeaveOther: '{count} paid days off',
         noEmployees: 'No active staff.',
         shiftsOne: 'one shift', shiftsOther: '{count} shifts',
         remains: 'remains', remainPlural: 'remain'
@@ -424,6 +427,8 @@
         approve: 'Approve', reject: 'Reject',
         approved: 'Approved', rejected: 'Rejected', pending: 'Waiting for approval',
         requestLabel: 'Request: {detail}', requestRejected: 'Request rejected',
+        sameRequestOne: 'Heads up: one other person asked for the same',
+        sameRequestOther: 'Heads up: {count} other people asked for the same',
         reason: 'Reason (optional)',
         reasonPlaceholder: 'e.g. wedding, exam, doctor appointment',
         reasonSaved: 'Reason saved', reasonGiven: 'Reason you gave: {text}',

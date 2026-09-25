@@ -388,6 +388,9 @@
         left: '{verb} {shifts} de cuota · libre el {days}',
         leftNoDays: '{verb} {shifts} de cuota, pero no hay ningún día libre esta semana',
         full: 'cuota completa ({assigned} de {max})',
+        fullWithLeave: 'cuota completa ({assigned} de {max}, incluyendo {leave})',
+        paidLeaveOne: 'un día libre pagado',
+        paidLeaveOther: '{count} días libres pagados',
         noEmployees: 'No hay personal activo.',
         shiftsOne: 'un turno', shiftsOther: '{count} turnos',
         remains: 'queda', remainPlural: 'quedan'
@@ -418,6 +421,8 @@
         approve: 'Aprobar', reject: 'Rechazar',
         approved: 'Aprobada', rejected: 'Rechazada', pending: 'Pendiente de aprobación',
         requestLabel: 'Solicitud: {detail}', requestRejected: 'Solicitud rechazada',
+        sameRequestOne: 'Atención: otra persona pidió lo mismo',
+        sameRequestOther: 'Atención: otras {count} personas pidieron lo mismo',
         reason: 'Motivo (opcional)',
         reasonPlaceholder: 'p. ej. boda, examen, cita médica',
         reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',

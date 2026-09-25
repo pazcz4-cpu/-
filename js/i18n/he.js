@@ -393,6 +393,9 @@
         left: '{verb} {shifts} במכסה · פנוי/ה ב{days}',
         leftNoDays: '{verb} {shifts} במכסה, אך אין יום פנוי השבוע',
         full: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max})',
+        fullWithLeave: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max}, כולל {leave})',
+        paidLeaveOne: 'יום חופש אחד בתשלום',
+        paidLeaveOther: '{count} ימי חופש בתשלום',
         noEmployees: 'לא הוגדרו עובדים פעילים.',
         shiftsOne: 'משמרת אחת', shiftsOther: '{count} משמרות',
         remains: 'נותרה', remainPlural: 'נותרו'
@@ -423,6 +426,8 @@
         approve: 'אישור', reject: 'דחייה',
         approved: 'אושר', rejected: 'נדחה', pending: 'ממתין לאישור',
         requestLabel: 'בקשה: {detail}', requestRejected: 'בקשה נדחתה',
+        sameRequestOne: 'שימו לב: בקשה חופפת גם מעובד/ת נוסף/ת',
+        sameRequestOther: 'שימו לב: בקשה חופפת גם מ-{count} עובדים נוספים',
         reason: 'סיבה (לא חובה)',
         reasonPlaceholder: 'למשל: חתונה, בחינה, תור לרופא',
         reasonSaved: 'הסיבה נשמרה', reasonGiven: 'הסיבה שציינת: {text}',

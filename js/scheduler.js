@@ -49,7 +49,10 @@
       if (dayList[i].shiftId === demand.shiftId) return false; // אותה משמרת פעמיים באותו יום
     }
 
-    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) return false;
+    /* המכסה בפועל: יום חופש בתשלום הוא יום שנוצל, והוא יורד
+       מהמכסה. בלי זה המנוע משבץ משמרת שישית לעובד שכבר שולם
+       לו על היום השישי שלו. */
+    if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) return false;
 
     /* מנוחה בין משמרות. נבדק לשני הכיוונים, כי סדר השיבוץ אינו
        כרונולוגי, ולפי הפער האמיתי בשעות – כך זה עובד גם על
@@ -216,7 +219,7 @@
             blockers.push({ dayIdx: day, branchId: slot.branchId, shiftId: slot.shiftId });
           });
         });
-        if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+        if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) {
           for (var d = 0; d < 7; d++) {
             ctx.byDay[emp.id][d].forEach(function (slot) {
               blockers.push({ dayIdx: d, branchId: slot.branchId, shiftId: slot.shiftId });
@@ -269,7 +272,7 @@
       if (day < 0 || day > 6) return;
       ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
     });
-    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+    if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) {
       for (var day = 0; day < 7; day++) {
         ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
       }

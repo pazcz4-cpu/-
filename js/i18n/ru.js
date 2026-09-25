@@ -388,6 +388,9 @@
         left: '{verb} {shifts} в норме · свободен в {days}',
         leftNoDays: '{verb} {shifts} в норме, но свободных дней на этой неделе нет',
         full: 'норма выбрана полностью ({assigned} из {max})',
+        fullWithLeave: 'норма выбрана полностью ({assigned} из {max}, включая {leave})',
+        paidLeaveOne: 'один оплачиваемый выходной',
+        paidLeaveOther: '{count} оплачиваемых выходных',
         noEmployees: 'Нет активных сотрудников.',
         shiftsOne: 'одна смена', shiftsOther: '{count} смен',
         remains: 'осталась', remainPlural: 'осталось'
@@ -418,6 +421,8 @@
         approve: 'Одобрить', reject: 'Отклонить',
         approved: 'Одобрена', rejected: 'Отклонена', pending: 'Ожидает одобрения',
         requestLabel: 'Заявка: {detail}', requestRejected: 'Заявка отклонена',
+        sameRequestOne: 'Внимание: то же самое просил ещё один человек',
+        sameRequestOther: 'Внимание: то же самое просили ещё {count} человек',
         reason: 'Причина (необязательно)',
         reasonPlaceholder: 'например: свадьба, экзамен, приём у врача',
         reasonSaved: 'Причина сохранена', reasonGiven: 'Указанная причина: {text}',

@@ -388,6 +388,9 @@
         left: '{verb} {shifts} de quota · disponible le {days}',
         leftNoDays: '{verb} {shifts} de quota, mais aucun jour libre cette semaine',
         full: 'quota entièrement utilisé ({assigned} sur {max})',
+        fullWithLeave: 'quota entièrement utilisé ({assigned} sur {max}, dont {leave})',
+        paidLeaveOne: 'un jour de congé payé',
+        paidLeaveOther: '{count} jours de congé payés',
         noEmployees: 'Aucun membre du personnel actif.',
         shiftsOne: 'un service', shiftsOther: '{count} services',
         remains: 'il reste', remainPlural: 'il reste'
@@ -418,6 +421,8 @@
         approve: 'Approuver', reject: 'Refuser',
         approved: 'Approuvée', rejected: 'Refusée', pending: 'En attente d’approbation',
         requestLabel: 'Demande : {detail}', requestRejected: 'Demande refusée',
+        sameRequestOne: 'Attention : une autre personne a demandé la même chose',
+        sameRequestOther: 'Attention : {count} autres personnes ont demandé la même chose',
         reason: 'Motif (facultatif)',
         reasonPlaceholder: 'ex. mariage, examen, rendez-vous médical',
         reasonSaved: 'Motif enregistré', reasonGiven: 'Motif indiqué : {text}',

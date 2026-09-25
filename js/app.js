@@ -1328,6 +1328,14 @@
         });
       } else if (row.spare > 0) {
         text += t('availability.leftNoDays', { verb: remainVerb(row.spare), shifts: shiftsWord(row.spare) });
+      } else if (row.paidLeave) {
+        /* "מנוצל במלואו" על עובד שעבד חמש מתוך שש נראה כמו
+           טעות, עד שאומרים שהיום השישי נלקח כחופש בתשלום —
+           כלומר הוא יום שנוצל ולא יום שנותר. */
+        text += t('availability.fullWithLeave', {
+          assigned: row.assigned, max: row.max,
+          leave: tCount('availability.paidLeave', row.paidLeave)
+        });
       } else {
         text += t('availability.full', { assigned: row.assigned, max: row.max });
       }
@@ -1399,6 +1407,10 @@
         Store.formatDate(Store.dateOfDay(weekKey, item.dayIdx)) + '</span>' +
         '<em>' + esc(describeConstraint(item.record)) + '</em>' +
         (item.record.note ? '<small>' + esc(item.record.note) + '</small>' : '') +
+        /* כאן ההחלטה מתקבלת בפועל, ולכן כאן צריכה להופיע
+           האזהרה: מנהל שמאשר חמש בקשות לאותה משמרת אחת-אחת
+           אינו רואה שזו אותה משמרת, עד מוצאי שבת. */
+        sameRequestNote(item.empId, item.dayIdx) +
         '</div>';
       html += '<div class="pending-actions">' +
         '<button class="btn small approve" data-decision="approved">' + t('constraints.approve') + '</button>' +
@@ -1951,7 +1963,8 @@
         var reason = record && record.note ? ' · ' + record.note : '';
         if (status === Store.CONSTRAINT_STATUS.PENDING) {
           cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">' +
-            esc(t('constraints.requestLabel', { detail: describeConstraint(record) })) + esc(reason) + '</div>';
+            esc(t('constraints.requestLabel', { detail: describeConstraint(record) })) + esc(reason) +
+            sameRequestNote(emp.id, day.idx) + '</div>';
         } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
           cellTag = '<div class="c-status rejected">' + t('constraints.requestRejected') + '</div>';
         } else if (record && record.note) {
@@ -1985,6 +1998,37 @@
 
     html += '</tbody></table>';
     $('#constraints-grid').innerHTML = html;
+  }
+
+
+  /* מי עוד ביקש את אותו דבר באותו יום.
+
+     מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שחמישה אנשים
+     ביקשו את אותה משמרת בשישי. הוא מאשר את הראשונה, ואת
+     החמישית, ואז מגלה במוצאי שבת שאין מי שיעבוד. השורה הזו
+     היא כל ההבדל בין אישור אוטומטי לבין החלטה.
+
+     סגור כברירת מחדל: המספר הוא מה שקובע אם לעצור, והשמות
+     נחוצים רק למי שעצר. */
+  var openSameRequest = {};
+
+  function sameRequestNote(empId, dayIdx) {
+    var others = Store.overlappingRequests(state, week(), empId, dayIdx);
+    if (!others.length) return '';
+    var key = empId + '|' + dayIdx;
+    var open = !!openSameRequest[key];
+    var html = '<button type="button" class="c-same" data-same="' + esc(key) + '"' +
+      ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+      esc(tCount('constraints.sameRequest', others.length)) + '</button>';
+    if (open) {
+      html += '<ul class="c-same-list">' + others.map(function (item) {
+        var what = item.off
+          ? t('constraints.dayOff')
+          : item.shifts.map(shiftLabel).join(', ');
+        return '<li>' + esc(item.name) + ' · ' + esc(what) + '</li>';
+      }).join('') + '</ul>';
+    }
+    return html;
   }
 
   /* ========== עובדים ========== */
@@ -3678,7 +3722,11 @@
     /* לוח השנה: סגירת יום, שעות מיוחדות, וביטול של כל אחד
        מהם. המערכת אינה סוגרת דבר לבד — היא מציעה, והמנהל
        מאשר בלחיצה. */
-    $('#calendar-days').addEventListener('click', function (event) {
+    /* בלי המקטע הזה (העמוד המקומי ב-/tool, שאין בו לוח שנה)
+       הקישור היה נופל על null — ועמו כל שאר הקישורים שאחריו,
+       כלומר כל המסך. */
+    var calendarHost = $('#calendar-days');
+    if (calendarHost) calendarHost.addEventListener('click', function (event) {
       var button = event.target.closest('[data-cal-close],[data-cal-hours],' +
         '[data-cal-open],[data-cal-clear]');
       if (!button) return;
@@ -3967,11 +4015,34 @@
       });
     }
 
+    /* פתיחה וסגירה של רשימת "מי עוד ביקש". לפני onConstraintClick,
+       כי הכפתור יושב בתוך התא — בלי העצירה כאן הלחיצה הייתה
+       ממשיכה ומשנה את האילוץ עצמו. */
+    $('#constraints-grid').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-same]');
+      if (!button) return;
+      event.stopPropagation();
+      event.preventDefault();
+      var key = button.dataset.same;
+      openSameRequest[key] = !openSameRequest[key];
+      renderConstraints();
+    }, true);
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);
     $('#constraints-grid').addEventListener('click', onLeaveClick);
     $('#constraints-mobile').addEventListener('click', onLeaveClick);
 
+    /* פתיחת רשימת "מי עוד ביקש". אותו מאזין כמו בלוח, כי זו
+       אותה שורה — רק במקום שבו מאשרים אותה. */
+    $('#pending-constraints').addEventListener('click', function (event) {
+      var toggle = event.target.closest('[data-same]');
+      if (!toggle) return;
+      event.stopPropagation();
+      event.preventDefault();
+      openSameRequest[toggle.dataset.same] = !openSameRequest[toggle.dataset.same];
+      renderPending();
+      renderConstraints();
+    }, true);
     $('#pending-constraints').addEventListener('click', function (event) {
       var button = event.target.closest('[data-decision]');
       if (!button) return;

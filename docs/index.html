@@ -2261,6 +2261,24 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 .cal-policy-row > span { flex: 1 1 10rem; font-size: var(--t-sm); }
 .cal-policy-row select { flex: 0 0 auto; }
 
+/* ===== "מי עוד ביקש את אותו דבר" =====
+
+   מנהל מאשר בקשות אחת-אחת ואינו רואה שחמישה ביקשו את אותה
+   משמרת. השורה הזו היא כל ההבדל בין אישור אוטומטי לבין החלטה,
+   ולכן היא בולטת בתוך התג הצהוב ולא נקראת כמו עוד הערה. */
+.c-same {
+  display: block; width: 100%; margin-top: 4px; padding: 0;
+  background: none; border: 0; font: inherit; font-size: var(--t-xs);
+  font-weight: 600; color: var(--warn-ink, #8a5a00); text-align: start;
+  cursor: pointer; text-decoration: underline;
+}
+.c-same[aria-expanded="true"] { text-decoration: none; }
+.c-same-list {
+  margin: 2px 0 0; padding-inline-start: 14px;
+  font-size: var(--t-xs); font-weight: 400; color: var(--muted);
+}
+.c-same-list li { margin: 1px 0; }
+
 </style>
 </head>
 <body>
@@ -3128,6 +3146,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} left · free on {days}',
         leftNoDays: '{verb} {shifts} left, but no free day this week',
         full: 'fully used ({assigned} of {max})',
+        fullWithLeave: 'fully used ({assigned} of {max}, including {leave})',
+        paidLeaveOne: 'one paid day off',
+        paidLeaveOther: '{count} paid days off',
         noEmployees: 'No active staff.',
         shiftsOne: 'one shift', shiftsOther: '{count} shifts',
         remains: 'remains', remainPlural: 'remain'
@@ -3158,6 +3179,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Approve', reject: 'Reject',
         approved: 'Approved', rejected: 'Rejected', pending: 'Waiting for approval',
         requestLabel: 'Request: {detail}', requestRejected: 'Request rejected',
+        sameRequestOne: 'Heads up: one other person asked for the same',
+        sameRequestOther: 'Heads up: {count} other people asked for the same',
         reason: 'Reason (optional)',
         reasonPlaceholder: 'e.g. wedding, exam, doctor appointment',
         reasonSaved: 'Reason saved', reasonGiven: 'Reason you gave: {text}',
@@ -4563,6 +4586,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} במכסה · פנוי/ה ב{days}',
         leftNoDays: '{verb} {shifts} במכסה, אך אין יום פנוי השבוע',
         full: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max})',
+        fullWithLeave: 'מנוצל/ת במלואו/ה ({assigned} מתוך {max}, כולל {leave})',
+        paidLeaveOne: 'יום חופש אחד בתשלום',
+        paidLeaveOther: '{count} ימי חופש בתשלום',
         noEmployees: 'לא הוגדרו עובדים פעילים.',
         shiftsOne: 'משמרת אחת', shiftsOther: '{count} משמרות',
         remains: 'נותרה', remainPlural: 'נותרו'
@@ -4593,6 +4619,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'אישור', reject: 'דחייה',
         approved: 'אושר', rejected: 'נדחה', pending: 'ממתין לאישור',
         requestLabel: 'בקשה: {detail}', requestRejected: 'בקשה נדחתה',
+        sameRequestOne: 'שימו לב: בקשה חופפת גם מעובד/ת נוסף/ת',
+        sameRequestOther: 'שימו לב: בקשה חופפת גם מ-{count} עובדים נוספים',
         reason: 'סיבה (לא חובה)',
         reasonPlaceholder: 'למשל: חתונה, בחינה, תור לרופא',
         reasonSaved: 'הסיבה נשמרה', reasonGiven: 'הסיבה שציינת: {text}',
@@ -5993,6 +6021,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} de cuota · libre el {days}',
         leftNoDays: '{verb} {shifts} de cuota, pero no hay ningún día libre esta semana',
         full: 'cuota completa ({assigned} de {max})',
+        fullWithLeave: 'cuota completa ({assigned} de {max}, incluyendo {leave})',
+        paidLeaveOne: 'un día libre pagado',
+        paidLeaveOther: '{count} días libres pagados',
         noEmployees: 'No hay personal activo.',
         shiftsOne: 'un turno', shiftsOther: '{count} turnos',
         remains: 'queda', remainPlural: 'quedan'
@@ -6023,6 +6054,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Aprobar', reject: 'Rechazar',
         approved: 'Aprobada', rejected: 'Rechazada', pending: 'Pendiente de aprobación',
         requestLabel: 'Solicitud: {detail}', requestRejected: 'Solicitud rechazada',
+        sameRequestOne: 'Atención: otra persona pidió lo mismo',
+        sameRequestOther: 'Atención: otras {count} personas pidieron lo mismo',
         reason: 'Motivo (opcional)',
         reasonPlaceholder: 'p. ej. boda, examen, cita médica',
         reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
@@ -7423,6 +7456,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} de quota · disponible le {days}',
         leftNoDays: '{verb} {shifts} de quota, mais aucun jour libre cette semaine',
         full: 'quota entièrement utilisé ({assigned} sur {max})',
+        fullWithLeave: 'quota entièrement utilisé ({assigned} sur {max}, dont {leave})',
+        paidLeaveOne: 'un jour de congé payé',
+        paidLeaveOther: '{count} jours de congé payés',
         noEmployees: 'Aucun membre du personnel actif.',
         shiftsOne: 'un service', shiftsOther: '{count} services',
         remains: 'il reste', remainPlural: 'il reste'
@@ -7453,6 +7489,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Approuver', reject: 'Refuser',
         approved: 'Approuvée', rejected: 'Refusée', pending: 'En attente d’approbation',
         requestLabel: 'Demande : {detail}', requestRejected: 'Demande refusée',
+        sameRequestOne: 'Attention : une autre personne a demandé la même chose',
+        sameRequestOther: 'Attention : {count} autres personnes ont demandé la même chose',
         reason: 'Motif (facultatif)',
         reasonPlaceholder: 'ex. mariage, examen, rendez-vous médical',
         reasonSaved: 'Motif enregistré', reasonGiven: 'Motif indiqué : {text}',
@@ -8853,6 +8891,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} من الحصة · متاح يوم {days}',
         leftNoDays: '{verb} {shifts} من الحصة، لكن لا يوجد يوم متاح هذا الأسبوع',
         full: 'استُهلكت الحصة بالكامل ({assigned} من {max})',
+        fullWithLeave: 'استُهلكت الحصة بالكامل ({assigned} من {max}، بما في ذلك {leave})',
+        paidLeaveOne: 'يوم إجازة مدفوع واحد',
+        paidLeaveOther: '{count} أيام إجازة مدفوعة',
         noEmployees: 'لا يوجد موظفون نشطون.',
         shiftsOne: 'مناوبة واحدة', shiftsOther: '{count} مناوبات',
         remains: 'تبقّت', remainPlural: 'تبقّت'
@@ -8883,6 +8924,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'موافقة', reject: 'رفض',
         approved: 'مقبول', rejected: 'مرفوض', pending: 'بانتظار الموافقة',
         requestLabel: 'طلب: {detail}', requestRejected: 'تم رفض الطلب',
+        sameRequestOne: 'انتبه: طلب مماثل من موظف آخر أيضًا',
+        sameRequestOther: 'انتبه: طلب مماثل من {count} موظفين آخرين',
         reason: 'السبب (اختياري)',
         reasonPlaceholder: 'مثلًا: عرس، امتحان، موعد طبيب',
         reasonSaved: 'تم حفظ السبب', reasonGiven: 'السبب الذي ذكرته: {text}',
@@ -10283,6 +10326,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} в норме · свободен в {days}',
         leftNoDays: '{verb} {shifts} в норме, но свободных дней на этой неделе нет',
         full: 'норма выбрана полностью ({assigned} из {max})',
+        fullWithLeave: 'норма выбрана полностью ({assigned} из {max}, включая {leave})',
+        paidLeaveOne: 'один оплачиваемый выходной',
+        paidLeaveOther: '{count} оплачиваемых выходных',
         noEmployees: 'Нет активных сотрудников.',
         shiftsOne: 'одна смена', shiftsOther: '{count} смен',
         remains: 'осталась', remainPlural: 'осталось'
@@ -10313,6 +10359,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Одобрить', reject: 'Отклонить',
         approved: 'Одобрена', rejected: 'Отклонена', pending: 'Ожидает одобрения',
         requestLabel: 'Заявка: {detail}', requestRejected: 'Заявка отклонена',
+        sameRequestOne: 'Внимание: то же самое просил ещё один человек',
+        sameRequestOther: 'Внимание: то же самое просили ещё {count} человек',
         reason: 'Причина (необязательно)',
         reasonPlaceholder: 'например: свадьба, экзамен, приём у врача',
         reasonSaved: 'Причина сохранена', reasonGiven: 'Указанная причина: {text}',
@@ -11713,6 +11761,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} im Kontingent · frei am {days}',
         leftNoDays: '{verb} {shifts} im Kontingent, aber kein freier Tag in dieser Woche',
         full: 'Kontingent voll ausgeschöpft ({assigned} von {max})',
+        fullWithLeave: 'Kontingent voll ausgeschöpft ({assigned} von {max}, inklusive {leave})',
+        paidLeaveOne: 'einen bezahlten freien Tag',
+        paidLeaveOther: '{count} bezahlte freie Tage',
         noEmployees: 'Kein aktives Team.',
         shiftsOne: 'eine Schicht', shiftsOther: '{count} Schichten',
         remains: 'bleibt', remainPlural: 'bleiben'
@@ -11743,6 +11794,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Genehmigen', reject: 'Ablehnen',
         approved: 'Genehmigt', rejected: 'Abgelehnt', pending: 'Wartet auf Genehmigung',
         requestLabel: 'Wunsch: {detail}', requestRejected: 'Wunsch abgelehnt',
+        sameRequestOne: 'Achtung: eine weitere Person hat dasselbe beantragt',
+        sameRequestOther: 'Achtung: {count} weitere Personen haben dasselbe beantragt',
         reason: 'Grund (optional)',
         reasonPlaceholder: 'z. B. Hochzeit, Prüfung, Arzttermin',
         reasonSaved: 'Grund gespeichert', reasonGiven: 'Angegebener Grund: {text}',
@@ -13143,6 +13196,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         left: '{verb} {shifts} de quota · livre em {days}',
         leftNoDays: '{verb} {shifts} de quota, mas não há nenhum dia livre esta semana',
         full: 'quota totalmente usada ({assigned} de {max})',
+        fullWithLeave: 'quota totalmente usada ({assigned} de {max}, incluindo {leave})',
+        paidLeaveOne: 'um dia de folga pago',
+        paidLeaveOther: '{count} dias de folga pagos',
         noEmployees: 'Não há pessoal ativo.',
         shiftsOne: 'um turno', shiftsOther: '{count} turnos',
         remains: 'resta', remainPlural: 'restam'
@@ -13173,6 +13229,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         approve: 'Aprovar', reject: 'Recusar',
         approved: 'Aprovado', rejected: 'Recusado', pending: 'À espera de aprovação',
         requestLabel: 'Pedido: {detail}', requestRejected: 'Pedido recusado',
+        sameRequestOne: 'Atenção: outra pessoa pediu o mesmo',
+        sameRequestOther: 'Atenção: mais {count} pessoas pediram o mesmo',
         reason: 'Motivo (opcional)',
         reasonPlaceholder: 'p. ex. casamento, exame, consulta médica',
         reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
@@ -17489,6 +17547,83 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   /* ===== ימי חופש ומכסת עבודה ===== */
 
   /* הימים שהעובד ביקש כחופש בשבוע הזה */
+  /* ימי החופש בתשלום שהעובד לקח בשבוע הזה. */
+  function paidLeaveDays(week, empId) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      /* רק חופש שאושר. בקשה שממתינה אינה משפיעה על השיבוץ עד
+         שהמנהל מחליט — וזה כולל את המכסה: עובד שהגיש בקשה
+         לחופש בתשלום והיא עוד ממתינה עדיין יכול לעבוד אותו
+         יום, ואסור שהמכסה שלו תקטן לפני ההחלטה. */
+      if (!isEffective(getConstraintRecord(week, empId, day))) continue;
+      if (leaveOf(week, empId, day) === LEAVE.PAID) days.push(day);
+    }
+    return days;
+  }
+
+  /* המכסה בפועל לשבוע הזה.
+
+     יום חופש בתשלום הוא יום עבודה שנוצל: העובד מקבל עליו שכר,
+     והוא יורד מהמכסה. בלי זה עובד עם מכסה של שש שעבד חמש ולקח
+     יום חופש בתשלום הופיע כמי ש"נותרה לו משמרת אחת" — והמנהל
+     חיפש לו משמרת שישית שכבר שולמה לו.
+
+     חופש ללא תשלום אינו יורד מהמכסה: העובד לא קיבל עליו דבר,
+     והמכסה שלו נשארת כפי שהיא. */
+  function effectiveMaxShifts(week, emp) {
+    var max = Number(emp && emp.maxShifts) || 0;
+    if (!week || !emp) return max;
+    return Math.max(0, max - paidLeaveDays(week, emp.id).length);
+  }
+
+  /* ===== מי עוד ביקש את אותו דבר באותו יום =====
+
+     מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שחמישה אנשים
+     ביקשו את אותה משמרת בשישי. הוא מאשר את הראשונה, ואת
+     החמישית, ואז מגלה במוצאי שבת שאין מי שיעבוד.
+
+     מה שנספר הוא בקשות שמסירות זמינות מאותו יום — יום חופש
+     או חסימת משמרת. בקשת העדפה אינה נספרת: היא אינה מוציאה
+     אף אחד מהמשמרת, ולכן אין בה סיכון.
+
+     נספרות רק בקשות שממתינות. בקשה שכבר אושרה היא עובדה
+     שהמנהל כבר מכיר, ושורה שאומרת "עוד ארבעה" בזמן שארבעתם
+     כבר אושרו מייצרת בהלה במקום מידע. */
+  function removesFromDay(record) {
+    if (!record) return null;
+    if (record.off) return { off: true, shifts: [] };
+    var shifts = Object.keys(record.blocked || {}).filter(function (shiftId) {
+      return record.blocked[shiftId];
+    });
+    return shifts.length ? { off: false, shifts: shifts } : null;
+  }
+
+  /* האם שתי בקשות נוגעות באותה זמינות. יום חופש מסיר את כל
+     המשמרות, ולכן הוא חופף לכל חסימה. */
+  function requestsOverlap(a, b) {
+    if (!a || !b) return false;
+    if (a.off || b.off) return true;
+    return a.shifts.some(function (shiftId) { return b.shifts.indexOf(shiftId) !== -1; });
+  }
+
+  function overlappingRequests(state, week, empId, dayIdx) {
+    var mine = removesFromDay(getConstraintRecord(week, empId, dayIdx));
+    if (!mine) return [];
+    var out = [];
+    (state.employees || []).forEach(function (emp) {
+      if (emp.id === empId || !emp.active) return;
+      var record = getConstraintRecord(week, emp.id, dayIdx);
+      if (constraintStatus(record) !== CONSTRAINT_STATUS.PENDING) return;
+      var theirs = removesFromDay(record);
+      if (!requestsOverlap(mine, theirs)) return;
+      out.push({
+        empId: emp.id, name: emp.name,
+        off: theirs.off, shifts: theirs.shifts
+      });
+    });
+    return out;
+  }
+
   function requestedDaysOff(week, empId) {
     var days = [];
     for (var day = 0; day < 7; day++) {
@@ -17694,7 +17829,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
      ממספר הימים שבהם הוא יכול לעבוד בפועל. */
   function targetShifts(state, week, emp) {
-    return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
+    return Math.min(effectiveMaxShifts(week, emp), workableDays(state, week, emp).length);
   }
 
   /* ===== טיוטה ופרסום ===== */
@@ -17752,7 +17887,9 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       if (!emp.active) return;
       var assigned = employeeWeekCount(state, week, emp.id);
       var max = Number(emp.maxShifts) || 0;
-      var spare = Math.max(0, max - assigned);
+      /* המכסה בפועל: יום חופש בתשלום הוא יום שנוצל */
+      var paidLeave = paidLeaveDays(week, emp.id).length;
+      var spare = Math.max(0, effectiveMaxShifts(week, emp) - assigned);
 
       var freeDays = [];
       for (var day = 0; day < 7; day++) {
@@ -17767,6 +17904,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
 
       rows.push({
         empId: emp.id, name: emp.name, assigned: assigned, max: max,
+        paidLeave: paidLeave,
         spare: spare, freeDays: freeDays,
         available: Math.min(spare, freeDays.length)
       });
@@ -18274,6 +18412,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     removeRole: removeRole,
     employeeCanWorkDay: employeeCanWorkDay,
     requestedDaysOff: requestedDaysOff,
+    paidLeaveDays: paidLeaveDays, effectiveMaxShifts: effectiveMaxShifts,
+    overlappingRequests: overlappingRequests,
     workableDays: workableDays,
     targetShifts: targetShifts,
     scheduleSignature: scheduleSignature,
@@ -18346,7 +18486,10 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       if (dayList[i].shiftId === demand.shiftId) return false; // אותה משמרת פעמיים באותו יום
     }
 
-    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) return false;
+    /* המכסה בפועל: יום חופש בתשלום הוא יום שנוצל, והוא יורד
+       מהמכסה. בלי זה המנוע משבץ משמרת שישית לעובד שכבר שולם
+       לו על היום השישי שלו. */
+    if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) return false;
 
     /* מנוחה בין משמרות. נבדק לשני הכיוונים, כי סדר השיבוץ אינו
        כרונולוגי, ולפי הפער האמיתי בשעות – כך זה עובד גם על
@@ -18513,7 +18656,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
             blockers.push({ dayIdx: day, branchId: slot.branchId, shiftId: slot.shiftId });
           });
         });
-        if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+        if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) {
           for (var d = 0; d < 7; d++) {
             ctx.byDay[emp.id][d].forEach(function (slot) {
               blockers.push({ dayIdx: d, branchId: slot.branchId, shiftId: slot.shiftId });
@@ -18566,7 +18709,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       if (day < 0 || day > 6) return;
       ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
     });
-    if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) {
+    if (ctx.counts[emp.id] >= Store.effectiveMaxShifts(ctx.week, emp)) {
       for (var day = 0; day < 7; day++) {
         ctx.byDay[emp.id][day].forEach(function (slot) { push(day, slot); });
       }
@@ -18879,7 +19022,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       eligible.push(emp);
 
       if (Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx).length) { busy.push(emp.name); return; }
-      if (Store.employeeWeekCount(state, week, emp.id) >= (emp.maxShifts || 99)) { atMax.push(emp.name); return; }
+      if (Store.employeeWeekCount(state, week, emp.id) >=
+        Store.effectiveMaxShifts(week, emp)) { atMax.push(emp.name); return; }
       /* מנוחה בין משמרות, לפי הפער בשעות ולשני הכיוונים */
       if (Store.restRule(state).enabled) {
         var tooClose = false;
@@ -19199,7 +19343,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         }
 
         var workable = Store.workableDays(state, week, emp).length;
-        var expected = Math.min(emp.maxShifts || 99, workable);
+        var expected = Math.min(Store.effectiveMaxShifts(week, emp), workable);
         if (daysOff.length === 1 && total < expected && total > 0) {
           issues.push(issue('info', 'below-target',
             t('alerts.belowTarget', {
@@ -19209,9 +19353,14 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         }
       }
 
-      if (emp.active && total > (emp.maxShifts || 99)) {
+      /* המספר בהודעה הוא המכסה שנבדקה בפועל, ולא זו שבכרטיס:
+         עובד שלקח יום חופש בתשלום נבדק מול מכסה קטנה יותר,
+         והודעה שאומרת "6" בזמן שהחריגה נמדדה מול 5 נראית
+         כמו באג. */
+      var effectiveMax = Store.effectiveMaxShifts(week, emp);
+      if (emp.active && total > effectiveMax) {
         issues.push(issue('warning', 'over-max',
-          t('alerts.overMax', { name: emp.name, total: total, max: emp.maxShifts }),
+          t('alerts.overMax', { name: emp.name, total: total, max: effectiveMax }),
           { empId: emp.id }));
       }
       if (emp.active && total === 0 && Store.weekDemands(state, week).length) {
@@ -22340,6 +22489,14 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         });
       } else if (row.spare > 0) {
         text += t('availability.leftNoDays', { verb: remainVerb(row.spare), shifts: shiftsWord(row.spare) });
+      } else if (row.paidLeave) {
+        /* "מנוצל במלואו" על עובד שעבד חמש מתוך שש נראה כמו
+           טעות, עד שאומרים שהיום השישי נלקח כחופש בתשלום —
+           כלומר הוא יום שנוצל ולא יום שנותר. */
+        text += t('availability.fullWithLeave', {
+          assigned: row.assigned, max: row.max,
+          leave: tCount('availability.paidLeave', row.paidLeave)
+        });
       } else {
         text += t('availability.full', { assigned: row.assigned, max: row.max });
       }
@@ -22411,6 +22568,10 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         Store.formatDate(Store.dateOfDay(weekKey, item.dayIdx)) + '</span>' +
         '<em>' + esc(describeConstraint(item.record)) + '</em>' +
         (item.record.note ? '<small>' + esc(item.record.note) + '</small>' : '') +
+        /* כאן ההחלטה מתקבלת בפועל, ולכן כאן צריכה להופיע
+           האזהרה: מנהל שמאשר חמש בקשות לאותה משמרת אחת-אחת
+           אינו רואה שזו אותה משמרת, עד מוצאי שבת. */
+        sameRequestNote(item.empId, item.dayIdx) +
         '</div>';
       html += '<div class="pending-actions">' +
         '<button class="btn small approve" data-decision="approved">' + t('constraints.approve') + '</button>' +
@@ -22963,7 +23124,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         var reason = record && record.note ? ' · ' + record.note : '';
         if (status === Store.CONSTRAINT_STATUS.PENDING) {
           cellTag = '<div class="c-status pending" title="' + esc(record.note || '') + '">' +
-            esc(t('constraints.requestLabel', { detail: describeConstraint(record) })) + esc(reason) + '</div>';
+            esc(t('constraints.requestLabel', { detail: describeConstraint(record) })) + esc(reason) +
+            sameRequestNote(emp.id, day.idx) + '</div>';
         } else if (status === Store.CONSTRAINT_STATUS.REJECTED) {
           cellTag = '<div class="c-status rejected">' + t('constraints.requestRejected') + '</div>';
         } else if (record && record.note) {
@@ -22997,6 +23159,37 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
 
     html += '</tbody></table>';
     $('#constraints-grid').innerHTML = html;
+  }
+
+
+  /* מי עוד ביקש את אותו דבר באותו יום.
+
+     מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שחמישה אנשים
+     ביקשו את אותה משמרת בשישי. הוא מאשר את הראשונה, ואת
+     החמישית, ואז מגלה במוצאי שבת שאין מי שיעבוד. השורה הזו
+     היא כל ההבדל בין אישור אוטומטי לבין החלטה.
+
+     סגור כברירת מחדל: המספר הוא מה שקובע אם לעצור, והשמות
+     נחוצים רק למי שעצר. */
+  var openSameRequest = {};
+
+  function sameRequestNote(empId, dayIdx) {
+    var others = Store.overlappingRequests(state, week(), empId, dayIdx);
+    if (!others.length) return '';
+    var key = empId + '|' + dayIdx;
+    var open = !!openSameRequest[key];
+    var html = '<button type="button" class="c-same" data-same="' + esc(key) + '"' +
+      ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+      esc(tCount('constraints.sameRequest', others.length)) + '</button>';
+    if (open) {
+      html += '<ul class="c-same-list">' + others.map(function (item) {
+        var what = item.off
+          ? t('constraints.dayOff')
+          : item.shifts.map(shiftLabel).join(', ');
+        return '<li>' + esc(item.name) + ' · ' + esc(what) + '</li>';
+      }).join('') + '</ul>';
+    }
+    return html;
   }
 
   /* ========== עובדים ========== */
@@ -24690,7 +24883,11 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     /* לוח השנה: סגירת יום, שעות מיוחדות, וביטול של כל אחד
        מהם. המערכת אינה סוגרת דבר לבד — היא מציעה, והמנהל
        מאשר בלחיצה. */
-    $('#calendar-days').addEventListener('click', function (event) {
+    /* בלי המקטע הזה (העמוד המקומי ב-/tool, שאין בו לוח שנה)
+       הקישור היה נופל על null — ועמו כל שאר הקישורים שאחריו,
+       כלומר כל המסך. */
+    var calendarHost = $('#calendar-days');
+    if (calendarHost) calendarHost.addEventListener('click', function (event) {
       var button = event.target.closest('[data-cal-close],[data-cal-hours],' +
         '[data-cal-open],[data-cal-clear]');
       if (!button) return;
@@ -24979,11 +25176,34 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       });
     }
 
+    /* פתיחה וסגירה של רשימת "מי עוד ביקש". לפני onConstraintClick,
+       כי הכפתור יושב בתוך התא — בלי העצירה כאן הלחיצה הייתה
+       ממשיכה ומשנה את האילוץ עצמו. */
+    $('#constraints-grid').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-same]');
+      if (!button) return;
+      event.stopPropagation();
+      event.preventDefault();
+      var key = button.dataset.same;
+      openSameRequest[key] = !openSameRequest[key];
+      renderConstraints();
+    }, true);
     $('#constraints-grid').addEventListener('click', onConstraintClick);
     $('#constraints-mobile').addEventListener('click', onConstraintClick);
     $('#constraints-grid').addEventListener('click', onLeaveClick);
     $('#constraints-mobile').addEventListener('click', onLeaveClick);
 
+    /* פתיחת רשימת "מי עוד ביקש". אותו מאזין כמו בלוח, כי זו
+       אותה שורה — רק במקום שבו מאשרים אותה. */
+    $('#pending-constraints').addEventListener('click', function (event) {
+      var toggle = event.target.closest('[data-same]');
+      if (!toggle) return;
+      event.stopPropagation();
+      event.preventDefault();
+      openSameRequest[toggle.dataset.same] = !openSameRequest[toggle.dataset.same];
+      renderPending();
+      renderConstraints();
+    }, true);
     $('#pending-constraints').addEventListener('click', function (event) {
       var button = event.target.closest('[data-decision]');
       if (!button) return;

@@ -2019,6 +2019,83 @@
   /* ===== ימי חופש ומכסת עבודה ===== */
 
   /* הימים שהעובד ביקש כחופש בשבוע הזה */
+  /* ימי החופש בתשלום שהעובד לקח בשבוע הזה. */
+  function paidLeaveDays(week, empId) {
+    var days = [];
+    for (var day = 0; day < 7; day++) {
+      /* רק חופש שאושר. בקשה שממתינה אינה משפיעה על השיבוץ עד
+         שהמנהל מחליט — וזה כולל את המכסה: עובד שהגיש בקשה
+         לחופש בתשלום והיא עוד ממתינה עדיין יכול לעבוד אותו
+         יום, ואסור שהמכסה שלו תקטן לפני ההחלטה. */
+      if (!isEffective(getConstraintRecord(week, empId, day))) continue;
+      if (leaveOf(week, empId, day) === LEAVE.PAID) days.push(day);
+    }
+    return days;
+  }
+
+  /* המכסה בפועל לשבוע הזה.
+
+     יום חופש בתשלום הוא יום עבודה שנוצל: העובד מקבל עליו שכר,
+     והוא יורד מהמכסה. בלי זה עובד עם מכסה של שש שעבד חמש ולקח
+     יום חופש בתשלום הופיע כמי ש"נותרה לו משמרת אחת" — והמנהל
+     חיפש לו משמרת שישית שכבר שולמה לו.
+
+     חופש ללא תשלום אינו יורד מהמכסה: העובד לא קיבל עליו דבר,
+     והמכסה שלו נשארת כפי שהיא. */
+  function effectiveMaxShifts(week, emp) {
+    var max = Number(emp && emp.maxShifts) || 0;
+    if (!week || !emp) return max;
+    return Math.max(0, max - paidLeaveDays(week, emp.id).length);
+  }
+
+  /* ===== מי עוד ביקש את אותו דבר באותו יום =====
+
+     מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שחמישה אנשים
+     ביקשו את אותה משמרת בשישי. הוא מאשר את הראשונה, ואת
+     החמישית, ואז מגלה במוצאי שבת שאין מי שיעבוד.
+
+     מה שנספר הוא בקשות שמסירות זמינות מאותו יום — יום חופש
+     או חסימת משמרת. בקשת העדפה אינה נספרת: היא אינה מוציאה
+     אף אחד מהמשמרת, ולכן אין בה סיכון.
+
+     נספרות רק בקשות שממתינות. בקשה שכבר אושרה היא עובדה
+     שהמנהל כבר מכיר, ושורה שאומרת "עוד ארבעה" בזמן שארבעתם
+     כבר אושרו מייצרת בהלה במקום מידע. */
+  function removesFromDay(record) {
+    if (!record) return null;
+    if (record.off) return { off: true, shifts: [] };
+    var shifts = Object.keys(record.blocked || {}).filter(function (shiftId) {
+      return record.blocked[shiftId];
+    });
+    return shifts.length ? { off: false, shifts: shifts } : null;
+  }
+
+  /* האם שתי בקשות נוגעות באותה זמינות. יום חופש מסיר את כל
+     המשמרות, ולכן הוא חופף לכל חסימה. */
+  function requestsOverlap(a, b) {
+    if (!a || !b) return false;
+    if (a.off || b.off) return true;
+    return a.shifts.some(function (shiftId) { return b.shifts.indexOf(shiftId) !== -1; });
+  }
+
+  function overlappingRequests(state, week, empId, dayIdx) {
+    var mine = removesFromDay(getConstraintRecord(week, empId, dayIdx));
+    if (!mine) return [];
+    var out = [];
+    (state.employees || []).forEach(function (emp) {
+      if (emp.id === empId || !emp.active) return;
+      var record = getConstraintRecord(week, emp.id, dayIdx);
+      if (constraintStatus(record) !== CONSTRAINT_STATUS.PENDING) return;
+      var theirs = removesFromDay(record);
+      if (!requestsOverlap(mine, theirs)) return;
+      out.push({
+        empId: emp.id, name: emp.name,
+        off: theirs.off, shifts: theirs.shifts
+      });
+    });
+    return out;
+  }
+
   function requestedDaysOff(week, empId) {
     var days = [];
     for (var day = 0; day < 7; day++) {
@@ -2224,7 +2301,7 @@
   /* כמה משמרות ראוי שהעובד יעבוד השבוע: המכסה השבועית, אך לא יותר
      ממספר הימים שבהם הוא יכול לעבוד בפועל. */
   function targetShifts(state, week, emp) {
-    return Math.min(Number(emp.maxShifts) || 0, workableDays(state, week, emp).length);
+    return Math.min(effectiveMaxShifts(week, emp), workableDays(state, week, emp).length);
   }
 
   /* ===== טיוטה ופרסום ===== */
@@ -2282,7 +2359,9 @@
       if (!emp.active) return;
       var assigned = employeeWeekCount(state, week, emp.id);
       var max = Number(emp.maxShifts) || 0;
-      var spare = Math.max(0, max - assigned);
+      /* המכסה בפועל: יום חופש בתשלום הוא יום שנוצל */
+      var paidLeave = paidLeaveDays(week, emp.id).length;
+      var spare = Math.max(0, effectiveMaxShifts(week, emp) - assigned);
 
       var freeDays = [];
       for (var day = 0; day < 7; day++) {
@@ -2297,6 +2376,7 @@
 
       rows.push({
         empId: emp.id, name: emp.name, assigned: assigned, max: max,
+        paidLeave: paidLeave,
         spare: spare, freeDays: freeDays,
         available: Math.min(spare, freeDays.length)
       });
@@ -2804,6 +2884,8 @@
     removeRole: removeRole,
     employeeCanWorkDay: employeeCanWorkDay,
     requestedDaysOff: requestedDaysOff,
+    paidLeaveDays: paidLeaveDays, effectiveMaxShifts: effectiveMaxShifts,
+    overlappingRequests: overlappingRequests,
     workableDays: workableDays,
     targetShifts: targetShifts,
     scheduleSignature: scheduleSignature,

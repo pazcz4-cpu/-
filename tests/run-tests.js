@@ -1420,6 +1420,155 @@ test('מספר העוסק מנוקה בלי לפסול פורמטים מחו"ל'
    נתקע או כשצריך להודיע על משהו דחוף — מייל שאינו נקרא אינו דרך
    ליצירת קשר, ואז אין שום דרך. */
 
+
+
+/* ===== מי עוד ביקש את אותו דבר באותו יום =====
+
+   מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שחמישה אנשים
+   ביקשו את אותה משמרת בשישי. הוא מאשר את הראשונה, ואת
+   החמישית, ואז מגלה במוצאי שבת שאין מי שיעבוד. */
+function requestState() {
+  var state = Store.emptyState();
+  state.employees = ['בן', 'אור', 'פז', 'דנה'].map(function (name, index) {
+    return {
+      id: 'e' + index, name: name, active: true, maxShifts: 6,
+      branches: [], shifts: [], roles: []
+    };
+  });
+  return state;
+}
+
+test('בקשת יום חופש חופפת לכל בקשה אחרת באותו יום', function () {
+  var state = requestState();
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e0', 5, { off: true, status: 'pending' });
+  Store.setConstraint(week, 'e1', 5, { off: true, status: 'pending' });
+  /* חסימת משמרת בלבד — יום חופש מסיר את כל המשמרות, ולכן הם
+     חופפים */
+  Store.setConstraint(week, 'e2', 5, { blocked: { evening: true }, status: 'pending' });
+
+  var forFirst = Store.overlappingRequests(state, week, 'e0', 5);
+  assertEqual(forFirst.length, 2, 'לא נמצאו שתי הבקשות החופפות');
+  assertEqual(forFirst[0].name, 'אור', 'השם הראשון שגוי');
+  /* העובד עצמו אינו מופיע ברשימה שלו */
+  assert(!forFirst.some(function (item) { return item.empId === 'e0'; }),
+    'העובד מופיע ברשימה של עצמו');
+});
+
+test('חסימות של משמרות שונות אינן נחשבות חופפות', function () {
+  var state = requestState();
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e0', 3, { blocked: { morning: true }, status: 'pending' });
+  Store.setConstraint(week, 'e1', 3, { blocked: { evening: true }, status: 'pending' });
+  assertEqual(Store.overlappingRequests(state, week, 'e0', 3).length, 0,
+    'חסימות של שתי משמרות שונות נספרו כחופפות');
+});
+
+test('רק בקשות שממתינות נספרות', function () {
+  var state = requestState();
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e0', 4, { off: true, status: 'pending' });
+  /* בקשה שכבר אושרה היא עובדה שהמנהל מכיר. שורה שאומרת "עוד
+     ארבעה" בזמן שארבעתם אושרו מייצרת בהלה במקום מידע. */
+  Store.setConstraint(week, 'e1', 4, { off: true, status: 'approved' });
+  Store.setConstraint(week, 'e2', 4, { off: true, status: 'rejected' });
+  assertEqual(Store.overlappingRequests(state, week, 'e0', 4).length, 0,
+    'בקשה מאושרת או דחויה נספרה');
+});
+
+test('בקשת העדפה אינה נספרת כחופפת', function () {
+  var state = requestState();
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e0', 2, { off: true, status: 'pending' });
+  /* העדפה אינה מוציאה אף אחד מהמשמרת, ולכן אין בה סיכון */
+  Store.setConstraint(week, 'e1', 2, { preferred: { morning: true }, status: 'pending' });
+  assertEqual(Store.overlappingRequests(state, week, 'e0', 2).length, 0,
+    'בקשת העדפה נספרה כחופפת');
+});
+
+test('עובד שהושבת אינו נספר', function () {
+  var state = requestState();
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e0', 1, { off: true, status: 'pending' });
+  Store.setConstraint(week, 'e1', 1, { off: true, status: 'pending' });
+  state.employees[1].active = false;
+  assertEqual(Store.overlappingRequests(state, week, 'e0', 1).length, 0,
+    'עובד מושבת נספר');
+});
+
+/* ===== חופש בתשלום יורד מהמכסה =====
+
+   עובד עם מכסה של שש שעבד חמש ולקח יום חופש בתשלום הופיע
+   כמי ש"נותרה לו משמרת אחת", והמנהל חיפש לו משמרת שישית
+   שכבר שולמה לו. יום חופש בתשלום הוא יום עבודה שנוצל. */
+test('יום חופש בתשלום מוריד מהמכסה, ובלי תשלום לא', function () {
+  var emp = { id: 'e1', maxShifts: 6 };
+  var week = { constraints: {} };
+  assertEqual(Store.effectiveMaxShifts(week, emp), 6, 'מכסה השתנתה בלי חופש');
+
+  Store.setConstraint(week, 'e1', 2, { off: true });
+  Store.setLeave(week, 'e1', 2, Store.LEAVE.PAID);
+  assertEqual(Store.effectiveMaxShifts(week, emp), 5, 'חופש בתשלום לא ירד מהמכסה');
+  assertEqual(Store.paidLeaveDays(week, 'e1').length, 1, 'יום החופש לא נספר');
+
+  /* חופש ללא תשלום אינו יורד: העובד לא קיבל עליו דבר */
+  Store.setConstraint(week, 'e1', 4, { off: true });
+  assertEqual(Store.effectiveMaxShifts(week, emp), 5, 'חופש ללא תשלום ירד מהמכסה');
+});
+
+test('בקשת חופש שממתינה אינה מקטינה את המכסה', function () {
+  var emp = { id: 'e1', maxShifts: 6 };
+  var week = { constraints: {} };
+  /* בקשה שהעובד הגיש ועוד לא אושרה */
+  Store.setConstraint(week, 'e1', 2, { off: true, status: Store.CONSTRAINT_STATUS.PENDING });
+  Store.setLeave(week, 'e1', 2, Store.LEAVE.PAID);
+  assertEqual(Store.effectiveMaxShifts(week, emp), 6, 'בקשה שממתינה הקטינה את המכסה');
+
+  /* ומרגע שאושרה — היא יום שנוצל */
+  Store.setConstraintStatus(week, 'e1', 2, Store.CONSTRAINT_STATUS.APPROVED);
+  assertEqual(Store.effectiveMaxShifts(week, emp), 5, 'חופש שאושר לא ירד מהמכסה');
+});
+
+test('עובד שניצל את מכסתו דרך חופש בתשלום אינו מוצג כפנוי', function () {
+  var state = Store.emptyState();
+  state.employees = [{
+    id: 'e1', name: 'בן', active: true, maxShifts: 6,
+    branches: [], shifts: [], roles: []
+  }];
+  var week = Store.getWeek(state, '2026-09-20');
+  /* חמש משמרות, ויום שישי נלקח כחופש בתשלום */
+  var branch = state.branches[0];
+  var shiftId = Store.shiftIds(state)[0];
+  for (var day = 0; day < 5; day++) {
+    Store.setAssigned(week, day, branch.id, shiftId, ['e1']);
+  }
+  Store.setConstraint(week, 'e1', 5, { off: true });
+  Store.setLeave(week, 'e1', 5, Store.LEAVE.PAID);
+
+  var row = Store.weekAvailability(state, week).rows.filter(function (item) {
+    return item.empId === 'e1';
+  })[0];
+  assertEqual(row.assigned, 5, 'מספר המשמרות שגוי');
+  assertEqual(row.spare, 0, 'נותרה לו יתרה אף שהיום השישי נלקח כחופש בתשלום');
+  assertEqual(row.paidLeave, 1, 'יום החופש בתשלום לא הגיע למסך');
+});
+
+/* הסבר "למה שובץ ככה" והאזהרה על חריגה נמדדים מול אותה מכסה
+   בדיוק. הודעה שאומרת "6" כשהבדיקה נעשתה מול 5 נראית כמו באג. */
+test('המנוע אינו משבץ מעבר למכסה שנותרה אחרי חופש בתשלום', function () {
+  var state = Store.emptyState();
+  state.employees = [{
+    id: 'e1', name: 'בן', active: true, maxShifts: 2,
+    branches: [], shifts: [], roles: []
+  }];
+  var week = Store.getWeek(state, '2026-09-20');
+  Store.setConstraint(week, 'e1', 6, { off: true });
+  Store.setLeave(week, 'e1', 6, Store.LEAVE.PAID);
+  var result = Scheduler.generate(state, week, { seed: 7 });
+  var count = Store.employeeWeekCount(state, result.week || week, 'e1');
+  assert(count <= 1, 'המנוע שיבץ ' + count + ' משמרות במקום אחת לכל היותר');
+});
+
 /* ===== לוח השנה של העסק =====
 
    הבקשה: "תמיד תסמן חגים וימים מיוחדים שהעסק יידע עליהם, והוא

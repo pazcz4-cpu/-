@@ -120,6 +120,39 @@ console.log('   האזהרה נעלמה:', after.length === 0);
 await signIn('ronit@ap.co.il', 'secret123');
 console.log('6. אצל העובדת:', (await page.locator('.req-badge').first().innerText()).trim());
 
+/* ===== מי עוד ביקש את אותו דבר =====
+
+   מנהל מאשר בקשות אחת-אחת, ולכן הוא אינו רואה שכמה אנשים
+   ביקשו את אותה משמרת. השורה הזו היא כל ההבדל בין אישור
+   אוטומטי לבין החלטה, ולכן היא יושבת ליד כפתור האישור. */
+await signIn('mgr@ap.co.il', 'secret123');
+await page.click('.tab[data-tab="constraints"]');
+await page.waitForTimeout(700);
+await page.evaluate(() => {
+  const app = window.ShiftApp, Store = window.ShiftStore;
+  const state = app.getState();
+  const week = Store.getWeek(state, Store.currentWeekKey());
+  state.employees.slice(0, 3).forEach((emp) => {
+    Store.setConstraint(week, emp.id, 4, { off: true, status: 'pending' });
+  });
+  app.render();
+});
+await page.waitForTimeout(600);
+const notes = await page.locator('#pending-constraints .c-same').count();
+console.log('7. אזהרת חפיפה ליד כל בקשה:', notes, notes === 3 ? '✓' : '✗');
+if (notes !== 3) errors.push('אזהרת החפיפה לא הופיעה ליד שלוש הבקשות');
+/* סגורה כברירת מחדל: המספר קובע אם לעצור, השמות נחוצים למי שעצר */
+console.log('   סגורה בהתחלה:', await page.locator('#pending-constraints .c-same-list').count() === 0);
+await page.locator('#pending-constraints .c-same').first().click();
+await page.waitForTimeout(400);
+const who = await page.locator('#pending-constraints .c-same-list li').count();
+console.log('   ואחרי לחיצה רואים מי:', who, who === 2 ? '✓' : '✗');
+if (who !== 2) errors.push('רשימת השמות לא נפתחה');
+/* הלחיצה על האזהרה אינה מאשרת ואינה דוחה דבר */
+const stillPending = await page.locator('.pending-item').count();
+console.log('   והבקשות עדיין ממתינות:', stillPending, stillPending >= 3 ? '✓' : '✗');
+if (stillPending < 3) errors.push('הלחיצה על האזהרה שינתה את הבקשות');
+
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();
 if (errors.length) process.exit(1);

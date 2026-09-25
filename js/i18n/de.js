@@ -388,6 +388,9 @@
         left: '{verb} {shifts} im Kontingent · frei am {days}',
         leftNoDays: '{verb} {shifts} im Kontingent, aber kein freier Tag in dieser Woche',
         full: 'Kontingent voll ausgeschöpft ({assigned} von {max})',
+        fullWithLeave: 'Kontingent voll ausgeschöpft ({assigned} von {max}, inklusive {leave})',
+        paidLeaveOne: 'einen bezahlten freien Tag',
+        paidLeaveOther: '{count} bezahlte freie Tage',
         noEmployees: 'Kein aktives Team.',
         shiftsOne: 'eine Schicht', shiftsOther: '{count} Schichten',
         remains: 'bleibt', remainPlural: 'bleiben'
@@ -418,6 +421,8 @@
         approve: 'Genehmigen', reject: 'Ablehnen',
         approved: 'Genehmigt', rejected: 'Abgelehnt', pending: 'Wartet auf Genehmigung',
         requestLabel: 'Wunsch: {detail}', requestRejected: 'Wunsch abgelehnt',
+        sameRequestOne: 'Achtung: eine weitere Person hat dasselbe beantragt',
+        sameRequestOther: 'Achtung: {count} weitere Personen haben dasselbe beantragt',
         reason: 'Grund (optional)',
         reasonPlaceholder: 'z. B. Hochzeit, Prüfung, Arzttermin',
         reasonSaved: 'Grund gespeichert', reasonGiven: 'Angegebener Grund: {text}',

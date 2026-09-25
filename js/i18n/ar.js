@@ -388,6 +388,9 @@
         left: '{verb} {shifts} من الحصة · متاح يوم {days}',
         leftNoDays: '{verb} {shifts} من الحصة، لكن لا يوجد يوم متاح هذا الأسبوع',
         full: 'استُهلكت الحصة بالكامل ({assigned} من {max})',
+        fullWithLeave: 'استُهلكت الحصة بالكامل ({assigned} من {max}، بما في ذلك {leave})',
+        paidLeaveOne: 'يوم إجازة مدفوع واحد',
+        paidLeaveOther: '{count} أيام إجازة مدفوعة',
         noEmployees: 'لا يوجد موظفون نشطون.',
         shiftsOne: 'مناوبة واحدة', shiftsOther: '{count} مناوبات',
         remains: 'تبقّت', remainPlural: 'تبقّت'
@@ -418,6 +421,8 @@
         approve: 'موافقة', reject: 'رفض',
         approved: 'مقبول', rejected: 'مرفوض', pending: 'بانتظار الموافقة',
         requestLabel: 'طلب: {detail}', requestRejected: 'تم رفض الطلب',
+        sameRequestOne: 'انتبه: طلب مماثل من موظف آخر أيضًا',
+        sameRequestOther: 'انتبه: طلب مماثل من {count} موظفين آخرين',
         reason: 'السبب (اختياري)',
         reasonPlaceholder: 'مثلًا: عرس، امتحان، موعد طبيب',
         reasonSaved: 'تم حفظ السبب', reasonGiven: 'السبب الذي ذكرته: {text}',

@@ -213,6 +213,66 @@ try {
   check('ונעלמה כשכיבו אותה', (await columns()).join('|'), /^((?!שעות נוספות).)*$/);
   check('אבל השעות בפועל נשארו', (await row('עובד/ת 1'))[2], '24:00');
 
+  /* ===== הקובץ שנוסע למערכת השכר =====
+
+     נבדק דרך ההורדה האמיתית ולא דרך הפונקציה: מה שמגיע אל
+     מנהלת החשבונות הוא הקובץ, ובדיוק שם נופלים ה-BOM, הציטוט
+     והפסיק בשם. */
+  console.log('\n== קובץ לשכר ==');
+
+  /* מספר עובד בשכר על הכרטיס, כולל אפס מוביל */
+  await page.click('.tab[data-tab="employees"]');
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const app = window.ShiftApp;
+    const state = app.getState();
+    state.employees[0].payrollId = '0417';
+    state.employees[0].name = 'כהן, דוד';
+    app.persistConfig();
+    app.render();
+  });
+  await page.waitForTimeout(400);
+  await page.click('.tab[data-tab="hours"]');
+  await page.waitForTimeout(900);
+
+  async function downloadText(selector) {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click(selector)
+    ]);
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    return { name: download.suggestedFilename(), text: Buffer.concat(chunks).toString('utf8') };
+  }
+
+  const summary = await downloadText('#hours-payroll');
+  /* שם הקובץ נבדק במלואו, ולא רק הסיומת: דפדפני Chromium
+     מתעלמים משם הורדה שיש בו תו שאינו ASCII ושומרים את הקובץ
+     כ-"download", בלי שם ובלי סיומת. זה מה שקרה כאן קודם, כי
+     השם היה "שעות-לשכר-...". */
+  check('שם הקובץ מלא, באנגלית ועם סיומת',
+    summary.name, 'setshifts-payroll-summary-2026-09.csv');
+  /* בלי BOM אקסל בווינדוס קורא את העברית כג׳יבריש, והקובץ
+     נראה תקין למי שמסתכל רק על המספרים */
+  check('הקובץ נפתח ב-BOM', summary.text.charCodeAt(0), 0xFEFF);
+  check('יש טור מספר עובד בשכר', /מספר עובד בשכר/.test(summary.text), true);
+  check('ויש שעות עשרוניות לצד שעות:דקות',
+    /שעות \(עשרוני\)/.test(summary.text) && /שעות \(שעות:דקות\)/.test(summary.text), true);
+  /* המספר יוצא כטקסט, אחרת אקסל הופך 0417 ל-417 ומערכת השכר
+     לא מוצאת לו בעלים */
+  check('מספר עם אפס מוביל נשמר כטקסט', summary.text.indexOf('0417') !== -1, true);
+  check('והוא מוגן מהמרה למספר', /=""?0417/.test(summary.text), true);
+  /* פסיק בתוך שם מצוטט, אחרת כל השורה זזה טור אחד */
+  check('פסיק בשם מצוטט', summary.text.indexOf('"כהן, דוד"') !== -1, true);
+
+  const detail = await downloadText('#hours-payroll-detail');
+  check('וגם לפירוט יש שם משלו',
+    detail.name, 'setshifts-payroll-detail-2026-09.csv');
+  check('בפירוט יש תאריך, כניסה ויציאה',
+    /תאריך/.test(detail.text) && /כניסה/.test(detail.text) && /יציאה/.test(detail.text), true);
+  check('ושתי השורות אינן זהות', summary.text === detail.text, false);
+
   console.log('\n== כיבוי השעון ==');
   await page.click('.tab[data-tab="settings"]');
   await page.waitForTimeout(500);

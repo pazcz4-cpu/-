@@ -57,9 +57,13 @@ try {
   });
   check('שם הקובץ', built.fileName, /\.xlsx$/);
   check('הטור הראשון הוא השם', built.headers[0], 'שם');
-  check('תשעה טורים', built.headers.length, 9);
+  check('עשרה טורים', built.headers.length, 10);
   check('יש טור תפקידים', built.headers.indexOf('תפקידים') > 0, true);
   check('ויש טור טלפון', built.headers.indexOf('טלפון') > 0, true);
+  /* בלי המספר הזה הקובץ שנוסע למערכת השכר מזהה את העובד בשם
+     בלבד, ושני "דוד כהן" הם בדיוק המקרה שבו זה נופל. */
+  check('ויש טור מספר עובד בשכר',
+    built.headers.indexOf('מספר עובד בשכר') > 0, true);
   /* שורת דוגמה בגיליון הנתונים הייתה נכנסת כעובד אמיתי אצל כל
      מי ששכח למחוק אותה */
   check('גיליון הנתונים מכיל כותרות בלבד', built.rowCount, 1);

@@ -884,6 +884,126 @@
     return clock.enabled && (clock.mode === 'phone' || clock.mode === 'both');
   }
 
+  /* ===== ייצוא לשכר =====
+
+     מה שמנהלת החשבונות צריכה אינו מה שהמנהל רואה על המסך.
+     על המסך שעות נכתבות כ-"8:36", כי זה מה שמופיע בתלוש וזה
+     מה שמשווים מולו; מערכת שכר רוצה 8.60, כי היא מכפילה את זה
+     בתעריף. לכן שתי הצורות יוצאות זו לצד זו, והמייבא בוחר.
+
+     שתי רמות פירוט, כי מערכות השכר חלוקות ביניהן: יש כאלה
+     שקולטות שורה אחת לעובד לחודש, ויש כאלה שרוצות כל כניסה
+     ויציאה בנפרד ומחשבות בעצמן. */
+
+  /* שעות עשרוניות, מעוגלות למאיות. 8 שעות ו-36 דקות = 8.60 */
+  function decimalHours(minutes) {
+    return (Math.max(0, Math.round(Number(minutes) || 0)) / 60).toFixed(2);
+  }
+
+  function payrollIdentity(emp) {
+    return {
+      empId: emp.id,
+      payrollId: payrollIdOf(emp),
+      clockId: clockIdOf(emp) || '',
+      name: emp.name || ''
+    };
+  }
+
+  /* שורה אחת לעובד לחודש. רק עובדים שיש להם מה לדווח עליו:
+     שורה של אפס שעות במערכת שכר היא בקשה לבדוק למה. */
+  function payrollSummary(state, monthKey) {
+    var report = monthlyReport(state, monthKey);
+    var out = [];
+    (state.employees || []).forEach(function (emp) {
+      var row = report[emp.id];
+      if (!row) return;
+      if (!row.minutes && !row.plannedMinutes && !row.openSessions &&
+          !row.paidLeaveDays && !row.unpaidLeaveDays) return;
+      var line = payrollIdentity(emp);
+      line.monthKey = monthKey;
+      line.days = row.days;
+      line.minutes = row.minutes;
+      line.hours = decimalHours(row.minutes);
+      line.clock = formatMinutes(row.minutes);
+      line.plannedMinutes = row.plannedMinutes;
+      line.plannedHours = decimalHours(row.plannedMinutes);
+      line.overtimeMinutes = row.overtimeMinutes;
+      line.overtimeHours = decimalHours(row.overtimeMinutes);
+      line.paidLeaveDays = row.paidLeaveDays;
+      line.unpaidLeaveDays = row.unpaidLeaveDays;
+      /* משמרת פתוחה ודיווח יתום הם אותה בעיה מבחינת מי שמקבל
+         את הקובץ: יש כאן שעות שאי אפשר לסמוך עליהן. */
+      line.openSessions = row.openSessions + row.orphanPunches;
+      out.push(line);
+    });
+    return out;
+  }
+
+  /* שורה לכל זוג כניסה–יציאה, לפי סדר הזמן. משמרת פתוחה נכללת
+     עם שעת יציאה ריקה ואפס דקות – השמטה שקטה שלה הייתה מייצרת
+     קובץ שנראה תקין וחסרות בו שעות. */
+  function payrollPunches(state, monthKey) {
+    var out = [];
+    var weekKeys = weekKeysForMonth(monthKey);
+    var byEmployee = {};
+    (state.employees || []).forEach(function (emp) { byEmployee[emp.id] = emp; });
+
+    weekKeys.forEach(function (weekKey) {
+      var week = (state.weeks || {})[weekKey];
+      if (!week) return;
+      var near = {
+        prev: (state.weeks || {})[shiftWeekKey(weekKey, -1)],
+        next: (state.weeks || {})[shiftWeekKey(weekKey, 1)]
+      };
+      var seen = {};
+      punchList(week).forEach(function (punch) { seen[punch.empId] = true; });
+      Object.keys(seen).forEach(function (empId) {
+        var emp = byEmployee[empId];
+        if (!emp) return;
+        punchSessions(week, empId, near).forEach(function (session) {
+          var stamp = Date.parse(session.inAt || session.outAt);
+          if (isNaN(stamp)) return;
+          var start = new Date(stamp);
+          /* המשמרת שייכת לחודש שבו היא נפתחה, כמו בדוח */
+          if (monthKeyOf(start) !== monthKey) return;
+          var line = payrollIdentity(emp);
+          line.date = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());
+          line.inAt = session.inAt ? clockOf(new Date(Date.parse(session.inAt))) : '';
+          line.outAt = session.outAt ? clockOf(new Date(Date.parse(session.outAt))) : '';
+          line.minutes = session.minutes;
+          line.hours = decimalHours(session.minutes);
+          line.clock = formatMinutes(session.minutes);
+          line.open = !!session.open;
+          line.orphan = !!session.orphan;
+          line.at = stamp;
+          out.push(line);
+        });
+      });
+    });
+    return out.sort(function (a, b) {
+      if (a.name !== b.name) return a.name < b.name ? -1 : 1;
+      return a.at - b.at;
+    });
+  }
+
+  function clockOf(date) {
+    return pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+
+  /* ===== מספר העובד במערכת השכר =====
+
+     זה לא אותו מספר כמו במכשיר השעון. במכשיר המספר מוקצה
+     אוטומטית ומשרת רק את הקריאה של הכרטיס; במערכת השכר הוא כבר
+     קיים, נקבע על ידי מי שמנהל את השכר, ולפיו מערכת השכר יודעת
+     על מי השעות. בלעדיו כל ייצוא לשכר מזוהה בשם בלבד — ושני
+     עובדים בשם "דוד כהן" הם בדיוק המקרה שבו זה נופל.
+
+     לכן נשמר כטקסט ולא כמספר: יש מערכות שבהן המספר מתחיל באפס,
+     ויש כאלה שבהן הוא כולל אות או מקף. */
+  function payrollIdOf(emp) {
+    return String((emp && emp.payrollId) || '').trim();
+  }
+
   /* ===== המספר של העובד במכשיר =====
 
      מכשיר חומרה אינו מכיר מזהים כמו "emp-7". הוא מכיר מספר
@@ -2279,6 +2399,10 @@
     timeclock: timeclock,
     allowsPhonePunch: allowsPhonePunch,
     clockIdOf: clockIdOf,
+    payrollIdOf: payrollIdOf,
+    payrollSummary: payrollSummary,
+    payrollPunches: payrollPunches,
+    decimalHours: decimalHours,
     nextClockId: nextClockId,
     assignClockIds: assignClockIds,
     employeeByClockId: employeeByClockId,

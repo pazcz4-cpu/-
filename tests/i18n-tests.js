@@ -6,6 +6,15 @@ var fs = require('fs');
 var path = require('path');
 
 var I18n = require('../js/i18n/core.js');
+
+/* platform.js מצפה ל-window ול-document. כאן נדרשת ממנו רק
+   פונקציה טהורה אחת, ולכן די בתחליף מינימלי. */
+global.window = global.window || global;
+global.document = global.document || {
+  createElement: function () { return {}; },
+  body: { appendChild: function () {}, removeChild: function () {} }
+};
+var Platform = require('../js/platform.js');
 var dir = path.join(__dirname, '..', 'js', 'i18n');
 
 /* טוענים כל קובץ שפה שנמצא בתיקייה, ולא רשימה קבועה, כדי ששפה חדשה
@@ -179,7 +188,8 @@ var COMPOSED_KEYS = [
   'leaveRequest.status_rejected', 'leaveRequest.status_mixed',
   'alerts.dropInactiveOne', 'alerts.dropInactiveOther',           // js/app.js – tCount
   'alerts.dropInactiveDoneOne', 'alerts.dropInactiveDoneOther',
-  'support.sent', 'support.sentUrgent'          // js/backend/support-ui.js – לפי סוג הפנייה
+  'support.sent', 'support.sentUrgent',         // js/backend/support-ui.js – לפי סוג הפנייה
+  'hours.missingPayrollIdOne', 'hours.missingPayrollIdOther'   // js/app.js – tCount
 ];
 
 languages.forEach(function (lang) {
@@ -190,6 +200,49 @@ languages.forEach(function (lang) {
   });
 });
 I18n.use('he');
+
+
+/* ===== שם הקובץ שהדפדפן באמת שומר =====
+
+   דפדפני Chromium מתעלמים מערך download שיש בו ולו תו אחד
+   שאינו ASCII, ושומרים את הקובץ בשם "download" – בלי שם
+   ובלי סיומת. נבדק מול דפדפן אמיתי: "hours-2026-09.csv"
+   נשמר בשמו, ו-"דוח-שעות-2026-09.csv" נשמר כ-"download".
+
+   כלומר בדיוק הקבצים שיוצאים מהעסק – דוח השעות שנשלח לחשבת
+   השכר ודוח ימי החופש – הגיעו בלי שם ובלי סיומת. */
+console.log('\n== שמות הקבצים לייצוא ==');
+
+var fileNameKeys = ['hours.fileName', 'hours.payrollFile', 'leave.fileName',
+  'hours.payrollKindSummary', 'hours.payrollKindDetail', 'ui.personalFileName'];
+
+test('שמות הקבצים כתובים ב-ASCII בכל השפות', function () {
+  I18n.list().forEach(function (lang) {
+    I18n.use(lang.code);
+    fileNameKeys.forEach(function (key) {
+      var value = I18n.t(key);
+      assert(!/[^\x20-\x7E]/.test(value),
+        lang.code + ': ' + key + ' אינו ASCII – הדפדפן יוריד אותו כ-"download": ' + value);
+    });
+  });
+  I18n.use('he');
+});
+
+test('ההגנה על שם הקובץ שומרת סיומת ומבדילה בין קבצים', function () {
+  var safe = Platform.safeFileName;
+  /* שם תקין עובר כמו שהוא */
+  assert(safe('setshifts-hours-2026-09.csv') === 'setshifts-hours-2026-09.csv',
+    'שם ASCII תקין שונה: ' + safe('setshifts-hours-2026-09.csv'));
+  /* ושם עברי לפחות שומר את התאריך ואת הסיומת, במקום "download" */
+  var fixed = safe('דוח-שעות-2026-09.csv');
+  assert(!/[^\x20-\x7E]/.test(fixed), 'התוצאה עדיין אינה ASCII: ' + fixed);
+  assert(/\.csv$/.test(fixed), 'אבדה הסיומת: ' + fixed);
+  assert(fixed.indexOf('2026-09') !== -1, 'אבד התאריך שמבדיל בין קבצים: ' + fixed);
+  /* שם ריק אינו מייצר קובץ בלי שם */
+  assert(safe('').length > 0, 'שם ריק');
+  /* תווים שווינדוס אוסר בשם קובץ אינם עוברים */
+  assert(!/[\\\/:*?"<>|]/.test(safe('דוח: 2026/09.csv')), 'תווים אסורים בווינדוס');
+});
 
 console.log('\n== שפת ברירת המחדל ==');
 

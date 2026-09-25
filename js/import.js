@@ -84,6 +84,11 @@
     email: ['email', 'mail', 'e-mail', 'address', 'מייל', 'אימייל', 'דואר', 'דוא"ל', 'כתובת מייל'],
     phone: ['phone', 'mobile', 'cell', 'tel', 'telephone', 'phonenumber',
       'טלפון', 'נייד', 'פלאפון', 'סלולרי', 'מספר טלפון'],
+    /* מספר העובד במערכת השכר. לא אותו מספר כמו בשעון הנוכחות,
+       ולכן גם לא אותם כינויים: מי שמייבא קובץ מהנהלת חשבונות
+       מביא את המספר שמערכת השכר מכירה. */
+    payrollId: ['payroll', 'payrollid', 'payrollnumber', 'employeenumber', 'empno',
+      'מספר עובד', 'מספר עובד בשכר', 'מספר בשכר', 'מספר שכר', 'עובד מספר', 'ת.ז שכר'],
     note: ['note', 'notes', 'comment', 'הערה', 'הערות'],
     active: ['active', 'status', 'פעיל', 'סטטוס']
   };
@@ -104,6 +109,7 @@
     maxShifts: 'importData.colMax',
     email: 'importData.colEmail',
     phone: 'importData.colPhone',
+    payrollId: 'importData.colPayrollId',
     note: 'importData.colNote',
     active: 'importData.colActive'
   };
@@ -131,7 +137,7 @@
 
   /* שמות הטורים כפי שהם נכתבים בתבנית, לפי הסדר בקובץ */
   var COLUMNS = ['name', 'branches', 'shifts', 'roles', 'maxShifts', 'email', 'phone',
-    'note', 'active'];
+    'payrollId', 'note', 'active'];
 
   function columnLabels() {
     return COLUMNS.map(function (field) { return t(FIELD_KEYS[field]); });
@@ -156,8 +162,10 @@
      בקובץ עם שורת כותרות הסדר לא משנה ממילא. */
   /* הסדר בקובץ בלי שורת כותרות. התפקידים נוספו בסוף בכוונה:
      קובץ שנבנה לפני שהם היו קיימים ממשיך להיקרא נכון. */
+  /* payrollId בסוף: קובץ שנבנה לפני שהוא היה קיים ממשיך
+     להיקרא נכון. */
   var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email', 'roles',
-    'phone'];
+    'phone', 'payrollId'];
 
   /* ===== פענוח תא ===== */
 
@@ -356,6 +364,7 @@
         name: name,
         email: email,
         phone: normalizePhone(cell(row, 'phone')),
+        payrollId: String(cell(row, 'payrollId') || '').trim(),
         branchNames: missing,
         branchIds: branchIds,
         roles: roleIds,
@@ -414,6 +423,7 @@
       employee.note = row.note;
       employee.email = row.email || '';
       employee.phone = row.phone || '';
+      employee.payrollId = row.payrollId || '';
       employee.active = row.active;
       created.employees.push(employee);
     });

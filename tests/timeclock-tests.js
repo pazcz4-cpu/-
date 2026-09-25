@@ -404,5 +404,97 @@ test('הדוח החודשי נותן שמונה שעות ביום הכניסה',
   assertEqual(Object.keys(row.byDay).join(','), '2026-09-19', 'היום שאליו נזקפו השעות');
 });
 
+/* ===== הקובץ שנוסע למערכת השכר =====
+
+   מה שנבדק כאן הוא לא "המספר הנכון" אלא המקומות שבהם קובץ
+   נראה תקין ומגיע שבור אל מי שמייבא אותו. */
+console.log('\n== ייצוא לשכר ==');
+
+var Csv = require('../js/csv.js');
+
+function payrollState() {
+  var state = Store.emptyState();
+  state.employees = [
+    { id: 'emp-1', name: 'כהן, דוד', payrollId: '0417', clockId: 3,
+      active: true, branches: [], shifts: ['morning'], maxShifts: 6, roles: [] },
+    { id: 'emp-2', name: 'רות לוי', payrollId: '', clockId: 4,
+      active: true, branches: [], shifts: ['morning'], maxShifts: 6, roles: [] }
+  ];
+  var week = Store.getWeek(state, '2026-09-13');
+  punch(week, 'emp-1', Store.PUNCH.IN, '2026-09-14T06:00:00.000Z');
+  punch(week, 'emp-1', Store.PUNCH.OUT, '2026-09-14T14:36:00.000Z');
+  punch(week, 'emp-2', Store.PUNCH.IN, '2026-09-15T08:00:00.000Z');   // בלי יציאה
+  return state;
+}
+
+test('סיכום חודשי: שעות בשתי הצורות, ומספר העובד בשכר', function () {
+  var lines = Store.payrollSummary(payrollState(), '2026-09');
+  assertEqual(lines.length, 2, 'מספר השורות');
+  var david = lines.filter(function (l) { return l.empId === 'emp-1'; })[0];
+  assertEqual(david.payrollId, '0417', 'מספר בשכר');
+  assertEqual(david.clockId, 3, 'מספר בשעון');
+  assertEqual(david.clock, '8:36', 'שעות לעין אנושית');
+  /* 8 שעות ו-36 דקות הן 8.60 ולא 8.36. זו הטעות שמגיעה
+     לתלוש כשמעתיקים את העמודה הלא נכונה. */
+  assertEqual(david.hours, '8.60', 'שעות עשרוניות');
+  var ruth = lines.filter(function (l) { return l.empId === 'emp-2'; })[0];
+  assertEqual(ruth.openSessions, 1, 'משמרת פתוחה נספרת');
+  assertEqual(ruth.hours, '0.00', 'משמרת פתוחה אינה מייצרת שעות');
+});
+
+test('פירוט דיווחים: שורה לכל זוג, ומשמרת פתוחה מסומנת', function () {
+  var lines = Store.payrollPunches(payrollState(), '2026-09');
+  assertEqual(lines.length, 2, 'מספר השורות');
+  var david = lines.filter(function (l) { return l.empId === 'emp-1'; })[0];
+  assertEqual(david.date, '2026-09-14', 'תאריך');
+  assertEqual(david.hours, '8.60', 'שעות עשרוניות');
+  assertEqual(david.open, false, 'סגורה');
+  /* המשמרת הפתוחה יוצאת בקובץ ומסומנת. השמטה שקטה שלה הייתה
+     מייצרת קובץ שנראה תקין וחסרות בו שעות. */
+  var ruth = lines.filter(function (l) { return l.empId === 'emp-2'; })[0];
+  assert(ruth, 'המשמרת הפתוחה הושמטה מהקובץ');
+  assertEqual(ruth.open, true, 'מסומנת כפתוחה');
+  assertEqual(ruth.outAt, '', 'בלי שעת יציאה');
+  assertEqual(ruth.hours, '0.00', 'בלי שעות');
+});
+
+test('שעות עשרוניות: מאיות ולא דקות', function () {
+  assertEqual(Store.decimalHours(0), '0.00', 'אפס');
+  assertEqual(Store.decimalHours(30), '0.50', 'חצי שעה');
+  assertEqual(Store.decimalHours(516), '8.60', 'יום עבודה');
+  assertEqual(Store.decimalHours(485), '8.08', 'עיגול');
+});
+
+test('CSV: פסיק בשם, מרכאות, ומספר שמתחיל באפס', function () {
+  var text = Csv.build([
+    ['שם', 'מספר'],
+    ['כהן, דוד', Csv.asText('0417')],
+    ['עם "מרכאות"', '5']
+  ]);
+  /* בלי BOM אקסל בווינדוס קורא את העברית כג׳יבריש */
+  assertEqual(text.charAt(0), '﻿', 'חסר BOM');
+  var lines = text.split('\r\n');
+  var q = String.fromCharCode(34);
+  /* פסיק בתוך שם מחייב ציטוט, אחרת "כהן, דוד" הופך לשני טורים
+     וכל השורה זזה. והמספר יוצא כ-="0417" כדי שאקסל לא יקרא
+     אותו כ-417 ומערכת השכר לא תמצא לו בעלים. */
+  assertEqual(lines[1],
+    q + 'כהן, דוד' + q + ',' + q + '=' + q + q + '0417' + q + q + q,
+    'ציטוט והגנה על האפס');
+  assertEqual(lines[2],
+    q + 'עם ' + q + q + 'מרכאות' + q + q + q + ',5',
+    'מרכאות בתוך תא');
+  /* CRLF, כי זה מה שמערכות ווינדוס מצפות לו */
+  assert(text.indexOf('\r\n') !== -1, 'שורות אינן מסתיימות ב-CRLF');
+});
+
+test('CSV: תא ריק נשאר ריק ולא הופך למחרוזת ריקה מצוטטת', function () {
+  /* ="" הוא תא שנראה תקין ואינו, ומערכת שכר עלולה לקלוט אותו
+     כמחרוזת ולא כערך חסר. */
+  assertEqual(Csv.asText(''), '', 'מחרוזת ריקה');
+  assertEqual(Csv.asText(null), '', 'null');
+  assertEqual(Csv.asText(undefined), '', 'undefined');
+});
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

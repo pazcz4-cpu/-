@@ -8,6 +8,7 @@
   var Validate = window.ShiftValidate;
   var Platform = window.ShiftPlatform;
   var Xlsx = window.ShiftXlsx;
+  var Csv = window.ShiftCsv;
   var I18n = window.I18n;
 
   /* קיצור לשכבת התרגום. אם היא לא נטענה – מוצג המפתח, והמערכת ממשיכה לעבוד. */
@@ -1538,6 +1539,7 @@
       var row = report[emp.id];
       return {
         empId: emp.id,
+        employee: emp,
         name: emp.name,
         days: row.days,
         minutes: row.minutes,
@@ -1708,13 +1710,13 @@
     var S = Xlsx.STYLE;
     /* השעות מיוצאות כטקסט "8:32" ולא כמספר עשרוני: זה מה
        שמופיע בתלוש, וזה מה שמשווים מולו. */
-    var head = [t('hours.columnName'), t('hours.columnDays'), t('hours.columnActual'),
-      t('hours.columnPlanned')];
+    var head = [t('hours.colPayrollId'), t('hours.columnName'), t('hours.columnDays'),
+      t('hours.columnActual'), t('hours.colHoursDecimal'), t('hours.columnPlanned')];
     if (overtimeOn) head.push(t('hours.columnOvertime'));
     head.push(t('hours.columnPaidLeave'), t('hours.columnUnpaidLeave'), t('hours.columnOpen'));
     var sheet = {
       name: t('hours.sheetName'),
-      cols: [26, 10, 12, 12, 12, 12, 14, 12],
+      cols: [14, 26, 10, 12, 14, 12, 12, 12, 14, 12],
       rows: [
         { cells: [{ v: t('hours.title') + ' · ' + monthKey, s: S.TITLE }], height: 24 },
         [],
@@ -1722,10 +1724,15 @@
       ]
     };
     rows.forEach(function (row) {
+      /* גם כאן שתי צורות של אותו מספר: "8:36" למי שמשווה מול
+         התלוש, ו-8.60 למנהלת חשבונות שעובדת ידנית ומכפילה
+         בתעריף. שני טורים חסכו בדיוק את ההקלדה הזו. */
       var cells = [
+        { v: Store.payrollIdOf(row.employee || {}) || '', s: S.PLAIN },
         { v: row.name, s: S.ROW_HEAD },
         { v: row.days, s: S.PLAIN },
         { v: Store.formatMinutes(row.minutes), s: S.PLAIN },
+        { v: Store.decimalHours(row.minutes), s: S.PLAIN },
         { v: Store.formatMinutes(row.plannedMinutes), s: S.PLAIN }
       ];
       if (overtimeOn) cells.push({ v: Store.formatMinutes(row.overtimeMinutes), s: S.PLAIN });
@@ -1739,6 +1746,95 @@
     });
     saveFile(t('hours.fileName') + '-' + monthKey + '.xlsx', blob,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+
+  /* ===== הקובץ שנוסע למערכת השכר =====
+
+     הקובץ באקסל נועד לעין אנושית: שעות כ-"8:36", כותרת, עיצוב.
+     מערכת שכר רוצה משהו אחר לגמרי – טקסט שטוח, מספר עובד
+     שאפשר להתאים לפיו, ושעות עשרוניות שאפשר להכפיל בתעריף.
+
+     אין פורמט אחד שכל מערכות השכר קולטות; מה שיש כמעט בכולן
+     הוא ייבוא CSV עם מיפוי טורים. לכן הקובץ כולל את כל מה
+     שמישהו עשוי למפות – מספר עובד בשכר, מספר בשעון, שם, שעות
+     בשתי הצורות – ומי שמייבא בוחר את הטורים שהמערכת שלו
+     צריכה. טור מיותר בקובץ אינו מפריע לייבוא ממופה; טור חסר
+     שולח את מנהלת החשבונות להקליד ידנית.
+
+     שתי רמות פירוט, כי המערכות חלוקות: יש שקולטות שורה אחת
+     לעובד לחודש, ויש שרוצות כל כניסה ויציאה ומחשבות בעצמן. */
+  function payrollFileName(kind, monthKey) {
+    return t('hours.payrollFile') + '-' + kind + '-' + monthKey + '.csv';
+  }
+
+  function savePayrollCsv(name, rows) {
+    var text = Csv.build(rows);
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    saveFile(name, blob, 'text/csv;charset=utf-8');
+  }
+
+  /* שורה אחת לעובד לחודש */
+  function exportPayrollSummary() {
+    var monthKey = hoursMonth();
+    var lines = Store.payrollSummary(state, monthKey);
+    if (!lines.length) { toast(t('hours.none')); return; }
+    var overtimeOn = Store.overtimeRule(state).enabled;
+
+    var head = [t('hours.colPayrollId'), t('hours.colClockId'), t('hours.columnName'),
+      t('hours.colMonth'), t('hours.columnDays'), t('hours.colHoursDecimal'),
+      t('hours.colHoursClock'), t('hours.colPlannedDecimal')];
+    if (overtimeOn) head.push(t('hours.colOvertimeDecimal'));
+    head.push(t('hours.columnPaidLeave'), t('hours.columnUnpaidLeave'), t('hours.columnOpen'));
+
+    var rows = [head];
+    lines.forEach(function (line) {
+      var cells = [
+        Csv.asText(line.payrollId), Csv.asText(line.clockId), line.name,
+        line.monthKey, line.days, line.hours, line.clock, line.plannedHours
+      ];
+      if (overtimeOn) cells.push(line.overtimeHours);
+      cells.push(line.paidLeaveDays, line.unpaidLeaveDays, line.openSessions);
+      rows.push(cells);
+    });
+    savePayrollCsv(payrollFileName(t('hours.payrollKindSummary'), monthKey), rows);
+    warnMissingPayrollId(lines);
+  }
+
+  /* שורה לכל כניסה–יציאה */
+  function exportPayrollPunches() {
+    var monthKey = hoursMonth();
+    var lines = Store.payrollPunches(state, monthKey);
+    if (!lines.length) { toast(t('hours.none')); return; }
+
+    var rows = [[t('hours.colPayrollId'), t('hours.colClockId'), t('hours.columnName'),
+      t('hours.colDate'), t('hours.colIn'), t('hours.colOut'),
+      t('hours.colHoursDecimal'), t('hours.colHoursClock'), t('hours.colFlag')]];
+    lines.forEach(function (line) {
+      rows.push([
+        Csv.asText(line.payrollId), Csv.asText(line.clockId), line.name,
+        line.date, line.inAt, line.outAt, line.hours, line.clock,
+        /* משמרת פתוחה ודיווח יתום יוצאים בקובץ ומסומנים. השמטה
+           שקטה שלהם הייתה מייצרת קובץ שנראה תקין וחסרות בו
+           שעות – וזה בדיוק מה שמתגלה בתלוש. */
+        line.open ? t('hours.flagOpen') : (line.orphan ? t('hours.flagOrphan') : '')
+      ]);
+    });
+    savePayrollCsv(payrollFileName(t('hours.payrollKindDetail'), monthKey), rows);
+    warnMissingPayrollId(lines);
+  }
+
+  /* מי שאין לו מספר בשכר ייקלט לפי שם, ושני "דוד כהן" הם
+     בדיוק המקרה שבו זה נופל. אומרים את זה בזמן ההורדה, ולא
+     אחרי שהקובץ כבר נשלח. */
+  function warnMissingPayrollId(lines) {
+    var missing = [];
+    lines.forEach(function (line) {
+      if (!line.payrollId && missing.indexOf(line.name) === -1) missing.push(line.name);
+    });
+    if (!missing.length) return;
+    toast(tCount('hours.missingPayrollId', missing.length, {
+      names: missing.slice(0, 3).join(', ')
+    }));
   }
 
   function renderConstraints() {
@@ -2099,6 +2195,14 @@
       html += '<div class="field"><label class="title">' + t('employees.phone') + '</label>' +
         '<input class="text-input" type="tel" dir="ltr" data-field="phone" ' +
         'value="' + esc(emp.phone || '') + '"></div>';
+      /* מספר העובד במערכת השכר. אינו זהה למספר בשעון: שם הוא
+         מוקצה אוטומטית ומשרת את קריאת הכרטיס, וכאן הוא כבר
+         קיים ונקבע על ידי מי שמנהל את השכר. בלעדיו הקובץ
+         שנוסע למערכת השכר מזוהה בשם בלבד. */
+      html += '<div class="field"><label class="title">' + t('employees.payrollId') + '</label>' +
+        '<input class="text-input" dir="ltr" data-field="payrollId" maxlength="20" ' +
+        'value="' + esc(emp.payrollId || '') + '">' +
+        '<p class="hint">' + esc(t('employees.payrollIdHint')) + '</p></div>';
       /* שליחת פרטי כניסה. קיימת רק כשיש שרת שיודע לשלוח דואר –
          בכלי המקומי אין למי לשלוח ואין ממה. */
       if (source.sendAccess) {
@@ -3073,8 +3177,14 @@
     var blob = new Blob([bytes], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    var safeName = emp.name.replace(/[\\\/:*?"<>|]/g, '').trim() || t('schedule.employee');
-    saveFile(t('ui.personalFileName', { name: safeName }) + '-' + weekKey + '.xlsx', blob,
+    /* שם הקובץ באנגלית ובלי שם העובד: דפדפני Chromium
+       מתעלמים משם הורדה שיש בו תו שאינו ASCII ושומרים את
+       הקובץ כ-"download". מה שמבדיל בין הקבצים הוא המספר
+       הקצר של העובד – אותו מספר שמופיע לו על הכרטיס – והשם
+       המלא נמצא בתוך הקובץ עצמו. */
+    var fileTag = Store.clockIdOf(emp) ||
+      (state.employees.indexOf(emp) + 1);
+    saveFile(t('ui.personalFileName', { name: fileTag }) + '-' + weekKey + '.xlsx', blob,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   }
 
@@ -3539,6 +3649,10 @@
     }
     var hoursExport = $('#hours-export');
     if (hoursExport) { hoursExport.addEventListener('click', exportHours); }
+    var payrollExport = $('#hours-payroll');
+    if (payrollExport) { payrollExport.addEventListener('click', exportPayrollSummary); }
+    var payrollDetail = $('#hours-payroll-detail');
+    if (payrollDetail) { payrollDetail.addEventListener('click', exportPayrollPunches); }
 
     /* פתיחה, מחיקה והוספה של דיווחים. הכתיבה היא של המנהל,
        ולכן היא עוברת בשמירת השבוע הרגילה — ולא בפונקציה של
@@ -3811,6 +3925,10 @@
       else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
       else if (field === 'email') emp.email = String(event.target.value || '').trim().toLowerCase();
       else if (field === 'phone') emp.phone = normalizePhone(event.target.value);
+      /* מספר בשכר נשמר כטקסט ולא כמספר: יש מערכות שבהן הוא
+         מתחיל באפס, ויש שבהן יש בו מקף. רווח בקצוות הוא בדיוק
+         מה שגורם לאי-התאמה שקטה במערכת השכר. */
+      else if (field === 'payrollId') emp.payrollId = String(event.target.value || '').trim();
       else emp[field] = event.target.value;
       persist('config');
       if (field === 'active' || field === 'maxShifts') render();

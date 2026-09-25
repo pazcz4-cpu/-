@@ -38,8 +38,41 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 500);
   }
 
+  /* ===== שם הקובץ שהדפדפן באמת ישמור =====
+
+     דפדפנים מבוססי Chromium מתעלמים מערך download שיש בו ולו
+     תו אחד שאינו ASCII, ושומרים את הקובץ בשם "download" – בלי
+     שם ובלי סיומת. זה נבדק: "hours-2026-09.csv" נשמר בשמו,
+     ו-"דוח-שעות-2026-09.csv" נשמר כ-"download".
+
+     כלומר בדיוק הקבצים שיוצאים מהעסק החוצה – דוח השעות
+     שנשלח לחשבת השכר, דוח ימי החופש – הגיעו בלי שם ובלי
+     סיומת, וווינדוס אינו יודע לפתוח אותם בלחיצה כפולה.
+
+     השמירה כאן היא הרשת האחרונה: היא שומרת את החלק ה-ASCII
+     של השם (בדרך כלל התאריך, שהוא מה שמבדיל בין הקבצים) ואת
+     הסיומת, ומוסיפה קידומת שאפשר לזהות. שמות הקבצים עצמם
+     נכתבים באנגלית במקור, וזו רק ההגנה למי שיוסיף שם חדש. */
+  function safeFileName(filename) {
+    var text = String(filename == null ? '' : filename).trim();
+    if (!text) return 'setshifts';
+    if (!/[^\x20-\x7E]/.test(text)) return text;
+
+    var dot = text.lastIndexOf('.');
+    var ext = dot > 0 ? text.slice(dot) : '';
+    if (/[^\x20-\x7E]/.test(ext)) { ext = ''; dot = -1; }
+    var base = (dot > 0 ? text.slice(0, dot) : text)
+      .replace(/[^\x20-\x7E]+/g, '-')
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^[-\s]+|[-\s]+$/g, '');
+    return 'setshifts' + (base ? '-' + base : '') + ext;
+  }
+  Platform.safeFileName = safeFileName;
+
   /* מחזיר Promise עם הודעה למשתמש (או null כשאין מה להודיע) */
-  Platform.saveFile = function (filename, content, mime) {
+  Platform.saveFile = function (rawName, content, mime) {
+    var filename = safeFileName(rawName);
     if (Platform.downloads) {
       return Platform.downloads.save({ filename: filename, data: content })
         .then(function () { return t('ui.fileSaved'); })

@@ -73,7 +73,10 @@
           read: function () {
             var current = backend.session();
             var company = (current && current.company) || session.company;
-            return { name: company.name || '', taxId: company.taxId || '' };
+            return {
+              name: company.name || '', taxId: company.taxId || '',
+              phone: company.phone || '', logo: company.logo || ''
+            };
           },
           save: function (details) {
             return backend.saveCompanyDetails(details).then(function (company) {
@@ -322,8 +325,12 @@
       document.getElementById('manager-root').classList.add('hidden');
       var employeeRoot = document.getElementById('employee-root');
       employeeRoot.classList.remove('hidden');
+      /* ההתחברות הטרייה ולא זו שנתפסה בעלייה: המנהל פותח את
+         התצוגה המקדימה בדיוק אחרי ששינה משהו — שם עסק, לוגו —
+         ורוצה לראות מה העובד יראה עכשיו, לא מה שהיה בכניסה. */
       previewUI = new root.ShiftEmployeeUI.EmployeeUI({
-        backend: backend, session: session, preview: true, employeeId: employeeId
+        backend: backend, session: backend.session() || session,
+        preview: true, employeeId: employeeId
       });
       employeeRoot.addEventListener('click', function (event) {
         if (event.target.closest('#preview-exit')) exitPreview();

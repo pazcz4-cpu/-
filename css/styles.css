@@ -618,6 +618,39 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .company-fields .check { flex-direction: column; align-items: stretch; gap: 4px; }
 .company-fields .text-input { width: 100%; }
 
+/* לוגו העסק. התצוגה המקדימה בגודל שבו הלוגו באמת מופיע בסרגל
+   ובמסך העובד, ולא בגודל הקובץ — כדי שמי שמעלה יראה מיד מה
+   הוא יקבל ולא יופתע אחר כך.
+
+   הרקע משובץ ולא לבן: לוגו שקוף על לבן נראה תקין עד שמישהו
+   מפעיל מצב כהה, ואז מתברר שחצי ממנו לא נראה. כאן רואים את
+   השקיפות בזמן ההעלאה. */
+.company-logo-field { margin-top: var(--s4); }
+.company-logo-label {
+  display: block; font-weight: 600; font-size: var(--t-sm); margin-bottom: var(--s2);
+}
+.company-logo-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+}
+.company-logo-preview {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 160px; height: 60px; padding: var(--s2);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(45deg, var(--c2-bg) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--c2-bg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--c2-bg) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--c2-bg) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.company-logo-preview img { max-height: 44px; max-width: 220px; width: auto; }
+.company-logo-preview.is-empty {
+  background-image: none; color: var(--muted); font-size: var(--t-xs);
+}
+.company-logo-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
 .emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
 
 /* ===== משמרת כקובייה =====
@@ -1289,6 +1322,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   font: inherit; color: inherit; text-align: start; cursor: pointer;
   line-height: 1.3;
 }
+/* עם לוגו הכפתור הופך לשתי עמודות: הלוגו, ולידו שתי השורות.
+   הגובה נשאר מה שהיה — 28 פיקסלים הם בדיוק גובה שתי השורות,
+   ולכן הסרגל אינו קופץ כשלקוח מעלה לוגו. */
+.user-id.has-logo { flex-direction: row; align-items: center; gap: var(--s2); }
+.user-logo {
+  flex: 0 0 auto; height: 28px; width: auto; max-width: 120px;
+  object-fit: contain; display: block;
+}
+.user-id-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
 .user-id:hover { border-color: var(--line); background: var(--bg); }
 .user-id[aria-expanded="true"] { border-color: var(--brand); background: var(--bg); }
 .user-company { font-weight: 700; font-size: var(--t-sm); }
@@ -1730,6 +1772,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .employee-logo { display: block; flex: 0 0 auto; }
 .employee-logo .brand-img { width: 148px; max-width: 46vw; }
+/* לוגו של הלקוח: תקרה ולא רוחב קבוע. לוגו רחב ולוגו מרובע הם
+   שני דברים שונים לגמרי, ורוחב קבוע היה מותח את הראשון ומנפח
+   את השני. */
+.employee-logo.is-company img {
+  display: block; height: 40px; width: auto;
+  max-width: 46vw; object-fit: contain;
+}
 .employee-company { font-size: 14px; font-weight: 500; color: var(--muted); }
 /* קישור למדריך. שקט, אבל קיים: עובד שנתקע בשמונה בערב לא ישלח
    הודעה למנהל – הוא פשוט לא יגיש. */

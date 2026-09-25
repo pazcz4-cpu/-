@@ -342,6 +342,16 @@
       '<p class="adm-card-sub">' + statusPill(c.status) + ' · ' +
       esc(PLAN_LABEL[c.plan] || c.plan) + ' · נפתח ' + esc(date(c.createdAt)) + '</p>';
 
+    /* דרך ליצור קשר. השורה הזו היא כל הסיבה שהטלפון נדרש
+       בהרשמה: כשחיוב נכשל או כשלקוח פיילוט נתקע, זה המקום שבו
+       מחפשים איך להגיע אליו — ולא בין המיילים. */
+    html += '<p class="adm-card-sub">' +
+      (c.phone
+        ? 'טלפון: <a href="tel:' + esc(c.phone) + '" dir="ltr">' + esc(c.phone) + '</a>'
+        : 'טלפון: לא הוזן') +
+      (c.taxId ? ' · ח.פ. ' + esc(c.taxId) : '') +
+      '</p>';
+
     html += '<div class="adm-tiles">' +
       tile('בתוקף עד', esc(date(c.validUntil)),
         left === null ? '' : (left >= 0 ? left + ' ימים נותרו' : Math.abs(left) + ' ימים עברו')) +

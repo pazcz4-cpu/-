@@ -38,6 +38,9 @@ await a.page.fill('input[name="companyName"]', 'מייפון בע״מ');
 await a.page.fill('input[name="name"]', 'פז');
 await a.page.fill('input[name="email"]', 'boss@maiphone.co.il');
 await a.page.fill('input[name="password"]', 'secret123');
+/* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+   עם הלקוח כשמשהו בחשבון דורש טיפול. */
+await a.page.fill('input[name="phone"]', '054-1234567');
 await a.page.click('#signup-form button[type="submit"]');
 await a.page.waitForTimeout(1200);
 console.log('2. אחרי הרשמה – האפליקציה גלויה:', await a.page.locator('#app-root').isVisible());
@@ -66,6 +69,9 @@ await b.page.waitForTimeout(200);
 await b.page.fill('input[name="companyName"]', 'חברה אחרת');
 await b.page.fill('input[name="email"]', 'other@other.co.il');
 await b.page.fill('input[name="password"]', 'secret123');
+/* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+   עם הלקוח כשמשהו בחשבון דורש טיפול. */
+await b.page.fill('input[name="phone"]', '054-1234567');
 await b.page.click('#signup-form button[type="submit"]');
 await b.page.waitForTimeout(1200);
 const bFilled = await b.page.locator('#schedule-branch select.emp-select').evaluateAll(e => e.filter(x=>x.value).length);

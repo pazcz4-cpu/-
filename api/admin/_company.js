@@ -54,6 +54,11 @@ module.exports = async function ({ body, db }) {
         currentPeriodEnd: company.current_period_end,
         cancelAtPeriodEnd: !!company.cancel_at_period_end,
         createdAt: company.created_at,
+        /* הטלפון של הלקוח. זו הסיבה שהוא נדרש בהרשמה: כשמנוי
+           נכשל או כשלקוח פיילוט נתקע, המשרד האחורי הוא המקום
+           שבו מחפשים איך להגיע אליו. */
+        phone: company.phone || null,
+        taxId: company.tax_id || null,
         billingProvider: company.billing_provider || null,
         /* מזהה הטוקן עצמו אינו נחוץ כאן, ומה שאינו מוצג אינו
            יכול להישלח בצילום מסך */

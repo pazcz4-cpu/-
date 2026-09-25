@@ -625,6 +625,39 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 .company-fields .check { flex-direction: column; align-items: stretch; gap: 4px; }
 .company-fields .text-input { width: 100%; }
 
+/* לוגו העסק. התצוגה המקדימה בגודל שבו הלוגו באמת מופיע בסרגל
+   ובמסך העובד, ולא בגודל הקובץ — כדי שמי שמעלה יראה מיד מה
+   הוא יקבל ולא יופתע אחר כך.
+
+   הרקע משובץ ולא לבן: לוגו שקוף על לבן נראה תקין עד שמישהו
+   מפעיל מצב כהה, ואז מתברר שחצי ממנו לא נראה. כאן רואים את
+   השקיפות בזמן ההעלאה. */
+.company-logo-field { margin-top: var(--s4); }
+.company-logo-label {
+  display: block; font-weight: 600; font-size: var(--t-sm); margin-bottom: var(--s2);
+}
+.company-logo-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+}
+.company-logo-preview {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 160px; height: 60px; padding: var(--s2);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(45deg, var(--c2-bg) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--c2-bg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--c2-bg) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--c2-bg) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.company-logo-preview img { max-height: 44px; max-width: 220px; width: auto; }
+.company-logo-preview.is-empty {
+  background-image: none; color: var(--muted); font-size: var(--t-xs);
+}
+.company-logo-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
 .emp-chip { display: block; border-radius: 6px; padding: 2px 6px; margin: 2px 0; font-size: 12.5px; }
 
 /* ===== משמרת כקובייה =====
@@ -1296,6 +1329,15 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
   font: inherit; color: inherit; text-align: start; cursor: pointer;
   line-height: 1.3;
 }
+/* עם לוגו הכפתור הופך לשתי עמודות: הלוגו, ולידו שתי השורות.
+   הגובה נשאר מה שהיה — 28 פיקסלים הם בדיוק גובה שתי השורות,
+   ולכן הסרגל אינו קופץ כשלקוח מעלה לוגו. */
+.user-id.has-logo { flex-direction: row; align-items: center; gap: var(--s2); }
+.user-logo {
+  flex: 0 0 auto; height: 28px; width: auto; max-width: 120px;
+  object-fit: contain; display: block;
+}
+.user-id-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
 .user-id:hover { border-color: var(--line); background: var(--bg); }
 .user-id[aria-expanded="true"] { border-color: var(--brand); background: var(--bg); }
 .user-company { font-weight: 700; font-size: var(--t-sm); }
@@ -1737,6 +1779,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .employee-logo { display: block; flex: 0 0 auto; }
 .employee-logo .brand-img { width: 148px; max-width: 46vw; }
+/* לוגו של הלקוח: תקרה ולא רוחב קבוע. לוגו רחב ולוגו מרובע הם
+   שני דברים שונים לגמרי, ורוחב קבוע היה מותח את הראשון ומנפח
+   את השני. */
+.employee-logo.is-company img {
+  display: block; height: 40px; width: auto;
+  max-width: 46vw; object-fit: contain;
+}
 .employee-company { font-size: 14px; font-weight: 500; color: var(--muted); }
 /* קישור למדריך. שקט, אבל קיים: עובד שנתקע בשמונה בערב לא ישלח
    הודעה למנהל – הוא פשוט לא יגיש. */
@@ -3370,6 +3419,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'That invitation has already been used, or does not exist.',
         nameRequired: 'A name is required.',
         companyNameRequired: 'A business name is required.',
+        phoneInvalid: 'A valid contact phone number is required.',
+        logoInvalid: 'The logo was not saved. It needs to be a PNG, JPG or WebP file.',
         cannotChangeOwner: 'The account owner cannot be changed'
       },
 
@@ -3382,7 +3433,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'The name is what your staff see and what appears in emails to them. The business number appears on your subscription invoice, and you may leave it empty.',
         saved: 'Business details saved.',
         saveFailed: 'We could not save the business details. Please try again.',
-        nameRequired: 'A business name is required.'
+        nameRequired: 'A business name is required.',
+        phone: 'Contact phone',
+        phoneHint: 'We use it to reach you about the account. It isn\'t shown to employees anywhere in the system.',
+        logo: 'Company logo',
+        logoHint: 'Appears at the top of the manager screen and on the employee screen. PNG, JPG or WebP — it gets resized for you.',
+        logoChoose: 'Choose a logo',
+        logoReplace: 'Replace logo',
+        logoRemove: 'Remove logo',
+        logoNone: 'No logo yet',
+        logoPending: 'The logo is saved when you press “Save business details”.',
+        logoBadType: 'Pick an image file: PNG, JPG or WebP.',
+        logoTooBig: 'Still too large after resizing. Try a logo file rather than a photo.',
+        logoUnreadable: 'We couldn\'t read that file. Try another one.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -3618,6 +3681,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Sign in', signUp: 'Create a business account',
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
+        phone: 'Contact phone',
+        phoneHint: 'So we can reach you if something on the account needs attention',
         showPassword: 'Show password',
         hidePassword: 'Hide password',
         enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',
@@ -4760,6 +4825,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'ההזמנה כבר נוצלה או שאינה קיימת.',
         nameRequired: 'צריך להזין שם.',
         companyNameRequired: 'צריך להזין שם עסק.',
+        phoneInvalid: 'צריך מספר טלפון תקין ליצירת קשר.',
+        logoInvalid: 'הלוגו לא נשמר. צריך קובץ PNG, JPG או WebP.',
         cannotChangeOwner: 'לא ניתן לשנות את בעל החשבון'
       },
 
@@ -4772,7 +4839,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'השם הוא מה שהעובדים רואים ומה שמופיע במיילים אליהם. מספר העוסק מופיע על החשבונית שתקבלו על המנוי, ואפשר להשאיר אותו ריק.',
         saved: 'פרטי העסק נשמרו.',
         saveFailed: 'לא הצלחנו לשמור את פרטי העסק. נסו שוב.',
-        nameRequired: 'צריך להזין שם עסק.'
+        nameRequired: 'צריך להזין שם עסק.',
+        phone: 'טלפון ליצירת קשר',
+        phoneHint: 'המספר משמש אותנו כדי להגיע אליכם בענייני החשבון, ואינו מוצג לעובדים בשום מסך.',
+        logo: 'לוגו העסק',
+        logoHint: 'מופיע בראש המסך של המנהלים ובמסך של העובדים. PNG, JPG או WebP — המערכת מקטינה אותו לבד.',
+        logoChoose: 'בחירת לוגו',
+        logoReplace: 'החלפת הלוגו',
+        logoRemove: 'הסרת הלוגו',
+        logoNone: 'עדיין אין לוגו',
+        logoPending: 'הלוגו יישמר כשתלחצו על "שמירת פרטי העסק".',
+        logoBadType: 'צריך קובץ תמונה: PNG, JPG או WebP.',
+        logoTooBig: 'הקובץ גדול מדי גם אחרי הקטנה. נסו קובץ לוגו ולא תצלום.',
+        logoUnreadable: 'לא הצלחנו לקרוא את הקובץ. נסו קובץ אחר.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -5008,6 +5087,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'התחברות', signUp: 'פתיחת חשבון לעסק',
         email: 'אימייל', password: 'סיסמה', name: 'השם שלך', companyName: 'שם העסק',
         passwordHint: 'לפחות 6 תווים',
+        phone: 'טלפון ליצירת קשר',
+        phoneHint: 'כדי שנוכל להגיע אליכם אם משהו בחשבון דורש טיפול',
         showPassword: 'הצגת הסיסמה',
         hidePassword: 'הסתרת הסיסמה',
         enter: 'כניסה', create: 'פתיחת חשבון', signingIn: 'מתחבר…', creating: 'פותח חשבון…',
@@ -6145,6 +6226,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'Esa invitación ya se usó o no existe.',
         nameRequired: 'Se requiere un nombre.',
         companyNameRequired: 'Se requiere un nombre de empresa.',
+        phoneInvalid: 'Hace falta un teléfono de contacto válido.',
+        logoInvalid: 'El logotipo no se guardó. Debe ser un archivo PNG, JPG o WebP.',
         cannotChangeOwner: 'El propietario de la cuenta no se puede cambiar'
       },
 
@@ -6157,7 +6240,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'El nombre es lo que ve tu plantilla y lo que aparece en los correos que recibe. El NIF aparece en la factura de la suscripción y puedes dejarlo vacío.',
         saved: 'Datos del negocio guardados.',
         saveFailed: 'No hemos podido guardar los datos del negocio. Inténtalo de nuevo.',
-        nameRequired: 'Hace falta un nombre de empresa.'
+        nameRequired: 'Hace falta un nombre de empresa.',
+        phone: 'Teléfono de contacto',
+        phoneHint: 'La usamos para localizarte por temas de la cuenta. No se muestra al personal en ninguna pantalla.',
+        logo: 'Logotipo de la empresa',
+        logoHint: 'Aparece arriba en la pantalla de gestión y en la del personal. PNG, JPG o WebP: se reduce solo.',
+        logoChoose: 'Elegir logotipo',
+        logoReplace: 'Cambiar logotipo',
+        logoRemove: 'Quitar logotipo',
+        logoNone: 'Todavía sin logotipo',
+        logoPending: 'El logotipo se guarda al pulsar «Guardar datos del negocio».',
+        logoBadType: 'Elige un archivo de imagen: PNG, JPG o WebP.',
+        logoTooBig: 'Sigue siendo demasiado grande tras reducirlo. Prueba con un logotipo en vez de una foto.',
+        logoUnreadable: 'No pudimos leer ese archivo. Prueba con otro.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -6393,6 +6488,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Iniciar sesión', signUp: 'Crear cuenta de empresa',
         email: 'Correo', password: 'Contraseña', name: 'Tu nombre', companyName: 'Nombre de la empresa',
         passwordHint: 'Al menos 6 caracteres',
+        phone: 'Teléfono de contacto',
+        phoneHint: 'Para poder localizarte si algo de la cuenta necesita atención',
         showPassword: 'Mostrar la contraseña',
         hidePassword: 'Ocultar la contraseña',
         enter: 'Entrar', create: 'Crear cuenta', signingIn: 'Entrando…', creating: 'Creando…',
@@ -7530,6 +7627,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'Cette invitation a déjà été utilisée ou n\'existe pas.',
         nameRequired: 'Un nom est requis.',
         companyNameRequired: "Un nom d'entreprise est requis.",
+        phoneInvalid: 'Un numéro de téléphone valide est nécessaire.',
+        logoInvalid: 'Le logo n\'a pas été enregistré. Il faut un fichier PNG, JPG ou WebP.',
         cannotChangeOwner: 'Le propriétaire du compte ne peut pas être modifié'
       },
 
@@ -7542,7 +7641,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: "Le nom est ce que vos équipes voient et ce qui figure dans les e-mails qui leur sont envoyés. Le numéro apparaît sur la facture de l'abonnement et peut rester vide.",
         saved: "Informations de l'entreprise enregistrées.",
         saveFailed: "Nous n'avons pas pu enregistrer les informations. Réessayez.",
-        nameRequired: "Un nom d'entreprise est requis."
+        nameRequired: "Un nom d'entreprise est requis.",
+        phone: 'Téléphone de contact',
+        phoneHint: 'Nous l\'utilisons pour vous joindre au sujet du compte. Il n\'est affiché sur aucun écran des équipes.',
+        logo: 'Logo de l\'entreprise',
+        logoHint: 'Apparaît en haut de l\'écran des responsables et sur l\'écran des équipes. PNG, JPG ou WebP — la taille est ajustée automatiquement.',
+        logoChoose: 'Choisir un logo',
+        logoReplace: 'Remplacer le logo',
+        logoRemove: 'Retirer le logo',
+        logoNone: 'Pas encore de logo',
+        logoPending: 'Le logo est enregistré en cliquant sur « Enregistrer les informations ».',
+        logoBadType: 'Choisissez un fichier image : PNG, JPG ou WebP.',
+        logoTooBig: 'Encore trop volumineux après réduction. Essayez un fichier logo plutôt qu\'une photo.',
+        logoUnreadable: 'Impossible de lire ce fichier. Essayez-en un autre.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -7778,6 +7889,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Connexion', signUp: 'Créer un compte entreprise',
         email: 'E-mail', password: 'Mot de passe', name: 'Votre nom', companyName: 'Nom de l’entreprise',
         passwordHint: 'Au moins 6 caractères',
+        phone: 'Téléphone de contact',
+        phoneHint: 'Pour vous joindre si quelque chose sur le compte demande une intervention',
         showPassword: 'Afficher le mot de passe',
         hidePassword: 'Masquer le mot de passe',
         enter: 'Se connecter', create: 'Créer le compte', signingIn: 'Connexion…', creating: 'Création…',
@@ -8915,6 +9028,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'هذه الدعوة استُخدمت بالفعل أو أنها غير موجودة.',
         nameRequired: 'الاسم مطلوب.',
         companyNameRequired: 'اسم النشاط التجاري مطلوب.',
+        phoneInvalid: 'مطلوب رقم هاتف صالح للتواصل.',
+        logoInvalid: 'لم يُحفظ الشعار. يجب أن يكون ملف PNG أو JPG أو WebP.',
         cannotChangeOwner: 'لا يمكن تغيير مالك الحساب'
       },
 
@@ -8927,7 +9042,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'الاسم هو ما يراه الموظفون وما يظهر في الرسائل المرسلة إليهم. ويظهر الرقم الضريبي على فاتورة الاشتراك، ويمكن تركه فارغًا.',
         saved: 'تم حفظ بيانات النشاط.',
         saveFailed: 'تعذّر حفظ بيانات النشاط. حاول مرة أخرى.',
-        nameRequired: 'يجب إدخال اسم النشاط.'
+        nameRequired: 'يجب إدخال اسم النشاط.',
+        phone: 'هاتف للتواصل',
+        phoneHint: 'نستخدمه للوصول إليكم بشأن الحساب، ولا يُعرض للموظفين في أي شاشة.',
+        logo: 'شعار الشركة',
+        logoHint: 'يظهر أعلى شاشة المدير وفي شاشة الموظف. PNG أو JPG أو WebP — يُصغَّر تلقائيًا.',
+        logoChoose: 'اختيار شعار',
+        logoReplace: 'استبدال الشعار',
+        logoRemove: 'إزالة الشعار',
+        logoNone: 'لا يوجد شعار بعد',
+        logoPending: 'يُحفظ الشعار عند الضغط على «حفظ تفاصيل النشاط».',
+        logoBadType: 'اختر ملف صورة: PNG أو JPG أو WebP.',
+        logoTooBig: 'الملف كبير جدًا حتى بعد التصغير. جرّب ملف شعار بدل صورة فوتوغرافية.',
+        logoUnreadable: 'تعذّرت قراءة الملف. جرّب ملفًا آخر.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -9163,6 +9290,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'تسجيل الدخول', signUp: 'فتح حساب للشركة',
         email: 'البريد الإلكتروني', password: 'كلمة المرور', name: 'اسمك', companyName: 'اسم الشركة',
         passwordHint: '6 أحرف على الأقل',
+        phone: 'هاتف للتواصل',
+        phoneHint: 'لنتمكّن من الوصول إليكم إذا احتاج الحساب إلى معالجة',
         showPassword: 'إظهار كلمة المرور',
         hidePassword: 'إخفاء كلمة المرور',
         enter: 'دخول', create: 'فتح حساب', signingIn: 'جارٍ الدخول…', creating: 'جارٍ الإنشاء…',
@@ -10300,6 +10429,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'Это приглашение уже использовано или не существует.',
         nameRequired: 'Укажите имя.',
         companyNameRequired: 'Укажите название компании.',
+        phoneInvalid: 'Нужен действующий телефон для связи.',
+        logoInvalid: 'Логотип не сохранён. Нужен файл PNG, JPG или WebP.',
         cannotChangeOwner: 'Владельца аккаунта нельзя изменить'
       },
 
@@ -10312,7 +10443,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'Название видят сотрудники, и оно стоит в письмах к ним. Налоговый номер попадает в счёт за подписку, его можно оставить пустым.',
         saved: 'Данные компании сохранены.',
         saveFailed: 'Не удалось сохранить данные компании. Попробуйте ещё раз.',
-        nameRequired: 'Нужно указать название компании.'
+        nameRequired: 'Нужно указать название компании.',
+        phone: 'Телефон для связи',
+        phoneHint: 'Мы используем его, чтобы связаться по вопросам аккаунта. Сотрудникам он нигде не показывается.',
+        logo: 'Логотип компании',
+        logoHint: 'Показывается вверху экрана руководителя и на экране сотрудника. PNG, JPG или WebP — размер подбирается автоматически.',
+        logoChoose: 'Выбрать логотип',
+        logoReplace: 'Заменить логотип',
+        logoRemove: 'Убрать логотип',
+        logoNone: 'Логотипа пока нет',
+        logoPending: 'Логотип сохранится по кнопке «Сохранить данные компании».',
+        logoBadType: 'Выберите файл изображения: PNG, JPG или WebP.',
+        logoTooBig: 'Даже после уменьшения файл слишком большой. Попробуйте логотип, а не фотографию.',
+        logoUnreadable: 'Не удалось прочитать файл. Попробуйте другой.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -10548,6 +10691,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Вход', signUp: 'Создать аккаунт компании',
         email: 'Электронная почта', password: 'Пароль', name: 'Ваше имя', companyName: 'Название компании',
         passwordHint: 'Не менее 6 символов',
+        phone: 'Телефон для связи',
+        phoneHint: 'Чтобы мы могли связаться, если по аккаунту что-то потребуется',
         showPassword: 'Показать пароль',
         hidePassword: 'Скрыть пароль',
         enter: 'Войти', create: 'Создать аккаунт', signingIn: 'Вход…', creating: 'Создание…',
@@ -11685,6 +11830,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'Diese Einladung wurde bereits genutzt oder existiert nicht.',
         nameRequired: 'Ein Name ist erforderlich.',
         companyNameRequired: 'Ein Firmenname ist erforderlich.',
+        phoneInvalid: 'Eine gültige Telefonnummer für Rückfragen ist erforderlich.',
+        logoInvalid: 'Das Logo wurde nicht gespeichert. Es braucht eine PNG-, JPG- oder WebP-Datei.',
         cannotChangeOwner: 'Der Kontoinhaber kann nicht geändert werden'
       },
 
@@ -11697,7 +11844,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'Den Namen sieht Ihre Belegschaft, und er steht in den E-Mails an sie. Die Steuernummer erscheint auf der Rechnung zum Abo und darf leer bleiben.',
         saved: 'Unternehmensdaten gespeichert.',
         saveFailed: 'Die Unternehmensdaten konnten nicht gespeichert werden. Bitte erneut versuchen.',
-        nameRequired: 'Ein Name des Betriebs ist erforderlich.'
+        nameRequired: 'Ein Name des Betriebs ist erforderlich.',
+        phone: 'Telefon für Rückfragen',
+        phoneHint: 'Wir nutzen sie, um Sie zum Konto zu erreichen. Mitarbeitenden wird sie nirgends angezeigt.',
+        logo: 'Firmenlogo',
+        logoHint: 'Erscheint oben im Managerbereich und im Mitarbeiterbereich. PNG, JPG oder WebP — die Größe wird automatisch angepasst.',
+        logoChoose: 'Logo auswählen',
+        logoReplace: 'Logo ersetzen',
+        logoRemove: 'Logo entfernen',
+        logoNone: 'Noch kein Logo',
+        logoPending: 'Das Logo wird mit „Firmendaten speichern“ gespeichert.',
+        logoBadType: 'Bitte eine Bilddatei wählen: PNG, JPG oder WebP.',
+        logoTooBig: 'Auch verkleinert noch zu groß. Bitte eine Logodatei statt eines Fotos verwenden.',
+        logoUnreadable: 'Die Datei konnte nicht gelesen werden. Bitte eine andere versuchen.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -11933,6 +12092,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Anmelden', signUp: 'Firmenkonto erstellen',
         email: 'E-Mail', password: 'Passwort', name: 'Ihr Name', companyName: 'Firmenname',
         passwordHint: 'Mindestens 6 Zeichen',
+        phone: 'Telefon für Rückfragen',
+        phoneHint: 'Damit wir Sie erreichen, wenn im Konto etwas zu klären ist',
         showPassword: 'Passwort anzeigen',
         hidePassword: 'Passwort ausblenden',
         enter: 'Anmelden', create: 'Konto erstellen', signingIn: 'Anmelden…', creating: 'Wird erstellt…',
@@ -13070,6 +13231,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         inviteNotPending: 'Esse convite já foi usado ou não existe.',
         nameRequired: 'É necessário um nome.',
         companyNameRequired: 'É necessário um nome de empresa.',
+        phoneInvalid: 'É necessário um telefone de contacto válido.',
+        logoInvalid: 'O logótipo não foi guardado. Tem de ser um ficheiro PNG, JPG ou WebP.',
         cannotChangeOwner: 'O proprietário da conta não pode ser alterado'
       },
 
@@ -13082,7 +13245,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         hint: 'O nome é o que a equipa vê e o que consta dos e-mails enviados para ela. O NIF aparece na fatura da subscrição e pode ficar vazio.',
         saved: 'Dados da empresa guardados.',
         saveFailed: 'Não foi possível guardar os dados da empresa. Tente novamente.',
-        nameRequired: 'É necessário um nome de empresa.'
+        nameRequired: 'É necessário um nome de empresa.',
+        phone: 'Telefone de contacto',
+        phoneHint: 'Usamo-lo para falar consigo sobre a conta. Não é mostrado à equipa em nenhum ecrã.',
+        logo: 'Logótipo da empresa',
+        logoHint: 'Aparece no topo do ecrã dos gestores e no ecrã da equipa. PNG, JPG ou WebP — é reduzido automaticamente.',
+        logoChoose: 'Escolher logótipo',
+        logoReplace: 'Substituir logótipo',
+        logoRemove: 'Remover logótipo',
+        logoNone: 'Ainda sem logótipo',
+        logoPending: 'O logótipo é guardado ao carregar em «Guardar dados do negócio».',
+        logoBadType: 'Escolha um ficheiro de imagem: PNG, JPG ou WebP.',
+        logoTooBig: 'Continua demasiado grande depois de reduzido. Tente um ficheiro de logótipo em vez de uma fotografia.',
+        logoUnreadable: 'Não conseguimos ler esse ficheiro. Tente outro.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -13318,6 +13493,8 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         signIn: 'Entrar', signUp: 'Criar conta de empresa',
         email: 'E-mail', password: 'Palavra-passe', name: 'O teu nome', companyName: 'Nome da empresa',
         passwordHint: 'Pelo menos 6 caracteres',
+        phone: 'Telefone de contacto',
+        phoneHint: 'Para conseguirmos falar consigo se algo na conta precisar de atenção',
         showPassword: 'Mostrar a palavra-passe',
         hidePassword: 'Ocultar a palavra-passe',
         enter: 'Entrar', create: 'Criar conta', signingIn: 'A entrar…', creating: 'A criar…',
@@ -22947,8 +23124,32 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
     var taxField = $('#company-tax-id');
     /* הקלדה באמצע אינה נדרסת: המסך מצויר מחדש גם בעקבות שינוי
        שהגיע מחבר צוות אחר. */
+    var phoneField = $('#company-phone');
     if (nameField && document.activeElement !== nameField) nameField.value = current.name;
     if (taxField && document.activeElement !== taxField) taxField.value = current.taxId;
+    if (phoneField && document.activeElement !== phoneField) phoneField.value = current.phone || '';
+    renderCompanyLogo(pendingLogo === null ? (current.logo || '') : pendingLogo);
+  }
+
+  /* הלוגו שנבחר אך טרם נשמר. null = לא נגעו בו בכלל, ואז המסך
+     מציג את מה שבשרת; מחרוזת ריקה = הלקוח ביקש להסיר אותו,
+     וזה שונה מ"אין שינוי". */
+  var pendingLogo = null;
+
+  function renderCompanyLogo(logo) {
+    var preview = $('#company-logo-preview');
+    var clear = $('#company-logo-clear');
+    var pick = $('#company-logo-pick');
+    if (!preview) return;
+    if (logo) {
+      preview.innerHTML = '<img src="' + esc(logo) + '" alt="">';
+      preview.classList.remove('is-empty');
+    } else {
+      preview.textContent = t('company.logoNone');
+      preview.classList.add('is-empty');
+    }
+    if (clear) clear.classList.toggle('hidden', !logo);
+    if (pick) pick.textContent = t(logo ? 'company.logoReplace' : 'company.logoChoose');
   }
 
   function sayCompany(text, isError) {
@@ -24941,11 +25142,25 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
         if (!details) return;
         var name = String($('#company-name').value || '').trim();
         if (!name) { sayCompany(t('company.nameRequired'), true); return; }
+        var phone = String($('#company-phone').value || '');
+        /* הטלפון רשאי להשתנות אבל לא להתרוקן: הוא נדרש בהרשמה
+           בדיוק כדי שתמיד תהיה דרך ליצירת קשר. */
+        var Model = window.ShiftModel;
+        if (Model && !Model.isValidPhone(phone)) {
+          sayCompany(t('server.phoneInvalid'), true);
+          $('#company-phone').focus();
+          return;
+        }
+        var patch = { name: name, taxId: $('#company-tax-id').value, phone: phone };
+        /* הלוגו נשלח רק אם נגעו בו. בלי התנאי כל שמירה של שם
+           העסק הייתה שולחת שוב את כל התמונה. */
+        if (pendingLogo !== null) patch.logo = pendingLogo;
         saveCompany.disabled = true;
         sayCompany('');
-        Promise.resolve(details.save({ name: name, taxId: $('#company-tax-id').value }))
+        Promise.resolve(details.save(patch))
           .then(function () {
             saveCompany.disabled = false;
+            pendingLogo = null;
             /* מה שנשמר בשרת הוא מה שחוזר למסך: מספר עוסק שהוקלד עם
                רווחים נראה כאן אחרי הניקוי, ולא כפי שהוקלד. */
             renderCompanyDetails();
@@ -24954,6 +25169,43 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
             saveCompany.disabled = false;
             sayCompany((err && err.message) || t('company.saveFailed'), true);
           });
+      });
+    }
+
+    /* בחירת לוגו. שדה הקובץ עצמו מוסתר וכפתור רגיל פותח אותו:
+       שדה קובץ מקורי נראה אחרת בכל דפדפן ואי אפשר לתרגם את
+       הכיתוב שלו. */
+    var logoPick = $('#company-logo-pick');
+    var logoFile = $('#company-logo-file');
+    var logoClear = $('#company-logo-clear');
+    if (logoPick && logoFile) {
+      logoPick.addEventListener('click', function () { logoFile.click(); });
+      logoFile.addEventListener('change', function (event) {
+        var file = event.target.files && event.target.files[0];
+        event.target.value = '';
+        if (!file) return;
+        var Logo = window.ShiftCompanyLogo;
+        if (!Logo) return;
+        sayCompany('');
+        Logo.fromFile(file).then(function (data) {
+          pendingLogo = data;
+          renderCompanyLogo(data);
+          /* נשמר רק בלחיצה על "שמירת פרטי העסק", כמו שאר
+             השדות במקטע — אחרת שתי דרכי שמירה באותו טופס. */
+          sayCompany(t('company.logoPending'));
+        }, function (err) {
+          var code = (err && err.code) || '';
+          sayCompany(t(code === 'bad_type' ? 'company.logoBadType'
+            : code === 'too_big' ? 'company.logoTooBig'
+            : 'company.logoUnreadable'), true);
+        });
+      });
+    }
+    if (logoClear) {
+      logoClear.addEventListener('click', function () {
+        pendingLogo = '';
+        renderCompanyLogo('');
+        sayCompany(t('company.logoPending'));
       });
     }
 

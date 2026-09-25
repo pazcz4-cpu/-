@@ -38,6 +38,9 @@ async function signUp(viewport, email, role) {
   await page.fill('input[name="companyName"]', 'פ.ט אינטק סחר');
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', 'secret123');
+  /* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+     עם הלקוח כשמשהו בחשבון דורש טיפול. */
+  await page.fill('input[name="phone"]', '054-1234567');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1500);
   return page;

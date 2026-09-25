@@ -49,11 +49,20 @@ test('מצב המנוי והתוקף אינם ניתנים לכתיבה מהדפ
   /* בלי זה כל לקוח מעניק לעצמו מנוי חינם בפקודה אחת */
   has('revoke all on public.companies from authenticated;',
     'companies פתוחה לכתיבה');
-  /* השם ומספר העוסק הם של הלקוח, והוא עורך אותם בהגדרות.
-     הרשימה סגורה: כל עמודה נוספת כאן היא עמודה שלקוח יכול
-     לכתוב, ולכן השורה נבדקת במלואה ולא בהכלה. */
-  has('grant update (name, tax_id) on public.companies to authenticated;',
-    'הרשאת הכתיבה על companies אינה מוגבלת לשם ולמספר העוסק');
+  /* השם, מספר העוסק, הטלפון והלוגו הם של הלקוח, והוא עורך
+     אותם בהגדרות. הרשימה סגורה: כל עמודה נוספת כאן היא עמודה
+     שלקוח יכול לכתוב, ולכן השורה נבדקת במלואה ולא בהכלה. */
+  has('grant update (name, tax_id, phone, logo) on public.companies to authenticated;',
+    'הרשאת הכתיבה על companies אינה מוגבלת לשדות של הלקוח');
+  /* ובמפורש: מה שאסור. בדיקת השורה המלאה למעלה תופסת את זה
+     ממילא, אבל היא נכשלת גם על תוספת תמימה — וההודעה הזו
+     אומרת איזו עמודה בדיוק אסור שתופיע שם. */
+  ['plan', 'status', 'valid_until', 'custom_price_monthly',
+    'billing_subscription_id'].forEach(function (column) {
+    var line = (sql.match(/grant update \([^)]*\) on public\.companies[^;]*;/) || [''])[0];
+    assert(line.indexOf(column) === -1,
+      'לקוח יכול לכתוב ל-' + column + ' של החברה שלו');
+  });
   assert(!/grant update \([^)]*\b(status|plan|valid_until|billing_)/.test(sql),
     'עמודה של מנוי או חיוב ניתנת לכתיבה מהדפדפן');
 });

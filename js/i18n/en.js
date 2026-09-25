@@ -740,6 +740,8 @@
         inviteNotPending: 'That invitation has already been used, or does not exist.',
         nameRequired: 'A name is required.',
         companyNameRequired: 'A business name is required.',
+        phoneInvalid: 'A valid contact phone number is required.',
+        logoInvalid: 'The logo was not saved. It needs to be a PNG, JPG or WebP file.',
         cannotChangeOwner: 'The account owner cannot be changed'
       },
 
@@ -752,7 +754,19 @@
         hint: 'The name is what your staff see and what appears in emails to them. The business number appears on your subscription invoice, and you may leave it empty.',
         saved: 'Business details saved.',
         saveFailed: 'We could not save the business details. Please try again.',
-        nameRequired: 'A business name is required.'
+        nameRequired: 'A business name is required.',
+        phone: 'Contact phone',
+        phoneHint: 'We use it to reach you about the account. It isn\'t shown to employees anywhere in the system.',
+        logo: 'Company logo',
+        logoHint: 'Appears at the top of the manager screen and on the employee screen. PNG, JPG or WebP — it gets resized for you.',
+        logoChoose: 'Choose a logo',
+        logoReplace: 'Replace logo',
+        logoRemove: 'Remove logo',
+        logoNone: 'No logo yet',
+        logoPending: 'The logo is saved when you press “Save business details”.',
+        logoBadType: 'Pick an image file: PNG, JPG or WebP.',
+        logoTooBig: 'Still too large after resizing. Try a logo file rather than a photo.',
+        logoUnreadable: 'We couldn\'t read that file. Try another one.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -988,6 +1002,8 @@
         signIn: 'Sign in', signUp: 'Create a business account',
         email: 'Email', password: 'Password', name: 'Your name', companyName: 'Business name',
         passwordHint: 'At least 6 characters',
+        phone: 'Contact phone',
+        phoneHint: 'So we can reach you if something on the account needs attention',
         showPassword: 'Show password',
         hidePassword: 'Hide password',
         enter: 'Sign in', create: 'Create account', signingIn: 'Signing in…', creating: 'Creating…',

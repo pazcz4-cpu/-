@@ -493,6 +493,79 @@
       .slice(0, 30);
   }
 
+  /* טלפון ליצירת קשר עם הלקוח.
+
+     אותו שיקול כמו במספר העוסק, ומסיבה חזקה יותר: מספר תקין
+     בגרמניה, בברזיל ובישראל אינו נראה אותו דבר, וחסימה לפי
+     תבנית ישראלית פירושה לקוח מחו"ל שאינו יכול להירשם בכלל.
+     לכן נשמרים התווים שמרכיבים מספר בעולם — ספרות, קידומת
+     בינלאומית, וסימני הפרדה — והבדיקה היחידה היא שיש מספיק
+     ספרות כדי שזה יהיה מספר ולא הקלדה מקרית.
+
+     שבע ספרות הוא המינימום: מספר מקומי קצר ביותר בעולם. */
+  function normalizePhone(value) {
+    var clean = String(value == null ? '' : value)
+      .replace(/[^0-9+()\-. ]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 30);
+    /* פלוס אחד בלבד, ורק בהתחלה: "+" באמצע אינו חלק משום מספר */
+    return clean.replace(/(?!^)\+/g, '');
+  }
+
+  function phoneDigits(value) {
+    return String(value == null ? '' : value).replace(/\D/g, '').length;
+  }
+
+  function isValidPhone(value) {
+    return phoneDigits(normalizePhone(value)) >= 7;
+  }
+
+  /* לוגו העסק.
+
+     נשמר כ-data URI בשורת החברה ולא כקובץ באחסון נפרד. הסיבה
+     אינה עצלות: אחסון קבצים דורש דלי, מדיניות גישה משלו וכתובת
+     ציבורית לכל לוגו — כלומר עוד מקום שבו בידוד בין חברות יכול
+     להישבר, בשביל תמונה שגודלה כמה עשרות קילובייט. הלוגו נוסע
+     ממילא עם שורת החברה שנטענת בכל כניסה.
+
+     בגלל זה יש תקרה, והיא נאכפת גם כאן וגם בשרת: שורה שמגיעה
+     למאה קילובייט מאטה כל טעינה של כל משתמש בחברה. הדפדפן
+     מקטין את התמונה לפני השליחה (js/company-logo.js), וזה מוריד
+     כמעט כל קובץ אל מתחת לתקרה.
+
+     רק שלושת הפורמטים האלה. SVG אינו ברשימה בכוונה: הוא מסמך
+     שיכול להכיל סקריפט, ולוגו שמנהל מעלה מוצג אצל כל העובדים
+     שלו. */
+  var LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+  var LOGO_MAX_BYTES = 64 * 1024;
+
+  function isLogoType(type) {
+    return LOGO_TYPES.indexOf(String(type || '').toLowerCase()) !== -1;
+  }
+
+  /* גודל ה-data URI במספר בייטים בפועל */
+  function logoBytes(value) {
+    var text = String(value == null ? '' : value);
+    var comma = text.indexOf(',');
+    if (comma === -1) return 0;
+    var body = text.slice(comma + 1);
+    var padding = body.slice(-2) === '==' ? 2 : (body.slice(-1) === '=' ? 1 : 0);
+    return Math.max(0, Math.floor(body.length * 3 / 4) - padding);
+  }
+
+  /* מחזיר את הלוגו אם הוא תקין, ומחרוזת ריקה אם לא. ריק פירושו
+     "אין לוגו", וזה מצב חוקי לגמרי. */
+  function normalizeLogo(value) {
+    var text = String(value == null ? '' : value).trim();
+    if (!text) return '';
+    var head = text.match(/^data:([a-z/+-]+);base64,([A-Za-z0-9+/=]+)$/i);
+    if (!head) return '';
+    if (!isLogoType(head[1])) return '';
+    if (logoBytes(text) > LOGO_MAX_BYTES) return '';
+    return text;
+  }
+
   function hasPaymentMethod(company) {
     return !!(company && company.billingSubscriptionId);
   }
@@ -508,13 +581,19 @@
     return translate('billing.priceMonthly', amount + '₪', { amount: amount });
   }
 
-  function newTrialCompany(name, now) {
+  function newTrialCompany(name, now, phone) {
     var today = now ? new Date(now) : new Date();
     return {
       name: name,
       /* מספר העוסק / ח.פ. – הלקוח מזין אותו בהגדרות כשהוא צריך
          חשבונית על שם העסק */
       taxId: '',
+      /* טלפון ליצירת קשר. נדרש בהרשמה ולא אופציונלי: כשמנוי
+         נכשל, כשלקוח פיילוט נתקע, או כשצריך להודיע על משהו
+         דחוף — מייל שאינו נקרא אינו דרך ליצירת קשר. */
+      phone: normalizePhone(phone),
+      /* לוגו העסק, כ-data URI. ריק עד שהלקוח מעלה אחד. */
+      logo: '',
       plan: DEFAULT_PLAN,
       status: SUBSCRIPTION.TRIAL,
       validUntil: addDays(today, TRIAL_DAYS).toISOString(),
@@ -545,6 +624,9 @@
     CHARGE_GRACE_DAYS: CHARGE_GRACE_DAYS,
     hasPaymentMethod: hasPaymentMethod, formatDate: formatDate, priceLabel: priceLabel,
     normalizeTaxId: normalizeTaxId,
+    normalizePhone: normalizePhone, isValidPhone: isValidPhone,
+    normalizeLogo: normalizeLogo, isLogoType: isLogoType,
+    logoBytes: logoBytes, LOGO_TYPES: LOGO_TYPES, LOGO_MAX_BYTES: LOGO_MAX_BYTES,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,

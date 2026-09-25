@@ -2642,8 +2642,32 @@
     var taxField = $('#company-tax-id');
     /* הקלדה באמצע אינה נדרסת: המסך מצויר מחדש גם בעקבות שינוי
        שהגיע מחבר צוות אחר. */
+    var phoneField = $('#company-phone');
     if (nameField && document.activeElement !== nameField) nameField.value = current.name;
     if (taxField && document.activeElement !== taxField) taxField.value = current.taxId;
+    if (phoneField && document.activeElement !== phoneField) phoneField.value = current.phone || '';
+    renderCompanyLogo(pendingLogo === null ? (current.logo || '') : pendingLogo);
+  }
+
+  /* הלוגו שנבחר אך טרם נשמר. null = לא נגעו בו בכלל, ואז המסך
+     מציג את מה שבשרת; מחרוזת ריקה = הלקוח ביקש להסיר אותו,
+     וזה שונה מ"אין שינוי". */
+  var pendingLogo = null;
+
+  function renderCompanyLogo(logo) {
+    var preview = $('#company-logo-preview');
+    var clear = $('#company-logo-clear');
+    var pick = $('#company-logo-pick');
+    if (!preview) return;
+    if (logo) {
+      preview.innerHTML = '<img src="' + esc(logo) + '" alt="">';
+      preview.classList.remove('is-empty');
+    } else {
+      preview.textContent = t('company.logoNone');
+      preview.classList.add('is-empty');
+    }
+    if (clear) clear.classList.toggle('hidden', !logo);
+    if (pick) pick.textContent = t(logo ? 'company.logoReplace' : 'company.logoChoose');
   }
 
   function sayCompany(text, isError) {
@@ -4636,11 +4660,25 @@
         if (!details) return;
         var name = String($('#company-name').value || '').trim();
         if (!name) { sayCompany(t('company.nameRequired'), true); return; }
+        var phone = String($('#company-phone').value || '');
+        /* הטלפון רשאי להשתנות אבל לא להתרוקן: הוא נדרש בהרשמה
+           בדיוק כדי שתמיד תהיה דרך ליצירת קשר. */
+        var Model = window.ShiftModel;
+        if (Model && !Model.isValidPhone(phone)) {
+          sayCompany(t('server.phoneInvalid'), true);
+          $('#company-phone').focus();
+          return;
+        }
+        var patch = { name: name, taxId: $('#company-tax-id').value, phone: phone };
+        /* הלוגו נשלח רק אם נגעו בו. בלי התנאי כל שמירה של שם
+           העסק הייתה שולחת שוב את כל התמונה. */
+        if (pendingLogo !== null) patch.logo = pendingLogo;
         saveCompany.disabled = true;
         sayCompany('');
-        Promise.resolve(details.save({ name: name, taxId: $('#company-tax-id').value }))
+        Promise.resolve(details.save(patch))
           .then(function () {
             saveCompany.disabled = false;
+            pendingLogo = null;
             /* מה שנשמר בשרת הוא מה שחוזר למסך: מספר עוסק שהוקלד עם
                רווחים נראה כאן אחרי הניקוי, ולא כפי שהוקלד. */
             renderCompanyDetails();
@@ -4649,6 +4687,43 @@
             saveCompany.disabled = false;
             sayCompany((err && err.message) || t('company.saveFailed'), true);
           });
+      });
+    }
+
+    /* בחירת לוגו. שדה הקובץ עצמו מוסתר וכפתור רגיל פותח אותו:
+       שדה קובץ מקורי נראה אחרת בכל דפדפן ואי אפשר לתרגם את
+       הכיתוב שלו. */
+    var logoPick = $('#company-logo-pick');
+    var logoFile = $('#company-logo-file');
+    var logoClear = $('#company-logo-clear');
+    if (logoPick && logoFile) {
+      logoPick.addEventListener('click', function () { logoFile.click(); });
+      logoFile.addEventListener('change', function (event) {
+        var file = event.target.files && event.target.files[0];
+        event.target.value = '';
+        if (!file) return;
+        var Logo = window.ShiftCompanyLogo;
+        if (!Logo) return;
+        sayCompany('');
+        Logo.fromFile(file).then(function (data) {
+          pendingLogo = data;
+          renderCompanyLogo(data);
+          /* נשמר רק בלחיצה על "שמירת פרטי העסק", כמו שאר
+             השדות במקטע — אחרת שתי דרכי שמירה באותו טופס. */
+          sayCompany(t('company.logoPending'));
+        }, function (err) {
+          var code = (err && err.code) || '';
+          sayCompany(t(code === 'bad_type' ? 'company.logoBadType'
+            : code === 'too_big' ? 'company.logoTooBig'
+            : 'company.logoUnreadable'), true);
+        });
+      });
+    }
+    if (logoClear) {
+      logoClear.addEventListener('click', function () {
+        pendingLogo = '';
+        renderCompanyLogo('');
+        sayCompany(t('company.logoPending'));
       });
     }
 

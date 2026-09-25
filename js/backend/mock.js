@@ -110,9 +110,15 @@
     if (!input.companyName || !String(input.companyName).trim()) {
       return Promise.reject(this._fail('invalid_input', t('server.companyRequired')));
     }
+    /* בלי טלפון אין דרך להגיע ללקוח כשמשהו נשבר, ולכן זו
+       דחייה ולא שדה ריק שיישאר ריק לנצח */
+    if (!Model.isValidPhone(input.phone)) {
+      return Promise.reject(this._fail('invalid_input', t('server.phoneInvalid')));
+    }
 
     var companyId = newId('co');
-    var company = Model.newTrialCompany(String(input.companyName).trim(), this.now());
+    var company = Model.newTrialCompany(String(input.companyName).trim(), this.now(),
+      input.phone);
     company.id = companyId;
     this.db.companies[companyId] = company;
 
@@ -935,6 +941,23 @@
     /* מספר העוסק רשאי להיות ריק: לא לכל לקוח יש אחד, ולא בכל
        מדינה הוא נדרש */
     if ('taxId' in patch) company.taxId = Model.normalizeTaxId(patch.taxId);
+    /* הטלפון רשאי להשתנות אבל לא להתרוקן: הוא נדרש בהרשמה
+       בדיוק כדי שתמיד תהיה דרך ליצירת קשר */
+    if ('phone' in patch) {
+      if (!Model.isValidPhone(patch.phone)) {
+        return Promise.reject(this._fail('invalid', t('server.phoneInvalid')));
+      }
+      company.phone = Model.normalizePhone(patch.phone);
+    }
+    /* לוגו ריק פירושו הסרה, וזו פעולה חוקית. לוגו שאינו עובר
+       את הבדיקה נדחה ולא נשמר חלקית. */
+    if ('logo' in patch) {
+      var logo = String(patch.logo || '').trim();
+      if (logo && !Model.normalizeLogo(logo)) {
+        return Promise.reject(this._fail('invalid', t('server.logoInvalid')));
+      }
+      company.logo = Model.normalizeLogo(logo);
+    }
     this._save();
     return Promise.resolve(clone(company));
   };

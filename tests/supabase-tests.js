@@ -402,8 +402,7 @@ run('הרשמת חברה יוצרת בעלים עם תקופת ניסיון', fu
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'Boss@Test.CO.il', password: 'secret123', name: 'דנה', companyName: 'רשת הבדיקה'
-  }).then(function (session) {
+    email: 'Boss@Test.CO.il', password: 'secret123', name: 'דנה', companyName: 'רשת הבדיקה', phone: '054-1234567'}).then(function (session) {
     assertEqual(session.user.role, 'owner', 'מי שנרשם אינו בעלים');
     assertEqual(session.user.email, 'boss@test.co.il', 'האימייל לא עבר נרמול');
     assertEqual(session.company.name, 'רשת הבדיקה', 'שם החברה לא נשמר');
@@ -419,8 +418,7 @@ run('סיסמה קצרה נדחית לפני פנייה לשרת', function () {
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'a@b.co', password: '123', companyName: 'X'
-  }).then(function () { throw new Error('הסיסמה הקצרה התקבלה'); }, function (err) {
+    email: 'a@b.co', password: '123', companyName: 'X', phone: '054-1234567'}).then(function () { throw new Error('הסיסמה הקצרה התקבלה'); }, function (err) {
     assertEqual(err.code, 'weak_password', 'קוד שגיאה לא נכון');
     assertEqual(server.calls.length, 0, 'נשלחה בקשה לשרת למרות שהקלט פסול');
   });
@@ -428,7 +426,7 @@ run('סיסמה קצרה נדחית לפני פנייה לשרת', function () {
 
 run('הרשמה בלי שם חברה נדחית', function () {
   var backend = makeBackend(new FakeSupabase());
-  return backend.signUpCompany({ email: 'a@b.co', password: 'secret123', companyName: '  ' })
+  return backend.signUpCompany({ email: 'a@b.co', password: 'secret123', companyName: '  ', phone: '054-1234567'})
     .then(function () { throw new Error('התקבלה חברה בלי שם'); }, function (err) {
       assertEqual(err.code, 'invalid_input', 'קוד שגיאה לא נכון');
     });
@@ -437,11 +435,9 @@ run('הרשמה בלי שם חברה נדחית', function () {
 run('אימייל תפוס מוחזר כהודעה מתורגמת', function () {
   var server = new FakeSupabase();
   return makeBackend(server).signUpCompany({
-    email: 'a@b.co', password: 'secret123', companyName: 'X'
-  }).then(function () {
+    email: 'a@b.co', password: 'secret123', companyName: 'X', phone: '054-1234567'}).then(function () {
     return makeBackend(server).signUpCompany({
-      email: 'a@b.co', password: 'secret123', companyName: 'Y'
-    });
+      email: 'a@b.co', password: 'secret123', companyName: 'Y', phone: '054-1234567'});
   }).then(function () { throw new Error('אותו אימייל נרשם פעמיים'); }, function (err) {
     assertEqual(err.code, 'email_taken', 'קוד שגיאה לא נכון');
     assertEqual(err.message, I18n.t('server.emailTaken'), 'ההודעה אינה מתורגמת');
@@ -451,8 +447,7 @@ run('אימייל תפוס מוחזר כהודעה מתורגמת', function () 
 run('סיסמה שגויה מחזירה הודעה מתורגמת', function () {
   var server = new FakeSupabase();
   return makeBackend(server).signUpCompany({
-    email: 'a@b.co', password: 'secret123', companyName: 'X'
-  }).then(function () {
+    email: 'a@b.co', password: 'secret123', companyName: 'X', phone: '054-1234567'}).then(function () {
     return makeBackend(server).signIn({ email: 'a@b.co', password: 'wrong' });
   }).then(function () { throw new Error('ההתחברות הצליחה עם סיסמה שגויה'); }, function (err) {
     assertEqual(err.code, 'bad_credentials', 'קוד שגיאה לא נכון');
@@ -464,8 +459,7 @@ run('restore משחזר התחברות אחרי רענון העמוד', function
   var server = new FakeSupabase();
   var storage = memoryStorage();
   return makeBackend(server, storage).signUpCompany({
-    email: 'a@b.co', password: 'secret123', name: 'דנה', companyName: 'X'
-  }).then(function () {
+    email: 'a@b.co', password: 'secret123', name: 'דנה', companyName: 'X', phone: '054-1234567'}).then(function () {
     /* מכשיר חדש עם אותו אחסון = רענון העמוד */
     var fresh = makeBackend(server, storage);
     assertEqual(fresh.session(), null, 'היה מידע לפני restore');
@@ -482,8 +476,7 @@ run('יציאה מוחקת את האסימון גם אם השרת לא נענה'
   var storage = memoryStorage();
   var backend = makeBackend(server, storage);
   return backend.signUpCompany({
-    email: 'a@b.co', password: 'secret123', companyName: 'X'
-  }).then(function () {
+    email: 'a@b.co', password: 'secret123', companyName: 'X', phone: '054-1234567'}).then(function () {
     server.fetch = function () { return Promise.reject(new Error('אין רשת')); };
     return backend.signOut();
   }).then(function () {
@@ -498,8 +491,7 @@ function signedIn() {
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'boss@test.co', password: 'secret123', name: 'דנה', companyName: 'רשת'
-  }).then(function (session) {
+    email: 'boss@test.co', password: 'secret123', name: 'דנה', companyName: 'רשת', phone: '054-1234567'}).then(function (session) {
     return { server: server, backend: backend, session: session };
   });
 }
@@ -821,8 +813,7 @@ run('אסימון שפג מחודש אוטומטית לפני הבקשה', funct
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'a@b.co', password: 'secret123', companyName: 'X'
-  }).then(function () {
+    email: 'a@b.co', password: 'secret123', companyName: 'X', phone: '054-1234567'}).then(function () {
     backend.tokens.expires_at = Math.floor(Date.now() / 1000) - 60;   // כבר פג
     server.calls.length = 0;
     return backend.listWeeks();
@@ -859,8 +850,7 @@ run('הרשמה אינה מסתיימת עד שהמייל מאושר', function 
   var backend = makeBackend(server);
   return backend.signUpCompany({
     email: 'dana@cafe.test', password: 'secret123',
-    name: 'דנה', companyName: 'קפה מרכז'
-  }).then(function () {
+    name: 'דנה', companyName: 'קפה מרכז', phone: '054-1234567'}).then(function () {
     throw new Error('ההרשמה הסתיימה למרות שהמייל לא אושר');
   }, function (err) {
     assertEqual(err.code, 'confirm_email', 'קוד שגיאה לא נכון');
@@ -874,8 +864,7 @@ run('שם החברה נשמר על משתמש האימות ולא רק בדפד�
   var backend = makeBackend(server);
   return backend.signUpCompany({
     email: 'dana@cafe.test', password: 'secret123',
-    name: 'דנה', companyName: 'קפה מרכז'
-  }).catch(function () {
+    name: 'דנה', companyName: 'קפה מרכז', phone: '054-1234567'}).catch(function () {
     var user = server.users[Object.keys(server.users)[0]];
     assertEqual(user.user_metadata.company_name, 'קפה מרכז', 'שם החברה לא נשמר');
     assertEqual(user.user_metadata.name, 'דנה', 'שם המשתמש לא נשמר');
@@ -889,8 +878,7 @@ run('הכניסה הראשונה אחרי אישור המייל מקימה את 
   var first = makeBackend(server);
   return first.signUpCompany({
     email: 'dana@cafe.test', password: 'secret123',
-    name: 'דנה', companyName: 'קפה מרכז'
-  }).catch(function () {
+    name: 'דנה', companyName: 'קפה מרכז', phone: '054-1234567'}).catch(function () {
     /* ...והלקוח חוזר ממכשיר אחר לגמרי, בלי שום זיכרון מקומי */
     var other = makeBackend(server, memoryStorage());
     return other.signIn({ email: 'dana@cafe.test', password: 'secret123' })
@@ -910,8 +898,7 @@ run('כניסה שנייה אינה פותחת חברה נוספת', function ()
   var backend = makeBackend(server);
   return backend.signUpCompany({
     email: 'dana@cafe.test', password: 'secret123',
-    name: 'דנה', companyName: 'קפה מרכז'
-  }).catch(function () {
+    name: 'דנה', companyName: 'קפה מרכז', phone: '054-1234567'}).catch(function () {
     return makeBackend(server, memoryStorage())
       .signIn({ email: 'dana@cafe.test', password: 'secret123' });
   }).then(function () {
@@ -932,8 +919,7 @@ run('עובד שהושבת אינו מקבל חברה חדשה אלא נשאר �
   var backend = makeBackend(server);
   return backend.signUpCompany({
     email: 'owner@cafe.test', password: 'secret123',
-    name: 'בעלים', companyName: 'קפה מרכז'
-  }).then(function () {
+    name: 'בעלים', companyName: 'קפה מרכז', phone: '054-1234567'}).then(function () {
     /* עובד קיים של החברה, שהושבת */
     server.users['user-emp'] = {
       id: 'user-emp', email: 'emp@cafe.test', password: 'secret123',
@@ -960,8 +946,7 @@ console.log('\n== קריאות שירות ==');
 function withCompany(server, email) {
   var backend = makeBackend(server, memoryStorage());
   return backend.signUpCompany({
-    email: email, password: 'secret123', name: 'מנהל', companyName: email.split('@')[0]
-  }).then(function () { return backend; });
+    email: email, password: 'secret123', name: 'מנהל', companyName: email.split('@')[0], phone: '054-1234567'}).then(function () { return backend; });
 }
 
 run('קריאה נפתחת וחוזרת עם סטטוס פתוח', function () {
@@ -1134,8 +1119,7 @@ run('קישור איפוס סיסמה נקרא מהכתובת ומבקש לקב�
   var backend = makeBackend(server);
   var userId;
   return backend.signUpCompany({
-    email: 'boss@link.test', password: 'secret123', name: 'פז', companyName: 'קישורים'
-  }).then(function (session) {
+    email: 'boss@link.test', password: 'secret123', name: 'פז', companyName: 'קישורים', phone: '054-1234567'}).then(function (session) {
     userId = session.user.id;
     backend._clearTokens();
     var token = makeToken(userId);
@@ -1200,8 +1184,7 @@ run('הזמנת משתמש נשלחת בלי סיסמה', function () {
   };
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'boss2@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
-  }).then(function () {
+    email: 'boss2@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות', phone: '054-1234567'}).then(function () {
     return backend.createUser({ email: 'New@Link.test', name: 'חדש', role: 'employee' });
   }).then(function (user) {
     assertEqual(user.invited, true, 'התשובה אינה מציינת שנשלחה הזמנה');
@@ -1217,8 +1200,7 @@ run('רשימת המשתמשים מביאה גם את תאריכי ההזמנה 
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'boss3@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
-  }).then(function (session) {
+    email: 'boss3@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות', phone: '054-1234567'}).then(function (session) {
     /* המוזמן יושב בטבלה עם תאריך הזמנה ובלי תאריך הצטרפות */
     server.companyUsers['invited-1'] = {
       id: 'invited-1', company_id: session.company.id, email: 'p@link.test',
@@ -1251,8 +1233,7 @@ run('הכניסה הראשונה מסמנת הצטרפות, והשנייה כב�
     }).length;
   }
   return backend.signUpCompany({
-    email: 'boss4@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
-  }).then(function (session) {
+    email: 'boss4@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות', phone: '054-1234567'}).then(function (session) {
     assertEqual(joinCalls(), 1, 'הכניסה הראשונה לא נרשמה');
     /* עכשיו השורה נושאת תאריך, כמו אחרי הכתיבה האמיתית */
     server.companyUsers[session.user.id].joined_at = '2026-09-20T08:00:00.000Z';
@@ -1266,8 +1247,7 @@ run('שליחה חוזרת שולחת קישור ומאפסת את שעון הת
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'boss5@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
-  }).then(function (session) {
+    email: 'boss5@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות', phone: '054-1234567'}).then(function (session) {
     server.companyUsers['invited-5'] = {
       id: 'invited-5', company_id: session.company.id, email: 'old@link.test',
       name: 'מוזמן', role: 'employee', employee_id: null, active: true,
@@ -1291,8 +1271,7 @@ run('ביטול הזמנה עובר בשרת, כי מחיקה דורשת מפת�
   };
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'boss6@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות'
-  }).then(function () {
+    email: 'boss6@link.test', password: 'secret123', name: 'פז', companyName: 'הזמנות', phone: '054-1234567'}).then(function () {
     return backend.cancelInvite('invited-6');
   }).then(function (result) {
     assertEqual(result.cancelled, true, 'הביטול לא אושר');
@@ -1326,8 +1305,7 @@ run('כתובת תפוסה מוחזרת כהודעה בעברית בכל נוס�
       var api = makeBackend(fresh);
       return api.signUpCompany({
         email: 'dup' + (checked++) + '@link.test', password: 'secret123',
-        name: 'פז', companyName: 'כפילויות'
-      }).then(function () {
+        name: 'פז', companyName: 'כפילויות', phone: '054-1234567'}).then(function () {
         return api.createUser({ email: 'taken@link.test', name: 'חדש', role: 'employee' });
       }).then(function () {
         throw new Error('כתובת תפוסה לא נדחתה: ' + message);
@@ -1358,8 +1336,7 @@ run('כתובת שהועתקה מהמסך עם /rest/v1/ עדיין עובדת',
   });
   assertEqual(backend.url, 'https://example.supabase.co', 'הסיומת לא נוקתה');
   return backend.signUpCompany({
-    email: 'url@link.test', password: 'secret123', name: 'פז', companyName: 'כתובות'
-  }).then(function (session) {
+    email: 'url@link.test', password: 'secret123', name: 'פז', companyName: 'כתובות', phone: '054-1234567'}).then(function (session) {
     assertEqual(session.company.name, 'כתובות', 'ההרשמה נכשלה');
     var bad = server.calls.filter(function (c) {
       return /\/(rest|auth)\/v1\/.*\/(rest|auth)\/v1\//.test(c.path) ||
@@ -1389,8 +1366,7 @@ run('שינוי השם שלי עובר דרך הפונקציה, בלי מזהה 
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'id1@sb.test', password: 'secret123', name: 'שם ישן', companyName: 'עסק'
-  }).then(function () {
+    email: 'id1@sb.test', password: 'secret123', name: 'שם ישן', companyName: 'עסק', phone: '054-1234567'}).then(function () {
     return backend.saveOwnName('  שם חדש  ');
   }).then(function (user) {
     assertEqual(user.name, 'שם חדש', 'השם לא נשמר, או שהרווחים נשארו');
@@ -1413,8 +1389,7 @@ run('שם ריק אינו מגיע לשרת בכלל', function () {
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'id2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function () {
+    email: 'id2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function () {
     var before = server.calls.length;
     return backend.saveOwnName('   ').then(function () {
       throw new Error('שם ריק התקבל');
@@ -1429,8 +1404,7 @@ run('שם העסק נכתב לעמודה אחת, ורק לבעלים', function 
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'id3@sb.test', password: 'secret123', name: 'פז', companyName: 'שם ברשם החברות'
-  }).then(function (session) {
+    email: 'id3@sb.test', password: 'secret123', name: 'פז', companyName: 'שם ברשם החברות', phone: '054-1234567'}).then(function (session) {
     return backend.renameCompany('השם המסחרי').then(function () {
       assertEqual(backend.session().company.name, 'השם המסחרי', 'ההתחברות לא התעדכנה');
       assertEqual(server.companies[session.company.id].name, 'השם המסחרי', 'השרת לא עודכן');
@@ -1451,8 +1425,7 @@ run('מספר העוסק נשמר לצד השם, ונקרא בחזרה לתוך 
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'tax1@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function (session) {
+    email: 'tax1@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
     /* כפי שלקוח מקליד אותו בפועל: עם רווחים ומקף */
     return backend.saveCompanyDetails({ name: 'עסק', taxId: ' 51-234 567 8 ' })
       .then(function () {
@@ -1475,8 +1448,7 @@ run('מספר עוסק ריק נשמר כ-null, ולא כמחרוזת ריקה',
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'tax2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function (session) {
+    email: 'tax2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
     return backend.saveCompanyDetails({ taxId: '   ' }).then(function () {
       assertEqual(server.companies[session.company.id].tax_id, null,
         'נשמרה מחרוזת ריקה במקום null');
@@ -1489,8 +1461,7 @@ run('שמירת פרטי העסק בלי שינוי אינה שולחת בקשה
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'tax3@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function () {
+    email: 'tax3@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function () {
     var before = server.calls.length;
     return backend.saveCompanyDetails({}).then(function () {
       assertEqual(server.calls.length, before, 'נשלחה בקשה ריקה לשרת');
@@ -1502,8 +1473,7 @@ run('שם עסק ריק נדחה לפני שהוא מגיע לשרת', function 
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'tax4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function (session) {
+    email: 'tax4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
     var before = server.calls.length;
     return backend.saveCompanyDetails({ name: '   ', taxId: '512345678' }).then(function () {
       throw new Error('שם ריק התקבל');
@@ -1520,8 +1490,7 @@ run('מנהל שמנסה לשנות את שם העסק מקבל סירוב ול�
   var server = new FakeSupabase();
   var backend = makeBackend(server);
   return backend.signUpCompany({
-    email: 'id4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function (session) {
+    email: 'id4@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
     /* אותו משתמש, תפקיד מנהל: כך RLS רואה אותו */
     server.companyUsers[session.user.id].role = 'manager';
     return backend.renameCompany('לא שלי').then(function () {
@@ -1558,8 +1527,7 @@ run('אחסון חסום: ההתחברות עובדת, והמצב נשמר בז�
     storage: blockedStorage()
   });
   return backend.signUpCompany({
-    email: 'blocked@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק'
-  }).then(function (session) {
+    email: 'blocked@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
     assertEqual(session.company.name, 'עסק', 'ההרשמה נכשלה כשהאחסון חסום');
     /* אותה לשונית: המשתמש מחובר, והפעולות עובדות */
     assert(backend.session() !== null, 'המשתמש נראה מנותק באותה לשונית');

@@ -46,6 +46,9 @@ try {
   await mgr.fill('input[name="companyName"]', 'קפה מרכז');
   await mgr.fill('input[name="email"]', 'boss@link.test');
   await mgr.fill('input[name="password"]', 'secret123');
+  /* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+     עם הלקוח כשמשהו בחשבון דורש טיפול. */
+  await mgr.fill('input[name="phone"]', '054-1234567');
   await mgr.click('#signup-form button[type="submit"]');
   await mgr.waitForTimeout(1400);
 

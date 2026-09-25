@@ -80,7 +80,8 @@
     "test:shell": "node tests/shell-browser-test.mjs",
     "test:a11y": "node build-site.js >/dev/null && node tests/a11y-browser-test.mjs",
     "hero:sizes": "node tools/hero-sizes.js",
-    "test:seo": "node build-site.js && node tests/seo-tests.js"
+    "test:seo": "node build-site.js && node tests/seo-tests.js",
+    "test:brand": "node tests/company-brand-browser-test.mjs"
   },
   "license": "MIT"
 }

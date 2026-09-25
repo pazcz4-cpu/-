@@ -1391,9 +1391,9 @@ test('הסכימה מאפשרת לכל משתמש לתקן את שמו – ור�
 test('פרטי העסק פתוחים לכתיבה לבעלים בלבד, והם העמודות היחידות', function () {
   var schema = fs.readFileSync(
     path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
-  /* השם ומספר העוסק – ותו לא. תוכנית, מצב מנוי ותוקף נשארים
-     מחוץ לרשימה, אחרת לקוח מאריך לעצמו את הניסיון. */
-  assert(schema.indexOf('grant update (name, tax_id) on public.companies') !== -1,
+  /* השם, מספר העוסק, הטלפון והלוגו – ותו לא. תוכנית, מצב מנוי
+     ותוקף נשארים מחוץ לרשימה, אחרת לקוח מאריך לעצמו את הניסיון. */
+  assert(schema.indexOf('grant update (name, tax_id, phone, logo) on public.companies') !== -1,
     'פרטי העסק אינם פתוחים לכתיבה, או שנפתחו איתם עמודות נוספות');
   var policy = schema.slice(schema.indexOf('create policy companies_update'));
   policy = policy.slice(0, policy.indexOf(';'));
@@ -1411,6 +1411,95 @@ test('מספר העוסק מנוקה בלי לפסול פורמטים מחו"ל'
   assertEqual(Model.normalizeTaxId('<script>x</script>'), 'scriptxscript', 'תווים מסוכנים נשארו');
   assertEqual(Model.normalizeTaxId(null), '', 'ריק אינו מחזיר מחרוזת ריקה');
   assertEqual(Model.normalizeTaxId(new Array(60).join('9')).length, 30, 'האורך אינו מוגבל');
+});
+
+
+/* ===== טלפון ליצירת קשר =====
+
+   הטלפון נדרש בהרשמה ולא אופציונלי: כשמנוי נכשל, כשלקוח פיילוט
+   נתקע או כשצריך להודיע על משהו דחוף — מייל שאינו נקרא אינו דרך
+   ליצירת קשר, ואז אין שום דרך. */
+test('הטלפון מנוקה בלי לפסול מספרים מחו"ל', function () {
+  assertEqual(Model.normalizePhone(' 054-123 4567 '), '054-123 4567', 'מספר ישראלי');
+  assertEqual(Model.normalizePhone('+972 54 1234567'), '+972 54 1234567', 'קידומת בינלאומית');
+  assertEqual(Model.normalizePhone('+49 (0)30 123456'), '+49 (0)30 123456', 'מספר גרמני נפסל');
+  assertEqual(Model.normalizePhone('054<script>1234567'), '0541234567', 'תווים מסוכנים נשארו');
+  /* פלוס אחד ורק בהתחלה: "+" באמצע אינו חלק משום מספר */
+  assertEqual(Model.normalizePhone('+972+54+1234567'), '+972541234567',
+    'פלוס באמצע לא הוסר');
+  assertEqual(Model.normalizePhone(null), '', 'ריק אינו מחזיר מחרוזת ריקה');
+  assertEqual(Model.normalizePhone(new Array(60).join('9')).length, 30, 'האורך אינו מוגבל');
+});
+
+test('מספר שאינו מספר נדחה, ומספר מחו"ל מתקבל', function () {
+  assert(Model.isValidPhone('054-1234567'), 'מספר ישראלי נדחה');
+  assert(Model.isValidPhone('+49 30 123456'), 'מספר גרמני נדחה');
+  assert(Model.isValidPhone('+1 (212) 555-0100'), 'מספר אמריקאי נדחה');
+  assert(!Model.isValidPhone('12345'), 'חמש ספרות התקבלו כמספר טלפון');
+  assert(!Model.isValidPhone(''), 'ריק התקבל');
+  assert(!Model.isValidPhone('לא מספר'), 'טקסט התקבל');
+});
+
+/* ===== לוגו העסק =====
+
+   נשמר כ-data URI בשורת החברה, ולכן הוא נוסע עם כל טעינה של כל
+   עובד. בלי תקרה שורה אחת מאטה את כולם. */
+test('רק שלושת פורמטי התמונה מתקבלים כלוגו', function () {
+  var png = 'data:image/png;base64,iVBORw0KGgo=';
+  assertEqual(Model.normalizeLogo(png), png, 'PNG תקין נדחה');
+  assert(Model.normalizeLogo('data:image/jpeg;base64,/9j/4AAQ=='), 'JPEG נדחה');
+  assert(Model.normalizeLogo('data:image/webp;base64,UklGRg=='), 'WebP נדחה');
+  /* SVG הוא מסמך שיכול להכיל סקריפט, והלוגו מוצג אצל כל
+     העובדים של אותה חברה */
+  assertEqual(Model.normalizeLogo('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), '',
+    'SVG התקבל כלוגו');
+  assertEqual(Model.normalizeLogo('https://example.com/logo.png'), '', 'כתובת חיצונית התקבלה');
+  assertEqual(Model.normalizeLogo('data:text/html;base64,PGI+eDwvYj4='), '', 'HTML התקבל');
+  assertEqual(Model.normalizeLogo(''), '', 'ריק אינו מחזיר ריק');
+  assertEqual(Model.normalizeLogo(null), '', 'null אינו מחזיר ריק');
+});
+
+test('לוגו גדול מהתקרה נדחה ואינו נשמר חלקית', function () {
+  /* בייט אחד מעל התקרה מספיק: התקרה קיימת כדי שלא תהיה שורה
+     של מגה שמאטה כל טעינה של כל עובד בחברה. */
+  var over = 'data:image/png;base64,' +
+    new Array(Math.ceil(Model.LOGO_MAX_BYTES * 4 / 3) + 40).join('A');
+  assert(Model.logoBytes(over) > Model.LOGO_MAX_BYTES, 'הבדיקה עצמה לא בנתה קובץ גדול');
+  assertEqual(Model.normalizeLogo(over), '', 'לוגו מעל התקרה התקבל');
+});
+
+test('מדידת הגודל מתעלמת מהכותרת ומסופרת את ה-base64 בלבד', function () {
+  /* "AAAA" הם ארבעה תווי base64 = שלושה בייטים */
+  assertEqual(Model.logoBytes('data:image/png;base64,AAAA'), 3, 'ארבעה תווים');
+  assertEqual(Model.logoBytes('data:image/png;base64,AAA='), 2, 'ריפוד של תו אחד');
+  assertEqual(Model.logoBytes('data:image/png;base64,AA=='), 1, 'ריפוד של שני תווים');
+  assertEqual(Model.logoBytes('לא data URI'), 0, 'מחרוזת שאינה data URI');
+});
+
+test('חברה חדשה נולדת עם הטלפון שהוזן ובלי לוגו', function () {
+  var company = Model.newTrialCompany('קפה מרכז', new Date('2026-01-01T00:00:00Z'),
+    ' 054-123 4567 ');
+  assertEqual(company.phone, '054-123 4567', 'הטלפון לא נשמר מנורמל');
+  assertEqual(company.logo, '', 'חברה חדשה נולדה עם לוגו');
+});
+
+/* ההקטנה בדפדפן. החישוב עצמו טהור, ולכן נבדק כאן; הציור עצמו
+   נבדק בדפדפן. */
+test('הלוגו מוקטן בלי למתוח ובלי להגדיל תמונה קטנה', function () {
+  var Logo = require('../js/company-logo.js');
+  /* לוגו רחב: נבלם ברוחב */
+  var wide = Logo.fit(1600, 400, 320, 120);
+  assertEqual(wide.width, 320, 'הרוחב לא נבלם');
+  assertEqual(wide.height, 80, 'היחס לא נשמר');
+  /* לוגו גבוה: נבלם בגובה */
+  var tall = Logo.fit(400, 1600, 320, 120);
+  assertEqual(tall.height, 120, 'הגובה לא נבלם');
+  assertEqual(tall.width, 30, 'היחס לא נשמר');
+  /* קטן מהתקרה נשאר כפי שהוא: הגדלה מייצרת קובץ גדול יותר
+     ותמונה מטושטשת, ואין בה שום רווח. */
+  var small = Logo.fit(120, 40, 320, 120);
+  assertEqual(small.width, 120, 'תמונה קטנה נמתחה');
+  assertEqual(small.height, 40, 'תמונה קטנה נמתחה');
 });
 
 /* ח.פ. שנשמר בהגדרות ולא נוסע לספק הוא שדה שלא עושה כלום.

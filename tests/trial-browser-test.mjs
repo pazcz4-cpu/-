@@ -57,6 +57,9 @@ try {
   await page.fill('input[name="companyName"]', 'עסק ניסיון');
   await page.fill('input[name="email"]', 'trial@test.co.il');
   await page.fill('input[name="password"]', 'secret123');
+  /* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+     עם הלקוח כשמשהו בחשבון דורש טיפול. */
+  await page.fill('input[name="phone"]', '054-1234567');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1300);
 

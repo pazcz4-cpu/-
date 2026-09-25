@@ -267,10 +267,20 @@
     this._error('');
     this._notice('');
     this._setBusy(true, t('auth.creating'));
+    /* נבדק כאן וגם בשרת. כאן — כדי שהלקוח יקבל הודעה מובנת
+       לפני שנוצר לו חשבון; בשרת — כי מי שיעקוף את הטופס יוצר
+       לקוח שאין לנו דרך להגיע אליו. */
+    if (!Model.isValidPhone(form.phone.value)) {
+      this._setBusy(false);
+      this._error(t('server.phoneInvalid'));
+      form.phone.focus();
+      return;
+    }
     this.backend.signUpCompany({
       companyName: form.companyName.value,
       name: form.name.value,
       email: form.email.value,
+      phone: form.phone.value,
       password: form.password.value
     }).then(function (session) {
       self._setBusy(false);
@@ -431,12 +441,25 @@
       ? roleName
       : session.user.name + ' · ' + roleName;
 
+    /* הלוגו של הלקוח, אם העלה אחד. הוא בא לפני השם ולא במקומו:
+       לוגו לבדו אינו אומר באיזה חשבון אני כשלמנהל יש יותר
+       מעסק אחד, ושם לבדו אינו נראה כמו המערכת של מקום העבודה.
+       alt ריק בכוונה — השם כתוב לידו, וקורא מסך שיקריא את
+       שניהם יאמר אותו דבר פעמיים. */
+    var logo = session.company.logo
+      ? '<img class="user-logo" src="' + esc(session.company.logo) + '" alt="" decoding="async">'
+      : '';
+
     var identity =
-      '<button type="button" id="user-account" class="user-id" ' +
+      '<button type="button" id="user-account" class="user-id' +
+        (logo ? ' has-logo' : '') + '" ' +
         'aria-expanded="' + (this.accountOpen ? 'true' : 'false') + '" ' +
         'aria-controls="account-panel" title="' + esc(t('account.open')) + '">' +
-        '<span class="user-company">' + esc(session.company.name) + '</span>' +
-        '<span class="user-name">' + esc(personLine) + '</span>' +
+        logo +
+        '<span class="user-id-text">' +
+          '<span class="user-company">' + esc(session.company.name) + '</span>' +
+          '<span class="user-name">' + esc(personLine) + '</span>' +
+        '</span>' +
       '</button>';
 
     bar.innerHTML = identity +
@@ -612,6 +635,14 @@
         '<label>' + t('auth.companyName') + '<input type="text" name="companyName" class="text-input" required></label>' +
         '<label>' + t('auth.name') + '<input type="text" name="name" class="text-input" autocomplete="name"></label>' +
         '<label>' + t('auth.email') + '<input type="email" name="email" class="text-input" autocomplete="username" required></label>' +
+        /* טלפון, ולא אופציונלי. כשמנוי נכשל, כשלקוח פיילוט
+           נתקע, או כשצריך להודיע על משהו דחוף — מייל שאינו
+           נקרא אינו דרך ליצירת קשר, ואז אין שום דרך. אין כאן
+           תבנית מדינה: מספר תקין בגרמניה אינו נראה כמו מספר
+           תקין בישראל, וחסימה לפי תבנית אחת פירושה לקוח שאינו
+           יכול להזין את המספר שלו. */
+        '<label>' + t('auth.phone') + '<input type="tel" name="phone" class="text-input" dir="ltr" autocomplete="tel" maxlength="30" required>' +
+        '<small>' + t('auth.phoneHint') + '</small></label>' +
         '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
         '<small>' + t('auth.passwordHint') + '</small></label>' +
         '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +

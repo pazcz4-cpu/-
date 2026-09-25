@@ -58,6 +58,50 @@ alter table public.company_users
 alter table public.companies
   add column if not exists tax_id text;
 
+-- טלפון ליצירת קשר עם הלקוח. נדרש בהרשמה ולא אופציונלי: כשמנוי
+-- נכשל, כשלקוח פיילוט נתקע, או כשצריך להודיע על משהו דחוף --
+-- מייל שאינו נקרא אינו דרך ליצירת קשר, ואז אין שום דרך.
+--
+-- אין כאן בדיקת תבנית: מספר תקין בגרמניה אינו נראה כמו מספר
+-- תקין בישראל, ובדיקה לפי תבנית אחת פירושה לקוח מחו"ל שאינו
+-- יכול להירשם. מה שכן נבדק הוא שיש מספיק ספרות כדי שזה יהיה
+-- מספר ולא הקלדה מקרית -- שבע, המספר המקומי הקצר ביותר בעולם.
+alter table public.companies
+  add column if not exists phone text;
+
+alter table public.companies
+  drop constraint if exists companies_phone_check;
+alter table public.companies
+  add constraint companies_phone_check
+  check (phone is null or length(regexp_replace(phone, '\D', '', 'g')) >= 7);
+
+-- לוגו העסק, כ-data URI. מוצג למנהלים ולעובדים.
+--
+-- בשורה ולא באחסון קבצים: דלי דורש מדיניות גישה משלו וכתובת
+-- ציבורית לכל לוגו -- כלומר עוד מקום שבו בידוד בין חברות יכול
+-- להישבר, בשביל תמונה של כמה עשרות קילובייט שנוסעת ממילא עם
+-- שורת החברה.
+--
+-- התקרה נאכפת כאן ולא רק בדפדפן: שורה של מגה מאטה כל טעינה של
+-- כל עובד בחברה, ומי שפותח את כלי הפיתוח יכול לשלוח כל דבר.
+-- 64 קילובייט לאחר קידוד base64 הם כ-88 אלף תווים.
+--
+-- SVG אינו ברשימת הפורמטים בכוונה: הוא מסמך שיכול להכיל
+-- סקריפט, והלוגו הזה מוצג אצל כל העובדים של אותה חברה.
+alter table public.companies
+  add column if not exists logo text;
+
+alter table public.companies
+  drop constraint if exists companies_logo_check;
+alter table public.companies
+  add constraint companies_logo_check
+  check (
+    logo is null or (
+      length(logo) <= 90000
+      and logo ~ '^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$'
+    )
+  );
+
 -- מחיר חודשי שסוכם עם הלקוח הזה, וגובר על מחיר התוכנית.
 --
 -- קיים בשביל רשתות: מ-100 עובדים ומעלה אין מחירון, המחיר נסגר
@@ -267,7 +311,13 @@ create policy company_weeks_write on public.company_weeks
 
 -- SIGNUP: פתיחת חשבון לחברה
 -- נקרא מיד אחרי ההרשמה. יוצר את החברה ומגדיר את מי שנרשם כבעלים.
-create or replace function public.create_company(p_name text, p_user_name text, p_trial_days int default 14)
+-- הגרסה הקודמת קיבלה שלושה ארגומנטים. הוספת ארגומנט עם ברירת
+-- מחדל אינה מחליפה אותה אלא יוצרת עומס נוסף, ואז קריאה בשלושה
+-- שמות הופכת לדו-משמעית ונכשלת. לכן מוחקים במפורש.
+drop function if exists public.create_company(text, text, int);
+
+create or replace function public.create_company(
+  p_name text, p_user_name text, p_trial_days int default 14, p_phone text default '')
 returns public.companies
 language plpgsql
 security definer
@@ -290,8 +340,15 @@ begin
 
   select email into v_email from auth.users where id = auth.uid();
 
-  insert into public.companies (name, plan, status, valid_until)
-  values (trim(p_name), 'starter', 'trial', now() + make_interval(days => p_trial_days))
+  -- הטלפון נבדק כאן ולא רק בדפדפן: מי שיעקוף את הטופס יוצר
+  -- לקוח שאין לנו דרך להגיע אליו.
+  if length(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g')) < 7 then
+    raise exception 'a contact phone number is required' using errcode = '22023';
+  end if;
+
+  insert into public.companies (name, phone, plan, status, valid_until)
+  values (trim(p_name), trim(p_phone), 'starter', 'trial',
+          now() + make_interval(days => p_trial_days))
   returning * into v_company;
 
   insert into public.company_users (id, company_id, email, name, role, active)
@@ -973,7 +1030,7 @@ end;
 $$;
 
 -- GRANTS: הרשאות קריאה לפונקציות
-grant execute on function public.create_company(text, text, int)                 to authenticated;
+grant execute on function public.create_company(text, text, int, text)           to authenticated;
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
 grant execute on function public.save_own_punch(text)                            to authenticated;
@@ -993,7 +1050,7 @@ revoke all on public.companies from authenticated;
 grant select on public.companies to authenticated;
 -- שם העסק ומספר העוסק הם של הלקוח, ולכן הוא עורך אותם. מצב
 -- המנוי, התוכנית והתוקף אינם ברשימה הזו בכוונה.
-grant update (name, tax_id) on public.companies to authenticated;
+grant update (name, tax_id, phone, logo) on public.companies to authenticated;
 
 -- משתמשים: קריאה ועדכון. יצירה נעשית בשרת (api/create-user.js),
 -- כי היא דורשת מפתח ניהול.

@@ -734,6 +734,8 @@
         inviteNotPending: 'Cette invitation a déjà été utilisée ou n\'existe pas.',
         nameRequired: 'Un nom est requis.',
         companyNameRequired: "Un nom d'entreprise est requis.",
+        phoneInvalid: 'Un numéro de téléphone valide est nécessaire.',
+        logoInvalid: 'Le logo n\'a pas été enregistré. Il faut un fichier PNG, JPG ou WebP.',
         cannotChangeOwner: 'Le propriétaire du compte ne peut pas être modifié'
       },
 
@@ -746,7 +748,19 @@
         hint: "Le nom est ce que vos équipes voient et ce qui figure dans les e-mails qui leur sont envoyés. Le numéro apparaît sur la facture de l'abonnement et peut rester vide.",
         saved: "Informations de l'entreprise enregistrées.",
         saveFailed: "Nous n'avons pas pu enregistrer les informations. Réessayez.",
-        nameRequired: "Un nom d'entreprise est requis."
+        nameRequired: "Un nom d'entreprise est requis.",
+        phone: 'Téléphone de contact',
+        phoneHint: 'Nous l\'utilisons pour vous joindre au sujet du compte. Il n\'est affiché sur aucun écran des équipes.',
+        logo: 'Logo de l\'entreprise',
+        logoHint: 'Apparaît en haut de l\'écran des responsables et sur l\'écran des équipes. PNG, JPG ou WebP — la taille est ajustée automatiquement.',
+        logoChoose: 'Choisir un logo',
+        logoReplace: 'Remplacer le logo',
+        logoRemove: 'Retirer le logo',
+        logoNone: 'Pas encore de logo',
+        logoPending: 'Le logo est enregistré en cliquant sur « Enregistrer les informations ».',
+        logoBadType: 'Choisissez un fichier image : PNG, JPG ou WebP.',
+        logoTooBig: 'Encore trop volumineux après réduction. Essayez un fichier logo plutôt qu\'une photo.',
+        logoUnreadable: 'Impossible de lire ce fichier. Essayez-en un autre.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -982,6 +996,8 @@
         signIn: 'Connexion', signUp: 'Créer un compte entreprise',
         email: 'E-mail', password: 'Mot de passe', name: 'Votre nom', companyName: 'Nom de l’entreprise',
         passwordHint: 'Au moins 6 caractères',
+        phone: 'Téléphone de contact',
+        phoneHint: 'Pour vous joindre si quelque chose sur le compte demande une intervention',
         showPassword: 'Afficher le mot de passe',
         hidePassword: 'Masquer le mot de passe',
         enter: 'Se connecter', create: 'Créer le compte', signingIn: 'Connexion…', creating: 'Création…',

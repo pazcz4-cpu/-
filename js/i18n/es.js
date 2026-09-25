@@ -734,6 +734,8 @@
         inviteNotPending: 'Esa invitación ya se usó o no existe.',
         nameRequired: 'Se requiere un nombre.',
         companyNameRequired: 'Se requiere un nombre de empresa.',
+        phoneInvalid: 'Hace falta un teléfono de contacto válido.',
+        logoInvalid: 'El logotipo no se guardó. Debe ser un archivo PNG, JPG o WebP.',
         cannotChangeOwner: 'El propietario de la cuenta no se puede cambiar'
       },
 
@@ -746,7 +748,19 @@
         hint: 'El nombre es lo que ve tu plantilla y lo que aparece en los correos que recibe. El NIF aparece en la factura de la suscripción y puedes dejarlo vacío.',
         saved: 'Datos del negocio guardados.',
         saveFailed: 'No hemos podido guardar los datos del negocio. Inténtalo de nuevo.',
-        nameRequired: 'Hace falta un nombre de empresa.'
+        nameRequired: 'Hace falta un nombre de empresa.',
+        phone: 'Teléfono de contacto',
+        phoneHint: 'La usamos para localizarte por temas de la cuenta. No se muestra al personal en ninguna pantalla.',
+        logo: 'Logotipo de la empresa',
+        logoHint: 'Aparece arriba en la pantalla de gestión y en la del personal. PNG, JPG o WebP: se reduce solo.',
+        logoChoose: 'Elegir logotipo',
+        logoReplace: 'Cambiar logotipo',
+        logoRemove: 'Quitar logotipo',
+        logoNone: 'Todavía sin logotipo',
+        logoPending: 'El logotipo se guarda al pulsar «Guardar datos del negocio».',
+        logoBadType: 'Elige un archivo de imagen: PNG, JPG o WebP.',
+        logoTooBig: 'Sigue siendo demasiado grande tras reducirlo. Prueba con un logotipo en vez de una foto.',
+        logoUnreadable: 'No pudimos leer ese archivo. Prueba con otro.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -982,6 +996,8 @@
         signIn: 'Iniciar sesión', signUp: 'Crear cuenta de empresa',
         email: 'Correo', password: 'Contraseña', name: 'Tu nombre', companyName: 'Nombre de la empresa',
         passwordHint: 'Al menos 6 caracteres',
+        phone: 'Teléfono de contacto',
+        phoneHint: 'Para poder localizarte si algo de la cuenta necesita atención',
         showPassword: 'Mostrar la contraseña',
         hidePassword: 'Ocultar la contraseña',
         enter: 'Entrar', create: 'Crear cuenta', signingIn: 'Entrando…', creating: 'Creando…',

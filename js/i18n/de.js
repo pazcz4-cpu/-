@@ -734,6 +734,8 @@
         inviteNotPending: 'Diese Einladung wurde bereits genutzt oder existiert nicht.',
         nameRequired: 'Ein Name ist erforderlich.',
         companyNameRequired: 'Ein Firmenname ist erforderlich.',
+        phoneInvalid: 'Eine gültige Telefonnummer für Rückfragen ist erforderlich.',
+        logoInvalid: 'Das Logo wurde nicht gespeichert. Es braucht eine PNG-, JPG- oder WebP-Datei.',
         cannotChangeOwner: 'Der Kontoinhaber kann nicht geändert werden'
       },
 
@@ -746,7 +748,19 @@
         hint: 'Den Namen sieht Ihre Belegschaft, und er steht in den E-Mails an sie. Die Steuernummer erscheint auf der Rechnung zum Abo und darf leer bleiben.',
         saved: 'Unternehmensdaten gespeichert.',
         saveFailed: 'Die Unternehmensdaten konnten nicht gespeichert werden. Bitte erneut versuchen.',
-        nameRequired: 'Ein Name des Betriebs ist erforderlich.'
+        nameRequired: 'Ein Name des Betriebs ist erforderlich.',
+        phone: 'Telefon für Rückfragen',
+        phoneHint: 'Wir nutzen sie, um Sie zum Konto zu erreichen. Mitarbeitenden wird sie nirgends angezeigt.',
+        logo: 'Firmenlogo',
+        logoHint: 'Erscheint oben im Managerbereich und im Mitarbeiterbereich. PNG, JPG oder WebP — die Größe wird automatisch angepasst.',
+        logoChoose: 'Logo auswählen',
+        logoReplace: 'Logo ersetzen',
+        logoRemove: 'Logo entfernen',
+        logoNone: 'Noch kein Logo',
+        logoPending: 'Das Logo wird mit „Firmendaten speichern“ gespeichert.',
+        logoBadType: 'Bitte eine Bilddatei wählen: PNG, JPG oder WebP.',
+        logoTooBig: 'Auch verkleinert noch zu groß. Bitte eine Logodatei statt eines Fotos verwenden.',
+        logoUnreadable: 'Die Datei konnte nicht gelesen werden. Bitte eine andere versuchen.'
       },
 
       /* הזזת משמרות בין עובדים בתצוגה לפי עובד */
@@ -982,6 +996,8 @@
         signIn: 'Anmelden', signUp: 'Firmenkonto erstellen',
         email: 'E-Mail', password: 'Passwort', name: 'Ihr Name', companyName: 'Firmenname',
         passwordHint: 'Mindestens 6 Zeichen',
+        phone: 'Telefon für Rückfragen',
+        phoneHint: 'Damit wir Sie erreichen, wenn im Konto etwas zu klären ist',
         showPassword: 'Passwort anzeigen',
         hidePassword: 'Passwort ausblenden',
         enter: 'Anmelden', create: 'Konto erstellen', signingIn: 'Anmelden…', creating: 'Wird erstellt…',

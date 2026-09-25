@@ -315,6 +315,31 @@
             <input type="text" id="company-name" class="text-input" maxlength="120" autocomplete="organization"></label>
           <label class="check"><span data-i18n="company.taxId">ח.פ. / מספר עוסק</span>
             <input type="text" id="company-tax-id" class="text-input" maxlength="30" dir="ltr" inputmode="numeric" autocomplete="off"></label>
+          <!-- הטלפון נדרש בהרשמה, וכאן אפשר לעדכן אותו. הוא אינו
+               מוצג לעובדים: הוא קיים כדי שתהיה דרך להגיע לבעל
+               העסק כשמשהו בחשבון דורש טיפול. -->
+          <label class="check"><span data-i18n="company.phone">טלפון ליצירת קשר</span>
+            <input type="tel" id="company-phone" class="text-input" maxlength="30" dir="ltr" autocomplete="tel">
+            <small class="hint" data-i18n="company.phoneHint">המספר משמש אותנו כדי להגיע אליכם בענייני החשבון, ואינו מוצג לעובדים בשום מסך.</small></label>
+        </div>
+
+        <!-- לוגו העסק. הקובץ אינו נשלח כפי שהוא: הדפדפן מקטין
+             אותו לפני השמירה, כי לוגו שיוצא מתוכנת עיצוב הוא לא
+             פעם שלושה מגה ומוצג בגובה 28 פיקסלים. -->
+        <div class="company-logo-field">
+          <span class="company-logo-label" data-i18n="company.logo">לוגו העסק</span>
+          <div class="company-logo-row">
+            <span id="company-logo-preview" class="company-logo-preview"></span>
+            <div class="company-logo-actions">
+              <button type="button" id="company-logo-pick" class="btn ghost small"
+                data-i18n="company.logoChoose">בחירת לוגו</button>
+              <button type="button" id="company-logo-clear" class="btn ghost small hidden"
+                data-i18n="company.logoRemove">הסרת הלוגו</button>
+            </div>
+            <input type="file" id="company-logo-file" class="hidden"
+              accept="image/png,image/jpeg,image/webp">
+          </div>
+          <p class="hint" data-i18n="company.logoHint">מופיע בראש המסך של המנהלים ובמסך של העובדים.</p>
         </div>
         <div class="row">
           <button id="save-company-details" class="btn primary" data-i18n="company.save">שמירת פרטי העסק</button>
@@ -532,6 +557,7 @@
 <script src="js/i18n/dom.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/brand.js"></script>
+<script src="js/company-logo.js"></script>
 <script src="js/platform.js"></script>
 <script src="js/xlsx.js"></script>
 <script src="js/csv.js"></script>

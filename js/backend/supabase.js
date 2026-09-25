@@ -323,12 +323,14 @@
           /* custom_price_monthly: המחיר שסוכם עם הלקוח הזה. בלעדיו
              מסך המנוי שלו היה מציג את מחיר המחירון – ואצל רשת
              אין מחירון, ולכן הוא היה מציג אפס. */
-          '&select=id,name,tax_id,plan,status,valid_until,created_at,custom_price_monthly')
+          '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
+          'custom_price_monthly')
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
             var company = {
               id: row.id, name: row.name, taxId: row.tax_id || '',
+              phone: row.phone || '', logo: row.logo || '',
               plan: row.plan, status: row.status,
               customPriceMonthly: row.custom_price_monthly == null
                 ? null : Number(row.custom_price_monthly),
@@ -362,7 +364,8 @@
       return self._rpc('create_company', {
         p_name: companyName,
         p_user_name: String(meta.name || '').trim(),
-        p_trial_days: Model.TRIAL_DAYS
+        p_trial_days: Model.TRIAL_DAYS,
+        p_phone: Model.normalizePhone(meta.phone)
       }).then(function () { return self._loadSession(); });
     }, function () {
       /* אם לא הצלחנו לקרוא את המשתמש, נופלים חזרה להתנהגות הרגילה */
@@ -521,6 +524,11 @@
     if (!companyName) {
       return Promise.reject(fail('invalid_input', t('server.companyRequired')));
     }
+    /* בלי טלפון אין דרך להגיע ללקוח כשמשהו נשבר */
+    if (!Model.isValidPhone(input.phone)) {
+      return Promise.reject(fail('invalid_input', t('server.phoneInvalid')));
+    }
+    var phone = Model.normalizePhone(input.phone);
 
     /* שם החברה נשמר על משתמש האימות ולא רק כאן, כי כשאימות מייל
        דלוק ההרשמה אינה מסתיימת עכשיו: הלקוח יוצא לתיבת המייל,
@@ -531,7 +539,10 @@
       method: 'POST', token: null,
       body: {
         email: email, password: password,
-        data: { name: input.name || '', company_name: companyName }
+        /* גם הטלפון נשמר על משתמש האימות ולא רק בקריאה הבאה:
+           כשאימות מייל דלוק ההרשמה נגמרת במכשיר אחר, ומה
+           שהוקלד כאן לא יהיה שם. */
+        data: { name: input.name || '', company_name: companyName, phone: phone }
       }
     }).then(function (data) {
       if (!data || !data.access_token) {
@@ -542,7 +553,8 @@
       return self._rpc('create_company', {
         p_name: companyName,
         p_user_name: String(input.name || '').trim(),
-        p_trial_days: Model.TRIAL_DAYS
+        p_trial_days: Model.TRIAL_DAYS,
+        p_phone: phone
       });
     }).then(function () {
       return self._loadSession();
@@ -993,21 +1005,42 @@
     if ('taxId' in patch) {
       body.tax_id = Model.normalizeTaxId(patch.taxId) || null;
     }
+    /* הטלפון רשאי להשתנות אבל לא להתרוקן */
+    if ('phone' in patch) {
+      if (!Model.isValidPhone(patch.phone)) {
+        return Promise.reject(fail('invalid', t('server.phoneInvalid')));
+      }
+      body.phone = Model.normalizePhone(patch.phone);
+    }
+    /* ריק = הסרת הלוגו, וזו פעולה חוקית */
+    if ('logo' in patch) {
+      var logo = String(patch.logo || '').trim();
+      if (logo && !Model.normalizeLogo(logo)) {
+        return Promise.reject(fail('invalid', t('server.logoInvalid')));
+      }
+      body.logo = Model.normalizeLogo(logo) || null;
+    }
     if (!Object.keys(body).length) {
       return Promise.resolve(this._session ? this._session.company : null);
     }
     return this._rest('/companies?id=eq.' + companyId +
-      '&select=id,name,tax_id', {
+      '&select=id,name,tax_id,phone,logo', {
       method: 'PATCH', body: body
     }).then(function (rows) {
       /* שורה ריקה כאן פירושה שכללי ההרשאה דחו את הכתיבה */
       if (!rows || !rows.length) throw fail('forbidden', t('server.noPermission'));
+      var saved = {
+        name: rows[0].name, taxId: rows[0].tax_id || '',
+        phone: rows[0].phone || '', logo: rows[0].logo || ''
+      };
       if (self._session) {
-        self._session.company.name = rows[0].name;
-        self._session.company.taxId = rows[0].tax_id || '';
+        self._session.company.name = saved.name;
+        self._session.company.taxId = saved.taxId;
+        self._session.company.phone = saved.phone;
+        self._session.company.logo = saved.logo;
         return self._session.company;
       }
-      return { name: rows[0].name, taxId: rows[0].tax_id || '' };
+      return saved;
     });
   };
 

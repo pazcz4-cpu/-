@@ -441,8 +441,19 @@
     /* כותרת ממותגת. מסך העובד נפתח מקישור במייל, לרוב בטלפון,
        ולעיתים חודשים אחרי ההזמנה – ובלי לוגו הוא נראה כמו טופס
        אקראי ולא כמו המערכת של מקום העבודה. */
+    /* הלוגו של מקום העבודה כשיש כזה, ושל SetShifts כשאין.
+
+       למה מחליף ולא נוסף: העובד פותח את המסך הזה מקישור במייל,
+       לרוב בטלפון וחודשים אחרי ההזמנה. מה שצריך לענות לו בשנייה
+       הראשונה הוא "זה מקום העבודה שלי" — ושני לוגואים זה לצד זה
+       בכותרת של טלפון אינם עונים על שום שאלה. */
+    var companyLogo = this.session.company.logo;
     html += '<header class="employee-head">' +
-      '<span class="employee-logo">' + brandLockup() + '</span>' +
+      '<span class="employee-logo' + (companyLogo ? ' is-company' : '') + '">' +
+        (companyLogo
+          ? '<img src="' + esc(companyLogo) + '" alt="" decoding="async">'
+          : brandLockup()) +
+      '</span>' +
       '<span class="employee-company">' + esc(this.session.company.name) + '</span>' +
       /* מדריך בדף אחד. עובד שנתקע בשמונה בערב לא ישלח הודעה
          למנהל – הוא פשוט לא יגיש. */

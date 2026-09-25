@@ -45,6 +45,9 @@ try {
   await page.fill('input[name="name"]', 'מייפון הכיסוי המושלם בעמ');
   await page.fill('input[name="email"]', 'boss@id.test');
   await page.fill('input[name="password"]', 'secret123');
+  /* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+     עם הלקוח כשמשהו בחשבון דורש טיפול. */
+  await page.fill('input[name="phone"]', '054-1234567');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1300);
 
@@ -204,6 +207,9 @@ try {
   await twin.fill('input[name="name"]', 'סטשיפטס בעמ');
   await twin.fill('input[name="email"]', 'twin@id.test');
   await twin.fill('input[name="password"]', 'secret123');
+  /* הטלפון נדרש בהרשמה: בלעדיו אין לנו דרך ליצור קשר
+     עם הלקוח כשמשהו בחשבון דורש טיפול. */
+  await twin.fill('input[name="phone"]', '054-1234567');
   await twin.click('#signup-form button[type="submit"]');
   await twin.waitForTimeout(1300);
   check('שם העסק מופיע פעם אחת בלבד', await twin.evaluate(() => {

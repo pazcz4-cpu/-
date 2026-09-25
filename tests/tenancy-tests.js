@@ -74,11 +74,11 @@ console.log('\n== בידוד בין חברות ==');
 
 asyncTest('חברה אינה רואה את ההגדרות של חברה אחרת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה א' } }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () { return backend.loadConfig(); })
     .then(function (config) {
@@ -88,11 +88,11 @@ asyncTest('חברה אינה רואה את ההגדרות של חברה אחרת
 
 asyncTest('שבועות של חברה אחת אינם נגישים לחברה אחרת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a2@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a2@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveWeek('2026-09-20', { assignments: { x: ['emp-1'] } }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b2@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b2@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () { return backend.loadWeek('2026-09-20'); })
     .then(function (week) { assertEqual(week, null, 'דלף שבוע בין חברות'); })
@@ -102,11 +102,11 @@ asyncTest('שבועות של חברה אחת אינם נגישים לחברה א
 
 asyncTest('רשימת המשתמשים מוגבלת לחברה של המשתמש', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a3@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a3@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.createUser({ email: 'worker@a.com', password: 'secret1', role: 'employee' }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b3@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b3@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () { return backend.listUsers(); })
     .then(function (users) {
@@ -118,11 +118,11 @@ asyncTest('רשימת המשתמשים מוגבלת לחברה של המשתמש
 asyncTest('לא ניתן לערוך משתמש של חברה אחרת', function () {
   var backend = freshBackend();
   var foreignUserId;
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a4@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a4@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.createUser({ email: 'worker4@a.com', password: 'secret1', role: 'employee' }); })
     .then(function (user) { foreignUserId = user.id; return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b4@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b4@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () {
       return assertRejects(backend.updateUser(foreignUserId, { active: false }), 'not_found',
@@ -133,10 +133,10 @@ asyncTest('לא ניתן לערוך משתמש של חברה אחרת', function
 asyncTest('עדכון חי אינו מגיע לחברה אחרת', function () {
   var backend = freshBackend();
   var otherCompanyEvents = 0;
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a5@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a5@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b5@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b5@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () {
       backend.subscribe(function () { otherCompanyEvents++; });
@@ -151,13 +151,13 @@ asyncTest('עדכון חי אינו מגיע לחברה אחרת', function () {
 
 asyncTest('פרסום סידור בחברה אחת אינו נוגע בחברה אחרת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a6@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a6@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveWeek('2026-09-20', { assignments: { x: ['emp-1'] } }); })
     .then(function () { return backend.publishWeek('2026-09-20', true); })
     .then(function (week) { assertEqual(week.published, true, 'הפרסום לא נשמר'); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b6@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b6@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () {
       /* השבוע של חברה א אינו קיים אצל חברה ב, ולכן גם אינו מפורסם
@@ -171,11 +171,11 @@ asyncTest('פרסום סידור בחברה אחת אינו נוגע בחברה 
 
 asyncTest('אימייל שקיים בחברה אחת אינו נגרר לחברה אחרת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a7@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a7@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.createUser({ email: 'shared@x.com', role: 'employee' }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b7@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b7@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () {
       /* הזמנה לכתובת שכבר שייכת לחברה אחרת נדחית. אחרת אותו אדם
@@ -192,12 +192,12 @@ asyncTest('אימייל שקיים בחברה אחת אינו נגרר לחבר�
 
 asyncTest('קישור לקביעת סיסמה מכניס לחברה שלו בלבד', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a8@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a8@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה א' } }); })
     .then(function () { return backend.createUser({ email: 'worker8@a.com', role: 'employee' }); })
     .then(function () { return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b8@b.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'b8@b.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () { return backend.saveConfig({ settings: { secret: 'נתוני חברה ב' } }); })
     .then(function () { return backend.signOut(); })
@@ -221,7 +221,7 @@ asyncTest('קישור לקביעת סיסמה מכניס לחברה שלו בל�
 
 asyncTest('בקשת איפוס אינה מגלה אם הכתובת קיימת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a9@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a9@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.signOut(); })
     .then(function () { return backend.requestPasswordReset('a9@a.com'); })
     .then(function (known) {
@@ -234,7 +234,7 @@ asyncTest('בקשת איפוס אינה מגלה אם הכתובת קיימת', 
 
 asyncTest('קישור שלא נפתח אינו מקנה כלום', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'a10@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'a10@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.signOut(); })
     .then(function () {
       /* בקשה לאיפוס אינה מכניסה לשום מקום בפני עצמה */
@@ -252,7 +252,7 @@ console.log('\n== אכיפת הרשאות בשרת ==');
 
 asyncTest('עובד אינו יכול לשמור סידור', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner6@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner6@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp6@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-1' });
     })
@@ -272,7 +272,7 @@ asyncTest('עובד אינו יכול לשמור סידור', function () {
 
 asyncTest('עובד שומר אילוץ של עצמו בלבד', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner7@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner7@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp7@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-7' });
     })
@@ -290,7 +290,7 @@ asyncTest('עובד שומר אילוץ של עצמו בלבד', function () {
 
 asyncTest('עובד ללא קישור לכרטיס עובד אינו יכול לשמור אילוץ', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner8@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner8@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp8@a.com', password: 'secret1', role: 'employee' });
     })
@@ -304,7 +304,7 @@ asyncTest('עובד ללא קישור לכרטיס עובד אינו יכול ל
 
 asyncTest('עובד אינו משנה אילוצים אחרי פרסום הסידור', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner9@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner9@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp9@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-9' });
     })
@@ -320,7 +320,7 @@ asyncTest('עובד אינו משנה אילוצים אחרי פרסום הסי�
 
 asyncTest('מנהל אינו יכול לשנות את המנוי', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner10@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner10@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'mgr10@a.com', password: 'secret1', role: 'manager' });
     })
@@ -333,7 +333,7 @@ asyncTest('מנהל אינו יכול לשנות את המנוי', function () {
 
 asyncTest('לא ניתן להעניק תפקיד בעלים דרך יצירת משתמש', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner11@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner11@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'sneaky@a.com', password: 'secret1', role: 'owner' });
     })
@@ -346,7 +346,7 @@ console.log('\n== אישור אילוצים ==');
 
 asyncTest('בקשת עובד נשמרת תמיד כממתינה לאישור', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own20@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own20@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp20@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-20' });
     })
@@ -361,7 +361,7 @@ asyncTest('בקשת עובד נשמרת תמיד כממתינה לאישור', f
 
 asyncTest('עובד אינו יכול לאשר את הבקשה של עצמו', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own21@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own21@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp21@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-21' });
     })
@@ -376,7 +376,7 @@ asyncTest('עובד אינו יכול לאשר את הבקשה של עצמו', f
 
 asyncTest('עובד אינו יכול לשלוח בקשה בשם עובד אחר', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own22@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own22@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp22@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-22' });
     })
@@ -392,7 +392,7 @@ asyncTest('עובד אינו יכול לשלוח בקשה בשם עובד אחר
 
 asyncTest('מנהל מאשר ודוחה בקשות', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own23@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own23@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp23@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-23' });
     })
@@ -414,7 +414,7 @@ asyncTest('מנהל מאשר ודוחה בקשות', function () {
 
 asyncTest('החלטה לא חוקית ובקשה שאינה קיימת נדחות', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own24@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own24@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveWeek('2026-09-20', { constraints: {}, assignments: {} }); })
     .then(function () {
       return assertRejects(backend.decideConstraint('2026-09-20', 'emp-x', 1, 'maybe'), 'invalid_input');
@@ -426,7 +426,7 @@ asyncTest('החלטה לא חוקית ובקשה שאינה קיימת נדחו�
 
 asyncTest('עריכה חוזרת של בקשה שאושרה מחזירה אותה לאישור', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'own25@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own25@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp25@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-25' });
     })
@@ -451,7 +451,7 @@ console.log('\n== התחברות ==');
 
 asyncTest('סיסמה שגויה נדחית', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner12@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner12@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.signOut(); })
     .then(function () {
       return assertRejects(backend.signIn({ email: 'owner12@a.com', password: 'wrong' }), 'bad_credentials');
@@ -460,11 +460,11 @@ asyncTest('סיסמה שגויה נדחית', function () {
 
 asyncTest('אימייל כפול נדחה', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'dup@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'dup@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.signOut(); })
     .then(function () {
       return assertRejects(
-        backend.signUpCompany({ companyName: 'חברה ב', email: 'DUP@a.com', password: 'secret1' }),
+        backend.signUpCompany({ companyName: 'חברה ב', email: 'DUP@a.com', password: 'secret1', phone: '054-1234567'}),
         'email_taken', 'אימייל כפול (גם באותיות גדולות) התקבל');
     });
 });
@@ -472,14 +472,14 @@ asyncTest('אימייל כפול נדחה', function () {
 asyncTest('סיסמה קצרה נדחית', function () {
   var backend = freshBackend();
   return assertRejects(
-    backend.signUpCompany({ companyName: 'חברה', email: 'short@a.com', password: '123' }),
+    backend.signUpCompany({ companyName: 'חברה', email: 'short@a.com', password: '123', phone: '054-1234567'}),
     'weak_password');
 });
 
 asyncTest('משתמש שהושבת אינו יכול להתחבר', function () {
   var backend = freshBackend();
   var userId;
-  return backend.signUpCompany({ companyName: 'חברה', email: 'owner13@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'owner13@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.createUser({ email: 'emp13@a.com', password: 'secret1', role: 'employee' }); })
     .then(function (user) { userId = user.id; return backend.updateUser(userId, { active: false }); })
     .then(function () { return backend.signOut(); })
@@ -753,7 +753,7 @@ function withLimit(backend, max, countPreferences) {
 
 asyncTest('עובד אינו יכול לעבור את התקרה גם בפנייה ישירה לשרת', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap1@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap1@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 2); })
     .then(function () {
       return backend.createUser({ email: 'w1@a.com', password: 'secret1',
@@ -775,7 +775,7 @@ asyncTest('עובד אינו יכול לעבור את התקרה גם בפניי
 asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה מלאה', function () {
   /* זו ברירת המחדל: מנהל שהגביל ל-1 מצפה לראות שורה אחת */
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1); })
     .then(function () {
       return backend.createUser({ email: 'w2@a.com', password: 'secret1',
@@ -793,7 +793,7 @@ asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה �
 
 asyncTest('העדפה ומחיקה אינן נחסמות כשהעדפות אינן נספרות', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2b@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap2b@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1, false); })
     .then(function () {
       return backend.createUser({ email: 'w2b@a.com', password: 'secret1',
@@ -821,7 +821,7 @@ asyncTest('העדפה ומחיקה אינן נחסמות כשהעדפות אינ
 
 asyncTest('עריכה של בקשה קיימת אינה נספרת פעמיים', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap3@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap3@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1); })
     .then(function () {
       return backend.createUser({ email: 'w3@a.com', password: 'secret1',
@@ -841,7 +841,7 @@ asyncTest('עריכה של בקשה קיימת אינה נספרת פעמיים'
 
 asyncTest('מנהל אינו מוגבל בתקרה – הוא מתקן, לא מבקש', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap4@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap4@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1); })
     .then(function () {
       /* הבעלים מקושר לכרטיס עובד ושומר שלוש בקשות לעצמו */
@@ -860,7 +860,7 @@ asyncTest('מנהל אינו מוגבל בתקרה – הוא מתקן, לא מ�
 
 asyncTest('כשהתקרה כבויה אין שום הגבלה', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'cap5@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'cap5@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'w5@a.com', password: 'secret1',
         role: 'employee', employeeId: 'emp-c5' });
@@ -903,7 +903,7 @@ test('רק הזמנה שלא נוצלה ניתנת לביטול', function () {
 
 asyncTest('הזמנה מקבלת תאריך, והכניסה הראשונה מסמנת הצטרפות', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'inv1@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv1@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ name: 'דנה', email: 'dana1@a.com', role: 'employee' });
     })
@@ -930,7 +930,7 @@ asyncTest('שליחה חוזרת מאפסת את שעון התוקף', function 
   var backend = freshBackend();
   var clock = new Date('2026-09-01T08:00:00.000Z');
   backend.now = function () { return clock; };
-  return backend.signUpCompany({ companyName: 'חברה', email: 'inv2@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv2@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ name: 'רון', email: 'ron2@a.com', role: 'employee' });
     })
@@ -946,7 +946,7 @@ asyncTest('שליחה חוזרת מאפסת את שעון התוקף', function 
 
 asyncTest('ביטול הזמנה מוחק רק מוזמן שטרם נכנס', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'inv3@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv3@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ name: 'נועה', email: 'noa3@a.com', role: 'employee' });
     })
@@ -973,13 +973,13 @@ asyncTest('ביטול הזמנה מוחק רק מוזמן שטרם נכנס', fu
 asyncTest('אי אפשר לבטל הזמנה של חברה אחרת', function () {
   var backend = freshBackend();
   var target;
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'inv4a@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'inv4a@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ name: 'מוזמן', email: 'target4@a.com', role: 'employee' });
     })
     .then(function (user) { target = user; return backend.signOut(); })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'inv4b@a.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'inv4b@a.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () {
       return assertRejects(backend.cancelInvite(target.id), 'not_found', 'חברה אחרת');
@@ -989,7 +989,7 @@ asyncTest('אי אפשר לבטל הזמנה של חברה אחרת', function (
 asyncTest('עובד אינו יכול לבטל הזמנות', function () {
   var backend = freshBackend();
   var target;
-  return backend.signUpCompany({ companyName: 'חברה', email: 'inv5@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'inv5@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ name: 'מוזמן', email: 'target5@a.com', role: 'employee' });
     })
@@ -1010,7 +1010,7 @@ console.log('\n== זהות: השם שלי מול שם העסק ==');
 
 asyncTest('כל משתמש משנה את השם של עצמו', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'id1@a.com', password: 'secret1', name: 'שם ישן' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id1@a.com', password: 'secret1', name: 'שם ישן', phone: '054-1234567'})
     .then(function () { return backend.saveOwnName('שם חדש'); })
     .then(function (user) {
       assertEqual(user.name, 'שם חדש', 'השם לא השתנה');
@@ -1022,7 +1022,7 @@ asyncTest('כל משתמש משנה את השם של עצמו', function () {
 
 asyncTest('שם ריק נדחה', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'חברה', email: 'id2@a.com', password: 'secret1', name: 'פז' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id2@a.com', password: 'secret1', name: 'פז', phone: '054-1234567'})
     .then(function () { return assertRejects(backend.saveOwnName('   '), 'invalid', 'שם ריק'); })
     .then(function () { assertEqual(backend.session().user.name, 'פז', 'השם נמחק'); });
 });
@@ -1032,7 +1032,7 @@ asyncTest('שם ריק נדחה', function () {
 asyncTest('עובד משנה רק את שמו שלו', function () {
   var backend = freshBackend();
   var boss;
-  return backend.signUpCompany({ companyName: 'חברה', email: 'id3@a.com', password: 'secret1', name: 'הבעלים' })
+  return backend.signUpCompany({ companyName: 'חברה', email: 'id3@a.com', password: 'secret1', name: 'הבעלים', phone: '054-1234567'})
     .then(function () {
       boss = backend.session().user.id;
       return backend.createUser({ name: 'עובד', email: 'id3w@a.com', role: 'employee' });
@@ -1051,7 +1051,7 @@ asyncTest('עובד משנה רק את שמו שלו', function () {
 
 asyncTest('שם העסק – לבעלים בלבד', function () {
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'שם ברשם החברות', email: 'id4@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'שם ברשם החברות', email: 'id4@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.renameCompany('השם המסחרי'); })
     .then(function () {
       assertEqual(backend.session().company.name, 'השם המסחרי', 'שם העסק לא השתנה');
@@ -1074,7 +1074,7 @@ asyncTest('מספר העוסק – לבעלים בלבד, ואינו נשמר כ
   /* מספר העוסק הולך לחשבונית. מנהל משמרת אינו קובע על שם מי
      היא יוצאת, בדיוק כמו שאינו קובע את שם העסק. */
   var backend = freshBackend();
-  return backend.signUpCompany({ companyName: 'עסק', email: 'tax1@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'עסק', email: 'tax1@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return backend.saveCompanyDetails({ taxId: '51-234 5678' }); })
     .then(function () {
       assertEqual(backend.session().company.taxId, '51-2345678', 'מספר העוסק לא נשמר');
@@ -1096,13 +1096,13 @@ asyncTest('מספר העוסק – לבעלים בלבד, ואינו נשמר כ
 asyncTest('שינוי שם אינו חוצה חברות', function () {
   var backend = freshBackend();
   var firstId;
-  return backend.signUpCompany({ companyName: 'חברה א', email: 'id5a@a.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'חברה א', email: 'id5a@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       firstId = backend.session().company.id;
       return backend.signOut();
     })
     .then(function () {
-      return backend.signUpCompany({ companyName: 'חברה ב', email: 'id5b@a.com', password: 'secret1' });
+      return backend.signUpCompany({ companyName: 'חברה ב', email: 'id5b@a.com', password: 'secret1', phone: '054-1234567'});
     })
     .then(function () { return backend.renameCompany('ב החדשה'); })
     .then(function () {
@@ -1122,7 +1122,7 @@ function companyWithTwo(options) {
   var backend = freshBackend();
   var ids = {};
   var team = !!(options && options.team);
-  return backend.signUpCompany({ companyName: 'עסק', email: 'boss@p.com', password: 'secret1' })
+  return backend.signUpCompany({ companyName: 'עסק', email: 'boss@p.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.saveConfig({
         settings: {

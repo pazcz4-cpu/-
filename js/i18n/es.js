@@ -808,6 +808,8 @@
         branchPlaceholder: 'p. ej. Tienda central',
         addBranch: 'Añadir sucursal',
         shiftName: 'Turno',
+        shiftFrom: 'Hora de inicio',
+        shiftTo: 'Hora de fin',
         shiftsNote: 'Cambiar un nombre o una hora aquí afecta a todas las sucursales. Ajusta una en concreto luego en Sucursales.',
         importTitle: 'Importar un archivo',
         importBody: 'Excel o CSV, con los nombres del personal y sus sucursales.',
@@ -1064,6 +1066,7 @@
       },
 
       leave: {
+        paid: 'Con pago',
         unpaid: 'Sin pago',
         paidTitle: 'Día de vacaciones pagado',
         unpaidTitle: 'Día libre sin pago: es lo predeterminado',

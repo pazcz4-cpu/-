@@ -129,6 +129,65 @@ test('החלפת תבניות עובדת בכל שפה', function () {
   });
 });
 
+console.log('\n== מפתחות שהקוד באמת מבקש ==');
+
+/* בדיקת ההתאמה למעלה משווה כל שפה לאנגלית, ולכן מפתח שחסר בכל
+   שמונה השפות במידה שווה עובר אותה בשקט. בדיוק זה קרה עם
+   leave.paid: הצ'יפ "בתשלום" במסך האילוצים הציג את המחרוזת
+   leave.paid עצמה, בכל שפה, והבדיקות היו ירוקות.
+
+   לכן סורקים כאן את קוד המוצר עצמו: כל מפתח שכתוב כמחרוזת בתוך
+   t('...') חייב להתקיים במילון הבסיס. */
+function sourceFiles(dir, out) {
+  out = out || [];
+  fs.readdirSync(dir).forEach(function (name) {
+    var full = path.join(dir, name);
+    if (fs.statSync(full).isDirectory()) { if (name !== 'i18n') sourceFiles(full, out); }
+    else if (/\.js$/.test(name)) out.push(full);
+  });
+  return out;
+}
+
+var jsDir = path.join(__dirname, '..', 'js');
+
+test('כל מפתח שכתוב ישירות בקוד קיים במילון', function () {
+  I18n.use('en');
+  var missing = [];
+  sourceFiles(jsDir).forEach(function (file) {
+    var src = fs.readFileSync(file, 'utf8');
+    /* רק קריאה שנסגרת מיד – t('a.b') או t('a.b', {...}).
+       t('a.b' + x) הוא מפתח מורכב ונבדק ברשימה שמתחת. */
+    var re = /\bt\(\s*'([a-zA-Z][\w]*(?:\.[\w]+)+)'\s*(\)|,)/g;
+    var match;
+    while ((match = re.exec(src))) {
+      if (I18n.t(match[1]) === match[1]) {
+        missing.push(path.basename(file) + ': ' + match[1]);
+      }
+    }
+  });
+  assert(!missing.length, 'מפתחות שהקוד מבקש ואינם במילון: ' + missing.join(', '));
+});
+
+/* מפתחות שנבנים בזמן ריצה מצירוף מחרוזות. סריקה אוטומטית לא
+   יכולה לגלות אותם, ולכן הם רשומים כאן במפורש – וכשמוסיפים
+   ערך חדש למשפחה כזו, מוסיפים אותו גם לכאן. */
+var COMPOSED_KEYS = [
+  'leave.paid', 'leave.unpaid',                 // js/app.js – צ'יפ סוג יום החופש
+  'leave.paidTitle', 'leave.unpaidTitle',
+  'hours.src_phone', 'hours.src_device', 'hours.src_manager',   // js/app.js – דוח השעות
+  'leaveRequest.status_pending', 'leaveRequest.status_approved', // js/backend/employee-ui.js
+  'leaveRequest.status_rejected', 'leaveRequest.status_mixed'
+];
+
+languages.forEach(function (lang) {
+  test(lang.code + ': מפתחות מורכבים מתורגמים ולא חוזרים כמו שהם', function () {
+    I18n.use(lang.code);
+    var raw = COMPOSED_KEYS.filter(function (key) { return I18n.t(key) === key; });
+    assert(!raw.length, 'מוצגים כמחרוזת גולמית על המסך: ' + raw.join(', '));
+  });
+});
+I18n.use('he');
+
 console.log('\n== שפת ברירת המחדל ==');
 
 /* מדמים דפדפן. ב-Node navigator הוא מאפיין לקריאה בלבד, ולכן

@@ -808,6 +808,8 @@
         branchPlaceholder: 'por ex. Loja Central',
         addBranch: 'Adicionar filial',
         shiftName: 'Turno',
+        shiftFrom: 'Hora de início',
+        shiftTo: 'Hora de fim',
         shiftsNote: 'Mudar um nome ou horário aqui aplica-se a todas as filiais. Ajuste uma em concreto depois em Filiais.',
         importTitle: 'Importar um ficheiro',
         importBody: 'Excel ou CSV, com os nomes dos colaboradores e as suas filiais.',
@@ -1064,6 +1066,7 @@
       },
 
       leave: {
+        paid: 'Com pagamento',
         unpaid: 'Sem pagamento',
         paidTitle: 'Dia de férias pago',
         unpaidTitle: 'Dia de folga sem pagamento — é o predefinido',

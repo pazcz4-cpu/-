@@ -814,6 +814,8 @@
         branchPlaceholder: 'e.g. Main store',
         addBranch: 'Add location',
         shiftName: 'Shift',
+        shiftFrom: 'Start time',
+        shiftTo: 'End time',
         shiftsNote: 'Renaming a shift or changing its hours here applies everywhere. Tune a single location later in Locations.',
         importTitle: 'Import a file',
         importBody: 'Excel or CSV, with employee names and their locations.',
@@ -1070,6 +1072,7 @@
       },
 
       leave: {
+        paid: 'Paid',
         unpaid: 'Unpaid',
         paidTitle: 'Paid leave day',
         unpaidTitle: 'Unpaid day off — this is the default',

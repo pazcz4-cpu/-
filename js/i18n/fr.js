@@ -808,6 +808,8 @@
         branchPlaceholder: 'p. ex. Magasin central',
         addBranch: 'Ajouter une succursale',
         shiftName: 'Poste',
+        shiftFrom: 'Heure de début',
+        shiftTo: 'Heure de fin',
         shiftsNote: "Renommer un poste ou changer son horaire ici s'applique partout. Ajustez une succursale plus tard dans Succursales.",
         importTitle: 'Importer un fichier',
         importBody: 'Excel ou CSV, avec les noms des employés et leurs succursales.',
@@ -1064,6 +1066,7 @@
       },
 
       leave: {
+        paid: 'Payé',
         unpaid: 'Non payé',
         paidTitle: 'Jour de congé payé',
         unpaidTitle: 'Jour de repos non payé — c’est la valeur par défaut',

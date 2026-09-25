@@ -808,6 +808,8 @@
         branchPlaceholder: 'z. B. Filiale Mitte',
         addBranch: 'Filiale hinzufügen',
         shiftName: 'Schicht',
+        shiftFrom: 'Startzeit',
+        shiftTo: 'Endzeit',
         shiftsNote: 'Name oder Zeit hier zu ändern gilt für alle Filialen. Eine einzelne stellen Sie später unter Filialen ein.',
         importTitle: 'Datei importieren',
         importBody: 'Excel oder CSV, mit Namen und Filialen der Mitarbeitenden.',
@@ -1064,6 +1066,7 @@
       },
 
       leave: {
+        paid: 'Bezahlt',
         unpaid: 'Unbezahlt',
         paidTitle: 'Bezahlter Urlaubstag',
         unpaidTitle: 'Unbezahlter freier Tag — das ist die Voreinstellung',

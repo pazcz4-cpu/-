@@ -192,10 +192,10 @@
         '<input type="text" class="text-input wiz-shift-name" maxlength="40" value="' + esc(shift.name) + '"' +
           ' aria-label="' + esc(t('onboarding.shiftName') + ' ' + (index + 1)) + '">' +
         '<input type="text" class="time-input wiz-shift-from" maxlength="5" inputmode="numeric" value="' +
-          esc(shift.from || '') + '" aria-label="' + esc(t('settings.from')) + '">' +
+          esc(shift.from || '') + '" aria-label="' + esc(t('onboarding.shiftFrom')) + '">' +
         '<span class="wiz-dash">–</span>' +
         '<input type="text" class="time-input wiz-shift-to" maxlength="5" inputmode="numeric" value="' +
-          esc(shift.to || '') + '" aria-label="' + esc(t('settings.to')) + '">' +
+          esc(shift.to || '') + '" aria-label="' + esc(t('onboarding.shiftTo')) + '">' +
         '<button type="button" class="btn icon ghost wiz-drop" aria-label="' +
           esc(t('onboarding.remove')) + '">' + ico('close') + '</button>' +
         '</div>';

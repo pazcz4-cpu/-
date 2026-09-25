@@ -65,9 +65,14 @@
   <ul>
     <li><strong>אף אחד אצלנו אינו יכול לראות סיסמה.</strong> הסיסמאות
     נשמרות מגובבות (hashed) בשכבת האימות של Supabase.</li>
-    <li><strong>גם מנהל בחברה אינו קובע סיסמה לעובד.</strong> העובד
-    מקבל קישור בדואר וקובע סיסמה בעצמו. זה לא רק נוח – זה מונע מצב
-    שבו סיסמה של עובד עוברת בוואטסאפ ונשארת שם.</li>
+    <li><strong>גם מנהל בחברה אינו רואה סיסמה של עובד.</strong> יש
+    שתי דרכים לצרף עובד, ובשתיהן הסיסמה אינה עוברת דרך המסך של
+    המנהל: <em>שליחת הזמנה</em> – העובד מקבל קישור בדואר וקובע
+    סיסמה בעצמו; <em>שליחת פרטי כניסה</em> – השרת מגריל סיסמה,
+    שולח אותה ישירות למייל של העובד, ואינו מחזיר אותה לדפדפן של
+    המנהל. במקרה השני כדאי שהעובד יחליף אותה בכניסה הראשונה, דרך
+    "שכחתי סיסמה". כך או כך, סיסמה של עובד לא אמורה לעבור בוואטסאפ
+    ולהישאר שם.</li>
     <li>קישור הזמנה וקישור איפוס הם חד-פעמיים ופגים. קישור שנצרך
     כבר אינו עובד, והאסימון נמחק מהכתובת מיד כדי שלא יישאר
     בהיסטוריית הדפדפן.</li>
@@ -104,7 +109,9 @@
   <ul>
     <li>אין באתר ובמערכת אף קובץ Cookie, אף כלי אנליטיקה ואף פיקסל
     של צד שלישי.</li>
-    <li>אין מעקב מיקום, אין שעון נוכחות ואין ניטור עובדים.</li>
+    <li>אין מעקב מיקום ואין ניטור עובדים. שעון הנוכחות כבוי כברירת
+    מחדל, והעסק מחליט אם להפעיל אותו; מה שהוא רושם הוא שעת כניסה
+    ושעת יציאה, בלי GPS ובלי מיקום המכשיר.</li>
     <li>איננו מוכרים נתונים ואיננו משתפים אותם עם מפרסמים.</li>
   </ul>
 
@@ -162,10 +169,16 @@
   <ul>
     <li><strong>Nobody here can see a password.</strong> Passwords are
     stored hashed in Supabase's authentication layer.</li>
-    <li><strong>A manager does not set a password for staff
-    either.</strong> Each person gets a link by email and chooses their
-    own. That is not only convenient – it prevents a staff password
-    being sent over WhatsApp and living there forever.</li>
+    <li><strong>A manager never sees a member of staff's password
+    either.</strong> There are two ways to bring someone in, and in
+    neither does the password pass through the manager's screen:
+    <em>send an invitation</em> – the person gets a link by email and
+    chooses their own password; <em>send sign-in details</em> – the
+    server draws a password, mails it straight to that person, and
+    does not return it to the manager's browser. In the second case
+    they should change it on first sign-in, through "Forgot
+    password". Either way, a staff password should not be sent over
+    WhatsApp and live there forever.</li>
     <li>Invitation and reset links are single-use and expire. A link
     that has been used no longer works, and the token is stripped from
     the address immediately so it does not sit in browser history.</li>
@@ -207,7 +220,10 @@
   <ul>
     <li>There is not a single cookie, analytics tool or third-party
     pixel on the site or in the app.</li>
-    <li>No location tracking, no time clock, no staff monitoring.</li>
+    <li>No location tracking and no staff monitoring. The time clock
+    is off by default and the business decides whether to turn it on;
+    what it records is a clock-in and a clock-out time, with no GPS
+    and no device location.</li>
     <li>We do not sell data and do not share it with advertisers.</li>
   </ul>
 

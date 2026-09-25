@@ -79,12 +79,19 @@
       <tr><td>כרטיסי עובדים: שם, סניפים, סוגי משמרות, מכסה שבועית והערה חופשית</td><td>הבסיס לשיבוץ</td></tr>
       <tr><td>בקשות העובדים: יום או משמרת, סטטוס אישור, סיבה אופציונלית שהעובד כתב, והערת מנהל</td><td>כדי שהבקשות ישפיעו על הסידור ויהיה תיעוד להחלטה</td></tr>
       <tr><td>הסידורים עצמם, לכל שבוע</td><td>זה המוצר</td></tr>
+      <tr><td>דיווחי שעון הנוכחות, בעסק שהפעיל אותו: כניסה או יציאה, חותמת זמן, מקור הדיווח (טלפון, שעון בסניף, או תיקון שמנהל ביצע), ובדיווח ממכשיר גם מספר המכשיר והסניף</td><td>חישוב השעות בפועל לקראת התלוש</td></tr>
       <tr><td>קריאות שירות שנפתחו מול התמיכה</td><td>כדי לענות ולתקן</td></tr>
       <tr><td>מצב החיוב: תוכנית, תאריך תוקף, האם תשלום נכשל</td><td>ניהול המנוי</td></tr>
     </tbody>
   </table>
   <p>העובד כותב סיבה לבקשה רק אם הוא בוחר לכתוב. השדה חופשי, ולכן
   כדאי להנחות את הצוות לא להזין בו מידע רפואי או אישי מעבר לנדרש.</p>
+
+  <p>שעון הנוכחות כבוי כברירת מחדל. הוא נדלק רק אם העסק בחר להפעיל
+  אותו בהגדרות, ומה שנרשם בו הוא שעה – לא מקום. מנהל יכול לתקן
+  דיווח שגוי, והתיקון נשמר כתיקון ולא מוחק את מה שהיה. גם תיקון
+  שנמחק אינו מעלים את העובדה שהיה שם דיווח: הוא יורד מהרשימה
+  ומשפיע על דוח השעות מאותו רגע.</p>
 
   <h2>מה איננו אוספים</h2>
   <ul>
@@ -96,7 +103,9 @@
     של צד שלישי למעקב.</li>
     <li><strong>אין פרטי אמצעי תשלום</strong> – מספרי כרטיס נמסרים
     ישירות לספק הסליקה ואינם עוברים בשרתים שלנו ואינם נשמרים בהם.</li>
-    <li><strong>אין מיקום, אין שעון נוכחות ואין מעקב אחרי עובדים.</strong></li>
+    <li><strong>אין מיקום ואין מעקב אחרי עובדים.</strong> שעון
+    הנוכחות, אם העסק הפעיל אותו, רושם שעת כניסה ויציאה ותו לא –
+    בלי GPS, בלי מיקום המכשיר ובלי מעקב רציף.</li>
     <li><strong>איננו מוכרים מידע ואיננו משתפים אותו למטרות שיווק</strong>
     – של אף אחד.</li>
   </ul>
@@ -187,6 +196,7 @@
       <tr><td>Staff cards: name, locations, shift types, weekly limit and a free-text note</td><td>The basis for scheduling</td></tr>
       <tr><td>Availability requests: the day or shift, approval status, an optional reason the person wrote, and a manager note</td><td>So requests affect the schedule and the decision is on record</td></tr>
       <tr><td>The schedules themselves, per week</td><td>That is the product</td></tr>
+      <tr><td>Time-clock punches, in a business that turned the clock on: in or out, a timestamp, where the punch came from (phone, a clock at the location, or a manager correction), and for a device punch also the device serial and the location</td><td>Working out actual hours ahead of payroll</td></tr>
       <tr><td>Support tickets you open</td><td>To answer and fix them</td></tr>
       <tr><td>Billing state: plan, valid-until date, whether a payment failed</td><td>Running the subscription</td></tr>
     </tbody>
@@ -194,6 +204,11 @@
   <p>A reason for a request is written only if the person chooses to
   write one. The field is free text, so it is worth telling your team
   not to put medical or personal details in it.</p>
+
+  <p>The time clock is off by default. It runs only if the business
+  turns it on in settings, and what it records is a time – not a
+  place. A manager can correct a wrong punch; the correction is kept
+  as a correction and does not erase what was there before.</p>
 
   <h2>What we do not collect</h2>
   <ul>
@@ -206,8 +221,10 @@
     <li><strong>No payment details</strong> – card numbers go straight
     to the payment provider. They never pass through our servers and
     are not stored there.</li>
-    <li><strong>No location, no time clock and no staff
-    monitoring.</strong></li>
+    <li><strong>No location and no staff monitoring.</strong> The
+    time clock, where a business turns it on, records a clock-in and
+    a clock-out time and nothing else – no GPS, no device location,
+    no continuous tracking.</li>
     <li><strong>We do not sell data and we do not share it for
     marketing</strong> – anyone's.</li>
   </ul>

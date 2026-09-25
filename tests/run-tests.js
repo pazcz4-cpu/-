@@ -3007,6 +3007,49 @@ test('עמוד האבטחה אומר גם מה עוד לא קיים', function (
     'העמוד מבטיח בלי לציין את הגבולות');
 });
 
+/* ===== מה שהעמודים מכחישים חייב באמת לא להתקיים =====
+
+   שלושת העמודים האלה נכתבו לפני ששעון הנוכחות נבנה, והם המשיכו
+   להצהיר "אין שעון נוכחות" גם אחרי שהוא עלה לאוויר. הצהרת פרטיות
+   שמכחישה נתון שהמערכת אוספת היא לא ניסוח ישן – היא לא נכונה.
+
+   הבדיקה קושרת את ההכחשה ליכולת עצמה: כל עוד Store יודע לרשום
+   דיווח שעון, אסור לאף עמוד להכחיש שיש שעון. */
+test('אף עמוד משפטי אינו מכחיש יכולת שקיימת במערכת', function () {
+  var hasClock = typeof Store.addPunch === 'function' &&
+    typeof Store.timeclock === 'function';
+  assert(hasClock, 'שעון הנוכחות נעלם מ-Store – צריך לעדכן גם את הבדיקה הזו');
+
+  var DENIALS = [/אין שעון נוכחות/, /no time clock/i];
+  LEGAL_FILES.forEach(function (name) {
+    var html = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    DENIALS.forEach(function (pattern) {
+      assert(!pattern.test(html),
+        name + ': מכחיש את שעון הנוכחות, שקיים במערכת – ' + pattern);
+    });
+  });
+});
+
+/* ומה שהמערכת כן אוספת צריך להיות כתוב בהצהרת הפרטיות. */
+test('הצהרת הפרטיות מפרטת את נתוני שעון הנוכחות', function () {
+  var html = fs.readFileSync(path.join(__dirname, '..', 'privacy.html'), 'utf8');
+  assert(/שעון הנוכחות/.test(html), 'העברית אינה מזכירה את שעון הנוכחות');
+  assert(/time.clock/i.test(html), 'האנגלית אינה מזכירה את שעון הנוכחות');
+  /* לא די באזכור: צריך לומר מה נשמר */
+  assert(/חותמת זמן/.test(html), 'לא נאמר שנשמרת חותמת זמן');
+  assert(/timestamp/i.test(html), 'האנגלית אינה אומרת שנשמרת חותמת זמן');
+});
+
+/* שתי דרכים לצרף עובד, ושני עמודים תיארו כל אחד דרך אחרת כאילו
+   היא היחידה. */
+test('עמוד האבטחה מתאר את שתי הדרכים לצרף עובד', function () {
+  var html = fs.readFileSync(path.join(__dirname, '..', 'security.html'), 'utf8');
+  assert(/שליחת הזמנה/.test(html) && /שליחת פרטי כניסה/.test(html),
+    'העברית מתארת רק אחת משתי הדרכים');
+  assert(/send an invitation/i.test(html) && /send sign-in details/i.test(html),
+    'האנגלית מתארת רק אחת משתי הדרכים');
+});
+
 console.log('\n== כתובת התמיכה ==');
 
 test('כתובת התמיכה מוגדרת במקום אחד ותקינה', function () {

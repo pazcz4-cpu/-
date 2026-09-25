@@ -176,7 +176,9 @@ var COMPOSED_KEYS = [
   'leave.paidTitle', 'leave.unpaidTitle',
   'hours.src_phone', 'hours.src_device', 'hours.src_manager',   // js/app.js – דוח השעות
   'leaveRequest.status_pending', 'leaveRequest.status_approved', // js/backend/employee-ui.js
-  'leaveRequest.status_rejected', 'leaveRequest.status_mixed'
+  'leaveRequest.status_rejected', 'leaveRequest.status_mixed',
+  'alerts.dropInactiveOne', 'alerts.dropInactiveOther',           // js/app.js – tCount
+  'alerts.dropInactiveDoneOne', 'alerts.dropInactiveDoneOther'
 ];
 
 languages.forEach(function (lang) {

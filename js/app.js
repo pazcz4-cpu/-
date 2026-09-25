@@ -1136,6 +1136,24 @@
       shown.forEach(function (item) {
         html += '<div class="issue ' + item.level + '">' + esc(item.text) + '</div>';
       });
+      /* ===== משמרת שכבתה מתחת לסידור =====
+
+         מנהל שמכבה משמרת בסניף, או מוריד סניף מכרטיס של עובד,
+         עושה את זה בהגדרות – והשיבוצים שכבר נבנו נשארים במקומם.
+         זו התנהגות נכונה: המערכת לא מוחקת עבודה שמישהו כבר בנה,
+         ולא מוחקת בשקט משמרת שעובד כבר קיבל הודעה עליה.
+
+         אבל אז מתקבלת רשימת התראות ארוכה בלי שום דרך לסגור
+         אותה, ומנהל שרואה עשרים התראות מפסיק לקרוא אותן. הכפתור
+         הזה הוא הדרך: פעולה אחת מפורשת שמסירה בדיוק את
+         השיבוצים שנשארו במשמרות שכבר אינן פעילות. */
+      var orphans = shown.filter(function (item) { return item.type === 'inactive-slot'; });
+      if (orphans.length) {
+        html += '<div class="issues-actions">' +
+          '<button type="button" class="btn ghost small" id="drop-inactive">' +
+          esc(tCount('alerts.dropInactive', orphans.length)) + '</button>' +
+          '<span class="hint">' + esc(t('alerts.dropInactiveHint')) + '</span></div>';
+      }
       html += '</div>';
     }
 
@@ -1147,6 +1165,32 @@
         renderIssues(report);
       });
     });
+    var drop = container.querySelector('#drop-inactive');
+    if (drop) { drop.addEventListener('click', function () { dropInactiveSlots(report); }); }
+  }
+
+  /* הסרת השיבוצים שנשארו במשמרות שאינן פעילות עוד. אינה נוגעת
+     בשום שיבוץ אחר: מקור האמת הוא אותה רשימת התראות שהמנהל
+     רואה על המסך, ורק המפתחות שמופיעים בה נמחקים. */
+  function dropInactiveSlots(report) {
+    if (weekBlocked()) return;
+    var keys = [];
+    report.issues.forEach(function (item) {
+      if (item.type !== 'inactive-slot') return;
+      var key = Store.slotKey(item.ref.dayIdx, item.ref.branchId, item.ref.shiftId);
+      if (keys.indexOf(key) === -1) keys.push(key);
+    });
+    if (!keys.length) return;
+
+    var people = 0;
+    var current = week();
+    keys.forEach(function (key) { people += (current.assignments[key] || []).length; });
+    if (!confirm(t('alerts.dropInactiveConfirm', { count: people }))) return;
+
+    keys.forEach(function (key) { delete current.assignments[key]; });
+    persist('week');
+    render();
+    toast(tCount('alerts.dropInactiveDone', people));
   }
 
   function dayNames(dayIndexes) {

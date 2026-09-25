@@ -486,6 +486,16 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
   background: var(--surface);
 }
 
+/* הפעולה שסוגרת את רשימת ההתראות: כפתור אחד, והסבר לידו למה
+   הוא כאן. נדבק לתחתית המגירה כדי שלא ייגלל מחוץ לעין. */
+.issues-actions {
+  position: sticky; bottom: calc(var(--s3) * -1);
+  margin-top: var(--s2); padding-top: var(--s2);
+  border-top: 1px solid var(--line); background: var(--surface);
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
+}
+.issues-actions .hint { margin: 0; font-size: 12px; }
+
 .workload { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
 .load-pill {
   background: var(--surface); border: 1px solid var(--line); border-radius: 999px;

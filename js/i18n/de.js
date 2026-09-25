@@ -42,6 +42,11 @@
         signIn: 'Anmelden',
         start: 'Gratis starten',
         startLong: 'Gratis starten – {days} Tage',
+        /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
+           שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
+           מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
+        pageTitle: 'Dienstplan-Software & Zeiterfassung für Teams | SetShifts',
+        metaDescription: 'Eine ganze Woche Dienstplan mit einem Klick – nach Verfügbarkeit, Wünschen und Schichtkontingent. Doppelbelegungen fallen vor dem Veröffentlichen auf. 14 Tage gratis.',
         heroBadge: 'KI-Dienstplanung — vom einzelnen Standort bis zur ganzen Kette',
         heroTitle: 'Ihr ganzer Betrieb, in einem Klick geplant.',
         heroSubtitle: 'Eine ganze Woche für das ganze Team – an einem Standort oder an allen – nach Verfügbarkeit, Wünschen und dem Schichtkontingent jeder Person. Zu jeder Zuteilung steht, warum genau diese Person.',
@@ -132,6 +137,7 @@
         footerRights: 'Alle Rechte vorbehalten.',
         about: 'Über uns',
         stories: 'Wo es hilft',
+        pricing: 'Preise',
         faq: 'FAQ',
         contact: 'Kontakt',
         privacy: 'Datenschutz',

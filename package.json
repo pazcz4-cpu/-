@@ -10,7 +10,7 @@
     "vercel-build": "node build-site.js",
     "test:sync": "node tests/sync-browser-test.mjs",
     "test:tenancy": "node tests/tenancy-tests.js",
-    "test:all": "node tests/vercel-limits-tests.js && node tests/schema-guard-tests.js && node tests/schema-live-tests.js && node tests/deploy-readiness-tests.js && node tests/run-tests.js && node tests/timeclock-tests.js && node tests/calendar-tests.js && node tests/timeclock-api-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node tests/xlsx-read-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js && node tests/payplus-provider-tests.js && node tests/billing-cron-tests.js && node tests/admin-tests.js && node tests/access-email-tests.js",
+    "test:all": "node tests/vercel-limits-tests.js && node tests/schema-guard-tests.js && node tests/schema-live-tests.js && node tests/deploy-readiness-tests.js && node tests/run-tests.js && node tests/timeclock-tests.js && node tests/calendar-tests.js && node tests/timeclock-api-tests.js && node tests/tenancy-tests.js && node tests/i18n-tests.js && node build-site.js && node tests/seo-tests.js && node tests/xlsx-read-tests.js && node tests/supabase-tests.js && node tests/billing-webhook-tests.js && node tests/payplus-provider-tests.js && node tests/billing-cron-tests.js && node tests/admin-tests.js && node tests/access-email-tests.js",
     "test:saas": "node tests/saas-browser-test.mjs && node tests/roles-browser-test.mjs",
     "test:billing": "node tests/billing-browser-test.mjs",
     "test:approval": "node tests/approval-browser-test.mjs",
@@ -78,7 +78,9 @@
     "store:assets": "node tools/store-assets.js",
     "store:shots": "node tools/store-shots.mjs",
     "test:shell": "node tests/shell-browser-test.mjs",
-    "test:a11y": "node build-site.js >/dev/null && node tests/a11y-browser-test.mjs"
+    "test:a11y": "node build-site.js >/dev/null && node tests/a11y-browser-test.mjs",
+    "hero:sizes": "node tools/hero-sizes.js",
+    "test:seo": "node build-site.js && node tests/seo-tests.js"
   },
   "license": "MIT"
 }

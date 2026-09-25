@@ -45,9 +45,10 @@ try {
     errors.push('CONSOLE: ' + text);
   });
 
-  console.log('\n== ארבעת העמודים עולים, בשתי שפות ==');
+  console.log('\n== עמודי התוכן עולים, בשתי שפות ==');
   for (const [name, file] of [['מי אנחנו', 'about.html'], ['איפה זה עוזר', 'stories.html'],
-    ['שאלות נפוצות', 'faq.html'], ['צור קשר', 'contact.html']]) {
+    ['מחירים', 'pricing.html'], ['שאלות נפוצות', 'faq.html'],
+    ['צור קשר', 'contact.html'], ['העמוד לא נמצא', '404.html']]) {
     await page.goto(url(file));
     await page.waitForTimeout(400);
     check(name + ': שתי גרסאות בקוד', await page.locator('article[data-legal]').count(), 2);
@@ -192,11 +193,12 @@ try {
 
   console.log('\n== לשוניות בראש כל עמוד ==');
   for (const [file, slug, label] of [['about.html', 'about', 'מי אנחנו'],
-    ['stories.html', 'stories', 'איפה זה עוזר'], ['faq.html', 'faq', 'שאלות נפוצות'],
+    ['stories.html', 'stories', 'איפה זה עוזר'], ['pricing.html', 'pricing', 'מחירים'],
+    ['faq.html', 'faq', 'שאלות נפוצות'],
     ['contact.html', 'contact', 'צור קשר'], ['privacy.html', 'privacy', null]]) {
     await page.goto(url(file));
     await page.waitForTimeout(400);
-    check(slug + ': ארבע לשוניות', await page.locator('.lp-tabs a').count(), 4);
+    check(slug + ': חמש לשוניות', await page.locator('.lp-tabs a').count(), 5);
     const current = await page.locator('.lp-tabs a[aria-current="page"]');
     if (label) {
       check(slug + ': הלשונית הנוכחית מסומנת', await current.count(), 1);
@@ -214,7 +216,8 @@ try {
   {
     const phone = await browser.newContext({ viewport: { width: 360, height: 700 }, locale: 'he-IL' });
     const pp = await phone.newPage();
-    for (const file of ['about.html', 'stories.html', 'faq.html', 'contact.html']) {
+    for (const file of ['about.html', 'stories.html', 'pricing.html', 'faq.html',
+      'contact.html']) {
       await pp.goto(url(file));
       await pp.waitForTimeout(400);
       const seen = await pp.evaluate(() => {
@@ -237,11 +240,11 @@ try {
   console.log('\n== הקישורים בין העמודים עובדים ==');
   await page.goto(url('landing.html'));
   await page.waitForTimeout(900);
-  for (const dir of ['about', 'stories', 'faq', 'contact']) {
+  for (const dir of ['about', 'stories', 'pricing', 'faq', 'contact']) {
     check('דף המכירה מקשר אל /' + dir + '/',
       await page.locator('a[href="' + dir + '/"]').count() > 0, true);
   }
-  check('ויש בו שורת לשוניות', await page.locator('.lp-tabs a').count(), 4);
+  check('ויש בו שורת לשוניות', await page.locator('.lp-tabs a').count(), 5);
   /* בדף המכירה הלשוניות עוברות במערכת התרגום המלאה */
   check('שהתוויות בה מתורגמות ולא מפתחות',
     /landing\./.test(await page.locator('.lp-tabs').innerText()), false);

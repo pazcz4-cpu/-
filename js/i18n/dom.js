@@ -82,10 +82,29 @@
     });
   }
 
+  /* השפה שהעמוד כבר נשלח בה. נקבעת בזמן הבנייה: לכל שפה יש
+     כתובת משלה (/ בעברית, /en/ באנגלית וכן הלאה), והטקסטים
+     כבר מוחלפים בקובץ עצמו כדי שסורק יראה אותם.
+
+     SHIFT_PAGE_LANG_FIXED מבדיל בין שני מצבים. בכתובת שמצהירה
+     על שפה היא גוברת על כל דבר אחר — מי שפתח /en/ ביקש אנגלית
+     עכשיו, גם אם בפעם הקודמת בחר עברית, ובלי זה הכתובת אומרת
+     דבר אחד והעמוד מראה אחר. בשורש אין הצהרה כזו, ולכן שם
+     ההעדפה השמורה של המבקר גוברת. */
+  function fromPage() {
+    var code = root.SHIFT_PAGE_LANG;
+    return (code && I18n.has(code)) ? code : null;
+  }
+
   /* נקרא פעם אחת בעליית העמוד, לפני שהאפליקציה מציירת משהו */
   function init() {
-    /* העדפה שהמשתמש בחר בעצמו גוברת תמיד על ברירת המחדל */
-    I18n.use(stored() || I18n.initial());
+    var page = fromPage();
+    var saved = stored();
+    if (saved && !I18n.has(saved)) saved = null;
+    /* העדפה שהמשתמש בחר בעצמו גוברת על ברירת המחדל, אבל לא על
+       כתובת שמצהירה על שפה */
+    I18n.use((page && root.SHIFT_PAGE_LANG_FIXED) ? page :
+      (saved || page || I18n.initial()));
     I18n.onChange(applyDocument);
     applyDocument();
     return I18n.code();
@@ -94,7 +113,7 @@
   var API = {
     STORAGE_KEY: STORAGE_KEY,
     stored: stored, remember: remember,
-    apply: apply, applyDocument: applyDocument,
+    apply: apply, applyDocument: applyDocument, fromPage: fromPage,
     setLanguage: setLanguage, fillPicker: fillPicker, init: init
   };
 

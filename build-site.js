@@ -10,6 +10,14 @@
 const fs = require('fs');
 const path = require('path');
 const icons = require('./tools/icons.js');
+const seo = require('./tools/seo.js');
+
+/* שכבת התרגום והמודל נטענים גם כאן, בצד השרת, כדי שהעמודים
+   ייצאו מהבנייה כשהטקסטים כבר בתוכם. סורק אינו מריץ את מחליף
+   השפות, וכל מה שמוחלף רק בדפדפן אינו קיים מבחינתו. */
+const I18n = require('./js/i18n/core.js');
+seo.LANGUAGES.forEach((lang) => require('./js/i18n/' + lang.code + '.js'));
+const Model = require('./js/backend/model.js');
 
 const root = __dirname;
 
@@ -230,11 +238,21 @@ fs.copyFileSync(path.join(root, 'sw.js'), path.join(out, 'sw.js'));
    כשהם עוברים לתת-תיקייה, הנתיבים היחסים נשברים – ולכן ממירים
    אותם לנתיבים מוחלטים. */
 function toAbsolutePaths(html) {
+  const asset = /^(css|js|icons|brand|assets)\//;
   return html
     .replace(/(src|href)="(?!https?:|\/|#|data:|mailto:)([^"]+)"/g, (match, attr, value) => {
-      if (/^(css|js|icons|brand|assets)\//.test(value)) return attr + '="/' + value + '"';
+      if (asset.test(value)) return attr + '="/' + value + '"';
       return match;
-    });
+    })
+    /* srcset הוא רשימה, ולכן הוא לא נתפס בכלל שלמעלה. התמונה
+       הראשית מוגשת בארבעה רוחבים, ובלי השורה הזו כל הגרסאות
+       הקטנות נשברו בדפי השפה — כלומר הטלפון היה מוריד דווקא
+       את הקובץ הגדול, או לא מוריד כלום. */
+    .replace(/srcset="([^"]+)"/g, (match, value) =>
+      'srcset="' + value.split(',').map((entry) => {
+        const trimmed = entry.trim().replace(/\s+/g, ' ');
+        return asset.test(trimmed) ? '/' + trimmed : trimmed;
+      }).join(', ') + '"');
 }
 
 /* האם יש סליקה מחוברת ומוכנה.
@@ -307,8 +325,13 @@ function escapeAttr(value) {
 
 /* תגיות שכל עמוד צריך: אייקון, manifest ומצב אפליקציה באייפון */
 function headExtras(options) {
-  return [
-    '<link rel="manifest" href="' + options.manifest + '">',
+  /* רק לעמודים שיש להם manifest. עמודי התוכן לא קיבלו אחד,
+     ולכן נשלח להם href="undefined" — כלומר כל ביקור ב"שאלות
+     נפוצות" ביקש מהשרת /faq/undefined וקיבל 404. בדפדפן זו
+     שורה אדומה בקונסול; אצל סורק זו כתובת שבורה שנמצאה
+     בעמוד, וסורק סופר כאלה. */
+  return (options.manifest
+    ? ['<link rel="manifest" href="' + options.manifest + '">'] : []).concat([
     '<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">',
     '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">',
     '<meta name="theme-color" content="#23499f">',
@@ -317,34 +340,25 @@ function headExtras(options) {
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
     '<meta name="apple-mobile-web-app-title" content="SetShifts">',
     '<meta name="format-detection" content="telephone=no">'
-  ].concat(options.canonical ? ['<link rel="canonical" href="' + SITE_URL + options.canonical + '">'] : [])
-    /* המערכת והכלי אינם עמודי תוכן, ואין סיבה שיופיעו בחיפוש */
-    .concat(options.noindex ? ['<meta name="robots" content="noindex, follow">'] : [])
-    .concat(options.social ? socialTags(options.social) : [])
+  ]).concat(options.canonical ? ['<link rel="canonical" href="' + SITE_URL + options.canonical + '">'] : [])
+    /* המערכת והכלי אינם עמודי תוכן, ואין סיבה שיופיעו בחיפוש.
+       לעמוד שכן נסרק נאמר במפורש שמותר להציג ממנו קטע מלא
+       ותמונה גדולה — בלי זה התוצאה מקבלת חיתוך שמרני, ותוצאה
+       עם תמונה נלחצת יותר מתוצאה בלי. */
+    .concat([options.noindex
+      ? '<meta name="robots" content="noindex, follow">'
+      : '<meta name="robots" content="index, follow, max-snippet:-1, ' +
+        'max-image-preview:large, max-video-preview:-1">'])
+    .concat(options.alternates ? seo.alternateTags(SITE_URL) : [])
+    .concat(options.social ? seo.socialTags(options.social) : [])
+    .concat((options.structured || []).map(seo.jsonLd))
+    /* השפה שהעמוד כבר נשלח בה, לפני שקוד כלשהו רץ. בלי זה
+       js/i18n/dom.js היה בוחר שפה לפי הדפדפן ומצייר מחדש את
+       העמוד — כלומר הכתובת אומרת /en/ והמבקר רואה עברית. */
+    .concat(options.pageLang ? ['<script>window.SHIFT_PAGE_LANG=' +
+      JSON.stringify(options.pageLang.code) + ';window.SHIFT_PAGE_LANG_FIXED=' +
+      (options.pageLang.code !== seo.DEFAULT_LANG) + ';</script>'] : [])
     .join('\n');
-}
-
-/* תצוגה מקדימה בוואטסאפ, בפייסבוק ובטוויטר.
-   הטקסט כאן סטטי בעברית: סורקים אינם מריצים את מחליף השפות,
-   והשוק הראשון הוא ישראל. */
-function socialTags(meta) {
-  return [
-    '<meta property="og:type" content="website">',
-    '<meta property="og:site_name" content="SetShifts">',
-    '<meta property="og:url" content="' + SITE_URL + '/">',
-    '<meta property="og:locale" content="he_IL">',
-    '<meta property="og:title" content="' + escapeAttr(meta.title) + '">',
-    '<meta property="og:description" content="' + escapeAttr(meta.description) + '">',
-    '<meta property="og:image" content="' + SITE_URL + '/icons/social.png">',
-    '<meta property="og:image:width" content="1200">',
-    '<meta property="og:image:height" content="630">',
-    '<meta property="og:image:width" content="512">',
-    '<meta property="og:image:height" content="512">',
-    '<meta name="twitter:card" content="summary">',
-    '<meta name="twitter:title" content="' + escapeAttr(meta.title) + '">',
-    '<meta name="twitter:description" content="' + escapeAttr(meta.description) + '">',
-    '<meta name="twitter:image" content="' + SITE_URL + '/icons/social.png">'
-  ];
 }
 
 /* רישום ה-Service Worker. נעשה כאן ולא בקוד האפליקציה, כי רק
@@ -361,6 +375,9 @@ const SW_REGISTER = `
 function page(source, target, options) {
   const opts = options || {};
   let html = markBilling(markVideo(fillLegal(toAbsolutePaths(read(source)))));
+  /* מה שקורה לעמוד לפני שהוא נשלח: תרגום בזמן הבנייה, והפיכת
+     הקישורים היחסיים למוחלטים כשהוא יורד לתת-תיקייה. */
+  if (opts.transform) html = opts.transform(html);
   html = html.replace('</head>', headExtras(opts) + '\n</head>');
   /* המשרד האחורי אינו עובד במצב לא מקוון ואינו אמור להישמר
      במטמון של המכשיר. מסך שרואה את כל הלקוחות לא צריך להשאיר
@@ -371,12 +388,92 @@ function page(source, target, options) {
   write(target, html);
 }
 
-/* דף המכירה: מפנה ל-icons/ יחסית, וזה תקין כי הוא יושב בשורש */
-page('landing.html', 'index.html', {
-  manifest: '/app/manifest.webmanifest',
-  canonical: '/',
-  social: metaOf(read('landing.html'))
+/* ===== דף המכירה, פעם אחת לכל שפה =====
+
+   עד כאן שמונה השפות היו קיימות רק בדפדפן: אותו קובץ נשלח לכל
+   מי שביקש, והטקסטים הוחלפו אחרי הטעינה. מבחינת מנוע חיפוש זה
+   אתר בעברית בלבד — שבע שפות שאיש לא יכול למצוא.
+
+   עכשיו לכל שפה יש כתובת משלה, הטקסטים כבר בתוך הקובץ, וכל
+   עמוד מצהיר על כל האחרים ב-hreflang. העברית נשארת בשורש: זו
+   הכתובת שכבר קיימת, ולהעביר אותה ל-/he/ היה מוחק את מה שנצבר
+   בה. */
+
+/* המחירון לנתונים המובנים. נקרא מ-model.js ולא נכתב כאן שוב:
+   מחיר שמופיע בגוגל ואינו המחיר באתר הוא בדיוק מה שגורם לגוגל
+   להוריד את התוצאה המורחבת, ובינתיים מביא לקוחות שמגלים מחיר
+   אחר ממה שהובטח. */
+function plansForSchema() {
+  return Model.PLAN_ORDER.map((id) => {
+    const plan = Model.PLANS[id];
+    return {
+      id: plan.id, name: plan.name, range: plan.range,
+      priceMonthly: plan.priceMonthly, quote: plan.quote
+    };
+  });
+}
+
+/* מה המוצר יודע לעשות, בלשון של מי שמחפש. נגזר מהמפתחות של
+   מקטע היכולות בדף עצמו, כדי שרשימה שתשתנה בעמוד תשתנה גם כאן. */
+const FEATURE_KEYS = [
+  'landing.feature1Title', 'landing.feature2Title', 'landing.feature3Title',
+  'landing.feature4Title', 'landing.feature5Title', 'landing.feature6Title'
+];
+
+function landingStructured(lang) {
+  const description = I18n.t('landing.metaDescription');
+  const features = FEATURE_KEYS
+    .map((key) => I18n.t(key))
+    .filter((text, index) => text && text !== FEATURE_KEYS[index]);
+  return [
+    seo.organization(SITE_URL, {
+      legalName: LEGAL.LEGAL_ENTITY || null,
+      supportEmail: Model.SUPPORT_EMAIL
+    }),
+    seo.softwareApplication(SITE_URL, {
+      description: description,
+      features: features,
+      plans: plansForSchema(),
+      currency: 'ILS',
+      pricingPath: '/pricing/'
+    }),
+    /* לשונית שפה אינה עמוד נפרד, ולכן אין כאן פירורי לחם —
+       דף הבית הוא השורש עצמו. */
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': SITE_URL + seo.pathOf(lang.code) + '#webpage',
+      url: SITE_URL + seo.pathOf(lang.code),
+      name: I18n.t('landing.pageTitle'),
+      description: description,
+      inLanguage: lang.code,
+      isPartOf: { '@id': SITE_URL + '/#organization' }
+    }
+  ];
+}
+
+seo.LANGUAGES.forEach((lang) => {
+  I18n.use(lang.code);
+  const here = seo.pathOf(lang.code);
+  page('landing.html',
+    lang.code === seo.DEFAULT_LANG ? 'index.html' : lang.code + '/index.html', {
+      manifest: '/app/manifest.webmanifest',
+      canonical: here,
+      alternates: true,
+      pageLang: lang,
+      social: {
+        siteUrl: SITE_URL,
+        url: SITE_URL + here,
+        ogLocale: lang.ogLocale,
+        title: I18n.t('landing.pageTitle'),
+        description: I18n.t('landing.metaDescription')
+      },
+      structured: landingStructured(lang),
+      transform: (html) =>
+        seo.absoluteLinks(seo.translate(html, (key) => I18n.t(key), lang), lang.code)
+    });
 });
+I18n.use(seo.DEFAULT_LANG);
 page('app.html', 'app/index.html', { manifest: '/app/manifest.webmanifest', noindex: true });
 page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', noindex: true });
 
@@ -402,16 +499,59 @@ const PROSE_PAGES = [
   { file: 'about.html', dir: 'about', label: 'מי אנחנו', priority: '0.6' },
   { file: 'stories.html', dir: 'stories', label: 'איפה זה עוזר', priority: '0.6' },
   { file: 'faq.html', dir: 'faq', label: 'שאלות נפוצות',
-    priority: '0.7', changefreq: 'monthly' },
+    priority: '0.7', changefreq: 'monthly', faq: true },
+  /* מחירים. העמוד שמי שמחפש "כמה עולה תוכנה לסידור
+     עבודה" מחפש בפועל, והשאילתה הזו היא כוונת קנייה
+     ולא סקרנות. עד כאן המחירון היה מקטע בתוך דף הבית,
+     ולמקטע אין כתובת משלו שאפשר לדרג אותה. */
+  { file: 'pricing.html', dir: 'pricing', label: 'מחירים',
+    priority: '0.8', changefreq: 'monthly', faq: true },
   { file: 'contact.html', dir: 'contact', label: 'צור קשר', priority: '0.6' }
 ];
+/* מה שכל עמוד פרוזה מקבל: תצוגה מקדימה משלו, שביל שמוביל אליו,
+   וזהות המוצר.
+
+   עד כאן אף עמוד תוכן לא נשא תגיות שיתוף, ולכן קישור ל"שאלות
+   נפוצות" שנשלח בוואטסאפ הופיע בלי כותרת ובלי תיאור — כלומר
+   נראה כמו קישור מפוקפק. */
+function proseHead(item) {
+  const meta = metaOf(read(item.file));
+  const here = '/' + item.dir + '/';
+  const structured = [
+    seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL }),
+    seo.breadcrumbs(SITE_URL, [
+      { name: 'SetShifts', path: '/' },
+      { name: item.label, path: here }
+    ])
+  ];
+  /* השאלות נקראות מהעמוד עצמו. שאלה שתשתנה בעמוד ולא כאן
+     הייתה נשלחת לגוגל כתשובה שאינה מופיעה בו — וזו בדיוק ההפרה
+     שבגללה מוסרת התוצאה המורחבת. */
+  if (item.faq) {
+    /* fillLegal קודם: העמוד הגולמי מכיל סימונים כמו
+       {{SUPPORT_EMAIL}}, ותשובה שנשלחת לגוגל עם סימון בתוכה
+       אינה התשובה שמופיעה בעמוד. */
+    const items = seo.faqFromHtml(fillLegal(read(item.file)), 'he');
+    if (items.length) structured.push(seo.faqPage(items));
+  }
+  return {
+    canonical: here,
+    social: {
+      siteUrl: SITE_URL, url: SITE_URL + here, ogLocale: 'he_IL',
+      title: meta.title, description: meta.description
+    },
+    structured: structured
+  };
+}
+
 PROSE_PAGES.forEach((item) => {
-  page(item.file, item.dir + '/index.html', { canonical: '/' + item.dir + '/' });
+  page(item.file, item.dir + '/index.html', proseHead(item));
 });
 
 /* מדריך לעובד. עמוד ציבורי בכוונה: מנהל שולח את הקישור לקבוצת
    העובדים, ומי שפותח אותו עוד לא התחבר לשום דבר. */
-page('guide.html', 'guide/index.html', { canonical: '/guide/' });
+page('guide.html', 'guide/index.html',
+  proseHead({ file: 'guide.html', dir: 'guide', label: 'מדריך לעובד/ת' }));
 
 /* הגדרות החיבור לשרת, נכתבות מחדש לכל פריסה.
    המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
@@ -466,22 +606,100 @@ function buildStamp() {
 write('version.txt', buildStamp());
 
 /* ===== קבצים לשורש ===== */
-write('robots.txt',
-  'User-agent: *\nAllow: /\nDisallow: /tool/\nDisallow: /admin/\nDisallow: /version.txt\nSitemap: ' + SITE_URL + '/sitemap.xml\n');
+write('robots.txt', [
+  'User-agent: *',
+  'Allow: /',
+  'Disallow: /tool/',
+  'Disallow: /admin/',
+  'Disallow: /version.txt',
+  /* סורקי בינה מלאכותית שמצטטים מקורות. חסימה שלהם אינה
+     מגינה על דבר — התוכן כאן ציבורי ממילא — והיא כן מוציאה
+     את המוצר מהתשובות שאנשים מקבלים היום במקום לחפש. */
+  '',
+  'User-agent: GPTBot',
+  'Allow: /',
+  '',
+  'User-agent: PerplexityBot',
+  'Allow: /',
+  '',
+  'User-agent: ClaudeBot',
+  'Allow: /',
+  '',
+  'Sitemap: ' + SITE_URL + '/sitemap.xml',
+  ''
+].join('\n'));
 
-/* דף המכירה מגיש את כל השפות מאותה כתובת, ולכן יש בדיוק כתובת
-   אחת למנועי החיפוש */
+/* ===== מפת האתר =====
+
+   lastmod אינו קישוט: הוא מה שמסמן לסורק שכדאי לחזור. בלעדיו
+   כל עמוד נראה זהה לגרסה שכבר נסרקה, ואתר חדש ממתין שבועות
+   לסריקה חוזרת. התאריך נלקח מזמן השינוי האמיתי של קובץ המקור,
+   ולא מזמן הבנייה — אחרת כל פריסה הייתה מצהירה ששמונה עשר
+   עמודים השתנו, וההצהרה הזו מפסיקה להיות אמינה.
+
+   לדף המכירה יש שמונה כתובות, אחת לכל שפה, וכל אחת מצהירה על
+   כל האחרות. זו אותה הצהרה שב-hreflang שבעמוד עצמו, וגוגל
+   מבקש את שתיהן. */
+function lastModified(file) {
+  try {
+    return fs.statSync(path.join(root, file)).mtime.toISOString().slice(0, 10);
+  } catch (err) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function sitemapEntry(loc, options) {
+  const opts = options || {};
+  return '  <url>\n' +
+    '    <loc>' + loc + '</loc>\n' +
+    '    <lastmod>' + opts.lastmod + '</lastmod>\n' +
+    '    <changefreq>' + (opts.changefreq || 'yearly') + '</changefreq>\n' +
+    '    <priority>' + (opts.priority || '0.3') + '</priority>\n' +
+    (opts.alternates || []).map((alt) =>
+      '    <xhtml:link rel="alternate" hreflang="' + alt.code +
+      '" href="' + alt.href + '"/>\n').join('') +
+    '  </url>\n';
+}
+
+const landingModified = lastModified('landing.html');
+const landingAlternates = seo.LANGUAGES
+  .map((lang) => ({ code: lang.code, href: SITE_URL + seo.pathOf(lang.code) }))
+  .concat([{ code: 'x-default', href: SITE_URL + seo.pathOf(seo.DEFAULT_LANG) }]);
+
 write('sitemap.xml',
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
-  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-  '  <url><loc>' + SITE_URL + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n' +
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n' +
+  '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
+  seo.LANGUAGES.map((lang) =>
+    sitemapEntry(SITE_URL + seo.pathOf(lang.code), {
+      lastmod: landingModified,
+      changefreq: 'weekly',
+      priority: lang.code === seo.DEFAULT_LANG ? '1.0' : '0.9',
+      alternates: landingAlternates
+    })).join('') +
   PROSE_PAGES.map((item) =>
-    '  <url><loc>' + SITE_URL + '/' + item.dir + '/</loc>' +
-    '<changefreq>' + (item.changefreq || 'yearly') + '</changefreq>' +
-    '<priority>' + (item.priority || '0.3') + '</priority></url>\n').join('') +
-  '  <url><loc>' + SITE_URL + '/guide/</loc>' +
-  '<changefreq>monthly</changefreq><priority>0.4</priority></url>\n' +
+    sitemapEntry(SITE_URL + '/' + item.dir + '/', {
+      lastmod: lastModified(item.file),
+      changefreq: item.changefreq || 'yearly',
+      priority: item.priority || '0.3'
+    })).join('') +
+  sitemapEntry(SITE_URL + '/guide/', {
+    lastmod: lastModified('guide.html'),
+    changefreq: 'monthly', priority: '0.4'
+  }) +
   '</urlset>\n');
+
+/* ===== עמוד 404 =====
+
+   קישור שבור קורה: כתובת ישנה ששותפה, שגיאת הקלדה, עמוד
+   שנמחק. בלי הקובץ הזה המבקר מקבל את מסך ברירת המחדל של
+   Vercel — לבן, באנגלית, בלי דרך חזרה — ובורח. כאן הוא מקבל
+   את האתר עצמו, עם הדרך הביתה.
+
+   noindex: עמוד שגיאה שנסרק הוא עמוד שמופיע בתוצאות. */
+/* Vercel מגיש את 404.html בשורש לכל כתובת שלא נמצאה. */
+page('404.html', '404.html', { noindex: true });
+
 write('.nojekyll', '');
 
 /* ההחלפה. הישנה מוסטת הצידה, החדשה נכנסת במקומה, והישנה נמחקת –

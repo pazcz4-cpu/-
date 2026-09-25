@@ -42,6 +42,11 @@
         signIn: 'Entrar',
         start: 'Começar grátis',
         startLong: 'Começar grátis – {days} dias',
+        /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
+           שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
+           מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
+        pageTitle: 'Software de escalas de turnos e ponto | SetShifts',
+        metaDescription: 'Crie uma semana inteira de turnos com um clique: por disponibilidade, pedidos e a quota de cada pessoa, com sobreposições detetadas antes de publicar. 14 dias grátis.',
         heroBadge: 'Planeamento com IA — de uma loja a toda uma rede',
         heroTitle: 'Todo o teu negócio, planeado num clique.',
         heroSubtitle: 'Uma semana inteira para toda a equipa — numa loja ou em todas — por disponibilidade, pedidos e a quota de turnos de cada pessoa. Cada atribuição explica porquê aquela pessoa.',
@@ -132,6 +137,7 @@
         footerRights: 'Todos os direitos reservados.',
         about: 'Quem somos',
         stories: 'Onde ajuda',
+        pricing: 'Preços',
         faq: 'Perguntas frequentes',
         contact: 'Contacto',
         privacy: 'Privacidade',

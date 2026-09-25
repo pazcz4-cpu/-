@@ -42,6 +42,11 @@
         signIn: 'Connexion',
         start: 'Essai gratuit',
         startLong: 'Essai gratuit – {days} jours',
+        /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
+           שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
+           מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
+        pageTitle: 'Logiciel de planning des équipes et pointeuse | SetShifts',
+        metaDescription: 'Créez une semaine entière de planning en un clic : selon disponibilités, demandes et quota de chacun, avec les doublons détectés avant publication. 14 jours gratuits.',
         heroBadge: 'Planification par IA — d\'un seul site à tout un réseau',
         heroTitle: 'Toute votre activité, planifiée en un clic.',
         heroSubtitle: 'Une semaine entière pour toute l\'équipe — sur un seul site ou sur tous — selon disponibilités, demandes et le quota de créneaux de chacun. Chaque affectation explique pourquoi cette personne.',
@@ -132,6 +137,7 @@
         footerRights: 'Tous droits réservés.',
         about: 'À propos',
         stories: 'Où ça aide',
+        pricing: 'Tarifs',
         faq: 'Questions fréquentes',
         contact: 'Contact',
         privacy: 'Confidentialité',

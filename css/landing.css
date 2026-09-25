@@ -399,6 +399,11 @@
 .legal table {
   width: 100%; border-collapse: collapse; margin: 14px 0 6px; font-size: 14.5px;
   display: block; overflow-x: auto;
+  /* styles.css נותן לכל table רוחב מזערי של 900 פיקסלים,
+     כי שם מדובר בטבלת הסידור. בעמוד פרוזה הרוחב הזה
+     דוחף את העמוד כולו הצידה בטלפון, במקום להישאר
+     בתוך הגלילה של הטבלה עצמה. */
+  min-width: 0;
 }
 .legal th, .legal td {
   border: 1px solid var(--line); padding: 8px 11px;

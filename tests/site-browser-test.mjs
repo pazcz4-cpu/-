@@ -91,7 +91,9 @@ try {
     check('ואין טקסט חתוך', row.clipped, false);
   }
   check('בורר שפה', await page.locator('#landing-language option').count(), 8);
-  check('קישור התחברות', await page.locator('a[href="app/"]').count(), 1);
+  /* הקישורים באתר הבנוי מוחלטים, כדי שאותו דף יעבוד גם
+     מ-/en/ וגם מהשורש */
+  check('קישור התחברות', await page.locator('a[href="/app/"]').count(), 1);
 
   /* גלילה הצידה בטלפון: הסרגל העליון גלש מהמסך, וכל העמוד נגלל
      איתו. זה לא נראה בשום בדיקה קודמת כי כולן רצו במסך רחב. */
@@ -241,8 +243,11 @@ try {
   /* קובץ המקור אינו נדרש באתר החי – ממנו נגזרו כל השאר */
   check('קובץ המקור אינו מפורסם',
     (await page.request.get(BASE + '/brand/logo-source.png')).status(), 404);
+  /* עד כאן נבדק שאין תגית robots בכלל. עכשיו יש אחת,
+     והיא אומרת במפורש שמותר להציג קטע מלא ותמונה גדולה —
+     בדיקה חזקה יותר מהעדר תגית. */
   check('דף המכירה פתוח למנועי חיפוש',
-    await page.locator('meta[name="robots"]').count(), 0);
+    await page.locator('meta[name="robots"]').getAttribute('content'), /^index, follow/);
 
   const robots = await (await page.request.get(BASE + '/robots.txt')).text();
   check('robots.txt מפנה למפת האתר', robots, new RegExp('Sitemap: ' + DOMAIN + '/sitemap.xml'));
@@ -329,7 +334,7 @@ try {
     check('/' + dir + '/ עולה', response.status(), 200);
     check('  יש כותרת', (await page.locator('h1:visible').textContent()).trim().length > 2, true);
     check('  אינו מסומן noindex',
-      await page.locator('meta[name="robots"]').count(), 0);
+      await page.locator('meta[name="robots"]').getAttribute('content'), /^index, follow/);
     check('  נמצא במפת האתר',
       sitemap.indexOf('<loc>' + DOMAIN + '/' + dir + '/</loc>') !== -1, true);
     /* גרסה אחת בלבד גלויה, אחרת שתי שפות רצות אחת על השנייה */

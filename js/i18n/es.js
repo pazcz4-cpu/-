@@ -42,6 +42,11 @@
         signIn: 'Entrar',
         start: 'Empezar gratis',
         startLong: 'Empezar gratis – {days} días',
+        /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
+           שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
+           מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
+        pageTitle: 'Software de planificación de turnos y fichaje | SetShifts',
+        metaDescription: 'Crea una semana entera de turnos con un clic: según disponibilidad, solicitudes y el cupo de cada persona, detectando turnos duplicados antes de publicar. 14 días gratis.',
         heroBadge: 'Planificación con IA: de una sola sucursal a toda una cadena',
         heroTitle: 'Todo tu negocio, planificado en un clic.',
         heroSubtitle: 'Una semana entera para todo el equipo, en una sucursal o en todas: según disponibilidad, solicitudes y el cupo de turnos de cada persona. Cada asignación explica por qué esa persona.',
@@ -132,6 +137,7 @@
         footerRights: 'Todos los derechos reservados.',
         about: 'Quiénes somos',
         stories: 'Dónde ayuda',
+        pricing: 'Precios',
         faq: 'Preguntas frecuentes',
         contact: 'Contacto',
         privacy: 'Privacidad',

@@ -41,6 +41,11 @@
         faq6Q: 'When exactly am I charged?',
         faq6A: 'You sign up without a credit card, and the first {days} days are free. To continue after the trial you add a payment method on the subscription screen, and from then it is monthly until you cancel. If you add nothing, it simply stops at the end of the trial — your data is kept, and you can always export it.',
         signIn: 'Sign in', start: 'Start free', startLong: 'Start free – {days} days',
+        /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
+           שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
+           מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
+        pageTitle: 'Employee Scheduling Software & Time Clock | SetShifts',
+        metaDescription: 'Build a week of shifts in one click — by availability, requests and each person\'s shift limit, with double bookings caught before you publish. Free 14-day trial.',
         heroBadge: 'AI employee scheduling — from one location to a whole chain',
         heroTitle: 'Your entire operation, scheduled in one click.',
         heroSubtitle: 'A whole week for your whole team — one location or all of them — from availability, requests and each person\'s shift limit. Every assignment says why that person.',
@@ -138,6 +143,7 @@
         footerRights: 'All rights reserved.',
         about: 'About',
         stories: 'Where it helps',
+        pricing: 'Pricing',
         faq: 'FAQ',
         contact: 'Contact',
         privacy: 'Privacy',

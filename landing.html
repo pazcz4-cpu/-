@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title data-i18n="app.title">סידור משמרות</title>
-<meta name="description" data-i18n-content="landing.heroSubtitle" content="בונים שבוע שלם של משמרות לכל הצוות — בסניף אחד או בכולם — בלחיצה אחת.">
+<title data-i18n="landing.pageTitle">תוכנה לסידור עבודה ומשמרות לעובדים | SetShifts</title>
+<meta name="description" data-i18n-content="landing.metaDescription" content="בונים סידור עבודה שבועי בלחיצה אחת — לפי זמינות, אילוצים ומכסת המשמרות של כל עובד, עם זיהוי כפל משמרות לפני הפרסום. שעון נוכחות ודוח שעות. 14 ימי ניסיון.">
 <meta name="theme-color" content="#23499f">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -35,6 +35,7 @@
   <nav class="landing-wrap lp-tabs" aria-label="ניווט באתר">
     <a href="about/"><span data-i18n="landing.about">מי אנחנו</span></a>
     <a href="stories/"><span data-i18n="landing.stories">איפה זה עוזר</span></a>
+    <a href="pricing/"><span data-i18n="landing.pricing">מחירים</span></a>
     <a href="faq/"><span data-i18n="landing.faq">שאלות נפוצות</span></a>
     <a href="contact/"><span data-i18n="landing.contact">צור קשר</span></a>
   </nav>
@@ -62,6 +63,11 @@
        שנראית, ולכן היא נטענת ראשונה ולא נדחית. -->
   <figure class="lp-hero-shot">
     <img src="assets/landing/hero-schedule.png"
+         srcset="assets/landing/hero-schedule-560.png 560w,
+                 assets/landing/hero-schedule-836.png 836w,
+                 assets/landing/hero-schedule-1100.png 1100w,
+                 assets/landing/hero-schedule.png 1672w"
+         sizes="(min-width: 1500px) 1500px, 100vw"
          width="1672" height="941"
          alt="איור: שלושה סניפים וארבעה עובדים מחוברים בקווים ללוח סידור אחד במרכז, ולידו סימן וי שהסידור תקין"
          loading="eager" fetchpriority="high" decoding="async">
@@ -364,6 +370,7 @@
     <a id="footer-whatsapp" class="hidden" target="_blank" rel="noopener"></a>
     <a href="about/" data-i18n="landing.about">מי אנחנו</a>
     <a href="stories/" data-i18n="landing.stories">איפה זה עוזר</a>
+    <a href="pricing/" data-i18n="landing.pricing">מחירים</a>
     <a href="faq/" data-i18n="landing.faq">שאלות נפוצות</a>
     <a href="contact/" data-i18n="landing.contact">צור קשר</a>
     <a href="privacy/" data-i18n="landing.privacy">מדיניות פרטיות</a>
@@ -446,7 +453,7 @@
         ? '<a class="lp-btn lp-btn-outline" href="' + esc(quoteHref()) + '">' +
             esc(t('plans.quoteCta')) + '</a>'
         : '<a class="lp-btn ' + (isFeatured ? 'lp-btn-primary' : 'lp-btn-ghost') +
-            '" href="app/?signup=1&plan=' + esc(plan.id) + '">' +
+            '" href="/app/?signup=1&plan=' + esc(plan.id) + '">' +
             esc(t('landing.pricingCta')) + '</a>';
 
       return '<div class="lp-plan' + (isFeatured ? ' lp-plan-featured' : '') +
@@ -518,7 +525,22 @@
   var picker = document.getElementById('landing-language');
   window.I18nDom.fillPicker(picker);
   picker.addEventListener('change', function () {
-    window.I18nDom.setLanguage(picker.value);
+    var code = picker.value;
+    /* לכל שפה יש כתובת משלה באתר הבנוי — / בעברית, /en/
+       באנגלית וכן הלאה — ולכן החלפת שפה היא מעבר לעמוד ולא
+       החלפת טקסטים במקום. אחרת הכתובת שבסרגל אומרת דבר אחד
+       והעמוד מראה אחר, ומי שמשתף את הקישור משתף את השפה הלא
+       נכונה. הבחירה נשמרת קודם, כדי שגם המערכת עצמה תיפתח בה.
+
+       SHIFT_PAGE_LANG קיים רק באתר הבנוי. בפתיחה מקומית של
+       landing.html אין כתובות שפה, והחלפה במקום היא הנכונה. */
+    window.I18nDom.remember(code);
+    var target = code === 'he' ? '/' : '/' + code + '/';
+    if (window.SHIFT_PAGE_LANG && window.location.pathname !== target) {
+      window.location.href = target;
+      return;
+    }
+    window.I18nDom.setLanguage(code);
     window.I18nDom.fillPicker(picker);
   });
 })();

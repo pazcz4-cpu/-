@@ -13,7 +13,18 @@
     try { return root.localStorage.getItem(KEY); } catch (err) { return null; }
   }
 
+  /* עוגן בכתובת: /faq/#en. דפי השפה באתר מקשרים לעמודי התוכן
+     כך, כי אלה כתובים בעברית ובאנגלית בלבד ומי שהגיע מ-/de/
+     צריך את האנגלית. עוגן ולא פרמטר שאילתה, כדי שלא ייווצר
+     לאותו תוכן זוג כתובות שמנוע חיפוש יראה ככפילות. */
+  function fromHash() {
+    var hash = String(root.location && root.location.hash || '').replace('#', '');
+    return DIR[hash] ? hash : null;
+  }
+
   function preferred() {
+    var asked = fromHash();
+    if (asked) return asked;
     var saved = stored();
     if (saved && DIR[saved]) return saved;
     /* שפת המערכת, אם הלקוח כבר בחר אחת במוצר עצמו */

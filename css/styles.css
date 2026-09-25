@@ -496,6 +496,16 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 }
 .issues-actions .hint { margin: 0; font-size: 12px; }
 
+/* ההודעה שמחליפה את כפתור ההחתמה כשאין משמרת קרובה. נראית
+   כמו הודעה ולא כמו כפתור מושבת: כפתור אפור מזמין לחיצות
+   חוזרות, והעובד חושב שהמערכת תקועה. */
+.punch-blocked {
+  margin: 0; padding: var(--s3);
+  border: 1px dashed var(--line); border-radius: var(--r-md);
+  background: var(--c2-bg); color: var(--muted);
+  font-size: var(--t-sm); line-height: 1.5; text-align: center;
+}
+
 .workload { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
 .load-pill {
   background: var(--surface); border: 1px solid var(--line); border-radius: 999px;

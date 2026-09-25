@@ -547,12 +547,30 @@
           { hours: Store.formatMinutes(todayMinutes) })) + '</span>';
       }
       html += '</div>';
-      html += '<button type="button" class="btn punch-btn ' +
-        (inside ? 'ghost' : 'primary') + '" data-punch="1"' +
-        (this.preview ? ' disabled' : '') + '>' +
-        ico(inside ? 'checkCircle' : 'clock') +
-        '<span>' + esc(t(inside ? 'employee.clockOut' : 'employee.clockIn')) + '</span>' +
-        '</button>';
+
+      /* ===== כניסה רק כשיש משמרת =====
+
+         עובד שמחתים שלוש שעות מוקדם, או ביום שאינו עובד בו,
+         מייצר שעות שלא סוכמו — והמנהל מגלה את זה בתלוש.
+
+         היציאה לעולם אינה נחסמת: מי שכבר בפנים חייב לצאת,
+         אחרת המשמרת נשארת פתוחה ולא נספרת בכלל. */
+      var window_ = inside
+        ? { allowed: true }
+        : Store.canPunchIn(this.state, this.week, this.weekKey, this._employeeId());
+
+      if (!window_.allowed) {
+        html += '<p class="punch-blocked">' + esc(t('employee.clockNoShift', {
+          hours: Math.round(window_.leadMinutes / 60)
+        })) + '</p>';
+      } else {
+        html += '<button type="button" class="btn punch-btn ' +
+          (inside ? 'ghost' : 'primary') + '" data-punch="1"' +
+          (this.preview ? ' disabled' : '') + '>' +
+          ico(inside ? 'checkCircle' : 'clock') +
+          '<span>' + esc(t(inside ? 'employee.clockOut' : 'employee.clockIn')) + '</span>' +
+          '</button>';
+      }
       html += '</div>';
     }
 

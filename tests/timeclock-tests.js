@@ -496,5 +496,106 @@ test('CSV: תא ריק נשאר ריק ולא הופך למחרוזת ריקה �
   assertEqual(Csv.asText(undefined), '', 'undefined');
 });
 
+
+/* ===== חלון ההחתמה =====
+
+   שעון שכל אחד מחתים בו בכל שעה מייצר שעות שלא סוכמו. הכלל
+   חוסם כניסה למי שאין לו משמרת קרובה — ושלוש ההגנות עליו הן
+   מה שנבדק כאן, כי כלל שחוסם עובד אמיתי גרוע מהבעיה שהוא
+   פותר. */
+console.log('\n== חלון ההחתמה ==');
+
+function windowState() {
+  var state = Store.emptyState();
+  state.settings.timeclock = { enabled: true, mode: 'phone', devices: [] };
+  var week = Store.getWeek(state, '2026-09-13');
+  /* שני, 09:30–16:00 בסניף הראשון */
+  Store.setAssigned(week, 1, state.branches[0].id, 'morning', [state.employees[0].id]);
+  week.published = true;
+  return state;
+}
+function may(state, iso) {
+  return Store.canPunchIn(state, state.weeks['2026-09-13'], '2026-09-13',
+    state.employees[0].id, new Date(iso));
+}
+
+test('שעתיים לפני המשמרת — פתוח, ולפני כן — סגור', function () {
+  var state = windowState();
+  assertEqual(may(state, '2026-09-14T07:29:00').allowed, false, 'שעתיים ודקה לפני');
+  assertEqual(may(state, '2026-09-14T07:31:00').allowed, true, 'בתוך השעתיים');
+  assertEqual(may(state, '2026-09-14T09:30:00').allowed, true, 'בדיוק בהתחלה');
+});
+
+test('מי שמאחר עדיין מחתים, ואחרי סוף המשמרת לא', function () {
+  var state = windowState();
+  /* עובד שמגיע באיחור של שעה הוא המקרה הרגיל, לא הקצה */
+  assertEqual(may(state, '2026-09-14T10:30:00').allowed, true, 'באיחור');
+  assertEqual(may(state, '2026-09-14T15:59:00').allowed, true, 'רגע לפני הסוף');
+  assertEqual(may(state, '2026-09-14T16:01:00').allowed, false, 'אחרי הסוף');
+});
+
+test('יום שאין בו משמרת — סגור', function () {
+  var state = windowState();
+  assertEqual(may(state, '2026-09-16T09:30:00').allowed, false, 'יום אחר');
+});
+
+/* ===== שלוש ההגנות ===== */
+
+test('הגנה: שבוע שלא פורסם אינו חוסם אף אחד', function () {
+  /* עסק שהדליק את השעון ועוד לא בנה סידור אינו אמור לגלות
+     שאף עובד אינו יכול להחתים. */
+  var state = windowState();
+  state.weeks['2026-09-13'].published = false;
+  assertEqual(may(state, '2026-09-16T09:30:00').allowed, true, 'שבוע בטיוטה');
+});
+
+test('הגנה: אפשר לכבות את הכלל, ואז הכל פתוח', function () {
+  var state = windowState();
+  state.settings.timeclock.requireShift = false;
+  assertEqual(may(state, '2026-09-16T03:00:00').allowed, true, 'כלל כבוי');
+});
+
+test('הגנה: אורך החלון ניתן לשינוי', function () {
+  var state = windowState();
+  state.settings.timeclock.leadMinutes = 30;
+  assertEqual(may(state, '2026-09-14T08:00:00').allowed, false, 'שעה וחצי לפני, חלון חצי שעה');
+  assertEqual(may(state, '2026-09-14T09:15:00').allowed, true, 'רבע שעה לפני');
+  state.settings.timeclock.leadMinutes = 8 * 60;
+  assertEqual(may(state, '2026-09-14T03:00:00').allowed, true, 'חלון של שמונה שעות');
+});
+
+test('עסק ישן בלי ההגדרה מקבל שעתיים ואת ההגנה', function () {
+  var state = windowState();
+  delete state.settings.timeclock.requireShift;
+  delete state.settings.timeclock.leadMinutes;
+  var rule = Store.punchWindowRule(state);
+  assertEqual(rule.enabled, true, 'דלוק');
+  assertEqual(rule.leadMinutes, Store.DEFAULT_PUNCH_LEAD_MINUTES, 'שעתיים');
+  assertEqual(rule.leadMinutes, 120, 'ושעתיים הן 120 דקות');
+});
+
+test('משמרת לילה שחוצה חצות פותחת חלון עד הבוקר', function () {
+  var state = windowState();
+  state.settings.shifts = state.settings.shifts.concat([
+    { id: 'night', name: 'לילה', from: '22:00', to: '06:00', color: 5 }
+  ]);
+  var branch = state.branches[0];
+  Object.keys(branch.schedule).forEach(function (day) {
+    branch.schedule[day].night = { need: 1, from: '22:00', to: '06:00' };
+  });
+  var week = state.weeks['2026-09-13'];
+  Store.setAssigned(week, 1, branch.id, 'night', [state.employees[0].id]);
+  /* הלילה של שני נמשך אל תוך שלישי בבוקר */
+  assertEqual(may(state, '2026-09-15T02:00:00').allowed, true, 'באמצע הלילה');
+  assertEqual(may(state, '2026-09-15T05:59:00').allowed, true, 'רגע לפני הסוף');
+  assertEqual(may(state, '2026-09-15T07:00:00').allowed, false, 'אחרי שהלילה נגמר');
+});
+
+test('יום חג אינו פותח חלון', function () {
+  var state = windowState();
+  state.weeks['2026-09-13'].holidays[1] = 'חג';
+  assertEqual(may(state, '2026-09-14T09:30:00').allowed, false, 'חג');
+});
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

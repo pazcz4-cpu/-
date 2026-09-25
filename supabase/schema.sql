@@ -560,6 +560,142 @@ $$;
 --
 -- גם כיוון הדיווח נגזר בשרת ולא מתקבל מהבקשה: כפתור שנלחץ
 -- פעמיים ברשת איטית לא ייצור יציאה לפני כניסה.
+-- ===== חלון ההחתמה =====
+--
+-- שעון נוכחות שכל אחד יכול להחתים בו בכל שעה מייצר שעות שלא
+-- סוכמו: עובד שמגיע שלוש שעות מוקדם, עובד שמחתים ביום שאינו
+-- עובד בו, ומי שמחתים ושוכח לצאת. המנהל מגלה את זה בתלוש.
+--
+-- הכלל: כניסה מותרת רק כשיש לעובד משמרת שעומדת להתחיל
+-- (בברירת מחדל שעתיים מראש) או משמרת שכבר רצה — כי עובד
+-- שמאחר עדיין צריך להחתים.
+--
+-- שלוש הגנות על הכלל עצמו, כדי שלא ייצור תקלה גרועה מזו
+-- שהוא פותר:
+--
+--   · יציאה לעולם אינה נבדקת כאן. הבדיקה נקראת רק על כניסה.
+--   · שבוע שלא פורסם מחזיר true. עסק שהדליק את השעון ועוד לא
+--     בנה סידור אינו אמור לגלות שאף אחד אינו יכול להחתים.
+--   · כל שגיאה בדרך מחזירה true. הגדרה פגומה או שעה לא
+--     תקינה לא ימנעו מעובד להחתים כניסה למשמרת אמיתית.
+--
+-- זהו התאום של Store.canPunchIn בצד הלקוח. שם זה מה שמצויר
+-- על המסך, וכאן זה מה שנאכף.
+create or replace function public.punch_window_open(
+  p_company uuid, p_week_key text, p_employee text, p_at timestamptz)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_config    jsonb;
+  v_clock     jsonb;
+  v_week      jsonb;
+  v_published boolean;
+  v_lead      int;
+  v_tz        text;
+  v_key       text;
+  v_ids       jsonb;
+  v_day       int;
+  v_branch    text;
+  v_shift     text;
+  v_slot      jsonb;
+  v_from      text;
+  v_to        text;
+  v_start     timestamptz;
+  v_finish    timestamptz;
+  v_date      date;
+begin
+  select config into v_config from public.company_configs where company_id = p_company;
+  v_clock := coalesce(v_config->'settings'->'timeclock', '{}'::jsonb);
+
+  -- הכלל כבוי בהגדרות
+  if coalesce(v_clock->>'requireShift', 'true') <> 'true' then
+    return true;
+  end if;
+
+  select week, published into v_week, v_published
+    from public.company_weeks
+   where company_id = p_company and week_key = p_week_key;
+
+  -- אין שבוע, או שהוא עוד לא פורסם: אין סידור לבדוק מולו
+  if v_week is null or coalesce(v_published, false) = false then
+    return true;
+  end if;
+
+  v_lead := coalesce(nullif(v_clock->>'leadMinutes', '')::int, 120);
+  if v_lead <= 0 then v_lead := 120; end if;
+  v_tz := coalesce(nullif(v_clock->>'timeZone', ''), 'Asia/Jerusalem');
+
+  for v_key, v_ids in
+    select key, value from jsonb_each(coalesce(v_week->'assignments', '{}'::jsonb))
+  loop
+    -- רק המשמרות של העובד הזה
+    if not (v_ids @> to_jsonb(p_employee)) then
+      continue;
+    end if;
+
+    v_day    := split_part(v_key, '|', 1)::int;
+    v_branch := split_part(v_key, '|', 2);
+    v_shift  := split_part(v_key, '|', 3);
+
+    -- יום חג: אין עבודה, ולכן גם אין חלון
+    if (v_week->'holidays') ? v_day::text then
+      continue;
+    end if;
+
+    -- שעות המשמרת בסניף קודמות להגדרת המשמרת הכללית
+    select branch->'schedule'->v_day::text->v_shift into v_slot
+      from jsonb_array_elements(coalesce(v_config->'branches', '[]'::jsonb)) as branch
+     where branch->>'id' = v_branch
+     limit 1;
+
+    v_from := v_slot->>'from';
+    v_to   := v_slot->>'to';
+
+    -- מוצ״ש: שעת ההתחלה נגזרת משעת צאת השבת של אותו שבוע
+    if coalesce(v_slot->>'auto', '') = 'motzash'
+       and coalesce(v_week->>'shabbatEnd', '') <> '' then
+      v_from := to_char((v_week->>'shabbatEnd')::time + interval '30 minutes', 'HH24:MI');
+    end if;
+
+    if coalesce(v_from, '') = '' or coalesce(v_to, '') = '' then
+      select s->>'from', s->>'to' into v_from, v_to
+        from jsonb_array_elements(coalesce(v_config->'settings'->'shifts', '[]'::jsonb)) as s
+       where s->>'id' = v_shift
+       limit 1;
+    end if;
+
+    if coalesce(v_from, '') = '' or coalesce(v_to, '') = '' then
+      continue;
+    end if;
+
+    v_date   := (p_week_key::date) + v_day;
+    v_start  := (v_date + v_from::time) at time zone v_tz;
+    v_finish := (v_date + v_to::time) at time zone v_tz;
+    -- משמרת שחוצה חצות נגמרת למחרת
+    if v_finish <= v_start then
+      v_finish := v_finish + interval '1 day';
+    end if;
+
+    if p_at >= v_start - make_interval(mins => v_lead) and p_at <= v_finish then
+      return true;
+    end if;
+  end loop;
+
+  return false;
+exception
+  when others then
+    -- הגדרה פגומה לא תחסום עובד מלהחתים על משמרת אמיתית
+    return true;
+end;
+$$;
+
+revoke all on function public.punch_window_open(uuid, text, text, timestamptz) from public;
+grant execute on function public.punch_window_open(uuid, text, text, timestamptz) to authenticated;
+
 create or replace function public.save_own_punch(p_week_key text)
 returns public.company_weeks
 language plpgsql
@@ -657,6 +793,18 @@ begin
      and abs(extract(epoch from (v_now - (v_last->>'at')::timestamptz))) <= 90 then
     v_week.week := public.week_as_seen(v_week);
     return v_week;
+  end if;
+
+  -- כניסה רק כשיש משמרת קרובה. יציאה לעולם אינה נבדקת: מי
+  -- שבפנים חייב לצאת, אחרת המשמרת נשארת פתוחה ולא נספרת.
+  --
+  -- מספר הדקות נכלל בהודעה, כדי שהמסך יגיד "בשעתיים הקרובות"
+  -- לפי מה שהעסק הגדיר ולא לפי מספר שקבוע בקוד הלקוח.
+  if v_kind = 'in'
+     and not public.punch_window_open(v_company, v_target, v_employee, v_now) then
+    raise exception 'no shift within the punch window %',
+      coalesce(nullif(v_config->'settings'->'timeclock'->>'leadMinutes', '')::int, 120)
+      using errcode = '55001';
   end if;
 
   v_punches := v_punches || jsonb_build_array(jsonb_build_object(

@@ -394,6 +394,15 @@
       </div>
       <p class="hint" style="margin:0" data-i18n="settings.clockHint">הסידור הוא מה שתוכנן; השעון הוא מה שקרה. בסוף החודש אפשר להוציא דוח שעות לפי הדיווחים.</p>
 
+      <label class="check"><input type="checkbox" id="opt-clock-window">
+        <span data-i18n="settings.clockWindow">כניסה רק למי שיש לו משמרת קרובה</span></label>
+      <div class="row">
+        <label class="check"><span data-i18n="settings.clockWindowLead">עד</span>
+          <input type="number" id="clock-lead" class="num-input" min="1" max="12" step="0.5"></label>
+        <span class="hint" data-i18n="settings.clockWindowUnit">שעות לפני תחילת המשמרת</span>
+      </div>
+      <p class="hint" style="margin:0" data-i18n="settings.clockWindowHint">עובד בלי משמרת קרובה יראה הודעה במקום הכפתור. יציאה אף פעם אינה נחסמת, ושבוע שעדיין לא פורסם אינו חוסם אף אחד.</p>
+
       <!-- מכשירי החומרה. מוצגים רק כשהעסק בחר לעבוד עם שעון
            בסניף: לעסק שמדווח מהטלפון זו שורה שמבקשת הסבר. -->
       <div id="clock-devices" class="hidden">

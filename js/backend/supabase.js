@@ -49,6 +49,14 @@
     if (lower.indexOf('already published') !== -1) {
       return fail('week_published', t('server.weekPublished'));
     }
+    /* חלון ההחתמה. ההודעה אומרת לעובד מה לעשות – לפנות למנהל –
+       ולא רק שהפעולה נכשלה. */
+    if (lower.indexOf('punch window') !== -1) {
+      /* מספר הדקות מגיע בהודעה מהשרת, ולכן המסך אומר את מה
+         שהעסק הגדיר ולא מספר שקבוע כאן. */
+      var lead = Number((String(text).match(/(\d+)\s*$/) || [])[1]) || 120;
+      return fail('no_shift', t('server.punchNoShift', { hours: Math.round(lead / 60) }));
+    }
     if (lower.indexOf('deadline has passed') !== -1) {
       return fail('deadline_passed', t('server.deadlinePassed'));
     }

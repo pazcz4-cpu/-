@@ -222,6 +222,129 @@ try {
     return total;
   }), 2);
 
+  /* ===== חלון ההחתמה =====
+
+     עד כאן העובד החתים על שבוע שעוד לא פורסם, ולכן שום דבר לא
+     חסם אותו — וזו ההגנה הראשונה, שנבדקת כאן במרומז. עכשיו
+     המנהל מפרסם שבוע בלי משמרת לעובדת, והכפתור צריך להיעלם.
+
+     מה שחייב להישאר פתוח בכל מצב הוא היציאה: עובדת שנכנסה
+     ונחסמה מלצאת תישאר בתוך משמרת פתוחה לנצח, וזו שעה שלא
+     נספרת בכלל. */
+  console.log('\n== חלון ההחתמה: אין משמרת קרובה ==');
+
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.fill('#signin-form input[name="email"]', 'boss@clock.test');
+  await page.fill('#signin-form input[name="password"]', 'secret123');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(1600);
+
+  /* מרוקנים את השיבוצים של השבוע ומפרסמים אותו: שבוע מפורסם
+     שבו לעובדת אין ולו משמרת אחת. */
+  await page.evaluate(async () => {
+    const app = window.ShiftApp;
+    const state = app.getState();
+    const key = window.ShiftStore.currentWeekKey();
+    const week = state.weeks[key];
+    week.assignments = {};
+    week.published = true;
+    await window.__backend.saveWeek(key, week);
+  });
+  await page.waitForTimeout(600);
+
+  await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.fill('#signin-form input[name="email"]', 'ronit@clock.test');
+  await page.fill('#signin-form input[name="password"]', 'secret123');
+  await page.click('#signin-form button[type="submit"]');
+  await page.waitForTimeout(1800);
+
+  check('כרטיס השעון עדיין מוצג', await page.locator('.punch-card').count(), 1);
+  check('אבל אין כפתור החתמה', await page.locator('.punch-btn').count(), 0);
+  check('ובמקומו הסבר מה לעשות',
+    await page.locator('.punch-blocked').innerText(), /אין לך משמרת.*נא לפנות למנהל/);
+
+  /* וגם קריאה ישירה לשרת נדחית: מסך ישן לא אמור לעקוף כלל
+     של העסק. */
+  check('גם קריאה ישירה לשרת נדחית', await page.evaluate(async () => {
+    try {
+      await window.__backend.savePunch(window.ShiftStore.currentWeekKey());
+      return 'עבר';
+    } catch (err) { return err.code || 'נדחה'; }
+  }), 'no_shift');
+
+  console.log('\n== יציאה אינה נחסמת לעולם ==');
+  /* מחזירים לעובדת משמרת, היא נכנסת, ואז המשמרת נמחקת
+     מהסידור — בדיוק מה שקורה כשמנהל משנה סידור באמצע יום.
+     היא חייבת להצליח לצאת. */
+  await page.evaluate(async () => {
+    const backend = window.__backend;
+    const key = window.ShiftStore.currentWeekKey();
+    const db = backend.db;
+    const companyId = Object.keys(db.data)[0];
+    const data = db.data[companyId];
+    const emp = data.config.employees[0];
+    const branch = data.config.branches[0];
+    /* משמרת שרצה עכשיו: מהיום, מחצות עד חצות */
+    const day = new Date().getDay();
+    branch.schedule[day] = branch.schedule[day] || {};
+    branch.schedule[day].morning = { need: 1, from: '00:00', to: '23:59' };
+    data.weeks[key].assignments[day + '|' + branch.id + '|morning'] = [emp.id];
+    data.weeks[key].published = true;
+    backend._save();
+  });
+  await page.reload();
+  await page.waitForTimeout(1600);
+  check('עם משמרת שרצה — הכפתור חזר', await page.locator('.punch-btn').count(), 1);
+  /* דוחפים את הדיווחים הקודמים אחורה, אחרת חלון הכפילות בולע
+     את הכניסה הבאה */
+  await page.evaluate(() => {
+    const backend = window.__backend;
+    Object.keys(backend.db.data).forEach((companyId) => {
+      const weeks = backend.db.data[companyId].weeks || {};
+      Object.keys(weeks).forEach((key) => {
+        (weeks[key].punches || []).forEach((punch) => {
+          punch.at = new Date(Date.parse(punch.at) - 10 * 60 * 1000).toISOString();
+        });
+      });
+    });
+    backend._save();
+  });
+  await page.click('.punch-btn');
+  await page.waitForTimeout(1300);
+  check('העובדת בפנים', await page.locator('.punch-state b').innerText(), /בפנים מאז/);
+
+  /* ועכשיו המשמרת נעלמת מתחתיה */
+  await page.evaluate(() => {
+    const backend = window.__backend;
+    const companyId = Object.keys(backend.db.data)[0];
+    const key = window.ShiftStore.currentWeekKey();
+    backend.db.data[companyId].weeks[key].assignments = {};
+    backend._save();
+  });
+  await page.reload();
+  await page.waitForTimeout(1600);
+  check('הכפתור עדיין שם, כי היא בפנים', await page.locator('.punch-btn').count(), 1);
+  check('והוא אומר "יציאה"', await page.locator('.punch-btn').innerText(), /יציאה/);
+  await page.evaluate(() => {
+    const backend = window.__backend;
+    Object.keys(backend.db.data).forEach((companyId) => {
+      const weeks = backend.db.data[companyId].weeks || {};
+      Object.keys(weeks).forEach((key) => {
+        (weeks[key].punches || []).forEach((punch) => {
+          punch.at = new Date(Date.parse(punch.at) - 10 * 60 * 1000).toISOString();
+        });
+      });
+    });
+    backend._save();
+  });
+  await page.click('.punch-btn');
+  await page.waitForTimeout(1300);
+  check('והיציאה נרשמה', await page.locator('.punch-state b').innerText(), /לא רשום/);
+
   console.log('\n== כיבוי מסיר את הכפתור ==');
   await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await page.reload();
@@ -244,10 +367,12 @@ try {
   check('הכרטיס נעלם', await page.locator('.punch-card').count(), 0);
   /* והדיווחים לא נמחקו: כיבוי הוא הפסקת דיווח, לא מחיקת
      היסטוריה. דוח של חודש שעבר חייב להישאר נכון. */
+  /* ארבעה: שתי ההחתמות הראשונות, ועוד שתיים מבדיקת חלון
+     ההחתמה שרצה לפני כן. */
   check('אבל הדיווחים שנשמרו נשארו', await page.evaluate(async () => {
     const week = await window.__backend.loadWeek(window.ShiftStore.currentWeekKey());
     return (week.punches || []).length;
-  }), 2);
+  }), 4);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

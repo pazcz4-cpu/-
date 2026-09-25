@@ -370,9 +370,22 @@
         }
       }
 
-      // מדיניות: יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע
+      /* ===== מדיניות יום החופש השבועי =====
+
+         "יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע"
+         מדבר על יום המנוחה השבועי, ולא על חופשה.
+
+         יום שסומן כ**חופשה בתשלום** הוא דבר אחר לגמרי: הוא
+         יורד מהמכסה של העובד, המנהל אישר אותו, והוא אמור
+         להופיע בסידור בדיוק ככה. ספירה שלו כ"יום חופש נוסף"
+         מייצרת התראה על מצב תקין — וזה בדיוק סוג ההתראה
+         שגורמת למנהל להפסיק לקרוא אותן.
+
+         לכן נספרים כאן רק ימי המנוחה: מה שאינו מסומן בתשלום. */
       if (emp.active && state.settings.oneDayOffPerWeek) {
-        var daysOff = Store.requestedDaysOff(week, emp.id);
+        var daysOff = Store.requestedDaysOff(week, emp.id).filter(function (day) {
+          return Store.leaveOf(week, emp.id, day) !== Store.LEAVE.PAID;
+        });
         if (daysOff.length > 1) {
           issues.push(issue('warning', 'extra-days-off',
             t('alerts.extraDaysOff', {

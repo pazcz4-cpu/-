@@ -298,6 +298,38 @@ test('עסק קיים בלי restMinutes מקבל את ברירת המחדל', f
   assertEqual(Store.restRule(state).enabled, false, 'כבוי');
 });
 
+/* ===== יום חופשה בתשלום אינו "יום חופש נוסף" =====
+
+   מדיניות "יום חופש אחד בשבוע" מדברת על יום המנוחה השבועי.
+   יום שסומן כחופשה בתשלום הוא דבר אחר: הוא יורד מהמכסה של
+   העובד, המנהל אישר אותו, והוא אמור להופיע בסידור בדיוק ככה.
+
+   דווח מהשטח: עובד עם שני ימים מסומנים, שאחד מהם בתשלום, קיבל
+   המלצה "סימן 2 ימי חופש – מגיע יום אחד". זו התראה על מצב
+   תקין, וזה בדיוק סוג ההתראה שגורמת למנהל להפסיק לקרוא אותן. */
+test('יום חופשה בתשלום אינו נספר כיום חופש נוסף', function () {
+  var state = freshState();
+  state.settings.oneDayOffPerWeek = true;
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var empId = state.employees[0].id;
+
+  /* שני ימים מסומנים, שניהם ללא תשלום: זו באמת חריגה */
+  Store.setConstraint(weekData, empId, 1, { off: true });
+  Store.setConstraint(weekData, empId, 6, { off: true });
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'extra-days-off').length, 1,
+    'שני ימי מנוחה אמורים להיספר כחריגה');
+
+  /* עכשיו השני מסומן כחופשה בתשלום — וזה תקין */
+  Store.setLeave(weekData, empId, 6, Store.LEAVE.PAID);
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'extra-days-off').length, 0,
+    'חופשה בתשלום אינה יום חופש נוסף');
+
+  /* ושלושה ימים, שאחד מהם בתשלום, עדיין חריגה: שניים נשארו */
+  Store.setConstraint(weekData, empId, 3, { off: true });
+  assertEqual(issuesOfType(Validate.validate(state, weekData), 'extra-days-off').length, 1,
+    'שני ימי מנוחה ועוד חופשה — עדיין חריגה');
+});
+
 test('שיבוץ ידני נשמר כאשר מסומן "שמירת שיבוצים ידניים"', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');

@@ -491,6 +491,25 @@
        פתוחה, ולא בשבוע החדש. אחרת המשמרת מתפצלת בין שני
        שבועות ומגיעה לתלוש כאפס שעות. */
     var target = Store.punchTarget(data.weeks, session.user.employeeId, weekKey);
+
+    /* כניסה רק כשיש משמרת קרובה. נבדק כאן ולא רק במסך: מסך
+       ישן, או קריאה ישירה, לא אמורים לעקוף כלל של העסק.
+       יציאה אינה נבדקת — מי שבפנים חייב לצאת. */
+    if (target.kind === Store.PUNCH.IN) {
+      var checkState = Store.migrate({
+        settings: (data.config && data.config.settings) || null,
+        branches: (data.config && data.config.branches) || null,
+        employees: (data.config && data.config.employees) || null,
+        weeks: {}
+      });
+      var gate = Store.canPunchIn(checkState, data.weeks[weekKey], weekKey,
+        session.user.employeeId, this.now());
+      if (!gate.allowed) {
+        return Promise.reject(this._fail('no_shift', t('server.punchNoShift', {
+          hours: Math.round(gate.leadMinutes / 60)
+        })));
+      }
+    }
     weekKey = target.weekKey;
     var week = data.weeks[weekKey];
     if (!Array.isArray(week.punches)) week.punches = [];

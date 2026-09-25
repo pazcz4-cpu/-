@@ -2517,6 +2517,17 @@
         mode.value = clock.mode;
         mode.disabled = viewOnly || !clock.enabled;
       }
+      var windowToggle = $('#opt-clock-window');
+      if (windowToggle) {
+        var windowRule = Store.punchWindowRule(state);
+        windowToggle.checked = windowRule.enabled;
+        windowToggle.disabled = viewOnly || !clock.enabled;
+        var lead = $('#clock-lead');
+        if (lead) {
+          lead.value = Math.round(windowRule.leadMinutes / 6) / 10;
+          lead.disabled = viewOnly || !clock.enabled || !windowRule.enabled;
+        }
+      }
     }
     var overtimeToggle = $('#opt-overtime');
     if (overtimeToggle) {
@@ -2713,6 +2724,7 @@
     '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off', '#default-shabbat',
+    '#opt-clock-window', '#clock-lead',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
   ];
@@ -4464,6 +4476,28 @@
     /* שעון הנוכחות. ההגדרה היא של העסק כולו: "לחלק מהצוות יש
        שעון" הוא מצב שאי אפשר להסביר לאף אחד מהם, ולכן מה שמשתנה
        הוא איך מדווחים ולא מי מדווח. */
+    function saveClock(patch) {
+      var current = Store.timeclock(state);
+      state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
+        enabled: current.enabled, mode: current.mode, devices: current.devices
+      }, patch);
+      persist('config');
+      render();
+    }
+    if ($('#opt-clock-window')) {
+      $('#opt-clock-window').addEventListener('change', function (event) {
+        saveClock({ requireShift: event.target.checked });
+      });
+    }
+    if ($('#clock-lead')) {
+      $('#clock-lead').addEventListener('change', function (event) {
+        var hours = Number(event.target.value);
+        /* אפס אינו "בלי חלון" אלא חלון באורך אפס, כלומר חסימה
+           מוחלטת. כיבוי נעשה בתיבת הסימון. */
+        if (!(hours > 0) || hours > 12) { toast(t('settings.clockWindowRange')); render(); return; }
+        saveClock({ leadMinutes: Math.round(hours * 60) });
+      });
+    }
     if ($('#opt-clock')) {
       $('#opt-clock').addEventListener('change', function (event) {
         var current = Store.timeclock(state);

@@ -872,6 +872,10 @@
     var value = (state && state.settings && state.settings.timeclock) || {};
     return {
       enabled: value.enabled === true,
+      /* חסימת כניסה למי שאין לו משמרת קרובה. דלוק כברירת מחדל;
+         עסק שהעבודה שלו מגיעה ביום עצמו מכבה אותו. */
+      requireShift: value.requireShift !== false,
+      leadMinutes: value.leadMinutes,
       /* phone – העובד מדווח מהטלפון. device – רק שעון בסניף.
          both – שניהם, וכל סניף בוחר בפועל מה יש לו. */
       mode: value.mode === 'device' || value.mode === 'both' ? value.mode : 'phone',
@@ -988,6 +992,87 @@
 
   function clockOf(date) {
     return pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+
+  /* ===== מתי מותר להחתים כניסה =====
+
+     שעון נוכחות שכל אחד יכול להחתים בו בכל שעה הוא שעון
+     שמייצר שעות שלא סוכמו: עובד שמגיע שלוש שעות מוקדם, עובד
+     שמחתים ביום שאינו עובד בו, ומי שמחתים ושוכח לצאת. בסוף
+     החודש המנהל מגלה את זה בתלוש.
+
+     הכלל: כניסה מותרת רק כשיש לעובד משמרת שעומדת להתחיל,
+     בברירת מחדל שעתיים מראש, או משמרת שכבר רצה עכשיו — כי
+     עובד שמאחר עדיין צריך להחתים.
+
+     שלוש הגנות על הכלל עצמו, כדי שלא ייצור תקלה גרועה מזו
+     שהוא פותר:
+
+       · יציאה לעולם אינה נחסמת. עובד שנכנס וחסימה תמנע ממנו
+         לצאת יישאר בתוך משמרת פתוחה לנצח, וזו שעה שלא נספרת.
+       · שבוע שלא פורסם אינו חוסם. עסק שהדליק את השעון ועוד
+         לא בנה סידור אינו אמור לגלות שאף אחד אינו יכול
+         להחתים.
+       · אפשר לכבות את הכלל בהגדרות. יש עסקים שבהם העבודה
+         מגיעה ביום עצמו. */
+  var DEFAULT_PUNCH_LEAD_MINUTES = 120;
+
+  function punchWindowRule(state) {
+    var clock = timeclock(state);
+    var minutes = Math.round(Number(clock.leadMinutes));
+    return {
+      /* דלוק כברירת מחדל. עסק ישן בלי ההגדרה מקבל את ההגנה. */
+      enabled: clock.requireShift !== false,
+      leadMinutes: (isFinite(minutes) && minutes > 0) ? minutes : DEFAULT_PUNCH_LEAD_MINUTES
+    };
+  }
+
+  /* המשמרות של העובד בשבוע הזה, כתאריכים אמיתיים. משמרת שחוצה
+     חצות נגמרת למחרת, וזה מה ש-shiftSpanAt כבר יודע. */
+  function employeeShiftTimes(state, week, weekKey, empId) {
+    var out = [];
+    var weekStart = dateOfDay(weekKey, 0);
+    for (var dayIdx = 0; dayIdx <= 6; dayIdx++) {
+      if (isHoliday(week, dayIdx)) continue;
+      employeeDayAssignments(state, week, empId, dayIdx).forEach(function (slot) {
+        var span = shiftSpanAt(state, week, slot.branchId, slot.shiftId, dayIdx);
+        if (!span) return;
+        out.push({
+          branchId: slot.branchId,
+          shiftId: slot.shiftId,
+          dayIdx: dayIdx,
+          start: new Date(weekStart.getTime() + span.start * 60000),
+          end: new Date(weekStart.getTime() + span.end * 60000)
+        });
+      });
+    }
+    return out.sort(function (a, b) { return a.start - b.start; });
+  }
+
+  /* האם מותר לעובד הזה להחתים כניסה עכשיו.
+     מחזיר { allowed, reason, next } – next היא המשמרת הקרובה
+     ביותר, אם יש, כדי שאפשר יהיה לומר לו מתי כן. */
+  function canPunchIn(state, week, weekKey, empId, now) {
+    var rule = punchWindowRule(state);
+    if (!rule.enabled) return { allowed: true, reason: 'off' };
+    if (!week || !week.published) return { allowed: true, reason: 'unpublished' };
+
+    var at = now ? new Date(now) : new Date();
+    var stamp = at.getTime();
+    var lead = rule.leadMinutes * 60000;
+    var shifts = employeeShiftTimes(state, week, weekKey, empId);
+    var next = null;
+
+    for (var i = 0; i < shifts.length; i++) {
+      var shift = shifts[i];
+      /* פתוח משעתיים לפני ההתחלה ועד סוף המשמרת: מי שמאחר
+         עדיין מחתים, ומי שמקדים מדי – לא. */
+      if (stamp >= shift.start.getTime() - lead && stamp <= shift.end.getTime()) {
+        return { allowed: true, reason: 'shift', shift: shift };
+      }
+      if (shift.start.getTime() > stamp && (!next || shift.start < next.start)) next = shift;
+    }
+    return { allowed: false, reason: 'no-shift', next: next, leadMinutes: rule.leadMinutes };
   }
 
   /* ===== מספר העובד במערכת השכר =====
@@ -2400,6 +2485,10 @@
     allowsPhonePunch: allowsPhonePunch,
     clockIdOf: clockIdOf,
     payrollIdOf: payrollIdOf,
+    punchWindowRule: punchWindowRule,
+    employeeShiftTimes: employeeShiftTimes,
+    canPunchIn: canPunchIn,
+    DEFAULT_PUNCH_LEAD_MINUTES: DEFAULT_PUNCH_LEAD_MINUTES,
     payrollSummary: payrollSummary,
     payrollPunches: payrollPunches,
     decimalHours: decimalHours,

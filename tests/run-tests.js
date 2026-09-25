@@ -3191,6 +3191,43 @@ test('עמוד האבטחה מתאר את שתי הדרכים לצרף עובד'
     'האנגלית מתארת רק אחת משתי הדרכים');
 });
 
+/* ===== התמונה הראשית של דף המכירה =====
+
+   כאן ישב פעם צילום מסך שנוצר ב-store:shots, ועכשיו יושב
+   איור. הכלי היה דורס אותו בשקט בהרצה הבאה, והתמונה הראשית
+   של האתר הייתה מתחלפת בלי שאיש ביקש. */
+test('כלי הצילומים אינו דורס את התמונה הראשית', function () {
+  var tool = fs.readFileSync(path.join(__dirname, '..', 'tools', 'store-shots.mjs'), 'utf8');
+  var landing = fs.readFileSync(path.join(__dirname, '..', 'landing.html'), 'utf8');
+  var used = (landing.match(/assets\/landing\/([\w-]+)\.png/) || [])[1];
+  assert(used, 'לא נמצאה התמונה הראשית ב-landing.html');
+  assert(tool.indexOf("'" + used + "'") === -1,
+    'store-shots כותב ל-' + used + '.png, שהוא הקובץ שדף המכירה מציג');
+});
+
+/* המידות ב-HTML ובאspect-ratio שב-CSS חייבות להתאים לקובץ
+   עצמו, אחרת הכותרת קופצת כשהתמונה נטענת. */
+test('מידות התמונה הראשית תואמות בין הקובץ, ה-HTML וה-CSS', function () {
+  var landing = fs.readFileSync(path.join(__dirname, '..', 'landing.html'), 'utf8');
+  var css = fs.readFileSync(path.join(__dirname, '..', 'css', 'landing.css'), 'utf8');
+  var name = (landing.match(/assets\/landing\/([\w-]+)\.png/) || [])[1];
+  var png = fs.readFileSync(path.join(__dirname, '..', 'assets', 'landing', name + '.png'));
+  var width = png.readUInt32BE(16), height = png.readUInt32BE(20);
+
+  /* רק התג של התמונה הראשית, ולא הראשון שיש בו מידות בדף */
+  var tag = landing.match(/<img[^>]*assets\/landing\/[\w-]+\.png[^>]*>/);
+  assert(tag, 'לא נמצא תג התמונה הראשית');
+  var attrs = tag[0].match(/width="(\d+)"[\s\S]*?height="(\d+)"/);
+  assert(attrs, 'אין width ו-height על התמונה הראשית');
+  assertEqual(Number(attrs[1]), width, 'רוחב ב-HTML');
+  assertEqual(Number(attrs[2]), height, 'גובה ב-HTML');
+
+  var ratio = css.match(/aspect-ratio:\s*(\d+)\s*\/\s*(\d+)/);
+  assert(ratio, 'אין aspect-ratio ב-CSS');
+  assertEqual(Number(ratio[1]), width, 'רוחב ב-CSS');
+  assertEqual(Number(ratio[2]), height, 'גובה ב-CSS');
+});
+
 console.log('\n== כתובת התמיכה ==');
 
 test('כתובת התמיכה מוגדרת במקום אחד ותקינה', function () {

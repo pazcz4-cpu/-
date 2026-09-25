@@ -200,7 +200,12 @@ try {
          כאן בלבד; במערכת הוא מופיע ברגע שגוררים אליו משמרת. */
       await page.addStyleTag({ content: '#shift-tray{display:none !important}' });
       await page.waitForTimeout(200);
-      await capture(page, out, 'hero-schedule');
+      /* לא hero-schedule.png: שם יושב עכשיו האיור של דף
+         המכירה, ולא צילום מסך. הכלי הזה היה דורס אותו בשקט
+         בהרצה הבאה, והתמונה הראשית של האתר הייתה מתחלפת בלי
+         שאיש ביקש. הצילום נשמר בשם משלו ומשמש את חומרי
+         החנויות. */
+      await capture(page, out, 'schedule-wide');
       await ctx.close();
       continue;
     }

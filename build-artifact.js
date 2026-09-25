@@ -25,7 +25,40 @@ scripts.forEach((src) => {
 body = body.replace(/\n{3,}/g, '\n\n').trim();
 
 const css = read('css/styles.css');
-const js = scripts.map((src) => `/* ===== ${src} ===== */\n${read(src)}`).join('\n\n');
+
+/* הלוגו, מוטבע.
+
+   הקובץ הזה נפתח כקובץ אחד, גם בלי אינטרנט, ולכן אין לו תיקיית
+   brand/ לצידו. js/brand.js גוזר את הנתיב מ-script[src] שלו —
+   וכאן הסקריפטים מוטבעים, ולכן לא היה מה לגזור: הדפדפן ביקש
+   "brand/logo-mark-white.png" יחסית לתיקייה שבה יושב הקובץ,
+   וקיבל 404. כלומר לוגו שבור בכל פתיחה של הכלי המקומי.
+
+   מוטבעים רק הקבצים שהעמוד הזה באמת מבקש, ולא כל התיקייה:
+   כל קובץ מוסיף שליש לגודלו בקידוד base64. */
+function brandFiles(markup) {
+  const wanted = {};
+  const marks = markup.match(/data-brand-mark="([^"]*)"/g) || [];
+  marks.forEach((tag) => {
+    wanted[/="white"/.test(tag) ? 'logo-mark-white.png' : 'logo-mark.png'] = true;
+  });
+  if (/data-brand-lockup/.test(markup)) {
+    wanted['logo-lockup.png'] = true;
+    wanted['logo-lockup-light.png'] = true;
+  }
+  const out = {};
+  Object.keys(wanted).forEach((file) => {
+    const full = path.join(root, 'brand', file);
+    if (!fs.existsSync(full)) throw new Error('חסר קובץ לוגו: brand/' + file);
+    out[file] = 'data:image/png;base64,' + fs.readFileSync(full).toString('base64');
+  });
+  return out;
+}
+
+const brand = '/* ===== brand/ (מוטבע) ===== */\n' +
+  'window.SHIFT_BRAND_FILES = ' + JSON.stringify(brandFiles(body)) + ';';
+const js = [brand].concat(
+  scripts.map((src) => `/* ===== ${src} ===== */\n${read(src)}`)).join('\n\n');
 
 const out = `<title>${title}</title>
 <style>

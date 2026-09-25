@@ -24,6 +24,14 @@ page.on('dialog', async d => { await d.accept(); });
 
 await skipWizard(page);
 
+/* כל בקשה שנכשלת. הקובץ הזה נפתח כקובץ אחד, ולכן כל נכס
+   שאינו מוטבע בו הוא נכס שבור: אין לצידו תיקייה שאפשר להביא
+   ממנה. כך נשבר הלוגו — הסקריפטים מוטבעים, ולכן js/brand.js
+   לא מצא נתיב לגזור ממנו, וביקש brand/logo-mark-white.png
+   יחסית ל-dist/. זה הופיע כשורה אדומה בקונסול בלבד. */
+const missing = [];
+page.on('response', (r) => { if (r.status() >= 400) missing.push(r.status() + ' ' + r.url()); });
+
 await page.goto(APP);
 await page.waitForTimeout(500);
 await page.click('.tab[data-tab="settings"]');
@@ -94,5 +102,7 @@ console.log('8. אחרי מחיקה:', await page.locator('.shift-row').count(),
 console.log('   הודעה:', (await page.locator('#toast').innerText()).trim());
 
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
+console.log('נכסים חסרים:', missing.length ? missing.join(' | ') : 'אין');
+if (missing.length) errors.push('נכסים חסרים: ' + missing.join(' | '));
 await browser.close();
 if (errors.length) process.exit(1);

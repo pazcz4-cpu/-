@@ -29,7 +29,21 @@
      document.currentScript כבר מצביע על הקובץ שקרא לנו, ולא
      עלינו, וזה מייצר כתובת שאינה קיימת. */
   var prefix = base();
-  function url(file) { return prefix + 'brand/' + file; }
+
+  /* קובץ אחד שנפתח בלי אינטרנט (dist/sidur-mishmarot.html) אינו
+     יכול להצביע לתיקיית brand/: הסקריפטים בו מוטבעים, ולכן אין
+     script[src] שממנו נגזר הנתיב, והתוצאה הייתה
+     "brand/logo-mark-white.png" יחסית ל-dist/ — כתובת שאינה
+     קיימת, כלומר לוגו שבור בכל פתיחה של הכלי המקומי.
+
+     build-artifact.js מטביע שם את הקבצים עצמם כ-data URI ומניח
+     אותם כאן. כשהמפה אינה קיימת — כלומר בכל שאר המסכים —
+     שום דבר אינו משתנה. */
+  function url(file) {
+    var inline = root.SHIFT_BRAND_FILES;
+    if (inline && inline[file]) return inline[file];
+    return prefix + 'brand/' + file;
+  }
 
   function esc(value) {
     return String(value == null ? '' : value)

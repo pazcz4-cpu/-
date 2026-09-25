@@ -730,13 +730,26 @@
     return punchList(week).filter(function (punch) { return punch.empId === empId; });
   }
 
+  function firstPunchAt(week, empId) {
+    var list = punchesOf(week, empId);
+    return list.length ? list[0] : null;
+  }
+
   /* האם העובד נמצא בפנים כרגע. זה מה שקובע איזה כפתור מוצג לו,
      ולכן הוא נגזר מהדיווח האחרון ולא נשמר כדגל: דגל שנשמר יכול
-     לסתור את הדיווחים, והדיווחים הם האמת. */
-  function punchState(week, empId) {
+     לסתור את הדיווחים, והדיווחים הם האמת.
+
+     prevWeek – השבוע שלפני. משמרת לילה של מוצאי שבת נכנסת ביום
+     האחרון של השבוע ויוצאת ביום הראשון של הבא, ובלי השבוע
+     הקודם העובד שפותח את האפליקציה ב-02:00 רואה "כניסה" בזמן
+     שהוא בתוך משמרת. */
+  function punchState(week, empId, prevWeek) {
     var list = punchesOf(week, empId);
-    if (!list.length) return PUNCH.OUT;
-    return list[list.length - 1].kind === PUNCH.IN ? PUNCH.IN : PUNCH.OUT;
+    if (list.length) {
+      return list[list.length - 1].kind === PUNCH.IN ? PUNCH.IN : PUNCH.OUT;
+    }
+    if (prevWeek) return punchState(prevWeek, empId);
+    return PUNCH.OUT;
   }
 
   /* זוגות כניסה–יציאה, לפי סדר הזמן.
@@ -747,10 +760,28 @@
 
      כניסה בלי יציאה נשארת פתוחה ואינה נספרת כשעות. לא מנחשים
      מתי הוא יצא: ניחוש כזה נכנס לתלוש. */
-  function punchSessions(week, empId) {
+  function punchSessions(week, empId, neighbours) {
+    var near = neighbours || {};
     var out = [];
     var open = null;
-    punchesOf(week, empId).forEach(function (punch) {
+    var list = punchesOf(week, empId);
+
+    /* משמרת שחוצה את סוף השבוע. הכניסה במוצאי שבת נרשמת בשבוע
+       אחד והיציאה בראשון בבוקר בשבוע הבא, ואז שני השבועות
+       משקרים: באחד משמרת פתוחה, בשני יציאה יתומה, ובתלוש אפס
+       שעות על לילה שלם של עבודה.
+
+       הצד הכותב מכוון את היציאה לשבוע שבו הכניסה פתוחה, ולכן
+       נתונים חדשים אינם מגיעים לכאן מפוצלים. השחבור כאן הוא
+       רשת הביטחון: הוא מתקן גם את מה שכבר נרשם מפוצל, וגם כל
+       מסלול כתיבה שעוד יתווסף. היציאה נספרת פעם אחת בלבד –
+       בשבוע של הכניסה – והשבוע שאחריו מדלג עליה. */
+    if (near.prev && list.length && list[0].kind === PUNCH.OUT &&
+        punchState(near.prev, empId) === PUNCH.IN) {
+      list = list.slice(1);
+    }
+
+    list.forEach(function (punch) {
       if (punch.kind === PUNCH.IN) {
         /* כניסה על כניסה: הראשונה נשארת פתוחה, וזו מתחילה
            מחדש. המנהל יראה את הפתוחה ויתקן. */
@@ -774,8 +805,53 @@
       });
       open = null;
     });
-    if (open) out.push({ inAt: open.at, outAt: null, minutes: 0, open: true, punchIn: open });
+    if (open) {
+      var first = near.next ? firstPunchAt(near.next, empId) : null;
+      var closer = (first && first.kind === PUNCH.OUT) ? first : null;
+      if (closer) {
+        out.push({
+          inAt: open.at,
+          outAt: closer.at,
+          minutes: Math.max(0, Math.round((punchTime(closer) - punchTime(open)) / 60000)),
+          open: false,
+          punchIn: open,
+          punchOut: closer
+        });
+      } else {
+        out.push({ inAt: open.at, outAt: null, minutes: 0, open: true, punchIn: open });
+      }
+    }
     return out;
+  }
+
+  /* ===== לאן נרשם דיווח חדש, ומה הכיוון שלו =====
+
+     שאלה אחת שכל מסלול כתיבה שואל: העובד לחץ על הכפתור, או
+     העביר כרטיס במכשיר – זו כניסה או יציאה, ולאיזה שבוע היא
+     נכנסת.
+
+     התשובה הרגילה היא "לשבוע של החותמת, והכיוון הפוך מהדיווח
+     הקודם". החריג היחיד הוא הרגע שאחרי חצות של מוצאי שבת:
+     בשבוע החדש עוד אין לעובד אף דיווח, ובשבוע שלפניו הוא
+     בפנים. אז היציאה נרשמת בשבוע שבו הכניסה פתוחה, והמשמרת
+     נשארת שלמה במקום אחד.
+
+     weeks – מפה של מפתח שבוע לאובייקט שבוע. די בשבוע הנוכחי
+     ובזה שלפניו. */
+  function punchTarget(weeks, empId, weekKey) {
+    var map = weeks || {};
+    var mine = punchesOf(map[weekKey], empId);
+    if (!mine.length) {
+      var prevKey = shiftWeekKey(weekKey, -1);
+      if (map[prevKey] && punchState(map[prevKey], empId) === PUNCH.IN) {
+        return { weekKey: prevKey, kind: PUNCH.OUT };
+      }
+    }
+    var last = mine.length ? mine[mine.length - 1] : null;
+    return {
+      weekKey: weekKey,
+      kind: last && last.kind === PUNCH.IN ? PUNCH.OUT : PUNCH.IN
+    };
   }
 
   /* ===== שעות נוספות =====
@@ -915,8 +991,15 @@
       if (!week) return;
       var seen = {};
       punchList(week).forEach(function (punch) { seen[punch.empId] = true; });
+      /* השבוע שלפני והשבוע שאחרי, כדי שמשמרת לילה של מוצאי
+         שבת תיספר פעם אחת ובשלמותה. אם הם לא נטענו – התוצאה
+         היא מה שהייתה קודם, ולא שגיאה. */
+      var near = {
+        prev: (state.weeks || {})[shiftWeekKey(weekKey, -1)],
+        next: (state.weeks || {})[shiftWeekKey(weekKey, 1)]
+      };
       Object.keys(seen).forEach(function (empId) {
-        punchSessions(week, empId).forEach(function (session) {
+        punchSessions(week, empId, near).forEach(function (session) {
           /* היום שאליו נזקפת המשמרת הוא יום הכניסה, וגם משמרת
              שנפתחה ב-30 בחודש ונסגרה ב-1 בבא שייכת כולה לחודש
              שנפתחה בו. חצייה אינה מקרה קצה אלא משמרת ערב.
@@ -2125,6 +2208,7 @@
     punchesOf: punchesOf,
     punchState: punchState,
     punchSessions: punchSessions,
+    punchTarget: punchTarget,
     timeclock: timeclock,
     allowsPhonePunch: allowsPhonePunch,
     clockIdOf: clockIdOf,

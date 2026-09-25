@@ -237,32 +237,53 @@ async function storePunches(context, rows) {
     byWeek[weekKey].push({ empId: emp.id, at: when.toISOString() });
   });
 
-  const keys = Object.keys(byWeek);
+  /* השבועות נטענים פעם אחת ונשמרים בסוף, כי דיווח אחד יכול
+     לגעת בשבוע שאינו שלו: יציאה ממשמרת לילה שנפתחה במוצאי שבת
+     נרשמת בשבוע שבו הכניסה פתוחה. */
+  const weeks = {};
+  const published = {};
+  const dirty = {};
+
+  async function weekAt(weekKey) {
+    if (!(weekKey in weeks)) {
+      const remote = await loadWeek(context.companyId, weekKey);
+      const week = remote ? remote.week : {};
+      if (!Array.isArray(week.punches)) week.punches = [];
+      weeks[weekKey] = week;
+      published[weekKey] = remote ? remote.published : false;
+    }
+    return weeks[weekKey];
+  }
+
+  /* סדר כרונולוגי בין השבועות ובתוכם: הכיוון (כניסה או יציאה)
+     נגזר מהדיווח הקודם, ואצווה שהגיעה בסדר אחר הייתה הופכת את
+     הכניסות ליציאות. */
+  const keys = Object.keys(byWeek).sort();
   for (let i = 0; i < keys.length; i++) {
     const weekKey = keys[i];
-    const remote = await loadWeek(context.companyId, weekKey);
-    const week = remote ? remote.week : {};
-    if (!Array.isArray(week.punches)) week.punches = [];
-    /* מיון לפי זמן לפני הכתיבה: הכיוון (כניסה או יציאה) נגזר
-       מהדיווח הקודם, ואצווה שהגיעה בסדר אחר הייתה הופכת את
-       הכניסות ליציאות. */
+    await weekAt(weekKey);
+    await weekAt(Store.shiftWeekKey(weekKey, -1));
     byWeek[weekKey].sort(function (a, b) { return Date.parse(a.at) - Date.parse(b.at); });
-    byWeek[weekKey].forEach(function (item) {
-      const kind = Store.punchState(week, item.empId) === Store.PUNCH.IN
-        ? Store.PUNCH.OUT : Store.PUNCH.IN;
+    for (const item of byWeek[weekKey]) {
+      const target = Store.punchTarget(weeks, item.empId, weekKey);
+      const week = await weekAt(target.weekKey);
       const result = Store.addPunch(week, {
-        empId: item.empId, kind: kind, at: item.at,
+        empId: item.empId, kind: target.kind, at: item.at,
         src: Store.PUNCH_SRC.DEVICE, deviceSn: context.device.sn,
         branchId: context.device.branchId || ''
       });
-      if (result.ok) stored++;
+      if (result.ok) { stored++; dirty[target.weekKey] = true; }
       else if (result.reason === 'duplicate') duplicate++;
       else bad++;
-    });
-    /* מצב הפרסום נשמר כפי שהיה. השמירה דורסת את השורה, ולכן
-       כתיבת דיווח לשבוע מפורסם הייתה מבטלת את הפרסום שלו —
-       הסידור היה נעלם מהמסכים של כל הצוות באמצע השבוע. */
-    await saveWeek(context.companyId, weekKey, week, remote ? remote.published : false);
+    }
+  }
+
+  /* מצב הפרסום נשמר כפי שהיה. השמירה דורסת את השורה, ולכן
+     כתיבת דיווח לשבוע מפורסם הייתה מבטלת את הפרסום שלו —
+     הסידור היה נעלם מהמסכים של כל הצוות באמצע השבוע. */
+  const touched = Object.keys(dirty).sort();
+  for (let i = 0; i < touched.length; i++) {
+    await saveWeek(context.companyId, touched[i], weeks[touched[i]], published[touched[i]]);
   }
   return { stored: stored, unknown: unknown, duplicate: duplicate, bad: bad };
 }

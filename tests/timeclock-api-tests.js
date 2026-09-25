@@ -20,6 +20,7 @@ I18n.use('he');
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-key';
 
+var Store = require('../js/store.js');
 var handler = require('../api/timeclock.js');
 var internals = handler._internals;
 
@@ -295,14 +296,42 @@ asyncTest('אצווה שנשלחה פעמיים אינה נספרת פעמיים
   });
 });
 
-asyncTest('שתי משמרות בשני שבועות נכתבות לשתי שורות', function () {
+/* ===== משמרת לילה שחוצה את סוף השבוע =====
+
+   26.09.2026 הוא שבת, היום האחרון של השבוע 2026-09-20. כניסה
+   ב-22:00 ויציאה ב-02:00 הן משמרת אחת, אבל היציאה נופלת ביום
+   הראשון של השבוע הבא.
+
+   קודם כל דיווח נכתב לשבוע של החותמת שלו, ואז השבוע הראשון
+   נשאר עם משמרת פתוחה, השני עם יציאה יתומה, והתלוש קיבל אפס
+   שעות על לילה שלם. עכשיו היציאה נכתבת לשבוע שבו הכניסה
+   פתוחה, והמשמרת נשארת שלמה במקום אחד. */
+asyncTest('משמרת לילה שחוצה את סוף השבוע נשארת שלמה', function () {
   var server = fakeServer();
   return call({
     method: 'POST', query: { action: 'cdata', SN: 'SN-1', table: 'ATTLOG' },
     body: '1\t2026-09-26 22:00:00\t0\t1\n1\t2026-09-27 02:00:00\t0\t1'
   }).then(function () {
-    assert(server.weeks['2026-09-20'], 'השבוע הראשון לא נכתב');
-    assert(server.weeks['2026-09-27'], 'השבוע השני לא נכתב');
+    assert(server.weeks['2026-09-20'], 'שבוע הכניסה לא נכתב');
+    assertEqual(server.weeks['2026-09-20'].punches.length, 2,
+      'שני הדיווחים אמורים לשבת באותו שבוע');
+    assertEqual(!!server.weeks['2026-09-27'], false,
+      'לא אמורה להיווצר שורה לשבוע הבא');
+    var kinds = server.weeks['2026-09-20'].punches.map(function (p) { return p.kind; });
+    assertEqual(kinds.join(','), 'in,out', 'כניסה ואחריה יציאה');
+
+    /* וזה מה שמגיע לתלוש: ארבע שעות על יום הכניסה, בלי משמרת
+       פתוחה ובלי דיווח יתום. */
+    var state = { settings: { overtime: {} }, employees: [{ id: 'emp-1' }],
+      branches: [], weeks: { '2026-09-20': server.weeks['2026-09-20'] } };
+    var sessions = Store.punchSessions(server.weeks['2026-09-20'], 'emp-1');
+    assertEqual(sessions.length, 1, 'זוג אחד');
+    assertEqual(sessions[0].minutes, 240, 'דקות בזוג');
+    var row = Store.monthlyReport(state, '2026-09')['emp-1'];
+    assert(row, 'העובד אינו בדוח');
+    assertEqual(row.minutes, 240, 'דקות בדוח החודשי');
+    assertEqual(row.openSessions, 0, 'משמרות פתוחות');
+    assertEqual(row.orphanPunches, 0, 'דיווחים יתומים');
   });
 });
 

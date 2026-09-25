@@ -692,8 +692,14 @@
 
   /* דיווח שעון. אין כאן מה לשלוח מלבד השבוע: מי, מתי ולאיזה
      כיוון נקבעים כולם בשרת. */
+  /* מחזיר { weekKey, week }, ולא את השבוע לבדו: השרת הוא שמחליט
+     לאיזה שבוע נכנס הדיווח. יציאה ממשמרת לילה שנפתחה במוצאי
+     שבת נרשמת בשבוע שבו הכניסה פתוחה, ולא בשבוע החדש, ולקוח
+     שיניח שקיבל את השבוע ששלח יתייק את הנתונים במקום הלא נכון. */
   SupabaseBackend.prototype.savePunch = function (weekKey) {
-    return this._rpc('save_own_punch', { p_week_key: weekKey }).then(weekOf);
+    return this._rpc('save_own_punch', { p_week_key: weekKey }).then(function (row) {
+      return { weekKey: (row && row.week_key) || weekKey, week: weekOf(row) };
+    });
   };
 
   /* בקשת חופשה. הטווח נשלח, והשרת כותב רשומה יומית לכל יום בו

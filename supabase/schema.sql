@@ -576,6 +576,9 @@ declare
   v_last     jsonb;
   v_kind     text;
   v_now      timestamptz := now();
+  v_target   text := p_week_key;
+  v_prev_key text;
+  v_prev     jsonb;
 begin
   if v_company is null then
     raise exception 'not signed in' using errcode = '28000';
@@ -591,14 +594,47 @@ begin
     raise exception 'time clock is off' using errcode = '55000';
   end if;
 
+  -- ===== משמרת לילה שחוצה את סוף השבוע =====
+  --
+  -- העובד נכנס במוצאי שבת ב-22:00 ויוצא בראשון ב-02:00. שני
+  -- הדיווחים הם משמרת אחת, אבל היציאה נופלת ביום הראשון של
+  -- השבוע הבא. אם היא נכתבת לשם, שני השבועות משקרים: באחד
+  -- משמרת פתוחה, בשני יציאה יתומה, ובתלוש אפס שעות על לילה
+  -- שלם של עבודה.
+  --
+  -- לכן כשאין לעובד עוד אף דיווח בשבוע החדש, ובשבוע שלפניו
+  -- הדיווח האחרון שלו הוא כניסה – הוא עדיין בתוך המשמרת,
+  -- והיציאה נרשמת שם. התנאי "אין דיווח בשבוע החדש" הוא מה
+  -- שמגביל את זה לרגע הזה בלבד.
+  if p_week_key ~ '^\d{4}-\d{2}-\d{2}$' then
+    if not exists (
+      select 1 from public.company_weeks w,
+        jsonb_array_elements(coalesce(w.week->'punches', '[]'::jsonb)) as item
+       where w.company_id = v_company and w.week_key = p_week_key
+         and item->>'empId' = v_employee
+    ) then
+      v_prev_key := to_char((p_week_key::date - 7), 'YYYY-MM-DD');
+      select item into v_prev
+        from public.company_weeks w,
+          jsonb_array_elements(coalesce(w.week->'punches', '[]'::jsonb)) as item
+       where w.company_id = v_company and w.week_key = v_prev_key
+         and item->>'empId' = v_employee
+       order by item->>'at' desc
+       limit 1;
+      if coalesce(v_prev->>'kind', '') = 'in' then
+        v_target := v_prev_key;
+      end if;
+    end if;
+  end if;
+
   -- שורת שבוע נוצרת אם אין: עובד שדיווח בשבוע שהמנהל טרם נגע
   -- בו אינו אמור לקבל שגיאה.
   insert into public.company_weeks (company_id, week_key, week, published)
-  values (v_company, p_week_key, '{}'::jsonb, false)
+  values (v_company, v_target, '{}'::jsonb, false)
   on conflict (company_id, week_key) do nothing;
 
   select * into v_week from public.company_weeks
-   where company_id = v_company and week_key = p_week_key for update;
+   where company_id = v_company and week_key = v_target for update;
 
   v_punches := coalesce(v_week.week->'punches', '[]'::jsonb);
 
@@ -633,10 +669,12 @@ begin
   update public.company_weeks
      set week = jsonb_set(coalesce(week, '{}'::jsonb), array['punches'], v_punches, true),
          updated_at = now()
-   where company_id = v_company and week_key = p_week_key
+   where company_id = v_company and week_key = v_target
   returning * into v_week;
 
-  -- מה שחוזר לעובד הוא הפרוסה שלו, ולא השבוע כולו.
+  -- מה שחוזר לעובד הוא הפרוסה שלו, ולא השבוע כולו. השורה
+  -- נושאת את week_key שלה, ולכן הלקוח יודע לאיזה שבוע הדיווח
+  -- נכנס גם כשזה אינו השבוע ששלח.
   v_week.week := public.week_as_seen(v_week);
   return v_week;
 end;

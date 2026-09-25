@@ -90,11 +90,35 @@
     }).then(function (week) {
       self.week = week || Store.emptyWeek();
       self.state.weeks[self.weekKey] = self.week;
+      return self._loadPrevWeek();
+    }).then(function () {
       self.render();
     }, function (err) {
       self.root.innerHTML = '<p class="auth-error">' +
         esc(t('employee.loadFailed', { message: (err && err.message) || '' })) + '</p>';
     });
+  };
+
+  /* ===== השבוע שלפני, בשביל השעון =====
+
+     משמרת לילה שנפתחה במוצאי שבת יוצאת בראשון בבוקר, כלומר
+     בשבוע אחר. בלי השבוע הקודם העובד שפותח את האפליקציה אחרי
+     חצות רואה כפתור "כניסה" בזמן שהוא כבר בתוך משמרת.
+
+     נטען רק כשצריך: שעון דלוק, ואין עדיין אף דיווח שלו בשבוע
+     הנוכחי. ברגע שהוא מדווח בשבוע הזה – השאלה נסגרת, ואין
+     קריאה נוספת. */
+  EmployeeUI.prototype._loadPrevWeek = function () {
+    var self = this;
+    if (!Store.allowsPhonePunch(this.state)) return Promise.resolve();
+    if (this.weekKey !== Store.currentWeekKey()) return Promise.resolve();
+    if (Store.punchesOf(this.week, this._employeeId()).length) return Promise.resolve();
+    var prevKey = Store.shiftWeekKey(this.weekKey, -1);
+    if (this.state.weeks[prevKey]) return Promise.resolve();
+    if (!this.backend || typeof this.backend.loadWeek !== 'function') return Promise.resolve();
+    return Promise.resolve(this.backend.loadWeek(prevKey)).then(function (week) {
+      if (week) self.state.weeks[prevKey] = week;
+    }, function () { /* אין שבוע קודם, או שהטעינה נכשלה – השעון עובד בלעדיו */ });
   };
 
   EmployeeUI.prototype._bind = function () {
@@ -181,10 +205,16 @@
     if (this.busy) return;
     if (!this.backend || typeof this.backend.savePunch !== 'function') return;
     this.busy = true;
-    this.backend.savePunch(this.weekKey).then(function (week) {
+    this.backend.savePunch(this.weekKey).then(function (result) {
       self.busy = false;
-      self.week = week;
-      self.state.weeks[self.weekKey] = week;
+      /* השרת מחזיר גם לאיזה שבוע הדיווח נכנס. יציאה ממשמרת
+         שנפתחה במוצאי שבת נרשמת בשבוע הקודם, ואז השבוע המוצג
+         אינו זה שהשתנה – ותיוק שלו תחת המפתח הנוכחי היה מחליף
+         את השבוע של העובד בשבוע שעבר. */
+      var key = (result && result.weekKey) || self.weekKey;
+      var week = (result && result.week) || result;
+      self.state.weeks[key] = week;
+      if (key === self.weekKey) self.week = week;
       self._flash(t('employee.clockSaved'));
       self.render();
     }, function (err) {
@@ -490,10 +520,21 @@
        מוצג רק בשבוע הנוכחי. דיווח כניסה על השבוע הבא אינו דבר
        שקיים, וכפתור שמופיע שם הוא הזמנה לטעות. */
     if (Store.allowsPhonePunch(this.state) && this.weekKey === Store.currentWeekKey()) {
-      var sessions = Store.punchSessions(this.week, this._employeeId());
-      var inside = Store.punchState(this.week, this._employeeId()) === Store.PUNCH.IN;
+      /* השבוע שלפני. משמרת לילה של מוצאי שבת נכנסת ביום האחרון
+         של השבוע ויוצאת בראשון בבוקר, ובלי השבוע הקודם העובד
+         שפותח את האפליקציה ב-02:00 רואה "כניסה" בזמן שהוא בתוך
+         משמרת – ולוחץ, ואז הלילה שלו מתפצל לשניים. */
+      var prevWeek = this.state.weeks[Store.shiftWeekKey(this.weekKey, -1)] || null;
+      var sessions = Store.punchSessions(this.week, this._employeeId(), { prev: prevWeek });
+      var inside = Store.punchState(this.week, this._employeeId(), prevWeek) === Store.PUNCH.IN;
       var openSession = null;
       sessions.forEach(function (session) { if (session.open) openSession = session; });
+      /* המשמרת הפתוחה עשויה לשבת בשבוע הקודם, וזו בדיוק משמרת
+         הלילה שרצה עכשיו. */
+      if (!openSession && inside && prevWeek) {
+        Store.punchSessions(prevWeek, this._employeeId(), { next: this.week })
+          .forEach(function (session) { if (session.open) openSession = session; });
+      }
       var todayMinutes = this._todayMinutes(sessions);
 
       html += '<div class="m-card punch-card' + (inside ? ' is-in' : '') + '" data-emp-part="clock">';

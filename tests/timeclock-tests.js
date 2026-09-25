@@ -307,5 +307,102 @@ test('במצב מכשיר בלבד אין דיווח מהטלפון', function (
   assertEqual(Store.allowsPhonePunch(state), true, 'מצב משולב');
 });
 
+/* ===== משמרת לילה שחוצה את סוף השבוע =====
+
+   המקרה שהפיל את כל השרשרת. 19.09.2026 הוא שבת, היום האחרון
+   של השבוע 2026-09-13. כניסה ב-22:00 ויציאה ב-02:00 הן משמרת
+   אחת, אבל היציאה נופלת ביום הראשון של השבוע הבא – ובמערכת
+   שבועית זה שבוע אחר.
+
+   קודם היציאה נכתבה לשבוע החדש, ואז שבוע אחד נשאר עם משמרת
+   פתוחה, השני עם דיווח יתום, ובדוח החודשי הופיעו אפס שעות על
+   לילה שלם של עבודה. עסק שמאבד כך משמרת אחת בכל שבוע. */
+console.log('\n== משמרת לילה שחוצה את סוף השבוע ==');
+
+var SAT_IN = '2026-09-19T22:00:00.000Z';   // שבת, היום האחרון של השבוע
+var SUN_OUT = '2026-09-20T06:00:00.000Z';  // ראשון בבוקר, כבר בשבוע הבא
+var WEEK_A = '2026-09-13';
+var WEEK_B = '2026-09-20';
+
+test('שני צדי המשמרת נופלים בשני שבועות שונים', function () {
+  assertEqual(Store.currentWeekKey(new Date(SAT_IN)), WEEK_A, 'שבוע הכניסה');
+  assertEqual(Store.currentWeekKey(new Date(SUN_OUT)), WEEK_B, 'שבוע היציאה');
+});
+
+test('הדיווח מכוון לשבוע שבו הכניסה פתוחה', function () {
+  var weeks = {};
+  weeks[WEEK_A] = freshWeek();
+  weeks[WEEK_B] = freshWeek();
+
+  var first = Store.punchTarget(weeks, 'emp-1', WEEK_A);
+  assertEqual(first.weekKey, WEEK_A, 'הכניסה נרשמת בשבוע שלה');
+  assertEqual(first.kind, Store.PUNCH.IN, 'כיוון הכניסה');
+  punch(weeks[WEEK_A], 'emp-1', first.kind, SAT_IN);
+
+  /* ראשון ב-06:00. בשבוע החדש אין לעובד אף דיווח, ובשבוע
+     שלפניו הוא בפנים – ולכן זו יציאה, והיא נרשמת שם. */
+  var second = Store.punchTarget(weeks, 'emp-1', WEEK_B);
+  assertEqual(second.weekKey, WEEK_A, 'היציאה נרשמת בשבוע של הכניסה');
+  assertEqual(second.kind, Store.PUNCH.OUT, 'כיוון היציאה');
+  punch(weeks[WEEK_A], 'emp-1', second.kind, SUN_OUT);
+
+  var sessions = Store.punchSessions(weeks[WEEK_A], 'emp-1');
+  assertEqual(sessions.length, 1, 'זוג אחד');
+  assertEqual(sessions[0].open, false, 'המשמרת סגורה');
+  assertEqual(sessions[0].minutes, 480, 'שמונה שעות');
+
+  /* ואחרי היציאה, הדיווח הבא באמת נרשם בשבוע החדש */
+  var third = Store.punchTarget(weeks, 'emp-1', WEEK_B);
+  assertEqual(third.weekKey, WEEK_B, 'הכניסה הבאה בשבוע החדש');
+  assertEqual(third.kind, Store.PUNCH.IN, 'וכיוונה כניסה');
+});
+
+test('העובד שפותח את האפליקציה אחרי חצות נראה בפנים', function () {
+  var weekA = freshWeek();
+  var weekB = freshWeek();
+  punch(weekA, 'emp-1', Store.PUNCH.IN, SAT_IN);
+  /* בלי השבוע הקודם המסך היה מציע לו "כניסה" בזמן שהוא בתוך
+     משמרת – והלחיצה הייתה מפצלת את הלילה שלו לשניים. */
+  assertEqual(Store.punchState(weekB, 'emp-1'), Store.PUNCH.OUT, 'בלי השבוע הקודם');
+  assertEqual(Store.punchState(weekB, 'emp-1', weekA), Store.PUNCH.IN, 'עם השבוע הקודם');
+});
+
+test('נתונים שכבר נרשמו מפוצלים משתחברים בקריאה', function () {
+  /* רשת הביטחון: כך זה נראה במערכות שרצו לפני התיקון, וכך
+     נראה כל מסלול כתיבה שעוד יתווסף ויפספס את הכיוון. */
+  var weekA = freshWeek();
+  var weekB = freshWeek();
+  punch(weekA, 'emp-1', Store.PUNCH.IN, SAT_IN);
+  punch(weekB, 'emp-1', Store.PUNCH.OUT, SUN_OUT);
+
+  var lone = Store.punchSessions(weekA, 'emp-1');
+  assertEqual(lone[0].open, true, 'בלי השבוע הבא – משמרת פתוחה');
+
+  var joined = Store.punchSessions(weekA, 'emp-1', { next: weekB });
+  assertEqual(joined.length, 1, 'זוג אחד');
+  assertEqual(joined[0].open, false, 'המשמרת נסגרה');
+  assertEqual(joined[0].minutes, 480, 'שמונה שעות');
+
+  /* והשבוע הבא אינו סופר את אותה יציאה שוב */
+  var after = Store.punchSessions(weekB, 'emp-1', { prev: weekA });
+  assertEqual(after.length, 0, 'היציאה נספרה פעם אחת בלבד');
+});
+
+test('הדוח החודשי נותן שמונה שעות ביום הכניסה', function () {
+  var state = Store.emptyState();
+  state.weeks[WEEK_A] = freshWeek();
+  state.weeks[WEEK_B] = freshWeek();
+  punch(state.weeks[WEEK_A], 'emp-1', Store.PUNCH.IN, SAT_IN);
+  punch(state.weeks[WEEK_B], 'emp-1', Store.PUNCH.OUT, SUN_OUT);
+
+  var row = Store.monthlyReport(state, '2026-09')['emp-1'];
+  assert(row, 'העובד אינו בדוח');
+  assertEqual(row.minutes, 480, 'דקות בדוח');
+  assertEqual(row.days, 1, 'ימי עבודה');
+  assertEqual(row.openSessions, 0, 'משמרות פתוחות');
+  assertEqual(row.orphanPunches, 0, 'דיווחים יתומים');
+  assertEqual(Object.keys(row.byDay).join(','), '2026-09-19', 'היום שאליו נזקפו השעות');
+});
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

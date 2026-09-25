@@ -1684,6 +1684,13 @@
 
   function loadHoursMonth() {
     var keys = Store.weekKeysForMonth(hoursMonth());
+    /* גם השבוע שאחרי החודש. משמרת לילה של מוצאי שבת האחרון
+       בחודש יוצאת בראשון שאחריו, והיציאה נרשמת בשבוע הבא –
+       בלי לטעון אותו הלילה הזה נספר כמשמרת פתוחה ובאפס שעות. */
+    if (keys.length) {
+      var after = Store.shiftWeekKey(keys[keys.length - 1], 1);
+      if (keys.indexOf(after) === -1) keys.push(after);
+    }
     var chain = Promise.resolve();
     keys.forEach(function (key) {
       chain = chain.then(function () {

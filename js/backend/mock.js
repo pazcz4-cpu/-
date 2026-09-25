@@ -486,14 +486,18 @@
       data.weeks[weekKey] = { constraints: {}, assignments: {}, manual: {}, holidays: {},
         punches: [], shabbatEnd: '', note: '' };
     }
+
+    /* יציאה ממשמרת שנפתחה במוצאי שבת נרשמת בשבוע שבו הכניסה
+       פתוחה, ולא בשבוע החדש. אחרת המשמרת מתפצלת בין שני
+       שבועות ומגיעה לתלוש כאפס שעות. */
+    var target = Store.punchTarget(data.weeks, session.user.employeeId, weekKey);
+    weekKey = target.weekKey;
     var week = data.weeks[weekKey];
     if (!Array.isArray(week.punches)) week.punches = [];
 
-    var kind = Store.punchState(week, session.user.employeeId) === Store.PUNCH.IN
-      ? Store.PUNCH.OUT : Store.PUNCH.IN;
     var result = Store.addPunch(week, {
       empId: session.user.employeeId,
-      kind: kind,
+      kind: target.kind,
       at: this.now().toISOString(),
       src: Store.PUNCH_SRC.PHONE
     });
@@ -505,7 +509,9 @@
     week.updatedAt = this.now().toISOString();
     this._save();
     this._notify(session.company.id, { type: 'week', weekKey: weekKey, week: clone(week) });
-    return Promise.resolve(this._weekSlice(session, clone(week)));
+    return Promise.resolve({
+      weekKey: weekKey, week: this._weekSlice(session, clone(week))
+    });
   };
 
   /* ===== בקשת חופשה עתידית =====

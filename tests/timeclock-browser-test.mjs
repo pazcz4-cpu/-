@@ -130,6 +130,29 @@ try {
     window.__backend.followLink('ronit@clock.test', 'invite');
     await window.__backend.setPassword('secret123');
   });
+  /* משמרת לעובדת בשבוע הנוכחי. בלעדיה אין לה מה להחתים
+     עליו, והכלל "כניסה רק כשיש משמרת קרובה" חוסם אותה בצדק —
+     כך שזה גם חלק מהתרחיש האמיתי וגם מה שמאפשר לבדוק את
+     ההחתמה עצמה. המשמרת נפרסת על כל היום כדי שהבדיקה לא
+     תהיה תלויה בשעה שבה היא רצה. */
+  await page.evaluate(() => {
+    const backend = window.__backend;
+    const key = window.ShiftStore.currentWeekKey();
+    const companyId = Object.keys(backend.db.data)[0];
+    const data = backend.db.data[companyId];
+    const emp = data.config.employees[0];
+    const branch = data.config.branches[0];
+    const day = new Date().getDay();
+    branch.schedule[day] = branch.schedule[day] || {};
+    branch.schedule[day].morning = { need: 1, from: '00:00', to: '23:59' };
+    data.weeks[key] = data.weeks[key] ||
+      { constraints: {}, assignments: {}, manual: {}, holidays: {}, punches: [] };
+    data.weeks[key].assignments[day + '|' + branch.id + '|morning'] = [emp.id];
+    /* ומפורסם: סידור בטיוטה אינו מגיע למכשיר של העובד בכלל */
+    data.weeks[key].published = true;
+    backend._save();
+  });
+
   await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await page.reload();
   await page.waitForTimeout(900);
@@ -206,6 +229,17 @@ try {
   await page.fill('#signin-form input[name="password"]', 'secret123');
   await page.click('#signin-form button[type="submit"]');
   await page.waitForTimeout(1600);
+  /* השבוע פורסם קודם כדי שהעובדת תראה את המשמרת שלה. כאן
+     בודקים את מסלול הפרסום עצמו, ולכן מחזירים אותו לטיוטה. */
+  await page.evaluate(() => {
+    const backend = window.__backend;
+    const companyId = Object.keys(backend.db.data)[0];
+    const key = window.ShiftStore.currentWeekKey();
+    backend.db.data[companyId].weeks[key].published = false;
+    backend._save();
+  });
+  await page.reload();
+  await page.waitForTimeout(1400);
   await page.click('#generate');
   await page.waitForTimeout(2200);
   await page.click('#publish-week');

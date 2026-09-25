@@ -612,7 +612,7 @@
         clockWindow: 'Clock in only with a shift coming up',
         clockWindowLead: 'Up to',
         clockWindowUnit: 'hours before the shift starts',
-        clockWindowHint: 'Anyone without a shift coming up sees a message instead of the button. Clocking out is never blocked, and a week that has not been published blocks nobody.',
+        clockWindowHint: 'The window opens from a shift in a published schedule. Anyone without one sees a message instead of the button. Clocking out is never blocked. If your business does not build and publish a schedule in advance, turn the rule off.',
         clockWindowRange: 'The number of hours must be between 1 and 12.',
         devicesTitle: 'Terminals at the branches',
         devicesHint: 'On the device: Menu, then Comm, then Cloud Server. Server address: setshifts.com, port 443. Then enter here the serial number printed on the back of the device.',

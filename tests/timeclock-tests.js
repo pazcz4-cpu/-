@@ -541,12 +541,23 @@ test('יום שאין בו משמרת — סגור', function () {
 
 /* ===== שלוש ההגנות ===== */
 
-test('הגנה: שבוע שלא פורסם אינו חוסם אף אחד', function () {
-  /* עסק שהדליק את השעון ועוד לא בנה סידור אינו אמור לגלות
-     שאף עובד אינו יכול להחתים. */
+test('סידור בטיוטה אינו פותח חלון', function () {
+  /* דווח מהשטח: מסך שאומר "הסידור לשבוע הזה עדיין לא פורסם"
+     והציע לידו כפתור כניסה. הסידור שטרם פורסם אינו מגיע
+     למכשיר של העובד בכלל, ולכן כלל שמסתמך עליו היה נאכף
+     בשרת בלבד — והעובד היה רואה הודעה שסותרת את מה שהשרת
+     מרשה. */
   var state = windowState();
   state.weeks['2026-09-13'].published = false;
-  assertEqual(may(state, '2026-09-16T09:30:00').allowed, true, 'שבוע בטיוטה');
+  assertEqual(may(state, '2026-09-14T09:30:00').allowed, false, 'טיוטה');
+  state.weeks['2026-09-13'].published = true;
+  assertEqual(may(state, '2026-09-14T09:30:00').allowed, true, 'אחרי פרסום');
+});
+
+test('שבוע שאין לו שורה בכלל — חסום', function () {
+  var state = windowState();
+  assertEqual(Store.canPunchIn(state, null, '2026-09-13', state.employees[0].id,
+    new Date('2026-09-14T09:30:00')).allowed, false, 'אין שבוע');
 });
 
 test('הגנה: אפשר לכבות את הכלל, ואז הכל פתוח', function () {

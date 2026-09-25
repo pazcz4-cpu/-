@@ -606,7 +606,7 @@
         clockWindow: 'Fichar solo con un turno próximo',
         clockWindowLead: 'Hasta',
         clockWindowUnit: 'horas antes de que empiece el turno',
-        clockWindowHint: 'Quien no tenga un turno próximo verá un mensaje en lugar del botón. La salida nunca se bloquea, y una semana que aún no se ha publicado no bloquea a nadie.',
+        clockWindowHint: 'La ventana se abre a partir de un turno en un horario publicado. Quien no tenga uno verá un mensaje en lugar del botón. La salida nunca se bloquea. Si tu negocio no crea y publica el horario con antelación, desactiva la regla.',
         clockWindowRange: 'El número de horas debe estar entre 1 y 12.',
         devicesTitle: 'Terminales en los locales',
         devicesHint: 'En el dispositivo: Menu, luego Comm, luego Cloud Server. Dirección del servidor: setshifts.com, puerto 443. Después, introduce aquí el número de serie impreso en la parte trasera.',

@@ -606,7 +606,7 @@
         clockWindow: 'Picar o ponto só com turno próximo',
         clockWindowLead: 'Até',
         clockWindowUnit: 'horas antes de o turno começar',
-        clockWindowHint: 'Quem não tiver um turno próximo vê uma mensagem em vez do botão. A saída nunca é bloqueada, e uma semana ainda não publicada não bloqueia ninguém.',
+        clockWindowHint: 'A janela abre a partir de um turno num horário publicado. Quem não tiver um vê uma mensagem em vez do botão. A saída nunca é bloqueada. Se o seu negócio não cria e publica horário com antecedência, desligue a regra.',
         clockWindowRange: 'O número de horas tem de estar entre 1 e 12.',
         devicesTitle: 'Terminais nas lojas',
         devicesHint: 'No aparelho: Menu, depois Comm, depois Cloud Server. Endereço do servidor: setshifts.com, porta 443. Depois introduza aqui o número de série impresso na traseira.',

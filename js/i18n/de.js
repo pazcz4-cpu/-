@@ -606,7 +606,7 @@
         clockWindow: 'Kommen nur mit bevorstehender Schicht',
         clockWindowLead: 'Bis zu',
         clockWindowUnit: 'Stunden vor Schichtbeginn',
-        clockWindowHint: 'Wer keine bevorstehende Schicht hat, sieht statt der Schaltfläche einen Hinweis. Gehen wird nie blockiert, und eine noch nicht veröffentlichte Woche blockiert niemanden.',
+        clockWindowHint: 'Das Fenster öffnet sich anhand einer Schicht in einem veröffentlichten Plan. Wer keine hat, sieht statt der Schaltfläche einen Hinweis. Gehen wird nie blockiert. Erstellt und veröffentlicht Ihr Betrieb keinen Plan im Voraus, schalten Sie die Regel ab.',
         clockWindowRange: 'Die Stundenzahl muss zwischen 1 und 12 liegen.',
         devicesTitle: 'Terminals in den Filialen',
         devicesHint: 'Am Gerät: Menu, dann Comm, dann Cloud Server. Serveradresse: setshifts.com, Port 443. Danach hier die Seriennummer von der Rückseite des Geräts eintragen.',

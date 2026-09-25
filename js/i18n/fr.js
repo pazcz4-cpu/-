@@ -606,7 +606,7 @@
         clockWindow: 'Pointer uniquement avec un service à venir',
         clockWindowLead: 'Jusqu’à',
         clockWindowUnit: 'heures avant le début du service',
-        clockWindowHint: 'Sans service à venir, la personne voit un message au lieu du bouton. La sortie n’est jamais bloquée, et une semaine non publiée ne bloque personne.',
+        clockWindowHint: 'La fenêtre s’ouvre à partir d’un service dans un planning publié. Sans cela, la personne voit un message au lieu du bouton. La sortie n’est jamais bloquée. Si votre entreprise ne crée et ne publie pas de planning à l’avance, désactivez la règle.',
         clockWindowRange: 'Le nombre d’heures doit être compris entre 1 et 12.',
         devicesTitle: 'Terminaux dans les établissements',
         devicesHint: 'Sur l’appareil : Menu, puis Comm, puis Cloud Server. Adresse du serveur : setshifts.com, port 443. Saisissez ensuite ici le numéro de série inscrit au dos de l’appareil.',

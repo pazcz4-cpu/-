@@ -1072,6 +1072,10 @@ body { -webkit-tap-highlight-color: transparent; }
 .menu-pop {
   position: absolute; top: calc(100% + var(--s1)); inset-inline-start: 0; z-index: 40;
   min-width: 260px; max-width: min(340px, calc(100vw - var(--s6)));
+  /* גובה: התפריט מחזיק עכשיו גם את מועדי השבוע, ושבוע של
+     סוכות מגיע לארבעה כרטיסים. בלי התקרה הוא נמשך מתחת
+     לקצה המסך ואי אפשר להגיע לתחתית שלו. */
+  max-height: min(70vh, 640px); overflow-y: auto;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--e3);
   padding: var(--s2); display: flex; flex-direction: column; gap: var(--s1);
@@ -2209,6 +2213,54 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
   .shell-sheet-card { box-shadow: 0 -6px 26px rgb(0 0 0 / .5); }
 }
 
+/* ===== לוח השנה של העסק =====
+
+   מה נופל בשבוע, ושתי הפעולות שהמנהל יכול לעשות עם זה. הכרטיס
+   ולא שורה: לכל יום יש שם, סוג, ושני כפתורים — וזה לא נכנס
+   לשורה אחת בטלפון בלי להידחס. */
+.calendar-days { display: flex; flex-direction: column; gap: var(--s2); }
+/* המקטע הזה רחב מהשאר, ולכן הוא זה שקובע את רוחב התפריט */
+#calendar-section { min-width: 290px; }
+.calendar-day {
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--s2) var(--s3); background: var(--surface);
+}
+/* יום שכבר נסגר שקט: ההחלטה התקבלה, ואין בו עוד מה לעשות */
+.calendar-day.is-closed { opacity: .75; }
+.calendar-day-head {
+  display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap;
+}
+.calendar-day-name { font-weight: 600; font-size: var(--t-sm); }
+.calendar-day-when { color: var(--muted); font-size: var(--t-xs); }
+.calendar-day-kind { color: var(--muted); font-size: var(--t-xs); margin-top: 2px; }
+/* שני הכפתורים זה לצד זה כשיש מקום, וזה מתחת לזה כשאין.
+   בתפריט הצר הם היו נערמים תמיד, וארבעה מועדים בשבוע הפכו
+   את התפריט לעמוד שצריך לגלול בו. */
+.calendar-day-actions {
+  display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s2);
+}
+.calendar-day-actions .btn { flex: 1 1 auto; white-space: nowrap; }
+.calendar-day-state {
+  margin-top: var(--s2); font-size: var(--t-xs); color: var(--muted);
+}
+/* כפתור שנראה כמו קישור: ביטול אינו פעולה ראשית, ושני כפתורים
+   מלאים זה לצד זה הופכים את הביטול לשווה ערך לסגירה. */
+.link-btn {
+  background: none; border: 0; padding: 0; font: inherit; font-size: inherit;
+  color: var(--brand); cursor: pointer; text-decoration: underline;
+}
+.settings-sub {
+  margin: var(--s3) 0 var(--s2); font-weight: 600; font-size: var(--t-sm);
+}
+/* המדיניות לכל סוג יום: שם מימין, בחירה משמאל, ורשימה שנקראת
+   מלמעלה למטה ולא כטבלה שנשברת בטלפון. */
+.cal-policy { display: flex; flex-direction: column; gap: var(--s2); }
+.cal-policy-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+}
+.cal-policy-row > span { flex: 1 1 10rem; font-size: var(--t-sm); }
+.cal-policy-row select { flex: 0 0 auto; }
+
 </style>
 </head>
 <body>
@@ -3224,6 +3276,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Dates this week',
+        enable: 'Mark dates on the schedule',
+        approx: '(approx.)',
+        closeDay: 'Close the day',
+        specialHours: 'Special hours',
+        editHours: 'Change hours',
+        clearHours: 'Clear',
+        isClosed: 'Locations are closed on this day.',
+        reopen: 'Reopen',
+        hoursSet: 'Special hours for this day: {hours}',
+        hoursPrompt: 'Working hours on {day} (for example 08:00-14:00). A shift entirely outside those hours will not be created:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} is back to normal hours',
+        hoursBad: 'We couldn\'t read those hours. The format is 08:00-14:00.',
+        title: 'Calendar and dates',
+        hint: 'The system marks what falls in each week, and the business decides what to do about it. It never closes a location on its own — it suggests, and you approve.',
+        sets: 'Which calendars to show',
+        setHebrew: 'Hebrew',
+        setMuslim: 'Muslim',
+        setChristian: 'Christian',
+        policy: 'What to suggest for each kind of day',
+        policyClose: 'Suggest closing',
+        policyNote: 'Show only',
+        policyHide: 'Don\'t show',
+        off: 'Turn the calendar off'
+      },
       holidays: {
         erevRoshHashana: 'Erev Rosh Hashanah',
         roshHashana1: 'Rosh Hashanah',
@@ -4630,6 +4711,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'מועדים בשבוע הזה',
+        enable: 'לסמן מועדים בלוח הסידור',
+        approx: '(בערך)',
+        closeDay: 'לסגור את היום',
+        specialHours: 'שעות מיוחדות',
+        editHours: 'שינוי השעות',
+        clearHours: 'ביטול',
+        isClosed: 'הסניפים סגורים ביום הזה.',
+        reopen: 'לפתוח מחדש',
+        hoursSet: 'שעות מיוחדות ליום הזה: {hours}',
+        hoursPrompt: 'שעות העבודה ביום {day} (למשל 08:00-14:00). משמרת שכולה מחוץ לשעות האלה לא תיווצר:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} חזר לשעות הרגילות',
+        hoursBad: 'לא הצלחנו לקרוא את השעות. הצורה היא 08:00-14:00.',
+        title: 'לוח שנה ומועדים',
+        hint: 'המערכת מסמנת מה נופל בכל שבוע, והעסק מחליט מה לעשות עם זה. היא לעולם אינה סוגרת סניף לבד — היא מציעה, ואתם מאשרים.',
+        sets: 'אילו לוחות להציג',
+        setHebrew: 'עברי',
+        setMuslim: 'מוסלמי',
+        setChristian: 'נוצרי',
+        policy: 'מה להציע לכל סוג יום',
+        policyClose: 'להציע לסגור',
+        policyNote: 'להציג בלבד',
+        policyHide: 'לא להציג',
+        off: 'לכבות את לוח השנה'
+      },
       holidays: {
         erevRoshHashana: 'ערב ראש השנה',
         roshHashana1: 'ראש השנה',
@@ -6031,6 +6141,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Fechas de esta semana',
+        enable: 'Marcar las fechas en el cuadrante',
+        approx: '(aprox.)',
+        closeDay: 'Cerrar el día',
+        specialHours: 'Horario especial',
+        editHours: 'Cambiar el horario',
+        clearHours: 'Quitar',
+        isClosed: 'Las sucursales están cerradas ese día.',
+        reopen: 'Volver a abrir',
+        hoursSet: 'Horario especial para ese día: {hours}',
+        hoursPrompt: 'Horario de trabajo del {day} (por ejemplo 08:00-14:00). Un turno totalmente fuera de ese horario no se creará:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} vuelve al horario normal',
+        hoursBad: 'No pudimos leer ese horario. El formato es 08:00-14:00.',
+        title: 'Calendario y fechas',
+        hint: 'El sistema marca lo que cae en cada semana y el negocio decide qué hacer. Nunca cierra una sucursal por su cuenta: lo propone y tú lo apruebas.',
+        sets: 'Qué calendarios mostrar',
+        setHebrew: 'Hebreo',
+        setMuslim: 'Musulmán',
+        setChristian: 'Cristiano',
+        policy: 'Qué proponer para cada tipo de día',
+        policyClose: 'Proponer cerrar',
+        policyNote: 'Solo mostrar',
+        policyHide: 'No mostrar',
+        off: 'Apagar el calendario'
+      },
       holidays: {
         erevRoshHashana: 'Víspera de Rosh Hashaná',
         roshHashana1: 'Rosh Hashaná',
@@ -7432,6 +7571,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Dates de cette semaine',
+        enable: 'Signaler les dates dans le planning',
+        approx: '(env.)',
+        closeDay: 'Fermer la journée',
+        specialHours: 'Horaires spéciaux',
+        editHours: 'Modifier les horaires',
+        clearHours: 'Retirer',
+        isClosed: 'Les sites sont fermés ce jour-là.',
+        reopen: 'Rouvrir',
+        hoursSet: 'Horaires spéciaux pour ce jour : {hours}',
+        hoursPrompt: 'Horaires de travail le {day} (par exemple 08:00-14:00). Un créneau entièrement hors de ces horaires ne sera pas créé :',
+        hoursSaved: '{day} : {hours}',
+        hoursCleared: '{day} revient aux horaires habituels',
+        hoursBad: 'Impossible de lire ces horaires. Le format est 08:00-14:00.',
+        title: 'Calendrier et dates',
+        hint: 'Le système signale ce qui tombe chaque semaine, et l\'entreprise décide quoi en faire. Il ne ferme jamais un site de lui-même : il propose, vous validez.',
+        sets: 'Quels calendriers afficher',
+        setHebrew: 'Hébraïque',
+        setMuslim: 'Musulman',
+        setChristian: 'Chrétien',
+        policy: 'Ce qui est proposé pour chaque type de jour',
+        policyClose: 'Proposer de fermer',
+        policyNote: 'Afficher seulement',
+        policyHide: 'Ne pas afficher',
+        off: 'Désactiver le calendrier'
+      },
       holidays: {
         erevRoshHashana: 'Veille de Roch Hachana',
         roshHashana1: 'Roch Hachana',
@@ -8833,6 +9001,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'المناسبات هذا الأسبوع',
+        enable: 'تعليم المناسبات في جدول الورديات',
+        approx: '(تقريبًا)',
+        closeDay: 'إغلاق اليوم',
+        specialHours: 'ساعات خاصة',
+        editHours: 'تغيير الساعات',
+        clearHours: 'إلغاء',
+        isClosed: 'الفروع مغلقة في هذا اليوم.',
+        reopen: 'إعادة الفتح',
+        hoursSet: 'ساعات خاصة لهذا اليوم: {hours}',
+        hoursPrompt: 'ساعات العمل يوم {day} (مثلًا 08:00-14:00). أي وردية خارج هذه الساعات كليًا لن تُنشأ:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: 'عاد {day} إلى ساعاته المعتادة',
+        hoursBad: 'تعذّرت قراءة الساعات. الصيغة هي 08:00-14:00.',
+        title: 'التقويم والمناسبات',
+        hint: 'يعلّم النظام ما يقع في كل أسبوع، والعمل يقرّر ماذا يفعل به. لا يغلق فرعًا من تلقاء نفسه — يقترح، وأنتم توافقون.',
+        sets: 'أي التقاويم تُعرض',
+        setHebrew: 'العبري',
+        setMuslim: 'الإسلامي',
+        setChristian: 'المسيحي',
+        policy: 'ماذا يُقترح لكل نوع يوم',
+        policyClose: 'اقتراح الإغلاق',
+        policyNote: 'العرض فقط',
+        policyHide: 'عدم العرض',
+        off: 'إيقاف التقويم'
+      },
       holidays: {
         erevRoshHashana: 'ليلة رأس السنة العبرية',
         roshHashana1: 'رأس السنة العبرية',
@@ -10234,6 +10431,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Даты на этой неделе',
+        enable: 'Отмечать даты в расписании',
+        approx: '(примерно)',
+        closeDay: 'Закрыть день',
+        specialHours: 'Особые часы',
+        editHours: 'Изменить часы',
+        clearHours: 'Убрать',
+        isClosed: 'В этот день точки закрыты.',
+        reopen: 'Открыть снова',
+        hoursSet: 'Особые часы на этот день: {hours}',
+        hoursPrompt: 'Часы работы в {day} (например 08:00-14:00). Смена, целиком выходящая за эти часы, не будет создана:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} вернулся к обычным часам',
+        hoursBad: 'Не удалось прочитать часы. Формат — 08:00-14:00.',
+        title: 'Календарь и даты',
+        hint: 'Система отмечает, что выпадает на каждую неделю, а бизнес решает, что с этим делать. Она никогда не закрывает точку сама — предлагает, а вы подтверждаете.',
+        sets: 'Какие календари показывать',
+        setHebrew: 'Еврейский',
+        setMuslim: 'Мусульманский',
+        setChristian: 'Христианский',
+        policy: 'Что предлагать для каждого типа дня',
+        policyClose: 'Предлагать закрыть',
+        policyNote: 'Только показывать',
+        policyHide: 'Не показывать',
+        off: 'Выключить календарь'
+      },
       holidays: {
         erevRoshHashana: 'Канун Рош ха-Шана',
         roshHashana1: 'Рош ха-Шана',
@@ -11635,6 +11861,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Termine diese Woche',
+        enable: 'Termine im Dienstplan markieren',
+        approx: '(ca.)',
+        closeDay: 'Tag schließen',
+        specialHours: 'Sonderzeiten',
+        editHours: 'Zeiten ändern',
+        clearHours: 'Aufheben',
+        isClosed: 'An diesem Tag sind die Standorte geschlossen.',
+        reopen: 'Wieder öffnen',
+        hoursSet: 'Sonderzeiten für diesen Tag: {hours}',
+        hoursPrompt: 'Arbeitszeiten am {day} (zum Beispiel 08:00-14:00). Eine Schicht, die ganz außerhalb liegt, wird nicht angelegt:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} hat wieder die normalen Zeiten',
+        hoursBad: 'Die Zeiten konnten nicht gelesen werden. Das Format ist 08:00-14:00.',
+        title: 'Kalender und Termine',
+        hint: 'Das System markiert, was in jede Woche fällt, und der Betrieb entscheidet, was daraus folgt. Es schließt nie von sich aus einen Standort — es schlägt vor, Sie bestätigen.',
+        sets: 'Welche Kalender anzeigen',
+        setHebrew: 'Jüdisch',
+        setMuslim: 'Muslimisch',
+        setChristian: 'Christlich',
+        policy: 'Was für jede Art von Tag vorgeschlagen wird',
+        policyClose: 'Schließen vorschlagen',
+        policyNote: 'Nur anzeigen',
+        policyHide: 'Nicht anzeigen',
+        off: 'Kalender ausschalten'
+      },
       holidays: {
         erevRoshHashana: 'Erew Rosch ha-Schana',
         roshHashana1: 'Rosch ha-Schana',
@@ -13036,6 +13291,35 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Datas desta semana',
+        enable: 'Assinalar as datas na escala',
+        approx: '(aprox.)',
+        closeDay: 'Fechar o dia',
+        specialHours: 'Horário especial',
+        editHours: 'Alterar o horário',
+        clearHours: 'Remover',
+        isClosed: 'As lojas estão fechadas nesse dia.',
+        reopen: 'Reabrir',
+        hoursSet: 'Horário especial para esse dia: {hours}',
+        hoursPrompt: 'Horário de trabalho em {day} (por exemplo 08:00-14:00). Um turno totalmente fora desse horário não será criado:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} volta ao horário normal',
+        hoursBad: 'Não conseguimos ler esse horário. O formato é 08:00-14:00.',
+        title: 'Calendário e datas',
+        hint: 'O sistema assinala o que cai em cada semana e o negócio decide o que fazer. Nunca fecha uma loja sozinho: sugere, e vocês aprovam.',
+        sets: 'Que calendários mostrar',
+        setHebrew: 'Hebraico',
+        setMuslim: 'Muçulmano',
+        setChristian: 'Cristão',
+        policy: 'O que sugerir para cada tipo de dia',
+        policyClose: 'Sugerir fechar',
+        policyNote: 'Apenas mostrar',
+        policyHide: 'Não mostrar',
+        off: 'Desligar o calendário'
+      },
       holidays: {
         erevRoshHashana: 'Véspera de Rosh Hashaná',
         roshHashana1: 'Rosh Hashaná',
@@ -15190,6 +15474,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
   var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+  /* לוח השנה מחושב ואינו נטען משום מקור חיצוני. נפתר בכל קריאה
+     ולא פעם אחת: store.js נטען בעמוד לפני calendar.js. */
+  function Calendar() {
+    return root.ShiftCalendar ||
+      (typeof require === 'function' ? require('./calendar.js') : null);
+  }
 
   /* טקסטים למשתמש מגיעים משכבת התרגום; בלעדיה מוצג המפתח */
   function t(key, params) {
@@ -15379,9 +15669,74 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     return config;
   }
 
-  function slotNeed(branch, dayIdx, shiftId) {
+  /* week אופציונלי, ומשנה תשובה אחת בלבד: משמרת שהשעות
+     המיוחדות של אותו יום מוציאות אותה לגמרי מהחלון אינה
+     מתקיימת. זה המקרה של משמרת ערב בערב פסח — היא מתחילה
+     אחרי שהעסק כבר סגר, ובלי זה הלוח היה מבקש לאייש אותה. */
+  function slotNeed(branch, dayIdx, shiftId, week) {
     var config = slotConfig(branch, dayIdx, shiftId);
-    return config ? Number(config.need) || 0 : 0;
+    if (!config) return 0;
+    if (week && dayHours(week, dayIdx) && !slotHours(week, branch, dayIdx, shiftId)) return 0;
+    return Number(config.need) || 0;
+  }
+
+  /* ===== שעות מיוחדות ליום =====
+
+     ערב חג הוא היום שבו רוב העסקים לא סוגרים ולא עובדים כרגיל:
+     הם עובדים עד מוקדם. עד כה היו רק שתי אפשרויות — יום רגיל
+     או סניפים סגורים — ולכן ערב פסח נבנה כיום מלא, כולל משמרת
+     ערב שאיש לא עבד בה, והמנהל תיקן את זה ביד בכל שנה מחדש.
+
+     השעות נשמרות על השבוע ולא על הסניף: שעות הסניף הן תבנית
+     שחוזרת בכל שבוע, ושינוי שלה בגלל ערב חג אחד היה משנה את
+     כל השנה. כאן זה חל על השבוע הזה בלבד.
+
+     היום כולו, ולא לכל סניף בנפרד. "ערב חג: עד 14:00" הוא מה
+     שעסק אומר בפועל, ופיצול לסניפים היה הופך פעולה של לחיצה
+     לטופס. סניף שצריך משהו אחר — המנהל עורך את המשמרת עצמה,
+     כמו תמיד. */
+  function dayHours(week, dayIdx) {
+    var entry = ((week && week.dayHours) || {})[dayIdx];
+    if (!entry) return null;
+    var from = parseTime(entry.from) === null ? '' : entry.from;
+    var to = parseTime(entry.to) === null ? '' : entry.to;
+    if (!from && !to) return null;
+    return { from: from, to: to };
+  }
+
+  function setDayHours(week, dayIdx, hours) {
+    if (!week.dayHours) week.dayHours = {};
+    if (!hours) { delete week.dayHours[dayIdx]; return null; }
+    var from = normalizeTimeInput(hours.from);
+    var to = normalizeTimeInput(hours.to);
+    if (!from && !to) { delete week.dayHours[dayIdx]; return null; }
+    week.dayHours[dayIdx] = { from: from, to: to };
+    return dayHours(week, dayIdx);
+  }
+
+  /* חיתוך חלון המשמרת לחלון היום.
+
+     מחזיר null כשלא נשאר כלום — כלומר המשמרת אינה מתקיימת
+     ביום הזה. זה המקרה של משמרת ערב בערב פסח: היא מתחילה
+     אחרי שהעסק כבר סגר, ולכן אין לה מה לחפש בלוח.
+
+     משמרת לילה חוצה חצות (22:00–06:00), ולכן הסוף נמדד כהמשך
+     של אותו יום ולא כשעה קטנה יותר. בלי זה כל משמרת לילה
+     הייתה נראית כמו חלון ריק ונמחקת. */
+  function clipToDay(from, to, limit) {
+    var start = parseTime(from);
+    var end = parseTime(to);
+    if (start === null || end === null) return { from: from, to: to };
+    if (end <= start) end += 1440;
+
+    var dayStart = parseTime(limit.from);
+    var dayEnd = parseTime(limit.to);
+    if (dayStart !== null && dayEnd !== null && dayEnd <= dayStart) dayEnd += 1440;
+
+    if (dayStart !== null && start < dayStart) start = dayStart;
+    if (dayEnd !== null && end > dayEnd) end = dayEnd;
+    if (end <= start) return null;
+    return { from: formatTime(start), to: formatTime(end) };
   }
 
   /* שעות בפועל. במוצ״ש ההתחלה נגזרת משעת צאת השבת של אותו שבוע. */
@@ -15393,7 +15748,17 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       var shabbatEnd = (week && week.shabbatEnd) || '';
       from = shabbatEnd ? addMinutes(shabbatEnd, Data.MOTZASH.offsetMinutes) : '';
     }
-    return { from: from, to: config.to || '', auto: config.auto || null };
+    var hours = { from: from, to: config.to || '', auto: config.auto || null };
+    /* שעות מיוחדות ליום גוברות על התבנית של הסניף */
+    var limit = dayHours(week, dayIdx);
+    if (limit) {
+      var clipped = clipToDay(hours.from, hours.to, limit);
+      if (!clipped) return null;
+      hours.from = clipped.from;
+      hours.to = clipped.to;
+      hours.limited = true;
+    }
+    return hours;
   }
 
   function hoursLabel(hours) {
@@ -16213,6 +16578,149 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
      היחידה שצריך לתת לו. */
   var DEFAULT_PUNCH_LEAD_MINUTES = 120;
 
+
+  /* ===== לוח השנה של העסק =====
+
+     הבקשה שממנה זה נולד: "תמיד תסמן חגים וימים מיוחדים שהעסק
+     יידע עליהם, והוא יגדיר אותם לפי הפעילות שלו".
+
+     שני חלקים, ובכוונה נפרדים:
+
+     1. מה היום הזה. זה עובדה, לא החלטה, והיא מוצגת תמיד — כי
+        מנהל שבונה סידור לשבוע של סוכות צריך לדעת שזה סוכות
+        לפני שהוא מפרסם, ולא אחרי.
+
+     2. מה זה אומר לעסק הזה. בית קפה פתוח בחול המועד, חברת
+        שמירה עובדת ביום כיפור, ומשרד סגור בשניהם. לכן לכל סוג
+        יום יש מדיניות שהעסק קובע, וברירת המחדל שלה היא
+        "להציג" — לא "לסגור".
+
+     המערכת אינה סוגרת סניפים לבד גם כשהמדיניות אומרת סגירה:
+     היא מציעה, והמנהל מאשר בלחיצה. סידור שנמחק לבד ביום שבו
+     העסק דווקא עובד הוא נזק שאי אפשר לתקן בלחיצה אחת. */
+  var CALENDAR_SETS = ['hebrew', 'muslim', 'christian'];
+  var CALENDAR_KINDS = ['yomtov', 'erev', 'cholhamoed', 'memorial',
+    'fast', 'festive', 'muslim', 'christian'];
+  /* 'close' = להציע סגירה, 'note' = להציג בלבד, 'hide' = לא להציג */
+  var CALENDAR_POLICY = { CLOSE: 'close', NOTE: 'note', HIDE: 'hide' };
+
+  /* יום טוב הוא היום היחיד שברירת המחדל שלו היא הצעת סגירה:
+     ברוב המוחלט של העסקים בישראל אין בו עבודה, ומי שכן עובד
+     בו משנה את זה פעם אחת בהגדרות. כל השאר מוצגים בלבד. */
+  function defaultCalendarPolicy() {
+    var out = {};
+    CALENDAR_KINDS.forEach(function (kind) {
+      out[kind] = kind === 'yomtov' ? CALENDAR_POLICY.CLOSE : CALENDAR_POLICY.NOTE;
+    });
+    return out;
+  }
+
+  function calendarRule(state) {
+    var raw = ((state && state.settings) || {}).calendar || {};
+    var sets = {};
+    CALENDAR_SETS.forEach(function (name) {
+      /* ברירת המחדל היא שלושת הלוחות. עסק ישראלי מעסיק לא פעם
+         עובדים משלוש הדתות, ויום שלא סומן הוא יום שהמנהל שיבץ
+         בו מישהו שביקש אותו חופשי. מי שאינו רוצה — מכבה. */
+      sets[name] = (raw.sets && raw.sets[name] !== undefined)
+        ? !!raw.sets[name] : true;
+    });
+    var fallback = defaultCalendarPolicy();
+    var policy = {};
+    CALENDAR_KINDS.forEach(function (kind) {
+      var value = raw.policy && raw.policy[kind];
+      policy[kind] = (value === CALENDAR_POLICY.CLOSE || value === CALENDAR_POLICY.NOTE ||
+        value === CALENDAR_POLICY.HIDE) ? value : fallback[kind];
+    });
+    return { enabled: raw.enabled !== false, sets: sets, policy: policy };
+  }
+
+  function setCalendarRule(state, patch) {
+    if (!state.settings) state.settings = {};
+    var current = calendarRule(state);
+    if ('enabled' in patch) current.enabled = !!patch.enabled;
+    if (patch.sets) {
+      CALENDAR_SETS.forEach(function (name) {
+        if (name in patch.sets) current.sets[name] = !!patch.sets[name];
+      });
+    }
+    if (patch.policy) {
+      CALENDAR_KINDS.forEach(function (kind) {
+        var value = patch.policy[kind];
+        if (value === CALENDAR_POLICY.CLOSE || value === CALENDAR_POLICY.NOTE ||
+          value === CALENDAR_POLICY.HIDE) {
+          current.policy[kind] = value;
+        }
+      });
+    }
+    state.settings.calendar = current;
+    return current;
+  }
+
+  /* מה נופל בכל יום בשבוע הזה.
+
+     מחזיר מערך באורך שבעה ימים; כל תא הוא מערך של מועדים, כי
+     יש ימים שנופלים בהם שניים (ערב חג שהוא גם צום, למשל).
+     ריק פירושו יום רגיל.
+
+     approximate מגיע מהלוח המוסלמי: תחילת החודש שם נקבעת
+     בראייה בפועל, והחישוב יכול לסטות ביום. הסימון עובר הלאה
+     כדי שהמסך יוכל לומר "בערך", ולא להציג ודאות שאינה קיימת. */
+  function calendarDays(state, weekKey) {
+    var empty = [[], [], [], [], [], [], []];
+    var rule = calendarRule(state);
+    if (!rule.enabled) return empty;
+    var Cal = Calendar();
+    if (!Cal || !weekKey) return empty;
+
+    var from = dateOfDay(weekKey, 0);
+    var to = dateOfDay(weekKey, 6);
+    var found;
+    try { found = Cal.between(from, to, rule.sets); }
+    catch (err) { return empty; }
+
+    var byDay = [[], [], [], [], [], [], []];
+    found.forEach(function (item) {
+      var policy = rule.policy[item.kind] || CALENDAR_POLICY.NOTE;
+      if (policy === CALENDAR_POLICY.HIDE) return;
+      /* המרחק בימים מתחילת השבוע. נגזר מהתאריך שהלוח מחזיר
+         ולא מהסדר שבו הוא מחזיר אותם. */
+      var parts = item.date.split('-');
+      var day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      var idx = Math.round((day - from) / 86400000);
+      if (idx < 0 || idx > 6) return;
+      byDay[idx].push({
+        id: item.id,
+        kind: item.kind,
+        date: item.date,
+        approximate: !!item.approximate,
+        name: t('holidays.' + item.id),
+        kindName: t('holidays.kind.' + item.kind),
+        suggestClose: policy === CALENDAR_POLICY.CLOSE
+      });
+    });
+    return byDay;
+  }
+
+  /* הימים שהלוח מציע לסגור בהם, ושעדיין אינם מסומנים כחג.
+
+     יום שכבר מסומן אינו חוזר: ההצעה נעלמת ברגע שהיא נענתה,
+     ואינה הופכת לשורה שחוזרת בכל ציור. */
+  function calendarSuggestions(state, week, weekKey) {
+    var out = [];
+    calendarDays(state, weekKey).forEach(function (items, idx) {
+      if (isHoliday(week, idx)) return;
+      var closing = items.filter(function (item) { return item.suggestClose; });
+      if (!closing.length) return;
+      out.push({
+        dayIdx: idx,
+        name: closing.map(function (item) { return item.name; }).join(' · '),
+        items: closing
+      });
+    });
+    return out;
+  }
+
   function punchWindowRule(state) {
     var clock = timeclock(state);
     var minutes = Math.round(Number(clock.leadMinutes));
@@ -16707,7 +17215,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     if (isHoliday(week, dayIdx)) return [];
     return shiftIds(state).filter(function (shiftId) {
       return state.branches.some(function (branch) {
-        return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
+        return branch.active && slotNeed(branch, dayIdx, shiftId, week) > 0;
       });
     });
   }
@@ -16944,7 +17452,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
         shiftIds(state).forEach(function (shiftId) {
-          var need = slotNeed(branch, day, shiftId);
+          var need = slotNeed(branch, day, shiftId, week);
           if (need > 0) {
             demands.push({
               dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need,
@@ -16969,7 +17477,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       if (!branch.active) return false;
       if (emp.branches.length && emp.branches.indexOf(branch.id) === -1) return false;
       return shiftIds(state).some(function (shiftId) {
-        if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
+        if (slotNeed(branch, dayIdx, shiftId, week) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
         if (!employeeFitsSlot(state, emp, slotRoleNeeds(state, branch, dayIdx, shiftId))) return false;
@@ -17684,6 +18192,11 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     clockIdOf: clockIdOf,
     payrollIdOf: payrollIdOf,
     punchWindowRule: punchWindowRule,
+    dayHours: dayHours, setDayHours: setDayHours, clipToDay: clipToDay,
+    calendarRule: calendarRule, setCalendarRule: setCalendarRule,
+    calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
+    CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,
+    CALENDAR_POLICY: CALENDAR_POLICY,
     employeeShiftTimes: employeeShiftTimes,
     canPunchIn: canPunchIn,
     DEFAULT_PUNCH_LEAD_MINUTES: DEFAULT_PUNCH_LEAD_MINUTES,
@@ -20916,6 +21429,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     $('#constraints-week').textContent = t('ui.constraintsWeek', { label: label });
 
     renderHolidays();
+    renderCalendarDays();
 
     var current = week();
     var field = $('#shabbat-end');
@@ -20975,7 +21489,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     activeBranches.forEach(function (branch) {
       var shiftsHtml = '';
       shiftList().forEach(function (shift) {
-        var need = Store.slotNeed(branch, mobileDay, shift.id);
+        var need = Store.slotNeed(branch, mobileDay, shift.id, current);
         var assigned = Store.getAssigned(current, mobileDay, branch.id, shift.id);
         if (!need && !assigned.length) return;
 
@@ -21134,6 +21648,96 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     $('#holiday-days').innerHTML = html;
   }
 
+
+  /* ========== מועדים בשבוע הזה ==========
+
+     שתי פעולות לכל יום, ולא אחת: ערב חג הוא היום שבו רוב
+     העסקים לא סוגרים ולא עובדים כרגיל — הם עובדים עד מוקדם.
+     עד כה היו רק "יום רגיל" או "סניפים סגורים", ולכן ערב פסח
+     נבנה כיום מלא והמנהל תיקן אותו ביד בכל שנה מחדש. */
+  function renderCalendarDays() {
+    var section = $('#calendar-section');
+    var sep = $('#calendar-sep');
+    var host = $('#calendar-days');
+    if (!host || !section) return;
+
+    var current = week();
+    var days = Store.calendarDays(state, weekKey);
+    var any = days.some(function (items) { return items.length; });
+    section.hidden = !any;
+    if (sep) sep.hidden = !any;
+    if (!any) { host.innerHTML = ''; return; }
+
+    var html = '';
+    days.forEach(function (items, idx) {
+      if (!items.length) return;
+      var closed = Store.isHoliday(current, idx);
+      var hours = Store.dayHours(current, idx);
+      /* "בערך" מגיע מהלוח המוסלמי: תחילת החודש שם נקבעת
+         בראייה בפועל, והחישוב יכול לסטות ביום. עדיף לומר את
+         זה מאשר להציג ודאות שאינה קיימת. */
+      var names = items.map(function (item) {
+        return esc(item.name) + (item.approximate ? ' ' + esc(t('calendar.approx')) : '');
+      }).join(' · ');
+      var kinds = items.map(function (item) { return esc(item.kindName); }).join(' · ');
+
+      html += '<div class="calendar-day' + (closed ? ' is-closed' : '') + '">' +
+        '<div class="calendar-day-head">' +
+          '<span class="calendar-day-name">' + names + '</span>' +
+          '<span class="calendar-day-when">' + esc(Data.DAYS[idx].name) + ' · ' +
+            esc(Store.formatDate(Store.dateOfDay(weekKey, idx))) + '</span>' +
+        '</div>' +
+        '<div class="calendar-day-kind">' + kinds + '</div>';
+
+      if (closed) {
+        html += '<div class="calendar-day-state">' + esc(t('calendar.isClosed')) +
+          ' <button type="button" class="link-btn" data-cal-open="' + idx + '">' +
+          esc(t('calendar.reopen')) + '</button></div>';
+      } else {
+        html += '<div class="calendar-day-actions">' +
+          '<button type="button" class="btn ghost small" data-cal-close="' + idx + '">' +
+            esc(t('calendar.closeDay')) + '</button>' +
+          '<button type="button" class="btn ghost small" data-cal-hours="' + idx + '">' +
+            esc(t(hours ? 'calendar.editHours' : 'calendar.specialHours')) + '</button>' +
+          '</div>';
+        if (hours) {
+          html += '<div class="calendar-day-state">' +
+            esc(t('calendar.hoursSet', { hours: Store.hoursLabel(hours) })) +
+            ' <button type="button" class="link-btn" data-cal-clear="' + idx + '">' +
+            esc(t('calendar.clearHours')) + '</button></div>';
+        }
+      }
+      html += '</div>';
+    });
+    host.innerHTML = html;
+  }
+
+  /* סגירת יום מתוך לוח השנה. אותה פעולה בדיוק כמו סימון חג
+     ידני, כולל האזהרה על שיבוצים שיימחקו — ולכן היא עוברת
+     דרך אותו קוד ולא דרך העתק שלו. */
+  function closeDayFromCalendar(dayIdx, name) {
+    var current = week();
+    var assignedCount = 0;
+    state.employees.forEach(function (emp) {
+      assignedCount += Store.employeeDayAssignments(state, current, emp.id, dayIdx).length;
+    });
+    if (assignedCount && !confirm(t('toast.holidayHasAssignments', { count: assignedCount }))) {
+      return false;
+    }
+    if (assignedCount) {
+      state.branches.forEach(function (branch) {
+        Store.shiftIds(state).forEach(function (shiftId) {
+          Store.setAssigned(current, dayIdx, branch.id, shiftId, []);
+          delete current.manual[Store.slotKey(dayIdx, branch.id, shiftId)];
+        });
+      });
+    }
+    Store.setHoliday(current, dayIdx, name);
+    /* יום סגור ושעות מיוחדות אינם יכולים להתקיים יחד */
+    Store.setDayHours(current, dayIdx, null);
+    return true;
+  }
+
   /* ========== לוח הסידור לפי סניף ========== */
   function issueMaps(report) {
     var cells = {}, employeesDay = {};
@@ -21245,7 +21849,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         html += '<td class="row-head ' + shiftClass(shift.id) + '">' + esc(shift.name) + '</td>';
 
         Data.DAYS.forEach(function (day) {
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
           if (Store.isHoliday(week(), day.idx) && !assigned.length) {
             if (shiftIndex === 0) {
@@ -23176,8 +23780,77 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     node.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
   }
 
+
+  /* ========== הגדרות לוח השנה ========== */
+  function renderCalendarSettings() {
+    var rule = Store.calendarRule(state);
+    var enabled = $('#cal-enabled');
+    if (!enabled) return;
+    enabled.checked = rule.enabled;
+    var options = $('#cal-options');
+    if (options) options.classList.toggle('hidden', !rule.enabled);
+
+    Store.CALENDAR_SETS.forEach(function (name) {
+      var box = $('#cal-set-' + name);
+      if (box) box.checked = !!rule.sets[name];
+    });
+
+    var host = $('#cal-policy');
+    if (!host) return;
+    var values = [
+      { value: Store.CALENDAR_POLICY.CLOSE, label: t('calendar.policyClose') },
+      { value: Store.CALENDAR_POLICY.NOTE, label: t('calendar.policyNote') },
+      { value: Store.CALENDAR_POLICY.HIDE, label: t('calendar.policyHide') }
+    ];
+    host.innerHTML = Store.CALENDAR_KINDS.map(function (kind) {
+      var current = rule.policy[kind];
+      return '<label class="cal-policy-row"><span>' + esc(t('holidays.kind.' + kind)) + '</span>' +
+        '<select class="text-input" data-cal-kind="' + kind + '">' +
+        values.map(function (option) {
+          return '<option value="' + option.value + '"' +
+            (option.value === current ? ' selected' : '') + '>' +
+            esc(option.label) + '</option>';
+        }).join('') +
+        '</select></label>';
+    }).join('');
+  }
+
+  function bindCalendarSettings() {
+    var enabled = $('#cal-enabled');
+    if (!enabled) return;
+    enabled.addEventListener('change', function () {
+      Store.setCalendarRule(state, { enabled: enabled.checked });
+      persist('all');
+      render();
+    });
+    Store.CALENDAR_SETS.forEach(function (name) {
+      var box = $('#cal-set-' + name);
+      if (!box) return;
+      box.addEventListener('change', function () {
+        var patch = { sets: {} };
+        patch.sets[name] = box.checked;
+        Store.setCalendarRule(state, patch);
+        persist('all');
+        render();
+      });
+    });
+    var host = $('#cal-policy');
+    if (host) {
+      host.addEventListener('change', function (event) {
+        var select = event.target.closest('[data-cal-kind]');
+        if (!select) return;
+        var patch = { policy: {} };
+        patch.policy[select.dataset.calKind] = select.value;
+        Store.setCalendarRule(state, patch);
+        persist('all');
+        render();
+      });
+    }
+  }
+
   function renderSettings() {
     renderCompanyDetails();
+    renderCalendarSettings();
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     var restRule = Store.restRule(state);
     $('#opt-rest').checked = restRule.enabled;
@@ -23399,7 +24072,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         if (!branch.active) return;
         Store.shiftIds(state).forEach(function (shiftId) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
-          var need = Store.slotNeed(branch, day.idx, shiftId);
+          var need = Store.slotNeed(branch, day.idx, shiftId, week());
           if (!assigned.length && !need) return;
           var names = assigned.map(empNameOf).join(', ') || ('‼ ' + t('ui.missingStaff'));
           var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
@@ -23497,7 +24170,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         ];
         var maxLines = 1;
         Data.DAYS.forEach(function (day) {
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
           if (Store.isHoliday(current, day.idx) && !assigned.length) {
             cells.push({ v: Store.holidayName(current, day.idx) + '\n' + t('excel.closed'), s: Xlsx.STYLE.CLOSED });
@@ -23793,7 +24466,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         if (!branch.active) return;
         shiftList().forEach(function (shift) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           if (!assigned.length && !need) return;
           if (Store.isHoliday(week(), day.idx) && !assigned.length) return;
           rows.push([
@@ -24012,6 +24685,69 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       if (!select) return;
       var cell = select.closest('.m-shift');
       applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
+    });
+
+    /* לוח השנה: סגירת יום, שעות מיוחדות, וביטול של כל אחד
+       מהם. המערכת אינה סוגרת דבר לבד — היא מציעה, והמנהל
+       מאשר בלחיצה. */
+    $('#calendar-days').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-cal-close],[data-cal-hours],' +
+        '[data-cal-open],[data-cal-clear]');
+      if (!button) return;
+      if (weekBlocked()) return;
+      var current = week();
+      var data = button.dataset;
+
+      if (data.calClose !== undefined) {
+        var dayIdx = Number(data.calClose);
+        var items = Store.calendarDays(state, weekKey)[dayIdx] || [];
+        var label = items.map(function (item) { return item.name; }).join(' · ') ||
+          t('toast.holidayDefault');
+        if (!closeDayFromCalendar(dayIdx, label)) return;
+        persist();
+        render();
+        toast(t('toast.holidayMarked', { day: Data.DAYS[dayIdx].name }));
+        return;
+      }
+
+      if (data.calOpen !== undefined) {
+        var openIdx = Number(data.calOpen);
+        Store.setHoliday(current, openIdx, null);
+        persist();
+        render();
+        toast(t('toast.holidayCleared', { day: Data.DAYS[openIdx].name }));
+        return;
+      }
+
+      if (data.calClear !== undefined) {
+        var clearIdx = Number(data.calClear);
+        Store.setDayHours(current, clearIdx, null);
+        persist();
+        render();
+        toast(t('calendar.hoursCleared', { day: Data.DAYS[clearIdx].name }));
+        return;
+      }
+
+      var hoursIdx = Number(data.calHours);
+      var existing = Store.dayHours(current, hoursIdx);
+      /* שדה אחד ולא שניים: "08:00-14:00" הוא מה שעסק אומר
+         בפועל על ערב חג, ושני חלונות רצופים לאותה פעולה הם
+         שתי הזדמנויות לבטל באמצע. */
+      var answer = window.prompt(
+        t('calendar.hoursPrompt', { day: Data.DAYS[hoursIdx].name }),
+        existing ? (existing.from + '-' + existing.to) : '08:00-14:00');
+      if (answer === null) return;
+      var parts = String(answer).split(/[-\u2013\u2014]/);
+      var saved = Store.setDayHours(current, hoursIdx,
+        { from: parts[0], to: parts[1] });
+      if (!saved && String(answer).trim()) { toast(t('calendar.hoursBad'), true); return; }
+      persist();
+      render();
+      toast(saved
+        ? t('calendar.hoursSaved', {
+          day: Data.DAYS[hoursIdx].name, hours: Store.hoursLabel(saved)
+        })
+        : t('calendar.hoursCleared', { day: Data.DAYS[hoursIdx].name }));
     });
 
     $('#holiday-days').addEventListener('click', function (event) {
@@ -25152,6 +25888,8 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       event.target.value = '';
     });
 
+    bindCalendarSettings();
+
     var saveCompany = $('#save-company-details');
     if (saveCompany) {
       saveCompany.addEventListener('click', function () {
@@ -25269,7 +26007,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       Data.DAYS.forEach(function (day) {
         var open = [];
         Store.shiftIds(state).forEach(function (shiftId) {
-          var need = Store.slotNeed(branch, day.idx, shiftId);
+          var need = Store.slotNeed(branch, day.idx, shiftId, week());
           if (!need) return;
           var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
           open.push(shiftLabel(shiftId) + ' ' + hours + ' (' + t('ui.peopleCount', { count: need }) + ')');

@@ -4,6 +4,12 @@
 
   var Data = root.ShiftData || (typeof require === 'function' ? require('./data.js') : null);
   var I18n = root.I18n || (typeof require === 'function' ? require('./i18n/core.js') : null);
+  /* לוח השנה מחושב ואינו נטען משום מקור חיצוני. נפתר בכל קריאה
+     ולא פעם אחת: store.js נטען בעמוד לפני calendar.js. */
+  function Calendar() {
+    return root.ShiftCalendar ||
+      (typeof require === 'function' ? require('./calendar.js') : null);
+  }
 
   /* טקסטים למשתמש מגיעים משכבת התרגום; בלעדיה מוצג המפתח */
   function t(key, params) {
@@ -193,9 +199,74 @@
     return config;
   }
 
-  function slotNeed(branch, dayIdx, shiftId) {
+  /* week אופציונלי, ומשנה תשובה אחת בלבד: משמרת שהשעות
+     המיוחדות של אותו יום מוציאות אותה לגמרי מהחלון אינה
+     מתקיימת. זה המקרה של משמרת ערב בערב פסח — היא מתחילה
+     אחרי שהעסק כבר סגר, ובלי זה הלוח היה מבקש לאייש אותה. */
+  function slotNeed(branch, dayIdx, shiftId, week) {
     var config = slotConfig(branch, dayIdx, shiftId);
-    return config ? Number(config.need) || 0 : 0;
+    if (!config) return 0;
+    if (week && dayHours(week, dayIdx) && !slotHours(week, branch, dayIdx, shiftId)) return 0;
+    return Number(config.need) || 0;
+  }
+
+  /* ===== שעות מיוחדות ליום =====
+
+     ערב חג הוא היום שבו רוב העסקים לא סוגרים ולא עובדים כרגיל:
+     הם עובדים עד מוקדם. עד כה היו רק שתי אפשרויות — יום רגיל
+     או סניפים סגורים — ולכן ערב פסח נבנה כיום מלא, כולל משמרת
+     ערב שאיש לא עבד בה, והמנהל תיקן את זה ביד בכל שנה מחדש.
+
+     השעות נשמרות על השבוע ולא על הסניף: שעות הסניף הן תבנית
+     שחוזרת בכל שבוע, ושינוי שלה בגלל ערב חג אחד היה משנה את
+     כל השנה. כאן זה חל על השבוע הזה בלבד.
+
+     היום כולו, ולא לכל סניף בנפרד. "ערב חג: עד 14:00" הוא מה
+     שעסק אומר בפועל, ופיצול לסניפים היה הופך פעולה של לחיצה
+     לטופס. סניף שצריך משהו אחר — המנהל עורך את המשמרת עצמה,
+     כמו תמיד. */
+  function dayHours(week, dayIdx) {
+    var entry = ((week && week.dayHours) || {})[dayIdx];
+    if (!entry) return null;
+    var from = parseTime(entry.from) === null ? '' : entry.from;
+    var to = parseTime(entry.to) === null ? '' : entry.to;
+    if (!from && !to) return null;
+    return { from: from, to: to };
+  }
+
+  function setDayHours(week, dayIdx, hours) {
+    if (!week.dayHours) week.dayHours = {};
+    if (!hours) { delete week.dayHours[dayIdx]; return null; }
+    var from = normalizeTimeInput(hours.from);
+    var to = normalizeTimeInput(hours.to);
+    if (!from && !to) { delete week.dayHours[dayIdx]; return null; }
+    week.dayHours[dayIdx] = { from: from, to: to };
+    return dayHours(week, dayIdx);
+  }
+
+  /* חיתוך חלון המשמרת לחלון היום.
+
+     מחזיר null כשלא נשאר כלום — כלומר המשמרת אינה מתקיימת
+     ביום הזה. זה המקרה של משמרת ערב בערב פסח: היא מתחילה
+     אחרי שהעסק כבר סגר, ולכן אין לה מה לחפש בלוח.
+
+     משמרת לילה חוצה חצות (22:00–06:00), ולכן הסוף נמדד כהמשך
+     של אותו יום ולא כשעה קטנה יותר. בלי זה כל משמרת לילה
+     הייתה נראית כמו חלון ריק ונמחקת. */
+  function clipToDay(from, to, limit) {
+    var start = parseTime(from);
+    var end = parseTime(to);
+    if (start === null || end === null) return { from: from, to: to };
+    if (end <= start) end += 1440;
+
+    var dayStart = parseTime(limit.from);
+    var dayEnd = parseTime(limit.to);
+    if (dayStart !== null && dayEnd !== null && dayEnd <= dayStart) dayEnd += 1440;
+
+    if (dayStart !== null && start < dayStart) start = dayStart;
+    if (dayEnd !== null && end > dayEnd) end = dayEnd;
+    if (end <= start) return null;
+    return { from: formatTime(start), to: formatTime(end) };
   }
 
   /* שעות בפועל. במוצ״ש ההתחלה נגזרת משעת צאת השבת של אותו שבוע. */
@@ -207,7 +278,17 @@
       var shabbatEnd = (week && week.shabbatEnd) || '';
       from = shabbatEnd ? addMinutes(shabbatEnd, Data.MOTZASH.offsetMinutes) : '';
     }
-    return { from: from, to: config.to || '', auto: config.auto || null };
+    var hours = { from: from, to: config.to || '', auto: config.auto || null };
+    /* שעות מיוחדות ליום גוברות על התבנית של הסניף */
+    var limit = dayHours(week, dayIdx);
+    if (limit) {
+      var clipped = clipToDay(hours.from, hours.to, limit);
+      if (!clipped) return null;
+      hours.from = clipped.from;
+      hours.to = clipped.to;
+      hours.limited = true;
+    }
+    return hours;
   }
 
   function hoursLabel(hours) {
@@ -1027,6 +1108,149 @@
      היחידה שצריך לתת לו. */
   var DEFAULT_PUNCH_LEAD_MINUTES = 120;
 
+
+  /* ===== לוח השנה של העסק =====
+
+     הבקשה שממנה זה נולד: "תמיד תסמן חגים וימים מיוחדים שהעסק
+     יידע עליהם, והוא יגדיר אותם לפי הפעילות שלו".
+
+     שני חלקים, ובכוונה נפרדים:
+
+     1. מה היום הזה. זה עובדה, לא החלטה, והיא מוצגת תמיד — כי
+        מנהל שבונה סידור לשבוע של סוכות צריך לדעת שזה סוכות
+        לפני שהוא מפרסם, ולא אחרי.
+
+     2. מה זה אומר לעסק הזה. בית קפה פתוח בחול המועד, חברת
+        שמירה עובדת ביום כיפור, ומשרד סגור בשניהם. לכן לכל סוג
+        יום יש מדיניות שהעסק קובע, וברירת המחדל שלה היא
+        "להציג" — לא "לסגור".
+
+     המערכת אינה סוגרת סניפים לבד גם כשהמדיניות אומרת סגירה:
+     היא מציעה, והמנהל מאשר בלחיצה. סידור שנמחק לבד ביום שבו
+     העסק דווקא עובד הוא נזק שאי אפשר לתקן בלחיצה אחת. */
+  var CALENDAR_SETS = ['hebrew', 'muslim', 'christian'];
+  var CALENDAR_KINDS = ['yomtov', 'erev', 'cholhamoed', 'memorial',
+    'fast', 'festive', 'muslim', 'christian'];
+  /* 'close' = להציע סגירה, 'note' = להציג בלבד, 'hide' = לא להציג */
+  var CALENDAR_POLICY = { CLOSE: 'close', NOTE: 'note', HIDE: 'hide' };
+
+  /* יום טוב הוא היום היחיד שברירת המחדל שלו היא הצעת סגירה:
+     ברוב המוחלט של העסקים בישראל אין בו עבודה, ומי שכן עובד
+     בו משנה את זה פעם אחת בהגדרות. כל השאר מוצגים בלבד. */
+  function defaultCalendarPolicy() {
+    var out = {};
+    CALENDAR_KINDS.forEach(function (kind) {
+      out[kind] = kind === 'yomtov' ? CALENDAR_POLICY.CLOSE : CALENDAR_POLICY.NOTE;
+    });
+    return out;
+  }
+
+  function calendarRule(state) {
+    var raw = ((state && state.settings) || {}).calendar || {};
+    var sets = {};
+    CALENDAR_SETS.forEach(function (name) {
+      /* ברירת המחדל היא שלושת הלוחות. עסק ישראלי מעסיק לא פעם
+         עובדים משלוש הדתות, ויום שלא סומן הוא יום שהמנהל שיבץ
+         בו מישהו שביקש אותו חופשי. מי שאינו רוצה — מכבה. */
+      sets[name] = (raw.sets && raw.sets[name] !== undefined)
+        ? !!raw.sets[name] : true;
+    });
+    var fallback = defaultCalendarPolicy();
+    var policy = {};
+    CALENDAR_KINDS.forEach(function (kind) {
+      var value = raw.policy && raw.policy[kind];
+      policy[kind] = (value === CALENDAR_POLICY.CLOSE || value === CALENDAR_POLICY.NOTE ||
+        value === CALENDAR_POLICY.HIDE) ? value : fallback[kind];
+    });
+    return { enabled: raw.enabled !== false, sets: sets, policy: policy };
+  }
+
+  function setCalendarRule(state, patch) {
+    if (!state.settings) state.settings = {};
+    var current = calendarRule(state);
+    if ('enabled' in patch) current.enabled = !!patch.enabled;
+    if (patch.sets) {
+      CALENDAR_SETS.forEach(function (name) {
+        if (name in patch.sets) current.sets[name] = !!patch.sets[name];
+      });
+    }
+    if (patch.policy) {
+      CALENDAR_KINDS.forEach(function (kind) {
+        var value = patch.policy[kind];
+        if (value === CALENDAR_POLICY.CLOSE || value === CALENDAR_POLICY.NOTE ||
+          value === CALENDAR_POLICY.HIDE) {
+          current.policy[kind] = value;
+        }
+      });
+    }
+    state.settings.calendar = current;
+    return current;
+  }
+
+  /* מה נופל בכל יום בשבוע הזה.
+
+     מחזיר מערך באורך שבעה ימים; כל תא הוא מערך של מועדים, כי
+     יש ימים שנופלים בהם שניים (ערב חג שהוא גם צום, למשל).
+     ריק פירושו יום רגיל.
+
+     approximate מגיע מהלוח המוסלמי: תחילת החודש שם נקבעת
+     בראייה בפועל, והחישוב יכול לסטות ביום. הסימון עובר הלאה
+     כדי שהמסך יוכל לומר "בערך", ולא להציג ודאות שאינה קיימת. */
+  function calendarDays(state, weekKey) {
+    var empty = [[], [], [], [], [], [], []];
+    var rule = calendarRule(state);
+    if (!rule.enabled) return empty;
+    var Cal = Calendar();
+    if (!Cal || !weekKey) return empty;
+
+    var from = dateOfDay(weekKey, 0);
+    var to = dateOfDay(weekKey, 6);
+    var found;
+    try { found = Cal.between(from, to, rule.sets); }
+    catch (err) { return empty; }
+
+    var byDay = [[], [], [], [], [], [], []];
+    found.forEach(function (item) {
+      var policy = rule.policy[item.kind] || CALENDAR_POLICY.NOTE;
+      if (policy === CALENDAR_POLICY.HIDE) return;
+      /* המרחק בימים מתחילת השבוע. נגזר מהתאריך שהלוח מחזיר
+         ולא מהסדר שבו הוא מחזיר אותם. */
+      var parts = item.date.split('-');
+      var day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      var idx = Math.round((day - from) / 86400000);
+      if (idx < 0 || idx > 6) return;
+      byDay[idx].push({
+        id: item.id,
+        kind: item.kind,
+        date: item.date,
+        approximate: !!item.approximate,
+        name: t('holidays.' + item.id),
+        kindName: t('holidays.kind.' + item.kind),
+        suggestClose: policy === CALENDAR_POLICY.CLOSE
+      });
+    });
+    return byDay;
+  }
+
+  /* הימים שהלוח מציע לסגור בהם, ושעדיין אינם מסומנים כחג.
+
+     יום שכבר מסומן אינו חוזר: ההצעה נעלמת ברגע שהיא נענתה,
+     ואינה הופכת לשורה שחוזרת בכל ציור. */
+  function calendarSuggestions(state, week, weekKey) {
+    var out = [];
+    calendarDays(state, weekKey).forEach(function (items, idx) {
+      if (isHoliday(week, idx)) return;
+      var closing = items.filter(function (item) { return item.suggestClose; });
+      if (!closing.length) return;
+      out.push({
+        dayIdx: idx,
+        name: closing.map(function (item) { return item.name; }).join(' · '),
+        items: closing
+      });
+    });
+    return out;
+  }
+
   function punchWindowRule(state) {
     var clock = timeclock(state);
     var minutes = Math.round(Number(clock.leadMinutes));
@@ -1521,7 +1745,7 @@
     if (isHoliday(week, dayIdx)) return [];
     return shiftIds(state).filter(function (shiftId) {
       return state.branches.some(function (branch) {
-        return branch.active && slotNeed(branch, dayIdx, shiftId) > 0;
+        return branch.active && slotNeed(branch, dayIdx, shiftId, week) > 0;
       });
     });
   }
@@ -1758,7 +1982,7 @@
       state.branches.forEach(function (branch) {
         if (!branch.active) return;
         shiftIds(state).forEach(function (shiftId) {
-          var need = slotNeed(branch, day, shiftId);
+          var need = slotNeed(branch, day, shiftId, week);
           if (need > 0) {
             demands.push({
               dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need,
@@ -1783,7 +2007,7 @@
       if (!branch.active) return false;
       if (emp.branches.length && emp.branches.indexOf(branch.id) === -1) return false;
       return shiftIds(state).some(function (shiftId) {
-        if (slotNeed(branch, dayIdx, shiftId) === 0) return false;
+        if (slotNeed(branch, dayIdx, shiftId, week) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
         if (!employeeFitsSlot(state, emp, slotRoleNeeds(state, branch, dayIdx, shiftId))) return false;
@@ -2498,6 +2722,11 @@
     clockIdOf: clockIdOf,
     payrollIdOf: payrollIdOf,
     punchWindowRule: punchWindowRule,
+    dayHours: dayHours, setDayHours: setDayHours, clipToDay: clipToDay,
+    calendarRule: calendarRule, setCalendarRule: setCalendarRule,
+    calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
+    CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,
+    CALENDAR_POLICY: CALENDAR_POLICY,
     employeeShiftTimes: employeeShiftTimes,
     canPunchIn: canPunchIn,
     DEFAULT_PUNCH_LEAD_MINUTES: DEFAULT_PUNCH_LEAD_MINUTES,

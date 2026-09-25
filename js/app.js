@@ -417,6 +417,7 @@
     $('#constraints-week').textContent = t('ui.constraintsWeek', { label: label });
 
     renderHolidays();
+    renderCalendarDays();
 
     var current = week();
     var field = $('#shabbat-end');
@@ -476,7 +477,7 @@
     activeBranches.forEach(function (branch) {
       var shiftsHtml = '';
       shiftList().forEach(function (shift) {
-        var need = Store.slotNeed(branch, mobileDay, shift.id);
+        var need = Store.slotNeed(branch, mobileDay, shift.id, current);
         var assigned = Store.getAssigned(current, mobileDay, branch.id, shift.id);
         if (!need && !assigned.length) return;
 
@@ -635,6 +636,96 @@
     $('#holiday-days').innerHTML = html;
   }
 
+
+  /* ========== מועדים בשבוע הזה ==========
+
+     שתי פעולות לכל יום, ולא אחת: ערב חג הוא היום שבו רוב
+     העסקים לא סוגרים ולא עובדים כרגיל — הם עובדים עד מוקדם.
+     עד כה היו רק "יום רגיל" או "סניפים סגורים", ולכן ערב פסח
+     נבנה כיום מלא והמנהל תיקן אותו ביד בכל שנה מחדש. */
+  function renderCalendarDays() {
+    var section = $('#calendar-section');
+    var sep = $('#calendar-sep');
+    var host = $('#calendar-days');
+    if (!host || !section) return;
+
+    var current = week();
+    var days = Store.calendarDays(state, weekKey);
+    var any = days.some(function (items) { return items.length; });
+    section.hidden = !any;
+    if (sep) sep.hidden = !any;
+    if (!any) { host.innerHTML = ''; return; }
+
+    var html = '';
+    days.forEach(function (items, idx) {
+      if (!items.length) return;
+      var closed = Store.isHoliday(current, idx);
+      var hours = Store.dayHours(current, idx);
+      /* "בערך" מגיע מהלוח המוסלמי: תחילת החודש שם נקבעת
+         בראייה בפועל, והחישוב יכול לסטות ביום. עדיף לומר את
+         זה מאשר להציג ודאות שאינה קיימת. */
+      var names = items.map(function (item) {
+        return esc(item.name) + (item.approximate ? ' ' + esc(t('calendar.approx')) : '');
+      }).join(' · ');
+      var kinds = items.map(function (item) { return esc(item.kindName); }).join(' · ');
+
+      html += '<div class="calendar-day' + (closed ? ' is-closed' : '') + '">' +
+        '<div class="calendar-day-head">' +
+          '<span class="calendar-day-name">' + names + '</span>' +
+          '<span class="calendar-day-when">' + esc(Data.DAYS[idx].name) + ' · ' +
+            esc(Store.formatDate(Store.dateOfDay(weekKey, idx))) + '</span>' +
+        '</div>' +
+        '<div class="calendar-day-kind">' + kinds + '</div>';
+
+      if (closed) {
+        html += '<div class="calendar-day-state">' + esc(t('calendar.isClosed')) +
+          ' <button type="button" class="link-btn" data-cal-open="' + idx + '">' +
+          esc(t('calendar.reopen')) + '</button></div>';
+      } else {
+        html += '<div class="calendar-day-actions">' +
+          '<button type="button" class="btn ghost small" data-cal-close="' + idx + '">' +
+            esc(t('calendar.closeDay')) + '</button>' +
+          '<button type="button" class="btn ghost small" data-cal-hours="' + idx + '">' +
+            esc(t(hours ? 'calendar.editHours' : 'calendar.specialHours')) + '</button>' +
+          '</div>';
+        if (hours) {
+          html += '<div class="calendar-day-state">' +
+            esc(t('calendar.hoursSet', { hours: Store.hoursLabel(hours) })) +
+            ' <button type="button" class="link-btn" data-cal-clear="' + idx + '">' +
+            esc(t('calendar.clearHours')) + '</button></div>';
+        }
+      }
+      html += '</div>';
+    });
+    host.innerHTML = html;
+  }
+
+  /* סגירת יום מתוך לוח השנה. אותה פעולה בדיוק כמו סימון חג
+     ידני, כולל האזהרה על שיבוצים שיימחקו — ולכן היא עוברת
+     דרך אותו קוד ולא דרך העתק שלו. */
+  function closeDayFromCalendar(dayIdx, name) {
+    var current = week();
+    var assignedCount = 0;
+    state.employees.forEach(function (emp) {
+      assignedCount += Store.employeeDayAssignments(state, current, emp.id, dayIdx).length;
+    });
+    if (assignedCount && !confirm(t('toast.holidayHasAssignments', { count: assignedCount }))) {
+      return false;
+    }
+    if (assignedCount) {
+      state.branches.forEach(function (branch) {
+        Store.shiftIds(state).forEach(function (shiftId) {
+          Store.setAssigned(current, dayIdx, branch.id, shiftId, []);
+          delete current.manual[Store.slotKey(dayIdx, branch.id, shiftId)];
+        });
+      });
+    }
+    Store.setHoliday(current, dayIdx, name);
+    /* יום סגור ושעות מיוחדות אינם יכולים להתקיים יחד */
+    Store.setDayHours(current, dayIdx, null);
+    return true;
+  }
+
   /* ========== לוח הסידור לפי סניף ========== */
   function issueMaps(report) {
     var cells = {}, employeesDay = {};
@@ -746,7 +837,7 @@
         html += '<td class="row-head ' + shiftClass(shift.id) + '">' + esc(shift.name) + '</td>';
 
         Data.DAYS.forEach(function (day) {
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
           if (Store.isHoliday(week(), day.idx) && !assigned.length) {
             if (shiftIndex === 0) {
@@ -2677,8 +2768,77 @@
     node.className = 'users-message' + (text ? '' : ' hidden') + (isError ? ' error' : '');
   }
 
+
+  /* ========== הגדרות לוח השנה ========== */
+  function renderCalendarSettings() {
+    var rule = Store.calendarRule(state);
+    var enabled = $('#cal-enabled');
+    if (!enabled) return;
+    enabled.checked = rule.enabled;
+    var options = $('#cal-options');
+    if (options) options.classList.toggle('hidden', !rule.enabled);
+
+    Store.CALENDAR_SETS.forEach(function (name) {
+      var box = $('#cal-set-' + name);
+      if (box) box.checked = !!rule.sets[name];
+    });
+
+    var host = $('#cal-policy');
+    if (!host) return;
+    var values = [
+      { value: Store.CALENDAR_POLICY.CLOSE, label: t('calendar.policyClose') },
+      { value: Store.CALENDAR_POLICY.NOTE, label: t('calendar.policyNote') },
+      { value: Store.CALENDAR_POLICY.HIDE, label: t('calendar.policyHide') }
+    ];
+    host.innerHTML = Store.CALENDAR_KINDS.map(function (kind) {
+      var current = rule.policy[kind];
+      return '<label class="cal-policy-row"><span>' + esc(t('holidays.kind.' + kind)) + '</span>' +
+        '<select class="text-input" data-cal-kind="' + kind + '">' +
+        values.map(function (option) {
+          return '<option value="' + option.value + '"' +
+            (option.value === current ? ' selected' : '') + '>' +
+            esc(option.label) + '</option>';
+        }).join('') +
+        '</select></label>';
+    }).join('');
+  }
+
+  function bindCalendarSettings() {
+    var enabled = $('#cal-enabled');
+    if (!enabled) return;
+    enabled.addEventListener('change', function () {
+      Store.setCalendarRule(state, { enabled: enabled.checked });
+      persist('all');
+      render();
+    });
+    Store.CALENDAR_SETS.forEach(function (name) {
+      var box = $('#cal-set-' + name);
+      if (!box) return;
+      box.addEventListener('change', function () {
+        var patch = { sets: {} };
+        patch.sets[name] = box.checked;
+        Store.setCalendarRule(state, patch);
+        persist('all');
+        render();
+      });
+    });
+    var host = $('#cal-policy');
+    if (host) {
+      host.addEventListener('change', function (event) {
+        var select = event.target.closest('[data-cal-kind]');
+        if (!select) return;
+        var patch = { policy: {} };
+        patch.policy[select.dataset.calKind] = select.value;
+        Store.setCalendarRule(state, patch);
+        persist('all');
+        render();
+      });
+    }
+  }
+
   function renderSettings() {
     renderCompanyDetails();
+    renderCalendarSettings();
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
     var restRule = Store.restRule(state);
     $('#opt-rest').checked = restRule.enabled;
@@ -2900,7 +3060,7 @@
         if (!branch.active) return;
         Store.shiftIds(state).forEach(function (shiftId) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
-          var need = Store.slotNeed(branch, day.idx, shiftId);
+          var need = Store.slotNeed(branch, day.idx, shiftId, week());
           if (!assigned.length && !need) return;
           var names = assigned.map(empNameOf).join(', ') || ('‼ ' + t('ui.missingStaff'));
           var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
@@ -2998,7 +3158,7 @@
         ];
         var maxLines = 1;
         Data.DAYS.forEach(function (day) {
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           var assigned = Store.getAssigned(current, day.idx, branch.id, shift.id);
           if (Store.isHoliday(current, day.idx) && !assigned.length) {
             cells.push({ v: Store.holidayName(current, day.idx) + '\n' + t('excel.closed'), s: Xlsx.STYLE.CLOSED });
@@ -3294,7 +3454,7 @@
         if (!branch.active) return;
         shiftList().forEach(function (shift) {
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shift.id);
-          var need = Store.slotNeed(branch, day.idx, shift.id);
+          var need = Store.slotNeed(branch, day.idx, shift.id, week());
           if (!assigned.length && !need) return;
           if (Store.isHoliday(week(), day.idx) && !assigned.length) return;
           rows.push([
@@ -3513,6 +3673,69 @@
       if (!select) return;
       var cell = select.closest('.m-shift');
       applyCellChange(cell, Number(cell.dataset.day), cell.dataset.branch, cell.dataset.shift);
+    });
+
+    /* לוח השנה: סגירת יום, שעות מיוחדות, וביטול של כל אחד
+       מהם. המערכת אינה סוגרת דבר לבד — היא מציעה, והמנהל
+       מאשר בלחיצה. */
+    $('#calendar-days').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-cal-close],[data-cal-hours],' +
+        '[data-cal-open],[data-cal-clear]');
+      if (!button) return;
+      if (weekBlocked()) return;
+      var current = week();
+      var data = button.dataset;
+
+      if (data.calClose !== undefined) {
+        var dayIdx = Number(data.calClose);
+        var items = Store.calendarDays(state, weekKey)[dayIdx] || [];
+        var label = items.map(function (item) { return item.name; }).join(' · ') ||
+          t('toast.holidayDefault');
+        if (!closeDayFromCalendar(dayIdx, label)) return;
+        persist();
+        render();
+        toast(t('toast.holidayMarked', { day: Data.DAYS[dayIdx].name }));
+        return;
+      }
+
+      if (data.calOpen !== undefined) {
+        var openIdx = Number(data.calOpen);
+        Store.setHoliday(current, openIdx, null);
+        persist();
+        render();
+        toast(t('toast.holidayCleared', { day: Data.DAYS[openIdx].name }));
+        return;
+      }
+
+      if (data.calClear !== undefined) {
+        var clearIdx = Number(data.calClear);
+        Store.setDayHours(current, clearIdx, null);
+        persist();
+        render();
+        toast(t('calendar.hoursCleared', { day: Data.DAYS[clearIdx].name }));
+        return;
+      }
+
+      var hoursIdx = Number(data.calHours);
+      var existing = Store.dayHours(current, hoursIdx);
+      /* שדה אחד ולא שניים: "08:00-14:00" הוא מה שעסק אומר
+         בפועל על ערב חג, ושני חלונות רצופים לאותה פעולה הם
+         שתי הזדמנויות לבטל באמצע. */
+      var answer = window.prompt(
+        t('calendar.hoursPrompt', { day: Data.DAYS[hoursIdx].name }),
+        existing ? (existing.from + '-' + existing.to) : '08:00-14:00');
+      if (answer === null) return;
+      var parts = String(answer).split(/[-\u2013\u2014]/);
+      var saved = Store.setDayHours(current, hoursIdx,
+        { from: parts[0], to: parts[1] });
+      if (!saved && String(answer).trim()) { toast(t('calendar.hoursBad'), true); return; }
+      persist();
+      render();
+      toast(saved
+        ? t('calendar.hoursSaved', {
+          day: Data.DAYS[hoursIdx].name, hours: Store.hoursLabel(saved)
+        })
+        : t('calendar.hoursCleared', { day: Data.DAYS[hoursIdx].name }));
     });
 
     $('#holiday-days').addEventListener('click', function (event) {
@@ -4653,6 +4876,8 @@
       event.target.value = '';
     });
 
+    bindCalendarSettings();
+
     var saveCompany = $('#save-company-details');
     if (saveCompany) {
       saveCompany.addEventListener('click', function () {
@@ -4770,7 +4995,7 @@
       Data.DAYS.forEach(function (day) {
         var open = [];
         Store.shiftIds(state).forEach(function (shiftId) {
-          var need = Store.slotNeed(branch, day.idx, shiftId);
+          var need = Store.slotNeed(branch, day.idx, shiftId, week());
           if (!need) return;
           var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shiftId));
           open.push(shiftLabel(shiftId) + ' ' + hours + ' (' + t('ui.peopleCount', { count: need }) + ')');

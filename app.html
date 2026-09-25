@@ -99,6 +99,15 @@
                 <input type="text" id="shabbat-end" class="time-input" inputmode="numeric" maxlength="5" data-i18n-placeholder="common.timePlaceholder" placeholder="שש:דד" data-i18n-title="settings.sabbathHint" title="משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
               </label>
             </div>
+            <!-- מה נופל בשבוע הזה לפי לוח השנה. מחושב, לא נטען
+                 משום מקור חיצוני, ומוצג תמיד — מנהל שבונה סידור
+                 לשבוע של סוכות צריך לדעת שזה סוכות לפני שהוא
+                 מפרסם ולא אחרי. הסגירה עצמה נשארת החלטה שלו. -->
+            <div class="menu-sep" id="calendar-sep" hidden></div>
+            <div class="menu-section" id="calendar-section" hidden>
+              <span class="menu-title" data-i18n="calendar.thisWeek">מועדים בשבוע הזה</span>
+              <div id="calendar-days" class="calendar-days"></div>
+            </div>
             <div class="menu-sep"></div>
             <div class="menu-section">
               <span class="menu-title" data-i18n="toolbar.holidays">ימי חג (הסניפים סגורים):</span>
@@ -351,6 +360,25 @@
       </div>
     </div>
 
+    <!-- לוח השנה. המערכת מסמנת תמיד מה נופל בכל שבוע, והעסק
+         קובע מה כל סוג יום אומר אצלו: בית קפה פתוח בחול המועד,
+         חברת שמירה עובדת ביום כיפור, ומשרד סגור בשניהם. -->
+    <h2 data-i18n="calendar.title">לוח שנה ומועדים</h2>
+    <div class="settings-block">
+      <p class="hint" style="margin:0 0 var(--s3)" data-i18n="calendar.hint">המערכת מסמנת מה נופל בכל שבוע, והעסק מחליט מה לעשות עם זה.</p>
+      <label class="check"><input type="checkbox" id="cal-enabled"> <span data-i18n="calendar.enable">לסמן מועדים בלוח הסידור</span></label>
+      <div id="cal-options">
+        <p class="settings-sub" data-i18n="calendar.sets">אילו לוחות להציג</p>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="cal-set-hebrew"> <span data-i18n="calendar.setHebrew">עברי</span></label>
+          <label class="check"><input type="checkbox" id="cal-set-muslim"> <span data-i18n="calendar.setMuslim">מוסלמי</span></label>
+          <label class="check"><input type="checkbox" id="cal-set-christian"> <span data-i18n="calendar.setChristian">נוצרי</span></label>
+        </div>
+        <p class="settings-sub" data-i18n="calendar.policy">מה להציע לכל סוג יום</p>
+        <div id="cal-policy" class="cal-policy"></div>
+      </div>
+    </div>
+
     <h2 data-i18n="settings.rules">כללי שיבוץ</h2>
     <div class="settings-block">
       <label class="check"><input type="checkbox" id="opt-one-per-day"> <span data-i18n="settings.onePerDay">עובד משובץ למשמרת אחת ביום לכל היותר</span></label>
@@ -562,6 +590,7 @@
 <script src="js/xlsx.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/data.js"></script>
+<script src="js/calendar.js"></script>
 <script src="js/store.js"></script>
 <script src="js/scheduler.js"></script>
 <script src="js/validate.js"></script>

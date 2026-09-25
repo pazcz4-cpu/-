@@ -536,6 +536,35 @@
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Dates de cette semaine',
+        enable: 'Signaler les dates dans le planning',
+        approx: '(env.)',
+        closeDay: 'Fermer la journée',
+        specialHours: 'Horaires spéciaux',
+        editHours: 'Modifier les horaires',
+        clearHours: 'Retirer',
+        isClosed: 'Les sites sont fermés ce jour-là.',
+        reopen: 'Rouvrir',
+        hoursSet: 'Horaires spéciaux pour ce jour : {hours}',
+        hoursPrompt: 'Horaires de travail le {day} (par exemple 08:00-14:00). Un créneau entièrement hors de ces horaires ne sera pas créé :',
+        hoursSaved: '{day} : {hours}',
+        hoursCleared: '{day} revient aux horaires habituels',
+        hoursBad: 'Impossible de lire ces horaires. Le format est 08:00-14:00.',
+        title: 'Calendrier et dates',
+        hint: 'Le système signale ce qui tombe chaque semaine, et l\'entreprise décide quoi en faire. Il ne ferme jamais un site de lui-même : il propose, vous validez.',
+        sets: 'Quels calendriers afficher',
+        setHebrew: 'Hébraïque',
+        setMuslim: 'Musulman',
+        setChristian: 'Chrétien',
+        policy: 'Ce qui est proposé pour chaque type de jour',
+        policyClose: 'Proposer de fermer',
+        policyNote: 'Afficher seulement',
+        policyHide: 'Ne pas afficher',
+        off: 'Désactiver le calendrier'
+      },
       holidays: {
         erevRoshHashana: 'Veille de Roch Hachana',
         roshHashana1: 'Roch Hachana',

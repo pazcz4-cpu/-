@@ -536,6 +536,35 @@
       },
       /* שמות המועדים. מחושבים ב-js/calendar.js, ומוצגים
          בסידור ובהגדרות. */
+      /* לוח השנה של העסק: מה נופל בכל שבוע, ומה
+         שהעסק בוחר לעשות עם זה. */
+      calendar: {
+        thisWeek: 'Datas desta semana',
+        enable: 'Assinalar as datas na escala',
+        approx: '(aprox.)',
+        closeDay: 'Fechar o dia',
+        specialHours: 'Horário especial',
+        editHours: 'Alterar o horário',
+        clearHours: 'Remover',
+        isClosed: 'As lojas estão fechadas nesse dia.',
+        reopen: 'Reabrir',
+        hoursSet: 'Horário especial para esse dia: {hours}',
+        hoursPrompt: 'Horário de trabalho em {day} (por exemplo 08:00-14:00). Um turno totalmente fora desse horário não será criado:',
+        hoursSaved: '{day}: {hours}',
+        hoursCleared: '{day} volta ao horário normal',
+        hoursBad: 'Não conseguimos ler esse horário. O formato é 08:00-14:00.',
+        title: 'Calendário e datas',
+        hint: 'O sistema assinala o que cai em cada semana e o negócio decide o que fazer. Nunca fecha uma loja sozinho: sugere, e vocês aprovam.',
+        sets: 'Que calendários mostrar',
+        setHebrew: 'Hebraico',
+        setMuslim: 'Muçulmano',
+        setChristian: 'Cristão',
+        policy: 'O que sugerir para cada tipo de dia',
+        policyClose: 'Sugerir fechar',
+        policyNote: 'Apenas mostrar',
+        policyHide: 'Não mostrar',
+        off: 'Desligar o calendário'
+      },
       holidays: {
         erevRoshHashana: 'Véspera de Rosh Hashaná',
         roshHashana1: 'Rosh Hashaná',

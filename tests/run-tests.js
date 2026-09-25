@@ -1419,6 +1419,128 @@ test('מספר העוסק מנוקה בלי לפסול פורמטים מחו"ל'
    הטלפון נדרש בהרשמה ולא אופציונלי: כשמנוי נכשל, כשלקוח פיילוט
    נתקע או כשצריך להודיע על משהו דחוף — מייל שאינו נקרא אינו דרך
    ליצירת קשר, ואז אין שום דרך. */
+
+/* ===== לוח השנה של העסק =====
+
+   הבקשה: "תמיד תסמן חגים וימים מיוחדים שהעסק יידע עליהם, והוא
+   יגדיר אותם לפי הפעילות שלו". שני חלקים — סימון תמיד, והחלטה
+   של העסק — ולכן שתי קבוצות בדיקות. */
+test('לוח השנה מסמן את מה שנופל בשבוע, עם הסוג של כל יום', function () {
+  var state = { settings: {} };
+  /* השבוע של יום כיפור וסוכות 2026 */
+  var days = Store.calendarDays(state, '2026-09-20');
+  assertEqual(days.length, 7, 'לא הוחזרו שבעה ימים');
+  assertEqual(days[1].length, 1, 'יום כיפור לא סומן');
+  assertEqual(days[1][0].id, 'yomKippur', 'היום השני אינו יום כיפור');
+  assertEqual(days[1][0].kind, 'yomtov', 'יום כיפור אינו מסווג כיום טוב');
+  assertEqual(days[0][0].id, 'erevYomKippur', 'ערב יום כיפור לא סומן');
+  assertEqual(days[0][0].kind, 'erev', 'ערב יום כיפור אינו מסווג כערב חג');
+  /* יום רגיל נשאר ריק, ולא מקבל ערך מומצא */
+  assertEqual(days[2].length, 0, 'יום רגיל קיבל סימון');
+});
+
+test('העסק מחליט מה כל סוג יום אומר אצלו', function () {
+  var state = { settings: {} };
+  /* ברירת המחדל: יום טוב מציע סגירה, כל השאר מוצגים בלבד.
+     חברת שמירה עובדת ביום כיפור, ולכן זו הצעה ולא החלטה. */
+  var rule = Store.calendarRule(state);
+  assertEqual(rule.policy.yomtov, Store.CALENDAR_POLICY.CLOSE, 'יום טוב אינו מציע סגירה');
+  assertEqual(rule.policy.erev, Store.CALENDAR_POLICY.NOTE, 'ערב חג מציע סגירה');
+  assertEqual(rule.policy.cholhamoed, Store.CALENDAR_POLICY.NOTE, 'חול המועד מציע סגירה');
+
+  /* עסק שעובד ביום טוב מכבה את ההצעה, והיא נעלמת */
+  Store.setCalendarRule(state, { policy: { yomtov: Store.CALENDAR_POLICY.NOTE } });
+  var days = Store.calendarDays(state, '2026-09-20');
+  assertEqual(days[1][0].suggestClose, false, 'ההצעה נשארה אחרי שכובתה');
+  /* ומי שאינו רוצה לראות אותו בכלל מסתיר */
+  Store.setCalendarRule(state, { policy: { yomtov: Store.CALENDAR_POLICY.HIDE } });
+  assertEqual(Store.calendarDays(state, '2026-09-20')[1].length, 0, 'יום מוסתר עדיין מוצג');
+});
+
+test('אפשר לכבות לוח שלם, ושלושתם דלוקים כברירת מחדל', function () {
+  var state = { settings: {} };
+  var rule = Store.calendarRule(state);
+  assert(rule.sets.hebrew && rule.sets.muslim && rule.sets.christian,
+    'לא כל הלוחות דלוקים כברירת מחדל');
+  /* חג המולד 2026 נופל ביום שישי */
+  var withChristian = Store.calendarDays(state, '2026-12-20');
+  var found = withChristian.some(function (items) {
+    return items.some(function (item) { return item.id === 'christmas'; });
+  });
+  assert(found, 'חג המולד אינו מסומן כשהלוח הנוצרי דלוק');
+
+  Store.setCalendarRule(state, { sets: { christian: false } });
+  var without = Store.calendarDays(state, '2026-12-20');
+  assert(!without.some(function (items) {
+    return items.some(function (item) { return item.id === 'christmas'; });
+  }), 'חג המולד נשאר אחרי שהלוח הנוצרי כובה');
+});
+
+/* הלוח המוסלמי נקבע בראייה בפועל, ולכן החישוב יכול לסטות ביום.
+   הסימון עובר למסך כדי שייאמר "בערך" ולא תוצג ודאות שאינה
+   קיימת — עסק שיסגור יום לפני הזמן על סמך המספר הזה עשה זאת
+   בגללנו. */
+test('מועד מוסלמי נושא סימון שהוא מקורב', function () {
+  var state = { settings: {} };
+  var Cal = require('../js/calendar.js');
+  var muslim = Cal.islamicYearHolidays(1448);
+  assert(muslim.length > 0, 'לא הוחזרו מועדים מוסלמיים');
+  muslim.forEach(function (item) {
+    assert(item.approximate === true, item.id + ': אינו מסומן כמקורב');
+  });
+});
+
+/* ===== שעות מיוחדות ליום ===== */
+
+test('שעות מיוחדות חותכות את המשמרת ואינן משנות את הסניף', function () {
+  var week = {};
+  Store.setDayHours(week, 3, { from: '08:00', to: '14:00' });
+  assertEqual(Store.dayHours(week, 3).to, '14:00', 'השעות לא נשמרו');
+  /* בוקר 09:30–16:00 נחתך ב-14:00 */
+  var morning = Store.clipToDay('09:30', '16:00', { from: '08:00', to: '14:00' });
+  assertEqual(morning.from, '09:30', 'ההתחלה זזה בלי סיבה');
+  assertEqual(morning.to, '14:00', 'הסוף לא נחתך');
+  /* ערב 15:00–22:00 מתחיל אחרי שהעסק סגר — אין משמרת */
+  assertEqual(Store.clipToDay('15:00', '22:00', { from: '08:00', to: '14:00' }), null,
+    'משמרת שכולה אחרי הסגירה נשארה');
+});
+
+/* משמרת לילה חוצה חצות. בלי הטיפול הזה היא נראית כמו חלון
+   שהסוף שלו קטן מההתחלה, וכל לילה היה נמחק. */
+test('משמרת לילה אינה נמחקת בגלל חציית חצות', function () {
+  var night = Store.clipToDay('22:00', '06:00', { from: '20:00', to: '04:00' });
+  assert(night, 'משמרת הלילה נמחקה');
+  assertEqual(night.from, '22:00', 'ההתחלה זזה');
+  assertEqual(night.to, '04:00', 'הסוף לא נחתך לשעת הסגירה');
+});
+
+test('יום עם שעות מיוחדות מבטל את המשמרות שמחוץ לחלון', function () {
+  /* emptyState כבר מגיע עם סניפים ומשמרות — הוא מצב הפתיחה
+     של הכלי המקומי, לא מצב ריק. */
+  var state = Store.emptyState();
+  var branch = state.branches[0];
+  var week = Store.getWeek(state, '2026-09-20');
+  var dayIdx = 3;
+  /* לפני השינוי: הערב קיים */
+  var before = Store.slotNeed(branch, dayIdx, 'evening', week);
+  Store.setDayHours(week, dayIdx, { from: '08:00', to: '14:00' });
+  var after = Store.slotNeed(branch, dayIdx, 'evening', week);
+  if (before > 0) {
+    assertEqual(after, 0, 'משמרת הערב נשארה אחרי שהעסק סוגר ב-14:00');
+  }
+  /* והבוקר נשאר, מקוצר */
+  var morning = Store.slotHours(week, branch, dayIdx, 'morning');
+  if (morning) assertEqual(morning.to, '14:00', 'הבוקר לא קוצר לשעת הסגירה');
+});
+
+test('ביטול השעות המיוחדות מחזיר את היום לקדמותו', function () {
+  var week = {};
+  Store.setDayHours(week, 2, { from: '08:00', to: '14:00' });
+  assert(Store.dayHours(week, 2), 'השעות לא נשמרו');
+  Store.setDayHours(week, 2, null);
+  assertEqual(Store.dayHours(week, 2), null, 'השעות נשארו אחרי ביטול');
+});
+
 test('הטלפון מנוקה בלי לפסול מספרים מחו"ל', function () {
   assertEqual(Model.normalizePhone(' 054-123 4567 '), '054-123 4567', 'מספר ישראלי');
   assertEqual(Model.normalizePhone('+972 54 1234567'), '+972 54 1234567', 'קידומת בינלאומית');

@@ -68,7 +68,7 @@
     "test:xss": "node tests/xss-browser-test.mjs",
     "test:schema": "node tests/schema-guard-tests.js",
     "test:sql": "node tests/schema-live-tests.js",
-    "test:calendar": "node tests/calendar-tests.js",
+    "test:calendar": "node tests/calendar-browser-test.mjs",
     "test:clock": "node tests/timeclock-tests.js",
     "test:clockapi": "node tests/timeclock-api-tests.js",
     "test:clockui": "node tests/timeclock-browser-test.mjs",

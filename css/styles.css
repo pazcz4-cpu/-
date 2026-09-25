@@ -1065,6 +1065,10 @@ body { -webkit-tap-highlight-color: transparent; }
 .menu-pop {
   position: absolute; top: calc(100% + var(--s1)); inset-inline-start: 0; z-index: 40;
   min-width: 260px; max-width: min(340px, calc(100vw - var(--s6)));
+  /* גובה: התפריט מחזיק עכשיו גם את מועדי השבוע, ושבוע של
+     סוכות מגיע לארבעה כרטיסים. בלי התקרה הוא נמשך מתחת
+     לקצה המסך ואי אפשר להגיע לתחתית שלו. */
+  max-height: min(70vh, 640px); overflow-y: auto;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--e3);
   padding: var(--s2); display: flex; flex-direction: column; gap: var(--s1);
@@ -2201,3 +2205,51 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
   .app-shell { box-shadow: 0 -2px 14px rgb(0 0 0 / .4); }
   .shell-sheet-card { box-shadow: 0 -6px 26px rgb(0 0 0 / .5); }
 }
+
+/* ===== לוח השנה של העסק =====
+
+   מה נופל בשבוע, ושתי הפעולות שהמנהל יכול לעשות עם זה. הכרטיס
+   ולא שורה: לכל יום יש שם, סוג, ושני כפתורים — וזה לא נכנס
+   לשורה אחת בטלפון בלי להידחס. */
+.calendar-days { display: flex; flex-direction: column; gap: var(--s2); }
+/* המקטע הזה רחב מהשאר, ולכן הוא זה שקובע את רוחב התפריט */
+#calendar-section { min-width: 290px; }
+.calendar-day {
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--s2) var(--s3); background: var(--surface);
+}
+/* יום שכבר נסגר שקט: ההחלטה התקבלה, ואין בו עוד מה לעשות */
+.calendar-day.is-closed { opacity: .75; }
+.calendar-day-head {
+  display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap;
+}
+.calendar-day-name { font-weight: 600; font-size: var(--t-sm); }
+.calendar-day-when { color: var(--muted); font-size: var(--t-xs); }
+.calendar-day-kind { color: var(--muted); font-size: var(--t-xs); margin-top: 2px; }
+/* שני הכפתורים זה לצד זה כשיש מקום, וזה מתחת לזה כשאין.
+   בתפריט הצר הם היו נערמים תמיד, וארבעה מועדים בשבוע הפכו
+   את התפריט לעמוד שצריך לגלול בו. */
+.calendar-day-actions {
+  display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s2);
+}
+.calendar-day-actions .btn { flex: 1 1 auto; white-space: nowrap; }
+.calendar-day-state {
+  margin-top: var(--s2); font-size: var(--t-xs); color: var(--muted);
+}
+/* כפתור שנראה כמו קישור: ביטול אינו פעולה ראשית, ושני כפתורים
+   מלאים זה לצד זה הופכים את הביטול לשווה ערך לסגירה. */
+.link-btn {
+  background: none; border: 0; padding: 0; font: inherit; font-size: inherit;
+  color: var(--brand); cursor: pointer; text-decoration: underline;
+}
+.settings-sub {
+  margin: var(--s3) 0 var(--s2); font-weight: 600; font-size: var(--t-sm);
+}
+/* המדיניות לכל סוג יום: שם מימין, בחירה משמאל, ורשימה שנקראת
+   מלמעלה למטה ולא כטבלה שנשברת בטלפון. */
+.cal-policy { display: flex; flex-direction: column; gap: var(--s2); }
+.cal-policy-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+}
+.cal-policy-row > span { flex: 1 1 10rem; font-size: var(--t-sm); }
+.cal-policy-row select { flex: 0 0 auto; }

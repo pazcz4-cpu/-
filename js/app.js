@@ -2541,7 +2541,14 @@
   function renderSettings() {
     renderCompanyDetails();
     $('#opt-one-per-day').checked = !!state.settings.onePerDay;
-    $('#opt-rest').checked = !!state.settings.restEveningMorning;
+    var restRule = Store.restRule(state);
+    $('#opt-rest').checked = restRule.enabled;
+    var restHours = $('#rest-hours');
+    if (restHours) {
+      /* נשמר בדקות ומוצג בשעות, כמו סף השעות הנוספות */
+      restHours.value = Math.round(restRule.minutes / 6) / 10;
+      restHours.disabled = viewOnly || !restRule.enabled;
+    }
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
     $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
     renderDeadline();
@@ -2601,7 +2608,7 @@
     '#employees-list input', '#employees-list button:not(.card-toggle):not(.card-summary)',
     '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
-    '#opt-one-per-day', '#opt-rest', '#opt-one-day-off', '#default-shabbat',
+    '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off', '#default-shabbat',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
   ];
@@ -4080,6 +4087,17 @@
       persist('config');
       render();
     });
+    if ($('#rest-hours')) {
+      $('#rest-hours').addEventListener('change', function (event) {
+        var hours = Number(event.target.value);
+        /* אפס אינו "בלי מנוחה" אלא מספר שנראה כמו טעות. כיבוי
+           נעשה בתיבת הסימון. */
+        if (!(hours > 0) || hours > 24) { toast(t('settings.restRange')); render(); return; }
+        state.settings.restMinutes = Math.round(hours * 60);
+        persist('config');
+        render();
+      });
+    }
     function shiftAt(shiftId) {
       var list = state.settings.shifts;
       for (var i = 0; i < list.length; i++) { if (list[i].id === shiftId) return { shift: list[i], index: i }; }
@@ -4513,7 +4531,10 @@
 
     parts.push('', t('ui.summaryRules'));
     parts.push('- ' + t(state.settings.onePerDay ? 'ui.ruleOnePerDayOn' : 'ui.ruleOnePerDayOff'));
-    parts.push('- ' + t(state.settings.restEveningMorning ? 'ui.ruleRestOn' : 'ui.ruleRestOff'));
+    var restSummary = Store.restRule(state);
+    parts.push('- ' + (restSummary.enabled
+      ? t('ui.ruleRestOn', { hours: Store.formatMinutes(restSummary.minutes) })
+      : t('ui.ruleRestOff')));
 
     parts.push('', t('ui.summaryBranches'));
     state.branches.forEach(function (branch) {

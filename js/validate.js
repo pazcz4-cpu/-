@@ -76,14 +76,20 @@
 
       if (Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx).length) { busy.push(emp.name); return; }
       if (Store.employeeWeekCount(state, week, emp.id) >= (emp.maxShifts || 99)) { atMax.push(emp.name); return; }
-      if (state.settings.restEveningMorning) {
-        var before = demand.dayIdx > 0 && demand.shiftId === 'morning' &&
-          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx - 1)
-            .some(function (s) { return s.shiftId === 'evening'; });
-        var after = demand.dayIdx < 6 && demand.shiftId === 'evening' &&
-          Store.employeeDayAssignments(state, week, emp.id, demand.dayIdx + 1)
-            .some(function (s) { return s.shiftId === 'morning'; });
-        if (before || after) { resting.push(emp.name); return; }
+      /* מנוחה בין משמרות, לפי הפער בשעות ולשני הכיוונים */
+      if (Store.restRule(state).enabled) {
+        var tooClose = false;
+        for (var near = demand.dayIdx - 1; near <= demand.dayIdx + 1; near++) {
+          if (near < 0 || near > 6 || near === demand.dayIdx) continue;
+          Store.employeeDayAssignments(state, week, emp.id, near).forEach(function (s) {
+            if (Store.breaksRest(state, week,
+              { dayIdx: near, branchId: s.branchId, shiftId: s.shiftId },
+              { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId })) {
+              tooClose = true;
+            }
+          });
+        }
+        if (tooClose) { resting.push(emp.name); return; }
       }
       free.push(emp.name);
     });
@@ -273,7 +279,6 @@
     // 2. בדיקות ברמת העובד
     state.employees.forEach(function (emp) {
       var total = 0;
-      var eveningDays = {};
 
       for (var day = 0; day < 7; day++) {
         var slots = Store.employeeDayAssignments(state, week, emp.id, day);
@@ -336,17 +341,32 @@
               }),
               { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
           }
-          if (s.shiftId === 'evening') eveningDays[day] = true;
         });
 
-        // מנוחה בין ערב לבוקר
-        if (state.settings.restEveningMorning && day > 0 && eveningDays[day - 1]) {
-          var morning = slots.some(function (s) { return s.shiftId === 'morning'; });
-          if (morning) {
-            issues.push(issue('warning', 'rest',
-              t('alerts.rest', { name: emp.name, previous: dayName(day - 1), day: dayName(day) }),
-              { dayIdx: day, empId: emp.id }));
-          }
+        /* מנוחה בין משמרות. נבדק רק אחורה, ליום שלפני, כדי
+           שאותה הפרה לא תדווח פעמיים – פעם מכל צד שלה. */
+        if (Store.restRule(state).enabled && day > 0) {
+          var previous = Store.employeeDayAssignments(state, week, emp.id, day - 1);
+          var reported = false;
+          previous.forEach(function (before) {
+            slots.forEach(function (after) {
+              if (reported) return;
+              if (!Store.breaksRest(state, week,
+                { dayIdx: day - 1, branchId: before.branchId, shiftId: before.shiftId },
+                { dayIdx: day, branchId: after.branchId, shiftId: after.shiftId })) return;
+              reported = true;
+              var gap = Store.restGapMinutes(state, week,
+                { dayIdx: day - 1, branchId: before.branchId, shiftId: before.shiftId },
+                { dayIdx: day, branchId: after.branchId, shiftId: after.shiftId });
+              issues.push(issue('warning', 'rest',
+                t('alerts.rest', {
+                  name: emp.name, previous: dayName(day - 1), day: dayName(day),
+                  gap: Store.formatMinutes(Math.max(0, gap)),
+                  need: Store.formatMinutes(Store.restRule(state).minutes)
+                }),
+                { dayIdx: day, empId: emp.id }));
+            });
+          });
         }
       }
 

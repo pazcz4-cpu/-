@@ -189,6 +189,115 @@ test('כלל המנוחה: אין בוקר אחרי ערב של היום הקו�
   assertEqual(issuesOfType(report, 'rest').length, 0, 'נמצאה הפרת מנוחה');
 });
 
+/* ===== מנוחה בין משמרות =====
+
+   הכלל היה בנוי על מזהי המשמרות morning ו-evening, ולכן עבד
+   בדיוק על שלוש משמרות ברירת המחדל. עסק 24/7 שמוסיף משמרת
+   לילה 22:00–06:00 – בדיוק מה שדף השימושים מתאר – לא היה מוגן
+   ממנה לבוקר שלמחרת.
+
+   עכשיו נמדד הפער האמיתי בשעות. שתי הבדיקות הבאות הן שני צדי
+   אותו מטבע: שההתנהגות הקיימת לא זזה, ושמשמרת חדשה מוגנת. */
+
+/* עסק עם משמרת לילה. חצי שעה בין סוף הלילה לתחילת הבוקר. */
+function nightState() {
+  var state = freshState();
+  state.settings.shifts = state.settings.shifts.concat([
+    { id: 'night', name: 'לילה', from: '22:00', to: '06:00', color: 5 }
+  ]);
+  var branch = state.branches[0];
+  state.branches = [branch];
+  Object.keys(branch.schedule).forEach(function (day) {
+    branch.schedule[day] = {
+      morning: { need: 1, from: '06:30', to: '14:00' },
+      night: { need: 1, from: '22:00', to: '06:00' }
+    };
+  });
+  state.employees = [{
+    id: 'emp-1', name: 'דני', active: true, branches: [branch.id],
+    shifts: ['morning', 'night'], maxShifts: 14, roles: []
+  }];
+  return state;
+}
+
+test('בשעות ברירת המחדל הכלל חוסם בדיוק בוקר אחרי ערב', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var branchId = state.branches[0].id;
+  function gap(a, b) {
+    return Store.restGapMinutes(state, weekData,
+      { dayIdx: 1, branchId: branchId, shiftId: a },
+      { dayIdx: 2, branchId: branchId, shiftId: b });
+  }
+  function blocks(a, b) {
+    return Store.breaksRest(state, weekData,
+      { dayIdx: 1, branchId: branchId, shiftId: a },
+      { dayIdx: 2, branchId: branchId, shiftId: b });
+  }
+  assertEqual(gap('evening', 'morning'), 690, 'הפער בין ערב לבוקר');
+  assertEqual(blocks('evening', 'morning'), true, 'ערב ואז בוקר');
+  /* וכל שאר הצמדים נשארים מותרים, כמו לפני השינוי */
+  ['evening|middle', 'evening|evening', 'middle|morning', 'middle|middle',
+   'morning|morning', 'morning|evening'].forEach(function (pair) {
+    var parts = pair.split('|');
+    assertEqual(blocks(parts[0], parts[1]), false, 'נחסם בטעות: ' + pair);
+  });
+});
+
+test('משמרת לילה שחוצה חצות חוסמת את הבוקר שאחריה', function () {
+  var state = nightState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var branchId = state.branches[0].id;
+  /* הלילה נגמר ב-06:00 והבוקר מתחיל ב-06:30 – חצי שעה מנוחה */
+  assertEqual(Store.restGapMinutes(state, weekData,
+    { dayIdx: 1, branchId: branchId, shiftId: 'night' },
+    { dayIdx: 2, branchId: branchId, shiftId: 'morning' }), 30, 'הפער בין לילה לבוקר');
+
+  /* וזה מה שבאמת קובע: המנוע לא משבץ ככה */
+  Store.setAssigned(weekData, 1, branchId, 'night', ['emp-1']);
+  weekData.manual[Store.slotKey(1, branchId, 'night')] = true;
+  var result = Scheduler.generate(state, weekData, { attempts: 200, keepManual: true, seed: 4242 });
+  weekData.assignments = result.assignments;
+  var morning = Store.getAssigned(weekData, 2, branchId, 'morning');
+  assertEqual(morning.indexOf('emp-1'), -1,
+    'שובץ לבוקר חצי שעה אחרי שסיים לילה');
+
+  /* ושיבוץ ידני כזה מדווח כהפרה, עם המספרים בתוך ההתראה */
+  Store.setAssigned(weekData, 2, branchId, 'morning', ['emp-1']);
+  var found = issuesOfType(Validate.validate(state, weekData), 'rest');
+  assertEqual(found.length, 1, 'מספר הפרות המנוחה');
+  assert(found[0].text.indexOf('0:30') !== -1,
+    'ההתראה אינה אומרת כמה מנוחה יש בפועל: ' + found[0].text);
+  assert(found[0].text.indexOf('12:00') !== -1,
+    'ההתראה אינה אומרת כמה נדרש: ' + found[0].text);
+});
+
+test('הסף ניתן לשינוי, וכיבוי הכלל מבטל אותו', function () {
+  var state = nightState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  var branchId = state.branches[0].id;
+  var pair = [
+    { dayIdx: 1, branchId: branchId, shiftId: 'night' },
+    { dayIdx: 2, branchId: branchId, shiftId: 'morning' }
+  ];
+  assertEqual(Store.breaksRest(state, weekData, pair[0], pair[1]), true, 'ברירת המחדל');
+  state.settings.restMinutes = 20;   // פחות מהפער של 30 דקות
+  assertEqual(Store.breaksRest(state, weekData, pair[0], pair[1]), false, 'סף נמוך');
+  state.settings.restMinutes = 480;
+  assertEqual(Store.breaksRest(state, weekData, pair[0], pair[1]), true, 'שמונה שעות');
+  state.settings.restEveningMorning = false;
+  assertEqual(Store.breaksRest(state, weekData, pair[0], pair[1]), false, 'כלל כבוי');
+});
+
+test('עסק קיים בלי restMinutes מקבל את ברירת המחדל', function () {
+  var state = freshState();
+  delete state.settings.restMinutes;
+  assertEqual(Store.restRule(state).minutes, Store.DEFAULT_REST_MINUTES, 'הסף');
+  assertEqual(Store.restRule(state).enabled, true, 'דלוק');
+  state.settings.restEveningMorning = false;
+  assertEqual(Store.restRule(state).enabled, false, 'כבוי');
+});
+
 test('שיבוץ ידני נשמר כאשר מסומן "שמירת שיבוצים ידניים"', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');

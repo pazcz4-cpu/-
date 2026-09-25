@@ -100,7 +100,7 @@
       facts.push({ code: 'capacity', params: { target: weekTarget, max: max } });
     }
 
-    if (state.settings && state.settings.restEveningMorning) {
+    if (Store.restRule(state).enabled) {
       facts.push({ code: 'rest' });
     }
 
@@ -164,18 +164,16 @@
       }
     }
 
-    if (state.settings && state.settings.restEveningMorning) {
-      var neighbours = [];
-      if (slot.shiftId === 'morning' && slot.dayIdx > 0) {
-        neighbours = (ctx.byDay[emp.id] || [])[slot.dayIdx - 1] || [];
+    if (Store.restRule(state).enabled) {
+      for (var d = slot.dayIdx - 1; d <= slot.dayIdx + 1; d++) {
+        if (d < 0 || d > 6 || d === slot.dayIdx) continue;
+        var neighbours = (ctx.byDay[emp.id] || [])[d] || [];
         for (var j = 0; j < neighbours.length; j++) {
-          if (neighbours[j].shiftId === 'evening') return { code: 'restRule' };
-        }
-      }
-      if (slot.shiftId === 'evening' && slot.dayIdx < 6) {
-        neighbours = (ctx.byDay[emp.id] || [])[slot.dayIdx + 1] || [];
-        for (var k = 0; k < neighbours.length; k++) {
-          if (neighbours[k].shiftId === 'morning') return { code: 'restRule' };
+          if (Store.breaksRest(state, week,
+            { dayIdx: d, branchId: neighbours[j].branchId, shiftId: neighbours[j].shiftId },
+            { dayIdx: slot.dayIdx, branchId: slot.branchId, shiftId: slot.shiftId })) {
+            return { code: 'restRule' };
+          }
         }
       }
     }

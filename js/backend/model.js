@@ -70,9 +70,26 @@
      לעולם שתי כתובות שונות. */
   var SUPPORT_EMAIL = 'support@setshifts.com';
 
-  /* זמן המענה האנושי שאנחנו מתחייבים אליו. מספר אחד, כדי שההבטחה
-     בדף המכירה, במסך התמיכה ובמענה האוטומטי בוואטסאפ תהיה זהה. */
-  var SUPPORT_REPLY_HOURS = 48;
+  /* ===== זמן המענה האנושי =====
+
+     הבטחה אחת ל"משהו לא עובד" ול"יש לי רעיון" היא הבטחה שגויה
+     בשני הכיוונים: היא ארוכה מדי למנהל שלא מצליח לפרסם סידור
+     היום, ומהודקת מדי לבקשת פיתוח שתתוכנן בעוד חודש.
+
+     לכן שני מספרים. התקלה היא היחידה שנמדדת בשעות עבודה, כי
+     היא היחידה שאפשר באמת לענות עליה מהר, ורק כשיש מי שיענה.
+     שאר הפניות נמדדות בשעות יומן.
+
+     כל המספרים כאן, ומשם הם מגיעים למסך התמיכה, לעמודי האתר
+     ולמענה האוטומטי בוואטסאפ. */
+  var SUPPORT_REPLY_HOURS = 48;        // שאלה או בקשת פיתוח
+  var SUPPORT_URGENT_HOURS = 4;        // "משהו לא עובד", בשעות הפעילות
+  var SUPPORT_HOURS_FROM = '09:00';
+  var SUPPORT_HOURS_TO = '18:00';
+
+  function supportReplyHours(kind) {
+    return kind === 'bug' ? SUPPORT_URGENT_HOURS : SUPPORT_REPLY_HOURS;
+  }
 
   /* מספר הוואטסאפ העסקי, בפורמט בינלאומי ובלי סימנים: 9725xxxxxxxx.
      כל עוד הוא ריק, הכפתור אינו מוצג בשום מקום – קישור שבור לערוץ
@@ -513,7 +530,11 @@
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
     SUPPORT_EMAIL: SUPPORT_EMAIL,
-    SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS, WHATSAPP_NUMBER: WHATSAPP_NUMBER,
+    SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS,
+    SUPPORT_URGENT_HOURS: SUPPORT_URGENT_HOURS,
+    SUPPORT_HOURS_FROM: SUPPORT_HOURS_FROM, SUPPORT_HOURS_TO: SUPPORT_HOURS_TO,
+    supportReplyHours: supportReplyHours,
+    WHATSAPP_NUMBER: WHATSAPP_NUMBER,
     TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
     TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
     setBillingLive: setBillingLive, isBillingLive: isBillingLive,

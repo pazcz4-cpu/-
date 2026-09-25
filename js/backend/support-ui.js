@@ -78,13 +78,19 @@
     if (button) button.disabled = true;
     message('');
 
+    var kind = form.kind.value;
     return ctx.backend.createTicket({
-      kind: form.kind.value,
+      kind: kind,
       subject: form.subject.value,
       body: form.body.value
     }).then(function () {
       form.reset();
-      message(t('support.sent', { hours: Model.SUPPORT_REPLY_HOURS }), false);
+      /* הזמן שנאמר כאן הוא הזמן שמתאים לסוג שנשלח, ולא מספר
+         אחד לכולם: אישור שמבטיח 48 שעות על תקלה חוסמת הוא
+         בדיוק הרגע שבו הלקוח מחליט להתקשר במקום לחכות. */
+      var replyIn = Model.supportReplyHours(kind);
+      message(t(kind === 'bug' ? 'support.sentUrgent' : 'support.sent',
+        { hours: replyIn, from: Model.SUPPORT_HOURS_FROM, to: Model.SUPPORT_HOURS_TO }), false);
       return render();
     }, function (err) {
       message((err && err.message) || t('support.sendFailed'), true);
@@ -107,7 +113,12 @@
     fillKinds();
     var promise = document.getElementById('support-promise');
     if (promise) {
-      promise.textContent = t('support.promise', { hours: Model.SUPPORT_REPLY_HOURS });
+      promise.textContent = t('support.promise', {
+        hours: Model.SUPPORT_REPLY_HOURS,
+        urgent: Model.SUPPORT_URGENT_HOURS,
+        from: Model.SUPPORT_HOURS_FROM,
+        to: Model.SUPPORT_HOURS_TO
+      });
     }
     var whatsapp = document.getElementById('support-whatsapp');
     if (whatsapp) {

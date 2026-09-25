@@ -950,6 +950,69 @@
     return hours * 60 + minutes;
   }
 
+  /* ===== מנוחה בין משמרות =====
+
+     הכלל הזה היה פעם "אין בוקר אחרי ערב של אתמול", והוא הושווה
+     לפי מזהי המשמרות morning ו-evening. זה עבד בדיוק על שלוש
+     משמרות ברירת המחדל: עסק שהוסיף משמרת לילה 22:00–06:00 לא
+     היה מוגן ממנה לבוקר שלמחרת, והיא בדיוק המשמרת שבה זה
+     מסוכן.
+
+     עכשיו נמדד הפער האמיתי בשעות, ולכן הוא עובד על כל משמרת
+     שהעסק מגדיר, כולל כזו שחוצה חצות.
+
+     ברירת המחדל היא 12 שעות ולא 8 (המינימום בחוק) מסיבה אחת:
+     בשעות ברירת המחדל של המערכת זה מייצר בדיוק את אותו איסור
+     שהיה קודם – ערב שנגמר ב-22:00 חוסם בוקר ב-09:30 (11.5
+     שעות) ואינו חוסם שום צמד אחר. עסק שרוצה לרדת ל-8 משנה
+     את המספר בהגדרות. */
+  var DEFAULT_REST_MINUTES = 12 * 60;
+
+  function restRule(state) {
+    var settings = (state && state.settings) || {};
+    var minutes = Math.round(Number(settings.restMinutes));
+    return {
+      /* עסק קיים נשמר עם restEveningMorning בלבד, והוא ממשיך
+         לקבוע אם הכלל דלוק. */
+      enabled: settings.restEveningMorning !== false,
+      minutes: (isFinite(minutes) && minutes > 0) ? minutes : DEFAULT_REST_MINUTES
+    };
+  }
+
+  /* תחילת המשמרת וסופה, בדקות מתחילת השבוע. שעות הסניף קודמות
+     להגדרת המשמרת, כי מוצ״ש וסניף עם שעות משלו הם המקרה שבו
+     ההפרש באמת שונה. */
+  function shiftSpanAt(state, week, branchId, shiftId, dayIdx) {
+    var branch = byId(state.branches, branchId);
+    var hours = branch ? slotHours(week, branch, dayIdx, shiftId) : null;
+    var shift = shiftById(state, shiftId) || {};
+    var from = parseClock((hours && hours.from) || shift.from);
+    var to = parseClock((hours && hours.to) || shift.to);
+    if (from === null || to === null) return null;
+    var length = to - from;
+    if (length <= 0) length += 24 * 60;          // משמרת שחוצה חצות
+    var start = Number(dayIdx) * 24 * 60 + from;
+    return { start: start, end: start + length };
+  }
+
+  /* הפער בין שתי משמרות בדקות, בלי קשר לסדר שבו נשאלו.
+     null = אי אפשר לחשב, ואז אין חסימה. */
+  function restGapMinutes(state, week, a, b) {
+    var first = shiftSpanAt(state, week, a.branchId, a.shiftId, a.dayIdx);
+    var second = shiftSpanAt(state, week, b.branchId, b.shiftId, b.dayIdx);
+    if (!first || !second) return null;
+    var early = first.start <= second.start ? first : second;
+    var late = first.start <= second.start ? second : first;
+    return late.start - early.end;
+  }
+
+  function breaksRest(state, week, a, b) {
+    var rule = restRule(state);
+    if (!rule.enabled) return false;
+    var gap = restGapMinutes(state, week, a, b);
+    return gap !== null && gap < rule.minutes;
+  }
+
   /* משמרת ערב שנגמרת ב-02:00 אינה באורך מינוס עשרים שעות */
   function shiftLengthMinutes(shift) {
     var from = parseClock(shift && shift.from);
@@ -2182,6 +2245,10 @@
     weekStart: weekStart,
     currentWeekKey: currentWeekKey,
     shiftWeekKey: shiftWeekKey,
+    restRule: restRule,
+    restGapMinutes: restGapMinutes,
+    breaksRest: breaksRest,
+    DEFAULT_REST_MINUTES: DEFAULT_REST_MINUTES,
     dateOfDay: dateOfDay,
     formatDate: formatDate,
     emptyState: emptyState, blankState: blankState,

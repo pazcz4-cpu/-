@@ -59,16 +59,24 @@ try {
 
   await a.page.click('.tab[data-tab="support"]');
   await a.page.waitForTimeout(300);
-  check('הבטחת זמן המענה מוצגת',
-    await a.page.locator('#support-promise').textContent(), /48/);
+  /* זמן המענה מדורג: תקלה שחוסמת עבודה מקבלת מספר אחר משאלה,
+     והמסך אומר את שניהם לפני שפותחים קריאה. */
+  const promise = await a.page.locator('#support-promise').textContent();
+  check('ההבטחה נוקבת בזמן לתקלה', /4 שעות/.test(promise), true);
+  check('ובזמן לשאר הפניות', /48 שעות/.test(promise), true);
+  check('ואומרת מהן שעות הפעילות', /09:00–18:00/.test(promise), true);
   check('כתובת המייל מוצגת כערוץ',
     await a.page.locator('#support-mail').getAttribute('href'), 'mailto:support@setshifts.com');
   check('רשימה ריקה בהתחלה',
     await a.page.locator('#support-list').textContent(), /עדיין לא נפתחו/);
 
   await openTicket(a.page, 'הסידור לא נשמר', 'לחצתי שמירה והשבוע חזר לקדמותו.', 'bug');
-  check('אישור עם זמן המענה',
-    await a.page.locator('#support-message').textContent(), /48/);
+  /* האישור על תקלה מבטיח את הזמן של תקלה, ולא 48 שעות: אישור
+     שמבטיח יומיים על סידור שלא מתפרסם היום הוא הרגע שבו הלקוח
+     מחליט להתקשר במקום לחכות. */
+  const bugMessage = await a.page.locator('#support-message').textContent();
+  check('אישור התקלה נוקב ב-4 שעות', /4 שעות/.test(bugMessage), true);
+  check('ולא מבטיח 48', /48/.test(bugMessage), false);
   check('הקריאה מופיעה ברשימה',
     await a.page.locator('.ticket-subject').first().textContent(), 'הסידור לא נשמר');
   check('הסטטוס ההתחלתי',
@@ -85,6 +93,8 @@ try {
     await a.page.locator('.ticket-subject').first().textContent(), 'ייצוא לאקסל לפי עובד');
   check('והסוג שלה נכון',
     await a.page.locator('.ticket-kind').first().textContent(), 'בקשת פיתוח');
+  check('ובקשת פיתוח מקבלת את הזמן הארוך',
+    await a.page.locator('#support-message').textContent(), /48/);
 
   console.log('\n== אימות קלט ==');
   await a.page.fill('#support-form input[name="subject"]', '   ');

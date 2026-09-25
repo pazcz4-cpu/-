@@ -178,7 +178,8 @@ var COMPOSED_KEYS = [
   'leaveRequest.status_pending', 'leaveRequest.status_approved', // js/backend/employee-ui.js
   'leaveRequest.status_rejected', 'leaveRequest.status_mixed',
   'alerts.dropInactiveOne', 'alerts.dropInactiveOther',           // js/app.js – tCount
-  'alerts.dropInactiveDoneOne', 'alerts.dropInactiveDoneOther'
+  'alerts.dropInactiveDoneOne', 'alerts.dropInactiveDoneOther',
+  'support.sent', 'support.sentUrgent'          // js/backend/support-ui.js – לפי סוג הפנייה
 ];
 
 languages.forEach(function (lang) {

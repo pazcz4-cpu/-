@@ -327,7 +327,13 @@
     <h2 data-i18n="settings.rules">כללי שיבוץ</h2>
     <div class="settings-block">
       <label class="check"><input type="checkbox" id="opt-one-per-day"> <span data-i18n="settings.onePerDay">עובד משובץ למשמרת אחת ביום לכל היותר</span></label>
-      <label class="check"><input type="checkbox" id="opt-rest"> <span data-i18n="settings.rest">אין משמרת בוקר אחרי משמרת ערב של היום הקודם</span></label>
+      <label class="check"><input type="checkbox" id="opt-rest"> <span data-i18n="settings.rest">מנוחה מינימלית בין שתי משמרות</span></label>
+      <div class="row">
+        <label class="check"><span data-i18n="settings.restAtLeast">לפחות</span>
+          <input type="number" id="rest-hours" class="num-input" min="1" max="24" step="0.5"></label>
+        <span class="hint" data-i18n="settings.restUnit">שעות</span>
+      </div>
+      <p class="hint" data-i18n="settings.restHint">הפער נמדד בין השעות בפועל, ולכן הכלל עובד גם על משמרת לילה שחוצה חצות. המינימום בחוק הוא 8 שעות; ברירת המחדל כאן היא 12, וזה בדיוק מה שמונע משמרת בוקר אחרי ערב.</p>
       <label class="check"><input type="checkbox" id="opt-one-day-off"> <span data-i18n="settings.oneDayOff">יום החופש שסומן באילוצים הוא יום החופש היחיד בשבוע</span></label>
     </div>
 

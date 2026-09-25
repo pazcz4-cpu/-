@@ -51,18 +51,17 @@
 
     if (ctx.counts[emp.id] >= (emp.maxShifts || 99)) return false;
 
-    // מנוחה בין ערב לבוקר – נבדק לשני הכיוונים, כי סדר השיבוץ אינו כרונולוגי
-    if (state.settings.restEveningMorning) {
-      if (demand.shiftId === 'morning' && day > 0) {
-        var prev = ctx.byDay[emp.id][day - 1];
-        for (var j = 0; j < prev.length; j++) {
-          if (prev[j].shiftId === 'evening') return false;
-        }
-      }
-      if (demand.shiftId === 'evening' && day < 6) {
-        var next = ctx.byDay[emp.id][day + 1];
-        for (var k = 0; k < next.length; k++) {
-          if (next[k].shiftId === 'morning') return false;
+    /* מנוחה בין משמרות. נבדק לשני הכיוונים, כי סדר השיבוץ אינו
+       כרונולוגי, ולפי הפער האמיתי בשעות – כך זה עובד גם על
+       משמרת לילה שחוצה חצות ולא רק על ערב ובוקר. */
+    if (Store.restRule(state).enabled) {
+      for (var d = day - 1; d <= day + 1; d++) {
+        if (d < 0 || d > 6 || d === day) continue;
+        var near = ctx.byDay[emp.id][d];
+        for (var j = 0; j < near.length; j++) {
+          if (Store.breaksRest(state, ctx.week,
+            { dayIdx: d, branchId: near[j].branchId, shiftId: near[j].shiftId },
+            { dayIdx: day, branchId: demand.branchId, shiftId: demand.shiftId })) return false;
         }
       }
     }

@@ -25,11 +25,20 @@
    משתני סביבה (Vercel -> Settings -> Environment Variables):
      WHATSAPP_TOKEN        טוקן קבוע של System User      (סודי!)
      WHATSAPP_PHONE_ID     Phone number ID ממסך API Setup
-     WHATSAPP_API_VERSION  לא חובה. ברירת מחדל: v21.0
+     WHATSAPP_API_VERSION  לא חובה. ברירת מחדל למטה
 */
 'use strict';
 
-var DEFAULT_VERSION = 'v21.0';
+/* גרסת ה-Graph API לשליחה.
+
+   מטא תומכת בכל גרסה כשנתיים ואז מפסיקה, בלי להודיע ובלי
+   התראה במסך -- השליחות פשוט מתחילות לחזור בשגיאה. ברירת
+   מחדל שנשארת במקום הופכת אחרי שנתיים לפצצת זמן שקטה.
+
+   לכן: להעלות את המספר הזה פעם בשנה, ולוודא שהוא תואם למה
+   שמוגדר ב-Vercel. הרשימה המעודכנת מופיעה בכל רשימת גרסאות
+   בממשק המפתחים של מטא. */
+var DEFAULT_VERSION = 'v26.0';
 
 function token() { return String(process.env.WHATSAPP_TOKEN || '').trim(); }
 function phoneId() { return String(process.env.WHATSAPP_PHONE_ID || '').trim(); }

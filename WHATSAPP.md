@@ -409,7 +409,7 @@ To                        רשימת נמענים מאושרים (עד 5)
 לבדיקה מהטרמינל שלך (לא מהצ'אט):
 
 ```bash
-curl -X POST "https://graph.facebook.com/v21.0/PHONE_NUMBER_ID/messages" \
+curl -X POST "https://graph.facebook.com/v26.0/PHONE_NUMBER_ID/messages" \
   -H "Authorization: Bearer TEMP_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -642,6 +642,18 @@ WA_ABANDONED_TEMPLATE      שם התבנית. ברירת מחדל: signup_abando
 WA_ABANDONED_COUPON        קוד הקופון שמוצע. למשל EXTRAMONTH
 WA_ABANDONED_AFTER_HOURS   אחרי כמה שעות לפנות. ברירת מחדל: 3
 ```
+
+**ד.** ועוד אחד שקל לשכוח:
+
+```
+WHATSAPP_API_VERSION       גרסת ה-Graph API לשליחה. למשל v26.0
+```
+
+> מטא תומכת בכל גרסה כשנתיים ואז מפסיקה — בלי הודעה ובלי
+> התראה במסך. השליחות פשוט מתחילות לחזור בשגיאה.
+>
+> הגרסה הנוכחית מופיעה בטבלת ה-Webhook fields, בעמודת
+> Version. כדאי להשוות אליה פעם בשנה.
 
 שלוש שעות ולא יממה: מי שיצא באמצע חוזר באותו ערב או לא חוזר
 בכלל. תזכורת שמגיעה מחר בבוקר פוגשת אדם שכבר בחר מוצר אחר.

@@ -17,6 +17,7 @@
   'use strict';
 
   var Model = root.ShiftModel;
+  var Store = root.ShiftStore;
 
   function t(key, params) {
     if (!root.I18n) return key;
@@ -33,17 +34,20 @@
     return root.ShiftIcons ? root.ShiftIcons.svg(name, extraClass) : '';
   }
 
-  /* השלב שבו הלקוח נמצא נשמר במכשיר ולא בשרת. הוא אינו נתון
-     של העסק אלא מצב של הביקור הזה, ולקוח שסגר את האשף באמצע
-     ופתח מהטלפון אינו צריך למצוא אותו מחכה לו שם. */
+  /* הסגירה נשמרת על העסק ולא על המכשיר.
+
+     הלקוח מאשר את המייל בטלפון ונכנס משם, ואת ההגדרה האמיתית
+     הוא עושה במחשב. דגל שיושב בדפדפן אחד פירושו אשף שנעלם
+     באמצע המעבר בין השניים -- ואז מי שבא להגדיר את העסק נוחת
+     על טבלה ריקה בלי לדעת מאיפה מתחילים.
+
+     המפתח הישן נשאר נקרא לצורך אחד: לקוח שכבר סגר את האשף
+     במכשיר הזה לפני השינוי אינו אמור לפגוש אותו שוב. */
   var KEY = 'setshifts-onboarding';
 
-  function stored() {
-    try { return root.localStorage.getItem(KEY) || ''; }
-    catch (err) { return ''; }
-  }
-  function remember(value) {
-    try { root.localStorage.setItem(KEY, value); } catch (err) { /* מצב פרטי */ }
+  function dismissedOnThisDevice() {
+    try { return !!root.localStorage.getItem(KEY); }
+    catch (err) { return false; }
   }
 
   var STEPS = [
@@ -65,13 +69,15 @@
      להגדיר. */
   Onboarding.prototype.needed = function () {
     if (!this.host) return false;
-    /* כל ערך שמור פירושו שהלקוח כבר ראה את האשף – סיים אותו
-       או דילג. אשף שחוזר אחרי שדילגו עליו הוא לא אשף אלא מטרד;
-       "skipped" נשמר בנפרד רק כדי שנדע מה קרה. */
-    if (stored()) return false;
     if (!Model.can(this.ctx.session.user.role, 'config.edit')) return false;
     var state = this.ctx.getState();
-    return !state.branches.length && !state.employees.length;
+    /* לחיצה מפורשת סוגרת אותו, ורק היא. */
+    if (Store.onboardingDone(state)) return false;
+    if (dismissedOnThisDevice()) return false;
+    /* וגם עסק שכבר מוגדר במלואו אינו צריך אותו: יש לאן לשבץ
+       ויש את מי. חסר אחד מהשניים -- ההגדרה לא הסתיימה, והאשף
+       עדיין הדבר המועיל ביותר על המסך. */
+    return !state.branches.length || !state.employees.length;
   };
 
   Onboarding.prototype.start = function () {
@@ -84,13 +90,28 @@
     return true;
   };
 
-  Onboarding.prototype.close = function (finished) {
+  /* סגירה לביקור הזה בלבד. הקשה ליד הכרטיס בטלפון אינה החלטה,
+     והיא בהחלט לא "אל תציג לי את זה יותר". */
+  Onboarding.prototype.hide = function () {
     if (!this.host) return;
-    remember(finished === false ? 'skipped' : 'done');
     this.host.classList.add('hidden');
     this.host.innerHTML = '';
     document.body.classList.remove('onboarding-open');
     if (this.ctx.onDone) this.ctx.onDone();
+  };
+
+  /* סגירה סופית: הלקוח סיים את האשף, או לחץ "אמשיך לבד".
+
+     נשמר על העסק דרך ההגדרות, ולכן הוא לא יחזור גם ממכשיר אחר.
+     כישלון שמירה אינו מצב שבור -- האשף ייסגר עכשיו ויחזור
+     בפעם הבאה, וזה עדיף על "נעלם ואיש אינו יודע למה". */
+  Onboarding.prototype.close = function (finished) {
+    if (!this.host) return;
+    var state = this.ctx.getState();
+    if (Store.setOnboardingDone(state, true) && this.ctx.persistConfig) {
+      try { this.ctx.persistConfig(); } catch (err) { /* יחזור בפעם הבאה */ }
+    }
+    this.hide();
   };
 
   /* ===== ציור ===== */
@@ -302,10 +323,10 @@
     this.bound = true;
 
     this.host.addEventListener('click', function (event) {
-      if (event.target.closest('#wiz-skip') || event.target.closest('.wiz-backdrop')) {
-        self.close(false);
-        return;
-      }
+      /* הכפתור סוגר סופית; הקשה ליד הכרטיס סוגרת לביקור הזה
+         בלבד. זה ההבדל בין "אני מסתדר לבד" לבין אצבע שהחליקה. */
+      if (event.target.closest('#wiz-skip')) { self.close(false); return; }
+      if (event.target.closest('.wiz-backdrop')) { self.hide(); return; }
       if (event.target.closest('#wiz-back')) {
         if (self.step > 0) { self.step--; self.render(); }
         return;

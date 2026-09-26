@@ -915,7 +915,7 @@
       },
 
       onboarding: {
-        skip: 'Omitir',
+        skip: 'Lo configuro yo',
         back: 'Atrás',
         next: 'Siguiente',
         finish: 'Finalizar',

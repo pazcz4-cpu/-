@@ -920,7 +920,7 @@
       },
 
       onboarding: {
-        skip: 'דילוג',
+        skip: 'אמשיך לבד',
         back: 'חזרה',
         next: 'הבא',
         finish: 'סיום',

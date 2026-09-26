@@ -915,7 +915,7 @@
       },
 
       onboarding: {
-        skip: 'Ignorer',
+        skip: 'Je m’en occupe',
         back: 'Retour',
         next: 'Suivant',
         finish: 'Terminer',

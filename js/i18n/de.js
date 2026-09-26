@@ -915,7 +915,7 @@
       },
 
       onboarding: {
-        skip: 'Überspringen',
+        skip: 'Ich mache das selbst',
         back: 'Zurück',
         next: 'Weiter',
         finish: 'Fertig',

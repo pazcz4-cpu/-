@@ -195,6 +195,77 @@ try {
   check('ורק שם השלב הנוכחי מוצג, כדי שארבעה לא ידחסו',
     await phone.locator('.wiz-step-name:visible').count(), 1);
 
+  /* ===== המעבר בין מכשירים =====
+
+     הלקוח מאשר את המייל בטלפון -- והאישור מכניס אותו למערכת --
+     ואת ההגדרה האמיתית הוא עושה במחשב. אשף שנסגר במכשיר אחד
+     ונעלם בשני פירושו שמי שבא להגדיר את העסק נוחת על טבלה
+     ריקה בלי לדעת מאיפה מתחילים. */
+  console.log('\n== מטלפון למחשב ==');
+
+  const mobile = await signUp(PHONE, 'cross@wiz.test');
+  check('בטלפון האשף נפתח', await mobile.locator('#onboarding').isVisible(), true);
+
+  /* ועוזב בלי להחליט דבר -- בדיוק כמו מי שאישר מייל בטלפון,
+     הציץ, וחזר למחשב */
+  const shared = await mobile.evaluate(() => localStorage.getItem('maiphone-mock-server-v1'));
+
+  /* ואותו חשבון, דפדפן אחר */
+  const desk = await browser.newContext({ viewport: DESK, locale: 'he-IL' });
+  const pc = await desk.newPage();
+  pc.on('pageerror', e => errors.push('PAGE: ' + e.message));
+  await pc.addInitScript(([data]) => {
+    try { localStorage.setItem('maiphone-mock-server-v1', data); } catch (e) {}
+  }, [shared]);
+  await pc.goto(APP);
+  await pc.waitForTimeout(600);
+  await pc.fill('input[name="email"]', 'cross@wiz.test');
+  await pc.fill('input[name="password"]', 'secret123');
+  await pc.click('#signin-form button[type="submit"]');
+  await pc.waitForTimeout(1700);
+  check('ובמחשב הוא מחכה לו', await pc.locator('#onboarding').isVisible(), true);
+
+  /* ורק לחיצה מפורשת סוגרת אותו -- בכל המכשירים */
+  await pc.click('#wiz-skip');
+  await pc.waitForTimeout(700);
+  check('"אמשיך לבד" סוגר', await pc.locator('#onboarding').isVisible(), false);
+  check('וההחלטה נשמרה על העסק', await pc.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+    const data = Object.values(raw.data)[0] || {};
+    return !!(data.config && data.config.settings && data.config.settings.onboardingDone);
+  }), true);
+
+  /* וההחלטה נוסעת גם למכשיר שלישי. הבדיקה נעשית בהקשר חדש
+     ולא ברענון של הקיים: ההקשר הזה מזריק את מצב השרת בכל
+     טעינה, ורענון היה משחזר את התמונה שמלפני הלחיצה. */
+  const after = await pc.evaluate(() => localStorage.getItem('maiphone-mock-server-v1'));
+  const third = await browser.newContext({ viewport: DESK, locale: 'he-IL' });
+  const tablet = await third.newPage();
+  tablet.on('pageerror', e => errors.push('PAGE: ' + e.message));
+  await tablet.addInitScript(([data]) => {
+    try { localStorage.setItem('maiphone-mock-server-v1', data); } catch (e) {}
+  }, [after]);
+  await tablet.goto(APP);
+  await tablet.waitForTimeout(600);
+  await tablet.fill('input[name="email"]', 'cross@wiz.test');
+  await tablet.fill('input[name="password"]', 'secret123');
+  await tablet.click('#signin-form button[type="submit"]');
+  await tablet.waitForTimeout(1700);
+  check('ובמכשיר שלישי הוא כבר לא קופץ',
+    await tablet.locator('#onboarding').isVisible(), false);
+
+  /* הקשה ליד הכרטיס אינה החלטה. היא סוגרת את האשף למסך הזה,
+     והוא חוזר בפעם הבאה -- זה ההבדל בין אצבע שהחליקה לבין
+     "אני מסתדר לבד". */
+  console.log('\n== הקשה ליד הכרטיס אינה "אל תציג יותר" ==');
+  const slip = await signUp(DESK, 'slip@wiz.test');
+  await slip.click('.wiz-backdrop', { position: { x: 8, y: 8 } });
+  await slip.waitForTimeout(500);
+  check('נסגר למסך הזה', await slip.locator('#onboarding').isVisible(), false);
+  await slip.reload();
+  await slip.waitForTimeout(1600);
+  check('וחזר ברענון הבא', await slip.locator('#onboarding').isVisible(), true);
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

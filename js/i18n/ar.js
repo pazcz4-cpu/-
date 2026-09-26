@@ -915,7 +915,7 @@
       },
 
       onboarding: {
-        skip: 'تخطٍّ',
+        skip: 'سأكمل بنفسي',
         back: 'رجوع',
         next: 'التالي',
         finish: 'إنهاء',

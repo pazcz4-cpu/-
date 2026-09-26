@@ -1145,6 +1145,27 @@
     return out;
   }
 
+  /* ===== אשף הפתיחה =====
+
+     האם הלקוח כבר סגר אותו. על העסק ולא על המכשיר: הלקוח מאשר
+     את המייל בטלפון ונכנס משם, ואת ההגדרה האמיתית הוא עושה
+     במחשב. דגל שיושב בדפדפן אחד פירושו אשף שנעלם באמצע המעבר
+     בין השניים.
+
+     נסגר רק בלחיצה מפורשת -- סיום או "אמשיך לבד". מי שיצא
+     מהעמוד, סגר לשונית, או הקיש ליד הכרטיס בטלפון לא החליט
+     דבר, ויפגוש את האשף שוב. */
+  function onboardingDone(state) {
+    return !!((state && state.settings) || {}).onboardingDone;
+  }
+
+  function setOnboardingDone(state, value) {
+    if (!state) return false;
+    if (!state.settings) state.settings = {};
+    state.settings.onboardingDone = value !== false;
+    return true;
+  }
+
   function calendarRule(state) {
     var raw = ((state && state.settings) || {}).calendar || {};
     var sets = {};
@@ -2803,6 +2824,7 @@
     payrollIdOf: payrollIdOf,
     punchWindowRule: punchWindowRule,
     dayHours: dayHours, setDayHours: setDayHours, clipToDay: clipToDay,
+    onboardingDone: onboardingDone, setOnboardingDone: setOnboardingDone,
     calendarRule: calendarRule, setCalendarRule: setCalendarRule,
     calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
     CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,

@@ -921,7 +921,7 @@
       },
 
       onboarding: {
-        skip: 'Skip',
+        skip: 'I’ll set it up myself',
         back: 'Back',
         next: 'Next',
         finish: 'Finish',

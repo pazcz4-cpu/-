@@ -3699,7 +3699,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Skip',
+        skip: 'I’ll set it up myself',
         back: 'Back',
         next: 'Next',
         finish: 'Finish',
@@ -5152,7 +5152,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'דילוג',
+        skip: 'אמשיך לבד',
         back: 'חזרה',
         next: 'הבא',
         finish: 'סיום',
@@ -6600,7 +6600,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Omitir',
+        skip: 'Lo configuro yo',
         back: 'Atrás',
         next: 'Siguiente',
         finish: 'Finalizar',
@@ -8048,7 +8048,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Ignorer',
+        skip: 'Je m’en occupe',
         back: 'Retour',
         next: 'Suivant',
         finish: 'Terminer',
@@ -9496,7 +9496,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'تخطٍّ',
+        skip: 'سأكمل بنفسي',
         back: 'رجوع',
         next: 'التالي',
         finish: 'إنهاء',
@@ -10944,7 +10944,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Пропустить',
+        skip: 'Настрою сам',
         back: 'Назад',
         next: 'Далее',
         finish: 'Готово',
@@ -12392,7 +12392,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Überspringen',
+        skip: 'Ich mache das selbst',
         back: 'Zurück',
         next: 'Weiter',
         finish: 'Fertig',
@@ -13840,7 +13840,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       onboarding: {
-        skip: 'Ignorar',
+        skip: 'Eu trato disso',
         back: 'Voltar',
         next: 'Seguinte',
         finish: 'Concluir',
@@ -15553,6 +15553,14 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   }
 
   var DEFAULT_SETTINGS = {
+    /* האם אשף הפתיחה כבר נסגר בידי הלקוח.
+
+       על העסק ולא על המכשיר, ובכוונה: הלקוח מאשר את המייל
+       בטלפון, נכנס משם, ואת ההגדרה האמיתית הוא עושה במחשב.
+       דגל שיושב בדפדפן אחד פירושו אשף שנעלם באמצע המעבר בין
+       השניים -- ואז מי שבא להגדיר את העסק נוחת על טבלה ריקה
+       בלי לדעת מאיפה מתחילים. */
+    onboardingDone: false,
     onePerDay: true,          // עובד משובץ למשמרת אחת ביום לכל היותר
     restEveningMorning: true, // מנוחה מינימלית בין שתי משמרות
     /* הסף בדקות. 12 שעות ולא 8 (המינימום בחוק) מסיבה אחת:
@@ -16801,6 +16809,27 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       out[kind] = kind === 'yomtov' ? CALENDAR_POLICY.CLOSE : CALENDAR_POLICY.NOTE;
     });
     return out;
+  }
+
+  /* ===== אשף הפתיחה =====
+
+     האם הלקוח כבר סגר אותו. על העסק ולא על המכשיר: הלקוח מאשר
+     את המייל בטלפון ונכנס משם, ואת ההגדרה האמיתית הוא עושה
+     במחשב. דגל שיושב בדפדפן אחד פירושו אשף שנעלם באמצע המעבר
+     בין השניים.
+
+     נסגר רק בלחיצה מפורשת -- סיום או "אמשיך לבד". מי שיצא
+     מהעמוד, סגר לשונית, או הקיש ליד הכרטיס בטלפון לא החליט
+     דבר, ויפגוש את האשף שוב. */
+  function onboardingDone(state) {
+    return !!((state && state.settings) || {}).onboardingDone;
+  }
+
+  function setOnboardingDone(state, value) {
+    if (!state) return false;
+    if (!state.settings) state.settings = {};
+    state.settings.onboardingDone = value !== false;
+    return true;
   }
 
   function calendarRule(state) {
@@ -18461,6 +18490,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     payrollIdOf: payrollIdOf,
     punchWindowRule: punchWindowRule,
     dayHours: dayHours, setDayHours: setDayHours, clipToDay: clipToDay,
+    onboardingDone: onboardingDone, setOnboardingDone: setOnboardingDone,
     calendarRule: calendarRule, setCalendarRule: setCalendarRule,
     calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
     CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,

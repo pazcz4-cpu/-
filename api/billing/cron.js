@@ -155,12 +155,27 @@ async function chargeCompany(provider, company, plans, now) {
      אם אין מחיר, מדלגים ולא גובים אפס. חיוב על סכום אפס אינו
      "חינם" אלא בקשה שהספק דוחה, ובמקרה הרע חיוב שמופיע ללקוח
      על כלום. הדילוג עולה בדוח הריצה כל יום עד שהמחיר יוזן. */
-  const amount = Number(company.custom_price_monthly) > 0
+  const base = Number(company.custom_price_monthly) > 0
     ? Math.round(Number(company.custom_price_monthly))
     : plan.priceMonthly;
-  if (!(amount > 0)) {
+  if (!(base > 0)) {
     return { company: company.id, action: 'skipped', reason: 'price-not-set' };
   }
+
+  /* ההנחה מהקופון. שני מצבים שונים לגמרי מגיעים לאפס, ורק אחד
+     מהם תקין:
+
+       base = 0          המחיר עוד לא סוכם. מדלגים ומחכים לאדם.
+       הנחה של 100%      "חודש חינם" שהובטח ללקוח. התקופה מוארכת
+                         בלי לגבות, ובלי לגשת לספק בכלל -- בקשת
+                         חיוב על אפס היא בקשה שהספק דוחה.
+
+     הבדיקה על base נעשתה למעלה, ולכן מכאן ואילך אפס פירושו
+     הטבה ולא תקלה. */
+  const discount = Number(company.discount_charges_left) > 0
+    ? Math.max(0, Math.min(100, Number(company.discount_percent) || 0))
+    : 0;
+  const amount = discount ? Math.max(0, Math.round(base * (100 - discount) / 100)) : base;
 
   /* התקופה שעליה משלמים מתחילה בדיוק כשהקודמת נגמרה */
   const periodStart = company.valid_until || now.toISOString();
@@ -174,6 +189,27 @@ async function chargeCompany(provider, company, plans, now) {
     return { company: company.id, action: 'error', reason: err.message };
   }
   if (!attempt) return { company: company.id, action: 'skipped', reason: 'already-charged' };
+
+  /* חודש חינם: אין מה לגבות, ויש מה להאריך. נרשם ביומן כמו כל
+     חיוב אחר, עם הסכום שנחסך -- אחרת חודש שלא נגבה נראה בדוח
+     כמו חודש שנשכח. */
+  if (amount === 0) {
+    const freeEnd = addDays(new Date(periodStart) > now ? new Date(periodStart) : now, MONTH_DAYS);
+    await recordOutcome(attempt.periodId, 'granted', {
+      amount: 0, waived: base, currency: 'ILS',
+      plan: company.plan, coupon: company.coupon_code || null
+    });
+    await patchCompany(company.id, {
+      status: 'active',
+      valid_until: freeEnd.toISOString(),
+      current_period_end: freeEnd.toISOString(),
+      discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)
+    });
+    return {
+      company: company.id, action: 'granted', waived: base,
+      until: freeEnd.toISOString()
+    };
+  }
 
   let result, thrown;
   try {
@@ -211,13 +247,21 @@ async function chargeCompany(provider, company, plans, now) {
       amount: amount,
       currency: 'ILS',
       plan: company.plan,
+      /* מה היה המחיר לפני ההנחה, ואיזה קופון הוזיל אותו. בלי
+         שתי השורות האלה שורת הכנסה נמוכה נראית כמו טעות. */
+      list_price: discount ? base : undefined,
+      coupon: discount ? (company.coupon_code || null) : undefined,
       transaction_id: result.transactionId || null
     });
-    await patchCompany(company.id, {
+    await patchCompany(company.id, Object.assign({
       status: 'active',
       valid_until: nextEnd.toISOString(),
       current_period_end: nextEnd.toISOString()
-    });
+    }, discount ? {
+      /* ההנחה נוצלה. יורדת רק אחרי חיוב שעבר: כרטיס שנדחה
+         והתקבל מחר אינו אמור לגבות את המחיר המלא. */
+      discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)
+    } : null));
     return {
       company: company.id, action: first ? 'first-charge' : 'renewal',
       until: nextEnd.toISOString(), transaction: result.transactionId || null
@@ -266,7 +310,14 @@ module.exports = async function handler(req, res) {
      שיהיה אפשר לקרוא אותן במקום אחד. */
   const due = await db('/companies?valid_until=lte.' + encodeURIComponent(nowIso) +
     '&status=in.(trial,active,past_due)' +
-    '&select=id,plan,status,valid_until,cancel_at_period_end,billing_subscription_id,billing_customer_id' +
+    /* הרשימה הזו היא מה שחושב עליו החיוב. עמודה שנשכחת כאן
+       אינה שגיאה אלא undefined: המחיר המוסכם של רשת נקרא בקוד
+       ולא נשאב מכאן, ולכן רשתות דולגו בשקט בתור "מחיר לא
+       נקבע". הבדיקות מחזירות רק את מה שנתבקש, כדי שהשכחה
+       הבאה תיפול שם ולא אצל לקוח. */
+    '&select=id,plan,status,valid_until,cancel_at_period_end,' +
+    'billing_subscription_id,billing_customer_id,custom_price_monthly,' +
+    'coupon_code,discount_percent,discount_charges_left' +
     '&order=valid_until.asc&limit=' + MAX_COMPANIES);
 
   if (!due.ok) return send(res, 500, { message: 'Could not read companies' });

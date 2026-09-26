@@ -295,6 +295,89 @@
     return PLANS[PLAN_ORDER[PLAN_ORDER.length - 1]];
   }
 
+  /* ===== קופונים =====
+
+     שני סוגים בלבד, ובכוונה:
+
+       days     מאריך את תקופת הניסיון או את התקופה המשולמת.
+                "חודש נוסף ללא עלות" הוא days=30.
+       percent  הנחה על החיוב הבא. 100 פירושו חיוב אחד שלא נגבה.
+
+     למה לא "סכום קבוע בשקלים": מוצר שנמכר בכמה מדינות אינו יכול
+     להחזיק הנחה של "50" בלי לדעת של מה. אחוז עובד בכל מטבע.
+
+     ההנחה חלה על החיוב הבא בלבד, ולא "לתמיד": קופון שיווקי שנשאר
+     פעיל שנה הוא הכנסה שנעלמה בלי שאיש החליט על כך. מי שרוצה
+     הנחה קבועה מזין מחיר מוסכם במשרד האחורי -- שם זו החלטה
+     מודעת, והיא רשומה על שם מי שקיבל אותה. */
+  var COUPON = { DAYS: 'days', PERCENT: 'percent' };
+
+  /* הקוד מנורמל לפני כל השוואה: הלקוח יקליד "extra month",
+     "Extra-Month" ו-"EXTRAMONTH ", וכולם אותו קופון. */
+  function normalizeCouponCode(code) {
+    return String(code == null ? '' : code)
+      .toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
+  }
+
+  /* מה לא בסדר בקופון הזה, או null אם הוא תקף.
+     מחזיר מפתח קצר ולא משפט: המשפט נבחר במסך, בשפה של הלקוח. */
+  function couponProblem(coupon, company, now) {
+    if (!coupon || !normalizeCouponCode(coupon.code)) return 'notFound';
+    if (coupon.active === false) return 'notFound';
+    if (COUPON.DAYS !== coupon.kind && COUPON.PERCENT !== coupon.kind) return 'notFound';
+    if (!(Number(coupon.value) > 0)) return 'notFound';
+    if (coupon.kind === COUPON.PERCENT && Number(coupon.value) > 100) return 'notFound';
+
+    var today = now ? new Date(now) : new Date();
+    if (coupon.validUntil && new Date(coupon.validUntil) < today) return 'expired';
+
+    var max = Number(coupon.maxUses);
+    if (isFinite(max) && max > 0 && Number(coupon.uses || 0) >= max) return 'exhausted';
+
+    /* קופון אחד ללקוח, לכל החיים. בלי הכלל הזה לקוח שקיבל שלוש
+       הודעות שיווקיות מממש שלושה קופונים ומגיע לחיוב אפס. */
+    if (company && normalizeCouponCode(company.couponCode)) return 'already';
+    return null;
+  }
+
+  /* מה הקופון עושה לחברה. מחזיר את השינוי בלבד, ולא נוגע בשום
+     דבר -- מי שמחיל אותו הוא השרת, וכאן רק מחושב מה מגיע. */
+  function couponEffect(coupon, company, now) {
+    if (couponProblem(coupon, company, now)) return null;
+    var value = Math.round(Number(coupon.value));
+    if (coupon.kind === COUPON.DAYS) {
+      /* מהתוקף הקיים, ולא מהיום: לקוח שנותרו לו עשרה ימי ניסיון
+         ומימש "חודש נוסף" אמור לקבל ארבעים, לא שלושים. תוקף
+         שכבר עבר אינו מקצר -- מונים מהיום. */
+      var from = company && company.validUntil ? new Date(company.validUntil) : null;
+      var base = now ? new Date(now) : new Date();
+      if (from && from > base) base = from;
+      return { kind: COUPON.DAYS, days: value, validUntil: addDays(base, value) };
+    }
+    return { kind: COUPON.PERCENT, percent: Math.min(100, value), charges: 1 };
+  }
+
+  /* הסכום שייגבה בפועל בחיוב הקרוב, אחרי ההנחה.
+
+     base מגיע מבחוץ ולא מחושב כאן, כי הוא כבר עבר את הכלל של
+     "מחיר מוסכם גובר על המחירון" -- ושכפול הכלל הזה היה מייצר
+     שני מחירים שונים לאותו לקוח. */
+  function discountedPrice(base, company) {
+    var amount = Math.max(0, Math.round(Number(base) || 0));
+    if (!company || !(Number(company.discountChargesLeft) > 0)) return amount;
+    var percent = Math.max(0, Math.min(100, Number(company.discountPercent) || 0));
+    if (!percent) return amount;
+    return Math.max(0, Math.round(amount * (100 - percent) / 100));
+  }
+
+  /* האם החיוב הקרוב נופל לאפס בגלל הנחה מלאה. זה מצב תקין --
+     "חודש חינם" -- ואסור לבלבל אותו עם "אין מחיר", שבו אין מה
+     לגבות כי המחיר עוד לא סוכם. הראשון מאריך את התקופה בלי
+     לגבות; השני מדלג ומחכה לאדם. */
+  function isFullyDiscounted(base, company) {
+    return Number(base) > 0 && discountedPrice(base, company) === 0;
+  }
+
   /* כמה עובדים אפשר עוד להוסיף בתוכנית הנוכחית (null = ללא הגבלה) */
   function employeesLeft(company, currentCount) {
     var plan = planOf(company);
@@ -631,6 +714,9 @@
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,
+    COUPON: COUPON, normalizeCouponCode: normalizeCouponCode,
+    couponProblem: couponProblem, couponEffect: couponEffect,
+    discountedPrice: discountedPrice, isFullyDiscounted: isFullyDiscounted,
     quoteHref: quoteHref,
     accessState: accessState, withinPlanLimits: withinPlanLimits,
     newTrialCompany: newTrialCompany, addDays: addDays

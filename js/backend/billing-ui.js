@@ -191,8 +191,74 @@
         t('billing.resume') + '</button></div>';
     }
 
+    html += couponBlock(company);
+
     html += '<p id="billing-message" class="users-message hidden"></p>';
     container.innerHTML = html;
+  }
+
+  /* ===== קופון =====
+
+     שורה אחת, סגורה כברירת מחדל. קופון הוא דבר שמי שיש לו קוד
+     מחפש, ומי שאין לו אינו צריך לראות -- שדה פתוח על מסך המנוי
+     אומר לכל לקוח "יש מחיר נמוך יותר, ואתה לא קיבלת אותו".
+
+     מי שכבר מימש רואה את הקוד שלו ולא שדה: קופון אחד ללקוח,
+     ושדה שאי אפשר להשתמש בו הוא הזמנה לנסות ולהיכשל. */
+  function couponBlock(company) {
+    var used = Model.normalizeCouponCode(company && company.couponCode);
+    if (used) {
+      return '<div class="settings-block coupon-used">' +
+        '<div class="billing-row"><span>' + t('billing.couponUsed') + '</span>' +
+        '<b>' + esc(used) + '</b></div></div>';
+    }
+    return '<details class="settings-block coupon-box" id="coupon-box">' +
+      '<summary>' + t('billing.couponAsk') + '</summary>' +
+      '<div class="row coupon-row">' +
+      '<input type="text" id="coupon-code" class="text-input" autocomplete="off" ' +
+      'spellcheck="false" maxlength="24" placeholder="' +
+      esc(t('billing.couponPlaceholder')) + '">' +
+      '<button id="coupon-apply" class="btn">' + t('billing.couponApply') + '</button>' +
+      '</div></details>';
+  }
+
+  /* התשובה מהשרת היא מפתח קצר, והמשפט נבחר כאן -- בשפה של
+     הלקוח, ולא בשפה של בסיס הנתונים. */
+  function couponMessage(answer) {
+    if (!answer || answer.result !== 'ok') {
+      var keys = {
+        expired: 'billing.couponExpired',
+        exhausted: 'billing.couponExhausted',
+        already: 'billing.couponAlready'
+      };
+      return { text: t(keys[answer && answer.result] || 'billing.couponNotFound'), error: true };
+    }
+    if (answer.kind === Model.COUPON.DAYS) {
+      return { text: t('billing.couponDays', { days: answer.value }), error: false };
+    }
+    if (Number(answer.value) >= 100) {
+      return { text: t('billing.couponFree'), error: false };
+    }
+    return { text: t('billing.couponPercent', { percent: answer.value }), error: false };
+  }
+
+  function applyCoupon(button) {
+    var input = document.getElementById('coupon-code');
+    var code = input ? input.value : '';
+    if (!Model.normalizeCouponCode(code)) { say(t('billing.couponNotFound'), true); return; }
+    button.disabled = true;
+    say('');
+    ctx.billing.redeemCoupon(code).then(function (answer) {
+      var message = couponMessage(answer);
+      render();
+      say(message.text, message.error);
+      /* רק מימוש שהצליח שינה משהו. רענון אחרי דחייה היה מרמז
+         שקרה משהו, בזמן שלא קרה דבר. */
+      if (!message.error && ctx.onChange) ctx.onChange();
+    }, function (err) {
+      render();
+      say((err && err.message) || t('billing.updateFailed'), true);
+    });
   }
 
   function say(text, isError) {
@@ -282,6 +348,9 @@
         }, function (err) { say((err && err.message) || t('billing.cancelFailed'), true); });
         return;
       }
+
+      var coupon = event.target.closest('#coupon-apply');
+      if (coupon) { applyCoupon(coupon); return; }
 
       if (event.target.closest('#billing-resume')) {
         say('');

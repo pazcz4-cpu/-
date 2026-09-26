@@ -198,6 +198,15 @@
     return this.provider.addPaymentMethod();
   };
 
+  /* מימוש קופון. עובר לשרת ולא לספק התשלומים: קופון הוא הטבה
+     שלנו על המנוי, ולא עסקה אצל הסולק. */
+  BillingService.prototype.redeemCoupon = function (code) {
+    if (!this.backend || !this.backend.redeemCoupon) {
+      return Promise.reject(new Error(t('payments.notConnected')));
+    }
+    return this.backend.redeemCoupon(code);
+  };
+
   BillingService.prototype.cancel = function () { return this.provider.cancel(); };
 
   BillingService.prototype.resume = function () {

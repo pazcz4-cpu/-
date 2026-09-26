@@ -667,6 +667,81 @@ test('מחיר מוסכם גובר על המחירון', function () {
   assertEqual(Model.effectivePrice({ plan: 'starter', customPriceMonthly: -5 }), 199, 'שלילי נחשב מחיר');
 });
 
+/* ===== קופונים ===== */
+
+test('קוד קופון מנורמל לפני כל השוואה', function () {
+  assertEqual(Model.normalizeCouponCode(' extra-month '), 'EXTRAMONTH', 'רווחים ומקף');
+  assertEqual(Model.normalizeCouponCode('Free NFC'), 'FREENFC', 'אותיות קטנות');
+  assertEqual(Model.normalizeCouponCode(null), '', 'ריק');
+  assertEqual(Model.normalizeCouponCode('א' + 'B2'), 'B2', 'תווים שאינם אנגלית או ספרה');
+});
+
+test('קופון תקף, ומה פוסל אותו', function () {
+  var now = new Date('2026-09-26T10:00:00Z');
+  var good = { code: 'EXTRAMONTH', kind: 'days', value: 30, active: true };
+  assertEqual(Model.couponProblem(good, {}, now), null, 'קופון תקין נפסל');
+
+  assertEqual(Model.couponProblem(null, {}, now), 'notFound', 'קופון שאינו קיים');
+  assertEqual(Model.couponProblem({ code: 'X', kind: 'days', value: 30, active: false }, {}, now),
+    'notFound', 'קופון מכובה');
+  assertEqual(Model.couponProblem({ code: 'X', kind: 'bonus', value: 5 }, {}, now),
+    'notFound', 'סוג שאינו מוכר');
+  assertEqual(Model.couponProblem({ code: 'X', kind: 'percent', value: 120 }, {}, now),
+    'notFound', 'הנחה מעל מאה אחוז');
+  assertEqual(Model.couponProblem(
+    { code: 'X', kind: 'days', value: 30, validUntil: '2026-09-01' }, {}, now),
+    'expired', 'קופון שפג');
+  assertEqual(Model.couponProblem(
+    { code: 'X', kind: 'days', value: 30, maxUses: 5, uses: 5 }, {}, now),
+    'exhausted', 'קופון שנוצל עד תום');
+});
+
+/* בלי הכלל הזה לקוח שקיבל שלוש הודעות שיווקיות מממש שלושה
+   קופונים ומגיע לחיוב אפס */
+test('קופון אחד ללקוח, לכל החיים', function () {
+  var now = new Date('2026-09-26');
+  var coupon = { code: 'FREENFC', kind: 'percent', value: 20 };
+  assertEqual(Model.couponProblem(coupon, { couponCode: '' }, now), null, 'לקוח נקי נחסם');
+  assertEqual(Model.couponProblem(coupon, { couponCode: 'EXTRAMONTH' }, now), 'already',
+    'לקוח שכבר מימש קיבל עוד קופון');
+});
+
+test('קופון ימים מאריך מהתוקף הקיים ולא מהיום', function () {
+  var now = new Date('2026-09-26T00:00:00Z');
+  var coupon = { code: 'EXTRAMONTH', kind: 'days', value: 30 };
+
+  /* נותרו עשרה ימי ניסיון: שלושים ועוד עשרה = ארבעים מהיום */
+  var effect = Model.couponEffect(coupon, { validUntil: '2026-10-06T00:00:00Z' }, now);
+  assertEqual(effect.validUntil.toISOString().slice(0, 10), '2026-11-05', 'הימים לא נוספו לתוקף');
+
+  /* תוקף שכבר עבר אינו מקצר -- מונים מהיום */
+  var past = Model.couponEffect(coupon, { validUntil: '2026-09-01T00:00:00Z' }, now);
+  assertEqual(past.validUntil.toISOString().slice(0, 10), '2026-10-26', 'תוקף שעבר קיצר את ההטבה');
+
+  assertEqual(Model.couponEffect(coupon, { couponCode: 'X' }, now), null,
+    'קופון פסול החזיר השפעה');
+});
+
+test('הנחה חלה על החיוב הבא בלבד', function () {
+  var withDiscount = { discountPercent: 20, discountChargesLeft: 1 };
+  assertEqual(Model.discountedPrice(199, withDiscount), 159, 'ההנחה לא חושבה');
+  assertEqual(Model.discountedPrice(199, { discountPercent: 20, discountChargesLeft: 0 }), 199,
+    'הנחה שנוצלה עדיין הופחתה');
+  assertEqual(Model.discountedPrice(199, null), 199, 'בלי חברה');
+  assertEqual(Model.discountedPrice(199, { discountPercent: 0, discountChargesLeft: 1 }), 199,
+    'אפס אחוז');
+});
+
+/* "חודש חינם" ו"אין מחיר" מגיעים שניהם לאפס, ומי שיבלבל ביניהם
+   או יחייב רשת באפס או ייתן לה חודש חינם בלי שאיש החליט */
+test('הנחה מלאה אינה "אין מחיר"', function () {
+  var free = { discountPercent: 100, discountChargesLeft: 1 };
+  assertEqual(Model.discountedPrice(199, free), 0, 'הנחה מלאה לא הגיעה לאפס');
+  assertEqual(Model.isFullyDiscounted(199, free), true, 'חודש חינם לא זוהה');
+  assertEqual(Model.isFullyDiscounted(0, free), false, 'מחיר שלא נקבע נחשב חודש חינם');
+  assertEqual(Model.isFullyDiscounted(199, {}), false, 'בלי הנחה');
+});
+
 test('התוכנית המתאימה נבחרת לפי מספר העובדים', function () {
   assertEqual(Model.planForEmployees(1).id, 'starter', 'עובד אחד');
   assertEqual(Model.planForEmployees(10).id, 'starter', 'בדיוק 10');

@@ -324,7 +324,9 @@
              מסך המנוי שלו היה מציג את מחיר המחירון – ואצל רשת
              אין מחירון, ולכן הוא היה מציג אפס. */
           '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
-          'custom_price_monthly')
+          /* הקופון וההנחה שנותרה. המסך מציג אותם, ובלעדיהם לקוח
+             שמימש קופון רואה מסך שלא השתנה ומנסה שוב. */
+          'custom_price_monthly,coupon_code,discount_percent,discount_charges_left')
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
@@ -334,6 +336,9 @@
               plan: row.plan, status: row.status,
               customPriceMonthly: row.custom_price_monthly == null
                 ? null : Number(row.custom_price_monthly),
+              couponCode: row.coupon_code || '',
+              discountPercent: Number(row.discount_percent) || 0,
+              discountChargesLeft: Number(row.discount_charges_left) || 0,
               validUntil: row.valid_until, createdAt: row.created_at
             };
             self._session = {
@@ -1091,6 +1096,41 @@
   };
 
   /* ביטול הזמנה = מחיקת המשתמש. דורש מפתח ניהול, ולכן עובר בשרת. */
+  /* מימוש קופון.
+
+     כל ההחלטה נמצאת בשרת, בפונקציית security definer: מה תקף,
+     מה כבר נוצל, ומה ההטבה. הדפדפן שולח קוד ומקבל תשובה קצרה.
+     בלי זה כל אחד היה מאריך לעצמו את הניסיון מהקונסולה.
+
+     התשובה: { result, kind, value, validUntil }. result הוא
+     'ok' או סיבת הדחייה -- המשפט נבחר במסך, בשפה של הלקוח. */
+  SupabaseBackend.prototype.redeemCoupon = function (code) {
+    var self = this;
+    var clean = Model.normalizeCouponCode(code);
+    if (!clean) return Promise.resolve({ result: 'notFound' });
+    return this._rpc('redeem_coupon', { p_code: clean }).then(function (rows) {
+      var row = (rows && rows[0]) || rows || {};
+      if (row.result !== 'ok') return { result: row.result || 'notFound' };
+      /* השורה בשרת השתנתה, והמסך נשען על העותק שבזיכרון.
+         טעינה מחדש של החברה היא מה שמונע מסך שמראה את המצב
+         הישן -- ובו הלקוח מנסה לממש שוב. */
+      if (self._session) {
+        self._session.company.couponCode = clean;
+        if (row.kind === Model.COUPON.DAYS) {
+          self._session.company.validUntil = row.valid_until;
+          self._session.access = Model.accessState(self._session.company, self.now());
+        } else {
+          self._session.company.discountPercent = Number(row.value) || 0;
+          self._session.company.discountChargesLeft = 1;
+        }
+      }
+      return {
+        result: 'ok', code: clean, kind: row.kind,
+        value: Number(row.value) || 0, validUntil: row.valid_until || null
+      };
+    });
+  };
+
   SupabaseBackend.prototype.cancelInvite = function (userId) {
     return this._server(this.cancelEndpoint, { userId: userId });
   };

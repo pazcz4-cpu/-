@@ -45,6 +45,29 @@ test('יומן החיוב סגור לחלוטין בפני הדפדפן', functi
 
 console.log('\n== מה לקוח אינו יכול לשנות ==');
 
+/* קופון משנה כסף: הוא מאריך תוקף או מוזיל חיוב. לקוח שיכול
+   לכתוב על השדות האלה, או לקרוא את טבלת הקודים ולבחור את
+   הנדיב ביותר, אינו צריך לשלם. */
+test('טבלת הקופונים סגורה לקריאה מהדפדפן', function () {
+  has('alter table public.coupons             enable row level security;',
+    'coupons בלי RLS');
+  has('alter table public.coupon_redemptions  enable row level security;',
+    'coupon_redemptions בלי RLS');
+  assert(!/create policy[^;]*on public\.coupons/.test(sql),
+    'יש מדיניות קריאה על coupons — אפשר לשלוף את כל הקודים');
+});
+
+test('הקופון מוחל רק דרך הפונקציה, ולא מהדפדפן', function () {
+  has('create or replace function public.redeem_coupon(p_code text)', 'אין פונקציית מימוש');
+  has('security definer', 'הפונקציה אינה security definer');
+  has('grant execute on function public.redeem_coupon(text) to authenticated;',
+    'אין הרשאת הרצה לפונקציה');
+  /* הרשימה הסגורה של grant update על companies נבדקת למטה,
+     והיא מה שמונע כתיבה ישירה על ההנחה ועל התוקף */
+  assert(sql.indexOf('grant update (name, tax_id, phone, logo, discount_percent') === -1,
+    'שדות ההנחה נפתחו לכתיבה מהדפדפן');
+});
+
 test('מצב המנוי והתוקף אינם ניתנים לכתיבה מהדפדפן', function () {
   /* בלי זה כל לקוח מעניק לעצמו מנוי חינם בפקודה אחת */
   has('revoke all on public.companies from authenticated;',

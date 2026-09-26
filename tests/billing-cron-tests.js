@@ -90,6 +90,21 @@ FakeDb.prototype.install = function () {
           if (statuses && statuses.indexOf(company.status) === -1) return false;
           return true;
         });
+      /* מחזירים רק את העמודות שהקוד ביקש, כמו PostgREST אמיתי.
+         בלי זה הבדיקה מזריקה שורה מלאה, הקוד קורא עמודה שהוא
+         שכח לבקש, והכול עובר -- בעוד שבאוויר הערך הוא undefined.
+         בדיוק ככה מחיר מוסכם של רשת לא נגבה חודשים. */
+      var selectMatch = query.match(/select=([^&]+)/);
+      var fields = selectMatch ? selectMatch[1].split(',') : null;
+      if (fields) {
+        rows = rows.map(function (company) {
+          var out = {};
+          fields.forEach(function (field) {
+            if (field in company) out[field] = company[field];
+          });
+          return out;
+        });
+      }
       return reply(200, rows);
     }
 
@@ -315,6 +330,65 @@ test('ניסיון שהסתיים בלי כרטיס פג ואינו מחויב',
   return run().then(function () {
     assertEqual(db.charges.length, 0, 'בוצע ניסיון חיוב בלי כרטיס');
     assertEqual(db.companies['co-1'].status, 'expired', 'הסטטוס לא עודכן');
+    db.restore();
+  });
+});
+
+console.log('\n== קופונים ==');
+
+test('הנחה מקופון מופחתת מהחיוב, ונוצלת פעם אחת', function () {
+  var db = new FakeDb([company({
+    id: 'co-cut', plan: 'starter',
+    discount_percent: 20, discount_charges_left: 1
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
+    assertEqual(db.charges[0].amount, 159, 'ההנחה לא הופחתה');
+    assertEqual(db.companies['co-cut'].discount_charges_left, 0, 'ההנחה לא נוצלה');
+    db.restore();
+  });
+});
+
+/* ההנחה יורדת רק אחרי חיוב שעבר. כרטיס שנדחה היום והתקבל מחר
+   אינו אמור לגבות את המחיר המלא. */
+test('הנחה אינה נוצלת כשהחיוב נכשל', function () {
+  var db = new FakeDb([company({
+    id: 'co-fail-cut', plan: 'starter', billing_subscription_id: 'fail-1',
+    discount_percent: 20, discount_charges_left: 1
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.companies['co-fail-cut'].discount_charges_left, 1,
+      'ההנחה נשרפה על חיוב שנכשל');
+    db.restore();
+  });
+});
+
+/* "חודש חינם" ו"מחיר שלא נקבע" מגיעים שניהם לאפס. הראשון מאריך
+   את התקופה בלי לגשת לספק בכלל; השני מדלג ומחכה לאדם. */
+test('הנחה מלאה מאריכה את התקופה בלי לחייב', function () {
+  var db = new FakeDb([company({
+    id: 'co-free', plan: 'starter',
+    discount_percent: 100, discount_charges_left: 1
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נשלחה בקשת חיוב על אפס');
+    assertEqual(db.companies['co-free'].status, 'active', 'החברה לא הופעלה');
+    assertEqual(db.companies['co-free'].discount_charges_left, 0, 'ההטבה לא נוצלה');
+    assert(new Date(db.companies['co-free'].valid_until) > new Date(), 'התוקף לא הוארך');
+    assertEqual(res.payload.results[0].action, 'granted', 'הפעולה לא נרשמה כהטבה');
+    db.restore();
+  });
+});
+
+test('רשת בלי מחיר מוסכם אינה מקבלת חודש חינם בטעות', function () {
+  var db = new FakeDb([company({ id: 'co-quote', plan: 'enterprise' })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נגבה כסף בלי מחיר');
+    assertEqual(res.payload.results[0].reason, 'price-not-set', 'לא דווח שהמחיר חסר');
     db.restore();
   });
 });

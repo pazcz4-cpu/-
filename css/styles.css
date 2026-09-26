@@ -2271,3 +2271,20 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
   font-size: var(--t-xs); font-weight: 400; color: var(--muted);
 }
 .c-same-list li { margin: 1px 0; }
+
+/* ===== קופון =====
+
+   סגור כברירת מחדל. שדה קופון פתוח על מסך המנוי אומר לכל לקוח
+   "יש מחיר נמוך יותר, ואתה לא קיבלת אותו" — ולכן הוא מגירה
+   שנפתחת רק אצל מי שמחפש אותה. */
+.coupon-box > summary {
+  cursor: pointer; font-size: var(--t-sm); color: var(--muted);
+  list-style: none;
+}
+.coupon-box > summary::-webkit-details-marker { display: none; }
+.coupon-box > summary::before { content: '+ '; font-weight: 700; }
+.coupon-box[open] > summary::before { content: '– '; }
+.coupon-box > summary:hover { color: var(--brand); }
+.coupon-row { display: flex; gap: var(--s2); margin-top: var(--s2); flex-wrap: wrap; }
+.coupon-row .text-input { flex: 1 1 10rem; text-transform: uppercase; }
+.coupon-used b { letter-spacing: .04em; }

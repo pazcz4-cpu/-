@@ -927,6 +927,49 @@
   /* שם העסק הוא השם המסחרי: מה שהעובדים רואים ומה שמופיע
      במיילים אליהם. בהרשמה נשמר לא פעם שם רשם החברות, ובלי
      האפשרות הזו הוא היה נשאר על המסך לתמיד. הבעלים בלבד. */
+  /* ===== קופונים =====
+
+     בשרת האמיתי הקודים יושבים בטבלה ומי שמחליט הוא security
+     definer. כאן הם רשימה קבועה: המצב המקומי משמש להדגמה
+     ולבדיקות, ואין בו מי שינפיק קופון.
+
+     הכללים עצמם אינם משוכפלים -- הם במודל, ונקראים משני הצדדים.
+     שכפול של "מה תקף" בין השרת לדפדפן הוא בדיוק המקום שבו
+     קופון שפג עובד רק באחד מהם. */
+  var MOCK_COUPONS = {
+    EXTRAMONTH: { code: 'EXTRAMONTH', kind: 'days', value: 30, active: true },
+    HALFOFF: { code: 'HALFOFF', kind: 'percent', value: 50, active: true },
+    FREEMONTH: { code: 'FREEMONTH', kind: 'percent', value: 100, active: true }
+  };
+
+  MockBackend.prototype.redeemCoupon = function (code) {
+    var session;
+    try { session = this._require('billing.manage'); } catch (err) { return Promise.reject(err); }
+    var clean = Model.normalizeCouponCode(code);
+    var coupon = MOCK_COUPONS[clean] || null;
+    var company = this.db.companies[session.company.id];
+    if (!company) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+
+    var problem = Model.couponProblem(coupon, company, this.now());
+    if (problem) return Promise.resolve({ result: problem });
+
+    var effect = Model.couponEffect(coupon, company, this.now());
+    company.couponCode = clean;
+    if (effect.kind === Model.COUPON.DAYS) {
+      company.validUntil = effect.validUntil.toISOString();
+    } else {
+      company.discountPercent = effect.percent;
+      company.discountChargesLeft = effect.charges;
+    }
+    this._save();
+    this._startSession(session.user.id);
+    return Promise.resolve({
+      result: 'ok', code: clean, kind: effect.kind,
+      value: coupon.value,
+      validUntil: company.validUntil || null
+    });
+  };
+
   MockBackend.prototype.saveCompanyDetails = function (details) {
     var session;
     try { session = this._require('company.rename'); } catch (err) { return Promise.reject(err); }

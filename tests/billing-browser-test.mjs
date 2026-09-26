@@ -144,6 +144,45 @@ await page.waitForTimeout(900);
 console.log('   אחרי שינוי:', (await page.locator('#billing-message').innerText()).trim(),
   '| תוכנית', await page.evaluate(() => window.__backend.session().company.plan));
 
+/* ===== קופון =====
+
+   הקופון נוגע בכסף: הוא מאריך תוקף או מוזיל חיוב. לכן נבדק
+   כאן לא רק שהוא עובד, אלא גם מה שאסור -- קוד שאינו קיים,
+   וקופון שני אחרי שכבר מומש אחד. */
+console.log('\n== קופון ==');
+console.log('8. המגירה סגורה כברירת מחדל:',
+  await page.locator('#coupon-box').evaluate(n => !n.open));
+
+/* קוד שאינו קיים אינו משנה דבר */
+await page.click('#coupon-box > summary');
+await page.waitForTimeout(200);
+await page.fill('#coupon-code', 'NOSUCHCODE');
+await page.click('#coupon-apply');
+await page.waitForTimeout(700);
+console.log('   קוד שאינו קיים:', (await page.locator('#billing-message').innerText()).trim());
+
+const wasUntil = await page.evaluate(() => window.__backend.session().company.validUntil);
+await page.click('#coupon-box > summary');
+await page.waitForTimeout(200);
+await page.fill('#coupon-code', 'extra-month');
+await page.click('#coupon-apply');
+await page.waitForTimeout(900);
+const nowUntil = await page.evaluate(() => window.__backend.session().company.validUntil);
+const added = Math.round((new Date(nowUntil) - new Date(wasUntil)) / 86400000);
+console.log('9. קופון ימים:', (await page.locator('#billing-message').innerText()).trim());
+console.log('   ימים שנוספו לתוקף:', added, added === 30 ? '✓' : '✗');
+if (added !== 30) errors.push('הקופון לא הוסיף שלושים ימים');
+
+/* קופון אחד ללקוח: השדה נעלם, ובמקומו הקוד שמומש */
+console.log('10. השדה הוחלף בקוד שמומש:',
+  await page.locator('#coupon-box').count() === 0,
+  '|', (await page.locator('.coupon-used b').innerText()).trim());
+
+/* וגם מי שינסה לעקוף את המסך נדחה */
+const second = await page.evaluate(() => window.__backend.redeemCoupon('HALFOFF'));
+console.log('    ניסיון שני נדחה:', second.result, second.result === 'already' ? '✓' : '✗');
+if (second.result !== 'already') errors.push('אפשר היה לממש קופון שני');
+
 // חסימה כשהמנוי פג
 await page.evaluate(() => {
   const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));

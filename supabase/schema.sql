@@ -1480,3 +1480,164 @@ $$;
 
 revoke all on function public.forget_push_token(text) from public;
 grant execute on function public.forget_push_token(text) to authenticated;
+
+
+-- ===== קופונים =====
+--
+-- שני סוגים בלבד: days מאריך את התקופה, percent מוזיל את החיוב
+-- הבא. "חודש נוסף ללא עלות" הוא days=30, ו"חודש ראשון חינם" הוא
+-- percent=100.
+--
+-- הקוד הוא המפתח הראשי ולא מזהה נפרד: הוא מה שהלקוח מקליד, הוא
+-- מה שמופיע בהודעה שנשלחה אליו, והוא חייב להיות ייחודי ממילא.
+-- הנורמליזציה (אותיות גדולות, בלי מקפים) נעשית בשני הצדדים --
+-- בדפדפן לפני השליחה, וכאן לפני ההשוואה.
+create table if not exists public.coupons (
+  code        text primary key,
+  kind        text not null check (kind in ('days', 'percent')),
+  value       integer not null check (value > 0),
+  note        text,
+  valid_until timestamptz,
+  max_uses    integer check (max_uses is null or max_uses > 0),
+  uses        integer not null default 0,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now(),
+  constraint coupons_percent_range
+    check (kind <> 'percent' or value <= 100),
+  constraint coupons_code_shape
+    check (code = upper(code) and code ~ '^[A-Z0-9]{2,24}$')
+);
+
+-- מי מימש מה. שורה אחת לכל חברה, לכל החיים: בלי המגבלה הזו
+-- לקוח שקיבל שלוש הודעות שיווקיות מממש שלושה קופונים ומגיע
+-- לחיוב אפס.
+create table if not exists public.coupon_redemptions (
+  company_id uuid primary key references public.companies(id) on delete cascade,
+  code       text not null references public.coupons(code),
+  kind       text not null,
+  value      integer not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists coupon_redemptions_code_idx
+  on public.coupon_redemptions (code);
+
+alter table public.coupons             enable row level security;
+alter table public.coupon_redemptions  enable row level security;
+
+-- אין מדיניות קריאה בכוונה: לקוח שיכול לקרוא את הטבלה יכול
+-- לשלוף את כל הקודים הפעילים ולבחור את הגדול ביותר. המימוש
+-- עובר דרך הפונקציה שלמטה, שמקבלת קוד ומחזירה תשובה -- ולא
+-- מאפשרת לעבור על הרשימה.
+
+-- הרחבות על שורת החברה: איזה קופון מומש, ומה ההנחה שנותרה.
+--
+-- discount_charges_left הוא מונה ולא תאריך: "החיוב הבא" הוא
+-- מה שהובטח ללקוח, וחיוב אחד הוא חיוב אחד גם אם הוא נדחה
+-- בשבועיים בגלל כרטיס שפג.
+alter table public.companies
+  add column if not exists coupon_code           text,
+  add column if not exists discount_percent      integer
+    check (discount_percent is null or (discount_percent >= 0 and discount_percent <= 100)),
+  add column if not exists discount_charges_left integer not null default 0
+    check (discount_charges_left >= 0);
+
+-- מימוש קופון.
+--
+-- security definer: הלקוח אינו רשאי לכתוב על שורת החברה שלו את
+-- המחיר, את התוקף או את ההנחה -- אחרת כל אחד היה מאריך לעצמו
+-- את הניסיון מקונסולת הדפדפן. הפונקציה היא השער היחיד.
+--
+-- מחזירה טקסט קצר ולא הודעה: 'ok' או סיבת הדחייה. המשפט נבחר
+-- במסך, בשפה של הלקוח.
+create or replace function public.redeem_coupon(p_code text)
+returns table (result text, kind text, value integer, valid_until timestamptz)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company public.companies;
+  v_role    text;
+  v_code    text;
+  v_coupon  public.coupons;
+  v_base    timestamptz;
+  v_until   timestamptz;
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+
+  select cu.role, c.* into v_role, v_company
+  from public.company_users cu
+  join public.companies c on c.id = cu.company_id
+  where cu.id = auth.uid() and cu.active;
+
+  if v_company.id is null then
+    raise exception 'no company' using errcode = '42501';
+  end if;
+
+  -- רק הבעלים. קופון משנה כסף, ומנהל אינו נוגע בכסף.
+  if v_role <> 'owner' then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
+
+  v_code := regexp_replace(upper(coalesce(p_code, '')), '[^A-Z0-9]', '', 'g');
+  if length(v_code) < 2 then
+    return query select 'notFound'::text, null::text, null::integer, null::timestamptz;
+    return;
+  end if;
+
+  -- קופון אחד ללקוח
+  if exists (select 1 from public.coupon_redemptions where company_id = v_company.id) then
+    return query select 'already'::text, null::text, null::integer, null::timestamptz;
+    return;
+  end if;
+
+  -- for update: שני לקוחות שמממשים קופון עם מכסה אחרונה באותה
+  -- שנייה. בלי הנעילה שניהם קוראים uses=4, שניהם כותבים 5,
+  -- ושניהם מקבלים את ההטבה.
+  select * into v_coupon from public.coupons
+  where code = v_code and active for update;
+
+  if v_coupon.code is null then
+    return query select 'notFound'::text, null::text, null::integer, null::timestamptz;
+    return;
+  end if;
+  if v_coupon.valid_until is not null and v_coupon.valid_until < now() then
+    return query select 'expired'::text, null::text, null::integer, null::timestamptz;
+    return;
+  end if;
+  if v_coupon.max_uses is not null and v_coupon.uses >= v_coupon.max_uses then
+    return query select 'exhausted'::text, null::text, null::integer, null::timestamptz;
+    return;
+  end if;
+
+  if v_coupon.kind = 'days' then
+    -- מהתוקף הקיים ולא מהיום: מי שנותרו לו עשרה ימים ומימש
+    -- "חודש נוסף" אמור לקבל ארבעים. תוקף שכבר עבר אינו מקצר.
+    v_base := greatest(coalesce(v_company.valid_until, now()), now());
+    v_until := v_base + make_interval(days => v_coupon.value);
+    update public.companies
+      set valid_until = v_until, coupon_code = v_coupon.code
+      where id = v_company.id;
+  else
+    v_until := v_company.valid_until;
+    update public.companies
+      set discount_percent = v_coupon.value,
+          discount_charges_left = 1,
+          coupon_code = v_coupon.code
+      where id = v_company.id;
+  end if;
+
+  insert into public.coupon_redemptions (company_id, code, kind, value)
+  values (v_company.id, v_coupon.code, v_coupon.kind, v_coupon.value);
+
+  update public.coupons set uses = uses + 1 where code = v_coupon.code;
+
+  return query select 'ok'::text, v_coupon.kind, v_coupon.value, v_until;
+end;
+$$;
+
+revoke all on function public.redeem_coupon(text) from public;
+grant execute on function public.redeem_coupon(text) to authenticated;

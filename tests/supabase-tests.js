@@ -264,6 +264,19 @@ FakeSupabase.prototype.fetch = function (url, options) {
 
   if (table === 'companies') {
     if (method === 'GET') {
+      /* PostgREST דוחה את כל השאילתה בגלל עמודה אחת שאינה
+         קיימת, ולא מחזיר את השאר. זה מה שהופך עמודה שנוספה
+         בקוד לפני המיגרציה לחסימת התחברות. */
+      var asked = (/(?:^|&)select=([^&]*)/.exec(query) || [])[1] || '';
+      var absent = (this.missingColumns || []).filter(function (column) {
+        return asked.split(',').indexOf(column) !== -1;
+      })[0];
+      if (absent) {
+        return reply(400, {
+          code: '42703',
+          message: 'column companies.' + absent + ' does not exist'
+        });
+      }
       return reply(200, Object.keys(this.companies)
         .map(function (id) { return self.companies[id]; })
         .filter(function (row) { return !where.id || row.id === where.id; }));
@@ -495,6 +508,52 @@ function signedIn() {
     return { server: server, backend: backend, session: session };
   });
 }
+
+/* ===== מיגרציה שלא רצה =====
+
+   זה קרה באוויר: עמודה נוספה לשאילתה בקוד לפני שה-ALTER רץ
+   בבסיס הנתונים, ו-PostgREST דחה את כל הקריאה. התוצאה לא
+   הייתה "מסך המנוי בלי מחיר" אלא "אף אחד לא נכנס למערכת".
+
+   שדה תצוגה לעולם אינו תנאי לכניסה. */
+run('עמודת תצוגה חסרה אינה נועלת את ההתחברות', function () {
+  var server = new FakeSupabase();
+  server.missingColumns = ['custom_price_per_employee', 'employee_peak', 'employee_count'];
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'boss@test.co', password: 'secret123', name: 'דנה',
+    companyName: 'רשת', phone: '054-1234567'
+  }).then(function (session) {
+    assert(!!session, 'לא נוצרה התחברות');
+    assertEqual(session.company.name, 'רשת', 'החברה לא נטענה');
+    assert(!!session.access, 'מצב הגישה לא חושב');
+    /* מה שחסר נקרא כ"לא נקבע", והמסך נופל למחיר החבילה. זה
+       פחות ממה שצריך להיות שם, אבל זה לא מספר שהומצא -- והוא
+       אינו נוגע בחיוב עצמו, שנקרא בשרת מהשורה ולא מכאן. */
+    assertEqual(session.company.customPricePerEmployee, null,
+      'הומצא תעריף לעובד');
+    assertEqual(session.company.employeePeak, null, 'הומצא שיא');
+    /* והניסיון השני באמת יצא, ועם הרשימה המצומצמת */
+    var reads = server.calls.filter(function (call) {
+      return call.method === 'GET' && call.path.indexOf('/companies') !== -1;
+    });
+    assert(reads.length >= 2, 'לא היה ניסיון שני: ' + reads.length);
+    assert(reads[reads.length - 1].query.indexOf('custom_price_per_employee') === -1,
+      'הניסיון השני ביקש שוב את העמודה החסרה');
+  });
+});
+
+/* וכשהכל קיים -- קריאה אחת, בלי ניסיון מיותר בכל התחברות */
+run('כשהעמודות קיימות יש קריאה אחת בלבד', function () {
+  return signedIn().then(function (ctx) {
+    var reads = ctx.server.calls.filter(function (call) {
+      return call.method === 'GET' && call.path.indexOf('/companies') !== -1;
+    });
+    assertEqual(reads.length, 1, 'מספר הקריאות לחברה');
+    assert(reads[0].query.indexOf('custom_price_per_employee') !== -1,
+      'שדות התצוגה לא נתבקשו');
+  });
+});
 
 run('הגדרות נשמרות ונטענות חזרה', function () {
   return signedIn().then(function (ctx) {

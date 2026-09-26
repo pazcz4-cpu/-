@@ -298,6 +298,51 @@
 
   /* טוען את פרופיל המשתמש ואת החברה, ובונה את אובייקט ההתחברות
      שהאפליקציה מצפה לו. */
+  /* העמודות שבלעדיהן אין התחברות בכלל: מי החברה, מה המצב שלה
+     ועד מתי היא בתוקף. accessState נשען עליהן, וגם המסך. */
+  var COMPANY_CORE = 'id,name,tax_id,phone,logo,plan,status,valid_until,created_at';
+
+  /* ומה שמעבר: מחיר, קופון, מה שנמדד לחיוב, והסכמה לדיוור.
+     כל אלה מוצגים במסכים -- המנוי, החשבון -- ואף אחד מהם אינו
+     תנאי לכניסה למערכת.
+
+       custom_price_*   המחיר שסוכם, בשתי צורותיו. בלעדיו מסך
+                        המנוי היה מציג מחירון, ולרשת אין מחירון.
+       employee_*       מה שנמדד בשרת: כמה יש, וכמה היו לכל
+                        היותר מאז החיוב הקודם.
+       coupon/discount  הקופון וההנחה שנותרה. בלעדיהם לקוח
+                        שמימש רואה מסך שלא השתנה ומנסה שוב. */
+  var COMPANY_EXTRA = [
+    'custom_price_monthly', 'custom_price_per_employee',
+    'employee_count', 'employee_peak',
+    'coupon_code', 'discount_percent', 'discount_amount', 'discount_charges_left',
+    'wa_opt_in', 'wa_opt_out_at'
+  ];
+
+  /* קריאת החברה, ובלי שעמודה חסרה תנעל את כולם בחוץ.
+
+     PostgREST דוחה את כל השאילתה בגלל עמודה אחת שאינה קיימת,
+     ולכן עמודה שנוספה בקוד לפני שהמיגרציה רצה הפכה שדה תצוגה
+     במסך החיוב לחסימת התחברות גורפת. זה קרה, וזה לא אמור
+     להיות אפשרי: אף אחד לא אמור להינעל בחוץ בגלל מחיר.
+
+     לכן שני ניסיונות. השני מוותר על מה שאפשר לוותר עליו,
+     ומשאיר את מה שבלי אין התחברות בכלל -- ואם גם הוא נופל,
+     הכישלון עולה כרגיל. הוויתור נרשם בקונסולה בקול, כי מסך
+     שעובד בשקט חלקית הוא מסך שאיש לא יתקן. */
+  SupabaseBackend.prototype._loadCompany = function (companyId) {
+    var self = this;
+    var base = '/companies?id=eq.' + encodeURIComponent(companyId) + '&select=';
+    return this._rest(base + COMPANY_CORE + ',' + COMPANY_EXTRA.join(','))
+      .then(null, function (error) {
+        if (root.console && root.console.warn) {
+          root.console.warn('SetShifts: קריאת החברה נכשלה, מנסים בלי שדות התצוגה. ' +
+            'סימן מובהק למיגרציה שלא רצה. ' + ((error && error.message) || ''));
+        }
+        return self._rest(base + COMPANY_CORE);
+      });
+  };
+
   SupabaseBackend.prototype._loadSession = function () {
     var self = this;
     var userId = this._userId();
@@ -319,20 +364,7 @@
         if (!profile.joined_at) {
           self._rpc('mark_self_joined', {}).then(null, function () {});
         }
-        return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
-          /* המחיר שסוכם עם הלקוח הזה, בשתי צורותיו. בלעדיו מסך
-             המנוי שלו היה מציג את מחיר המחירון – ואצל רשת אין
-             מחירון, ולכן הוא היה מציג אפס. */
-          '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
-          'custom_price_monthly,custom_price_per_employee,' +
-          /* מה שנמדד בשרת: כמה עובדים יש, וכמה היו לכל היותר
-             מאז החיוב הקודם. המסך מציג את מה שייגבה בפועל,
-             ולא את הספירה של הרגע. */
-          'employee_count,employee_peak,' +
-          /* הקופון וההנחה שנותרה. המסך מציג אותם, ובלעדיהם לקוח
-             שמימש קופון רואה מסך שלא השתנה ומנסה שוב. */
-          'coupon_code,discount_percent,discount_amount,discount_charges_left,' +
-          'wa_opt_in,wa_opt_out_at')
+        return self._loadCompany(profile.company_id)
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }

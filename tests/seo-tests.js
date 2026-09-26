@@ -320,6 +320,15 @@ test('robots מפנה למפת האתר ואינו חוסם את מה שצריך
   assert(robots.indexOf('Disallow: /admin/') !== -1, 'המשרד האחורי אינו חסום');
 });
 
+/* אימות הבעלות מול Bing נשען על קובץ אחד בשורש. מחיקה שלו
+   בטעות אינה שוברת דבר באתר, והיא כן מנתקת את האתר מהאינדוקס
+   של Bing -- בשקט, עד שמישהו יבדוק. */
+test('קובץ האימות של Bing יושב בשורש', function () {
+  assert(exists('BingSiteAuth.xml'), 'אין קובץ אימות ל-Bing');
+  var xml = read('BingSiteAuth.xml');
+  assert(/<user>[A-F0-9]{32}<\/user>/.test(xml), 'קוד האימות אינו בתבנית הצפויה');
+});
+
 test('עמוד שגיאה קיים ואינו נכנס לתוצאות', function () {
   assert(exists('404.html'), 'אין עמוד 404');
   var html = read('404.html');

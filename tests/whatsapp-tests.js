@@ -15,6 +15,10 @@ process.env.WHATSAPP_TOKEN = 'wa-token';
 process.env.WHATSAPP_PHONE_ID = '111222333';
 process.env.WHATSAPP_APP_SECRET = 'app-secret';
 process.env.WHATSAPP_VERIFY_TOKEN = 'verify-me';
+/* פריסה אמיתית מגדירה קופון לסריקת הנטישות. בלעדיו הבדיקות
+   רצו על מצב שאף לקוח אינו נמצא בו, ושני הערכים שההודעה
+   נשענת עליהם יצאו ריקים בלי שאיש הבחין. */
+process.env.WA_ABANDONED_COUPON = 'EXTRAMONTH';
 
 var crypto = require('node:crypto');
 var wa = require('../api/_whatsapp.js');
@@ -45,12 +49,16 @@ function daysAgo(n) { return new Date(Date.now() - n * 864e5).toISOString(); }
 function hoursAgo(n) { return new Date(Date.now() - n * 36e5).toISOString(); }
 
 /* ===== שרת מדומה: בסיס הנתונים ומטא ===== */
-function Fake(companies) {
+function Fake(companies, coupons) {
   this.companies = {};
   (companies || []).forEach(function (row) { this.companies[row.id] = row; }, this);
   this.messages = [];    // שורות wa_messages
   this.sent = [];        // מה נשלח למטא בפועל
   this.reply = { ok: true };
+  /* ברירת המחדל היא הקופון שהסביבה מפנה אליו בבדיקות */
+  this.coupons = coupons === undefined
+    ? [{ code: 'EXTRAMONTH', kind: 'days', value: 30 }]
+    : coupons;
 }
 
 Fake.prototype.install = function () {
@@ -81,6 +89,11 @@ Fake.prototype.install = function () {
 
     var path = parsed.pathname.replace('/rest/v1', '');
     var body = opts.body ? JSON.parse(opts.body) : null;
+
+    /* הקופון נקרא כדי לתאר את ההטבה במילים */
+    if (path === '/coupons') {
+      return reply(200, self.coupons || []);
+    }
 
     if (path === '/wa_messages') {
       if (opts.method === 'POST') {
@@ -237,6 +250,64 @@ test('מי שנטש מקבל הודעה אחת', function () {
     assertEqual(db.sent.length, 1, 'מספר ההודעות שנשלחו');
     assertEqual(db.sent[0].to, '972541234567', 'הנמען');
     assertEqual(db.messages[0].status, 'sent', 'השורה לא סומנה כנשלחה');
+  });
+});
+
+/* ===== מה בדיוק נכנס להודעה =====
+
+   התבנית אושרה אצל מטא בצורה מסוימת, וכל סטייה ממנה היא הודעה
+   שלא יוצאת או הודעה שיוצאת שגויה. שני הדברים האלה נשברו כאן
+   בעבר, ושניהם נראו תקינים עד שמישהו קרא את ההודעה. */
+
+/* {{2}} יושב במשפט "ושמרנו לך ___", ולכן הוא חייב לתאר הטבה.
+   קודם נכנס שם קוד הקופון, והלקוח קיבל "ושמרנו לך
+   EXTRAMONTH" -- בהודעה הראשונה שהוא מקבל מאיתנו. */
+test('ההטבה נאמרת במילים, והקוד נשאר קוד', function () {
+  var db = new Fake([company()]);
+  db.install();
+  return runCron().then(function () {
+    var params = db.sent[0].template.components[0].parameters;
+    assertEqual(params[1].text, 'עוד 30 ימי ניסיון', 'תיאור ההטבה');
+    assertEqual(params[2].text, 'EXTRAMONTH', 'קוד הקופון');
+  });
+});
+
+test('אחוז וסכום מתוארים אחרת', function () {
+  var half = new Fake([company()], [{ code: 'EXTRAMONTH', kind: 'percent', value: 50 }]);
+  half.install();
+  return runCron().then(function () {
+    assertEqual(half.sent[0].template.components[0].parameters[1].text,
+      '50% הנחה על החיוב הראשון', 'אחוזים');
+    var ils = new Fake([company()], [{ code: 'EXTRAMONTH', kind: 'amount', value: 100 }]);
+    ils.install();
+    return runCron().then(function () {
+      assertEqual(ils.sent[0].template.components[0].parameters[1].text,
+        '100₪ הנחה על החיוב הראשון', 'שקלים');
+    });
+  });
+});
+
+/* קופון שלא נקרא אינו סיבה לא לשלוח: המשפט עדיין עומד */
+test('בלי קופון שנקרא, ההודעה עדיין יוצאת', function () {
+  var db = new Fake([company()], []);
+  db.install();
+  return runCron().then(function () {
+    assertEqual(db.sent.length, 1, 'לא נשלחה הודעה');
+    assertEqual(db.sent[0].template.components[0].parameters[1].text, 'הטבה', 'הנוסח החלופי');
+  });
+});
+
+/* הכפתור בתבנית מצביע על כתובת קבועה. רכיב button שנשלח אליה
+   מוחזר מ-132000, כלומר אף הודעה לא יוצאת בכלל -- וזה נראה
+   בדיוק כמו "הכל מוגדר ושום דבר לא עובד". */
+test('אין רכיב כפתור בהודעה, כי אין משתנה בכפתור', function () {
+  var db = new Fake([company()]);
+  db.install();
+  return runCron().then(function () {
+    var buttons = db.sent[0].template.components.filter(function (c) {
+      return c.type === 'button';
+    });
+    assertEqual(buttons.length, 0, 'נשלח רכיב כפתור מיותר');
   });
 });
 

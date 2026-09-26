@@ -101,13 +101,40 @@ async function record(company, template, patch) {
   });
 }
 
+/* מה הקופון נותן, במילים.
+
+   {{2}} בתבנית יושב במשפט "ושמרנו לך ___", ולכן הוא חייב לתאר
+   הטבה ולא להיות קוד. קודם נכנס שם הקוד עצמו, והלקוח היה מקבל
+   "ושמרנו לך EXTRAMONTH" -- משפט שאינו שבור אבל נקרא כמו
+   תקלה, בהודעה הראשונה שהוא מקבל מאיתנו.
+
+   הכללים כאן הם אותם כללים של couponEffect במודל: ימים
+   מאריכים תוקף, אחוז וסכום מוזילים חיוב אחד. */
+function benefitText(row) {
+  const value = Math.round(Number(row && row.value) || 0);
+  if (!(value > 0)) return 'הטבה';
+  if (row.kind === 'days') return 'עוד ' + value + ' ימי ניסיון';
+  if (row.kind === 'percent') return value + '% הנחה על החיוב הראשון';
+  if (row.kind === 'amount') return value + '₪ הנחה על החיוב הראשון';
+  return 'הטבה';
+}
+
+/* הקופון עצמו, כדי לדעת מה הוא נותן. נקרא פעם אחת לריצה ולא
+   פעם ללקוח: אותו קוד נשלח לכולם. */
+async function couponRow(code) {
+  if (!code) return null;
+  const call = await db('/coupons?code=eq.' + encodeURIComponent(code) +
+    '&select=code,kind,value&limit=1');
+  return (call.ok && (call.body || [])[0]) || null;
+}
+
 /* מה נכנס לתבנית. הסדר הוא {{1}}..{{4}} כפי שהיא אושרה אצל
    מטא, ולכן הוא נקבע כאן ולא אצל הקורא. */
-function values(company, coupon) {
+function values(company, coupon, benefit) {
   const until = new Date(Date.now() + 7 * 864e5);
   return [
     String(company.name || '').slice(0, 60),
-    coupon ? String(coupon) : '',
+    benefit || 'הטבה',
     coupon ? String(coupon) : '',
     until.getDate() + '.' + (until.getMonth() + 1)
   ];
@@ -133,6 +160,7 @@ module.exports = async function handler(req, res) {
   const newerThan = new Date(now - WINDOW_DAYS * 864e5).toISOString();
   const template = templateName();
   const coupon = String(process.env.WA_ABANDONED_COUPON || '').trim();
+  const benefit = benefitText(await couponRow(coupon));
 
   /* הסינון כולו בשאילתה, ולא בקוד: חברה שאינה עומדת בתנאי אינה
      אמורה לצאת מבסיס הנתונים בכלל. שורה עם טלפון של לקוח שלא
@@ -160,12 +188,16 @@ module.exports = async function handler(req, res) {
     }
     if (!mine) continue;   // כבר נשלח פעם אחת. זה לא אירוע.
 
+    /* בלי urlValues: הכפתור בתבנית מצביע על כתובת קבועה.
+
+       זה אינו ניקוי אלא תיקון -- רכיב button שנשלח לתבנית שאין
+       בכפתור שלה משתנה מוחזר מ-132000, כלומר אף הודעה לא
+       הייתה יוצאת בכלל. */
     const answer = await wa.sendTemplate({
       to: company.phone,
       template: template,
       language: 'he',
-      values: values(company, coupon),
-      urlValues: [String(company.id).slice(0, 8)]
+      values: values(company, coupon, benefit)
     });
 
     if (answer.ok) {

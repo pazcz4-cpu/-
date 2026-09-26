@@ -939,7 +939,8 @@
   var MOCK_COUPONS = {
     EXTRAMONTH: { code: 'EXTRAMONTH', kind: 'days', value: 30, active: true },
     HALFOFF: { code: 'HALFOFF', kind: 'percent', value: 50, active: true },
-    FREEMONTH: { code: 'FREEMONTH', kind: 'percent', value: 100, active: true }
+    FREEMONTH: { code: 'FREEMONTH', kind: 'percent', value: 100, active: true },
+    SAVE100: { code: 'SAVE100', kind: 'amount', value: 100, active: true }
   };
 
   MockBackend.prototype.redeemCoupon = function (code) {
@@ -957,8 +958,13 @@
     company.couponCode = clean;
     if (effect.kind === Model.COUPON.DAYS) {
       company.validUntil = effect.validUntil.toISOString();
+    } else if (effect.kind === Model.COUPON.AMOUNT) {
+      company.discountAmount = effect.amount;
+      company.discountPercent = 0;
+      company.discountChargesLeft = effect.charges;
     } else {
       company.discountPercent = effect.percent;
+      company.discountAmount = 0;
       company.discountChargesLeft = effect.charges;
     }
     this._save();

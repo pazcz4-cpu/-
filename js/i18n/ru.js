@@ -992,6 +992,7 @@
         cancelTrialConfirm: 'Отменить подписку? Списания не будет, доступ сохранится до конца пробного периода.',
         resume: 'Возобновить подписку',
         resumed: 'Подписка возобновлена',
+        pricePerEmployee: '{amount} ₪ за сотрудника в месяц',
         priceMonthly: '{amount} ILS / мес.', priceAmount: '{amount} ILS',
         updateFailed: 'Не удалось обновить', cancelFailed: 'Не удалось отменить',
         title: 'Ваша подписка', status: 'Статус', plan: 'Тариф', validUntil: 'Действует до',

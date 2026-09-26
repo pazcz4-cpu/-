@@ -667,6 +667,46 @@ test('מחיר מוסכם גובר על המחירון', function () {
   assertEqual(Model.effectivePrice({ plan: 'starter', customPriceMonthly: -5 }), 199, 'שלילי נחשב מחיר');
 });
 
+/* התעריף לעובד: מספר שמוכפל, ולא מספר שנשמר.
+
+   הסכנה כאן היא חיוב לפי מספר שנוחש. עסק שסגר 12 שקלים לעובד
+   ואין לנו כרגע את מספר העובדים שלו אינו עסק שמשלם 12 שקלים,
+   והחישוב חייב להודות שאינו יודע. */
+test('תעריף לעובד מוכפל במספר העובדים', function () {
+  var chain = { plan: 'enterprise', customPricePerEmployee: 12 };
+  assertEqual(Model.effectivePrice(chain, 140), 1680, 'ההכפלה');
+  assertEqual(Model.effectivePrice(chain, 0), 0, 'רשת בלי עובדים');
+  /* בלי מספר עובדים אין מה לחשב, והתשובה היא "עוד לא ידוע" */
+  assertEqual(Model.effectivePrice(chain), 0, 'הומצא מספר');
+  assertEqual(Model.effectivePrice(chain, -3), 0, 'מספר שלילי הפך למחיר');
+  assertEqual(Model.awaitingQuote(chain), false, 'תעריף הוא מחיר שנקבע');
+});
+
+test('תעריף לעובד גובר על סכום קבוע', function () {
+  var both = { plan: 'enterprise', customPriceMonthly: 1450, customPricePerEmployee: 12 };
+  assertEqual(Model.pricingOf(both).kind, Model.PRICING.PER_EMPLOYEE, 'הצורה שנבחרה');
+  assertEqual(Model.effectivePrice(both, 10), 120, 'הסכום הקבוע גבר');
+  assertEqual(Model.pricingOf({ plan: 'starter' }).kind, Model.PRICING.PLAN, 'מחירון');
+  assertEqual(Model.pricingOf({ plan: 'starter', customPriceMonthly: 150 }).kind,
+    Model.PRICING.FLAT, 'סכום קבוע');
+  /* אפס ושלילי אינם תעריף */
+  assertEqual(Model.pricingOf({ plan: 'starter', customPricePerEmployee: 0 }).kind,
+    Model.PRICING.PLAN, 'אפס נחשב תעריף');
+});
+
+/* "300₪" לבדו אינו מסביר למה בחודש הבא יופיע 312. המסך אומר
+   את התעריף ואת התוצאה, ולא רק את התוצאה. */
+test('המסך מציג תעריף וגם סכום', function () {
+  var chain = { plan: 'enterprise', customPricePerEmployee: 12 };
+  var label = Model.priceLabel(chain, 25);
+  assert(label.indexOf('12') !== -1, 'התעריף לא מופיע: ' + label);
+  assert(label.indexOf('300') !== -1, 'הסכום לא מופיע: ' + label);
+  /* בלי מספר עובדים מוצג התעריף בלבד, ולא "0₪ לחודש" */
+  var alone = Model.priceLabel(chain);
+  assert(alone.indexOf('12') !== -1, 'התעריף נעלם: ' + alone);
+  assert(alone.indexOf('0₪') === -1, 'הוצג אפס כמחיר: ' + alone);
+});
+
 /* ===== קופונים ===== */
 
 test('קוד קופון מנורמל לפני כל השוואה', function () {

@@ -332,6 +332,25 @@
       '<div id="adm-company-detail"></div>';
   }
 
+  /* מאיפה בא המחיר החודשי שמוצג מעליו.
+
+     בתעריף לעובד המספר הגדול משתנה מחודש לחודש, ובלי השורה
+     הזו אי אפשר לדעת למה: 480₪ הוא 12₪ כפול ארבעים, ומי
+     שרואה רק את 480 חושב שמישהו הזין אותו. */
+  function priceNote(c) {
+    if (c.customPricePerEmployee) {
+      var rate = money(c.customPricePerEmployee) + ' לעובד';
+      if (c.pricedEmployees == null) {
+        return 'מחיר מוסכם · ' + rate + ' · מספר העובדים לא נקרא';
+      }
+      return 'מחיר מוסכם · ' + rate + ' × ' + c.pricedEmployees + ' עובדים פעילים';
+    }
+    if (c.customPrice) {
+      return 'מחיר מוסכם' + (c.listPrice ? ' · מחירון ' + money(c.listPrice) : '');
+    }
+    return c.byQuote ? 'חבילת רשתות — לפי הצעת מחיר' : 'לפי המחירון';
+  }
+
   function renderCompanyDetail(view) {
     var node = document.getElementById('adm-company-detail');
     if (!node) return;
@@ -359,9 +378,7 @@
         view.payments.count + ' חיובים · נטו ' + money(view.payments.net)) +
       tile('מחיר חודשי',
         c.planPrice ? money(c.planPrice) : 'טרם נקבע',
-        c.customPrice
-          ? ('מחיר מוסכם' + (c.listPrice ? ' · מחירון ' + money(c.listPrice) : ''))
-          : (c.byQuote ? 'חבילת רשתות — לפי הצעת מחיר' : 'לפי המחירון')) +
+        priceNote(c)) +
       tile('אמצעי תשלום', c.hasCard ? 'יש' : 'אין',
         c.billingProvider || 'לא חובר') +
       tile('שימוש', String(view.usage.weeks) + ' שבועות',
@@ -608,14 +625,22 @@
     },
     /* המחיר שסוכם בפגישה. בלעדיו אי אפשר לחייב רשת בכלל, ולכן
        השדה נשאר גם לחבילות רגילות: לפעמים סוגרים מחיר אחר. */
+    /* שתי צורות של מחיר מוסכם, ושתיהן זמינות בכל חבילה: לפעמים
+       סוגרים תעריף לעובד גם עם עסק קטן, ורשת לא תמיד רוצה
+       שהמחיר שלה יזוז כשנכנס עובד. */
     'set-price': {
       title: 'מחיר חודשי מוסכם',
-      fields: '<label class="adm-field"><span>מחיר לחודש, כולל מע״מ</span>' +
+      fields: '<label class="adm-field"><span>צורת התמחור</span>' +
+        '<select class="adm-select" id="adm-f-mode">' +
+        '<option value="flat">סכום קבוע לכל העסק</option>' +
+        '<option value="per_employee">תעריף לעובד פעיל</option>' +
+        '</select></label>' +
+        '<label class="adm-field"><span id="adm-f-price-label">מחיר לחודש, כולל מע״מ</span>' +
         '<input class="adm-input" id="adm-f-price" type="number" min="1" step="1" ' +
         'placeholder="ריק = לפי המחירון"></label>' +
-        '<p class="adm-hint">המחיר הזה גובר על מחיר החבילה וייגבה בחיוב הבא. ' +
-        'השאירו ריק כדי לחזור למחירון. לשימוש ללא תשלום השתמשו ב"מתן תקופה ללא תשלום" ' +
-        'ולא במחיר אפס.</p>'
+        '<p class="adm-hint" id="adm-f-price-hint">המחיר הזה גובר על מחיר החבילה ' +
+        'וייגבה בחיוב הבא. השאירו ריק כדי לחזור למחירון. לשימוש ללא תשלום השתמשו ' +
+        'ב"מתן תקופה ללא תשלום" ולא במחיר אפס.</p>'
     },
     'set-status': {
       title: 'שינוי מצב מנוי',
@@ -629,12 +654,34 @@
     'set-cancel': { title: 'סימון סיום בתום התקופה', fields: '' }
   };
 
+  /* המחיר הנוכחי של הלקוח שפתוח על המסך, בתוך טופס המחיר */
+  function fillPrice(id) {
+    var c = (data.detail && data.detail.company) || null;
+    if (!c || c.id !== id) return;
+    var mode = document.getElementById('adm-f-mode');
+    var price = document.getElementById('adm-f-price');
+    if (!mode || !price) return;
+    if (c.customPricePerEmployee) {
+      mode.value = 'per_employee';
+      price.value = String(c.customPricePerEmployee);
+    } else if (c.customPrice) {
+      mode.value = 'flat';
+      price.value = String(c.customPrice);
+    }
+    /* הכיתובים נגזרים מהבחירה, וקביעה בקוד אינה מפעילה change */
+    mode.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function openAction(action, id, extra) {
     var form = ACTION_FORMS[action];
     if (!form) return;
     pending = { action: action, id: id, extra: extra || {} };
     document.getElementById('adm-modal-title').textContent = form.title;
     document.getElementById('adm-modal-fields').innerHTML = form.fields;
+    /* הטופס נפתח על מה שקיים היום. מי שבא לשנות תעריף לעובד
+       ומוצא טופס ריק במצב "סכום קבוע" עלול לשמור סכום קבוע
+       בלי לשים לב שהחליף צורת תמחור. */
+    if (action === 'set-price') fillPrice(id);
     document.getElementById('adm-modal-reason').value = '';
     document.getElementById('adm-modal-error').hidden = true;
     document.getElementById('adm-modal').hidden = false;
@@ -663,6 +710,8 @@
     /* ריק נשלח כריק ולא כאפס: אפס הוא מחיר, ריק הוא "בטל את
        המחיר המוסכם וחזור למחירון". */
     if (price) payload.price = price.value.trim() === '' ? null : Number(price.value);
+    var mode = document.getElementById('adm-f-mode');
+    if (mode) payload.mode = mode.value;
     if (pending.action === 'set-cancel') payload.cancel = !pending.extra.cancelNow;
 
     var button = document.getElementById('adm-modal-ok');
@@ -812,6 +861,28 @@
     var kind = COUPON_KIND[event.target.value];
     var label = document.getElementById('cp-value-label');
     if (label && kind) label.textContent = kind.unit;
+  });
+
+  /* ואותו דבר במחיר המוסכם: "1450 לחודש" ו-"12 לעובד" הם אותו
+     שדה, והמרחק ביניהם הוא פי מאה. */
+  document.addEventListener('change', function (event) {
+    if (event.target.id !== 'adm-f-mode') return;
+    var perEmployee = event.target.value === 'per_employee';
+    var label = document.getElementById('adm-f-price-label');
+    var hint = document.getElementById('adm-f-price-hint');
+    if (label) {
+      label.textContent = perEmployee
+        ? 'תעריף לעובד פעיל לחודש, כולל מע״מ'
+        : 'מחיר לחודש, כולל מע״מ';
+    }
+    if (hint && perEmployee) {
+      hint.textContent = 'החיוב החודשי יהיה התעריף כפול מספר העובדים הפעילים ' +
+        'באותו רגע. עסק שגדל משלם יותר בחודש הבא, בלי שיחה.';
+    } else if (hint) {
+      hint.textContent = 'המחיר הזה גובר על מחיר החבילה וייגבה בחיוב הבא. ' +
+        'השאירו ריק כדי לחזור למחירון. לשימוש ללא תשלום השתמשו ' +
+        'ב"מתן תקופה ללא תשלום" ולא במחיר אפס.';
+    }
   });
 
   document.addEventListener('submit', function (event) {

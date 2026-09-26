@@ -118,6 +118,16 @@ alter table public.companies
   add column if not exists custom_price_monthly integer
     check (custom_price_monthly is null or custom_price_monthly >= 0);
 
+-- תעריף לעובד פעיל, בשקלים לחודש. הצורה השנייה של מחיר מוסכם:
+-- רשת שגדלה משלמת יותר ורשת שהתכווצה משלמת פחות, בלי שיחה.
+--
+-- שתי הצורות לעולם אינן מלאות יחד -- המשרד האחורי מאפס את
+-- השנייה בכל שינוי -- כי שורה עם שתיהן היא שורה שאיש לא יידע
+-- לקרוא, ובינתיים מישהו יחויב לפי הלא נכונה.
+alter table public.companies
+  add column if not exists custom_price_per_employee integer
+    check (custom_price_per_employee is null or custom_price_per_employee >= 0);
+
 alter table public.companies
   add column if not exists billing_provider        text,
   add column if not exists billing_customer_id     text,

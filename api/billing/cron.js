@@ -144,6 +144,47 @@ async function patchCompany(id, patch) {
   return db('/companies?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: patch });
 }
 
+/* כמה עובדים פעילים יש לחברה עכשיו.
+
+   נקרא מההגדרות ולא מטבלה: העובדים יושבים ב-jsonb של החברה,
+   ואין להם שורות משלהם. נקרא רק כשצריך -- כלומר רק לחברות
+   שסגרו תעריף לעובד -- ולא בכל חיוב. */
+async function activeEmployees(companyId) {
+  const call = await db('/company_configs?company_id=eq.' +
+    encodeURIComponent(companyId) + '&select=config');
+  if (!call.ok) return null;
+  const config = ((call.body || [])[0] || {}).config || {};
+  const list = config.employees;
+  if (!Array.isArray(list)) return null;
+  return list.filter(function (employee) {
+    return employee && employee.active !== false;
+  }).length;
+}
+
+/* המחיר לחיוב הקרוב, לפני הנחות.
+
+   מחזיר { amount } או { reason } -- כי "אין מחיר" אינו סכום,
+   וכל מי שיחזיר כאן 0 יגרום לבקשת חיוב על אפס שהספק דוחה. */
+async function priceFor(company, plan) {
+  const rate = Number(company.custom_price_per_employee);
+  if (rate > 0) {
+    const count = await activeEmployees(company.id);
+    /* ההגדרות לא נקראו, או שאין בהן רשימת עובדים. ניחוש כאן
+       הוא חיוב שגוי, ולכן מדלגים ומחכים לריצה הבאה. */
+    if (count === null) return { reason: 'employees-unknown' };
+    /* רשת בלי עובדים פעילים אינה חייבת דבר החודש. זה מצב תקין
+       ולא תקלה, והוא עולה בדוח הריצה כדי שמישהו ישים לב אם
+       הוא נמשך. */
+    if (count === 0) return { reason: 'no-active-employees' };
+    return { amount: Math.round(rate * count) };
+  }
+
+  const flat = Number(company.custom_price_monthly);
+  if (flat > 0) return { amount: Math.round(flat) };
+  if (plan.priceMonthly > 0) return { amount: plan.priceMonthly };
+  return { reason: 'price-not-set' };
+}
+
 /* חיוב אחד, כולל הטיפול בהצלחה ובכישלון */
 async function chargeCompany(provider, company, plans, now) {
   const plan = plans[company.plan];
@@ -155,12 +196,14 @@ async function chargeCompany(provider, company, plans, now) {
      אם אין מחיר, מדלגים ולא גובים אפס. חיוב על סכום אפס אינו
      "חינם" אלא בקשה שהספק דוחה, ובמקרה הרע חיוב שמופיע ללקוח
      על כלום. הדילוג עולה בדוח הריצה כל יום עד שהמחיר יוזן. */
-  const base = Number(company.custom_price_monthly) > 0
-    ? Math.round(Number(company.custom_price_monthly))
-    : plan.priceMonthly;
-  if (!(base > 0)) {
-    return { company: company.id, action: 'skipped', reason: 'price-not-set' };
+  /* המחיר המוסכם גובר על המחירון, בשתי צורותיו. תעריף לעובד
+     דורש לספור -- וזו הסיבה שהחישוב אינו שורה אחת כאן אלא
+     פונקציה שיודעת גם להיכשל בשקט כשאין מה לספור. */
+  const priced = await priceFor(company, plan);
+  if (priced.reason) {
+    return { company: company.id, action: 'skipped', reason: priced.reason };
   }
+  const base = priced.amount;
 
   /* ההנחה מהקופון. שני מצבים שונים לגמרי מגיעים לאפס, ורק אחד
      מהם תקין:
@@ -322,6 +365,7 @@ module.exports = async function handler(req, res) {
        הבאה תיפול שם ולא אצל לקוח. */
     '&select=id,plan,status,valid_until,cancel_at_period_end,' +
     'billing_subscription_id,billing_customer_id,custom_price_monthly,' +
+    'custom_price_per_employee,' +
     'coupon_code,discount_percent,discount_amount,discount_charges_left' +
     '&order=valid_until.asc&limit=' + MAX_COMPANIES);
 

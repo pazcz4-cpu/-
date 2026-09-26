@@ -320,13 +320,14 @@
           self._rpc('mark_self_joined', {}).then(null, function () {});
         }
         return self._rest('/companies?id=eq.' + encodeURIComponent(profile.company_id) +
-          /* custom_price_monthly: המחיר שסוכם עם הלקוח הזה. בלעדיו
-             מסך המנוי שלו היה מציג את מחיר המחירון – ואצל רשת
-             אין מחירון, ולכן הוא היה מציג אפס. */
+          /* המחיר שסוכם עם הלקוח הזה, בשתי צורותיו. בלעדיו מסך
+             המנוי שלו היה מציג את מחיר המחירון – ואצל רשת אין
+             מחירון, ולכן הוא היה מציג אפס. */
           '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
+          'custom_price_monthly,custom_price_per_employee,' +
           /* הקופון וההנחה שנותרה. המסך מציג אותם, ובלעדיהם לקוח
              שמימש קופון רואה מסך שלא השתנה ומנסה שוב. */
-          'custom_price_monthly,coupon_code,discount_percent,discount_charges_left,' +
+          'coupon_code,discount_percent,discount_amount,discount_charges_left,' +
           'wa_opt_in,wa_opt_out_at')
           .then(function (companies) {
             var row = companies && companies[0];
@@ -337,9 +338,12 @@
               plan: row.plan, status: row.status,
               customPriceMonthly: row.custom_price_monthly == null
                 ? null : Number(row.custom_price_monthly),
+              customPricePerEmployee: row.custom_price_per_employee == null
+                ? null : Number(row.custom_price_per_employee),
               couponCode: row.coupon_code || '',
               waOptIn: !!row.wa_opt_in, waOptOutAt: row.wa_opt_out_at || null,
               discountPercent: Number(row.discount_percent) || 0,
+              discountAmount: Number(row.discount_amount) || 0,
               discountChargesLeft: Number(row.discount_charges_left) || 0,
               validUntil: row.valid_until, createdAt: row.created_at
             };
@@ -1133,8 +1137,13 @@
         if (row.kind === Model.COUPON.DAYS) {
           self._session.company.validUntil = row.valid_until;
           self._session.access = Model.accessState(self._session.company, self.now());
+        } else if (row.kind === Model.COUPON.AMOUNT) {
+          self._session.company.discountAmount = Number(row.value) || 0;
+          self._session.company.discountPercent = 0;
+          self._session.company.discountChargesLeft = 1;
         } else {
           self._session.company.discountPercent = Number(row.value) || 0;
+          self._session.company.discountAmount = 0;
           self._session.company.discountChargesLeft = 1;
         }
       }

@@ -992,6 +992,7 @@
         cancelTrialConfirm: '¿Cancelar la suscripción? No se te cobrará y el acceso se mantiene hasta el final de la prueba.',
         resume: 'Reanudar la suscripción',
         resumed: 'Suscripción reanudada',
+        pricePerEmployee: '{amount} ₪ por persona al mes',
         priceMonthly: '{amount} ILS / mes', priceAmount: '{amount} ILS',
         updateFailed: 'No se pudo actualizar', cancelFailed: 'No se pudo cancelar',
         title: 'Tu suscripción', status: 'Estado', plan: 'Plan', validUntil: 'Válida hasta',

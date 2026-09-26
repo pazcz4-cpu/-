@@ -997,6 +997,7 @@
         cancelTrialConfirm: 'לבטל את המנוי? לא תחויבו, והגישה תישמר עד סוף תקופת הניסיון.',
         resume: 'חידוש המנוי',
         resumed: 'המנוי חודש',
+        pricePerEmployee: '{amount} ₪ לעובד לחודש',
         priceMonthly: '{amount}₪ לחודש', priceAmount: '{amount}₪',
         updateFailed: 'העדכון נכשל', cancelFailed: 'הביטול נכשל',
         title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',

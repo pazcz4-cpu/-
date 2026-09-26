@@ -998,6 +998,7 @@
         cancelTrialConfirm: 'Cancel the subscription? You will not be charged, and access stays until the trial ends.',
         resume: 'Resume subscription',
         resumed: 'Subscription resumed',
+        pricePerEmployee: '₪{amount} per person / month',
         priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
         updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',

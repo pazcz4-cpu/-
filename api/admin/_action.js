@@ -87,20 +87,43 @@ module.exports = async function ({ user, body, db }) {
        הצעת־מחיר פירושו שהחיוב חוזר לדלג. אפס אינו מתקבל: מי
        שרוצה לתת שימוש חינם עושה זאת בהארכת תקופה, לא במחיר
        אפס שנראה בדוחות כמו לקוח משלם. */
-    const raw = body ? body.price : null;
-    if (raw === null || raw === '' || typeof raw === 'undefined') {
-      patch.custom_price_monthly = null;
-    } else {
-      const price = Math.round(Number(raw));
-      if (!isFinite(price) || price <= 0 || price > 1000000) {
-        return { status: 400, body: { message: 'price must be a positive amount, or empty to clear' } };
-      }
-      patch.custom_price_monthly = price;
+    /* שתי צורות: סכום חודשי לכל הרשת, או תעריף לעובד פעיל.
+       שתיהן נכתבות יחד ואחת מהן מתאפסת -- שורה שבה שתיהן
+       מלאות היא שורה שאיש לא יידע לקרוא, ובינתיים מישהו
+       יחויב לפי הלא נכונה. */
+    const mode = String((body && body.mode) || 'flat');
+    if (mode !== 'flat' && mode !== 'per_employee') {
+      return { status: 400, body: { message: 'Unknown pricing mode: ' + mode } };
     }
-    detail.from = company.custom_price_monthly === null ||
-      typeof company.custom_price_monthly === 'undefined'
-      ? null : Number(company.custom_price_monthly);
-    detail.to = patch.custom_price_monthly;
+    const raw = body ? body.price : null;
+    let value = null;
+    if (!(raw === null || raw === '' || typeof raw === 'undefined')) {
+      value = Math.round(Number(raw));
+      if (!isFinite(value) || value <= 0 || value > 1000000) {
+        return {
+          status: 400,
+          body: { message: 'price must be a positive amount, or empty to clear' }
+        };
+      }
+    }
+    patch.custom_price_monthly = mode === 'flat' ? value : null;
+    patch.custom_price_per_employee = mode === 'per_employee' ? value : null;
+
+    /* ביומן נרשמת הצורה ולא רק המספר: "1450" ו-"12" הם אותו
+       שדה מספרי, ובלי הצורה אי אפשר לדעת מה סוכם. */
+    function priceOf(row) {
+      const perEmployee = row && row.custom_price_per_employee;
+      if (perEmployee !== null && typeof perEmployee !== 'undefined') {
+        return { mode: 'per_employee', amount: Number(perEmployee) };
+      }
+      const flat = row && row.custom_price_monthly;
+      if (flat !== null && typeof flat !== 'undefined') {
+        return { mode: 'flat', amount: Number(flat) };
+      }
+      return null;
+    }
+    detail.from = priceOf(company);
+    detail.to = value === null ? null : { mode: mode, amount: value };
 
   } else if (action === 'set-status') {
     const status = String((body && body.status) || '');

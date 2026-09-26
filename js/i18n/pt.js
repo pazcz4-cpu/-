@@ -992,6 +992,7 @@
         cancelTrialConfirm: 'Cancelar a subscrição? Não serás cobrado e o acesso mantém-se até ao fim da experiência.',
         resume: 'Retomar a subscrição',
         resumed: 'Subscrição retomada',
+        pricePerEmployee: '{amount} ₪ por pessoa/mês',
         priceMonthly: '{amount} ILS / mês', priceAmount: '{amount} ILS',
         updateFailed: 'Não foi possível atualizar', cancelFailed: 'Não foi possível cancelar',
         title: 'A tua subscrição', status: 'Estado', plan: 'Plano', validUntil: 'Válida até',

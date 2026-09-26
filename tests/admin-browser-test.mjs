@@ -213,6 +213,31 @@ try {
   check('ועל הלקוח הנכון', action.body.id, 'co-2');
   check('החלון נסגר', await page.locator('#adm-modal').isHidden(), true);
 
+  /* תעריף לעובד. המספר הגדול על הכרטיס משתנה מחודש לחודש,
+     ולכן הכרטיס חייב לומר ממה הוא מורכב – ולכן גם טופס המחיר
+     חייב להיפתח על מה שקיים היום, ולא על סכום קבוע ריק. */
+  console.log('\n== תעריף לעובד ==');
+  WORLD.company.company = Object.assign({}, WORLD.company.company, {
+    planPrice: 480, customPrice: null, customPricePerEmployee: 12,
+    pricedEmployees: 40
+  });
+  await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
+  await page.waitForTimeout(500);
+  const perEmp = await page.locator('#adm-company-detail').innerText();
+  check('המחיר המחושב מוצג', perEmp, /480/);
+  check('וגם התעריף שהוא מורכב ממנו', perEmp, /12/);
+  check('וגם מספר העובדים', perEmp, /40 עובדים פעילים/);
+
+  await page.click('[data-act="set-price"]');
+  await page.waitForTimeout(300);
+  check('הטופס נפתח על צורת התמחור הקיימת',
+    await page.locator('#adm-f-mode').inputValue(), 'per_employee');
+  check('ועל התעריף הקיים', await page.locator('#adm-f-price').inputValue(), '12');
+  check('והכיתוב מדבר על עובד',
+    await page.locator('#adm-f-price-label').innerText(), /לעובד/);
+  await page.click('#adm-modal-cancel');
+  await page.waitForTimeout(200);
+
   console.log('\n== כסף ==');
   await page.click('.adm-tab[data-panel="money"]');
   await page.waitForTimeout(400);

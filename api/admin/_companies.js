@@ -51,6 +51,9 @@ module.exports = async function ({ body, db }) {
     paid[row.company_id] = (paid[row.company_id] || 0) + (Number(row.payload.amount) || 0);
   });
 
+  /* מספרי העובדים, רק ללקוחות שמתומחרים לפי עובד */
+  const counts = await Money.countsFor(db, companies);
+
   const openTickets = {};
   tickets.forEach(function (ticket) {
     if (ticket.status === 'closed') return;
@@ -72,10 +75,16 @@ module.exports = async function ({ body, db }) {
         id: company.id,
         name: company.name,
         plan: company.plan,
-        planPrice: Money.monthlyOf(company, Model.PLANS) || null,
+        planPrice: Money.monthlyOf(company, Model.PLANS, counts[company.id]) || null,
         listPrice: planSpec ? planSpec.priceMonthly : null,
         customPrice: company.custom_price_monthly == null
           ? null : Number(company.custom_price_monthly),
+        customPricePerEmployee: company.custom_price_per_employee == null
+          ? null : Number(company.custom_price_per_employee),
+        /* מספר העובדים שהמחיר לעובד מוכפל בו. null פירושו שלא
+           נספר – כי החברה אינה מתומחרת כך, או שההגדרות שלה לא
+           נקראו. */
+        pricedEmployees: counts[company.id] == null ? null : counts[company.id],
         byQuote: !!(planSpec && planSpec.quote),
         status: company.status,
         validUntil: company.valid_until,

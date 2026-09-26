@@ -25,6 +25,10 @@ module.exports = async function ({ db }) {
   const usersCall = await db('/company_users?select=company_id,role,active,joined_at&limit=50000');
   const users = (usersCall.ok && usersCall.body) || [];
 
+  /* מי שמתומחר לפי עובד – כמה עובדים יש לו. בלי זה התחזית
+     החודשית הייתה סופרת רשת כזו כאפס. */
+  const perEmployee = await Money.countsFor(db, companies);
+
   /* רק חיובים שעברו. שורת תביעה בלי outcome=charged היא ניסיון,
      לא הכנסה. */
   const chargesCall = await db('/billing_events?select=company_id,payload,received_at' +
@@ -118,7 +122,7 @@ module.exports = async function ({ db }) {
       },
       money: {
         /* מה צפוי להיכנס בחודש הבא מהמשלמים של היום */
-        recurring: Money.recurring(companies, Model.PLANS),
+        recurring: Money.recurring(companies, Model.PLANS, perEmployee),
         thisMonth: thisMonth,
         allTime: allTime,
         months: months

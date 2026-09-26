@@ -263,26 +263,62 @@
     return 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent(text);
   }
 
+  /* ===== מחיר מוסכם =====
+
+     שתי צורות, ושתיהן נסגרות בפגישה:
+
+       flat          סכום חודשי אחד לכל הרשת, בלי קשר לגודל.
+       per_employee  תעריף לעובד פעיל. רשת שגדלה משלמת יותר,
+                     ורשת שהתכווצה משלמת פחות -- בלי שיחה.
+
+     שתיהן זמינות בכל תוכנית, ולא רק ברשתות: לפעמים סוגרים
+     מחיר אחר גם עם עסק קטן, ומי שסגר תעריף לעובד לא אמור
+     לגלות שהמערכת יודעת רק סכום קבוע.
+
+     המחיר המוסכם גובר על המחירון, כי הוא מה שהלקוח הסכים
+     לשלם. */
+  var PRICING = { PLAN: 'plan', FLAT: 'flat', PER_EMPLOYEE: 'per_employee' };
+
+  /* איזו צורת תמחור חלה על החברה הזו, ומה הערך שלה.
+     התעריף לעובד גובר על הסכום הקבוע: מי שהזין אותו אחרון הוא
+     מי שהחליט, והמשרד האחורי מאפס את השני בכל שינוי. */
+  function pricingOf(company) {
+    var perEmployee = Number(company && company.customPricePerEmployee);
+    if (isFinite(perEmployee) && perEmployee > 0) {
+      return { kind: PRICING.PER_EMPLOYEE, rate: Math.round(perEmployee) };
+    }
+    var flat = Number(company && company.customPriceMonthly);
+    if (isFinite(flat) && flat > 0) {
+      return { kind: PRICING.FLAT, amount: Math.round(flat) };
+    }
+    return { kind: PRICING.PLAN, amount: planOf(company).priceMonthly || 0 };
+  }
+
   /* המחיר שבאמת נגבה מהחברה הזו.
 
-     לרשת עם מאה עובדים ומעלה אין מחירון – המחיר נסגר בפגישה
-     ומוזן ידנית במשרד האחורי. המחיר המותאם גובר גם בתוכנית
-     רגילה, כי לפעמים סוגרים מחיר אחר גם שם, ואם הוא קיים הוא
-     האמת: הוא מה שהלקוח הסכים לשלם.
+     employeeCount נדרש רק לתמחור לפי עובד, ובלעדיו אי אפשר
+     לחשב אותו: מחזירים 0, כלומר "עוד לא ידוע", ולא מספר
+     שהומצא. אסור לחייב מספר שנוחש.
 
-     מחזיר 0 כשאין מחיר כלל – כלומר "עוד לא סוכם", ולא "חינם".
-     מי שקורא חייב להבדיל בין השניים: אסור לחייב 0. */
-  function effectivePrice(company) {
-    var custom = Number(company && company.customPriceMonthly);
-    if (isFinite(custom) && custom > 0) return Math.round(custom);
-    return planOf(company).priceMonthly || 0;
+     מחזיר 0 גם כשאין מחיר כלל – כלומר "עוד לא סוכם", ולא
+     "חינם". מי שקורא חייב להבדיל בין השניים: אסור לחייב 0. */
+  function effectivePrice(company, employeeCount) {
+    var pricing = pricingOf(company);
+    if (pricing.kind !== PRICING.PER_EMPLOYEE) return pricing.amount;
+    var count = Number(employeeCount);
+    if (!isFinite(count) || count < 0) return 0;
+    return Math.round(pricing.rate * count);
   }
 
   /* האם המחיר של החברה הזו עוד לא נקבע. תוכנית הצעת־מחיר בלי
      מחיר מוזן היא בדיוק המצב הזה, והחיוב האוטומטי חייב לדלג
-     עליה ולא לנסות לגבות אפס. */
+     עליה ולא לנסות לגבות אפס.
+
+     תעריף לעובד הוא מחיר שנקבע גם כשעוד אין עובדים: השאלה
+     כאן היא אם סוכם מחיר, ולא אם יש כרגע ממה לגבות. */
   function awaitingQuote(company) {
-    return planOf(company).quote === true && effectivePrice(company) <= 0;
+    if (planOf(company).quote !== true) return false;
+    return pricingOf(company).kind === PRICING.PLAN;
   }
 
   /* התוכנית המתאימה למספר עובדים נתון */
@@ -669,11 +705,22 @@
   /* מחיר התוכנית כפי שהוא מוצג ללקוח. מחיר שסוכם איתו גובר על
      המחירון, ותוכנית שעוד אין בה מחיר אומרת זאת במילים – מספר
      אפס על מסך חיוב נקרא כמו "חינם". */
-  function priceLabel(company) {
+  function priceLabel(company, employeeCount) {
     if (awaitingQuote(company)) {
       return translate('plans.quotePrice', 'לפי הצעת מחיר');
     }
-    var amount = effectivePrice(company);
+    var pricing = pricingOf(company);
+    /* תעריף לעובד מוצג כתעריף ולא רק כסכום: "300 ש"ח" לבדו
+       אינו מסביר למה הוא יעלה בחודש הבא כשייכנס עובד. */
+    if (pricing.kind === PRICING.PER_EMPLOYEE) {
+      var count = Number(employeeCount);
+      var rate = translate('billing.pricePerEmployee', pricing.rate + '₪ לעובד',
+        { amount: pricing.rate });
+      if (!isFinite(count) || count < 0) return rate;
+      return rate + ' · ' + translate('billing.priceMonthly',
+        effectivePrice(company, count) + '₪', { amount: effectivePrice(company, count) });
+    }
+    var amount = pricing.amount;
     return translate('billing.priceMonthly', amount + '₪', { amount: amount });
   }
 
@@ -734,6 +781,7 @@
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,
+    PRICING: PRICING, pricingOf: pricingOf,
     COUPON: COUPON, COUPON_KINDS: COUPON_KINDS, normalizeCouponCode: normalizeCouponCode,
     couponProblem: couponProblem, couponEffect: couponEffect,
     discountedPrice: discountedPrice, isFullyDiscounted: isFullyDiscounted,

@@ -66,6 +66,7 @@ function Fake(seed) {
   this.tickets = data.tickets || [];
   this.coupons = data.coupons || [];
   this.redemptions = data.redemptions || [];
+  this.configs = data.configs || [];
   this.sessions = data.sessions || { 'owner-token': { id: 'u1', email: 'boss@setshifts.com' } };
   this.writes = [];
 }
@@ -164,7 +165,19 @@ Fake.prototype.install = function () {
       return reply(200, picked);
     }
     if (path === '/coupon_redemptions') return reply(200, self.redemptions);
-    if (path === '/company_configs' || path === '/company_weeks') return reply(200, []);
+    if (path === '/company_configs') {
+      /* התמחור לפי עובד קורא את ההגדרות של קבוצת לקוחות בבת
+         אחת, ולכן גם המסנן הזה נדרש כאן */
+      var inMatch = query.match(/company_id=in\.\(([^)]*)\)/);
+      if (inMatch) {
+        var wanted = inMatch[1].split(',');
+        return reply(200, self.configs.filter(function (row) {
+          return wanted.indexOf(String(row.company_id)) !== -1;
+        }));
+      }
+      return reply(200, companyFilter(self.configs));
+    }
+    if (path === '/company_weeks') return reply(200, []);
     return reply(404, { message: 'no route: ' + path });
   };
 };
@@ -602,8 +615,37 @@ test('מחיר מוסכם נשמר ונרשם ביומן', function () {
   return call(action, { action: 'set-price', id: 'co-1', price: 1450,
     reason: 'סוכם בפגישה מול הרשת' }).then(function (res) {
     assertEqual(res.payload.company.custom_price_monthly, 1450, 'המחיר לא נשמר');
-    assertEqual(res.payload.detail.to, 1450, 'המחיר החדש לא נרשם ביומן');
+    /* ביומן נרשמת גם הצורה: "1450" ו-"12" הם אותו שדה מספרי,
+       ובלי הצורה אי אפשר לדעת מה סוכם בפגישה. */
+    assertEqual(res.payload.detail.to.mode, 'flat', 'הצורה לא נרשמה');
+    assertEqual(res.payload.detail.to.amount, 1450, 'המחיר החדש לא נרשם ביומן');
     assertEqual(res.payload.detail.from, null, 'המצב הקודם לא נרשם');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('תעריף לעובד נשמר, ומאפס את הסכום הקבוע', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', price: 1450,
+    reason: 'סוכם בפגישה' }).then(function () {
+    return call(action, { action: 'set-price', id: 'co-1', mode: 'per_employee',
+      price: 12, reason: 'עברנו לתמחור לפי עובד' });
+  }).then(function (res) {
+    assertEqual(res.payload.company.custom_price_per_employee, 12, 'התעריף לא נשמר');
+    /* שורה עם שתי הצורות היא שורה שאיש לא יידע לקרוא */
+    assertEqual(res.payload.company.custom_price_monthly, null, 'הסכום הקבוע לא אופס');
+    assertEqual(res.payload.detail.to.mode, 'per_employee', 'הצורה שנרשמה');
+    assertEqual(res.payload.detail.from.mode, 'flat', 'הצורה הקודמת לא נרשמה');
+    assertEqual(res.payload.detail.from.amount, 1450, 'הסכום הקודם לא נרשם');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('צורת תמחור שאינה מוכרת נדחית', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-price', id: 'co-1', mode: 'per-hour',
+    price: 5, reason: 'ניסיון' }).then(function (res) {
+    assertEqual(res.statusCode, 400, 'קוד תשובה');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });
@@ -634,6 +676,98 @@ test('מחיר אפס או שלילי נדחה', function () {
       assertEqual(res.statusCode, 400, 'מחיר שלילי התקבל');
       fake.restore();
     }, function (e) { fake.restore(); throw e; });
+});
+
+/* ===== תעריף לעובד: מה שהמסכים מציגים =====
+
+   תעריף לעובד אינו מספר שנשמר אלא מספר שמחושב כל חודש מחדש,
+   ולכן כל מסך שמציג אותו חייב גם לספור. מסך שמציג את התעריף
+   בלבד נראה כאילו הרשת משלמת 12 שקלים בחודש. */
+function chainWorld() {
+  var fake = sampleWorld();
+  fake.companies.push({
+    id: 'co-5', name: 'רשת הצפון', plan: 'enterprise', status: 'active',
+    valid_until: daysAhead(25), billing_subscription_id: 'tok-5',
+    cancel_at_period_end: false, created_at: daysAgo(300),
+    custom_price_per_employee: 12
+  });
+  fake.users.push({ company_id: 'co-5', email: 'e@n.co.il', name: 'הדר',
+    role: 'owner', active: true });
+  fake.configs.push({
+    company_id: 'co-5',
+    config: {
+      employees: [
+        { id: 'e1', name: 'א' }, { id: 'e2', name: 'ב', active: true },
+        { id: 'e3', name: 'ג', active: false }
+      ]
+    }
+  });
+  return fake;
+}
+
+test('כרטיס הלקוח מציג את התעריף ואת מספר העובדים שהוא מוכפל בו', function () {
+  var fake = chainWorld(); fake.install();
+  return call(company, { id: 'co-5' }).then(function (res) {
+    var c = res.payload.company;
+    assertEqual(c.customPricePerEmployee, 12, 'התעריף לא הוצג');
+    /* שניים פעילים מתוך שלושה: מי שאין לו active נחשב פעיל,
+       ומי שסומן כלא פעיל אינו נספר */
+    assertEqual(c.pricedEmployees, 2, 'מספר העובדים הפעילים');
+    assertEqual(c.planPrice, 24, 'המחיר החודשי לא חושב מהתעריף');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('רשימת הלקוחות מחשבת גם היא, ולא מציגה את התעריף כמחיר', function () {
+  var fake = chainWorld(); fake.install();
+  return call(companies, {}).then(function (res) {
+    var row = res.payload.companies.filter(function (c) { return c.id === 'co-5'; })[0];
+    assertEqual(row.planPrice, 24, 'המחיר ברשימה');
+    assertEqual(row.customPricePerEmployee, 12, 'התעריף ברשימה');
+    assertEqual(row.pricedEmployees, 2, 'מספר העובדים ברשימה');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+/* ההגדרות של לקוח שאינו מתומחר לפי עובד אינן נקראות כלל.
+   בסיס הנתונים הזה מחזיק את שמות כל העובדים של כל הלקוחות,
+   וקריאה שלו כדי לחשב מספר שאיש אינו צריך היא בדיוק סוג
+   הקריאה שאין סיבה שתתקיים. */
+test('בלי לקוח שמתומחר לפי עובד – ההגדרות לא נקראות בכלל', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(companies, {}).then(function (res) {
+    var reads = fake.writes.filter(function (w) {
+      return w.path === '/company_configs';
+    });
+    assertEqual(reads.length, 0, 'ההגדרות נקראו לחינם');
+    assertEqual(res.payload.companies.length, 4, 'הרשימה');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+/* רשת שההגדרות שלה לא נקראו אינה רשת שאינה משלמת. ההבדל
+   חשוב: 0 על המסך הוא טענה, ו-null הוא הודאה שאין מידע. */
+test('רשת בלי הגדרות – מספר העובדים ריק ולא אפס', function () {
+  var fake = chainWorld();
+  fake.configs = [];
+  fake.install();
+  return call(company, { id: 'co-5' }).then(function (res) {
+    assertEqual(res.payload.company.pricedEmployees, null, 'אפס הוצג במקום "לא ידוע"');
+    assertEqual(res.payload.company.planPrice, null, 'הומצא מחיר');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('התחזית החודשית סופרת את הרשת לפי עובדיה', function () {
+  var fake = chainWorld(); fake.install();
+  return call(overview, {}).then(function (res) {
+    var mrr = res.payload.money.recurring;
+    /* co-1 (199) + co-5 (12×2). co-2 בניסיון, co-3 בפיגור,
+       co-4 מסומנת לסיום – אף אחת מהן אינה בתחזית. */
+    assertEqual(mrr.gross, 223, 'התחזית לא כוללת את הרשת');
+    assertEqual(mrr.companies, 2, 'מספר המשלמים');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
 });
 
 test('מחיר מוסכם דורש סיבה, כמו כל פעולה', function () {

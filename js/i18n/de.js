@@ -992,6 +992,7 @@
         cancelTrialConfirm: 'Abo kündigen? Es wird nichts abgebucht, und der Zugang bleibt bis zum Ende der Testphase.',
         resume: 'Abo fortsetzen',
         resumed: 'Abo fortgesetzt',
+        pricePerEmployee: '{amount} ₪ pro Person und Monat',
         priceMonthly: '{amount} ILS / Monat', priceAmount: '{amount} ILS',
         updateFailed: 'Aktualisierung fehlgeschlagen', cancelFailed: 'Kündigung fehlgeschlagen',
         title: 'Ihr Abonnement', status: 'Status', plan: 'Tarif', validUntil: 'Gültig bis',

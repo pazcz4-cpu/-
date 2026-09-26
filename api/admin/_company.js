@@ -40,15 +40,23 @@ module.exports = async function ({ body, db }) {
   const weeks = (weeksCall.ok && weeksCall.body) || [];
   const plan = Model.PLANS[company.plan];
 
+  /* לקוח שמתומחר לפי עובד – כמה עובדים פעילים יש לו. רק המספר
+     נקרא מההגדרות ורק עבורו; השמות נשארים שם. */
+  const counts = await Money.countsFor(db, [company]);
+  const pricedEmployees = counts[company.id] == null ? null : counts[company.id];
+
   return {
     body: {
       ok: true,
       company: {
         id: company.id, name: company.name, plan: company.plan,
-        planPrice: Money.monthlyOf(company, Model.PLANS) || null,
+        planPrice: Money.monthlyOf(company, Model.PLANS, pricedEmployees) || null,
         listPrice: plan ? plan.priceMonthly : null,
         customPrice: company.custom_price_monthly == null
           ? null : Number(company.custom_price_monthly),
+        customPricePerEmployee: company.custom_price_per_employee == null
+          ? null : Number(company.custom_price_per_employee),
+        pricedEmployees: pricedEmployees,
         byQuote: !!(plan && plan.quote),
         status: company.status, validUntil: company.valid_until,
         currentPeriodEnd: company.current_period_end,

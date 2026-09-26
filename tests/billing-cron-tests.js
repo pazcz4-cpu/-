@@ -36,7 +36,8 @@ function daysAgo(n) { return new Date(Date.now() - n * 864e5).toISOString(); }
 function daysAhead(n) { return new Date(Date.now() + n * 864e5).toISOString(); }
 
 /* ===== בסיס נתונים מדומה ===== */
-function FakeDb(companies) {
+function FakeDb(companies, configs) {
+  this.configs = configs || {};
   this.companies = {};
   (companies || []).forEach(function (company) { this.companies[company.id] = company; }, this);
   this.events = {};
@@ -106,6 +107,12 @@ FakeDb.prototype.install = function () {
         });
       }
       return reply(200, rows);
+    }
+
+    if (path === '/company_configs') {
+      var owner = (query.match(/company_id=eq\.([^&]+)/) || [])[1];
+      var config = self.configs && self.configs[owner];
+      return reply(200, config ? [{ config: config }] : []);
     }
 
     if (path === '/companies' && opts.method === 'PATCH') {
@@ -330,6 +337,66 @@ test('ניסיון שהסתיים בלי כרטיס פג ואינו מחויב',
   return run().then(function () {
     assertEqual(db.charges.length, 0, 'בוצע ניסיון חיוב בלי כרטיס');
     assertEqual(db.companies['co-1'].status, 'expired', 'הסטטוס לא עודכן');
+    db.restore();
+  });
+});
+
+console.log('\n== מחיר מוסכם לפי עובד ==');
+
+/* רשת שסגרה תעריף לעובד: המחיר נגזר ממספר העובדים הפעילים
+   באותו רגע, ולכן רשת שגדלה משלמת יותר בלי שיחה. */
+test('החיוב הוא התעריף כפול מספר העובדים הפעילים', function () {
+  var db = new FakeDb([company({
+    id: 'co-rate', plan: 'enterprise', custom_price_per_employee: 12
+  })], {
+    'co-rate': { employees: [
+      { id: 'e1', active: true }, { id: 'e2', active: true },
+      { id: 'e3', active: true }, { id: 'e4', active: false }
+    ] }
+  });
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
+    assertEqual(db.charges[0].amount, 36, 'המחיר לא חושב לפי שלושה עובדים פעילים');
+    db.restore();
+  });
+});
+
+/* ניחוש כאן הוא חיוב שגוי. עדיף לדלג ולחכות לריצה הבאה. */
+test('בלי הגדרות אין ניחוש ואין חיוב', function () {
+  var db = new FakeDb([company({
+    id: 'co-blind', plan: 'enterprise', custom_price_per_employee: 12
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נגבה כסף בלי לדעת כמה עובדים');
+    assertEqual(res.payload.results[0].reason, 'employees-unknown', 'הסיבה שדווחה');
+    db.restore();
+  });
+});
+
+test('רשת בלי עובדים פעילים אינה מחויבת', function () {
+  var db = new FakeDb([company({
+    id: 'co-empty', plan: 'enterprise', custom_price_per_employee: 12
+  })], { 'co-empty': { employees: [{ id: 'e1', active: false }] } });
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נגבה כסף בלי עובדים');
+    assertEqual(res.payload.results[0].reason, 'no-active-employees', 'הסיבה שדווחה');
+    db.restore();
+  });
+});
+
+/* שתי הצורות לא אמורות להיות מלאות יחד, אבל אם שורה כזו קיימת
+   -- התעריף לעובד הוא מה שנסגר אחרון, והוא מה שקובע. */
+test('תעריף לעובד גובר על סכום קבוע', function () {
+  var db = new FakeDb([company({
+    id: 'co-both', plan: 'enterprise',
+    custom_price_monthly: 1450, custom_price_per_employee: 10
+  })], { 'co-both': { employees: [{ id: 'e1', active: true }, { id: 'e2', active: true }] } });
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 20, 'נגבה הסכום הקבוע במקום התעריף');
     db.restore();
   });
 });

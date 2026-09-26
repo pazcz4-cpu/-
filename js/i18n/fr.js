@@ -992,6 +992,7 @@
         cancelTrialConfirm: 'Résilier l’abonnement ? Aucun prélèvement ne sera effectué, et l’accès reste jusqu’à la fin de l’essai.',
         resume: 'Reprendre l’abonnement',
         resumed: 'Abonnement repris',
+        pricePerEmployee: '{amount} ₪ par personne et par mois',
         priceMonthly: '{amount} ILS / mois', priceAmount: '{amount} ILS',
         updateFailed: 'Échec de la mise à jour', cancelFailed: 'Échec de l’annulation',
         title: 'Votre abonnement', status: 'Statut', plan: 'Formule', validUntil: 'Valable jusqu’au',

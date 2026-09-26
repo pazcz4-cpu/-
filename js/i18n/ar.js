@@ -992,6 +992,7 @@
         cancelTrialConfirm: 'إلغاء الاشتراك؟ لن يتم خصم أي مبلغ، ويبقى الوصول حتى نهاية الفترة التجريبية.',
         resume: 'استئناف الاشتراك',
         resumed: 'تم استئناف الاشتراك',
+        pricePerEmployee: '{amount} ₪ لكل موظف شهريًا',
         priceMonthly: '{amount} شيكل / شهر', priceAmount: '{amount} شيكل',
         updateFailed: 'فشل التحديث', cancelFailed: 'فشل الإلغاء',
         title: 'اشتراكك', status: 'الحالة', plan: 'الخطة', validUntil: 'سارٍ حتى',

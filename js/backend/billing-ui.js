@@ -59,7 +59,10 @@
     /* לא מחיר התוכנית אלא המחיר של החברה הזו: לרשת המחיר נסגר
        בפגישה ומוזן ידנית, ותוכנית הצעת־מחיר בלי מחיר אומרת זאת
        במילים. "0₪ לחודש" על מסך חיוב נקרא כמו חינם. */
-    var price = Model.priceLabel(company);
+    /* מספר העובדים נמסר כי תעריף לעובד מחושב ממנו. בלעדיו
+       המסך היה מציג תעריף בלי סכום, ולקוח שסגר עשרה שקלים
+       לעובד לא היה יודע כמה יירד לו החודש. */
+    var price = Model.priceLabel(company, employees);
     var html = '';
 
     /* בתקופת ניסיון הדבר החשוב ביותר על המסך הוא מתי יתבצע החיוב
@@ -139,7 +142,7 @@
       if (plan.quote && !(current && !Model.awaitingQuote(company))) {
         html += '<div class="plan-quote">' + esc(t('plans.quotePrice')) + '</div>';
       } else if (plan.quote) {
-        html += '<div class="plan-price">' + Model.effectivePrice(company) +
+        html += '<div class="plan-price">' + Model.effectivePrice(company, employees) +
           '<small>' + esc(t('billing.priceMonthly', { amount: '' }).trim()) + '</small></div>';
       } else {
         html += '<div class="plan-price">' + plan.priceMonthly +

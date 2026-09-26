@@ -993,6 +993,7 @@
         resume: 'Abo fortsetzen',
         resumed: 'Abo fortgesetzt',
         pricePerEmployee: '{amount} ₪ pro Person und Monat',
+        couponHint: 'Ein Code aus einer Kampagne oder einem Angebot. Er kann die Testphase verlängern oder eine Abrechnung senken.',
         peakNote: 'Abgerechnet wird nach der höchsten Zahl aktiver Mitarbeitender im Zeitraum — {count} im laufenden. Wer mitten im Monat dazukommt, zählt in der nächsten Abrechnung; wer deaktiviert wird, zählt bis zum Ende des laufenden Zeitraums, danach nicht mehr.',
         priceMonthly: '{amount} ILS / Monat', priceAmount: '{amount} ILS',
         updateFailed: 'Aktualisierung fehlgeschlagen', cancelFailed: 'Kündigung fehlgeschlagen',
@@ -1021,6 +1022,8 @@
 
       auth: {
         marketingOptIn: 'Ich möchte von SetShifts Nachrichten zu meinem Konto und zu ähnlichen Leistungen per WhatsApp und E-Mail erhalten. Jederzeit abbestellbar.',
+        couponLabel: 'Gutscheincode (optional)',
+        couponHint: 'Wenn Sie einen Code bekommen haben, geben Sie ihn hier ein — er wird direkt nach der Anmeldung eingelöst.',
         consent: 'Mit dem Anlegen eines Kontos stimme ich den {terms} und der {privacy} zu.',
         forgot: 'Passwort vergessen',
         sending: 'Senden…',

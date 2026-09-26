@@ -999,6 +999,7 @@
         resume: 'Resume subscription',
         resumed: 'Subscription resumed',
         pricePerEmployee: '₪{amount} per person / month',
+        couponHint: 'A code from a campaign or a quote. It can extend the trial or reduce one charge.',
         peakNote: 'Billing goes by the highest number of active staff during the period — {count} in the current one. Someone added mid-month counts in the coming charge; someone deactivated is counted until the end of the current period, and not after it.',
         priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
         updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
@@ -1027,6 +1028,8 @@
 
       auth: {
         marketingOptIn: 'I agree to receive messages from SetShifts about my account and similar services by WhatsApp and email. You can opt out at any time.',
+        couponLabel: 'Coupon code (optional)',
+        couponHint: 'If you were given a code, type it here and it is applied right after you sign up.',
         consent: 'By creating an account I agree to the {terms} and the {privacy}.',
         forgot: 'Forgot password',
         sending: 'Sending…',

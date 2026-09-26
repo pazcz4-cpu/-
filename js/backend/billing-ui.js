@@ -208,13 +208,37 @@
 
     html += '<p id="billing-message" class="users-message hidden"></p>';
     container.innerHTML = html;
+
+    /* קוד שהוקלד במסך ההרשמה מומש שם, ברגע שנוצרה ההתחברות,
+       אבל התשובה לא הייתה לאן להיאמר -- מסך ההרשמה נעלם באותה
+       שנייה. היא ממתינה כאן, ונאמרת פעם אחת. */
+    showSignupCoupon();
+  }
+
+  var COUPON_RESULT_KEY = 'setshifts-coupon-result';
+
+  function showSignupCoupon() {
+    var raw = null;
+    try {
+      raw = root.sessionStorage.getItem(COUPON_RESULT_KEY);
+      if (raw) root.sessionStorage.removeItem(COUPON_RESULT_KEY);
+    } catch (err) { return; }
+    if (!raw) return;
+    var answer;
+    try { answer = JSON.parse(raw); } catch (err) { return; }
+    var message = couponMessage(answer);
+    say(message.text, message.error);
   }
 
   /* ===== קופון =====
 
-     שורה אחת, סגורה כברירת מחדל. קופון הוא דבר שמי שיש לו קוד
-     מחפש, ומי שאין לו אינו צריך לראות -- שדה פתוח על מסך המנוי
-     אומר לכל לקוח "יש מחיר נמוך יותר, ואתה לא קיבלת אותו".
+     גלוי, ולא מגירה מקופלת.
+
+     קודם זו הייתה שורה אפורה וסגורה, מתוך מחשבה ששדה קופון
+     פתוח אומר לכל לקוח "יש מחיר נמוך יותר ואתה לא קיבלת
+     אותו". בפועל קרה ההפך: מי שכן קיבל קוד לא מצא איפה
+     להקליד אותו, וקמפיין שאיש אינו מצליח לממש אינו קמפיין.
+     החשש נשאר נכון, והמחיר שלו פשוט נמוך יותר מהחלופה.
 
      מי שכבר מימש רואה את הקוד שלו ולא שדה: קופון אחד ללקוח,
      ושדה שאי אפשר להשתמש בו הוא הזמנה לנסות ולהיכשל. */
@@ -225,14 +249,15 @@
         '<div class="billing-row"><span>' + t('billing.couponUsed') + '</span>' +
         '<b>' + esc(used) + '</b></div></div>';
     }
-    return '<details class="settings-block coupon-box" id="coupon-box">' +
-      '<summary>' + t('billing.couponAsk') + '</summary>' +
+    return '<div class="settings-block coupon-box" id="coupon-box">' +
+      '<div class="coupon-title">' + esc(t('billing.couponAsk')) + '</div>' +
+      '<p class="coupon-hint">' + esc(t('billing.couponHint')) + '</p>' +
       '<div class="row coupon-row">' +
       '<input type="text" id="coupon-code" class="text-input" autocomplete="off" ' +
       'spellcheck="false" maxlength="24" placeholder="' +
       esc(t('billing.couponPlaceholder')) + '">' +
-      '<button id="coupon-apply" class="btn">' + t('billing.couponApply') + '</button>' +
-      '</div></details>';
+      '<button id="coupon-apply" class="btn primary">' + t('billing.couponApply') + '</button>' +
+      '</div></div>';
   }
 
   /* התשובה מהשרת היא מפתח קצר, והמשפט נבחר כאן -- בשפה של

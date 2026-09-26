@@ -150,20 +150,18 @@ console.log('   אחרי שינוי:', (await page.locator('#billing-message').i
    כאן לא רק שהוא עובד, אלא גם מה שאסור -- קוד שאינו קיים,
    וקופון שני אחרי שכבר מומש אחד. */
 console.log('\n== קופון ==');
-console.log('8. המגירה סגורה כברירת מחדל:',
-  await page.locator('#coupon-box').evaluate(n => !n.open));
+/* השדה גלוי מיד, בלי לחיצה. קודם זו הייתה מגירה מקופלת, ומי
+   שקיבל קוד פשוט לא מצא אותה. */
+console.log('8. השדה גלוי בלי לפתוח כלום:',
+  await page.locator('#coupon-code').isVisible());
 
 /* קוד שאינו קיים אינו משנה דבר */
-await page.click('#coupon-box > summary');
-await page.waitForTimeout(200);
 await page.fill('#coupon-code', 'NOSUCHCODE');
 await page.click('#coupon-apply');
 await page.waitForTimeout(700);
 console.log('   קוד שאינו קיים:', (await page.locator('#billing-message').innerText()).trim());
 
 const wasUntil = await page.evaluate(() => window.__backend.session().company.validUntil);
-await page.click('#coupon-box > summary');
-await page.waitForTimeout(200);
 await page.fill('#coupon-code', 'extra-month');
 await page.click('#coupon-apply');
 await page.waitForTimeout(900);
@@ -222,6 +220,55 @@ await page.waitForTimeout(900);
 console.log('7. מנוי שפג – האפליקציה חסומה:', await page.locator('#app-root').isHidden(),
   '| מסך חסימה:', (await page.locator('.auth-blocked h2').innerText()).trim());
 console.log('   הסבר:', (await page.locator('.auth-blocked p').first().innerText()).trim());
+
+/* ===== הקוד שמוקלד כבר בהרשמה =====
+
+   הקוד נשלח כדי להביא אנשים להירשם, ועד כה המקום היחיד
+   להקליד אותו היה מסך המנוי -- כלומר אחרי ההרשמה. הקשר הזה
+   נבדק מקצה לקצה, בהקשר נקי: הרשמה עם קוד, ואז המסך שאומר
+   מה הוא עשה. */
+console.log('\n== קופון כבר בהרשמה ==');
+const fresh = await browser.newContext({ viewport: { width: 1400, height: 1000 }, locale: 'he-IL' });
+const signup = await fresh.newPage();
+signup.on('dialog', async d => { await d.accept(); });
+await skipWizard(signup);
+await signup.goto(APP);
+await signup.waitForTimeout(400);
+await signup.click('[data-auth-mode="signup"]');
+await signup.waitForTimeout(200);
+
+const couponField = await signup.locator('#signup-form input[name="coupon"]').count();
+console.log('12. יש שדה קופון במסך ההרשמה:', couponField === 1 ? '✓' : '✗');
+if (couponField !== 1) errors.push('אין שדה קופון במסך ההרשמה');
+
+await signup.fill('input[name="companyName"]', 'עסק עם קוד');
+await signup.fill('input[name="email"]', 'code@test.co.il');
+await signup.fill('input[name="password"]', 'secret123');
+await signup.fill('input[name="phone"]', '054-7654321');
+await signup.fill('input[name="coupon"]', ' extra-month ');
+await signup.click('#signup-form button[type="submit"]');
+await signup.waitForTimeout(1600);
+
+await signup.click('[data-screen="billing"]').catch(() => {});
+await signup.waitForTimeout(600);
+const billed = await signup.locator('#billing-panel').innerText();
+/* הקוד מנורמל בדרך: רווחים ומקף אינם אמורים להפיל מימוש */
+console.log('    והקוד מומש למרות הרווחים והמקף:',
+  /EXTRAMONTH/.test(billed) ? '✓' : '✗');
+if (!/EXTRAMONTH/.test(billed)) errors.push('הקוד מההרשמה לא מומש');
+const said = await signup.locator('#billing-message').innerText().catch(() => '');
+console.log('    ונאמר מה הוא עשה:', /30/.test(said) ? '✓' : '✗', '|', said.trim());
+if (!/30/.test(said)) errors.push('לא נאמר מה הקופון עשה');
+
+/* והשדה במסך המנוי גלוי, ולא מגירה מקופלת שצריך לחפש */
+const visible = await signup.evaluate(() => {
+  const box = document.getElementById('coupon-box');
+  return box ? box.tagName.toLowerCase() : 'none';
+});
+console.log('13. שדה הקופון במסך המנוי אינו details מקופל:',
+  visible !== 'details' ? '✓' : '✗', '|', visible);
+if (visible === 'details') errors.push('שדה הקופון עדיין מקופל');
+await fresh.close();
 
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();

@@ -993,6 +993,7 @@
         resume: 'Retomar a subscrição',
         resumed: 'Subscrição retomada',
         pricePerEmployee: '{amount} ₪ por pessoa/mês',
+        couponHint: 'Um código de campanha ou de uma proposta. Pode estender o teste ou baratear uma cobrança.',
         peakNote: 'A cobrança é pelo maior número de funcionários ativos durante o período — {count} no atual. Quem entra no meio do mês conta na próxima cobrança; quem é desativado conta até o fim do período atual, e não depois.',
         priceMonthly: '{amount} ILS / mês', priceAmount: '{amount} ILS',
         updateFailed: 'Não foi possível atualizar', cancelFailed: 'Não foi possível cancelar',
@@ -1021,6 +1022,8 @@
 
       auth: {
         marketingOptIn: 'Aceito receber da SetShifts mensagens sobre a minha conta e serviços semelhantes por WhatsApp e e-mail. Pode cancelar quando quiser.',
+        couponLabel: 'Código de cupom (opcional)',
+        couponHint: 'Se você recebeu um código, digite aqui e ele é aplicado logo após o cadastro.',
         consent: 'Ao criar uma conta aceito os {terms} e a {privacy}.',
         forgot: 'Esqueci a palavra-passe',
         sending: 'A enviar…',

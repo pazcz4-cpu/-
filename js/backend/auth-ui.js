@@ -276,6 +276,10 @@
       form.phone.focus();
       return;
     }
+    /* הקוד נזכר כאן ולא נשלח עם ההרשמה: המימוש הוא פעולה
+       של משתמש מחובר, והוא יכול להתבצע רק אחרי שיש התחברות. */
+    this.pendingCoupon = (form.coupon && form.coupon.value) || '';
+
     this.backend.signUpCompany({
       companyName: form.companyName.value,
       name: form.name.value,
@@ -387,13 +391,41 @@
     });
   };
 
+  /* הקוד שהוקלד בהרשמה, ממומש ברגע שיש התחברות.
+
+     התשובה נשמרת ואינה מוצגת כאן: המסך הזה נעלם בשנייה הבאה.
+     מסך המנוי הוא שמציג אותה, וזה גם המקום שבו רואים מה
+     הקופון עשה בפועל. אחסון לשיחה הזו בלבד, ובתוך try --
+     דפדפן שחוסם אחסון לא אמור להפיל התחברות. */
+  var COUPON_RESULT_KEY = 'setshifts-coupon-result';
+
+  AuthUI.prototype._redeemPending = function () {
+    var self = this;
+    var code = this.pendingCoupon;
+    this.pendingCoupon = '';
+    if (!code || typeof this.backend.redeemCoupon !== 'function') return Promise.resolve(null);
+    if (!Model.normalizeCouponCode(code)) return Promise.resolve(null);
+    return this.backend.redeemCoupon(code).then(function (answer) {
+      try {
+        root.sessionStorage.setItem(COUPON_RESULT_KEY, JSON.stringify(answer || {}));
+      } catch (err) { /* אין אחסון. ההרשמה עצמה הצליחה. */ }
+      return answer;
+    }, function () {
+      /* קוד שלא נקלט אינו סיבה לא להיכנס. הוא עדיין ניתן
+         להקלדה במסך המנוי, שם השדה גלוי. */
+      return null;
+    });
+  };
+
   AuthUI.prototype._enter = function (session) {
     var self = this;
     if (!session.access.allowed) { return this.showBlocked(session); }
-    this.gate.classList.add('hidden');
-    this.appRoot.classList.remove('hidden');
-    this.renderUserBar(session);
-    return Promise.resolve(this.onSignedIn ? this.onSignedIn(session) : null);
+    return this._redeemPending().then(function () {
+      self.gate.classList.add('hidden');
+      self.appRoot.classList.remove('hidden');
+      self.renderUserBar(session);
+      return Promise.resolve(self.onSignedIn ? self.onSignedIn(session) : null);
+    });
   };
 
   AuthUI.prototype.renderUserBar = function (session) {
@@ -674,6 +706,20 @@
            בדיעבד היא "איזה נוסח עמד מול העיניים שלו". */
         '<label class="auth-check"><input type="checkbox" name="waOptIn" value="1">' +
         '<span>' + esc(t('auth.marketingOptIn')) + '</span></label>' +
+        /* קוד קופון, ורשות.
+
+           הקוד נשלח כדי להביא אנשים להירשם, ועד כה המקום
+           היחיד להקליד אותו היה מסך המנוי -- כלומר אחרי
+           ההרשמה. מי שקיבל קוד ולא מצא איפה להזין אותו פשוט
+           לא נרשם, וזה בדיוק ההפך ממה שהקמפיין ניסה לעשות.
+
+           השדה אחרון ומסומן כרשות: מי שאין לו קוד אינו אמור
+           לעצור כאן ולתהות אם הוא מפספס משהו. */
+        '<label>' + esc(t('auth.couponLabel')) +
+        '<input type="text" name="coupon" class="text-input auth-coupon" dir="ltr" ' +
+        'autocomplete="off" spellcheck="false" maxlength="24" placeholder="' +
+        esc(t('billing.couponPlaceholder')) + '">' +
+        '<small>' + esc(t('auth.couponHint')) + '</small></label>' +
         '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +
         /* הסכמה לתנאים במסך שבו היא נדרשת, עם קישורים שנפתחים
            בלשונית אחרת כדי לא לאבד את הטופס שמולא */

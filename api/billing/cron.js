@@ -172,10 +172,15 @@ async function chargeCompany(provider, company, plans, now) {
 
      הבדיקה על base נעשתה למעלה, ולכן מכאן ואילך אפס פירושו
      הטבה ולא תקלה. */
-  const discount = Number(company.discount_charges_left) > 0
+  const hasDiscount = Number(company.discount_charges_left) > 0;
+  const off = hasDiscount ? Math.max(0, Math.round(Number(company.discount_amount) || 0)) : 0;
+  const percent = hasDiscount && !off
     ? Math.max(0, Math.min(100, Number(company.discount_percent) || 0))
     : 0;
-  const amount = discount ? Math.max(0, Math.round(base * (100 - discount) / 100)) : base;
+  const discount = off || percent;
+  const amount = off
+    ? Math.max(0, base - off)
+    : (percent ? Math.max(0, Math.round(base * (100 - percent) / 100)) : base);
 
   /* התקופה שעליה משלמים מתחילה בדיוק כשהקודמת נגמרה */
   const periodStart = company.valid_until || now.toISOString();
@@ -317,7 +322,7 @@ module.exports = async function handler(req, res) {
        הבאה תיפול שם ולא אצל לקוח. */
     '&select=id,plan,status,valid_until,cancel_at_period_end,' +
     'billing_subscription_id,billing_customer_id,custom_price_monthly,' +
-    'coupon_code,discount_percent,discount_charges_left' +
+    'coupon_code,discount_percent,discount_amount,discount_charges_left' +
     '&order=valid_until.asc&limit=' + MAX_COMPANIES);
 
   if (!due.ok) return send(res, 500, { message: 'Could not read companies' });

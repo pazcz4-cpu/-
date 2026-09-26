@@ -20,7 +20,8 @@ const ROUTES = {
   companies: require('./_companies.js'),
   company: require('./_company.js'),
   action: require('./_action.js'),
-  tickets: require('./_tickets.js')
+  tickets: require('./_tickets.js'),
+  coupons: require('./_coupons.js')
 };
 
 module.exports = endpoint(async function (ctx) {

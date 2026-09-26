@@ -732,6 +732,29 @@ test('הנחה חלה על החיוב הבא בלבד', function () {
     'אפס אחוז');
 });
 
+test('הנחה בשקלים יורדת מהמחיר, ולא מתחת לאפס', function () {
+  assertEqual(Model.discountedPrice(199, { discountAmount: 50, discountChargesLeft: 1 }), 149,
+    'ההנחה בשקלים לא הופחתה');
+  /* הנחה גדולה מהמחיר היא חודש חינם, ולא חוב שלנו ללקוח */
+  assertEqual(Model.discountedPrice(199, { discountAmount: 500, discountChargesLeft: 1 }), 0,
+    'הנחה גדולה מהמחיר ירדה מתחת לאפס');
+  assertEqual(Model.discountedPrice(199, { discountAmount: 50, discountChargesLeft: 0 }), 199,
+    'הנחה שנוצלה עדיין הופחתה');
+});
+
+test('קופון בשקלים תקף, ומחזיר סכום', function () {
+  var now = new Date('2026-09-26');
+  var coupon = { code: 'FIFTY', kind: 'amount', value: 50 };
+  assertEqual(Model.couponProblem(coupon, {}, now), null, 'קופון שקלים נפסל');
+  var effect = Model.couponEffect(coupon, {}, now);
+  assertEqual(effect.kind, 'amount', 'הסוג שהוחזר');
+  assertEqual(effect.amount, 50, 'הסכום שהוחזר');
+  /* לאחוז יש תקרה של 100; לשקלים אין, כי 500 ש"ח הנחה על מחיר
+     של 199 הם פשוט חודש חינם */
+  assertEqual(Model.couponProblem({ code: 'BIG', kind: 'amount', value: 5000 }, {}, now), null,
+    'סכום גדול נפסל בטעות');
+});
+
 /* "חודש חינם" ו"אין מחיר" מגיעים שניהם לאפס, ומי שיבלבל ביניהם
    או יחייב רשת באפס או ייתן לה חודש חינם בלי שאיש החליט */
 test('הנחה מלאה אינה "אין מחיר"', function () {

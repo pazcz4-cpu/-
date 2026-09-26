@@ -470,6 +470,119 @@
     node.innerHTML = html + '</tbody></table></div></div>';
   }
 
+  /* ===== קופונים =====
+
+     שלושה סוגים, ואותו טופס לשלושתם: מה שמשתנה ביניהם הוא
+     השדה האחד -- ימים, אחוזים או שקלים -- ואת השם שלו קובע
+     הסוג שנבחר. טופס נפרד לכל סוג היה אותו טופס שלוש פעמים,
+     ושלוש הזדמנויות שהם יתפצלו. */
+  var COUPON_KIND = {
+    days:    { label: 'הארכת תקופה', unit: 'ימים',   suffix: ' ימים' },
+    percent: { label: 'הנחה באחוזים', unit: 'אחוזים', suffix: '%' },
+    amount:  { label: 'הנחה בשקלים', unit: 'שקלים',  suffix: ' ₪' }
+  };
+
+  function couponValue(coupon) {
+    var kind = COUPON_KIND[coupon.kind];
+    return coupon.value + (kind ? kind.suffix : '');
+  }
+
+  /* מה מונע מהקופון לעבוד עכשיו. ריק = הוא פעיל. */
+  function couponBlocked(coupon) {
+    if (!coupon.active) return 'כבוי';
+    if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) return 'פג';
+    if (coupon.max_uses && coupon.uses >= coupon.max_uses) return 'נוצל';
+    return '';
+  }
+
+  function renderCoupons() {
+    var node = document.getElementById('panel-coupons');
+    var list = data.coupons;
+    if (!list) { node.innerHTML = '<p class="adm-empty">טוען…</p>'; return; }
+
+    var html = '<div class="adm-card"><h2>קופון חדש</h2>' +
+      '<p class="adm-card-sub">הקוד הוא מה שהלקוח מקליד. אותיות וספרות בלבד — ' +
+      'רווחים ומקפים יורדים אוטומטית.</p>' +
+      '<form id="adm-coupon-form" class="adm-coupon-form">' +
+      '<label class="adm-field"><span>קוד</span>' +
+      '<input class="adm-input" id="cp-code" maxlength="24" required ' +
+      'placeholder="EXTRAMONTH" autocomplete="off" spellcheck="false"></label>' +
+      '<label class="adm-field"><span>סוג</span>' +
+      '<select class="adm-select" id="cp-kind">' +
+      Object.keys(COUPON_KIND).map(function (kind) {
+        return '<option value="' + kind + '">' + esc(COUPON_KIND[kind].label) + '</option>';
+      }).join('') +
+      '</select></label>' +
+      '<label class="adm-field"><span id="cp-value-label">ימים</span>' +
+      '<input class="adm-input" id="cp-value" type="number" min="1" value="30" required></label>' +
+      '<label class="adm-field"><span>תוקף עד (לא חובה)</span>' +
+      '<input class="adm-input" id="cp-until" type="date"></label>' +
+      '<label class="adm-field"><span>מכסת מימושים (לא חובה)</span>' +
+      '<input class="adm-input" id="cp-max" type="number" min="1" ' +
+      'placeholder="ללא הגבלה"></label>' +
+      '<label class="adm-field adm-coupon-note"><span>למה זה (לעצמך)</span>' +
+      '<input class="adm-input" id="cp-note" maxlength="300" ' +
+      'placeholder="קמפיין נטישת הרשמה, ספטמבר"></label>' +
+      '<button class="adm-btn is-primary" type="submit">יצירה</button>' +
+      '</form>' +
+      '<p id="adm-coupon-msg" class="adm-error" hidden></p></div>';
+
+    html += '<div class="adm-card"><h2>הקופונים</h2>';
+    if (!list.coupons.length) {
+      html += '<p class="adm-empty">עוד לא נוצר קופון.</p>';
+    } else {
+      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>קוד</th><th>מה הוא נותן</th><th>מומש</th><th>תוקף</th>' +
+        '<th>מצב</th><th>למה</th><th></th></tr></thead><tbody>';
+      list.coupons.forEach(function (coupon) {
+        var blocked = couponBlocked(coupon);
+        html += '<tr>' +
+          '<td><strong>' + esc(coupon.code) + '</strong></td>' +
+          '<td>' + esc(couponValue(coupon)) + '</td>' +
+          '<td>' + coupon.uses + (coupon.max_uses ? ' / ' + coupon.max_uses : '') + '</td>' +
+          '<td>' + (coupon.valid_until ? esc(date(coupon.valid_until)) : '—') + '</td>' +
+          '<td>' + (blocked
+            ? '<span class="adm-pill">' + esc(blocked) + '</span>'
+            : '<span class="adm-pill is-active">פעיל</span>') + '</td>' +
+          '<td class="wide" style="color:var(--muted)">' + esc(coupon.note || '') + '</td>' +
+          '<td><button class="adm-btn is-small" data-coupon-toggle="' + esc(coupon.code) +
+            '" data-active="' + (coupon.active ? '1' : '0') + '">' +
+            (coupon.active ? 'כיבוי' : 'הדלקה') + '</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    /* מי מימש. זו התשובה ל"הקמפיין עבד?" בלי לפתוח עוד מסך. */
+    html += '<div class="adm-card"><h2>מימושים אחרונים</h2>';
+    if (!list.redemptions.length) {
+      html += '<p class="adm-empty">עוד לא מומש קופון.</p>';
+    } else {
+      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>תאריך</th><th>לקוח</th><th>קוד</th><th>מה קיבל</th>' +
+        '</tr></thead><tbody>';
+      list.redemptions.forEach(function (row) {
+        html += '<tr>' +
+          '<td>' + esc(date(row.created_at)) + '</td>' +
+          '<td class="wide"><a href="#" data-company="' + esc(row.company_id) + '">' +
+            esc(row.companyName || row.company_id) + '</a></td>' +
+          '<td>' + esc(row.code) + '</td>' +
+          '<td>' + esc(couponValue(row)) + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    node.innerHTML = html + '</div>';
+  }
+
+  function loadCoupons() {
+    return api('coupons', { action: 'list' }).then(function (body) {
+      data.coupons = body;
+      if (current === 'coupons') renderCoupons();
+    });
+  }
+
   /* ===== חלון פעולה ===== */
 
   var pending = null;
@@ -607,6 +720,7 @@
     if (panel === 'money') renderMoney();
     if (panel === 'companies') { renderCompanies(); if (!data.companies) loadCompanies(); }
     if (panel === 'tickets') { renderTickets(); if (!data.tickets) loadTickets(); }
+    if (panel === 'coupons') { renderCoupons(); if (!data.coupons) loadCoupons(); }
   }
 
   function start() {
@@ -672,6 +786,15 @@
       return;
     }
 
+    var toggle = event.target.closest('[data-coupon-toggle]');
+    if (toggle) {
+      api('coupons', {
+        action: 'toggle', code: toggle.dataset.couponToggle,
+        active: toggle.dataset.active !== '1'
+      }).then(loadCoupons).catch(function (error) { window.alert(error.message); });
+      return;
+    }
+
     var ticket = event.target.closest('[data-ticket]');
     if (ticket) {
       var reply = window.prompt('המענה ללקוח:');
@@ -680,6 +803,37 @@
         .then(loadTickets)
         .catch(function (error) { window.alert(error.message); });
     }
+  });
+
+  /* שם השדה משתנה עם הסוג: "ימים" הוא לא "שקלים", ושדה שכתוב
+     עליו הדבר הלא נכון הוא הדרך הבטוחה לתת 30 ש"ח במקום 30 יום. */
+  document.addEventListener('change', function (event) {
+    if (event.target.id !== 'cp-kind') return;
+    var kind = COUPON_KIND[event.target.value];
+    var label = document.getElementById('cp-value-label');
+    if (label && kind) label.textContent = kind.unit;
+  });
+
+  document.addEventListener('submit', function (event) {
+    if (event.target.id !== 'adm-coupon-form') return;
+    event.preventDefault();
+    var box = document.getElementById('adm-coupon-msg');
+    box.hidden = true;
+    api('coupons', {
+      action: 'create',
+      code: document.getElementById('cp-code').value,
+      kind: document.getElementById('cp-kind').value,
+      value: document.getElementById('cp-value').value,
+      validUntil: document.getElementById('cp-until').value,
+      maxUses: document.getElementById('cp-max').value,
+      note: document.getElementById('cp-note').value
+    }).then(function () {
+      data.coupons = null;
+      return loadCoupons();
+    }).catch(function (error) {
+      box.textContent = error.message;
+      box.hidden = false;
+    });
   });
 
   var searchTimer = null;

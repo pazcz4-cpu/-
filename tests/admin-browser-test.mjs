@@ -99,6 +99,23 @@ const WORLD = {
     tickets: [],
     usage: { configUpdatedAt: days(-2), weeks: 3, published: 2, lastWeekAt: days(-1) }
   },
+  coupons: {
+    ok: true,
+    coupons: [
+      { code: 'EXTRAMONTH', kind: 'days', value: 30, uses: 3, max_uses: null,
+        active: true, valid_until: null, note: 'קמפיין נטישה', redeemed: 3,
+        created_at: days(-5) },
+      { code: 'HALFOFF', kind: 'percent', value: 50, uses: 10, max_uses: 10,
+        active: true, valid_until: null, note: '', redeemed: 10, created_at: days(-9) },
+      { code: 'OLDONE', kind: 'amount', value: 50, uses: 0, max_uses: null,
+        active: false, valid_until: days(-2), note: 'נגמר', redeemed: 0,
+        created_at: days(-30) }
+    ],
+    redemptions: [
+      { company_id: 'co-1', companyName: 'קפה מרכז', code: 'EXTRAMONTH',
+        kind: 'days', value: 30, created_at: days(-1) }
+    ]
+  },
   tickets: {
     ok: true,
     tickets: [
@@ -213,6 +230,61 @@ try {
   check('הקריאה מוצגת עם שם הלקוח', tickets, /קפה מרכז/);
   check('וגוף הפנייה', tickets, /לחצתי שמירה/);
   check('והמצב בעברית', tickets, /פתוחה/);
+
+  console.log('\n== קופונים ==');
+  await page.click('.adm-tab[data-panel="coupons"]');
+  await page.waitForTimeout(500);
+
+  const rows = await page.locator('#panel-coupons .adm-table').first()
+    .locator('tbody tr').allInnerTexts();
+  check('שלושת הקופונים מוצגים', rows.length, 3);
+  /* כל סוג מוצג ביחידה שלו. "30" לבדו אינו אומר ימים או שקלים,
+     וזו בדיוק הטעות שנותנת 30 ש"ח במקום 30 יום. */
+  check('ימים מוצגים כימים', rows[0], /30 ימים/);
+  check('אחוזים כאחוזים', rows[1], /50%/);
+  check('ושקלים כשקלים', rows[2], /50 ₪/);
+
+  /* מה מונע מקופון לעבוד עכשיו, בלי לחשב בראש */
+  check('קופון פעיל מסומן', rows[0], /פעיל/);
+  check('קופון שנוצל עד תום מסומן', rows[1], /נוצל/);
+  check('וקופון כבוי מסומן', rows[2], /כבוי/);
+  check('ומי מימש מופיע בשמו',
+    await page.locator('#panel-coupons .adm-card').last().innerText(), /קפה מרכז/);
+
+  console.log('\n== יצירה ==');
+  /* שם השדה משתנה עם הסוג: "ימים" הוא לא "שקלים" */
+  check('ברירת המחדל היא ימים',
+    (await page.locator('#cp-value-label').innerText()).trim(), 'ימים');
+  await page.selectOption('#cp-kind', 'amount');
+  await page.waitForTimeout(200);
+  check('ואחרי בחירת שקלים השדה משנה שם',
+    (await page.locator('#cp-value-label').innerText()).trim(), 'שקלים');
+
+  sent.length = 0;
+  await page.fill('#cp-code', 'pilot 2026');
+  await page.fill('#cp-value', '50');
+  await page.fill('#cp-until', '2026-12-31');
+  await page.fill('#cp-max', '25');
+  await page.fill('#cp-note', 'קמפיין פיילוט');
+  await page.click('#adm-coupon-form button[type="submit"]');
+  await page.waitForTimeout(600);
+
+  const created = sent.filter((call) => call.body.action === 'create')[0];
+  check('הבקשה יצאה', !!created, true);
+  check('עם הקוד שהוקלד', created && created.body.code, 'pilot 2026');
+  check('עם הסוג', created && created.body.kind, 'amount');
+  check('עם הערך', created && created.body.value, '50');
+  check('עם התוקף', created && created.body.validUntil, '2026-12-31');
+  check('ועם המכסה', created && created.body.maxUses, '25');
+
+  console.log('\n== כיבוי ==');
+  sent.length = 0;
+  await page.click('[data-coupon-toggle="EXTRAMONTH"]');
+  await page.waitForTimeout(500);
+  const toggled = sent.filter((call) => call.body.action === 'toggle')[0];
+  check('הבקשה יצאה', !!toggled, true);
+  check('על הקוד הנכון', toggled && toggled.body.code, 'EXTRAMONTH');
+  check('ובכיוון הנכון', toggled && toggled.body.active, false);
 
   console.log('\n== במסך צר ==');
   await page.setViewportSize({ width: 390, height: 844 });

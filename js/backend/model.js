@@ -297,20 +297,23 @@
 
   /* ===== קופונים =====
 
-     שני סוגים בלבד, ובכוונה:
+     שלושה סוגים:
 
        days     מאריך את תקופת הניסיון או את התקופה המשולמת.
                 "חודש נוסף ללא עלות" הוא days=30.
-       percent  הנחה על החיוב הבא. 100 פירושו חיוב אחד שלא נגבה.
+       percent  הנחה באחוזים על החיוב הבא. 100 = חיוב שלא נגבה.
+       amount   הנחה בשקלים על החיוב הבא. גדולה מהמחיר = חינם.
 
-     למה לא "סכום קבוע בשקלים": מוצר שנמכר בכמה מדינות אינו יכול
-     להחזיק הנחה של "50" בלי לדעת של מה. אחוז עובד בכל מטבע.
+     amount הוא בשקלים כי בשקלים נגבה הכול: המחירון, המחיר
+     המוסכם והחיוב עצמו. ביום שיהיה מטבע שני הוא יצטרך להיות
+     מטבע על הקופון, ולא ערך ערטילאי שמישהו יפרש.
 
      ההנחה חלה על החיוב הבא בלבד, ולא "לתמיד": קופון שיווקי שנשאר
      פעיל שנה הוא הכנסה שנעלמה בלי שאיש החליט על כך. מי שרוצה
      הנחה קבועה מזין מחיר מוסכם במשרד האחורי -- שם זו החלטה
      מודעת, והיא רשומה על שם מי שקיבל אותה. */
-  var COUPON = { DAYS: 'days', PERCENT: 'percent' };
+  var COUPON = { DAYS: 'days', PERCENT: 'percent', AMOUNT: 'amount' };
+  var COUPON_KINDS = [COUPON.DAYS, COUPON.PERCENT, COUPON.AMOUNT];
 
   /* הקוד מנורמל לפני כל השוואה: הלקוח יקליד "extra month",
      "Extra-Month" ו-"EXTRAMONTH ", וכולם אותו קופון. */
@@ -324,7 +327,7 @@
   function couponProblem(coupon, company, now) {
     if (!coupon || !normalizeCouponCode(coupon.code)) return 'notFound';
     if (coupon.active === false) return 'notFound';
-    if (COUPON.DAYS !== coupon.kind && COUPON.PERCENT !== coupon.kind) return 'notFound';
+    if (COUPON_KINDS.indexOf(coupon.kind) === -1) return 'notFound';
     if (!(Number(coupon.value) > 0)) return 'notFound';
     if (coupon.kind === COUPON.PERCENT && Number(coupon.value) > 100) return 'notFound';
 
@@ -354,6 +357,9 @@
       if (from && from > base) base = from;
       return { kind: COUPON.DAYS, days: value, validUntil: addDays(base, value) };
     }
+    if (coupon.kind === COUPON.AMOUNT) {
+      return { kind: COUPON.AMOUNT, amount: value, charges: 1 };
+    }
     return { kind: COUPON.PERCENT, percent: Math.min(100, value), charges: 1 };
   }
 
@@ -365,6 +371,13 @@
   function discountedPrice(base, company) {
     var amount = Math.max(0, Math.round(Number(base) || 0));
     if (!company || !(Number(company.discountChargesLeft) > 0)) return amount;
+
+    /* סכום קודם לאחוז, ולא שניהם: קופון אחד ללקוח, ולכן רק אחד
+       מהשניים מלא בפועל. הסדר כאן קובע רק מה קורה בשורה פגומה,
+       וסכום קבוע הוא ההנחה שקל יותר להסביר ללקוח. */
+    var off = Math.max(0, Math.round(Number(company.discountAmount) || 0));
+    if (off) return Math.max(0, amount - off);
+
     var percent = Math.max(0, Math.min(100, Number(company.discountPercent) || 0));
     if (!percent) return amount;
     return Math.max(0, Math.round(amount * (100 - percent) / 100));
@@ -721,7 +734,7 @@
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,
-    COUPON: COUPON, normalizeCouponCode: normalizeCouponCode,
+    COUPON: COUPON, COUPON_KINDS: COUPON_KINDS, normalizeCouponCode: normalizeCouponCode,
     couponProblem: couponProblem, couponEffect: couponEffect,
     discountedPrice: discountedPrice, isFullyDiscounted: isFullyDiscounted,
     quoteHref: quoteHref,

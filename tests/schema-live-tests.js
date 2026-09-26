@@ -564,6 +564,29 @@ check('מנהל שאינו בעלים נדחה', function () {
   assertEqual(out, 'refused', 'השאילתה נפלה במקום שהחריגה תיתפס');
 });
 
+check('קופון בשקלים כותב סכום ומאפס אחוז', function () {
+  var value = ask(false,
+    "(select coalesce(discount_amount::text,'-') || '/' ||" +
+    " coalesce(discount_percent::text,'-') || '/' || discount_charges_left::text" +
+    " from public.companies where id = '" + CO + "')",
+    coupons("insert into public.coupons (code, kind, value) values ('FIFTY','amount',50);") +
+    "\nselect public.redeem_coupon('FIFTY');");
+  assertEqual(value, '50/-/1', 'מצב ההנחה אחרי מימוש קופון שקלים');
+});
+
+/* שני שדות הנחה על אותה שורה הם שורה שאיש לא יידע לקרוא בעוד
+   חצי שנה, ובינתיים היא מזילה פעמיים */
+check('קופון באחוזים מאפס את הסכום', function () {
+  var value = ask(false,
+    "(select coalesce(discount_amount::text,'-') || '/' ||" +
+    " coalesce(discount_percent::text,'-')" +
+    " from public.companies where id = '" + CO + "')",
+    coupons("insert into public.coupons (code, kind, value) values ('HALF','percent',50);" +
+      "\nupdate public.companies set discount_amount = 30 where id = '" + CO + "';") +
+    "\nselect public.redeem_coupon('HALF');");
+  assertEqual(value, '-/50', 'מצב ההנחה אחרי מימוש קופון אחוזים');
+});
+
 check('טבלת הקודים סגורה בפני המשתמש המחובר', function () {
   /* מי שיכול לקרוא אותה שולף את כל הקודים ובוחר את הנדיב ביותר */
   assertEqual(ask(false,

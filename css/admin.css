@@ -184,3 +184,14 @@
   .adm-top { padding-inline: var(--s3); }
   .adm-tile-value { font-size: var(--t-xl); }
 }
+
+/* טופס הקופון. רשת ולא עמודה: חמישה שדות קצרים זה מתחת לזה
+   הופכים טופס של דקה למסך גלילה. */
+.adm-coupon-form {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  align-items: end;
+}
+.adm-coupon-form .adm-coupon-note { grid-column: 1 / -1; }
+.adm-coupon-form #cp-code { text-transform: uppercase; letter-spacing: .04em; }
+.adm-coupon-form button { block-size: fit-content; }

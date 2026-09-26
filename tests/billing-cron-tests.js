@@ -352,6 +352,34 @@ test('הנחה מקופון מופחתת מהחיוב, ונוצלת פעם אח�
 
 /* ההנחה יורדת רק אחרי חיוב שעבר. כרטיס שנדחה היום והתקבל מחר
    אינו אמור לגבות את המחיר המלא. */
+test('הנחה בשקלים יורדת מהחיוב', function () {
+  var db = new FakeDb([company({
+    id: 'co-ils', plan: 'starter',
+    discount_amount: 50, discount_charges_left: 1
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
+    assertEqual(db.charges[0].amount, 149, 'ההנחה בשקלים לא הופחתה');
+    db.restore();
+  });
+});
+
+/* הנחה גדולה מהמחיר היא חודש חינם, ולא חוב שלנו ללקוח */
+test('הנחה בשקלים שגדולה מהמחיר אינה מחייבת', function () {
+  var db = new FakeDb([company({
+    id: 'co-big', plan: 'starter',
+    discount_amount: 500, discount_charges_left: 1
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נשלחה בקשת חיוב');
+    assertEqual(res.payload.results[0].action, 'granted', 'לא נרשם כהטבה');
+    assertEqual(db.companies['co-big'].status, 'active', 'החברה לא הופעלה');
+    db.restore();
+  });
+});
+
 test('הנחה אינה נוצלת כשהחיוב נכשל', function () {
   var db = new FakeDb([company({
     id: 'co-fail-cut', plan: 'starter', billing_subscription_id: 'fail-1',

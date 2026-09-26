@@ -27,6 +27,7 @@ var companies = route('companies');
 var company = route('company');
 var action = route('action');
 var tickets = route('tickets');
+var coupons = route('coupons');
 
 var passed = 0, failed = 0;
 function assert(condition, message) { if (!condition) throw new Error(message); }
@@ -63,6 +64,8 @@ function Fake(seed) {
   this.users = data.users || [];
   this.events = data.events || [];
   this.tickets = data.tickets || [];
+  this.coupons = data.coupons || [];
+  this.redemptions = data.redemptions || [];
   this.sessions = data.sessions || { 'owner-token': { id: 'u1', email: 'boss@setshifts.com' } };
   this.writes = [];
 }
@@ -141,6 +144,26 @@ Fake.prototype.install = function () {
       }
       return reply(200, list);
     }
+    if (path === '/coupons') {
+      if (opts.method === 'POST') {
+        var fresh = body[0];
+        if (self.coupons.some(function (c) { return c.code === fresh.code; })) {
+          return reply(409, { code: '23505' });
+        }
+        self.coupons.push(Object.assign({ uses: 0, created_at: new Date().toISOString() }, fresh));
+        return reply(201, [fresh]);
+      }
+      var codeMatch = query.match(/code=eq\.([^&]+)/);
+      var picked = codeMatch
+        ? self.coupons.filter(function (c) { return c.code === codeMatch[1]; })
+        : self.coupons;
+      if (opts.method === 'PATCH') {
+        picked.forEach(function (row) { Object.assign(row, body); });
+        return reply(200, picked);
+      }
+      return reply(200, picked);
+    }
+    if (path === '/coupon_redemptions') return reply(200, self.redemptions);
     if (path === '/company_configs' || path === '/company_weeks') return reply(200, []);
     return reply(404, { message: 'no route: ' + path });
   };
@@ -669,6 +692,112 @@ test('מענה ריק נדחה', function () {
   var fake = sampleWorld(); fake.install();
   return call(tickets, { action: 'reply', id: 't1', reply: '  ' }).then(function (res) {
     assertEqual(res.statusCode, 400, 'מענה ריק התקבל');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+console.log('\n== קופונים ==');
+
+function couponWorld(extra) {
+  return new Fake(Object.assign({
+    companies: [{ id: 'co-1', name: 'קפה מרכז', plan: 'starter', status: 'trial' }],
+    coupons: [
+      { code: 'EXTRAMONTH', kind: 'days', value: 30, uses: 2, max_uses: null,
+        active: true, note: 'קמפיין ספטמבר', created_at: daysAgo(3) }
+    ],
+    redemptions: [
+      { company_id: 'co-1', code: 'EXTRAMONTH', kind: 'days', value: 30,
+        created_at: daysAgo(1) }
+    ]
+  }, extra || {}));
+}
+
+test('הרשימה מראה כמה מומש ועל ידי מי', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'list' }).then(function (res) {
+    assertEqual(res.payload.coupons.length, 1, 'מספר הקופונים');
+    assertEqual(res.payload.coupons[0].redeemed, 1, 'מספר המימושים לא חושב');
+    assertEqual(res.payload.redemptions[0].companyName, 'קפה מרכז',
+      'שם הלקוח לא צורף למימוש');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('יצירת קופון בשקלים', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'create', code: ' fifty-off ', kind: 'amount',
+    value: 50, note: 'הנחה לפיילוט' }).then(function (res) {
+    assertEqual(res.statusCode || 200, 200, 'קוד תשובה');
+    /* הקוד מנורמל בדרך פנימה: מה שנשמר הוא מה שהלקוח יקליד */
+    assertEqual(fake.coupons[1].code, 'FIFTYOFF', 'הקוד לא נורמל');
+    assertEqual(fake.coupons[1].kind, 'amount', 'הסוג לא נשמר');
+    assertEqual(fake.coupons[1].value, 50, 'הערך לא נשמר');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+/* תאריך בלבד מגיע מהטופס. קופון שתקף "עד 31.12" אמור לעבוד גם
+   ב-31.12 בערב, ולא לפוג בחצות שלפניו. */
+test('תוקף נשמר עד סוף היום', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'create', code: 'DEC', kind: 'percent',
+    value: 20, validUntil: '2026-12-31' }).then(function () {
+    assertEqual(fake.coupons[1].valid_until, '2026-12-31T23:59:59Z', 'התוקף שנשמר');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('הנחה מעל מאה אחוז נדחית', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'create', code: 'TOOMUCH', kind: 'percent', value: 150 })
+    .then(function (res) {
+      assertEqual(res.statusCode, 400, 'קוד תשובה');
+      assertEqual(fake.coupons.length, 1, 'נוצר קופון פסול');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+test('סוג שאינו מוכר נדחה', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'create', code: 'WEIRD', kind: 'bonus', value: 5 })
+    .then(function (res) {
+      assertEqual(res.statusCode, 400, 'קוד תשובה');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+test('קוד שכבר קיים נדחה בהודעה ברורה', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'create', code: 'EXTRAMONTH', kind: 'days', value: 30 })
+    .then(function (res) {
+      assertEqual(res.statusCode, 409, 'קוד תשובה');
+      assert(/כבר קיים/.test(res.payload.message), 'ההודעה אינה מסבירה');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+/* כיבוי ולא מחיקה: קופון שנשלח בהודעה ללקוחות הוא הבטחה שיצאה
+   החוצה, והיומן שמצביע עליו צריך להישאר שלם. */
+test('כיבוי משאיר את הקופון ואת ההיסטוריה', function () {
+  var fake = couponWorld(); fake.install();
+  return call(coupons, { action: 'toggle', code: 'EXTRAMONTH', active: false })
+    .then(function (res) {
+      assertEqual(res.payload.ok, true, 'הכיבוי נכשל');
+      assertEqual(fake.coupons[0].active, false, 'הקופון לא כובה');
+      assertEqual(fake.coupons.length, 1, 'הקופון נמחק');
+      assertEqual(fake.redemptions.length, 1, 'היומן נמחק');
+      fake.restore();
+    }, function (e) { fake.restore(); throw e; });
+});
+
+test('לקוח אינו רשאי לגעת בקופונים', function () {
+  var fake = couponWorld();
+  fake.sessions['customer-token'] = { id: 'u9', email: 'someone@customer.co.il' };
+  fake.install();
+  return call(coupons, { action: 'create', code: 'FREE', kind: 'percent', value: 100 },
+    { token: 'customer-token' }).then(function (res) {
+    assertEqual(res.statusCode, 403, 'קוד תשובה');
+    assertEqual(fake.coupons.length, 1, 'נוצר קופון בידי לקוח');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });

@@ -1496,9 +1496,10 @@ grant execute on function public.forget_push_token(text) to authenticated;
 
 -- ===== קופונים =====
 --
--- שני סוגים בלבד: days מאריך את התקופה, percent מוזיל את החיוב
--- הבא. "חודש נוסף ללא עלות" הוא days=30, ו"חודש ראשון חינם" הוא
--- percent=100.
+-- שלושה סוגים: days מאריך את התקופה, percent מוזיל את החיוב הבא
+-- באחוזים, ו-amount מוזיל אותו בשקלים. "חודש נוסף ללא עלות" הוא
+-- days=30, "חודש ראשון חינם" הוא percent=100, ו"50 ש"ח הנחה" הוא
+-- amount=50.
 --
 -- הקוד הוא המפתח הראשי ולא מזהה נפרד: הוא מה שהלקוח מקליד, הוא
 -- מה שמופיע בהודעה שנשלחה אליו, והוא חייב להיות ייחודי ממילא.
@@ -1506,7 +1507,7 @@ grant execute on function public.forget_push_token(text) to authenticated;
 -- בדפדפן לפני השליחה, וכאן לפני ההשוואה.
 create table if not exists public.coupons (
   code        text primary key,
-  kind        text not null check (kind in ('days', 'percent')),
+  kind        text not null check (kind in ('days', 'percent', 'amount')),
   value       integer not null check (value > 0),
   note        text,
   valid_until timestamptz,
@@ -1551,6 +1552,9 @@ alter table public.companies
   add column if not exists coupon_code           text,
   add column if not exists discount_percent      integer
     check (discount_percent is null or (discount_percent >= 0 and discount_percent <= 100)),
+  -- הנחה בשקלים. גדולה מהמחיר פירושה חיוב שלא נגבה, וזה תקין.
+  add column if not exists discount_amount       integer
+    check (discount_amount is null or discount_amount >= 0),
   add column if not exists discount_charges_left integer not null default 0
     check (discount_charges_left >= 0);
 
@@ -1643,10 +1647,22 @@ begin
     update public.companies
       set valid_until = v_until, coupon_code = v_coupon.code
       where id = v_company.id;
+  elsif v_coupon.kind = 'amount' then
+    v_until := v_company.valid_until;
+    -- שני שדות ההנחה נכתבים יחד, ואחד מהם מתאפס: קופון אחד
+    -- ללקוח, ושתי הנחות על אותה שורה הן שורה שאיש לא יידע
+    -- לקרוא בעוד חצי שנה.
+    update public.companies
+      set discount_amount = v_coupon.value,
+          discount_percent = null,
+          discount_charges_left = 1,
+          coupon_code = v_coupon.code
+      where id = v_company.id;
   else
     v_until := v_company.valid_until;
     update public.companies
       set discount_percent = v_coupon.value,
+          discount_amount = null,
           discount_charges_left = 1,
           coupon_code = v_coupon.code
       where id = v_company.id;

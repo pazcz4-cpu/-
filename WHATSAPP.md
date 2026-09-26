@@ -18,6 +18,25 @@
 
 ---
 
+## באיזו שפה הממשק
+
+שני אתרים שונים, ורק אחד מהם מתורגם:
+
+| האתר | שלבים | עברית? |
+|------|-------|--------|
+| `business.facebook.com` | 2, 3, 7, 8, 9 | כן, מלאה |
+| `developers.facebook.com` | 4, 5, 6, 10 | **לא. אנגלית בלבד** |
+
+באתר המפתחים אין מתג שפה ואין תרגום — זה לא באג ואין מה
+לחפש. לכן בכל שלב כאן מופיע השם באנגלית, ולצידו השם בעברית
+במקומות שבהם הממשק מתורגם.
+
+**עוד דבר:** התרגום של מטא לעברית משתנה מדי כמה חודשים, והשמות
+באנגלית יציבים הרבה יותר. אם שם בעברית אינו מופיע אצלך בדיוק
+כפי שכתוב כאן — חפש את השם באנגלית שלצידו, הוא זה שיחזיק.
+
+---
+
 ## מה צריך להכין לפני שמתחילים
 
 | # | מה | הערה |
@@ -183,8 +202,9 @@
 **א.** `facebook.com` → יצירת חשבון. שם אמיתי, אימות מייל.
 אין צורך בתמונה, בחברים או בפוסטים.
 
-**ב. הפעל אימות דו-שלבי.** Settings → Security and login →
-Two-factor authentication.
+**ב. הפעל אימות דו-שלבי.**
+**Settings** (הגדרות) → **Security and login** (אבטחה והתחברות)
+→ **Two-factor authentication** (אימות דו-שלבי).
 
 > למה זה לא "בהמשך": חשבון הפייסבוק האישי הוא המפתח לכל הנכס
 > העסקי. מי שנכנס אליו לוקח את מספר הוואטסאפ של החברה.
@@ -193,18 +213,20 @@ Two-factor authentication.
 
 ## שלב 2 · תיק עסקי במטא (Business Manager)
 
-**א.** היכנס ל-`business.facebook.com` → **Create account**.
+**א.** היכנס ל-`business.facebook.com` →
+**Create account** (יצירת חשבון).
 
 **ב.** מלא: שם העסק, שמך, מייל עסקי (`support@setshifts.com`).
 
-**ג.** Settings (גלגל שיניים) → **Business info** → השלם הכול:
+**ג.** גלגל השיניים → **Business settings** (הגדרות עסק) →
+**Business info** (פרטי העסק) → השלם הכול:
 
-```
-Legal business name   השם המלא כפי שרשום ברשם / ברשות המסים
-Business address      הכתובת הרשומה, כולל מיקוד
-Business phone        טלפון
-Website               https://setshifts.com
-```
+| השדה באנגלית | בעברית | מה למלא |
+|---|---|---|
+| Legal business name | השם המשפטי של העסק | השם המלא כפי שרשום ברשם / ברשות המסים |
+| Business address | כתובת העסק | הכתובת הרשומה, כולל מיקוד |
+| Business phone number | מספר הטלפון של העסק | טלפון |
+| Website | אתר אינטרנט | `https://setshifts.com` |
 
 > 🛑 **הסיבה מספר אחת לדחיית אימות:** השם או הכתובת כאן אינם
 > זהים **בדיוק** למה שכתוב במסמכים שתעלה בשלב הבא. "בע״מ" חסר,
@@ -217,10 +239,14 @@ Website               https://setshifts.com
 
 אפשר להגיש עכשיו ולהמשיך לשלבים הבאים בזמן ההמתנה.
 
-**א.** Business settings → **Security Center**
-(או Business info → Verification) → **Start verification**.
+**א.** **Business settings** (הגדרות עסק) → **Security Center**
+(מרכז האבטחה) → **Start verification** (התחלת האימות).
 
-**ב.** חפש את העסק ברשימה, או "My business isn't listed" והזן ידנית.
+אצל חלק זה יושב במקום אחר: **Business info** (פרטי העסק) →
+**Verification** (אימות). שני המסלולים מגיעים לאותו מקום.
+
+**ב.** חפש את העסק ברשימה, או **"My business isn't listed"**
+(העסק שלי לא מופיע ברשימה) והזן ידנית.
 
 **ג.** העלה מסמך: תעודת עוסק מורשה / תעודת התאגדות, או מסמך עם
 שם וכתובת (חשבונית חשמל, דף בנק, ארנונה). PDF או צילום ברור.
@@ -237,6 +263,9 @@ Website               https://setshifts.com
 ---
 
 ## שלב 4 · אפליקציה ב-Meta for Developers
+
+> שלבים 4, 5 ו-6 הם באתר המפתחים, וכולם באנגלית בלבד.
+> בשלב 7 חוזרים ל-`business.facebook.com`, ושם יש עברית.
 
 **א.** `developers.facebook.com` → התחבר עם אותו חשבון אישי.
 
@@ -329,15 +358,22 @@ Description      מערכת שיבוץ עובדים
 
 הטוקן שבמסך API Setup מת אחרי 24 שעות. לפרודקשן צריך אחר.
 
-**א.** `business.facebook.com` → Settings → **Users → System users**.
+> חוזרים ל-`business.facebook.com`, ולכן כאן יש שוב עברית.
 
-**ב.** **Add** → שם: `SetShifts Server` → תפקיד: **Admin**.
+**א.** `business.facebook.com` → **Business settings**
+(הגדרות עסק) → **Users** (משתמשים) →
+**System users** (משתמשי מערכת).
 
-**ג.** **Assign assets** → סמן את האפליקציה `SetShifts Server`
-ואת ה-WABA → בשניהם **Full control**.
+**ב.** **Add** (הוספה) → שם: `SetShifts Server` →
+תפקיד: **Admin** (מנהל).
 
-**ד.** **Generate new token** → בחר את האפליקציה →
-**Expiration: Never** → סמן את שתי ההרשאות:
+**ג.** **Assign assets** (הקצאת נכסים) → סמן את האפליקציה
+`SetShifts Server` ואת ה-WABA → בשניהם
+**Full control** (שליטה מלאה).
+
+**ד.** **Generate new token** (יצירת טוקן חדש) → בחר את
+האפליקציה → **Expiration** (תפוגה): **Never** (אף פעם) →
+סמן את שתי ההרשאות:
 
 ```
 whatsapp_business_messaging
@@ -351,8 +387,11 @@ Vercel (שלב 10). אל תשמור אותו בקובץ, בצ'אט או בהער
 
 ## שלב 8 · אמצעי תשלום
 
-`business.facebook.com` → WhatsApp Manager → **Billing** →
-הוסף כרטיס אשראי.
+`business.facebook.com` → **WhatsApp Manager** (מנהל WhatsApp)
+→ **Billing** (חיוב) → הוסף כרטיס אשראי.
+
+אצל חלק זה יושב תחת **Business settings** (הגדרות עסק) →
+**Payments** (תשלומים) / **Payment methods** (אמצעי תשלום).
 
 בלי זה השליחה נעצרת אחרי המכסה החינמית.
 
@@ -374,7 +413,7 @@ Vercel (שלב 10). אל תשמור אותו בקובץ, בצ'אט או בהער
 טופס ולא כמו טקסט חופשי.
 
 `business.facebook.com/wa/manage/message-templates` →
-**Create template**.
+**Create template** (יצירת תבנית).
 
 התבנית לנטישת הרשמה — קטגוריה **Marketing**, שפה **Hebrew**:
 

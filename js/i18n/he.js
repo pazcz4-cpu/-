@@ -998,6 +998,7 @@
         resume: 'חידוש המנוי',
         resumed: 'המנוי חודש',
         pricePerEmployee: '{amount} ₪ לעובד לחודש',
+        peakNote: 'החיוב הוא לפי מספר העובדים הפעילים הגבוה ביותר בתקופה — {count} בתקופה הנוכחית. עובד שנוסף באמצע החודש נספר בחיוב הקרוב; עובד שהושבת ייספר עד סוף התקופה הנוכחית, ולא אחריה.',
         priceMonthly: '{amount}₪ לחודש', priceAmount: '{amount}₪',
         updateFailed: 'העדכון נכשל', cancelFailed: 'הביטול נכשל',
         title: 'המנוי שלך', status: 'סטטוס', plan: 'תוכנית', validUntil: 'בתוקף עד',

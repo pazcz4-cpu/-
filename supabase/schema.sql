@@ -128,6 +128,27 @@ alter table public.companies
   add column if not exists custom_price_per_employee integer
     check (custom_price_per_employee is null or custom_price_per_employee >= 0);
 
+-- BILLING: כמה עובדים, וכמה היו לכל היותר
+--
+-- שתי העמודות האלה הן מה שתמחור לפי עובד נשען עליו, והן קיימות
+-- כי ספירה ברגע אחד היא ספירה שאפשר לתזמן סביבה.
+--
+-- תאריך החיוב מופיע ללקוח על מסך המנוי. רשת עם מאה עובדים
+-- שמכבה תשעים מהם יום לפני -- מתג, לא מחיקה, ואף נתון אינו
+-- אובד -- הייתה משלמת עשירית, והחיוב שמצליח דוחף את התקופה
+-- חודש קדימה כך שאין ריצה שתתקן. למחרת מדליקים הכל בחזרה.
+--
+-- לכן לא גובים לפי הרגע אלא לפי השיא בתקופה: המספר הגבוה
+-- ביותר שהיה מאז החיוב הקודם. כדי לשלם פחות צריך באמת לא
+-- להחזיק את העובדים במערכת לאורך כל החודש -- כלומר לא
+-- להשתמש במוצר. זה התמריץ הנכון.
+--
+-- employee_count  כמה פעילים כרגע
+-- employee_peak   כמה היו לכל היותר מאז החיוב האחרון
+alter table public.companies
+  add column if not exists employee_count integer,
+  add column if not exists employee_peak  integer;
+
 alter table public.companies
   add column if not exists billing_provider        text,
   add column if not exists billing_customer_id     text,
@@ -1198,6 +1219,78 @@ drop trigger if exists company_users_role_guard on public.company_users;
 create trigger company_users_role_guard
   before update on public.company_users
   for each row execute function public.guard_user_role();
+
+-- BILLING: מי סופר את העובדים
+--
+-- לא הדפדפן. הלקוח כותב את ההגדרות שלו, ולכן כל מספר שהוא
+-- שולח הוא מספר שאפשר לשלוח אחר במקומו. הספירה נעשית כאן,
+-- על השורה שנכתבה, ובלי לשאול אף אחד.
+--
+-- זה גם המסלול היחיד שאי אפשר לעקוף: כדי להשתמש במוצר חייבים
+-- לשמור הגדרות, וכל שמירה עוברת כאן.
+--
+-- השיא עולה ואינו יורד. הוא מתאפס רק במנוע החיוב, ורק אחרי
+-- חיוב שהצליח -- אחרת חיוב שנכשל היה מוחק את מה שהוא בדיוק
+-- לא הצליח לגבות.
+create or replace function public.track_employee_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_list jsonb;
+  v_count integer;
+begin
+  v_list := new.config -> 'employees';
+
+  -- הגדרות שאין בהן רשימה אינן "אפס עובדים" אלא "לא נספר",
+  -- ולכן לא נוגעים במה שנמדד. אין כאן coalesce לרשימה ריקה
+  -- בכוונה: הוא היה הופך שמירה חלקית אחת -- הגדרות שנכתבו
+  -- בלי המפתח -- לאפס עובדים, ומדלג על לקוח אמיתי בחיוב.
+  --
+  -- רשימה ריקה מפורשת היא כן אפס: זה עסק שמחק את כולם, וזה
+  -- מצב אמיתי שצריך להירשם.
+  if v_list is null or jsonb_typeof(v_list) <> 'array' then
+    return new;
+  end if;
+
+  -- עובד בלי active נחשב פעיל, בדיוק כמו במסכים. ההשוואה היא
+  -- על הטקסט ולא על המרה לבוליאני, כדי שערך מפתיע בהגדרות
+  -- לא יפיל שמירה של לקוח.
+  select count(*) into v_count
+    from jsonb_array_elements(v_list) as e
+   where coalesce(e ->> 'active', 'true') <> 'false';
+
+  update public.companies
+     set employee_count = v_count,
+         employee_peak  = greatest(coalesce(employee_peak, 0), v_count)
+   where id = new.company_id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists company_configs_employee_count on public.company_configs;
+create trigger company_configs_employee_count
+  after insert or update on public.company_configs
+  for each row execute function public.track_employee_count();
+
+-- מילוי לאחור: מה שכבר שמור היום. בלי זה לקוח שלא ייגע
+-- בהגדרות עד החיוב הבא היה מגיע אליו בלי מספר בכלל.
+update public.companies c
+   set employee_count = sub.cnt,
+       employee_peak  = greatest(coalesce(c.employee_peak, 0), sub.cnt)
+  from (
+    select cfg.company_id,
+           (select count(*)
+              from jsonb_array_elements(cfg.config -> 'employees') as e
+             where coalesce(e ->> 'active', 'true') <> 'false') as cnt
+      from public.company_configs cfg
+     where jsonb_typeof(cfg.config -> 'employees') = 'array'
+  ) as sub
+ where c.id = sub.company_id
+   and c.employee_count is distinct from sub.cnt;
 
 -- PRIVACY: מה שעובד רואה בפועל
 --

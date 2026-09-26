@@ -993,6 +993,7 @@
         resume: 'Reanudar la suscripción',
         resumed: 'Suscripción reanudada',
         pricePerEmployee: '{amount} ₪ por persona al mes',
+        peakNote: 'La facturación va por el número más alto de empleados activos durante el periodo — {count} en el actual. Quien se añade a mitad de mes cuenta en el próximo cargo; quien se desactiva cuenta hasta el final del periodo actual, y no después.',
         priceMonthly: '{amount} ILS / mes', priceAmount: '{amount} ILS',
         updateFailed: 'No se pudo actualizar', cancelFailed: 'No se pudo cancelar',
         title: 'Tu suscripción', status: 'Estado', plan: 'Plan', validUntil: 'Válida hasta',

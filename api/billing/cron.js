@@ -22,6 +22,9 @@
 const { projectUrl } = require('../_supabase.js');
 
 const providers = require('./_providers.js');
+/* כמה עובדים מחייבים עליהם -- הכלל עצמו, במקום אחד, כי גם
+   המשרד האחורי שואל אותו וחייב לענות אותה תשובה */
+const Seats = require('../_seats.js');
 
 const MONTH_DAYS = 30;
 const GRACE_DAYS = 7;        // כמה זמן ממשיכים לנסות אחרי כישלון
@@ -147,8 +150,10 @@ async function patchCompany(id, patch) {
 /* כמה עובדים פעילים יש לחברה עכשיו.
 
    נקרא מההגדרות ולא מטבלה: העובדים יושבים ב-jsonb של החברה,
-   ואין להם שורות משלהם. נקרא רק כשצריך -- כלומר רק לחברות
-   שסגרו תעריף לעובד -- ולא בכל חיוב. */
+   ואין להם שורות משלהם. זהו מסלול הגיבוי בלבד -- הספירה
+   הרגילה מגיעה מהעמודה שהטריגר מתחזק. הוא נשאר כאן בשביל
+   לקוח שלא נגע בהגדרות מאז שהעמודות נוספו, ושאחרת היה מדולג
+   בלי סיבה. */
 async function activeEmployees(companyId) {
   const call = await db('/company_configs?company_id=eq.' +
     encodeURIComponent(companyId) + '&select=config');
@@ -161,6 +166,7 @@ async function activeEmployees(companyId) {
   }).length;
 }
 
+
 /* המחיר לחיוב הקרוב, לפני הנחות.
 
    מחזיר { amount } או { reason } -- כי "אין מחיר" אינו סכום,
@@ -168,7 +174,11 @@ async function activeEmployees(companyId) {
 async function priceFor(company, plan) {
   const rate = Number(company.custom_price_per_employee);
   if (rate > 0) {
-    const count = await activeEmployees(company.id);
+    /* העמודה קודמת. רק לקוח שלא שמר הגדרות מאז שהעמודות נוספו
+       מגיע לקריאה מההגדרות, ואז גם היא ספירה של רגע -- אבל
+       ספירה של רגע עדיפה על דילוג. */
+    let count = Seats.billable(company);
+    if (count === null) count = await activeEmployees(company.id);
     /* ההגדרות לא נקראו, או שאין בהן רשימת עובדים. ניחוש כאן
        הוא חיוב שגוי, ולכן מדלגים ומחכים לריצה הבאה. */
     if (count === null) return { reason: 'employees-unknown' };
@@ -183,6 +193,20 @@ async function priceFor(company, plan) {
   if (flat > 0) return { amount: Math.round(flat) };
   if (plan.priceMonthly > 0) return { amount: plan.priceMonthly };
   return { reason: 'price-not-set' };
+}
+
+/* התקופה נסגרה, ולכן השיא מתחיל מחדש מהמספר הנוכחי.
+
+   רק אחרי חיוב שהצליח. חיוב שנכשל משאיר את השיא כפי שהוא --
+   אחרת כרטיס שנדחה היה מוחק בדיוק את המספר שלא הצלחנו לגבות
+   עליו, והניסיון של מחר היה יוצא נמוך יותר.
+
+   בלי מספר נוכחי אין מה לאפס אליו, ועדיף להשאיר שיא ישן מאשר
+   לאפס לאפס. */
+function peakReset(company) {
+  const current = Number(company.employee_count);
+  if (!isFinite(current) || current < 0) return null;
+  return { employee_peak: current };
 }
 
 /* חיוב אחד, כולל הטיפול בהצלחה ובכישלון */
@@ -247,12 +271,12 @@ async function chargeCompany(provider, company, plans, now) {
       amount: 0, waived: base, currency: 'ILS',
       plan: company.plan, coupon: company.coupon_code || null
     });
-    await patchCompany(company.id, {
+    await patchCompany(company.id, Object.assign({
       status: 'active',
       valid_until: freeEnd.toISOString(),
       current_period_end: freeEnd.toISOString(),
       discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)
-    });
+    }, peakReset(company)));
     return {
       company: company.id, action: 'granted', waived: base,
       until: freeEnd.toISOString()
@@ -305,7 +329,7 @@ async function chargeCompany(provider, company, plans, now) {
       status: 'active',
       valid_until: nextEnd.toISOString(),
       current_period_end: nextEnd.toISOString()
-    }, discount ? {
+    }, peakReset(company), discount ? {
       /* ההנחה נוצלה. יורדת רק אחרי חיוב שעבר: כרטיס שנדחה
          והתקבל מחר אינו אמור לגבות את המחיר המלא. */
       discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)
@@ -365,7 +389,7 @@ module.exports = async function handler(req, res) {
        הבאה תיפול שם ולא אצל לקוח. */
     '&select=id,plan,status,valid_until,cancel_at_period_end,' +
     'billing_subscription_id,billing_customer_id,custom_price_monthly,' +
-    'custom_price_per_employee,' +
+    'custom_price_per_employee,employee_count,employee_peak,' +
     'coupon_code,discount_percent,discount_amount,discount_charges_left' +
     '&order=valid_until.asc&limit=' + MAX_COMPANIES);
 
@@ -411,5 +435,6 @@ module.exports = async function handler(req, res) {
 
 /* נחשף לבדיקות */
 module.exports.periodKey = periodKey;
+module.exports.billableEmployees = Seats.billable;
 module.exports.GRACE_DAYS = GRACE_DAYS;
 module.exports.MONTH_DAYS = MONTH_DAYS;

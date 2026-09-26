@@ -993,6 +993,7 @@
         resume: 'Retomar a subscrição',
         resumed: 'Subscrição retomada',
         pricePerEmployee: '{amount} ₪ por pessoa/mês',
+        peakNote: 'A cobrança é pelo maior número de funcionários ativos durante o período — {count} no atual. Quem entra no meio do mês conta na próxima cobrança; quem é desativado conta até o fim do período atual, e não depois.',
         priceMonthly: '{amount} ILS / mês', priceAmount: '{amount} ILS',
         updateFailed: 'Não foi possível atualizar', cancelFailed: 'Não foi possível cancelar',
         title: 'A tua subscrição', status: 'Estado', plan: 'Plano', validUntil: 'Válida até',

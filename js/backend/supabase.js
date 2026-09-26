@@ -325,6 +325,10 @@
              מחירון, ולכן הוא היה מציג אפס. */
           '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
           'custom_price_monthly,custom_price_per_employee,' +
+          /* מה שנמדד בשרת: כמה עובדים יש, וכמה היו לכל היותר
+             מאז החיוב הקודם. המסך מציג את מה שייגבה בפועל,
+             ולא את הספירה של הרגע. */
+          'employee_count,employee_peak,' +
           /* הקופון וההנחה שנותרה. המסך מציג אותם, ובלעדיהם לקוח
              שמימש קופון רואה מסך שלא השתנה ומנסה שוב. */
           'coupon_code,discount_percent,discount_amount,discount_charges_left,' +
@@ -340,6 +344,10 @@
                 ? null : Number(row.custom_price_monthly),
               customPricePerEmployee: row.custom_price_per_employee == null
                 ? null : Number(row.custom_price_per_employee),
+              employeeCount: row.employee_count == null
+                ? null : Number(row.employee_count),
+              employeePeak: row.employee_peak == null
+                ? null : Number(row.employee_peak),
               couponCode: row.coupon_code || '',
               waOptIn: !!row.wa_opt_in, waOptOutAt: row.wa_opt_out_at || null,
               discountPercent: Number(row.discount_percent) || 0,

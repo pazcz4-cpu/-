@@ -8,6 +8,7 @@
 'use strict';
 
 const Money = require('./_money.js');
+const Seats = require('../_seats.js');
 const Model = require('../../js/backend/model.js');
 
 module.exports = async function ({ body, db }) {
@@ -40,23 +41,23 @@ module.exports = async function ({ body, db }) {
   const weeks = (weeksCall.ok && weeksCall.body) || [];
   const plan = Model.PLANS[company.plan];
 
-  /* לקוח שמתומחר לפי עובד – כמה עובדים פעילים יש לו. רק המספר
-     נקרא מההגדרות ורק עבורו; השמות נשארים שם. */
-  const counts = await Money.countsFor(db, [company]);
-  const pricedEmployees = counts[company.id] == null ? null : counts[company.id];
 
   return {
     body: {
       ok: true,
       company: {
         id: company.id, name: company.name, plan: company.plan,
-        planPrice: Money.monthlyOf(company, Model.PLANS, pricedEmployees) || null,
+        planPrice: Money.monthlyOf(company, Model.PLANS) || null,
         listPrice: plan ? plan.priceMonthly : null,
         customPrice: company.custom_price_monthly == null
           ? null : Number(company.custom_price_monthly),
         customPricePerEmployee: company.custom_price_per_employee == null
           ? null : Number(company.custom_price_per_employee),
-        pricedEmployees: pricedEmployees,
+        /* מה שמחייבים עליו, ומה שיש כרגע. המספרים נקראים
+           מעמודות שהטריגר מתחזק, ולא מההגדרות: המשרד האחורי
+           אינו צריך לפתוח את רשימת העובדים כדי לספור אותה. */
+        pricedEmployees: Seats.billable(company),
+        currentEmployees: Seats.current(company),
         byQuote: !!(plan && plan.quote),
         status: company.status, validUntil: company.valid_until,
         currentPeriodEnd: company.current_period_end,

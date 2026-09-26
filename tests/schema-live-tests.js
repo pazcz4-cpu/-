@@ -603,6 +603,82 @@ check('והתוקף אינו ניתן לכתיבה ישירה', function () {
     'reset role;'), 'false', 'הרשאת כתיבה על ההנחה');
 });
 
+console.log('\n== שיא העובדים: מי סופר, ומה קורה כשמתרוקנים ==');
+
+/* זו ההגנה על תמחור לפי עובד, ולכן היא נבדקת מול Postgres
+   אמיתי: כל הכלל יושב בטריגר, והטריגר הוא המקום היחיד שהלקוח
+   אינו יכול לעקוף. חיקוי של הטריגר היה בודק את החיקוי. */
+function seats(expression, extraSql) {
+  return ask(false,
+    "(select " + expression + " from public.companies where id = '" + CO + "')",
+    'reset role;\n' + (extraSql || ''));
+}
+
+/* הגדרות העובדים נכתבות דרך ההגדרות, כמו שהלקוח כותב אותן */
+function setEmployees(json) {
+  return "update public.company_configs set config = jsonb_set(config, '{employees}', $j$" +
+    json + "$j$::jsonb) where company_id = '" + CO + "';";
+}
+
+check('הזריעה עצמה נספרת: שני עובדים פעילים', function () {
+  assertEqual(seats('employee_count::text'), '2', 'הספירה');
+  assertEqual(seats('employee_peak::text'), '2', 'השיא');
+});
+
+/* התרחיש עצמו: יום לפני החיוב מכבים את כולם */
+check('כיבוי כל העובדים מוריד את הספירה ואינו נוגע בשיא', function () {
+  var sql = setEmployees('[{"id":"emp-1","name":"דנה","active":false},' +
+    '{"id":"emp-2","name":"יוסי","active":false}]');
+  assertEqual(seats('employee_count::text', sql), '0', 'הספירה אחרי הכיבוי');
+  assertEqual(seats('employee_peak::text', sql), '2', 'השיא ירד עם הכיבוי');
+});
+
+/* מחיקה אמיתית, לא רק כיבוי. גם היא אינה נוגעת בשיא. */
+check('מחיקת כל העובדים גם היא אינה מורידה את השיא', function () {
+  var sql = setEmployees('[]');
+  assertEqual(seats('employee_count::text', sql), '0', 'הספירה אחרי המחיקה');
+  assertEqual(seats('employee_peak::text', sql), '2', 'השיא ירד עם המחיקה');
+});
+
+check('עובד שנוסף מעלה גם את הספירה וגם את השיא', function () {
+  var sql = setEmployees('[{"id":"emp-1","active":true},{"id":"emp-2","active":true},' +
+    '{"id":"emp-3","active":true}]');
+  assertEqual(seats('employee_count::text', sql), '3', 'הספירה');
+  assertEqual(seats('employee_peak::text', sql), '3', 'השיא');
+});
+
+/* אותו כלל כמו במסכים: מי שאין לו active הוא פעיל. אחרת כל
+   עובד שיובא מאקסל היה נספר כלא פעיל. */
+check('עובד בלי סימון active נחשב פעיל', function () {
+  var sql = setEmployees('[{"id":"emp-1"},{"id":"emp-2","active":false}]');
+  assertEqual(seats('employee_count::text', sql), '1', 'הספירה');
+});
+
+/* שמירה חלקית אינה "אפס עובדים". אם היא הייתה מאפסת, לקוח
+   אמיתי היה מדולג בחיוב בגלל כתיבה אחת חריגה. */
+check('הגדרות בלי רשימת עובדים אינן מאפסות את מה שנמדד', function () {
+  var sql = "update public.company_configs set config = '{\"settings\":{}}'::jsonb" +
+    " where company_id = '" + CO + "';";
+  assertEqual(seats('employee_count::text', sql), '2', 'הספירה נמחקה');
+  assertEqual(seats('employee_peak::text', sql), '2', 'השיא נמחק');
+});
+
+/* ערך מפתיע בהגדרות אסור שיפיל שמירה של לקוח */
+check('ערך שאינו בוליאני ב-active אינו מפיל את השמירה', function () {
+  var sql = setEmployees('[{"id":"emp-1","active":"כן"},{"id":"emp-2","active":false}]');
+  assertEqual(seats('employee_count::text', sql), '1', 'הספירה');
+});
+
+check('הלקוח אינו יכול לכתוב את השיא בעצמו', function () {
+  /* אחרת כל ההגנה היא בקשה אחת מהקונסולה */
+  assertEqual(ask(false,
+    "(select has_column_privilege('authenticated','public.companies','employee_peak','update')::text)",
+    'reset role;'), 'false', 'הרשאת כתיבה על השיא');
+  assertEqual(ask(false,
+    "(select has_column_privilege('authenticated','public.companies','employee_count','update')::text)",
+    'reset role;'), 'false', 'הרשאת כתיבה על הספירה');
+});
+
 stop();
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

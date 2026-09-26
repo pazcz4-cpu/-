@@ -683,25 +683,18 @@ test('מחיר אפס או שלילי נדחה', function () {
    תעריף לעובד אינו מספר שנשמר אלא מספר שמחושב כל חודש מחדש,
    ולכן כל מסך שמציג אותו חייב גם לספור. מסך שמציג את התעריף
    בלבד נראה כאילו הרשת משלמת 12 שקלים בחודש. */
-function chainWorld() {
+function chainWorld(overrides) {
   var fake = sampleWorld();
-  fake.companies.push({
+  fake.companies.push(Object.assign({
     id: 'co-5', name: 'רשת הצפון', plan: 'enterprise', status: 'active',
     valid_until: daysAhead(25), billing_subscription_id: 'tok-5',
     cancel_at_period_end: false, created_at: daysAgo(300),
-    custom_price_per_employee: 12
-  });
+    custom_price_per_employee: 12,
+    /* המספרים מגיעים מהעמודות שהטריגר מתחזק, ולא מההגדרות */
+    employee_count: 2, employee_peak: 2
+  }, overrides || {}));
   fake.users.push({ company_id: 'co-5', email: 'e@n.co.il', name: 'הדר',
     role: 'owner', active: true });
-  fake.configs.push({
-    company_id: 'co-5',
-    config: {
-      employees: [
-        { id: 'e1', name: 'א' }, { id: 'e2', name: 'ב', active: true },
-        { id: 'e3', name: 'ג', active: false }
-      ]
-    }
-  });
   return fake;
 }
 
@@ -710,9 +703,8 @@ test('כרטיס הלקוח מציג את התעריף ואת מספר העוב�
   return call(company, { id: 'co-5' }).then(function (res) {
     var c = res.payload.company;
     assertEqual(c.customPricePerEmployee, 12, 'התעריף לא הוצג');
-    /* שניים פעילים מתוך שלושה: מי שאין לו active נחשב פעיל,
-       ומי שסומן כלא פעיל אינו נספר */
-    assertEqual(c.pricedEmployees, 2, 'מספר העובדים הפעילים');
+    assertEqual(c.pricedEmployees, 2, 'מספר העובדים שמחייבים עליו');
+    assertEqual(c.currentEmployees, 2, 'מספר העובדים הנוכחי');
     assertEqual(c.planPrice, 24, 'המחיר החודשי לא חושב מהתעריף');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
@@ -725,35 +717,48 @@ test('רשימת הלקוחות מחשבת גם היא, ולא מציגה את �
     assertEqual(row.planPrice, 24, 'המחיר ברשימה');
     assertEqual(row.customPricePerEmployee, 12, 'התעריף ברשימה');
     assertEqual(row.pricedEmployees, 2, 'מספר העובדים ברשימה');
+    assertEqual(row.currentEmployees, 2, 'המספר הנוכחי ברשימה');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });
 
-/* ההגדרות של לקוח שאינו מתומחר לפי עובד אינן נקראות כלל.
+/* המשרד האחורי אינו פותח את רשימת העובדים כדי לספור אותה.
    בסיס הנתונים הזה מחזיק את שמות כל העובדים של כל הלקוחות,
-   וקריאה שלו כדי לחשב מספר שאיש אינו צריך היא בדיוק סוג
-   הקריאה שאין סיבה שתתקיים. */
-test('בלי לקוח שמתומחר לפי עובד – ההגדרות לא נקראות בכלל', function () {
-  var fake = sampleWorld(); fake.install();
+   והמספר יושב ממילא על השורה של החברה. */
+test('ספירת העובדים אינה עוברת דרך ההגדרות', function () {
+  var fake = chainWorld(); fake.install();
   return call(companies, {}).then(function (res) {
     var reads = fake.writes.filter(function (w) {
       return w.path === '/company_configs';
     });
-    assertEqual(reads.length, 0, 'ההגדרות נקראו לחינם');
-    assertEqual(res.payload.companies.length, 4, 'הרשימה');
+    assertEqual(reads.length, 0, 'ההגדרות נקראו כדי לספור');
+    assertEqual(res.payload.companies.length, 5, 'הרשימה');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });
 
-/* רשת שההגדרות שלה לא נקראו אינה רשת שאינה משלמת. ההבדל
-   חשוב: 0 על המסך הוא טענה, ו-null הוא הודאה שאין מידע. */
-test('רשת בלי הגדרות – מספר העובדים ריק ולא אפס', function () {
-  var fake = chainWorld();
-  fake.configs = [];
+/* רשת שלא נמדדה אינה רשת שאינה משלמת. ההבדל חשוב: 0 על המסך
+   הוא טענה, ו-null הוא הודאה שאין מידע. */
+test('רשת שלא נמדדה – מספר העובדים ריק ולא אפס', function () {
+  var fake = chainWorld({ employee_count: null, employee_peak: null });
   fake.install();
   return call(company, { id: 'co-5' }).then(function (res) {
     assertEqual(res.payload.company.pricedEmployees, null, 'אפס הוצג במקום "לא ידוע"');
     assertEqual(res.payload.company.planPrice, null, 'הומצא מחיר');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+/* התרחיש עצמו, כפי שהוא נראה מהמשרד האחורי: השיא הוא מה
+   שמחייבים עליו, והנוכחי הוא מה שיש. הפער מספר מה קרה. */
+test('מי שהתרוקן לפני החיוב מוצג לפי השיא, והפער נראה', function () {
+  var fake = chainWorld({ employee_peak: 100, employee_count: 10 });
+  fake.install();
+  return call(company, { id: 'co-5' }).then(function (res) {
+    var c = res.payload.company;
+    assertEqual(c.pricedEmployees, 100, 'לא מחייבים לפי השיא');
+    assertEqual(c.currentEmployees, 10, 'המספר הנוכחי לא הוצג');
+    assertEqual(c.planPrice, 1200, 'המחיר לא חושב לפי השיא');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });
@@ -768,6 +773,25 @@ test('התחזית החודשית סופרת את הרשת לפי עובדיה',
     assertEqual(mrr.companies, 2, 'מספר המשלמים');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
+});
+
+/* הכלל קיים בשני עולמות: בשרת (snake_case, שורות מבסיס
+   הנתונים) ובדפדפן (camelCase, אובייקט החברה שבמסך). שניהם
+   חייבים לומר אותו מספר -- לקוח שרואה סכום אחד ומחויב באחר
+   הוא שיחת טלפון שאי אפשר לנצח בה. */
+test('השרת והדפדפן סופרים אותו דבר', function () {
+  var Seats = require('../api/_seats.js');
+  var Model = require('../js/backend/model.js');
+  var cases = [
+    [100, 10], [10, 100], [0, 0], [null, null],
+    [null, 25], [25, null], [5, 5]
+  ];
+  cases.forEach(function (pair) {
+    var server = Seats.billable({ employee_peak: pair[0], employee_count: pair[1] });
+    var browser = Model.billableEmployees({ employeePeak: pair[0], employeeCount: pair[1] });
+    assertEqual(server, browser,
+      'שתי הספירות נפרדו על ' + JSON.stringify(pair));
+  });
 });
 
 test('מחיר מוסכם דורש סיבה, כמו כל פעולה', function () {

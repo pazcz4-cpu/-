@@ -83,6 +83,9 @@ test('מצב המנוי והתוקף אינם ניתנים לכתיבה מהדפ
   ['plan', 'status', 'valid_until', 'custom_price_monthly',
     'custom_price_per_employee', 'discount_amount', 'discount_percent',
     'discount_charges_left', 'coupon_code',
+    /* השיא הוא ההגנה על תמחור לפי עובד. לקוח שיכול לכתוב
+       אותו מבטל את ההגנה בבקשה אחת מהקונסולה. */
+    'employee_peak', 'employee_count',
     'billing_subscription_id'].forEach(function (column) {
     var line = (sql.match(/grant update \([^)]*\) on public\.companies[^;]*;/) || [''])[0];
     assert(line.indexOf(column) === -1,

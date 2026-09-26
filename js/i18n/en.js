@@ -999,6 +999,7 @@
         resume: 'Resume subscription',
         resumed: 'Subscription resumed',
         pricePerEmployee: '₪{amount} per person / month',
+        peakNote: 'Billing goes by the highest number of active staff during the period — {count} in the current one. Someone added mid-month counts in the coming charge; someone deactivated is counted until the end of the current period, and not after it.',
         priceMonthly: '{amount} ILS / month', priceAmount: '{amount} ILS',
         updateFailed: 'Update failed', cancelFailed: 'Cancelling failed',
         title: 'Your subscription', status: 'Status', plan: 'Plan', validUntil: 'Valid until',

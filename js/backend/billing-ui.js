@@ -105,6 +105,16 @@
       esc(state.plan.maxEmployees
         ? t('billing.of', { count: employees, max: state.plan.maxEmployees })
         : t('billing.unlimited', { count: employees })) + '</b></div>';
+    /* תמחור לפי עובד: הלקוח חייב לדעת שהחיוב הוא לפי השיא
+       בתקופה ולא לפי מה שרשום כאן עכשיו. בלי המשפט הזה עסק
+       שהשבית חמישה עובדים יראה מספר אחד ויחויב על אחר, ויתקשר
+       בצדק. מוצג רק כשזו באמת צורת התמחור שלו. */
+    var billed = Model.billableEmployees(company, employees);
+    if (Model.pricingOf(company).kind === Model.PRICING.PER_EMPLOYEE && billed !== null) {
+      html += '<p class="billing-note">' +
+        esc(t('billing.peakNote', { count: billed })) + '</p>';
+    }
+
     /* כשהודעת הניסיון כבר מוצגת למעלה, אותו מידע פעמיים רק מסיח */
     var noticeShown = onTrial && !company.cancelAtPeriodEnd;
     if (state.access.text && !noticeShown) {

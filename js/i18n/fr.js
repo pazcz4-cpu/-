@@ -993,6 +993,7 @@
         resume: 'Reprendre l’abonnement',
         resumed: 'Abonnement repris',
         pricePerEmployee: '{amount} ₪ par personne et par mois',
+        peakNote: 'La facturation se fait sur le nombre le plus élevé d\'employés actifs pendant la période — {count} sur la période en cours. Une personne ajoutée en milieu de mois compte au prochain prélèvement ; une personne désactivée compte jusqu\'à la fin de la période en cours, et pas au-delà.',
         priceMonthly: '{amount} ILS / mois', priceAmount: '{amount} ILS',
         updateFailed: 'Échec de la mise à jour', cancelFailed: 'Échec de l’annulation',
         title: 'Votre abonnement', status: 'Statut', plan: 'Formule', validUntil: 'Valable jusqu’au',

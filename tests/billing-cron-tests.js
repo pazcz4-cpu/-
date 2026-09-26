@@ -401,6 +401,82 @@ test('תעריף לעובד גובר על סכום קבוע', function () {
   });
 });
 
+/* ===== השיא, וההתרוקנות שלפני החיוב =====
+
+   זה כל הטעם בעמודות שהטריגר מתחזק. תאריך החיוב מופיע ללקוח
+   על מסך המנוי, ולכן ספירה ברגע החיוב היא ספירה שאפשר לתזמן
+   סביבה: מכבים תשעים עובדים ליום אחד ומדליקים למחרת. */
+test('מי שהתרוקן יום לפני החיוב מחויב לפי השיא', function () {
+  var db = new FakeDb([company({
+    id: 'co-drain', plan: 'enterprise', custom_price_per_employee: 12,
+    employee_peak: 100, employee_count: 10
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
+    assertEqual(db.charges[0].amount, 1200, 'נגבה לפי הספירה של הרגע ולא לפי השיא');
+    db.restore();
+  });
+});
+
+/* אחרי החיוב התקופה נסגרה, ולכן השיא מתחיל מחדש מהמספר
+   הנוכחי. אחרת עסק שהתכווץ באמת היה משלם את השיא לנצח. */
+test('אחרי חיוב שהצליח השיא מתאפס למספר הנוכחי', function () {
+  var db = new FakeDb([company({
+    id: 'co-reset', plan: 'enterprise', custom_price_per_employee: 12,
+    employee_peak: 100, employee_count: 40
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 1200, 'החיוב עצמו');
+    assertEqual(db.companies['co-reset'].employee_peak, 40, 'השיא לא התאפס');
+    db.restore();
+  });
+});
+
+/* חיוב שנכשל אינו סוגר תקופה. איפוס כאן היה מוחק בדיוק את
+   המספר שלא הצלחנו לגבות עליו, והניסיון של מחר היה יוצא נמוך
+   יותר -- כלומר כרטיס שנדחה היה הופך להנחה. */
+test('חיוב שנכשל אינו נוגע בשיא', function () {
+  var db = new FakeDb([company({
+    id: 'co-fail', plan: 'enterprise', custom_price_per_employee: 12,
+    billing_subscription_id: 'fail-1',
+    employee_peak: 100, employee_count: 10
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.companies['co-fail'].status, 'past_due', 'המצב אחרי הכישלון');
+    assertEqual(db.companies['co-fail'].employee_peak, 100, 'השיא נמחק בכישלון');
+    db.restore();
+  });
+});
+
+/* חגורה שנייה: אם השיא חסר משום מה, לא גובים פחות ממה שיש */
+test('בלי שיא נגבה לפי הספירה הנוכחית', function () {
+  var db = new FakeDb([company({
+    id: 'co-nopeak', plan: 'enterprise', custom_price_per_employee: 12,
+    employee_count: 25
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 300, 'לא נגבה לפי הספירה הנוכחית');
+    db.restore();
+  });
+});
+
+/* לקוח שלא נגע בהגדרות מאז שהעמודות נוספו. עדיף ספירה של רגע
+   על דילוג -- הוא לפחות מחויב על מה שיש לו. */
+test('בלי עמודות בכלל נופלים לקריאת ההגדרות', function () {
+  var db = new FakeDb([company({
+    id: 'co-old', plan: 'enterprise', custom_price_per_employee: 12
+  })], { 'co-old': { employees: [{ id: 'e1', active: true }, { id: 'e2', active: true }] } });
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 24, 'לא נקראו ההגדרות');
+    db.restore();
+  });
+});
+
 console.log('\n== קופונים ==');
 
 test('הנחה מקופון מופחתת מהחיוב, ונוצלת פעם אחת', function () {

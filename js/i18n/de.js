@@ -993,6 +993,7 @@
         resume: 'Abo fortsetzen',
         resumed: 'Abo fortgesetzt',
         pricePerEmployee: '{amount} ₪ pro Person und Monat',
+        peakNote: 'Abgerechnet wird nach der höchsten Zahl aktiver Mitarbeitender im Zeitraum — {count} im laufenden. Wer mitten im Monat dazukommt, zählt in der nächsten Abrechnung; wer deaktiviert wird, zählt bis zum Ende des laufenden Zeitraums, danach nicht mehr.',
         priceMonthly: '{amount} ILS / Monat', priceAmount: '{amount} ILS',
         updateFailed: 'Aktualisierung fehlgeschlagen', cancelFailed: 'Kündigung fehlgeschlagen',
         title: 'Ihr Abonnement', status: 'Status', plan: 'Tarif', validUntil: 'Gültig bis',

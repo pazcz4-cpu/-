@@ -694,6 +694,41 @@ test('תעריף לעובד גובר על סכום קבוע', function () {
     Model.PRICING.PLAN, 'אפס נחשב תעריף');
 });
 
+/* ===== השיא, וההתרוקנות שלפני החיוב =====
+
+   תאריך החיוב מופיע ללקוח על מסך המנוי שלו, ולכן ספירה ברגע
+   החיוב היא ספירה שאפשר לתזמן סביבה: מכבים תשעים מתוך מאה
+   עובדים ליום אחד -- מתג, בלי לאבד נתון -- ומדליקים למחרת.
+   לכן מחייבים לפי השיא בתקופה. */
+test('מחייבים לפי השיא בתקופה, ולא לפי הספירה של הרגע', function () {
+  var drained = {
+    plan: 'enterprise', customPricePerEmployee: 12,
+    employeePeak: 100, employeeCount: 10
+  };
+  assertEqual(Model.billableEmployees(drained, 10), 100, 'השיא לא ניצח');
+  assertEqual(Model.effectivePrice(drained, 10), 1200, 'החיוב ירד עם הכיבוי');
+});
+
+test('מה שהמסך רואה כרגע נשקל גם הוא, כשהוא הגדול', function () {
+  /* עסק שהרגע הוסיף עובדים אינו אמור לראות מחיר נמוך ממה
+     שייגבה ממנו בפועל */
+  var growing = { plan: 'enterprise', customPricePerEmployee: 12,
+    employeePeak: 20, employeeCount: 20 };
+  assertEqual(Model.billableEmployees(growing, 25), 25, 'התוספת לא נספרה');
+});
+
+/* ריק אינו אפס. Number(null) הוא 0, וזו בדיוק הטעות שהייתה
+   מציגה ללקוח "0₪ לחודש" במקום את התעריף שסוכם איתו. */
+test('עמודה ריקה נקראת כ"לא נמדד" ולא כאפס', function () {
+  assertEqual(Model.billableEmployees({ employeePeak: null, employeeCount: null }), null,
+    'ריק הפך לאפס');
+  assertEqual(Model.billableEmployees({ employeePeak: '', employeeCount: undefined }), null,
+    'מחרוזת ריקה הפכה לאפס');
+  /* אפס מפורש הוא כן אפס: עסק שמחק את כולם */
+  assertEqual(Model.billableEmployees({ employeePeak: 0, employeeCount: 0 }), 0,
+    'אפס אמיתי נעלם');
+});
+
 /* "300₪" לבדו אינו מסביר למה בחודש הבא יופיע 312. המסך אומר
    את התעריף ואת התוצאה, ולא רק את התוצאה. */
 test('המסך מציג תעריף וגם סכום', function () {

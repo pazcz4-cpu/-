@@ -183,6 +183,32 @@ const second = await page.evaluate(() => window.__backend.redeemCoupon('HALFOFF'
 console.log('    ניסיון שני נדחה:', second.result, second.result === 'already' ? '✓' : '✗');
 if (second.result !== 'already') errors.push('אפשר היה לממש קופון שני');
 
+/* תמחור לפי עובד: המסך חייב להציג את מה שייגבה בפועל.
+
+   לקוח שכיבה עובדים ורואה מספר נמוך יתקשר בצדק כשיגיע חיוב
+   אחר. המסך אומר את השיא, ואומר במילים למה. */
+await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+  const id = Object.keys(raw.companies)[0];
+  raw.companies[id].plan = 'enterprise';
+  raw.companies[id].customPricePerEmployee = 12;
+  raw.companies[id].employeePeak = 100;
+  raw.companies[id].employeeCount = 3;
+  localStorage.setItem('maiphone-mock-server-v1', JSON.stringify(raw));
+});
+await page.reload();
+await page.waitForTimeout(900);
+await page.click('[data-screen="billing"]').catch(() => {});
+await page.waitForTimeout(500);
+const perEmployee = await page.locator('#billing-panel').innerText();
+console.log('11. תעריף לעובד מוצג כתעריף:', /12/.test(perEmployee) ? '✓' : '✗');
+console.log('    והסכום לפי השיא ולא לפי הנוכחי:',
+  /1,?200/.test(perEmployee) ? '✓' : '✗');
+console.log('    והמסך מסביר שהחיוב לפי השיא:',
+  /הגבוה ביותר/.test(perEmployee) ? '✓' : '✗');
+if (!/1,?200/.test(perEmployee)) errors.push('מסך המנוי הציג מחיר שאינו מה שייגבה');
+if (!/הגבוה ביותר/.test(perEmployee)) errors.push('המסך לא הסביר את שיטת החיוב');
+
 // חסימה כשהמנוי פג
 await page.evaluate(() => {
   const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));

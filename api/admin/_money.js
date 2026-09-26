@@ -19,6 +19,8 @@
    את מה שכתוב בדף וגם את המשתנה. */
 'use strict';
 
+const Seats = require('../_seats.js');
+
 function vatRate() {
   const raw = Number(process.env.VAT_RATE);
   return isFinite(raw) && raw >= 0 ? raw : 18;
@@ -101,50 +103,6 @@ function byMonth(charges, from, to) {
   });
 }
 
-/* מי מתומחר לפי עובד. רק עבורן צריך לספור, ולכן רק אותן
-   קוראים: קריאת ההגדרות של כל הלקוחות כדי לחשב מספר אחד היא
-   מחיר שאין סיבה לשלם. */
-function perEmployeeIds(companies) {
-  return (companies || [])
-    .filter(function (company) {
-      return Number(company && company.custom_price_per_employee) > 0;
-    })
-    .map(function (company) { return company.id; });
-}
-
-/* כמה עובדים פעילים, משורות company_configs.
-
-   null פירושו "לא ידוע" – ההגדרות לא נקראו או שאין בהן רשימה.
-   זה אינו אפס: אפס הוא רשת בלי עובדים, ו-null הוא מידע חסר,
-   ומסך שיציג אפס במקום "לא ידוע" יטען שרשת פעילה אינה משלמת.
-
-   מה שנקרא כאן הוא רק המספר. שמות העובדים נשארים בהגדרות
-   ואינם חוזרים למשרד האחורי. */
-function employeeCounts(rows) {
-  const out = {};
-  (rows || []).forEach(function (row) {
-    const list = ((row && row.config) || {}).employees;
-    if (!Array.isArray(list)) return;
-    out[row.company_id] = list.filter(function (employee) {
-      return employee && employee.active !== false;
-    }).length;
-  });
-  return out;
-}
-
-/* מספרי העובדים הדרושים לתמחור, בקריאה אחת ורק כשצריך.
-
-   כשאף לקוח אינו מתומחר לפי עובד אין כאן פנייה לבסיס הנתונים
-   בכלל – וזה המצב הרגיל. */
-async function countsFor(db, companies) {
-  const ids = perEmployeeIds(companies);
-  if (!ids.length) return {};
-  const call = await db('/company_configs?select=company_id,config&company_id=in.(' +
-    ids.map(encodeURIComponent).join(',') + ')&limit=5000');
-  if (!call.ok) return {};
-  return employeeCounts(call.body || []);
-}
-
 /* המחיר החודשי של חברה אחת, כפי שייגבה בפועל.
 
    מחיר שסוכם איתה גובר על המחירון – זו הדרך היחידה לחייב רשת,
@@ -155,11 +113,14 @@ async function countsFor(db, companies) {
    תעריף מאפסת את הסכום הקבוע. בלי מספר עובדים אין מה לחשב,
    והתשובה היא 0 במשמעות "עוד לא ידוע": מוטב שרשת כזו תיעדר
    מהתחזית מאשר שתופיע בה בסכום שנוחש. */
-function monthlyOf(company, plans, employeeCount) {
+function monthlyOf(company, plans) {
   const rate = Number(company && company.custom_price_per_employee);
   if (isFinite(rate) && rate > 0) {
-    const count = Number(employeeCount);
-    if (!isFinite(count) || count < 0) return 0;
+    /* אותו כלל שהחיוב עצמו משתמש בו, ומאותו קובץ. משרד אחורי
+       שמציג מספר אחד בזמן שהספק מחויב באחר הוא משרד אחורי
+       שעדיף בלעדיו. */
+    const count = Seats.billable(company);
+    if (count === null) return 0;
     return Math.round(rate * count);
   }
   const custom = Number(company && company.custom_price_monthly);
@@ -171,13 +132,12 @@ function monthlyOf(company, plans, employeeCount) {
 /* הכנסה חודשית חוזרת: מה צפוי להיכנס בחודש הבא מהמנויים
    שמשלמים היום. זה המספר שאומר אם העסק גדל, ולא סכום החיובים
    של החודש שעבר – שמושפע מתאריכי חידוש. */
-function recurring(companies, plans, counts) {
-  const byCompany = counts || {};
+function recurring(companies, plans) {
   const paying = (companies || []).filter(function (company) {
     return company.status === 'active' && !company.cancel_at_period_end;
   });
   const total = sum(paying.map(function (company) {
-    return monthlyOf(company, plans, byCompany[company.id]);
+    return monthlyOf(company, plans);
   }));
   const parts = split(total);
   return {
@@ -188,8 +148,6 @@ function recurring(companies, plans, counts) {
 
 module.exports = {
   monthlyOf: monthlyOf,
-  perEmployeeIds: perEmployeeIds, employeeCounts: employeeCounts,
-  countsFor: countsFor,
   vatRate: vatRate, pricesIncludeVat: pricesIncludeVat,
   round: round, split: split, sum: sum,
   monthKey: monthKey, monthsBetween: monthsBetween,

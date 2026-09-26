@@ -341,9 +341,16 @@
     if (c.customPricePerEmployee) {
       var rate = money(c.customPricePerEmployee) + ' לעובד';
       if (c.pricedEmployees == null) {
-        return 'מחיר מוסכם · ' + rate + ' · מספר העובדים לא נקרא';
+        return 'מחיר מוסכם · ' + rate + ' · מספר העובדים לא נמדד';
       }
-      return 'מחיר מוסכם · ' + rate + ' × ' + c.pricedEmployees + ' עובדים פעילים';
+      var note = 'מחיר מוסכם · ' + rate + ' × ' + c.pricedEmployees + ' (שיא התקופה)';
+      /* הפער בין השיא לנוכחי הוא כל הסיפור של מי שכיבה עובדים
+         לפני החיוב. הוא כבר לא עולה לנו כסף -- גובים לפי השיא
+         -- אבל כדאי לדעת מי ניסה. */
+      if (c.currentEmployees != null && c.currentEmployees !== c.pricedEmployees) {
+        note += ' · כעת ' + c.currentEmployees;
+      }
+      return note;
     }
     if (c.customPrice) {
       return 'מחיר מוסכם' + (c.listPrice ? ' · מחירון ' + money(c.listPrice) : '');

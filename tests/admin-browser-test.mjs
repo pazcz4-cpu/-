@@ -219,14 +219,15 @@ try {
   console.log('\n== תעריף לעובד ==');
   WORLD.company.company = Object.assign({}, WORLD.company.company, {
     planPrice: 480, customPrice: null, customPricePerEmployee: 12,
-    pricedEmployees: 40
+    pricedEmployees: 40, currentEmployees: 40
   });
   await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
   await page.waitForTimeout(500);
   const perEmp = await page.locator('#adm-company-detail').innerText();
   check('המחיר המחושב מוצג', perEmp, /480/);
   check('וגם התעריף שהוא מורכב ממנו', perEmp, /12/);
-  check('וגם מספר העובדים', perEmp, /40 עובדים פעילים/);
+  check('וגם מספר העובדים שהוא מוכפל בו', perEmp, /40 \(שיא התקופה\)/);
+  check('ובלי פער אין רעש מיותר', perEmp.includes('כעת'), false);
 
   await page.click('[data-act="set-price"]');
   await page.waitForTimeout(300);
@@ -237,6 +238,18 @@ try {
     await page.locator('#adm-f-price-label').innerText(), /לעובד/);
   await page.click('#adm-modal-cancel');
   await page.waitForTimeout(200);
+
+  /* התרחיש עצמו: מי שכיבה עובדים לפני החיוב. זה כבר לא עולה
+     לנו כסף -- גובים לפי השיא -- אבל הפער חייב להיראות, כי
+     כדאי לדעת מי ניסה. */
+  WORLD.company.company = Object.assign({}, WORLD.company.company, {
+    planPrice: 1200, pricedEmployees: 100, currentEmployees: 10
+  });
+  await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
+  await page.waitForTimeout(500);
+  const drained = await page.locator('#adm-company-detail').innerText();
+  check('מחויב לפי השיא', drained, /1,?200/);
+  check('והפער מול הנוכחי נראה', drained, /100 \(שיא התקופה\) · כעת 10/);
 
   console.log('\n== כסף ==');
   await page.click('.adm-tab[data-panel="money"]');

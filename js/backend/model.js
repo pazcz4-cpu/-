@@ -294,19 +294,50 @@
     return { kind: PRICING.PLAN, amount: planOf(company).priceMonthly || 0 };
   }
 
+  /* כמה עובדים מחייבים עליהם: לא כמה יש עכשיו, אלא כמה היו
+     לכל היותר מאז החיוב הקודם.
+
+     תאריך החיוב מופיע ללקוח על המסך הזה עצמו, ולכן ספירה ברגע
+     החיוב היא ספירה שאפשר לתזמן סביבה: כיבוי תשעים עובדים
+     ליום אחד הוא מתג, ואף נתון אינו אובד. השיא נמדד בשרת --
+     טריגר על ההגדרות מעלה אותו בכל שמירה -- והוא מה שנגבה.
+
+     שלושה מספרים נשקלים, והגדול שבהם מנצח: השיא, הספירה
+     שנשמרה, ומה שהדפדפן רואה כרגע. המספר של הדפדפן נכלל כדי
+     שעסק שהרגע הוסיף עובדים לא יראה מחיר נמוך ממה שייגבה
+     ממנו בפועל.
+
+     null פירושו "אין מספר", ולא אפס. */
+  function billableEmployees(company, liveCount) {
+    /* ריק אינו אפס. Number(null) הוא 0, ולכן המרה ישירה הייתה
+       הופכת "לא נמדד" ל"אין עובדים" -- ומציגה ללקוח מחיר אפס
+       במקום את התעריף. */
+    var known = [
+      company && company.employeePeak,
+      company && company.employeeCount,
+      liveCount
+    ].filter(function (value) {
+      if (value === null || value === undefined || value === '') return false;
+      var number = Number(value);
+      return isFinite(number) && number >= 0;
+    }).map(Number);
+    if (!known.length) return null;
+    return Math.max.apply(null, known);
+  }
+
   /* המחיר שבאמת נגבה מהחברה הזו.
 
-     employeeCount נדרש רק לתמחור לפי עובד, ובלעדיו אי אפשר
-     לחשב אותו: מחזירים 0, כלומר "עוד לא ידוע", ולא מספר
-     שהומצא. אסור לחייב מספר שנוחש.
+     employeeCount הוא מה שהמסך רואה כרגע, והוא נשקל מול מה
+     שהשרת מדד. בלי שום מספר אי אפשר לחשב: מחזירים 0, כלומר
+     "עוד לא ידוע", ולא מספר שהומצא. אסור לחייב מספר שנוחש.
 
      מחזיר 0 גם כשאין מחיר כלל – כלומר "עוד לא סוכם", ולא
      "חינם". מי שקורא חייב להבדיל בין השניים: אסור לחייב 0. */
   function effectivePrice(company, employeeCount) {
     var pricing = pricingOf(company);
     if (pricing.kind !== PRICING.PER_EMPLOYEE) return pricing.amount;
-    var count = Number(employeeCount);
-    if (!isFinite(count) || count < 0) return 0;
+    var count = billableEmployees(company, employeeCount);
+    if (count === null) return 0;
     return Math.round(pricing.rate * count);
   }
 
@@ -713,12 +744,12 @@
     /* תעריף לעובד מוצג כתעריף ולא רק כסכום: "300 ש"ח" לבדו
        אינו מסביר למה הוא יעלה בחודש הבא כשייכנס עובד. */
     if (pricing.kind === PRICING.PER_EMPLOYEE) {
-      var count = Number(employeeCount);
+      var count = billableEmployees(company, employeeCount);
       var rate = translate('billing.pricePerEmployee', pricing.rate + '₪ לעובד',
         { amount: pricing.rate });
-      if (!isFinite(count) || count < 0) return rate;
-      return rate + ' · ' + translate('billing.priceMonthly',
-        effectivePrice(company, count) + '₪', { amount: effectivePrice(company, count) });
+      if (count === null) return rate;
+      var total = effectivePrice(company, employeeCount);
+      return rate + ' · ' + translate('billing.priceMonthly', total + '₪', { amount: total });
     }
     var amount = pricing.amount;
     return translate('billing.priceMonthly', amount + '₪', { amount: amount });
@@ -781,6 +812,7 @@
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,
+    billableEmployees: billableEmployees,
     PRICING: PRICING, pricingOf: pricingOf,
     COUPON: COUPON, COUPON_KINDS: COUPON_KINDS, normalizeCouponCode: normalizeCouponCode,
     couponProblem: couponProblem, couponEffect: couponEffect,

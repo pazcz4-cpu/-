@@ -1339,6 +1339,16 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .user-id[aria-expanded="true"] { border-color: var(--brand); background: var(--bg); }
 .user-company { font-weight: 700; font-size: var(--t-sm); }
 
+/* הסמל של SetShifts בקצה הסרגל. קטן ושקט בכוונה: הוא אומר
+   "מי מפעיל את זה", ולא מתחרה בלוגו של הלקוח שבצד השני.
+   אטום מלא בריחוף, כדי שיהיה ברור שהוא לחיץ. */
+.user-brand {
+  flex: 0 0 auto; display: inline-flex; align-items: center;
+  margin-inline-start: 4px; opacity: .55;
+}
+.user-brand:hover, .user-brand:focus-visible { opacity: 1; }
+.user-brand .brand-img { height: 20px; width: auto; display: block; }
+
 /* מגירת החשבון: נפתחת בשורה שנייה של הסרגל, ואינה מכסה כלום */
 .account-panel {
   flex-basis: 100%; margin-top: 8px; padding: 14px;
@@ -1766,8 +1776,9 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .limit-note.spent { color: var(--warn); font-weight: 700; }
 
 /* ===== כותרת האזור האישי =====
-   מסך העובד נפתח מקישור במייל, לרוב בטלפון, ולעיתים חודשים
-   אחרי ההזמנה. בלי לוגו ושם העסק הוא נראה כמו טופס אקראי. */
+   שם העסק והלוגו שלו יושבים בשורת המשתמש שמעל, ולכן כאן הם
+   היו מופיעים פעם שנייה -- אותו לוגו ואותו שם, אחד מתחת
+   לשני. נשאר כאן מה שהשורה שמעל אינה אומרת. */
 .employee-head {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; flex-wrap: wrap;
@@ -1776,14 +1787,6 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 }
 .employee-logo { display: block; flex: 0 0 auto; }
 .employee-logo .brand-img { width: 148px; max-width: 46vw; }
-/* לוגו של הלקוח: תקרה ולא רוחב קבוע. לוגו רחב ולוגו מרובע הם
-   שני דברים שונים לגמרי, ורוחב קבוע היה מותח את הראשון ומנפח
-   את השני. */
-.employee-logo.is-company img {
-  display: block; height: 40px; width: auto;
-  max-width: 46vw; object-fit: contain;
-}
-.employee-company { font-size: 14px; font-weight: 500; color: var(--muted); }
 /* קישור למדריך. שקט, אבל קיים: עובד שנתקע בשמונה בערב לא ישלח
    הודעה למנהל – הוא פשוט לא יגיש. */
 .employee-guide {

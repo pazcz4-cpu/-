@@ -466,9 +466,23 @@
         '</span>' +
       '</button>';
 
+    /* הסמל של SetShifts, בקצה הסרגל.
+
+       לקוח שמעלה לוגו משלו מקבל מערכת שנראית כשלו, וזה בדיוק
+       מה שהוא רוצה -- אבל המותג שמפעיל אותה נעלם לגמרי, וגם
+       העובדים שלו לא יודעים במה הם משתמשים. הסמל כאן, ולא
+       בכותרת של כל מסך בנפרד: הסרגל נכתב בכל מסך ובכל תפקיד,
+       ולכן פעם אחת כאן שווה בכל מקום -- ובלי להתחרות בלוגו של
+       הלקוח, שיושב בצד השני של אותה שורה. */
+    var brand = root.ShiftBrand
+      ? '<a class="user-brand" href="https://setshifts.com" target="_blank" ' +
+        'rel="noopener" title="SetShifts">' + root.ShiftBrand.markImg('SetShifts') + '</a>'
+      : '';
+
     bar.innerHTML = identity +
       notice + langSelect + previewButton + notifyButton +
       '<button id="user-signout" class="btn ghost small">' + t('auth.signOut') + '</button>' +
+      brand +
       '<div id="account-panel" class="account-panel' + (this.accountOpen ? '' : ' hidden') + '"></div>';
     bar.classList.remove('hidden');
     if (this.accountOpen) { this.renderAccount(session); }

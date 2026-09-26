@@ -134,14 +134,18 @@ try {
   await page.waitForTimeout(400);
   await page.locator('.preview-pick').first().click();
   await page.waitForTimeout(1200);
-  check('בכותרת מסך העובד', await page.locator('.employee-logo.is-company img').count(), 1);
-  /* כשיש לוגו של הלקוח הוא מחליף את זה של SetShifts: העובד
-     פותח את המסך מקישור במייל, ומה שצריך לענות לו בשנייה
-     הראשונה הוא "זה מקום העבודה שלי". */
-  check('במקום הלוגו של SetShifts',
-    await page.locator('.employee-head .brand-img').count(), 0);
-  check('לצד שם העסק',
-    await page.locator('.employee-company').innerText(), 'קפה מרכז');
+  /* הלוגו של הלקוח נאמר פעם אחת, בשורת המשתמש. כותרת מסך
+     העובד אינה חוזרת עליו: קודם היא כן, ואז אותו לוגו ואותו
+     שם הופיעו אחד מתחת לשני ותפסו מסך שלם בטלפון. */
+  check('שם העסק והלוגו שלו אינם חוזרים בכותרת',
+    await page.locator('.employee-head .user-logo, .employee-company').count(), 0);
+  check('ושורת המשתמש עדיין נושאת אותם',
+    await page.locator('#user-bar .user-logo').count(), 1);
+  /* והמותג שמפעיל את המערכת נשאר נוכח, גם ללקוח עם לוגו משלו */
+  check('הלוגו של SetShifts בכותרת מסך העובד',
+    await page.locator('.employee-head .brand-img').count() > 0, true);
+  check('והסמל שלו גם בשורת המשתמש',
+    await page.locator('#user-bar .user-brand .brand-img').count() > 0, true);
 
   console.log('\n== הסרת הלוגו מחזירה את המצב הקודם ==');
   const exit = page.locator('#preview-exit');

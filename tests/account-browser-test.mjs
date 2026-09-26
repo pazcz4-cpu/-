@@ -179,12 +179,15 @@ try {
     await page.locator('#user-bar .user-name').innerText(), /רונית כהן/);
   check('ושם העסק נשאר של העסק',
     await page.locator('#account-panel .account-static').innerText(), 'מייפון');
-  /* ובמקום שבו הוא באמת נחוץ הוא כן מופיע: מסך העובד, שצריך
-     לומר לעובדת היכן היא עובדת. שם הוא לא מתחרה במיתוג. */
-  check('שם העסק מופיע בכותרת מסך העובד',
-    await page.locator('.employee-company').innerText(), 'מייפון');
-  check('ולצידו הלוגו של SetShifts',
-    await page.locator('.employee-head .brand-img, .employee-head img').count() > 0, true);
+  /* ובמקום שבו הוא באמת נחוץ הוא כן מופיע: שורת המשתמש,
+     שנכתבת בכל מסך ובכל תפקיד ואומרת לעובדת היכן היא עובדת.
+     פעם אחת, ולא גם בכותרת מסך העובד שמתחתיה. */
+  check('שם העסק מופיע בשורת המשתמש',
+    await page.locator('#user-bar .user-company').innerText(), 'מייפון');
+  check('ואינו חוזר בכותרת מסך העובד',
+    await page.locator('.employee-company').count(), 0);
+  check('ובכותרת נמצא הלוגו של SetShifts',
+    await page.locator('.employee-head .brand-img').count() > 0, true);
 
   /* וגם בשרת: ניסיון ישיר לשנות את שם העסק כעובדת נדחה */
   const denied = await page.evaluate(async () => {

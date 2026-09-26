@@ -75,7 +75,10 @@
      כותרות – הולכים לפיה. המילים נלקחות מהתרגום הפעיל ומרשימת
      מילים נפוצות, כדי שקובץ באנגלית יעבוד גם בממשק בעברית. */
   var FIELD_WORDS = {
-    name: ['name', 'employee', 'staff', 'שם', 'עובד', 'עובדת', 'שם העובד'],
+    /* גם הכותרות הישנות וגם החדשות: לקוח שהוריד תבנית לפני
+       חודש וממלא אותה היום אינו אמור להיתקל בשגיאה. */
+    name: ['name', 'fullname', 'full name', 'employee', 'staff',
+      'שם', 'שם מלא', 'עובד', 'עובדת', 'שם העובד'],
     branches: ['branch', 'branches', 'location', 'locations', 'site', 'סניף', 'סניפים', 'מקום'],
     shifts: ['shift', 'shifts', 'משמרת', 'משמרות'],
     roles: ['role', 'roles', 'position', 'positions', 'job', 'title',
@@ -135,12 +138,26 @@
     return null;
   }
 
-  /* שמות הטורים כפי שהם נכתבים בתבנית, לפי הסדר בקובץ */
+  /* כל הטורים שהקורא יודע לזהות. הרשימה נשארת מלאה בכוונה:
+     לקוח שכבר בנה קובץ עם סניפים ומשמרות ממשיך לעבוד, וקובץ
+     שהגיע ממערכת אחרת אינו נדחה בגלל טור מיותר. */
   var COLUMNS = ['name', 'branches', 'shifts', 'roles', 'maxShifts', 'email', 'phone',
     'payrollId', 'note', 'active'];
 
+  /* ומה שאנחנו מבקשים בתבנית להורדה: שם, טלפון, מייל.
+
+     כל השאר -- סניפים, משמרות, תפקידים, מכסה -- נקבע באתר,
+     ושם זה גם הרבה יותר קל: בחירה מרשימה של מה שקיים בעסק,
+     במקום להקליד "בוקר; ערב" ולקוות שהאיות תואם. טור שהלקוח
+     ממלא לא נכון הוא שורה שנפסלת, וטור שהוא משאיר ריק הוא
+     עמודה שרק הפחידה אותו.
+
+     קובץ של עשרה טורים ריקים גורם ללקוח לסגור אותו. שלושה
+     טורים הוא ממלא. */
+  var TEMPLATE_COLUMNS = ['name', 'phone', 'email'];
+
   function columnLabels() {
-    return COLUMNS.map(function (field) { return t(FIELD_KEYS[field]); });
+    return TEMPLATE_COLUMNS.map(function (field) { return t(FIELD_KEYS[field]); });
   }
 
   /* מחזיר מיפוי טור→שדה אם השורה הראשונה היא כותרות, אחרת null */
@@ -166,6 +183,33 @@
      להיקרא נכון. */
   var POSITIONAL = ['name', 'branches', 'shifts', 'maxShifts', 'note', 'email', 'roles',
     'phone', 'payrollId'];
+
+  /* קובץ בלי שורת כותרות: באיזה סדר לקרוא אותו.
+
+     שלושה טורים לבדם אינם מספיקים כדי להחליט -- גם "שם, סניף,
+     משמרת" הוא שלושה טורים. מה שכן מכריע הוא מה יושב בהם:
+     מספר טלפון בטור השני או כתובת מייל בשלישי אינם יכולים
+     להיות סניף ומשמרת, והם התבנית שלנו אחרי שמישהו מחק את
+     שורת הכותרות.
+
+     בלי ההבחנה הזו הטלפון היה נוחת בטור "סניפים" והמייל
+     ב"משמרות": כל השורות נפסלות, ונפתח סניף בשם 050-1234567. */
+  function looksLikePhone(value) {
+    var text = String(value || '').trim();
+    if (!text) return false;
+    if (/[A-Za-zא-ת]/.test(text)) return false;
+    return (text.match(/\d/g) || []).length >= 7;
+  }
+
+  function orderFor(rows) {
+    var widest = 0;
+    rows.forEach(function (row) { widest = Math.max(widest, row.length); });
+    if (widest !== TEMPLATE_COLUMNS.length) return POSITIONAL;
+    var template = rows.some(function (row) {
+      return looksLikePhone(row[1]) || looksLikeEmail(String(row[2] || '').trim());
+    });
+    return template ? TEMPLATE_COLUMNS : POSITIONAL;
+  }
 
   /* ===== פענוח תא ===== */
 
@@ -224,9 +268,10 @@
     var body = rows;
     if (map) { body = rows.slice(1); }
     plan.columns = map || null;
+    var order = map ? null : orderFor(rows);
 
     function cell(row, field) {
-      var index = map ? map[field] : POSITIONAL.indexOf(field);
+      var index = map ? map[field] : order.indexOf(field);
       if (index === undefined || index === null || index < 0) return '';
       return row[index] === undefined ? '' : row[index];
     }
@@ -452,7 +497,7 @@
     applyPlan: applyPlan,
     looksLikeEmail: looksLikeEmail,
     sampleText: sampleText,
-    COLUMNS: COLUMNS,
+    COLUMNS: COLUMNS, TEMPLATE_COLUMNS: TEMPLATE_COLUMNS,
     FIELD_KEYS: FIELD_KEYS,
     columnLabels: columnLabels,
     fieldOf: fieldOf,

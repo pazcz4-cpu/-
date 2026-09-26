@@ -9,10 +9,14 @@
       הייתה נכנסת כעובד אמיתי אצל כל מי ששכח למחוק אותה, והדוגמאות
       יושבות בלשונית ההסבר במקום.
 
-   2. הכותרות והערכים החוקיים נלקחים מהעסק עצמו – שמות המשמרות,
-      התפקידים והסניפים שלו – ולא מרשימה כללית. כך מה שהלקוח כותב
-      מתאים למה שהמערכת מחפשת, במקום ש"בוקר" מול "morning" ייפול
-      בייבוא. */
+   2. שלושה טורים בלבד: שם מלא, טלפון ומייל. כל השאר – סניפים,
+      משמרות, תפקידים ומכסה – נקבע באתר, ושם זה גם קל יותר:
+      בחירה מרשימה של מה שקיים בעסק, במקום להקליד "בוקר; ערב"
+      ולקוות שהאיות תואם. קובץ של עשרה טורים ריקים גורם ללקוח
+      לסגור אותו; שלושה טורים הוא ממלא.
+
+      הקורא עצמו ממשיך לזהות את כל הטורים הישנים, כדי שקובץ
+      שנבנה לפני השינוי או הגיע ממערכת אחרת לא ייפול. */
 (function (root) {
   'use strict';
 
@@ -41,7 +45,7 @@
       name: t('importData.sheetStaff'),
       selected: true,
       freeze: { row: 1, col: 0 },
-      cols: [22, 24, 22, 20, 14, 26, 18, 26, 10],
+      cols: [26, 20, 30],
       rows: [
         { cells: Import.columnLabels().map(head), height: 24 }
       ]
@@ -74,16 +78,12 @@
 
     var yes = t('importData.helpYes');
     var no = t('importData.helpNo');
+    /* רק מה שבקובץ. טור שאינו בתבנית ומופיע בהסבר הוא טור
+       שהלקוח יחפש ולא ימצא. */
     var spec = [
       ['colName', yes, 'helpName', t('importData.sampleName')],
-      ['colBranches', no, 'helpBranches', exampleBranch],
-      ['colShifts', no, 'helpShifts', exampleShift],
-      ['colRoles', no, 'helpRoles', exampleRole],
-      ['colMax', no, 'helpMax', '5'],
-      ['colEmail', no, 'helpEmail', 'dana@example.com'],
       ['colPhone', no, 'helpPhone', '050-0000000'],
-      ['colNote', no, 'helpNote', ''],
-      ['colActive', no, 'helpActive', '']
+      ['colEmail', no, 'helpEmail', 'dana@example.com']
     ];
     spec.forEach(function (item) {
       rows.push([
@@ -95,11 +95,15 @@
     });
 
     rows.push([]);
-    rows.push([{ v: t('importData.helpMulti'), s: S.SUBTITLE }]);
+    /* מה שאינו בקובץ, ואיפה כן קובעים אותו. בלי המשפט הזה
+       הלקוח מחפש בקובץ טור לסניפים ולמשמרות, לא מוצא, ומניח
+       שהמערכת אינה יודעת לעשות את זה. */
+    rows.push([{ v: t('importData.helpRest'), s: S.SUBTITLE }]);
     rows.push([]);
 
-    /* הערכים החוקיים אצל העסק הזה. בלי הרשימה הזו הלקוח מנחש
-       איך קוראים למשמרת אצלו, והייבוא נופל על שגיאת כתיב. */
+    /* הערכים שקיימים אצל העסק הזה. הם אינם טורים בקובץ יותר,
+       והם כן מה שהלקוח יראה באתר כשיסמן לכל עובד -- ולכן הם
+       נשארים כאן, כתמונת מצב של מה שכבר מוגדר. */
     function listBlock(titleKey, values, emptyKey) {
       /* רשימה ריקה בלי מילה אחת עליה נראית כמו תקלה. כותרת בלי
          פריטים ובלי הסבר – עוד יותר. */

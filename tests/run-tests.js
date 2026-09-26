@@ -2887,6 +2887,62 @@ test('"לא" בטור הפעילות יוצר עובד מושבת', function () 
   assertEqual(plan.create[1].active, true, 'הפעיל נוצר כמושבת');
 });
 
+/* ===== תבנית של שלושה טורים ===== */
+
+test('התבנית להורדה מבקשת שם, טלפון ומייל בלבד', function () {
+  assertEqual(Import.TEMPLATE_COLUMNS.join(','), 'name,phone,email', 'הטורים בתבנית השתנו');
+  assertEqual(Import.columnLabels().length, 3, 'התבנית אינה בת שלושה טורים');
+});
+
+/* הקורא נשאר סובלני: לקוח שכבר בנה קובץ עם סניפים ומשמרות,
+   או שייצא קובץ ממערכת אחרת, אינו אמור להיתקל בשגיאה. */
+test('קובץ עם הטורים הישנים ממשיך להיקרא', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state,
+    'שם\tסניפים\tמשמרות\tמכסה\nדנה\tמרכז\tבוקר\t4');
+  assertEqual(plan.create.length, 1, 'השורה לא נקראה');
+  assertEqual(plan.create[0].name, 'דנה', 'השם לא נקרא');
+  assertEqual(plan.create[0].maxShifts, 4, 'המכסה לא נקראה');
+});
+
+test('גם הכותרת הישנה "שם" וגם החדשה "שם מלא" מזוהות', function () {
+  var state = freshState();
+  assertEqual(Import.planEmployees(state, 'שם מלא\tמספר טלפון\nדנה\t050-1111111')
+    .create[0].phone, '050-1111111', 'הכותרות החדשות לא זוהו');
+  assertEqual(Import.planEmployees(state, 'שם\tטלפון\nדנה\t050-1111111')
+    .create[0].phone, '050-1111111', 'הכותרות הישנות לא זוהו');
+});
+
+/* מי שמחק את שורת הכותרות, או הדביק שלוש עמודות מגיליון אחר.
+   לפי הסדר הישן הטלפון היה נוחת בטור "סניפים" והמייל
+   ב"משמרות" -- כל השורות נפסלות, ואיש אינו מבין למה. */
+test('שלושה טורים בלי כותרות נקראים לפי סדר התבנית', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'דנה כהן\t050-1234567\tdana@example.com');
+  assertEqual(plan.create.length, 1, 'השורה לא נקראה');
+  assertEqual(plan.create[0].name, 'דנה כהן', 'השם לא נקרא');
+  assertEqual(plan.create[0].phone, '050-1234567', 'הטלפון נקרא כסניף');
+  assertEqual(plan.create[0].email, 'dana@example.com', 'המייל נקרא כמשמרת');
+  assertEqual(plan.newBranches.length, 0, 'נוצר סניף מתוך מספר טלפון');
+});
+
+/* שלושה טורים לבדם אינם מספיקים: גם "שם, סניף, משמרת" הוא
+   שלושה טורים, ובו אין טלפון ואין מייל. */
+test('שלושה טורים בלי טלפון ובלי מייל נקראים בסדר הישן', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'דנה\tמרכז\tבוקר');
+  assertEqual(plan.create.length, 1, 'השורה לא נקראה');
+  assertEqual(plan.newBranches.length, 1, 'הסניף לא זוהה');
+  assertEqual(plan.create[0].phone, '', 'שם הסניף נקרא כטלפון');
+});
+
+test('קובץ רחב בלי כותרות נשאר בסדר הישן', function () {
+  var state = freshState();
+  var plan = Import.planEmployees(state, 'דנה\tמרכז\tבוקר\t4\tהערה');
+  assertEqual(plan.create[0].maxShifts, 4, 'הסדר הישן נשבר');
+  assertEqual(plan.newBranches.length, 1, 'הסניף לא זוהה');
+});
+
 test('הייבוא אינו משנה דבר עד שמאשרים', function () {
   var state = freshState();
   var before = JSON.stringify(state);

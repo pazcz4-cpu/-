@@ -56,14 +56,16 @@ try {
     }));
   });
   check('שם הקובץ', built.fileName, /\.xlsx$/);
-  check('הטור הראשון הוא השם', built.headers[0], 'שם');
-  check('עשרה טורים', built.headers.length, 10);
-  check('יש טור תפקידים', built.headers.indexOf('תפקידים') > 0, true);
-  check('ויש טור טלפון', built.headers.indexOf('טלפון') > 0, true);
-  /* בלי המספר הזה הקובץ שנוסע למערכת השכר מזהה את העובד בשם
-     בלבד, ושני "דוד כהן" הם בדיוק המקרה שבו זה נופל. */
-  check('ויש טור מספר עובד בשכר',
-    built.headers.indexOf('מספר עובד בשכר') > 0, true);
+  /* שלושה טורים ותו לא. כל השאר -- סניפים, משמרות, תפקידים,
+     מכסה -- נקבע באתר, ושם זו בחירה מרשימה ולא הקלדה שצריכה
+     לתאום איות. קובץ של עשרה טורים ריקים גורם ללקוח לסגור
+     אותו; שלושה טורים הוא ממלא. */
+  check('שלושה טורים בדיוק', built.headers.length, 3);
+  check('שם מלא', built.headers[0], 'שם מלא');
+  check('מספר טלפון', built.headers[1], 'מספר טלפון');
+  check('מייל', built.headers[2], 'מייל');
+  check('אין טור סניפים', built.headers.indexOf('סניפים'), -1);
+  check('אין טור משמרות', built.headers.indexOf('משמרות'), -1);
   /* שורת דוגמה בגיליון הנתונים הייתה נכנסת כעובד אמיתי אצל כל
      מי ששכח למחוק אותה */
   check('גיליון הנתונים מכיל כותרות בלבד', built.rowCount, 1);
@@ -98,8 +100,8 @@ try {
       name: 'עובדים',
       rows: [
         labels,
-        ['מיכל ברק', branch, shift, '', '4', 'michal@example.com', '', ''],
-        ['אורי שדה', 'סניף שלא היה', shift, '', '3', '', 'חדש', '']
+        ['מיכל ברק', '050-1234567', 'michal@example.com'],
+        ['אורי שדה', '', '']
       ]
     }]);
     const file = new File([bytes], 'staff.xlsx',
@@ -114,7 +116,9 @@ try {
 
   const counts = (await page.locator('.import-counts').innerText()).trim();
   check('שני עובדים זוהו מהקובץ', counts, /2 עובדים ייווצרו/);
-  check('גם הסניף החדש זוהה', counts, /סניף חדש אחד ייפתח/);
+  /* אין טור סניפים בקובץ, ולכן אין סניף שנפתח ממנו. זו הנקודה:
+     הקובץ מביא אנשים, והשיוך נעשה באתר. */
+  check('ולא נפתח סניף מהקובץ', /סניף/.test(counts), false);
   check('הכותרות לא נכנסו כעובד',
     (await page.locator('#import-preview').innerText()).indexOf('מיכל ברק') !== -1, true);
 
@@ -126,12 +130,18 @@ try {
   const added = await page.evaluate(() => {
     const state = window.ShiftApp.getState();
     const emp = state.employees.filter((e) => e.name === 'מיכל ברק')[0];
-    const branch = state.branches.filter((b) => b.name === 'סניף שלא היה')[0];
-    return { email: emp && emp.email, max: emp && emp.maxShifts, newBranch: !!branch };
+    const bare = state.employees.filter((e) => e.name === 'אורי שדה')[0];
+    return {
+      email: emp && emp.email, phone: emp && emp.phone,
+      bareCreated: !!bare, bareEmail: bare && bare.email
+    };
   });
   check('המייל נקלט', added.email, 'michal@example.com');
-  check('המכסה נקלטה', added.max, 4);
-  check('הסניף החדש נפתח', added.newBranch, true);
+  check('הטלפון נקלט', added.phone, '050-1234567');
+  /* שם לבדו מספיק: הטלפון והמייל נחוצים כדי לשלוח פרטי כניסה,
+     ולא כדי ליצור עובד */
+  check('עובד עם שם בלבד נוצר', added.bareCreated, true);
+  check('ובלי מייל', added.bareEmail, '');
 
   console.log('\n== קובץ שאינו אקסל ==');
   await page.click('#import-employees');

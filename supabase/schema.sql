@@ -1568,10 +1568,20 @@ begin
     raise exception 'not signed in' using errcode = '28000';
   end if;
 
-  select cu.role, c.* into v_role, v_company
+  -- שתי שאילתות ולא אחת: אי אפשר לשלוף into לרשומה ולמשתנה
+  -- סקלרי באותה פקודה, ו-Postgres דוחה את זה בזמן היצירה.
+  select cu.role into v_role
   from public.company_users cu
-  join public.companies c on c.id = cu.company_id
   where cu.id = auth.uid() and cu.active;
+
+  if v_role is null then
+    raise exception 'no company' using errcode = '42501';
+  end if;
+
+  select c.* into v_company
+  from public.companies c
+  join public.company_users cu on cu.company_id = c.id
+  where cu.id = auth.uid();
 
   if v_company.id is null then
     raise exception 'no company' using errcode = '42501';

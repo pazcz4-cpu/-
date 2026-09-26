@@ -490,6 +490,96 @@ check('הטבלה סגורה בפני המשתמש המחובר', function () {
   assertEqual(can, 'false', 'הרשאת קריאה ל-authenticated');
 });
 
+console.log('\n== קופונים: מי מממש, ומה קורה פעמיים ==');
+
+/* הקופון נוגע בכסף: הוא מאריך תוקף או מוזיל חיוב. כל הכללים
+   יושבים בפונקציה אחת בשרת, והיא המקום היחיד שאי אפשר לעקוף --
+   ולכן היא נבדקת מול Postgres אמיתי ולא מול חיקוי. */
+/* הקופונים נזרעים לפני המעבר לתפקיד המשתמש המחובר: הטבלה
+   סגורה בפניו לגמרי, וזה בדיוק מה שנבדק למטה. */
+function coupons(extra) {
+  return [
+    'reset role;',
+    "insert into public.coupons (code, kind, value) values ('EXTRAMONTH','days',30);",
+    extra || '',
+    "update public.companies set valid_until = now() + interval '10 days' where id = '" + CO + "';",
+    'set local role authenticated;',
+    "select set_config('request.jwt.claim.sub','" + BOSS + "', true);"
+  ].join('\n');
+}
+var COUPONS = coupons('');
+
+check('הבעלים מממש, והתוקף נמדד מהתוקף הקיים', function () {
+  /* עשרה ימים שנותרו ועוד שלושים = ארבעים מהיום. קיצור לשלושים
+     היה לוקח מהלקוח עשרה ימים ששילם עליהם. */
+  var days = ask(false,
+    "(select round(extract(epoch from (valid_until - now())) / 86400)::text" +
+    " from public.companies where id = '" + CO + "')",
+    COUPONS + "\nselect public.redeem_coupon('extra-month');");
+  assertEqual(days, '40', 'הימים שנותרו אחרי המימוש');
+});
+
+check('הקוד מנורמל: רווחים ומקפים אינם משנים', function () {
+  assertEqual(ask(false, "(select result from public.redeem_coupon(' Extra-Month '))", COUPONS),
+    'ok', 'קוד עם רווחים ומקף נדחה');
+});
+
+check('קופון אחד ללקוח: הניסיון השני נדחה', function () {
+  var out = ask(false,
+    "(select result from public.redeem_coupon('EXTRAMONTH'))",
+    COUPONS + "\nselect public.redeem_coupon('EXTRAMONTH');");
+  assertEqual(out, 'already', 'התשובה לניסיון השני');
+});
+
+check('קוד שאינו קיים אינו משנה דבר', function () {
+  var days = ask(false,
+    "(select round(extract(epoch from (valid_until - now())) / 86400)::text" +
+    " from public.companies where id = '" + CO + "')",
+    COUPONS + "\nselect public.redeem_coupon('NOSUCH');");
+  assertEqual(days, '10', 'התוקף השתנה בגלל קוד שאינו קיים');
+});
+
+check('קופון שפג אינו נתפס', function () {
+  var out = ask(false, "(select result from public.redeem_coupon('OLD'))",
+    coupons("insert into public.coupons (code, kind, value, valid_until)" +
+      " values ('OLD','days',30, now() - interval '1 day');"));
+  assertEqual(out, 'expired', 'קופון שפג');
+});
+
+check('קופון שנוצל עד תום אינו נתפס', function () {
+  var out = ask(false, "(select result from public.redeem_coupon('FULL'))",
+    coupons("insert into public.coupons (code, kind, value, max_uses, uses)" +
+      " values ('FULL','days',30, 5, 5);"));
+  assertEqual(out, 'exhausted', 'קופון שנוצל');
+});
+
+/* מנהל אינו נוגע בכסף. בלי הבדיקה הזו כל מנהל בכל חברה יכול
+   להאריך לעצמו את המנוי. */
+check('מנהל שאינו בעלים נדחה', function () {
+  var out = ask(false, "'refused'", COUPONS +
+    "\nselect set_config('request.jwt.claim.sub','" + DANA + "', true);" +
+    "\ndo $d$ begin\n" +
+    "  begin perform public.redeem_coupon('EXTRAMONTH');\n" +
+    "  exception when others then raise notice 'refused'; end;\nend $d$;");
+  assertEqual(out, 'refused', 'השאילתה נפלה במקום שהחריגה תיתפס');
+});
+
+check('טבלת הקודים סגורה בפני המשתמש המחובר', function () {
+  /* מי שיכול לקרוא אותה שולף את כל הקודים ובוחר את הנדיב ביותר */
+  assertEqual(ask(false,
+    "(select has_table_privilege('authenticated','public.coupons','select')::text)",
+    'reset role;'), 'false', 'הרשאת קריאה לטבלת הקופונים');
+});
+
+check('והתוקף אינו ניתן לכתיבה ישירה', function () {
+  assertEqual(ask(false,
+    "(select has_column_privilege('authenticated','public.companies','valid_until','update')::text)",
+    'reset role;'), 'false', 'הרשאת כתיבה על התוקף');
+  assertEqual(ask(false,
+    "(select has_column_privilege('authenticated','public.companies','discount_percent','update')::text)",
+    'reset role;'), 'false', 'הרשאת כתיבה על ההנחה');
+});
+
 stop();
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

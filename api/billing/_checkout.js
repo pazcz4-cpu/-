@@ -7,11 +7,10 @@
    ולא הימור על יכולת התזמון של הספק. */
 'use strict';
 
-const { endpoint } = require('./_shared.js');
 const providers = require('./_providers.js');
 const Model = require('../../js/backend/model.js');
 
-module.exports = endpoint(async function ({ company, user, body, db }) {
+module.exports = async function ({ company, user, body, db }) {
   const planId = body && body.plan;
   if (!planId || !Model.PLANS[planId]) {
     return { status: 400, body: { message: 'Unknown plan' } };
@@ -96,4 +95,4 @@ module.exports = endpoint(async function ({ company, user, body, db }) {
   });
 
   return { body: { ok: true, checkoutUrl: checkout && checkout.url } };
-});
+};

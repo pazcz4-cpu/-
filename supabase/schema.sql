@@ -315,9 +315,14 @@ create policy company_weeks_write on public.company_weeks
 -- מחדל אינה מחליפה אותה אלא יוצרת עומס נוסף, ואז קריאה בשלושה
 -- שמות הופכת לדו-משמעית ונכשלת. לכן מוחקים במפורש.
 drop function if exists public.create_company(text, text, int);
+-- החתימה גדלה בשני שדות: ההסכמה לדיוור והנוסח שהוצג. הגרסה
+-- הקודמת נמחקת במפורש, אחרת שתיהן קיימות ו-PostgREST בוחר לפי
+-- מה שנשלח -- ואז הסכמה שנשלחה נופלת בשקט על הגרסה הישנה.
+drop function if exists public.create_company(text, text, int, text);
 
 create or replace function public.create_company(
-  p_name text, p_user_name text, p_trial_days int default 14, p_phone text default '')
+  p_name text, p_user_name text, p_trial_days int default 14, p_phone text default '',
+  p_wa_opt_in boolean default false, p_wa_opt_in_text text default '')
 returns public.companies
 language plpgsql
 security definer
@@ -346,9 +351,16 @@ begin
     raise exception 'a contact phone number is required' using errcode = '22023';
   end if;
 
-  insert into public.companies (name, phone, plan, status, valid_until)
+  -- ההסכמה נשמרת עם התאריך ועם הנוסח שהוצג, ולא כדגל לבדו:
+  -- השאלה שנשאלת בדיעבד אינה "האם הוא הסכים" אלא "מתי, ומה
+  -- עמד מול העיניים שלו".
+  insert into public.companies (name, phone, plan, status, valid_until,
+                                wa_opt_in, wa_opt_in_at, wa_opt_in_text)
   values (trim(p_name), trim(p_phone), 'starter', 'trial',
-          now() + make_interval(days => p_trial_days))
+          now() + make_interval(days => p_trial_days),
+          coalesce(p_wa_opt_in, false),
+          case when p_wa_opt_in then now() else null end,
+          case when p_wa_opt_in then nullif(trim(p_wa_opt_in_text), '') else null end)
   returning * into v_company;
 
   insert into public.company_users (id, company_id, email, name, role, active)
@@ -1030,7 +1042,7 @@ end;
 $$;
 
 -- GRANTS: הרשאות קריאה לפונקציות
-grant execute on function public.create_company(text, text, int, text)           to authenticated;
+grant execute on function public.create_company(text, text, int, text, boolean, text) to authenticated;
 grant execute on function public.save_own_constraint(text, int, jsonb)           to authenticated;
 grant execute on function public.save_own_note(text, int, text)                  to authenticated;
 grant execute on function public.save_own_punch(text)                            to authenticated;
@@ -1651,3 +1663,55 @@ $$;
 
 revoke all on function public.redeem_coupon(text) from public;
 grant execute on function public.redeem_coupon(text) to authenticated;
+
+
+-- ===== וואטסאפ: הסכמה, הסרה ויומן שליחה =====
+--
+-- הודעה פרסומית לטלפון היא "דבר פרסומת" לפי סעיף 30א לחוק
+-- התקשורת, והפיצוי הוא עד 1,000 ש"ח להודעה בלי הוכחת נזק.
+-- השאלה בבית משפט אינה "האם הוא הסכים" אלא "תראה לי מתי, ואיזה
+-- נוסח עמד מול העיניים שלו" -- ולכן נשמר גם התאריך וגם הנוסח
+-- עצמו, ולא רק דגל.
+--
+-- wa_opt_out_at גובר על הכול. הסרה היא בקשה שמכבדים מיד, וגם
+-- אם ההסכמה עדיין רשומה.
+alter table public.companies
+  add column if not exists wa_opt_in      boolean not null default false,
+  add column if not exists wa_opt_in_at   timestamptz,
+  add column if not exists wa_opt_in_text text,
+  add column if not exists wa_opt_out_at  timestamptz;
+
+-- יומן השליחה. שתי מטרות, ושתיהן הכרחיות:
+--
+-- 1. הוכחה מה נשלח, למי ומתי.
+-- 2. מניעת שליחה כפולה. נטישה אחת מקבלת תזכורת אחת, ולא אחת
+--    בכל ריצה של הקרון -- האילוץ הייחודי למטה הוא מה שאוכף
+--    את זה, ולא בדיקה בקוד שיכולה לרוץ פעמיים במקביל.
+create table if not exists public.wa_messages (
+  id         uuid primary key default gen_random_uuid(),
+  company_id uuid references public.companies(id) on delete cascade,
+  template   text not null,
+  to_phone   text not null,
+  status     text not null default 'sent',
+  wa_id      text,
+  error      text,
+  created_at timestamptz not null default now()
+);
+
+-- תבנית אחת לחברה, פעם אחת. חברה שנטשה, קיבלה תזכורת, וחזרה
+-- לנטוש שוב אינה מקבלת אותה הודעה שוב.
+create unique index if not exists wa_messages_once_idx
+  on public.wa_messages (company_id, template);
+
+create index if not exists wa_messages_created_idx
+  on public.wa_messages (created_at desc);
+
+alter table public.wa_messages enable row level security;
+
+-- אין מדיניות: היומן נקרא ונכתב מהשרת בלבד, עם מפתח השירות.
+-- בשורות האלה יושבים מספרי טלפון של לקוחות.
+revoke all on public.wa_messages from authenticated, anon;
+
+-- ההסכמה נרשמת בהרשמה, והיא אינה ניתנת לעריכה מהדפדפן: הרשימה
+-- הסגורה של grant update על companies היא מה שמונע מלקוח לכתוב
+-- לעצמו "הסכמתי" או למחוק "ביקשתי להסיר".

@@ -32,9 +32,10 @@ function clear() {
 console.log('\n== בלי הגדרות כלל ==');
 clear();
 for (const [name, file] of [['משרד אחורי','api/admin/index.js'],
-                            ['חיוב: checkout','api/billing/checkout.js'],
+                            ['חיוב','api/billing/index.js'],
                             ['חיוב: webhook','api/billing/webhook.js'],
-                            ['חיוב: cron','api/billing/cron.js']]) {
+                            ['חיוב: cron','api/billing/cron.js'],
+                            ['וואטסאפ','api/wa.js']]) {
   delete require.cache[require.resolve(path+file)];
   const h = require(path+file);
   const r = res();

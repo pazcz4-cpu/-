@@ -2296,6 +2296,15 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 .coupon-row .text-input { flex: 1 1 10rem; text-transform: uppercase; }
 .coupon-used b { letter-spacing: .04em; }
 
+/* תיבת הסכמה בטופס ההרשמה. לא מסומנת מראש, ולא מודגשת: היא
+   בקשה, לא שלב. */
+.auth-check {
+  display: flex; align-items: flex-start; gap: var(--s2);
+  font-size: var(--t-xs); color: var(--muted); font-weight: 400;
+  line-height: 1.5; cursor: pointer;
+}
+.auth-check input { margin-top: 2px; flex: 0 0 auto; }
+
 </style>
 </head>
 <body>
@@ -3793,6 +3802,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'I agree to receive messages from SetShifts about my account and similar services by WhatsApp and email. You can opt out at any time.',
         consent: 'By creating an account I agree to the {terms} and the {privacy}.',
         forgot: 'Forgot password',
         sending: 'Sending…',
@@ -5245,6 +5255,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'אני מאשר/ת לקבל מ-SetShifts הודעות על החשבון ועל שירותים דומים בוואטסאפ ובדוא"ל. אפשר להסיר בכל עת.',
         consent: 'בפתיחת חשבון אני מסכים ל{terms} ול{privacy}.',
         forgot: 'שכחתי סיסמה',
         sending: 'שולח…',
@@ -6692,6 +6703,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'Acepto recibir mensajes de SetShifts sobre mi cuenta y servicios similares por WhatsApp y correo. Puedes darte de baja cuando quieras.',
         consent: 'Al crear una cuenta acepto los {terms} y la {privacy}.',
         forgot: 'He olvidado la contraseña',
         sending: 'Enviando…',
@@ -8139,6 +8151,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'J’accepte de recevoir de SetShifts des messages concernant mon compte et des services similaires par WhatsApp et e-mail. Désinscription à tout moment.',
         consent: 'En créant un compte, j’accepte les {terms} et la {privacy}.',
         forgot: 'Mot de passe oublié',
         sending: 'Envoi…',
@@ -9586,6 +9599,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'أوافق على تلقّي رسائل من SetShifts بخصوص حسابي وخدمات مشابهة عبر واتساب والبريد الإلكتروني. يمكن إلغاء الاشتراك في أي وقت.',
         consent: 'بإنشاء حساب أوافق على {terms} و{privacy}.',
         forgot: 'نسيت كلمة المرور',
         sending: 'جارٍ الإرسال…',
@@ -11033,6 +11047,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'Согласен получать от SetShifts сообщения об аккаунте и похожих услугах в WhatsApp и по почте. Отписаться можно в любой момент.',
         consent: 'Создавая аккаунт, я принимаю {terms} и {privacy}.',
         forgot: 'Забыли пароль',
         sending: 'Отправка…',
@@ -12480,6 +12495,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'Ich möchte von SetShifts Nachrichten zu meinem Konto und zu ähnlichen Leistungen per WhatsApp und E-Mail erhalten. Jederzeit abbestellbar.',
         consent: 'Mit dem Anlegen eines Kontos stimme ich den {terms} und der {privacy} zu.',
         forgot: 'Passwort vergessen',
         sending: 'Senden…',
@@ -13927,6 +13943,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       },
 
       auth: {
+        marketingOptIn: 'Aceito receber da SetShifts mensagens sobre a minha conta e serviços semelhantes por WhatsApp e e-mail. Pode cancelar quando quiser.',
         consent: 'Ao criar uma conta aceito os {terms} e a {privacy}.',
         forgot: 'Esqueci a palavra-passe',
         sending: 'A enviar…',

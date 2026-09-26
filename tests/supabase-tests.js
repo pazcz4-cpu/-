@@ -640,14 +640,15 @@ run('בעלים אינו ניתן לשינוי', function () {
 run('שינוי תוכנית עובר דרך השרת ולא נכתב מהדפדפן', function () {
   return signedIn().then(function (ctx) {
     /* השרת מאשר, ורק אחר כך המצב מתעדכן */
-    ctx.server.serverRoutes = { '/api/billing/checkout': { status: 200, body: { ok: true } } };
+    ctx.server.serverRoutes = { '/api/billing': { status: 200, body: { ok: true } } };
     ctx.server.calls.length = 0;
     return ctx.backend.setSubscription({ action: 'checkout', plan: 'growth' }).then(function () {
       var toServer = ctx.server.calls.filter(function (c) {
-        return c.path === '/api/billing/checkout';
+        return c.path === '/api/billing';
       });
       assertEqual(toServer.length, 1, 'הבקשה לא נשלחה לשרת');
       assertEqual(toServer[0].body.plan, 'growth', 'התוכנית לא נשלחה');
+      assertEqual(toServer[0].body.op, 'checkout', 'הפעולה לא נשלחה');
 
       /* הנקודה המרכזית: אסור שהדפדפן יכתוב את מצב המנוי בעצמו */
       var directWrite = ctx.server.calls.filter(function (c) {
@@ -661,7 +662,7 @@ run('שינוי תוכנית עובר דרך השרת ולא נכתב מהדפד
 
 run('מצב המנוי נטען מחדש מהשרת אחרי אישור', function () {
   return signedIn().then(function (ctx) {
-    ctx.server.serverRoutes = { '/api/billing/checkout': { status: 200, body: { ok: true } } };
+    ctx.server.serverRoutes = { '/api/billing': { status: 200, body: { ok: true } } };
     /* "הספק אישר" – השרת עדכן את השורה */
     ctx.server.companies[ctx.session.company.id].plan = 'growth';
     ctx.server.companies[ctx.session.company.id].status = 'active';
@@ -684,16 +685,17 @@ run('כשהחיוב לא חובר מתקבלת הודעה ברורה ולא שג
   });
 });
 
-/* ביטול וחידוש חולקים נקודת קצה אחת ונבדלים ב-op. הבדיקה מוודאת
-   שהכיוון באמת נשלח: op שגוי פירושו לקוח שביקש לבטל וחודש לו. */
-run('ביטול מנוי פונה לנקודת הקצה של המנוי עם op ביטול', function () {
+/* כל פעולות החיוב חולקות נקודת קצה אחת ונבדלות ב-op. הבדיקה
+   מוודאת שהכיוון באמת נשלח: op שגוי פירושו לקוח שביקש לבטל
+   וחודש לו. */
+run('ביטול מנוי פונה לנקודת הקצה של החיוב עם op ביטול', function () {
   return signedIn().then(function (ctx) {
     ctx.server.serverRoutes = {
-      '/api/billing/subscription': { status: 200, body: { ok: true } }
+      '/api/billing': { status: 200, body: { ok: true } }
     };
     return ctx.backend.setSubscription({ action: 'cancel' }).then(function () {
       var calls = ctx.server.calls.filter(function (c) {
-        return c.path === '/api/billing/subscription';
+        return c.path === '/api/billing';
       });
       assertEqual(calls.length, 1, 'בקשת הביטול לא נשלחה');
       assertEqual(calls[0].body && calls[0].body.op, 'cancel', 'נשלח op שגוי');
@@ -704,11 +706,11 @@ run('ביטול מנוי פונה לנקודת הקצה של המנוי עם op 
 run('חידוש פונה לאותה נקודת קצה עם op חידוש', function () {
   return signedIn().then(function (ctx) {
     ctx.server.serverRoutes = {
-      '/api/billing/subscription': { status: 200, body: { ok: true } }
+      '/api/billing': { status: 200, body: { ok: true } }
     };
     return ctx.backend.setSubscription({ action: 'resume' }).then(function () {
       var calls = ctx.server.calls.filter(function (c) {
-        return c.path === '/api/billing/subscription';
+        return c.path === '/api/billing';
       });
       assertEqual(calls.length, 1, 'בקשת החידוש לא נשלחה');
       assertEqual(calls[0].body && calls[0].body.op, 'resume', 'נשלח op שגוי');
@@ -716,16 +718,17 @@ run('חידוש פונה לאותה נקודת קצה עם op חידוש', funct
   });
 });
 
-run('הוספת אמצעי תשלום פונה לנקודת הקצה שלה', function () {
+run('הוספת אמצעי תשלום פונה לאותה נקודת קצה עם op משלה', function () {
   return signedIn().then(function (ctx) {
     ctx.server.serverRoutes = {
-      '/api/billing/payment-method': { status: 200, body: { checkoutUrl: null } }
+      '/api/billing': { status: 200, body: { checkoutUrl: null } }
     };
     return ctx.backend.setSubscription({ action: 'payment-method' }).then(function () {
       var call = ctx.server.calls.filter(function (c) {
-        return c.path === '/api/billing/payment-method';
+        return c.path === '/api/billing';
       });
       assertEqual(call.length, 1, 'הבקשה לא נשלחה');
+      assertEqual(call[0].body && call[0].body.op, 'payment-method', 'נשלח op שגוי');
     });
   });
 });

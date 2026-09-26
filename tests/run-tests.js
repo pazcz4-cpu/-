@@ -1778,7 +1778,7 @@ test('הלוגו מוקטן בלי למתוח ובלי להגדיל תמונה �
    הייתה מגלה חוליה מנותקת באמצע. */
 test('הח.פ. של הלקוח מגיע מהשרת אל בקשת התשלום', function () {
   var checkout = fs.readFileSync(
-    path.join(__dirname, '..', 'api', 'billing', 'checkout.js'), 'utf8');
+    path.join(__dirname, '..', 'api', 'billing', '_checkout.js'), 'utf8');
   assert(/taxId:\s*company\.tax_id/.test(checkout),
     'נקודת הקצה אינה מעבירה את מספר העוסק לספק');
   var providers = fs.readFileSync(

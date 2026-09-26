@@ -12,9 +12,8 @@
    את הסימון ומדלג. */
 'use strict';
 
-const { endpoint } = require('./_shared.js');
 
-module.exports = endpoint(async function ({ company, body, db }) {
+module.exports = async function ({ company, body, db }) {
   const op = String((body && body.op) || '');
 
   if (op === 'cancel') {
@@ -44,4 +43,4 @@ module.exports = endpoint(async function ({ company, body, db }) {
   }
 
   return { status: 400, body: { message: 'Unknown op: ' + op } };
-});
+};

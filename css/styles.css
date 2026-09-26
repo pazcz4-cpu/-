@@ -2288,3 +2288,12 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 .coupon-row { display: flex; gap: var(--s2); margin-top: var(--s2); flex-wrap: wrap; }
 .coupon-row .text-input { flex: 1 1 10rem; text-transform: uppercase; }
 .coupon-used b { letter-spacing: .04em; }
+
+/* תיבת הסכמה בטופס ההרשמה. לא מסומנת מראש, ולא מודגשת: היא
+   בקשה, לא שלב. */
+.auth-check {
+  display: flex; align-items: flex-start; gap: var(--s2);
+  font-size: var(--t-xs); color: var(--muted); font-weight: 400;
+  line-height: 1.5; cursor: pointer;
+}
+.auth-check input { margin-top: 2px; flex: 0 0 auto; }

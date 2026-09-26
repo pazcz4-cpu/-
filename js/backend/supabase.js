@@ -326,7 +326,8 @@
           '&select=id,name,tax_id,phone,logo,plan,status,valid_until,created_at,' +
           /* הקופון וההנחה שנותרה. המסך מציג אותם, ובלעדיהם לקוח
              שמימש קופון רואה מסך שלא השתנה ומנסה שוב. */
-          'custom_price_monthly,coupon_code,discount_percent,discount_charges_left')
+          'custom_price_monthly,coupon_code,discount_percent,discount_charges_left,' +
+          'wa_opt_in,wa_opt_out_at')
           .then(function (companies) {
             var row = companies && companies[0];
             if (!row) { self._session = null; self._sessionMiss = 'no-company'; return null; }
@@ -337,6 +338,7 @@
               customPriceMonthly: row.custom_price_monthly == null
                 ? null : Number(row.custom_price_monthly),
               couponCode: row.coupon_code || '',
+              waOptIn: !!row.wa_opt_in, waOptOutAt: row.wa_opt_out_at || null,
               discountPercent: Number(row.discount_percent) || 0,
               discountChargesLeft: Number(row.discount_charges_left) || 0,
               validUntil: row.valid_until, createdAt: row.created_at
@@ -370,7 +372,9 @@
         p_name: companyName,
         p_user_name: String(meta.name || '').trim(),
         p_trial_days: Model.TRIAL_DAYS,
-        p_phone: Model.normalizePhone(meta.phone)
+        p_phone: Model.normalizePhone(meta.phone),
+        p_wa_opt_in: !!meta.wa_opt_in,
+        p_wa_opt_in_text: meta.wa_opt_in ? String(meta.wa_opt_in_text || '') : ''
       }).then(function () { return self._loadSession(); });
     }, function () {
       /* אם לא הצלחנו לקרוא את המשתמש, נופלים חזרה להתנהגות הרגילה */
@@ -547,7 +551,15 @@
         /* גם הטלפון נשמר על משתמש האימות ולא רק בקריאה הבאה:
            כשאימות מייל דלוק ההרשמה נגמרת במכשיר אחר, ומה
            שהוקלד כאן לא יהיה שם. */
-        data: { name: input.name || '', company_name: companyName, phone: phone }
+        /* גם ההסכמה לדיוור והנוסח שהוצג: כשאימות מייל דלוק
+           החברה נוצרת בכניסה הראשונה, ואם ההסכמה לא נסעה עד
+           לכאן היא פשוט תיעלם -- והתוצאה תהיה לקוח שסימן ואינו
+           רשום כמי שהסכים. */
+        data: {
+          name: input.name || '', company_name: companyName, phone: phone,
+          wa_opt_in: !!input.waOptIn,
+          wa_opt_in_text: input.waOptIn ? String(input.waOptInText || '').slice(0, 400) : ''
+        }
       }
     }).then(function (data) {
       if (!data || !data.access_token) {
@@ -559,7 +571,9 @@
         p_name: companyName,
         p_user_name: String(input.name || '').trim(),
         p_trial_days: Model.TRIAL_DAYS,
-        p_phone: phone
+        p_phone: phone,
+        p_wa_opt_in: !!input.waOptIn,
+        p_wa_opt_in_text: input.waOptIn ? String(input.waOptInText || '').slice(0, 400) : ''
       });
     }).then(function () {
       return self._loadSession();
@@ -1147,17 +1161,14 @@
     /* הפעולה נקבעת בשכבת החיוב, ולא מנוחשת מתוך הנתונים */
     var action = (patch && patch.action) || 'checkout';
 
-    /* ביטול וחידוש יושבים באותה נקודת קצה, ונבדלים ב-op. שתיהן
-       הופכות אותו ערך בוליאני אחד, ומגבלת הפונקציות של Vercel
-       יקרה מכדי לבזבז אותה על שתי נקודות קצה זהות. */
-    var path = action;
-    var payload = { plan: patch && patch.plan };
-    if (action === 'cancel' || action === 'resume') {
-      path = 'subscription';
-      payload = { op: action };
-    }
+    /* כל פעולות החיוב יושבות בנקודת קצה אחת ונבדלות ב-op:
+       מאחורי כולן אותו שער הרשאה בדיוק -- הבעלים של החברה --
+       ומגבלת הפונקציות של Vercel יקרה מכדי לבזבז אותה על אותו
+       שער שנכתב שלוש פעמים. */
+    var payload = { op: action };
+    if (patch && patch.plan) payload.plan = patch.plan;
 
-    return this._server(this.billingEndpoint + '/' + path, payload)
+    return this._server(this.billingEndpoint, payload)
       .then(function (result) {
         /* הספק עשוי להחזיר כתובת תשלום. אם כן – שולחים לשם. */
         if (result && result.checkoutUrl) {

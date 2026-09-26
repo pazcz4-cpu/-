@@ -570,30 +570,11 @@ queue = queue.then(function () {
    החלפת תוכנית אינה דורשת סליקה: היא שינוי תקרה ומחיר, והכסף
    נגבה בחיוב הבא. */
 
-/* טוענים את נקודת הקצה בלי השרת: מחליפים את _shared.js במטמון
-   של require לפני הטעינה, כך ש-endpoint מחזיר את הפונקציה עצמה
-   ואפשר לקרוא לה עם חברה מזויפת. */
+/* המסלול עצמו, בלי השרת. מאז שכל פעולות החיוב יושבות בנקודת
+   קצה אחת, כל מסלול הוא פונקציה רגילה שמקבלת הקשר -- ואין
+   צורך להחליף את _shared.js במטמון כדי להגיע אליה. */
 function loadCheckout() {
-  var sharedPath = require.resolve('../api/billing/_shared.js');
-  var checkoutPath = require.resolve('../api/billing/checkout.js');
-  var writes = [];
-  var realShared = require.cache[sharedPath];
-  require.cache[sharedPath] = {
-    id: sharedPath, filename: sharedPath, loaded: true, exports: {
-      endpoint: function (handle) { return handle; },
-      db: function (path, options) {
-        writes.push({ path: path, options: options });
-        return Promise.resolve([]);
-      },
-      send: function () {}, requireOwner: function () {}, readBody: function () {}
-    }
-  };
-  delete require.cache[checkoutPath];
-  var handler = require('../api/billing/checkout.js');
-  delete require.cache[checkoutPath];
-  if (realShared) require.cache[sharedPath] = realShared;
-  else delete require.cache[sharedPath];
-  return { handler: handler, writes: writes };
+  return { handler: require('../api/billing/_checkout.js'), writes: [] };
 }
 
 function runCheckout(company, plan) {

@@ -219,6 +219,62 @@ try {
   check('ובשורה השנייה נשאר התפקיד',
     await twin.locator('#user-bar .user-name').innerText(), 'בעלים');
 
+  /* ===== ההסכמה לדיוור =====
+
+     תיבה שאינה מסומנת מראש, ונוסח שנשמר כפי שהוצג. השאלה
+     שנשאלת בדיעבד אינה "האם הוא הסכים" אלא "מתי, ומה עמד מול
+     העיניים שלו" -- ולכן גם התאריך וגם הטקסט נבדקים כאן. */
+  console.log('\n== הסכמה לדיוור ==');
+  const third = await mk();
+  await skipWizard(third);
+  await third.goto(APP);
+  await third.waitForTimeout(400);
+  await third.click('[data-auth-mode="signup"]');
+  await third.waitForTimeout(250);
+
+  check('התיבה אינה מסומנת מראש',
+    await third.locator('input[name="waOptIn"]').isChecked(), false);
+
+  await third.fill('input[name="companyName"]', 'עסק שהסכים');
+  await third.fill('input[name="email"]', 'optin@test.co.il');
+  await third.fill('input[name="password"]', 'secret123');
+  await third.fill('input[name="phone"]', '054-7654321');
+  const shown = (await third.locator('.auth-check span').innerText()).trim();
+  await third.check('input[name="waOptIn"]');
+  await third.click('#signup-form button[type="submit"]');
+  await third.waitForTimeout(1300);
+
+  const consent = await third.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+    const company = Object.values(raw.companies).filter((c) => c.name === 'עסק שהסכים')[0];
+    return company && {
+      optIn: company.waOptIn, at: company.waOptInAt, text: company.waOptInText
+    };
+  });
+  check('ההסכמה נשמרה', consent && consent.optIn, true);
+  check('עם תאריך', !!(consent && consent.at), true);
+  /* הנוסח שנשמר הוא הנוסח שהוצג, ולא תיאור שלו */
+  check('והנוסח שנשמר הוא זה שהוצג', consent && consent.text, shown);
+
+  /* ומי שלא סימן -- לא רשום כמי שהסכים */
+  const fourth = await mk();
+  await skipWizard(fourth);
+  await fourth.goto(APP);
+  await fourth.waitForTimeout(400);
+  await fourth.click('[data-auth-mode="signup"]');
+  await fourth.waitForTimeout(250);
+  await fourth.fill('input[name="companyName"]', 'עסק ששתק');
+  await fourth.fill('input[name="email"]', 'quiet@test.co.il');
+  await fourth.fill('input[name="password"]', 'secret123');
+  await fourth.fill('input[name="phone"]', '054-1111111');
+  await fourth.click('#signup-form button[type="submit"]');
+  await fourth.waitForTimeout(1300);
+  check('מי שלא סימן אינו רשום כמסכים', await fourth.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+    const company = Object.values(raw.companies).filter((c) => c.name === 'עסק ששתק')[0];
+    return company && company.waOptIn;
+  }), false);
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

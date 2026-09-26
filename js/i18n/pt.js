@@ -1018,6 +1018,7 @@
       },
 
       auth: {
+        marketingOptIn: 'Aceito receber da SetShifts mensagens sobre a minha conta e serviços semelhantes por WhatsApp e e-mail. Pode cancelar quando quiser.',
         consent: 'Ao criar uma conta aceito os {terms} e a {privacy}.',
         forgot: 'Esqueci a palavra-passe',
         sending: 'A enviar…',

@@ -664,7 +664,7 @@
     return translate('billing.priceMonthly', amount + '₪', { amount: amount });
   }
 
-  function newTrialCompany(name, now, phone) {
+  function newTrialCompany(name, now, phone, consent) {
     var today = now ? new Date(now) : new Date();
     return {
       name: name,
@@ -681,6 +681,13 @@
       status: SUBSCRIPTION.TRIAL,
       validUntil: addDays(today, TRIAL_DAYS).toISOString(),
       createdAt: today.toISOString(),
+      /* ההסכמה לדיוור, עם התאריך ועם הנוסח שהוצג. דגל לבדו
+         אינו הוכחה: השאלה שנשאלת בדיעבד היא "איזה נוסח עמד
+         מול העיניים שלו, ומתי". */
+      waOptIn: !!(consent && consent.optIn),
+      waOptInAt: consent && consent.optIn ? (now ? new Date(now) : new Date()).toISOString() : null,
+      waOptInText: consent && consent.optIn ? String(consent.text || '').slice(0, 400) : '',
+      waOptOutAt: null,
       /* מתמלאים כשהלקוח מזין כרטיס בעמוד התשלום של הספק */
       billingProvider: null,
       billingCustomerId: null,

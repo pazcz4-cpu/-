@@ -1024,6 +1024,7 @@
       },
 
       auth: {
+        marketingOptIn: 'I agree to receive messages from SetShifts about my account and similar services by WhatsApp and email. You can opt out at any time.',
         consent: 'By creating an account I agree to the {terms} and the {privacy}.',
         forgot: 'Forgot password',
         sending: 'Sending…',

@@ -118,7 +118,7 @@
 
     var companyId = newId('co');
     var company = Model.newTrialCompany(String(input.companyName).trim(), this.now(),
-      input.phone);
+      input.phone, { optIn: !!input.waOptIn, text: input.waOptInText });
     company.id = companyId;
     this.db.companies[companyId] = company;
 

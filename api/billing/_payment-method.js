@@ -2,11 +2,10 @@
    משמש גם כשלקוח הגיע לתום הניסיון בלי כרטיס, וגם כשכרטיס פג. */
 'use strict';
 
-const { endpoint } = require('./_shared.js');
 const providers = require('./_providers.js');
 const Model = require('../../js/backend/model.js');
 
-module.exports = endpoint(async function ({ company, user }) {
+module.exports = async function ({ company, user }) {
   const name = process.env.BILLING_PROVIDER || 'mock';
   const provider = providers[name];
   if (!provider || !provider.createCheckout) {
@@ -31,4 +30,4 @@ module.exports = endpoint(async function ({ company, user }) {
   });
 
   return { body: { ok: true, checkoutUrl: checkout && checkout.url } };
-});
+};

@@ -281,7 +281,11 @@
       name: form.name.value,
       email: form.email.value,
       phone: form.phone.value,
-      password: form.password.value
+      password: form.password.value,
+      /* הנוסח נשלח יחד עם התשובה, ולא רק "כן". הוא נשמר כפי
+         שהוצג -- בשפה שבה הלקוח קרא אותו. */
+      waOptIn: !!(form.waOptIn && form.waOptIn.checked),
+      waOptInText: form.waOptIn && form.waOptIn.checked ? t('auth.marketingOptIn') : ''
     }).then(function (session) {
       self._setBusy(false);
       self._enter(session);
@@ -645,6 +649,17 @@
         '<small>' + t('auth.phoneHint') + '</small></label>' +
         '<label>' + t('auth.password') + '<input type="password" name="password" class="text-input" autocomplete="new-password" required>' +
         '<small>' + t('auth.passwordHint') + '</small></label>' +
+        /* הסכמה לדיוור, ולא מסומנת מראש.
+
+           הודעה פרסומית לטלפון היא "דבר פרסומת" לפי סעיף 30א
+           לחוק התקשורת, והפיצוי הוא עד 1,000 ש"ח להודעה בלי
+           הוכחת נזק. תיבה מסומנת מראש אינה הסכמה -- היא ההפך
+           ממנה, והיא בדיוק מה שבית משפט מסתכל עליו.
+
+           הנוסח עצמו נשמר עם ההסכמה ולא רק דגל: השאלה שנשאלת
+           בדיעבד היא "איזה נוסח עמד מול העיניים שלו". */
+        '<label class="auth-check"><input type="checkbox" name="waOptIn" value="1">' +
+        '<span>' + esc(t('auth.marketingOptIn')) + '</span></label>' +
         '<button type="submit" class="btn primary">' + t('auth.create') + '</button>' +
         /* הסכמה לתנאים במסך שבו היא נדרשת, עם קישורים שנפתחים
            בלשונית אחרת כדי לא לאבד את הטופס שמולא */

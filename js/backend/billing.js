@@ -133,11 +133,12 @@
     if (!this.fetchImpl || !this.endpoint) {
       return Promise.reject(new Error(t('payments.notConfigured')));
     }
-    return this.fetchImpl(this.endpoint + '/' + action, {
+    /* נקודת קצה אחת, ו-op בגוף הבקשה. ראו api/billing/index.js */
+    return this.fetchImpl(this.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(body || {})
+      body: JSON.stringify(Object.assign({ op: action }, body || {}))
     }).then(function (response) {
       if (!response.ok) { throw new Error(t('payments.requestFailed', { status: response.status })); }
       return response.json();

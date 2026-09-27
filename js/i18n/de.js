@@ -135,6 +135,12 @@
         ctaTitle: 'Probieren Sie es am Plan für nächste Woche',
         ctaBody: 'Team einrichten, eine Woche bauen, den Unterschied sehen. Ein Nachmittag reicht.',
         footerRights: 'Alle Rechte vorbehalten.',
+        /* נגישות בשורת הניווט. עד כאן הן היו בעברית בכל
+           שמונה עמודי השפה — כלומר קורא מסך של מבקר מגרמניה
+           קרא לו מילים בעברית. */
+        skipToContent: "Zum Hauptinhalt springen",
+        siteNav: "Website-Navigation",
+        language: "Sprache",
         about: 'Über uns',
         stories: 'Wo es hilft',
         pricing: 'Preise',

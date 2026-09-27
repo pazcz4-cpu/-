@@ -135,6 +135,12 @@
         ctaTitle: 'Pruébalo con el cuadrante de la semana que viene',
         ctaBody: 'Configura tu equipo, crea una semana y nota la diferencia. Es cuestión de una tarde.',
         footerRights: 'Todos los derechos reservados.',
+        /* נגישות בשורת הניווט. עד כאן הן היו בעברית בכל
+           שמונה עמודי השפה — כלומר קורא מסך של מבקר מגרמניה
+           קרא לו מילים בעברית. */
+        skipToContent: "Saltar al contenido principal",
+        siteNav: "Navegación del sitio",
+        language: "Idioma",
         about: 'Quiénes somos',
         stories: 'Dónde ayuda',
         pricing: 'Precios',

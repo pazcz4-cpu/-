@@ -135,6 +135,12 @@
         ctaTitle: 'Experimenta no horário da próxima semana',
         ctaBody: 'Configura a equipa, constrói uma semana e vê a diferença. Leva uma tarde.',
         footerRights: 'Todos os direitos reservados.',
+        /* נגישות בשורת הניווט. עד כאן הן היו בעברית בכל
+           שמונה עמודי השפה — כלומר קורא מסך של מבקר מגרמניה
+           קרא לו מילים בעברית. */
+        skipToContent: "Saltar para o conteúdo principal",
+        siteNav: "Navegação do site",
+        language: "Idioma",
         about: 'Quem somos',
         stories: 'Onde ajuda',
         pricing: 'Preços',

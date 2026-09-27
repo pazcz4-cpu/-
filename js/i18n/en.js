@@ -141,6 +141,12 @@
         ctaTitle: 'Try it on next week’s schedule',
         ctaBody: 'Set up your team, build one week, and see the difference. It takes an afternoon.',
         footerRights: 'All rights reserved.',
+        /* נגישות בשורת הניווט. עד כאן הן היו בעברית בכל
+           שמונה עמודי השפה — כלומר קורא מסך של מבקר מגרמניה
+           קרא לו מילים בעברית. */
+        skipToContent: "Skip to main content",
+        siteNav: "Site navigation",
+        language: "Language",
         about: 'About',
         stories: 'Where it helps',
         pricing: 'Pricing',

@@ -24,16 +24,35 @@
   if (/\/contact$/.test(here)) return;
 
   var model = root.ShiftModel;
-  var href = 'contact/';
-  /* בעמודים שאינם השורש הנתיב היחסי שונה */
-  if (/\/[a-z-]+$/.test(here)) href = '../contact/';
+
+  /* לאיזה עמוד "צור קשר" — לפי השפה שהעמוד נשלח בה, ולא לפי
+     עומק הנתיב. הספירה לפי הנתיב טעתה בדיוק במקום אחד: בדף
+     הבית בשפה זרה (/de/) היא ראתה מקטע אחד וחישבה '../contact/',
+     כלומר שלחה מבקר מגרמניה לעמוד צור קשר בעברית.
+
+     SHIFT_PAGE_LANG קיים רק באתר הבנוי. בפתיחה מקומית של קובץ
+     מהדיסק אין שפה בכתובת, ושם הנתיב היחסי הוא הנכון. */
+  var lang = root.SHIFT_PAGE_LANG;
+  var href;
+  if (lang) {
+    href = (lang === 'he' ? '/' : '/' + lang + '/') + 'contact/';
+  } else {
+    href = 'contact/';
+    if (/\/[a-z-]+$/.test(here)) href = '../contact/';
+  }
   if (model && typeof model.quoteHref === 'function' && model.WHATSAPP_NUMBER) {
     href = model.quoteHref();
   }
 
+  /* התווית. בדף המכירה מערכת התרגום נטענת ומחליפה שפה במקום,
+     ולכן היא המקור. עמודי התוכן אינם טוענים מילונים בכלל — הם
+     נשלחים מתורגמים — ולכן שם התווית נחרטת בזמן הבנייה. בלי
+     זה הכפתור היה אומר "צור קשר" בעברית בעמוד גרמני. */
   function label() {
-    if (!root.I18n) return 'צור קשר';
-    try { return root.I18n.t('landing.contact'); } catch (err) { return 'צור קשר'; }
+    if (root.I18n) {
+      try { return root.I18n.t('landing.contact'); } catch (err) { /* ממשיכים */ }
+    }
+    return root.SHIFT_TALK_LABEL || 'צור קשר';
   }
 
   var link = document.createElement('a');

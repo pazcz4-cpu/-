@@ -41,19 +41,36 @@
 
   /* עמודי התוכן — מי אנחנו, איפה זה עוזר, מחירים, שאלות נפוצות
      וצור קשר — יש להם כתובת לכל שפה. בעמוד משפטי אין: הוא עברית
-     ואנגלית באותה כתובת. לכן כשהמבקר עובר כאן לאנגלית, הלשוניות
-     צריכות להוביל אל /en/faq/ ולא אל /faq/ — אחרת לחיצה על
-     לשונית מתוך המסמך באנגלית מחזירה אותו לעברית. */
+     ואנגלית באותה כתובת. לכן כשהמבקר עובר כאן לאנגלית, הקישורים
+     צריכים להוביל אל /en/faq/ ולא אל /faq/ — אחרת לחיצה על
+     קישור מתוך המסמך באנגלית מחזירה אותו לעברית.
+
+     כל הקישורים במסמך ולא רק הלשוניות: בעמוד 404 הדרך חזרה
+     יושבת בתוך הטקסט עצמו, ובגרסה האנגלית שלו היא הובילה
+     לעברית — כלומר מי שהגיע לכתובת שבורה באנגלית קיבל דרך חזרה
+     לשפה שהוא לא קורא.
+
+     שתי הרשימות האלה חוזרות גם ב-tools/seo.js וגם ב-build-site.js,
+     ויש בדיקה שמשווה בין שלושתן: עמוד תוכן שיתווסף שם ולא כאן
+     היה שובר בשקט את ההפניה. */
   var CONTENT = ['about', 'stories', 'pricing', 'faq', 'contact'];
+  var BILINGUAL = ['privacy', 'terms', 'security', 'accessibility', 'guide'];
 
   function retarget(lang) {
     var prefix = lang === 'he' ? '/' : '/' + lang + '/';
-    var links = document.querySelectorAll('.lp-tabs a, .lp-footer a');
+    var anchor = lang === 'he' ? '' : '#en';
+    var links = document.querySelectorAll('a[href^="/"]');
     Array.prototype.forEach.call(links, function (link) {
-      var found = String(link.getAttribute('href') || '')
-        .match(/^\/(?:[a-z]{2}\/)?([a-z]+)\/$/);
-      if (found && CONTENT.indexOf(found[1]) !== -1) {
+      /* העוגן מוסר קודם, אחרת קישור שכבר עודכן פעם אחת
+         (/privacy/#en) אינו נתפס שוב במעבר חזרה לעברית. */
+      var href = String(link.getAttribute('href') || '').replace(/#.*$/, '');
+      if (href === '/') { link.setAttribute('href', prefix); return; }
+      var found = href.match(/^\/(?:[a-z]{2}\/)?([a-z]+)\/$/);
+      if (!found) return;
+      if (CONTENT.indexOf(found[1]) !== -1) {
         link.setAttribute('href', prefix + found[1] + '/');
+      } else if (BILINGUAL.indexOf(found[1]) !== -1) {
+        link.setAttribute('href', '/' + found[1] + '/' + anchor);
       }
     });
   }
@@ -94,13 +111,5 @@
 
   show(preferred());
 
-  /* שורת הלשוניות נגללת לרוחב בטלפון, והלשונית של העמוד הנוכחי
-     יכולה להתחיל מחוץ למסך — כך שהמבקר אינו רואה איפה הוא נמצא.
-     inline בלבד: block היה מגלגל גם את העמוד עצמו כלפי מטה. */
-  (function showCurrentTab() {
-    var current = document.querySelector('.lp-tabs a[aria-current="page"]');
-    if (!current || !current.scrollIntoView) return;
-    try { current.scrollIntoView({ inline: 'center', block: 'nearest' }); }
-    catch (err) { /* דפדפן ישן – הלשונית פשוט נשארת במקומה */ }
-  })();
+  if (root.ShiftNav) { root.ShiftNav.showCurrentTab(); }
 })(typeof window !== 'undefined' ? window : globalThis);

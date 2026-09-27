@@ -414,5 +414,6 @@ module.exports = {
   faqPage: faqPage,
   articleOf: articleOf,
   plainText: plainText,
-  escapeAttr: escapeAttr
+  escapeAttr: escapeAttr,
+  escapeText: escapeText
 };

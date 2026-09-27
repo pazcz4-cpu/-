@@ -115,6 +115,22 @@ try {
   check('והבחירה נזכרת למערכת עצמה',
     await page.evaluate(() => localStorage.getItem('shift-schedule-lang')), 'de');
 
+  /* ב-select סגור, חץ מטה מחליף את הבחירה ומפעיל change מיד.
+     בלי ההפרדה בין מקלדת לעכבר, מי שגולש במקלדת היה מועבר לשפה
+     שחלף עליה בדרך — לפני שהגיע לזו שרצה. */
+  console.log('\n== במקלדת, חץ אינו מעביר עמוד ==');
+  await page.goto(BASE + '/faq/');
+  await page.waitForTimeout(250);
+  await page.focus('#page-language');
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(400);
+  check('חץ מטה אינו מנווט', new URL(page.url()).pathname, '/faq/');
+  check('אבל הבחירה בשדה כן זזה',
+    await page.evaluate(() => document.getElementById('page-language').value), '/en/faq/');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  check('ו-Enter מעביר', new URL(page.url()).pathname, '/en/faq/');
+
   console.log('\n== קישור ישן עם עוגן שפה ==');
   await page.goto(BASE + '/faq/#en');
   await page.waitForTimeout(600);
@@ -289,6 +305,29 @@ try {
      באנגלית הייתה מחזירה את הקורא לעברית. */
   check('ואז הן מובילות לאנגלית',
     await page.locator('.lp-tabs a[href="/en/faq/"]').count(), 1);
+
+  /* בעמוד 404 הדרך חזרה יושבת בתוך הטקסט עצמו, ולא בלשוניות.
+     בגרסה האנגלית היא הובילה לעברית — כלומר מי שהגיע לכתובת
+     שבורה באנגלית קיבל דרך חזרה לשפה שהוא אינו קורא. */
+  console.log('\n== עמוד 404: הדרך חזרה נשארת בשפה ==');
+  /* הקובץ עצמו, ולא כתובת שאינה קיימת: Vercel מגיש את 404.html
+     לכל כתובת שלא נמצאה, ושרת הבדיקות המקומי מחזיר 404 חשוף. */
+  await page.goto(BASE + '/404.html');
+  await page.waitForTimeout(400);
+  await page.click('[data-legal-lang="en"]');
+  await page.waitForTimeout(300);
+  check('באנגלית, "שאלות נפוצות" שבטקסט מוביל לאנגלית',
+    await page.locator('article[data-legal="en"] a[href="/en/faq/"]').count(), 1);
+  check('וגם דף הבית',
+    await page.locator('article[data-legal="en"] a[href="/en/"]').count(), 1);
+  check('והמדריך לעובד, שאינו מתורגם, מקבל עוגן',
+    await page.locator('article[data-legal="en"] a[href="/guide/#en"]').count(), 1);
+  await page.click('[data-legal-lang="he"]');
+  await page.waitForTimeout(300);
+  check('ובחזרה לעברית הקישורים חוזרים',
+    await page.locator('article[data-legal="he"] a[href="/faq/"]').count(), 1);
+  check('בלי עוגן שנשאר',
+    await page.locator('article[data-legal="he"] a[href="/guide/"]').count(), 1);
 
   console.log('\n== הלשוניות בטלפון: נגללות, ולא נחתכות מהמסך ==');
   {

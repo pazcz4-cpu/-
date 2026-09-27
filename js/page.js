@@ -14,6 +14,7 @@
   'use strict';
 
   var doc = root.document;
+  var Nav = root.ShiftNav;
   /* אותו מפתח שהמערכת עצמה משתמשת בו, כדי שמי שבחר שפה כאן
      ייכנס אליה גם באפליקציה */
   var STORAGE_KEY = 'shift-schedule-lang';
@@ -24,26 +25,23 @@
     catch (err) { /* דפדפן בלי אחסון – הבחירה פשוט לא נזכרת */ }
   }
 
-  function options() {
-    return picker ? Array.prototype.slice.call(picker.options) : [];
-  }
-
   function optionFor(code) {
-    return options().filter(function (option) {
+    if (!picker) return null;
+    return Array.prototype.slice.call(picker.options).filter(function (option) {
       return option.getAttribute('data-lang') === code;
     })[0] || null;
   }
 
+  function goTo(option) {
+    /* העמוד שאנחנו כבר בו: אין מה לטעון מחדש */
+    if (option.value === root.location.pathname) return;
+    remember(option.getAttribute('data-lang'));
+    root.location.href = option.value;
+  }
+
   /* ===== 1. בורר השפה ===== */
 
-  if (picker) {
-    picker.addEventListener('change', function () {
-      var option = picker.options[picker.selectedIndex];
-      if (!option) return;
-      remember(option.getAttribute('data-lang'));
-      root.location.href = option.value;
-    });
-  }
+  if (Nav) { Nav.bindLanguagePicker(picker, goTo); }
 
   /* ===== 2. עוגן שפה מקישור ישן =====
 
@@ -63,15 +61,7 @@
     root.location.replace(option.value);
   })();
 
-  /* ===== 3. הלשונית הנוכחית =====
+  /* ===== 3. הלשונית הנוכחית ===== */
 
-     שורת הלשוניות נגללת לרוחב בטלפון, והלשונית של העמוד הנוכחי
-     יכולה להתחיל מחוץ למסך — כך שהמבקר אינו רואה איפה הוא נמצא.
-     inline בלבד: block היה מגלגל גם את העמוד עצמו כלפי מטה. */
-  (function showCurrentTab() {
-    var current = doc.querySelector('.lp-tabs a[aria-current="page"]');
-    if (!current || !current.scrollIntoView) return;
-    try { current.scrollIntoView({ inline: 'center', block: 'nearest' }); }
-    catch (err) { /* דפדפן ישן – הלשונית פשוט נשארת במקומה */ }
-  })();
+  if (Nav) { Nav.showCurrentTab(); }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -121,15 +121,37 @@ var SERVED_FILE = path.join(__dirname, '..', 'site', 'sw.js');
 /* הצופה רץ כתהליך נפרד, והבנייה רצה כאן. ההפך – לולאת דגימה
    סינכרונית כאן שממתינה לילד – נתקעת: תהליך שהסתיים ולא נאסף
    נשאר זומבי, ו-kill(pid,0) עליו עדיין מצליח. */
+/* נמדד משך החלון ולא מספר הדגימות שנפלו בו.
+
+   הסיבה מדויקת: אין ב-POSIX החלפה אטומית של תיקייה. rename על
+   תיקייה קיימת שאינה ריקה נכשל, ולכן ההחלפה היא בהכרח שתי
+   פעולות — site הצידה, ואז החדשה במקומה — ובין השתיים site אינו
+   קיים. מדידה צמודה (‎600 אלף דגימות בבנייה) מראה שהחלון הזה
+   קצר ממיקרו-שנייה אחת, אבל הוא אינו אפס ולא יכול להיות.
+
+   הבדיקה קודם דרשה שאף דגימה לא תיפול בו, וזו דרישה שאי אפשר
+   לעמוד בה: היא עברה כמעט תמיד ונפלה אחת לכמה הרצות, כלומר
+   התנהגה כמו תקלה מקרית בדיוק כמו הבאג שהיא נועדה לתפוס.
+
+   מה שכן משנה הוא הסדר גודל. לפני התיקון החלון היה כשתי שניות —
+   כל הבנייה מתחילתה ועד סופה — וזה מה שהפיל את הבונים של Vercel.
+   אלפיות שנייה אינן. */
 var WATCHER =
   'var fs=require("fs");' +
   'var target=process.argv[1], outFile=process.argv[2];' +
-  'var checks=0, missing=0;' +
-  'var timer=setInterval(function(){checks++;if(!fs.existsSync(target))missing++;},1);' +
+  'var checks=0, missing=0, first=0, last=0;' +
+  'var timer=setInterval(function(){checks++;' +
+  '  if(fs.existsSync(target))return;' +
+  '  missing++; var now=Date.now(); if(!first)first=now; last=now;},1);' +
   'function report(){clearInterval(timer);' +
-  '  fs.writeFileSync(outFile, JSON.stringify({checks:checks,missing:missing}));' +
+  '  fs.writeFileSync(outFile, JSON.stringify({checks:checks,missing:missing,' +
+  '    windowMs:first?(last-first):0}));' +
   '  process.exit(0);}' +
   'process.on("SIGTERM", report);';
+
+/* הגבול. חלון של עשרות אלפיות שנייה הוא עדיין בלתי נראה לבונים,
+   וחלון של שנייה אינו. */
+var MAX_WINDOW_MS = 20;
 
 test('בנייה אינה משאירה את תיקיית הפלט חסרה בזמן שהיא רצה', function () {
   var cp = require('child_process');
@@ -167,11 +189,12 @@ test('בנייה אינה משאירה את תיקיית הפלט חסרה בז�
 
   assert(seen.checks > 50, 'הבנייה הסתיימה מהר מדי מכדי למדוד (' + seen.checks + ' דגימות)');
   assert(fs.existsSync(SERVED_FILE), 'site/sw.js אינו קיים אחרי הבנייה');
-  assert(seen.missing === 0,
-    'תיקיית הפלט נעלמה באמצע הבנייה ב-' + seen.missing + ' מתוך ' + seen.checks +
-    ' דגימות.\n' +
+  assert(seen.windowMs <= MAX_WINDOW_MS,
+    'תיקיית הפלט הייתה חסרה ' + seen.windowMs + ' אלפיות שנייה (' +
+    seen.missing + ' מתוך ' + seen.checks + ' דגימות).\n' +
     '      זה החלון שבו הבונים של Vercel נופלים על ENOENT. הבנייה\n' +
-    '      צריכה להיכתב לתיקייה זמנית ולהחליף את site/ בסוף.');
+    '      צריכה להיכתב לתיקייה זמנית ולהחליף את site/ בסוף,\n' +
+    '      ולא למחוק את site/ בהתחלה ולבנות אותה מחדש.');
 });
 
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

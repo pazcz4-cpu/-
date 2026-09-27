@@ -392,6 +392,7 @@
 <script src="js/i18n/de.js"></script>
 <script src="js/i18n/pt.js"></script>
 <script src="js/i18n/dom.js"></script>
+<script src="js/nav.js"></script>
 <script src="js/video.js"></script>
 <!-- מצב הסליקה, נקבע בבנייה ממשתני הסביבה. דף סטטי אינו יכול
      לשאול את השרת, ובלי הדגל הזה נוסח ההבטחה על הכרטיס היה
@@ -524,8 +525,11 @@
 
   var picker = document.getElementById('landing-language');
   window.I18nDom.fillPicker(picker);
-  picker.addEventListener('change', function () {
-    var code = picker.value;
+  /* דרך ShiftNav ולא ישירות מ-change: ב-select סגור, חץ מטה
+     מפעיל change מיד — כלומר מי שגולש במקלדת היה מועבר לשפה
+     שחלף עליה בדרך. */
+  window.ShiftNav.bindLanguagePicker(picker, function (option) {
+    var code = option.value;
     /* לכל שפה יש כתובת משלה באתר הבנוי — / בעברית, /en/
        באנגלית וכן הלאה — ולכן החלפת שפה היא מעבר לעמוד ולא
        החלפת טקסטים במקום. אחרת הכתובת שבסרגל אומרת דבר אחד

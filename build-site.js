@@ -318,10 +318,10 @@ function metaOf(html) {
   return { title: title, description: description };
 }
 
-function escapeAttr(value) {
-  return String(value == null ? '' : value)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+/* אותן שתי הגנות שב-tools/seo.js. עותק כאן היה עוד מקום
+   שמתיישן בשקט ביום שמוסיפים לו תו. */
+const escapeAttr = seo.escapeAttr;
+const escapeText = seo.escapeText;
 
 /* תגיות שכל עמוד צריך: אייקון, manifest ומצב אפליקציה באייפון */
 function headExtras(options) {
@@ -623,8 +623,13 @@ function fillMarker(html, marker, value, where) {
   if (html.indexOf(marker) === -1) {
     throw new Error(where + ': הסימון ' + marker + ' אינו קיים ב-page.html');
   }
-  return html.replace(marker, value);
+  /* פונקציה ולא מחרוזת. ב-String.replace, ‎$‎ במחרוזת ההחלפה הוא
+     תו מיוחד: ‎$&‎ מכניס את מה שנמצא, ו-‎$'‎ את כל שאר המסמך. כאן
+     מוכנס לתוך העמוד טקסט שנכתב ביד — כותרת, תיאור, ומאמר שלם —
+     וסימן דולר אחד בו היה מעתיק חלקים מהעמוד לתוך עצמו בשקט. */
+  return html.replace(marker, function () { return value; });
 }
+
 
 CONTENT_PAGES.forEach((item) => {
   seo.LANGUAGES.forEach((lang) => {
@@ -680,7 +685,7 @@ CONTENT_PAGES.forEach((item) => {
         let out = seo.absoluteLinks(
           seo.translate(html, (key) => I18n.t(key), lang), lang.code);
         out = fillMarker(out, '<title></title>',
-          '<title>' + seo.plainText(title) + '</title>', where);
+          '<title>' + escapeText(seo.plainText(title)) + '</title>', where);
         out = fillMarker(out, '<meta name="description" content="">',
           '<meta name="description" content="' + escapeAttr(meta.description) + '">',
           where);

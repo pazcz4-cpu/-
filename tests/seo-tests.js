@@ -184,6 +184,41 @@ function articleOf(html) {
   return found ? found[1] : '';
 }
 
+/* רשימת עמודי התוכן קיימת בשלושה מקומות, ולא במקרה: tools/seo.js
+   הוא הצד של הבנייה, build-site.js קובע מה נבנה ובאיזו עדיפות,
+   ו-js/legal.js רץ בדפדפן ואינו יכול לייבא אף אחד מהם.
+
+   הבדיקה משווה בין שלושתם. עמוד תוכן שיתווסף בשניים מהם ולא
+   בשלישי אינו שובר שום דבר שנראה: הוא רק מפסיק להפנות את
+   הקישורים בעמוד המשפטי ובעמוד 404 לשפה הנכונה — בשקט. */
+test('שלושת המקומות שמכירים את עמודי התוכן מסכימים ביניהם', function () {
+  function listIn(file, name) {
+    var text = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    var found = new RegExp('(?:var|const)\\s+' + name +
+      '\\s*=\\s*\\[([^\\]]*)\\]').exec(text);
+    assert(found, file + ': לא נמצאה הרשימה ' + name);
+    return (found[1].match(/'([a-z]+)'/g) || [])
+      .map(function (quoted) { return quoted.replace(/'/g, ''); }).sort().join(',');
+  }
+  var reference = seo.CONTENT_DIRS.slice().sort().join(',');
+  assert(listIn('tools/seo.js', 'CONTENT_DIRS') === reference, 'tools/seo.js');
+  assert(listIn('js/legal.js', 'CONTENT') === reference,
+    'js/legal.js: ' + listIn('js/legal.js', 'CONTENT') + ' מול ' + reference);
+
+  var bilingual = seo.BILINGUAL_DIRS.slice().sort().join(',');
+  assert(listIn('js/legal.js', 'BILINGUAL') === bilingual,
+    'js/legal.js: ' + listIn('js/legal.js', 'BILINGUAL') + ' מול ' + bilingual);
+
+  /* וב-build-site.js הרשימה אינה מחרוזות אלא שדות dir בתוך
+     CONTENT_PAGES, ולכן היא נקראת משם. */
+  var build = fs.readFileSync(path.join(__dirname, '..', 'build-site.js'), 'utf8');
+  var pages = /const CONTENT_PAGES = \[([\s\S]*?)\n\];/.exec(build);
+  assert(pages, 'build-site.js: לא נמצאה CONTENT_PAGES');
+  var dirs = (pages[1].match(/dir: '([a-z]+)'/g) || [])
+    .map(function (entry) { return entry.replace(/dir: '|'/g, ''); }).sort().join(',');
+  assert(dirs === reference, 'build-site.js: ' + dirs + ' מול ' + reference);
+});
+
 test('לכל עמוד תוכן נבנתה כתובת בכל שפה', function () {
   CONTENT.forEach(function (dir) {
     seo.LANGUAGES.forEach(function (lang) {

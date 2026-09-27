@@ -1834,3 +1834,62 @@ revoke all on public.wa_messages from authenticated, anon;
 -- ההסכמה נרשמת בהרשמה, והיא אינה ניתנת לעריכה מהדפדפן: הרשימה
 -- הסגורה של grant update על companies היא מה שמונע מלקוח לכתוב
 -- לעצמו "הסכמתי" או למחוק "ביקשתי להסיר".
+
+-- ===== תוספת התראות וואטסאפ לעובדים =====
+--
+-- שירות בתשלום נוסף שהעסק מפעיל לעצמו: כל עובד מקבל הודעת
+-- וואטסאפ על כל סידור שמתפרסם, ותזכורת לפני סגירת האילוצים.
+-- התמחור הוא לעובד לחודש, ולפי אותו כלל של המנוי עצמו -- השיא
+-- במהלך התקופה, לא הספירה ברגע החיוב.
+--
+-- העמודה אינה ברשימת ה-grant update של companies, ובכוונה:
+-- היא משנה את הסכום שנגבה, ולכן היא עוברת דרך פונקציה שבודקת
+-- מי מבקש. לקוח שיכתוב לעצמו את הדגל היה מקבל שירות בלי חיוב,
+-- או -- גרוע מזה -- מנהל שאינו הבעלים היה מגדיל את החשבון של
+-- העסק בלי רשות.
+alter table public.companies
+  add column if not exists wa_employee_addon    boolean not null default false,
+  add column if not exists wa_employee_addon_at timestamptz;
+
+-- הדלקה וכיבוי של התוספת. רק הבעלים, כמו כל דבר שנוגע בכסף.
+--
+-- התאריך נשמר גם בכיבוי ולא רק בהדלקה: "מתי זה הופעל" ו"מתי
+-- זה כובה" הן אותה שאלה כשלקוח שואל למה חויב.
+create or replace function public.set_wa_employee_addon(p_on boolean)
+returns table (enabled boolean, changed_at timestamptz)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_role       text;
+  v_company_id uuid;
+  v_on         boolean := coalesce(p_on, false);
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+
+  select cu.role, cu.company_id into v_role, v_company_id
+  from public.company_users cu
+  where cu.id = auth.uid() and cu.active;
+
+  if v_company_id is null then
+    raise exception 'no company' using errcode = '42501';
+  end if;
+
+  -- רק הבעלים. התוספת משנה את החיוב החודשי, ומנהל אינו נוגע בכסף.
+  if v_role <> 'owner' then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
+
+  update public.companies
+     set wa_employee_addon    = v_on,
+         wa_employee_addon_at = now()
+   where id = v_company_id;
+
+  return query select v_on, now();
+end;
+$$;
+
+grant execute on function public.set_wa_employee_addon(boolean) to authenticated;

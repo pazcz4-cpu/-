@@ -236,6 +236,72 @@ console.log('    והמסך מסביר שהחיוב לפי השיא:',
 if (!/1,?200/.test(perEmployee)) errors.push('מסך המנוי הציג מחיר שאינו מה שייגבה');
 if (!/הגבוה ביותר/.test(perEmployee)) errors.push('המסך לא הסביר את שיטת החיוב');
 
+/* ===== תוספת התראות הוואטסאפ לעובדים =====
+
+   שירות בתשלום שהעסק מדליק לעצמו. מה שנבדק כאן הוא לא המתג
+   אלא מה שקורה למחיר: לקוח שמדליק תוספת וממשיך לראות את אותו
+   סכום ליד תאריך החיוב יגלה את ההפרש בכרטיס האשראי.
+
+   מצב נקי ומפורש: תוכנית מהמחירון, בלי מחיר מוסכם, ושיא ידוע.
+   כך 399 ו-669 הם מספרים שאפשר לבדוק ולא תוצאה של חישוב. */
+await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+  const id = Object.keys(raw.companies)[0];
+  raw.companies[id].plan = 'growth';
+  raw.companies[id].customPricePerEmployee = null;
+  raw.companies[id].customPriceMonthly = null;
+  raw.companies[id].employeePeak = 30;
+  raw.companies[id].employeeCount = 30;
+  raw.companies[id].waEmployeeAddon = false;
+  localStorage.setItem('maiphone-mock-server-v1', JSON.stringify(raw));
+});
+await page.reload();
+await page.waitForTimeout(900);
+/* הלשונית עצמה, ולא data-screen: אחרי רענון המסך חוזר לסידור,
+   ו-innerText של פאנל מוסתר מחזיר מחרוזת ריקה — כלומר בדיקה
+   שנראית עוברת ואינה בודקת דבר. */
+await page.click('.tab[data-tab="billing"]');
+await page.waitForTimeout(500);
+
+const addonCard = page.locator('.billing-addon');
+console.log('16. כרטיס התוספת מופיע במסך המנוי:',
+  await addonCard.count() === 1 ? '✓' : '✗');
+if (await addonCard.count() !== 1) errors.push('אין כרטיס לתוספת הוואטסאפ');
+
+/* המחיר מופיע לפני הכפתור. מתג בלי מחיר הוא הפתעה בחיוב הבא. */
+const addonPitch = await addonCard.innerText();
+console.log('    והוא אומר כמה זה עולה:', /9/.test(addonPitch) ? '✓' : '✗');
+if (!/9/.test(addonPitch)) errors.push('כרטיס התוספת אינו מציג מחיר');
+
+const beforeAddon = await page.locator('.billing-current').innerText();
+console.log('    ולפני ההפעלה הסכום הוא מחיר התוכנית:',
+  /399/.test(beforeAddon) ? '✓' : '✗');
+
+await page.click('#billing-addon-toggle');
+await page.waitForTimeout(700);
+const afterAddon = await page.locator('.billing-current').innerText();
+
+console.log('17. אחרי ההפעלה הסכום כולל את התוספת:',
+  /669/.test(afterAddon) ? '✓' : '✗');
+if (!/669/.test(afterAddon)) {
+  errors.push('הסכום לא גדל בתוספת: ' + afterAddon.replace(/\s+/g, ' ').slice(0, 120));
+}
+console.log('    ומופיעות שתי שורות פירוט:',
+  /דמי מנוי/.test(afterAddon) && /התראות וואטסאפ/.test(afterAddon) ? '✓' : '✗');
+if (!/דמי מנוי/.test(afterAddon)) errors.push('אין פירוק לשני סעיפים במסך המנוי');
+console.log('    והתוספת מוצגת כמכפלה:',
+  /30/.test(afterAddon) && /270/.test(afterAddon) ? '✓' : '✗');
+
+/* כיבוי מחזיר בדיוק. תוספת שנדלקת ואינה נכבית היא חיוב שאי
+   אפשר לעצור מהמסך. */
+await page.click('#billing-addon-toggle');
+await page.waitForTimeout(700);
+const offAddon = await page.locator('.billing-current').innerText();
+console.log('18. הכיבוי מחזיר את הסכום:',
+  /399/.test(offAddon) && !/669/.test(offAddon) ? '✓' : '✗');
+if (/669/.test(offAddon)) errors.push('הכיבוי לא החזיר את הסכום');
+console.log('    והפירוט נעלם:', !/דמי מנוי/.test(offAddon) ? '✓' : '✗');
+
 // חסימה כשהמנוי פג
 await page.evaluate(() => {
   const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));

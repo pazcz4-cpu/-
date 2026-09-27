@@ -976,6 +976,19 @@
     });
   };
 
+  /* תוספת התראות הוואטסאפ לעובדים. אותה הרשאה כמו הקופון:
+     היא משנה כסף, ולכן היא של הבעלים. */
+  MockBackend.prototype.setWaEmployeeAddon = function (on) {
+    var session;
+    try { session = this._require('billing.manage'); } catch (err) { return Promise.reject(err); }
+    var company = this.db.companies[session.company.id];
+    if (!company) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    company.waEmployeeAddon = !!on;
+    this._save();
+    this._startSession(session.user.id);
+    return Promise.resolve({ enabled: company.waEmployeeAddon });
+  };
+
   MockBackend.prototype.saveCompanyDetails = function (details) {
     var session;
     try { session = this._require('company.rename'); } catch (err) { return Promise.reject(err); }

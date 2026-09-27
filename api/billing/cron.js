@@ -25,6 +25,9 @@ const providers = require('./_providers.js');
 /* כמה עובדים מחייבים עליהם -- הכלל עצמו, במקום אחד, כי גם
    המשרד האחורי שואל אותו וחייב לענות אותה תשובה */
 const Seats = require('../_seats.js');
+/* מחיר תוספת הוואטסאפ נקרא מהמודל ולא נכתב כאן שוב: מחיר שכתוב
+   בשני מקומות הוא מחיר שיום אחד יוצג ללקוח אחרת ממה שנגבה. */
+const { WA_EMPLOYEE_PRICE } = require('../../js/backend/model.js');
 
 const MONTH_DAYS = 30;
 const GRACE_DAYS = 7;        // כמה זמן ממשיכים לנסות אחרי כישלון
@@ -172,26 +175,45 @@ async function activeEmployees(companyId) {
    מחזיר { amount } או { reason } -- כי "אין מחיר" אינו סכום,
    וכל מי שיחזיר כאן 0 יגרום לבקשת חיוב על אפס שהספק דוחה. */
 async function priceFor(company, plan) {
+  /* כמה עובדים מחייבים עליהם. נקרא פעם אחת ומשמש את שני
+     הסעיפים -- גם תעריף לעובד וגם תוספת הוואטסאפ -- כי שני
+     סעיפים שנספרים אחרת באותה חשבונית הם שאלה שאין עליה
+     תשובה טובה. */
+  let seats = Seats.billable(company);
+  /* העמודה קודמת. רק לקוח שלא שמר הגדרות מאז שהעמודות נוספו
+     מגיע לקריאה מההגדרות, ואז גם היא ספירה של רגע -- אבל
+     ספירה של רגע עדיפה על דילוג. */
+  if (seats === null) seats = await activeEmployees(company.id);
+
+  const addonOn = company.wa_employee_addon === true;
+  /* התוספת דורשת מספר עובדים, ובלעדיו אי אפשר לחשב אותה. אין
+     כאן ניחוש: לקוח שהתוספת דלוקה אצלו ואין לו ספירה מדולג
+     כמו כל מחיר שלא ידוע. */
+  if (addonOn && seats === null) return { reason: 'employees-unknown' };
+  const addon = addonOn ? WA_EMPLOYEE_PRICE * seats : 0;
+
   const rate = Number(company.custom_price_per_employee);
   if (rate > 0) {
-    /* העמודה קודמת. רק לקוח שלא שמר הגדרות מאז שהעמודות נוספו
-       מגיע לקריאה מההגדרות, ואז גם היא ספירה של רגע -- אבל
-       ספירה של רגע עדיפה על דילוג. */
-    let count = Seats.billable(company);
-    if (count === null) count = await activeEmployees(company.id);
     /* ההגדרות לא נקראו, או שאין בהן רשימת עובדים. ניחוש כאן
        הוא חיוב שגוי, ולכן מדלגים ומחכים לריצה הבאה. */
-    if (count === null) return { reason: 'employees-unknown' };
+    if (seats === null) return { reason: 'employees-unknown' };
     /* רשת בלי עובדים פעילים אינה חייבת דבר החודש. זה מצב תקין
        ולא תקלה, והוא עולה בדוח הריצה כדי שמישהו ישים לב אם
        הוא נמשך. */
-    if (count === 0) return { reason: 'no-active-employees' };
-    return { amount: Math.round(rate * count) };
+    if (seats === 0) return { reason: 'no-active-employees' };
+    return { amount: Math.round(rate * seats) + addon, plan: Math.round(rate * seats),
+      addon: addon, seats: seats };
   }
 
   const flat = Number(company.custom_price_monthly);
-  if (flat > 0) return { amount: Math.round(flat) };
-  if (plan.priceMonthly > 0) return { amount: plan.priceMonthly };
+  if (flat > 0) {
+    return { amount: Math.round(flat) + addon, plan: Math.round(flat),
+      addon: addon, seats: seats };
+  }
+  if (plan.priceMonthly > 0) {
+    return { amount: plan.priceMonthly + addon, plan: plan.priceMonthly,
+      addon: addon, seats: seats };
+  }
   return { reason: 'price-not-set' };
 }
 
@@ -271,6 +293,11 @@ async function chargeCompany(provider, company, plans, now) {
   const priced = await priceFor(company, plan);
   if (priced.reason) return skipWithGrace(company, priced.reason, now);
   const base = priced.amount;
+  /* הפירוק. base הוא הסכום הכולל -- מנוי ועוד תוספת -- וההנחה
+     חלה עליו כולו: "חודש חינם" שמגיע עם חשבון של 270 ש"ח על
+     התוספת אינו חודש חינם. */
+  const addon = priced.addon || 0;
+  const seats = priced.seats === null || priced.seats === undefined ? null : priced.seats;
 
   /* ההנחה מהקופון. שני מצבים שונים לגמרי מגיעים לאפס, ורק אחד
      מהם תקין:
@@ -312,7 +339,8 @@ async function chargeCompany(provider, company, plans, now) {
     const freeEnd = addDays(new Date(periodStart) > now ? new Date(periodStart) : now, MONTH_DAYS);
     await recordOutcome(attempt.periodId, 'granted', {
       amount: 0, waived: base, currency: 'ILS',
-      plan: company.plan, coupon: company.coupon_code || null
+      plan: company.plan, coupon: company.coupon_code || null,
+      addon: addon || undefined, seats: addon ? seats : undefined
     });
     await patchCompany(company.id, Object.assign({
       status: 'active',
@@ -334,6 +362,18 @@ async function chargeCompany(provider, company, plans, now) {
       amount: amount,
       currency: 'ILS',
       plan: company.plan,
+      /* שני סעיפים בחשבונית, ולא סכום אחד: לקוח שמשלם על מנוי
+         ועל תוספת צריך לראות אותם בנפרד, והוא גם צריך שהמספר
+         בחשבונית יהיה אותו מספר שהוא רואה במסך המנוי.
+
+         נשלח רק כשיש מה לפצל. הנחה נשארת מחוץ לפירוק בכוונה --
+         היא חלה על הסכום כולו, ושורת הנחה בחשבונית היא נושא
+         של ספק החשבוניות ולא שלנו. */
+      items: addon && !discount ? [
+        { name: 'SetShifts – subscription', price: priced.plan, quantity: 1 },
+        { name: 'SetShifts – WhatsApp alerts for staff',
+          price: WA_EMPLOYEE_PRICE, quantity: seats }
+      ] : undefined,
       /* הספק מקבל את מפתח התקופה – לא את מפתח הניסיון – כדי
          שגם הוא יראה ניסיון חוזר כאותה תקופה ולא כחיוב חדש */
       idempotencyKey: attempt.periodId
@@ -362,6 +402,11 @@ async function chargeCompany(provider, company, plans, now) {
       amount: amount,
       currency: 'ILS',
       plan: company.plan,
+      /* הפירוק נשמר ביומן ולא רק נשלח לספק: "למה חויבתי 669"
+         היא שאלה שנשאלת חודשים אחרי, וצריך לענות עליה מהנתונים
+         ולא מהזיכרון. */
+      addon: addon || undefined,
+      seats: addon ? seats : undefined,
       /* מה היה המחיר לפני ההנחה, ואיזה קופון הוזיל אותו. בלי
          שתי השורות האלה שורת הכנסה נמוכה נראית כמו טעות. */
       list_price: discount ? base : undefined,
@@ -433,7 +478,8 @@ module.exports = async function handler(req, res) {
     '&select=id,plan,status,valid_until,cancel_at_period_end,' +
     'billing_subscription_id,billing_customer_id,custom_price_monthly,' +
     'custom_price_per_employee,employee_count,employee_peak,' +
-    'coupon_code,discount_percent,discount_amount,discount_charges_left' +
+    'coupon_code,discount_percent,discount_amount,discount_charges_left,' +
+    'wa_employee_addon' +
     '&order=valid_until.asc&limit=' + MAX_COMPANIES);
 
   if (!due.ok) return send(res, 500, { message: 'Could not read companies' });

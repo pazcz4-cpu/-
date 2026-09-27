@@ -679,6 +679,22 @@ check('הלקוח אינו יכול לכתוב את השיא בעצמו', functi
     'reset role;'), 'false', 'הרשאת כתיבה על הספירה');
 });
 
+/* התוספת משנה את הסכום שנגבה, ולכן היא אינה עמודה שהדפדפן
+   רשאי לכתוב. בלי הבדיקה הזו די בבקשה אחת מהקונסולה כדי לקבל
+   שירות בתשלום בלי לשלם עליו — או, בכיוון ההפוך, כדי שמנהל
+   שאינו הבעלים יגדיל לעסק את החשבון. */
+check('הלקוח אינו יכול להדליק לעצמו את תוספת הוואטסאפ', function () {
+  assertEqual(ask(false,
+    "(select has_column_privilege('authenticated','public.companies'," +
+    "'wa_employee_addon','update')::text)",
+    'reset role;'), 'false', 'הרשאת כתיבה על דגל התוספת');
+  /* והפונקציה שכן מותרת קיימת, אחרת אין דרך להדליק אותה בכלל */
+  assertEqual(ask(false,
+    "(select has_function_privilege('authenticated'," +
+    "'public.set_wa_employee_addon(boolean)','execute')::text)",
+    'reset role;'), 'true', 'אין הרשאה להריץ את הפונקציה');
+});
+
 stop();
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

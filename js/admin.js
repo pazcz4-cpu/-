@@ -358,6 +358,16 @@
     return c.byQuote ? 'חבילת רשתות — לפי הצעת מחיר' : 'לפי המחירון';
   }
 
+  /* תוספת התראות הוואטסאפ. שורה נפרדת ולא חלק מהמחיר, כי
+     בחשבונית היא סעיף נפרד — וכשלקוח שואל למה החשבון גדל,
+     התשובה צריכה להיות על המסך ולא בחישוב בראש. */
+  function addonNote(c) {
+    if (!c.waEmployeeAddon) return 'תוספת וואטסאפ לעובדים — כבויה';
+    return 'תוספת וואטסאפ לעובדים · ' + money(c.waAddonPrice) + ' × ' +
+      (c.pricedEmployees == null ? '?' : c.pricedEmployees) +
+      ' = ' + money(c.waAddonMonthly) + ' לחודש';
+  }
+
   function renderCompanyDetail(view) {
     var node = document.getElementById('adm-company-detail');
     if (!node) return;
@@ -386,6 +396,8 @@
       tile('מחיר חודשי',
         c.planPrice ? money(c.planPrice) : 'טרם נקבע',
         priceNote(c)) +
+      tile('תוספת וואטסאפ', c.waEmployeeAddon ? money(c.waAddonMonthly) : 'כבויה',
+        addonNote(c)) +
       tile('אמצעי תשלום', c.hasCard ? 'יש' : 'אין',
         c.billingProvider || 'לא חובר') +
       tile('שימוש', String(view.usage.weeks) + ' שבועות',
@@ -399,6 +411,8 @@
         '">שינוי חבילה</button>' +
       '<button class="adm-btn" data-act="set-price" data-id="' + esc(c.id) +
         '">מחיר מוסכם</button>' +
+      '<button class="adm-btn" data-act="set-wa-addon" data-id="' + esc(c.id) + '">' +
+        (c.waEmployeeAddon ? 'כיבוי תוספת וואטסאפ' : 'הפעלת תוספת וואטסאפ') + '</button>' +
       '<button class="adm-btn" data-act="set-status" data-id="' + esc(c.id) +
         '">שינוי מצב מנוי</button>' +
       '<button class="adm-btn" data-act="set-cancel" data-id="' + esc(c.id) + '">' +
@@ -639,6 +653,17 @@
         '<input class="adm-input" id="adm-f-days" type="number" min="1" max="365" value="14">' +
         '</label>'
     },
+    'set-wa-addon': {
+      title: 'תוספת התראות וואטסאפ לעובדים',
+      fields: '<label class="adm-field"><span>מצב</span>' +
+        '<select class="adm-select" id="adm-f-on">' +
+        '<option value="1">מופעלת</option>' +
+        '<option value="0">כבויה</option>' +
+        '</select></label>' +
+        '<p class="adm-hint">התוספת מחויבת לפי אותו מספר עובדים כמו המנוי — ' +
+        'השיא בתקופה — ומופיעה בחשבונית כסעיף נפרד. הלקוח יכול להדליק ולכבות ' +
+        'אותה גם בעצמו במסך המנוי.</p>'
+    },
     'set-plan': {
       title: 'שינוי חבילה',
       fields: '<label class="adm-field"><span>חבילה</span>' +
@@ -736,6 +761,9 @@
     if (price) payload.price = price.value.trim() === '' ? null : Number(price.value);
     var mode = document.getElementById('adm-f-mode');
     if (mode) payload.mode = mode.value;
+    /* בוליאני ולא מחרוזת: השרת בודק === true, ו-"0" הוא אמת. */
+    var on = document.getElementById('adm-f-on');
+    if (on) payload.on = on.value === '1';
     if (pending.action === 'set-cancel') payload.cancel = !pending.extra.cancelNow;
 
     var button = document.getElementById('adm-modal-ok');

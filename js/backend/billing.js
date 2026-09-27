@@ -184,6 +184,10 @@
       suggestedPlan: Model.planForEmployees(employeeCount),
       overLimit: !limits.ok,
       problems: limits.problems,
+      /* פירוק המחיר: המנוי, התוספת, והסכום שנגבה בפועל. המסך
+         מציג שתי שורות ולא סכום אחד, כי סכום שגדל בלי הסבר הוא
+         שיחת טלפון. */
+      price: Model.priceBreakdown(company, employeeCount),
       canManage: Model.can(session.user.role, 'billing.manage')
     };
   };
@@ -206,6 +210,16 @@
       return Promise.reject(new Error(t('payments.notConnected')));
     }
     return this.backend.redeemCoupon(code);
+  };
+
+  /* הדלקה וכיבוי של תוספת התראות הוואטסאפ לעובדים. כמו הקופון,
+     זו פעולה מול השרת שלנו ולא מול הסולק: היא משנה את הסכום
+     שייגבה בחיוב הבא, ולא עסקה עכשיו. */
+  BillingService.prototype.setWaEmployeeAddon = function (on) {
+    if (!this.backend || !this.backend.setWaEmployeeAddon) {
+      return Promise.reject(new Error(t('payments.notConnected')));
+    }
+    return this.backend.setWaEmployeeAddon(on);
   };
 
   BillingService.prototype.cancel = function () { return this.provider.cancel(); };

@@ -694,6 +694,49 @@ test('תעריף לעובד גובר על סכום קבוע', function () {
     Model.PRICING.PLAN, 'אפס נחשב תעריף');
 });
 
+/* ===== תוספת התראות הוואטסאפ לעובדים =====
+
+   שירות בתשלום נוסף, ולכן שלוש שאלות: כמה הוא מוסיף, לפי איזה
+   מספר עובדים, ומה קורה כשאין מספר. */
+test('התוספת מוסיפה 9 ש"ח לעובד על מחיר המנוי', function () {
+  var on = { plan: 'growth', waEmployeeAddon: true, employeePeak: 30 };
+  var breakdown = Model.priceBreakdown(on, 12);
+  assertEqual(breakdown.plan, 399, 'מחיר המנוי השתנה');
+  assertEqual(breakdown.addon, 270, 'התוספת');
+  assertEqual(breakdown.total, 669, 'הסכום הכולל');
+  assertEqual(Model.totalPrice(on, 12), 669, 'totalPrice אינו תואם');
+  /* effectivePrice נשאר מחיר המנוי בלבד: הוא נקרא במקומות
+     שמשווים אותו למחירון, ושינוי שלו היה מזיז אותם. */
+  assertEqual(Model.effectivePrice(on, 12), 399, 'effectivePrice נגוע בתוספת');
+});
+
+test('התוספת כבויה אינה מוסיפה דבר', function () {
+  var off = { plan: 'growth', employeePeak: 30 };
+  assertEqual(Model.priceBreakdown(off, 12).addon, 0, 'תוספת בלי שהודלקה');
+  assertEqual(Model.totalPrice(off, 12), 399, 'הסכום גדל בלי סיבה');
+});
+
+/* אותו כלל בדיוק כמו המנוי: השיא, ולא הספירה של הרגע. שני
+   סעיפים שנספרים אחרת באותה חשבונית הם גם שאלה שאין עליה
+   תשובה טובה וגם פרצה -- כיבוי עובדים ליום אחד היה מוזיל את
+   התוספת ולא את המנוי. */
+test('התוספת נספרת לפי השיא, כמו המנוי', function () {
+  var drained = {
+    plan: 'business', waEmployeeAddon: true,
+    employeePeak: 50, employeeCount: 5
+  };
+  assertEqual(Model.priceBreakdown(drained, 5).seats, 50, 'נספרה הספירה של הרגע');
+  assertEqual(Model.priceBreakdown(drained, 5).addon, 450, 'התוספת ירדה עם הכיבוי');
+});
+
+test('בלי מספר עובדים התוספת אינה מנחשת', function () {
+  var unknown = { plan: 'starter', waEmployeeAddon: true };
+  var breakdown = Model.priceBreakdown(unknown);
+  assertEqual(breakdown.seats, null, 'מספר שנוחש');
+  assertEqual(breakdown.addon, 0, 'חויבה תוספת בלי לדעת על כמה');
+  assertEqual(breakdown.total, 199, 'הסכום כולל תוספת מומצאת');
+});
+
 /* ===== השיא, וההתרוקנות שלפני החיוב =====
 
    תאריך החיוב מופיע ללקוח על מסך המנוי שלו, ולכן ספירה ברגע

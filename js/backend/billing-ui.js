@@ -92,9 +92,30 @@
     var chargeLabel = company.cancelAtPeriodEnd
       ? t('billing.validUntil')
       : (onTrial ? t('billing.firstCharge') : t('billing.nextCharge'));
+    /* כשהתוספת פעילה, הסכום שייגבה אינו מחיר המנוי. הצגת מחיר
+       המנוי לבדו ליד תאריך החיוב היא בדיוק ההבטחה שתישבר
+       בכרטיס האשראי. */
+    var breakdown = state.price;
+    var addonOn = !!(breakdown && breakdown.addonOn && breakdown.addon > 0);
+    var chargeText = addonOn && !Model.awaitingQuote(company)
+      ? t('billing.priceMonthly', { amount: breakdown.total })
+      : price;
     html += '<div class="billing-row"><span>' + chargeLabel + '</span><b>' +
       formatDate(company.validUntil) +
-      (company.cancelAtPeriodEnd ? '' : ' · ' + esc(price)) + '</b></div>';
+      (company.cancelAtPeriodEnd ? '' : ' · ' + esc(chargeText)) + '</b></div>';
+
+    /* הפירוק. שתי שורות ולא סכום אחד, וזה גם בדיוק מה שיופיע
+       בחשבונית -- כדי שמה שהלקוח רואה כאן ומה שהוא מקבל במייל
+       יהיו אותו דבר. */
+    if (addonOn && !Model.awaitingQuote(company)) {
+      html += '<div class="billing-row sub"><span>' + t('billing.waAddonLineSub') +
+        '</span><b>' + esc(t('billing.priceAmount', { amount: breakdown.plan })) +
+        '</b></div>';
+      html += '<div class="billing-row sub"><span>' + t('billing.waAddonLineItem') +
+        '</span><b>' + esc(t('billing.waAddonCount', {
+          count: breakdown.seats, amount: breakdown.rate, total: breakdown.addon
+        })) + '</b></div>';
+    }
 
     if (live || hasCard) {
       html += '<div class="billing-row"><span>' + t('billing.paymentMethod') + '</span><b>' +
@@ -135,6 +156,39 @@
         '<p class="hint">' + t('billing.ownerOnly') + '</p>';
       return;
     }
+
+    /* ===== תוספת התראות וואטסאפ לעובדים =====
+
+       כרטיס שיווקי ולא שורת הגדרה, ובכוונה: זה שירות שהעסק
+       קונה, ומי שרואה רק מתג בלי להבין מה הוא עושה לא ידליק
+       אותו. המחיר מופיע לפני הכפתור, והסכום החודשי המלא מופיע
+       ליד -- כדי שההפעלה לא תהיה הפתעה בחיוב הבא.
+
+       רק הבעלים מגיע לכאן: הבדיקה על canManage למעלה כבר
+       החזירה את כל השאר. */
+    var addonTotal = breakdown ? breakdown.rate * (breakdown.seats || 0) : 0;
+    html += '<div class="settings-block billing-addon' + (addonOn ? ' is-on' : '') + '">';
+    html += '<h2>' + t('billing.waAddonTitle') + '</h2>';
+    html += '<p class="billing-addon-pitch">' + esc(t('billing.waAddonPitch')) + '</p>';
+    html += '<ul class="billing-addon-list">';
+    ['waAddonB1', 'waAddonB2', 'waAddonB3', 'waAddonB4'].forEach(function (key) {
+      html += '<li>' + esc(t('billing.' + key)) + '</li>';
+    });
+    html += '</ul>';
+    html += '<p class="billing-addon-price">' +
+      esc(t('billing.waAddonPrice', { amount: breakdown ? breakdown.rate : 0 })) +
+      (breakdown && breakdown.seats !== null
+        ? ' · ' + esc(t('billing.waAddonCount', {
+            count: breakdown.seats, amount: breakdown.rate, total: addonTotal
+          }))
+        : '') + '</p>';
+    html += '<p class="billing-note">' + esc(t('billing.waAddonPeak')) + '</p>';
+    html += '<div class="row"><button id="billing-addon-toggle" class="btn' +
+      (addonOn ? '' : ' primary') + '" data-on="' + (addonOn ? '1' : '0') + '">' +
+      t(addonOn ? 'billing.waAddonDisable' : 'billing.waAddonEnable') + '</button>' +
+      '<span class="billing-addon-state">' +
+      t(addonOn ? 'billing.waAddonOn' : 'billing.waAddonOff') + '</span></div>';
+    html += '</div>';
 
     /* המחירון. ללא סליקה חיה הוא גם מחירון וגם דרך לעבור תוכנית:
        הבחירה משנה תקרה ומחיר, והכסף נגבה בחיוב הבא. */
@@ -378,6 +432,27 @@
           if (result && result.redirectUrl) { root.location.href = result.redirectUrl; return; }
           render();
         }, function (err) { say((err && err.message) || t('billing.updateFailed'), true); });
+        return;
+      }
+
+      /* הדלקה וכיבוי של תוספת הוואטסאפ.
+
+         ההפעלה מבקשת אישור כמו החלפת תוכנית, ומאותה סיבה: היא
+         מגדילה את החיוב החודשי. הכיבוי אינו מבקש -- הפסקת
+         תשלום אינה פעולה שצריך להגן על הלקוח מפניה. */
+      var addon = event.target.closest('#billing-addon-toggle');
+      if (addon) {
+        var turnOn = addon.dataset.on !== '1';
+        if (turnOn && !root.confirm(t('billing.waAddonConfirm'))) return;
+        say('');
+        addon.disabled = true;
+        ctx.billing.setWaEmployeeAddon(turnOn).then(function () {
+          render();
+          if (ctx.onChange) ctx.onChange();
+        }, function (err) {
+          addon.disabled = false;
+          say((err && err.message) || t('billing.waAddonFailed'), true);
+        });
         return;
       }
 

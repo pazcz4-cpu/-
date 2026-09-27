@@ -78,6 +78,17 @@ module.exports = async function ({ user, body, db }) {
     detail.from = company.plan;
     detail.to = plan;
 
+  } else if (action === 'set-wa-addon') {
+    /* הדלקה וכיבוי של תוספת הוואטסאפ מהמשרד האחורי. הלקוח
+       מדליק אותה בעצמו במסך המנוי; כאן זה נועד לשיחה שבה מבקשים
+       ממנו לכבות, או להפעלה שסוכמה בטלפון. נרשם ביומן כמו כל
+       פעולה שנוגעת בכסף. */
+    const on = (body && body.on) === true;
+    patch.wa_employee_addon = on;
+    patch.wa_employee_addon_at = new Date().toISOString();
+    detail.from = company.wa_employee_addon === true;
+    detail.to = on;
+
   } else if (action === 'set-price') {
     /* המחיר שסוכם בפגישה. זו הדרך היחידה לחייב רשת, כי לתוכנית
        שלה אין מחירון – ולכן זו גם פעולה שמזיזה כסף אמיתי

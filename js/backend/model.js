@@ -341,6 +341,56 @@
     return Math.round(pricing.rate * count);
   }
 
+  /* ===== תוספת התראות וואטסאפ לעובדים =====
+
+     שירות נוסף שהעסק מפעיל לעצמו: כל עובד מקבל הודעת וואטסאפ על
+     כל סידור שמתפרסם, ותזכורת לפני סגירת האילוצים. מה שהמנהל
+     היה עושה ביד, בקבוצה, בכל שבוע.
+
+     המחיר לעובד לחודש, כולל מע"מ — כמו כל מחיר במוצר הזה.
+
+     נספר לפי אותו כלל של המנוי עצמו: השיא במהלך התקופה, ולא
+     הספירה ברגע החיוב. שני מחירים שנספרים אחרת באותה חשבונית
+     הם הזמנה לשאלה שאין עליה תשובה טובה, וגם פרצה: כיבוי
+     עובדים ליום אחד היה מוזיל את התוספת ולא את המנוי. */
+  var WA_EMPLOYEE_PRICE = 9;
+
+  function waEmployeeAddon(company) {
+    return !!(company && company.waEmployeeAddon);
+  }
+
+  /* מה שהתוספת מוסיפה לחיוב החודשי. אפס כשהיא כבויה, ואפס גם
+     כשאין עדיין מספר עובדים — כי מספר שנוחש הוא חיוב שגוי. */
+  function addonPrice(company, employeeCount) {
+    if (!waEmployeeAddon(company)) return 0;
+    var count = billableEmployees(company, employeeCount);
+    if (count === null) return 0;
+    return WA_EMPLOYEE_PRICE * count;
+  }
+
+  /* הפירוק שמוצג ללקוח ושנשלח לחשבונית: המנוי בשורה אחת,
+     התוספת בשורה שנייה. שתי שורות ולא סכום אחד, כי לקוח שרואה
+     סכום שגדל בלי הסבר מתקשר לשאול -- ובצדק. */
+  function priceBreakdown(company, employeeCount) {
+    var plan = effectivePrice(company, employeeCount);
+    var seats = billableEmployees(company, employeeCount);
+    var addon = addonPrice(company, employeeCount);
+    return {
+      plan: plan,
+      addon: addon,
+      total: plan + addon,
+      seats: seats,
+      rate: WA_EMPLOYEE_PRICE,
+      addonOn: waEmployeeAddon(company)
+    };
+  }
+
+  /* הסכום שנגבה בפועל. effectivePrice נשאר מה שהוא -- מחיר
+     המנוי בלבד -- כי הוא נקרא במקומות שמשווים אותו למחירון. */
+  function totalPrice(company, employeeCount) {
+    return priceBreakdown(company, employeeCount).total;
+  }
+
   /* האם המחיר של החברה הזו עוד לא נקבע. תוכנית הצעת־מחיר בלי
      מחיר מוזן היא בדיוק המצב הזה, והחיוב האוטומטי חייב לדלג
      עליה ולא לנסות לגבות אפס.
@@ -809,6 +859,11 @@
     normalizeLogo: normalizeLogo, isLogoType: isLogoType,
     logoBytes: logoBytes, LOGO_TYPES: LOGO_TYPES, LOGO_MAX_BYTES: LOGO_MAX_BYTES,
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
+    WA_EMPLOYEE_PRICE: WA_EMPLOYEE_PRICE,
+    waEmployeeAddon: waEmployeeAddon,
+    addonPrice: addonPrice,
+    priceBreakdown: priceBreakdown,
+    totalPrice: totalPrice,
     planOf: planOf, planRange: planRange, roleName: roleName,
     planForEmployees: planForEmployees, employeesLeft: employeesLeft,
     effectivePrice: effectivePrice, awaitingQuote: awaitingQuote,

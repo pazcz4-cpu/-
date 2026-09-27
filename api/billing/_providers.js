@@ -436,6 +436,23 @@ const payplus = {
       more_info: input.idempotencyKey
     };
     if (payplusInvoices()) request.initial_invoice = true;
+    /* פירוט לחשבונית: דמי מנוי בשורה אחת, תוספת בשורה שנייה.
+       המבנה { name, price, quantity } מתועד במסמך (סעיף 18)
+       עבור דף התשלום; השימוש בו בנתיב החיוב עצמו אינו מתועד,
+       בדיוק כמו נתיב החיוב, ולכן הוא מאומת מול סביבת הבדיקות
+       ב-tools/payplus-smoke.js לפני הפעלה בייצור.
+
+       נשלח רק כשיש מה לפרט. מערך שסכומו אינו amount הוא חשבונית
+       שאינה תואמת לחיוב, ולכן הוא נבדק כאן ולא נשלח אם אינו
+       מסתדר -- עדיף חשבונית בשורה אחת על חשבונית שגויה. */
+    if (Array.isArray(input.items) && input.items.length) {
+      const sum = input.items.reduce(function (total, item) {
+        return total + (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      }, 0);
+      if (Math.round(sum) === Math.round(Number(input.amount))) {
+        request.items = input.items;
+      }
+    }
     if (process.env.PAYPLUS_CASHIER_UID) {
       request.cashier_uid = process.env.PAYPLUS_CASHIER_UID;
     }

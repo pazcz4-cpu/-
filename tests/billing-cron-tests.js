@@ -421,6 +421,97 @@ test('מי שהתרוקן יום לפני החיוב מחויב לפי השיא'
   });
 });
 
+/* ===== תוספת התראות הוואטסאפ לעובדים =====
+
+   סעיף שני על אותה חשבונית. שלוש שאלות: שהוא נגבה, שהוא נספר
+   לפי אותו מספר עובדים כמו המנוי, ושהוא מגיע לספק כשורה נפרדת
+   ולא נבלע בסכום. */
+test('התוספת נגבית מעל מחיר התוכנית', function () {
+  var db = new FakeDb([company({
+    id: 'co-addon', plan: 'growth',
+    wa_employee_addon: true, employee_peak: 30, employee_count: 30
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
+    assertEqual(db.charges[0].amount, 399 + 270, 'הסכום אינו מנוי ועוד תוספת');
+    db.restore();
+  });
+});
+
+test('התוספת כבויה אינה מוסיפה לחיוב', function () {
+  var db = new FakeDb([company({
+    id: 'co-noaddon', plan: 'growth', employee_peak: 30, employee_count: 30
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 399, 'נגבתה תוספת שלא הודלקה');
+    db.restore();
+  });
+});
+
+/* אותו מספר עובדים לשני הסעיפים. אחרת כיבוי עובדים ליום אחד
+   היה מוזיל את התוספת ולא את המנוי — וזו בדיוק הפרצה שהשיא
+   נועד לסגור. */
+test('התוספת נספרת לפי השיא, כמו המנוי', function () {
+  var db = new FakeDb([company({
+    id: 'co-addon-peak', plan: 'growth',
+    wa_employee_addon: true, employee_peak: 30, employee_count: 3
+  })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 399 + 270, 'התוספת ירדה עם הכיבוי');
+    db.restore();
+  });
+});
+
+/* החשבונית מפוצלת. שני סעיפים שסכומם הוא בדיוק הסכום שנגבה —
+   חשבונית שאינה מסתכמת לחיוב היא חשבונית שגויה. */
+test('שני סעיפים נשלחים לספק, וסכומם הוא הסכום שנגבה', function () {
+  var db = new FakeDb([company({
+    id: 'co-items', plan: 'business',
+    wa_employee_addon: true, employee_peak: 40, employee_count: 40
+  })]);
+  db.install();
+  return run().then(function () {
+    var items = db.charges[0].items;
+    assert(Array.isArray(items) && items.length === 2,
+      'לא נשלחו שני סעיפים: ' + JSON.stringify(items));
+    var sum = items.reduce(function (total, item) {
+      return total + item.price * item.quantity;
+    }, 0);
+    assertEqual(sum, db.charges[0].amount, 'סכום הסעיפים אינו הסכום שנגבה');
+    assertEqual(items[1].quantity, 40, 'התוספת אינה לפי מספר העובדים');
+    db.restore();
+  });
+});
+
+test('בלי תוספת אין פירוט, והחשבונית נשארת שורה אחת', function () {
+  var db = new FakeDb([company({ id: 'co-plain', plan: 'starter' })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].items, undefined, 'נשלח פירוט מיותר');
+    db.restore();
+  });
+});
+
+/* לקוח שהתוספת דלוקה אצלו ואין לו ספירת עובדים אינו מחויב על
+   מספר שנוחש. הוא מדולג, וזה עולה בדוח הריצה. */
+test('תוספת בלי ספירת עובדים מדלגת ואינה מנחשת', function () {
+  var db = new FakeDb([company({
+    id: 'co-addon-unknown', plan: 'starter', wa_employee_addon: true
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'חויב בלי לדעת על כמה עובדים');
+    var skipped = res.payload.results.filter(function (r) {
+      return r.reason === 'employees-unknown';
+    });
+    assertEqual(skipped.length, 1, 'הדילוג אינו מדווח');
+    db.restore();
+  });
+});
+
 /* אחרי החיוב התקופה נסגרה, ולכן השיא מתחיל מחדש מהמספר
    הנוכחי. אחרת עסק שהתכווץ באמת היה משלם את השיא לנצח. */
 test('אחרי חיוב שהצליח השיא מתאפס למספר הנוכחי', function () {

@@ -1562,6 +1562,22 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .billing-row b.status-active { color: var(--ok); }
 .billing-row b.status-past_due { color: var(--warn); }
 .billing-row b.status-canceled, .billing-row b.status-expired { color: var(--err); }
+/* פירוק החיוב: מנוי ותוספת. הזחה קלה ומשקל קטן יותר, כדי שיקראו
+   כפירוט של השורה שמעליהם ולא כשתי שורות נוספות באותה רמה. */
+.billing-row.sub { font-size: 13px; padding-inline-start: 12px; }
+.billing-row.sub b { font-weight: 500; color: var(--muted); }
+
+/* ===== תוספת התראות הוואטסאפ =====
+   כרטיס מכירה ולא שורת הגדרה: מי שרואה מתג בלי להבין מה הוא
+   עושה אינו מדליק אותו. */
+.billing-addon { gap: 10px; border: 1px solid var(--line); }
+.billing-addon.is-on { border-color: var(--ok); }
+.billing-addon h2 { margin: 0; font-size: 16px; }
+.billing-addon-pitch { margin: 0; font-size: 14px; color: var(--text); }
+.billing-addon-list { margin: 0; padding-inline-start: 18px; display: grid; gap: 4px; }
+.billing-addon-list li { font-size: 13px; color: var(--muted); }
+.billing-addon-price { margin: 0; font-size: 15px; font-weight: 600; }
+.billing-addon-state { align-self: center; font-size: 13px; color: var(--muted); }
 .billing-note {
   margin: 4px 0 0; font-size: 13px; padding: 8px 11px; border-radius: 8px;
   background: var(--info-bg); color: var(--info); border: 1px solid var(--info-line);

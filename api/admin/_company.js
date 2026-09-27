@@ -58,6 +58,12 @@ module.exports = async function ({ body, db }) {
            אינו צריך לפתוח את רשימת העובדים כדי לספור אותה. */
         pricedEmployees: Seats.billable(company),
         currentEmployees: Seats.current(company),
+        /* תוספת התראות הוואטסאפ, והסכום שהיא מוסיפה. מוצג כאן
+           כי "למה החשבון שלו גדל" היא שאלה שנשאלת מהמסך הזה. */
+        waEmployeeAddon: company.wa_employee_addon === true,
+        waAddonPrice: Model.WA_EMPLOYEE_PRICE,
+        waAddonMonthly: company.wa_employee_addon === true
+          ? Model.WA_EMPLOYEE_PRICE * (Seats.billable(company) || 0) : 0,
         byQuote: !!(plan && plan.quote),
         status: company.status, validUntil: company.valid_until,
         currentPeriodEnd: company.current_period_end,

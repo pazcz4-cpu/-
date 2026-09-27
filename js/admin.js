@@ -611,6 +611,27 @@
 
   var pending = null;
 
+  /* רשימת החבילות, נגזרת מ-model.js ולא כתובה כאן שוב.
+
+     עד כאן היא הייתה כתובה פעמיים, וזה בדיוק נשבר: גבול החבילה
+     הגדולה עבר מ-99 ל-70, והמשרד האחורי המשיך להציע "31–99" —
+     כלומר מי שמשנה חבילה ללקוח קרא מספר שאינו נכון יותר. */
+  function planOptions() {
+    var Model = window.ShiftModel;
+    if (!Model) return '<option value="starter">קטן</option>';
+    return Model.PLAN_ORDER.map(function (id) {
+      var plan = Model.PLANS[id];
+      var range = !plan.maxEmployees
+        ? plan.minEmployees + '+'
+        : (plan.minEmployees <= 1
+          ? 'עד ' + plan.maxEmployees
+          : plan.minEmployees + '–' + plan.maxEmployees);
+      var price = plan.quote ? 'לפי הצעת מחיר' : plan.priceMonthly + ' ₪';
+      return '<option value="' + id + '">' + plan.name + ' — ' +
+        range + ' עובדים — ' + price + '</option>';
+    }).join('');
+  }
+
   var ACTION_FORMS = {
     'extend-trial': {
       title: 'מתן תקופה ללא תשלום',
@@ -621,11 +642,7 @@
     'set-plan': {
       title: 'שינוי חבילה',
       fields: '<label class="adm-field"><span>חבילה</span>' +
-        '<select class="adm-select" id="adm-f-plan">' +
-        '<option value="starter">קטן — עד 10 עובדים — 199 ₪</option>' +
-        '<option value="growth">בינוני — 11–30 עובדים — 399 ₪</option>' +
-        '<option value="business">גדול — 31–99 עובדים — 599 ₪</option>' +
-        '<option value="enterprise">רשתות — 100+ — לפי הצעת מחיר</option>' +
+        '<select class="adm-select" id="adm-f-plan">' + planOptions() +
         '</select></label>' +
         '<p class="adm-hint">לחבילת הרשתות אין מחיר מחירון. אחרי המעבר ' +
         'צריך להזין את המחיר שסוכם ב"מחיר מוסכם", אחרת החיוב החודשי ידלג עליה.</p>'

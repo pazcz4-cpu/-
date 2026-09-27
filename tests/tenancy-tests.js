@@ -639,8 +639,8 @@ test('ארבע התוכניות במחירים ובטווחים שנקבעו', f
   assertEqual(Model.PLANS.growth.priceMonthly, 399, 'תוכנית בינוני');
   assertEqual(Model.PLANS.growth.maxEmployees, 30, 'עד 30 עובדים');
   assertEqual(Model.PLANS.business.priceMonthly, 599, 'תוכנית גדול');
-  assertEqual(Model.PLANS.business.maxEmployees, 99, 'עד 99 עובדים');
-  assertEqual(Model.PLANS.enterprise.minEmployees, 100, 'רשתות – מ-100');
+  assertEqual(Model.PLANS.business.maxEmployees, 70, 'עד 70 עובדים');
+  assertEqual(Model.PLANS.enterprise.minEmployees, 71, 'רשתות – מ-71');
   assertEqual(Model.PLANS.enterprise.maxEmployees, 0, 'ללא תקרה');
 });
 
@@ -846,8 +846,8 @@ test('התוכנית המתאימה נבחרת לפי מספר העובדים', 
   assertEqual(Model.planForEmployees(11).id, 'growth', '11 – מעבר לתוכנית הבאה');
   assertEqual(Model.planForEmployees(30).id, 'growth', 'בדיוק 30');
   assertEqual(Model.planForEmployees(31).id, 'business', '31 – התוכנית הגדולה');
-  assertEqual(Model.planForEmployees(99).id, 'business', 'בדיוק 99');
-  assertEqual(Model.planForEmployees(100).id, 'enterprise', '100 – כבר רשת');
+  assertEqual(Model.planForEmployees(70).id, 'business', 'בדיוק 70');
+  assertEqual(Model.planForEmployees(71).id, 'enterprise', '71 – כבר רשת');
   assertEqual(Model.planForEmployees(500).id, 'enterprise', 'הרבה עובדים');
 });
 
@@ -860,17 +860,17 @@ test('מגבלת העובדים נאכפת ומוצעת התוכנית הנכו�
   assert(over.problems[0].indexOf('399') !== -1, 'ההודעה כוללת את המחיר');
 });
 
-test('התוכנית הגדולה נעצרת ב-99 ומפנה לרשתות', function () {
-  assertEqual(Model.withinPlanLimits({ plan: 'business' }, { employees: 99 }).ok, true, 'בדיוק 99');
-  var over = Model.withinPlanLimits({ plan: 'business' }, { employees: 100 });
-  assertEqual(over.ok, false, '100 עובדים בתוכנית הגדולה');
+test('התוכנית הגדולה נעצרת ב-70 ומפנה לרשתות', function () {
+  assertEqual(Model.withinPlanLimits({ plan: 'business' }, { employees: 70 }).ok, true, 'בדיוק 70');
+  var over = Model.withinPlanLimits({ plan: 'business' }, { employees: 71 });
+  assertEqual(over.ok, false, '71 עובדים בתוכנית הגדולה');
   assertEqual(over.suggested.id, 'enterprise', 'לא הוצעה תוכנית הרשתות');
   assertEqual(over.quote, true, 'לא סומן שזו הצעת מחיר');
   /* ההודעה חייבת להפנות לשיחה ולא להציג מספר. "0₪" כאן הוא
      בדיוק המשפט שגורם ללקוח לחשוב שהוא מקבל את זה בחינם. */
   assert(over.problems[0].indexOf('0') === -1 || over.problems[0].indexOf('0₪') === -1,
     'ההודעה מציגה מחיר אפס');
-  assert(over.problems[0].indexOf('100') !== -1, 'ההודעה אינה מזכירה את מספר העובדים');
+  assert(over.problems[0].indexOf('71') !== -1, 'ההודעה אינה מזכירה את מספר העובדים');
 });
 
 test('תוכנית הרשתות עצמה אינה מוגבלת במספר עובדים', function () {

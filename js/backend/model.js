@@ -207,8 +207,8 @@
   var PLAN_SPEC = [
     { id: 'starter', minEmployees: 1, maxEmployees: 10, priceMonthly: 199 },
     { id: 'growth', minEmployees: 11, maxEmployees: 30, priceMonthly: 399 },
-    { id: 'business', minEmployees: 31, maxEmployees: 99, priceMonthly: 599 },
-    { id: 'enterprise', minEmployees: 100, maxEmployees: 0, priceMonthly: 0, quote: true }
+    { id: 'business', minEmployees: 31, maxEmployees: 70, priceMonthly: 599 },
+    { id: 'enterprise', minEmployees: 71, maxEmployees: 0, priceMonthly: 0, quote: true }
   ];
 
   /* השם והטווח נקראים בכל גישה, כדי שהחלפת שפה תשתקף מיד */

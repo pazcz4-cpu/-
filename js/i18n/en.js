@@ -1020,6 +1020,7 @@
         couponUsed: 'Coupon used',
         couponDays: 'Coupon applied — {days} days added to your subscription',
         couponPercent: 'Coupon applied — {percent}% off your next charge',
+        couponAmount: 'Coupon applied — ₪{amount} off your next charge',
         couponFree: 'Coupon applied — your next charge is on us',
         couponNotFound: 'We don\u2019t recognize that code',
         couponExpired: 'That coupon has expired',

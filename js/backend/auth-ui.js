@@ -276,9 +276,15 @@
       form.phone.focus();
       return;
     }
-    /* הקוד נזכר כאן ולא נשלח עם ההרשמה: המימוש הוא פעולה
-       של משתמש מחובר, והוא יכול להתבצע רק אחרי שיש התחברות. */
-    this.pendingCoupon = (form.coupon && form.coupon.value) || '';
+    /* הקוד נזכר כאן ולא נשלח עם ההרשמה: המימוש הוא פעולה של
+       משתמש מחובר, והוא יכול להתבצע רק אחרי שיש התחברות.
+
+       נשמר באחסון ולא על האובייקט הזה: כשאימות מייל דלוק,
+       ההרשמה נגמרת בלי התחברות, המשתמש הולך לתיבה וחוזר --
+       ואז הדף כבר נטען מחדש והאובייקט הזה אינו קיים. קוד
+       שנשמר רק בזיכרון היה נעלם בדיוק במסלול שקמפיין הנטישה
+       שולח אליו אנשים. */
+    setPendingCoupon((form.coupon && form.coupon.value) || '');
 
     this.backend.signUpCompany({
       companyName: form.companyName.value,
@@ -398,11 +404,28 @@
      הקופון עשה בפועל. אחסון לשיחה הזו בלבד, ובתוך try --
      דפדפן שחוסם אחסון לא אמור להפיל התחברות. */
   var COUPON_RESULT_KEY = 'setshifts-coupon-result';
+  var COUPON_PENDING_KEY = 'setshifts-coupon-pending';
+
+  /* האחסון עלול לזרוק (חלון פרטי, אחסון חסום), והרשמה אינה
+     אמורה ליפול בגלל קוד קופון. */
+  function setPendingCoupon(code) {
+    try {
+      if (code) { root.sessionStorage.setItem(COUPON_PENDING_KEY, String(code)); }
+      else { root.sessionStorage.removeItem(COUPON_PENDING_KEY); }
+    } catch (err) { /* אין אחסון. ההרשמה עצמה ממשיכה. */ }
+  }
+
+  function takePendingCoupon() {
+    try {
+      var code = root.sessionStorage.getItem(COUPON_PENDING_KEY);
+      if (code) root.sessionStorage.removeItem(COUPON_PENDING_KEY);
+      return code || '';
+    } catch (err) { return ''; }
+  }
 
   AuthUI.prototype._redeemPending = function () {
     var self = this;
-    var code = this.pendingCoupon;
-    this.pendingCoupon = '';
+    var code = takePendingCoupon();
     if (!code || typeof this.backend.redeemCoupon !== 'function') return Promise.resolve(null);
     if (!Model.normalizeCouponCode(code)) return Promise.resolve(null);
     return this.backend.redeemCoupon(code).then(function (answer) {

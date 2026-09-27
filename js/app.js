@@ -878,8 +878,23 @@
 
      הסימון יושב בכותרת ולא בתאים: הוא נכון ליום כולו, ואותו
      יום מופיע בכל התצוגות. */
+  /* המועדים של השבוע, פעם אחת לציור.
+
+     calendarDays בונה מחדש את שלושת לוחות השנה בכל קריאה, ויש
+     כאן שלוש טבלאות עם שבע כותרות כל אחת -- כלומר עשרים ואחד
+     חישובים מלאים בכל render. במחשב זה מילישניות, בטלפון זה
+     נראה. */
+  var calendarCache = { key: null, days: null };
+
+  function calendarForWeek() {
+    if (calendarCache.key !== weekKey) {
+      calendarCache = { key: weekKey, days: Store.calendarDays(state, weekKey) };
+    }
+    return calendarCache.days;
+  }
+
   function dayHeadCell(day) {
-    var items = Store.calendarDays(state, weekKey)[day.idx] || [];
+    var items = calendarForWeek()[day.idx] || [];
     var closed = Store.isHoliday(week(), day.idx);
     var cls = 'day-head' + (closed ? ' is-closed' : '') +
       (items.length ? ' has-mark' : '');
@@ -3140,6 +3155,11 @@
 
   /* ========== רינדור כולל ========== */
   function render() {
+    /* ההגדרות של הלוח (אילו לוחות, מה כל סוג אומר) משתנות
+       במסך ההגדרות, ואז אותו שבוע מחזיר תוצאה אחרת. המטמון
+       נזרק בכל ציור, ולכן הוא חוסך בתוך הציור ולא בין ציורים
+       -- וזה בדיוק מה שהיה יקר. */
+    calendarCache = { key: null, days: null };
     renderWeekHeader();
     lastReport = Validate.validate(state, week());
     var marks = issueMaps(lastReport);

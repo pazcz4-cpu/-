@@ -1014,6 +1014,7 @@
         couponUsed: 'Cupón canjeado',
         couponDays: 'Cupón canjeado: {days} días añadidos a tu suscripción',
         couponPercent: 'Cupón canjeado: {percent}\u00a0% de descuento en el próximo cobro',
+        couponAmount: 'Cupón aplicado: {amount} ₪ de descuento en el próximo cargo',
         couponFree: 'Cupón canjeado: el próximo cobro corre por nuestra cuenta',
         couponNotFound: 'No reconocemos ese código',
         couponExpired: 'Ese cupón ha caducado',

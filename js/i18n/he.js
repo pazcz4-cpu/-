@@ -1019,6 +1019,7 @@
         couponUsed: 'קופון שמומש',
         couponDays: 'הקופון מומש — נוספו {days} ימים לתוקף המנוי',
         couponPercent: 'הקופון מומש — {percent}% הנחה על החיוב הבא',
+        couponAmount: 'הקופון מומש — {amount}₪ הנחה על החיוב הבא',
         couponFree: 'הקופון מומש — החיוב הבא לא ייגבה',
         couponNotFound: 'הקוד אינו מוכר',
         couponExpired: 'תוקף הקופון פג',

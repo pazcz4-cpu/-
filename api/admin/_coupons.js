@@ -20,18 +20,6 @@ const Model = require('../../js/backend/model.js');
 
 const MAX_LIST = 200;
 
-/* כמה מימושים לכל קופון, בשאילתה אחת ולא אחת לכל שורה */
-async function redemptionCounts(db, codes) {
-  const out = {};
-  if (!codes.length) return out;
-  const call = await db('/coupon_redemptions?select=code,company_id&code=in.(' +
-    codes.map(encodeURIComponent).join(',') + ')&limit=5000');
-  ((call.ok && call.body) || []).forEach(function (row) {
-    out[row.code] = (out[row.code] || 0) + 1;
-  });
-  return out;
-}
-
 module.exports = async function ({ user, body, db }) {
   const action = String((body && body.action) || 'list');
 
@@ -39,8 +27,6 @@ module.exports = async function ({ user, body, db }) {
     const call = await db('/coupons?select=*&order=created_at.desc&limit=' + MAX_LIST);
     if (!call.ok) return { status: 500, body: { message: 'Could not read coupons' } };
     const coupons = call.body || [];
-
-    const counts = await redemptionCounts(db, coupons.map(function (row) { return row.code; }));
 
     /* המימושים האחרונים, עם שם הלקוח. זה מה שעונה על "עבד?"
        בלי לפתוח עוד מסך. */
@@ -61,9 +47,10 @@ module.exports = async function ({ user, body, db }) {
     return {
       body: {
         ok: true,
-        coupons: coupons.map(function (coupon) {
-          return Object.assign({}, coupon, { redeemed: counts[coupon.code] || 0 });
-        }),
+        /* coupons.uses מתוחזק ב-redeem_coupon עצמו, והמסך קורא
+           אותו. ספירה חוזרת מתוך טבלת המימושים הייתה שאילתה
+           שנייה, כתובת ארוכה, ושדה שאיש לא מסתכל עליו. */
+        coupons: coupons,
         redemptions: rows.map(function (row) {
           return Object.assign({}, row, { companyName: names[row.company_id] || null });
         })

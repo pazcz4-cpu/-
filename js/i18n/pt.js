@@ -1014,6 +1014,7 @@
         couponUsed: 'Cupão utilizado',
         couponDays: 'Cupão aplicado — {days} dias adicionados à sua subscrição',
         couponPercent: 'Cupão aplicado — {percent}\u00a0% de desconto na próxima cobrança',
+        couponAmount: 'Cupom aplicado — {amount} ₪ de desconto na próxima cobrança',
         couponFree: 'Cupão aplicado — a próxima cobrança é por nossa conta',
         couponNotFound: 'Não reconhecemos esse código',
         couponExpired: 'Esse cupão expirou',

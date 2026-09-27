@@ -860,9 +860,11 @@ function couponWorld(extra) {
   return new Fake(Object.assign({
     companies: [{ id: 'co-1', name: 'קפה מרכז', plan: 'starter', status: 'trial' }],
     coupons: [
-      { code: 'EXTRAMONTH', kind: 'days', value: 30, uses: 2, max_uses: null,
+      { code: 'EXTRAMONTH', kind: 'days', value: 30, uses: 1, max_uses: null,
         active: true, note: 'קמפיין ספטמבר', created_at: daysAgo(3) }
     ],
+    /* מימוש אחד, ו-uses=1. הם היו 1 ו-2, ושום בדיקה לא הבחינה
+       כי כל אחת הסתכלה על מספר אחר. */
     redemptions: [
       { company_id: 'co-1', code: 'EXTRAMONTH', kind: 'days', value: 30,
         created_at: daysAgo(1) }
@@ -874,9 +876,17 @@ test('הרשימה מראה כמה מומש ועל ידי מי', function () {
   var fake = couponWorld(); fake.install();
   return call(coupons, { action: 'list' }).then(function (res) {
     assertEqual(res.payload.coupons.length, 1, 'מספר הקופונים');
-    assertEqual(res.payload.coupons[0].redeemed, 1, 'מספר המימושים לא חושב');
+    /* המונה מגיע מהעמודה שהפונקציה בשרת מתחזקת, ולא מספירה
+       חוזרת של טבלת המימושים: זו הייתה שאילתה שנייה ושדה
+       שהמסך אינו קורא. */
+    assertEqual(res.payload.coupons[0].uses, 1, 'מספר המימושים');
     assertEqual(res.payload.redemptions[0].companyName, 'קפה מרכז',
       'שם הלקוח לא צורף למימוש');
+    /* המשרד האחורי אינו שואל את טבלת המימושים פעמיים */
+    var byCode = fake.writes.filter(function (w) {
+      return w.path === '/coupon_redemptions' && /code=in\./.test(w.query);
+    });
+    assertEqual(byCode.length, 0, 'רצה שאילתת ספירה מיותרת');
     fake.restore();
   }, function (e) { fake.restore(); throw e; });
 });

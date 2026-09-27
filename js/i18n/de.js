@@ -1014,6 +1014,7 @@
         couponUsed: 'Eingelöster Gutschein',
         couponDays: 'Gutschein eingelöst — {days} Tage zu Ihrem Abo hinzugefügt',
         couponPercent: 'Gutschein eingelöst — {percent}\u00a0% Rabatt auf die nächste Abbuchung',
+        couponAmount: 'Gutschein eingelöst — {amount} ₪ Rabatt auf die nächste Abrechnung',
         couponFree: 'Gutschein eingelöst — die nächste Abbuchung entfällt',
         couponNotFound: 'Dieser Code ist uns nicht bekannt',
         couponExpired: 'Der Gutschein ist abgelaufen',

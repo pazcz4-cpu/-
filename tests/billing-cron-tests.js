@@ -131,6 +131,8 @@ FakeDb.prototype.install = function () {
   var original = providers.mock.charge;
   providers.mock.charge = function (input) {
     self.charges.push(input);
+    /* וו לבדיקות שצריכות לשנות משהו בדיוק בזמן שהחיוב רץ */
+    if (typeof self.onCharge === 'function') self.onCharge(input);
     return original(input);
   };
   this.restore = function () { providers.mock.charge = original; };
@@ -474,6 +476,95 @@ test('בלי עמודות בכלל נופלים לקריאת ההגדרות', fu
   return run().then(function () {
     assertEqual(db.charges[0].amount, 24, 'לא נקראו ההגדרות');
     db.restore();
+  });
+});
+
+/* הספירה נקראת לפני הפנייה לספק. שמירת הגדרות שנוחתת בין
+   השתיים מעלה את השיא, ואיפוס עיוור לספירה הישנה היה מוחק את
+   העלייה -- כלומר מחייב פחות בתקופה הבאה על עובדים שכבר שם. */
+test('איפוס השיא קורא את הספירה מחדש', function () {
+  var db = new FakeDb([company({
+    id: 'co-race', plan: 'enterprise', custom_price_per_employee: 12,
+    employee_peak: 40, employee_count: 10
+  })]);
+  /* הלקוח שמר הגדרות בזמן שהחיוב רץ, והטריגר העלה את הספירה */
+  db.onCharge = function () { db.companies['co-race'].employee_count = 25; };
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges[0].amount, 480, 'החיוב לפי השיא שהיה');
+    assertEqual(db.companies['co-race'].employee_peak, 25,
+      'השיא אופס למספר הישן ולא למה שנמצא שם עכשיו');
+  });
+});
+
+/* ===== דילוג שאינו הופך למלכודת =====
+
+   דילוג משאיר את valid_until בעבר, ו-accessState חוסם חברה
+   פעילה שהתוקף שלה עבר. בלי הארכה קצרה זו מלכודת סגורה: רשת
+   בלי עובדים פעילים נחסמת למחרת, אי אפשר להיכנס כדי להוסיף
+   עובדים, ולכן כל ריצה הבאה מדלגת שוב -- לנצח. */
+test('רשת בלי עובדים אינה ננעלת בחוץ', function () {
+  var db = new FakeDb([company({
+    id: 'co-locked', plan: 'enterprise', status: 'active',
+    custom_price_per_employee: 12, employee_count: 0, employee_peak: 0,
+    valid_until: daysAgo(1)
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'נגבה כסף בלי עובדים');
+    assertEqual(res.payload.results[0].reason, 'no-active-employees', 'הסיבה');
+    var until = new Date(db.companies['co-locked'].valid_until);
+    assert(until > new Date(), 'התוקף נשאר בעבר, והלקוח ננעל בחוץ');
+    assertEqual(db.companies['co-locked'].status, 'active', 'המצב השתנה');
+  });
+});
+
+/* המחיר לא הוזן -- זה כשל שלנו, ולא סיבה לחסום לקוח */
+test('מחיר שלא נקבע אינו נועל את הלקוח', function () {
+  var db = new FakeDb([company({
+    id: 'co-noprice', plan: 'enterprise', status: 'active', valid_until: daysAgo(1)
+  })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(res.payload.results[0].reason, 'price-not-set', 'הסיבה');
+    assert(new Date(db.companies['co-noprice'].valid_until) > new Date(),
+      'התוקף נשאר בעבר');
+  });
+});
+
+/* אבל ההארכה היא חלון לתיקון ולא מנוי חינם: היא קצרה, היא
+   אינה נרשמת כחיוב, והיא חוזרת בדוח בכל יום. */
+test('ההארכה קצרה ואינה חודש', function () {
+  var db = new FakeDb([company({
+    id: 'co-short', plan: 'enterprise', status: 'active',
+    custom_price_per_employee: 12, employee_count: 0,
+    valid_until: daysAgo(1)
+  })]);
+  db.install();
+  return run().then(function () {
+    var days = Math.round(
+      (new Date(db.companies['co-short'].valid_until) - Date.now()) / 864e5);
+    assert(days > 0 && days <= 7, 'ההארכה אינה קצרה: ' + days + ' ימים');
+    assertEqual(db.charges.length, 0, 'נרשם חיוב');
+  });
+});
+
+/* מי שהתוקף שלו עוד לא עבר אינו זקוק להארכה, ואסור שיקבל
+   אותה: זה היה דוחף את התקופה של כל לקוח שמדולג. */
+test('דילוג לפני שהתוקף עבר אינו מאריך דבר', function () {
+  var db = new FakeDb([company({
+    id: 'co-future', plan: 'enterprise', status: 'active',
+    custom_price_per_employee: 12, employee_count: 0,
+    valid_until: daysAgo(0)
+  })]);
+  /* נלכד פעם אחת: daysAhead נקרא מהשעון, ושתי קריאות נפרדות
+     נבדלות במילישנייה -- והבדיקה הייתה נכשלת על עצמה. */
+  var untouched = daysAhead(5);
+  db.companies['co-future'].valid_until = untouched;
+  db.install();
+  return run().then(function () {
+    assertEqual(db.companies['co-future'].valid_until, untouched,
+      'התוקף נדחף בלי סיבה');
   });
 });
 

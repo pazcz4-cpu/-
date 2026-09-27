@@ -1014,6 +1014,7 @@
         couponUsed: 'Code utilisé',
         couponDays: 'Code validé — {days} jours ajoutés à votre abonnement',
         couponPercent: 'Code validé — {percent}\u00a0% de remise sur le prochain prélèvement',
+        couponAmount: 'Code appliqué — {amount} ₪ de réduction sur le prochain prélèvement',
         couponFree: 'Code validé — le prochain prélèvement est offert',
         couponNotFound: 'Ce code nous est inconnu',
         couponExpired: 'Ce code a expiré',

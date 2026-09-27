@@ -203,16 +203,61 @@ async function priceFor(company, plan) {
 
    בלי מספר נוכחי אין מה לאפס אליו, ועדיף להשאיר שיא ישן מאשר
    לאפס לאפס. */
-function peakReset(company) {
-  const current = Number(company.employee_count);
+async function peakReset(company) {
+  /* הספירה נקראת מחדש, ולא נלקחת מהשורה שנקראה בתחילת הריצה.
+
+     בין הקריאה ההיא לפנייה לספק עוברות שניות שבהן הלקוח יכול
+     לשמור הגדרות, והטריגר מעלה את הספירה ואת השיא. איפוס
+     למספר הישן היה מוחק את העלייה הזו, והתקופה הבאה הייתה
+     מתחילה נמוך מדי -- כלומר גובה פחות על עובדים שכבר שם.
+
+     שאילתה אחת לחיוב שהצליח. חיובים נדירים, והמחיר זניח. */
+  const call = await db('/companies?id=eq.' + encodeURIComponent(company.id) +
+    '&select=employee_count');
+  const fresh = call.ok && (call.body || [])[0];
+  const current = Number(fresh ? fresh.employee_count : company.employee_count);
   if (!isFinite(current) || current < 0) return null;
   return { employee_peak: current };
+}
+
+/* כמה ימים נותנים ללקוח שאי אפשר לחייב אותו.
+
+   קצר בכוונה: זה חלון לתיקון, לא מנוי חינם. הוא חוזר בדוח
+   הריצה בכל יום עד שמישהו נוגע בו. */
+const SKIP_GRACE_DAYS = 3;
+
+/* דילוג שאינו נועל את הלקוח בחוץ.
+
+   דילוג משאיר את valid_until בעבר, ו-accessState חוסם חברה
+   פעילה שהתוקף שלה עבר. התוצאה הייתה מלכודת סגורה: רשת בלי
+   עובדים פעילים (או כזו שההגדרות שלה לא נקראו, או שהמחיר שלה
+   לא הוזן) נחסמת למחרת -- ואז אי אפשר להיכנס כדי להוסיף
+   עובדים או לתקן, ולכן כל ריצה הבאה מדלגת שוב. לנצח.
+
+   הכשל הוא שלנו ולא של הלקוח: לא ביקשנו ממנו כסף ולא נדחינו.
+   לכן הוא ממשיך לעבוד עוד כמה ימים, ואנחנו רואים את זה בדוח
+   כל יום עד שנטפל.
+
+   מה שלא משתנה: לא נגבה כסף, לא נרשם חיוב, והתקופה אינה נדחפת
+   בחודש. רק חלון קצר לתיקון. */
+async function skipWithGrace(company, reason, now) {
+  const until = new Date(company.valid_until || now);
+  if (until > now) {
+    /* התוקף עוד לא עבר -- אין מה להאריך, ואין חסימה בדרך */
+    return { company: company.id, action: 'skipped', reason: reason };
+  }
+  const next = addDays(now, SKIP_GRACE_DAYS);
+  await patchCompany(company.id, { valid_until: next.toISOString() });
+  return {
+    company: company.id, action: 'skipped', reason: reason,
+    grace: next.toISOString()
+  };
 }
 
 /* חיוב אחד, כולל הטיפול בהצלחה ובכישלון */
 async function chargeCompany(provider, company, plans, now) {
   const plan = plans[company.plan];
-  if (!plan) return { company: company.id, action: 'skipped', reason: 'unknown-plan' };
+  if (!plan) return skipWithGrace(company, 'unknown-plan', now);
 
   /* הסכום שנגבה: מחיר שסוכם עם הלקוח גובר על המחירון. לרשת אין
      מחירון כלל – המחיר נסגר בפגישה ומוזן במשרד האחורי.
@@ -224,9 +269,7 @@ async function chargeCompany(provider, company, plans, now) {
      דורש לספור -- וזו הסיבה שהחישוב אינו שורה אחת כאן אלא
      פונקציה שיודעת גם להיכשל בשקט כשאין מה לספור. */
   const priced = await priceFor(company, plan);
-  if (priced.reason) {
-    return { company: company.id, action: 'skipped', reason: priced.reason };
-  }
+  if (priced.reason) return skipWithGrace(company, priced.reason, now);
   const base = priced.amount;
 
   /* ההנחה מהקופון. שני מצבים שונים לגמרי מגיעים לאפס, ורק אחד
@@ -276,7 +319,7 @@ async function chargeCompany(provider, company, plans, now) {
       valid_until: freeEnd.toISOString(),
       current_period_end: freeEnd.toISOString(),
       discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)
-    }, peakReset(company)));
+    }, await peakReset(company)));
     return {
       company: company.id, action: 'granted', waived: base,
       until: freeEnd.toISOString()
@@ -329,7 +372,7 @@ async function chargeCompany(provider, company, plans, now) {
       status: 'active',
       valid_until: nextEnd.toISOString(),
       current_period_end: nextEnd.toISOString()
-    }, peakReset(company), discount ? {
+    }, await peakReset(company), discount ? {
       /* ההנחה נוצלה. יורדת רק אחרי חיוב שעבר: כרטיס שנדחה
          והתקבל מחר אינו אמור לגבות את המחיר המלא. */
       discount_charges_left: Math.max(0, Number(company.discount_charges_left) - 1)

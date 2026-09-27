@@ -3832,6 +3832,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Coupon used',
         couponDays: 'Coupon applied — {days} days added to your subscription',
         couponPercent: 'Coupon applied — {percent}% off your next charge',
+        couponAmount: 'Coupon applied — ₪{amount} off your next charge',
         couponFree: 'Coupon applied — your next charge is on us',
         couponNotFound: 'We don\u2019t recognize that code',
         couponExpired: 'That coupon has expired',
@@ -5296,6 +5297,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'קופון שמומש',
         couponDays: 'הקופון מומש — נוספו {days} ימים לתוקף המנוי',
         couponPercent: 'הקופון מומש — {percent}% הנחה על החיוב הבא',
+        couponAmount: 'הקופון מומש — {amount}₪ הנחה על החיוב הבא',
         couponFree: 'הקופון מומש — החיוב הבא לא ייגבה',
         couponNotFound: 'הקוד אינו מוכר',
         couponExpired: 'תוקף הקופון פג',
@@ -6755,6 +6757,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Cupón canjeado',
         couponDays: 'Cupón canjeado: {days} días añadidos a tu suscripción',
         couponPercent: 'Cupón canjeado: {percent}\u00a0% de descuento en el próximo cobro',
+        couponAmount: 'Cupón aplicado: {amount} ₪ de descuento en el próximo cargo',
         couponFree: 'Cupón canjeado: el próximo cobro corre por nuestra cuenta',
         couponNotFound: 'No reconocemos ese código',
         couponExpired: 'Ese cupón ha caducado',
@@ -8214,6 +8217,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Code utilisé',
         couponDays: 'Code validé — {days} jours ajoutés à votre abonnement',
         couponPercent: 'Code validé — {percent}\u00a0% de remise sur le prochain prélèvement',
+        couponAmount: 'Code appliqué — {amount} ₪ de réduction sur le prochain prélèvement',
         couponFree: 'Code validé — le prochain prélèvement est offert',
         couponNotFound: 'Ce code nous est inconnu',
         couponExpired: 'Ce code a expiré',
@@ -9673,6 +9677,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'قسيمة مُفعّلة',
         couponDays: 'تم تفعيل القسيمة — أُضيف {days} يومًا إلى اشتراكك',
         couponPercent: 'تم تفعيل القسيمة — خصم {percent}% على الفاتورة القادمة',
+        couponAmount: 'تم تفعيل القسيمة — خصم {amount}₪ على الفاتورة القادمة',
         couponFree: 'تم تفعيل القسيمة — الفاتورة القادمة علينا',
         couponNotFound: 'الرمز غير معروف',
         couponExpired: 'انتهت صلاحية القسيمة',
@@ -11132,6 +11137,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Использованный промокод',
         couponDays: 'Промокод применён — к подписке добавлено дней: {days}',
         couponPercent: 'Промокод применён — скидка {percent}\u00a0% на следующее списание',
+        couponAmount: 'Купон применён — скидка {amount} ₪ на следующее списание',
         couponFree: 'Промокод применён — следующее списание за наш счёт',
         couponNotFound: 'Такой код нам неизвестен',
         couponExpired: 'Срок действия промокода истёк',
@@ -12591,6 +12597,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Eingelöster Gutschein',
         couponDays: 'Gutschein eingelöst — {days} Tage zu Ihrem Abo hinzugefügt',
         couponPercent: 'Gutschein eingelöst — {percent}\u00a0% Rabatt auf die nächste Abbuchung',
+        couponAmount: 'Gutschein eingelöst — {amount} ₪ Rabatt auf die nächste Abrechnung',
         couponFree: 'Gutschein eingelöst — die nächste Abbuchung entfällt',
         couponNotFound: 'Dieser Code ist uns nicht bekannt',
         couponExpired: 'Der Gutschein ist abgelaufen',
@@ -14050,6 +14057,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         couponUsed: 'Cupão utilizado',
         couponDays: 'Cupão aplicado — {days} dias adicionados à sua subscrição',
         couponPercent: 'Cupão aplicado — {percent}\u00a0% de desconto na próxima cobrança',
+        couponAmount: 'Cupom aplicado — {amount} ₪ de desconto na próxima cobrança',
         couponFree: 'Cupão aplicado — a próxima cobrança é por nossa conta',
         couponNotFound: 'Não reconhecemos esse código',
         couponExpired: 'Esse cupão expirou',
@@ -22397,8 +22405,23 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
 
      הסימון יושב בכותרת ולא בתאים: הוא נכון ליום כולו, ואותו
      יום מופיע בכל התצוגות. */
+  /* המועדים של השבוע, פעם אחת לציור.
+
+     calendarDays בונה מחדש את שלושת לוחות השנה בכל קריאה, ויש
+     כאן שלוש טבלאות עם שבע כותרות כל אחת -- כלומר עשרים ואחד
+     חישובים מלאים בכל render. במחשב זה מילישניות, בטלפון זה
+     נראה. */
+  var calendarCache = { key: null, days: null };
+
+  function calendarForWeek() {
+    if (calendarCache.key !== weekKey) {
+      calendarCache = { key: weekKey, days: Store.calendarDays(state, weekKey) };
+    }
+    return calendarCache.days;
+  }
+
   function dayHeadCell(day) {
-    var items = Store.calendarDays(state, weekKey)[day.idx] || [];
+    var items = calendarForWeek()[day.idx] || [];
     var closed = Store.isHoliday(week(), day.idx);
     var cls = 'day-head' + (closed ? ' is-closed' : '') +
       (items.length ? ' has-mark' : '');
@@ -24659,6 +24682,11 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
 
   /* ========== רינדור כולל ========== */
   function render() {
+    /* ההגדרות של הלוח (אילו לוחות, מה כל סוג אומר) משתנות
+       במסך ההגדרות, ואז אותו שבוע מחזיר תוצאה אחרת. המטמון
+       נזרק בכל ציור, ולכן הוא חוסך בתוך הציור ולא בין ציורים
+       -- וזה בדיוק מה שהיה יקר. */
+    calendarCache = { key: null, days: null };
     renderWeekHeader();
     lastReport = Validate.validate(state, week());
     var marks = issueMaps(lastReport);

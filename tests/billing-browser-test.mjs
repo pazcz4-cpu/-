@@ -199,7 +199,36 @@ await page.waitForTimeout(900);
 await page.click('[data-screen="billing"]').catch(() => {});
 await page.waitForTimeout(500);
 const perEmployee = await page.locator('#billing-panel').innerText();
-console.log('11. תעריף לעובד מוצג כתעריף:', /12/.test(perEmployee) ? '✓' : '✗');
+/* ===== הודעת הקופון אומרת מה הקופון נתן =====
+
+   הקופון בשקלים נוסף, והפונקציה שבוחרת את המשפט לא. קופון של
+   100₪ נפל על הענף "מאה אחוז ומעלה" ואמר ללקוח שהחיוב הבא לא
+   ייגבה כלל, וקופון של 50₪ נקרא כ-"50% הנחה". שתי הבטחות
+   שאיש לא נתן, והחיוב בפועל היה אחר. */
+const ilsMessage = await page.evaluate(() => {
+  const B = window.ShiftBillingUI;
+  if (!B || !B.couponMessage) return null;
+  return [
+    B.couponMessage({ result: 'ok', kind: 'amount', value: 100 }).text,
+    B.couponMessage({ result: 'ok', kind: 'amount', value: 50 }).text,
+    B.couponMessage({ result: 'ok', kind: 'percent', value: 100 }).text
+  ];
+});
+if (ilsMessage) {
+  console.log('11. קופון של 100₪ אינו נקרא כ"חינם":',
+    /100/.test(ilsMessage[0]) && !/לא ייגבה/.test(ilsMessage[0]) ? '✓' : '✗',
+    '|', ilsMessage[0]);
+  console.log('    וקופון של 50₪ אינו נקרא כאחוזים:',
+    !/%/.test(ilsMessage[1]) ? '✓' : '✗', '|', ilsMessage[1]);
+  console.log('    ואילו 100% כן אומר "לא ייגבה":',
+    /לא ייגבה/.test(ilsMessage[2]) ? '✓' : '✗');
+  if (/%/.test(ilsMessage[1])) errors.push('קופון בשקלים הוצג כאחוזים');
+  if (!/100/.test(ilsMessage[0])) errors.push('קופון של 100₪ לא הציג את הסכום');
+} else {
+  errors.push('couponMessage אינה חשופה לבדיקה');
+}
+
+console.log('12. תעריף לעובד מוצג כתעריף:', /12/.test(perEmployee) ? '✓' : '✗');
 console.log('    והסכום לפי השיא ולא לפי הנוכחי:',
   /1,?200/.test(perEmployee) ? '✓' : '✗');
 console.log('    והמסך מסביר שהחיוב לפי השיא:',
@@ -238,7 +267,7 @@ await signup.click('[data-auth-mode="signup"]');
 await signup.waitForTimeout(200);
 
 const couponField = await signup.locator('#signup-form input[name="coupon"]').count();
-console.log('12. יש שדה קופון במסך ההרשמה:', couponField === 1 ? '✓' : '✗');
+console.log('13. יש שדה קופון במסך ההרשמה:', couponField === 1 ? '✓' : '✗');
 if (couponField !== 1) errors.push('אין שדה קופון במסך ההרשמה');
 
 await signup.fill('input[name="companyName"]', 'עסק עם קוד');
@@ -265,7 +294,7 @@ const visible = await signup.evaluate(() => {
   const box = document.getElementById('coupon-box');
   return box ? box.tagName.toLowerCase() : 'none';
 });
-console.log('13. שדה הקופון במסך המנוי אינו details מקופל:',
+console.log('14. שדה הקופון במסך המנוי אינו details מקופל:',
   visible !== 'details' ? '✓' : '✗', '|', visible);
 if (visible === 'details') errors.push('שדה הקופון עדיין מקופל');
 await fresh.close();

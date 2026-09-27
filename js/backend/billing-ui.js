@@ -274,6 +274,12 @@
     if (answer.kind === Model.COUPON.DAYS) {
       return { text: t('billing.couponDays', { days: answer.value }), error: false };
     }
+    /* שקלים. בלי הענף הזה קופון של 50₪ נקרא כ-"50% הנחה",
+       וקופון של 100₪ נקרא כ-"החיוב הבא לא ייגבה" -- שתי
+       הבטחות שאיש לא נתן, והחיוב בפועל היה אחר. */
+    if (answer.kind === Model.COUPON.AMOUNT) {
+      return { text: t('billing.couponAmount', { amount: answer.value }), error: false };
+    }
     if (Number(answer.value) >= 100) {
       return { text: t('billing.couponFree'), error: false };
     }
@@ -409,5 +415,9 @@
     render();
   }
 
-  root.ShiftBillingUI = { init: init, render: render };
+  /* couponMessage נחשפת כדי שאפשר יהיה לבדוק אותה ישירות:
+     היא בוחרת מה נאמר ללקוח על כסף, וכל סוג קופון חדש חייב
+     להגיע אליה. הפעם האחרונה שלא -- קופון בשקלים נקרא
+     כאחוזים. */
+  root.ShiftBillingUI = { init: init, render: render, couponMessage: couponMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

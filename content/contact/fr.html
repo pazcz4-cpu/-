@@ -1,0 +1,72 @@
+<!--
+  title: Contact
+  description: Écrivez-nous, un humain répond — une panne qui bloque le travail sous 4 heures aux heures ouvrées, tout le reste sous 48.
+-->
+<h1>Contact</h1>
+<p class="legal-date">Un humain lit et répond — une panne qui bloque le travail sous 4 heures aux heures ouvrées, tout le reste sous 48</p>
+
+<p>Une question sur le produit, une demande de démonstration, une
+chaîne qui a besoin d’un devis, ou quelque chose qui ne fonctionne
+pas — tout arrive dans la même boîte, et nous répondons.</p>
+
+<div class="contact-direct">
+  <div>
+    <span class="contact-label">E-mail</span>
+    <a class="contact-value" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>
+  </div>
+  <button type="button" class="lp-btn lp-btn-ghost" data-copy="{{SUPPORT_EMAIL}}"
+    data-done="Copié">Copier</button>
+</div>
+
+<div class="contact-direct" id="contact-whatsapp" hidden>
+  <div>
+    <span class="contact-label">WhatsApp professionnel</span>
+    <a class="contact-value" id="contact-whatsapp-link" href="#"></a>
+  </div>
+</div>
+
+<h2>Envoyer un message</h2>
+<form id="contact-form" novalidate>
+  <label class="contact-field">
+    <span>Nom <b aria-hidden="true">*</b></span>
+    <input id="contact-name" name="name" type="text" autocomplete="name"
+      maxlength="120" required>
+  </label>
+  <label class="contact-field">
+    <span>E-mail <b aria-hidden="true">*</b></span>
+    <input id="contact-email" name="email" type="email" autocomplete="email"
+      maxlength="200" required>
+  </label>
+  <label class="contact-field">
+    <span>Nom de l’entreprise</span>
+    <input id="contact-company" name="company" type="text"
+      autocomplete="organization" maxlength="160">
+  </label>
+  <label class="contact-field">
+    <span>Téléphone</span>
+    <input id="contact-phone" name="phone" type="tel" autocomplete="tel"
+      maxlength="40">
+  </label>
+  <label class="contact-field">
+    <span>Message <b aria-hidden="true">*</b></span>
+    <textarea id="contact-message" name="message" rows="6" maxlength="4000"
+      required placeholder="Combien de salariés, combien d’établissements, et qu’est-ce qui gêne le plus dans le planning aujourd’hui ?"></textarea>
+  </label>
+
+  <div class="contact-trap" aria-hidden="true">
+    <label>Laissez ce champ vide
+      <input id="contact-website" name="website" type="text" tabindex="-1"
+        autocomplete="off"></label>
+  </div>
+
+  <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg" id="contact-send">Envoyer</button>
+  <p class="contact-note">Vos informations servent uniquement à vous
+  répondre. Vous n’êtes inscrit à aucune liste de diffusion. Voir notre
+  <a href="/privacy/">politique de confidentialité</a>.</p>
+  <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+</form>
+
+<p class="legal-foot">Si vous êtes déjà client et que quelque chose ne
+fonctionne pas, il existe un espace d’assistance à l’intérieur du
+système. Il nous parvient avec les informations de votre compte et
+reçoit une réponse plus rapide.</p>

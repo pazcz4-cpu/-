@@ -422,7 +422,14 @@ try {
        "מופעל על ידי {{LEGAL_ENTITY}}" על עמוד חי. */
     const body = await page.locator('body').innerText();
     check('/' + dir + '/ בלי תבנית שנשארה', /\{\{[A-Z_]+\}\}/.test(body), false);
-    check('/' + dir + '/ שתי שפות', await page.locator('article[data-legal]').count(), 2);
+    /* גרסה אחת בעמוד, לא שתיים: לכל שפה כתובת משלה. מה
+       שנבדק כאן הוא שהכתובת בשורש היא העברית, ושהמקבילה
+       באותה שפה אחרת באמת נבנתה. */
+    check('/' + dir + '/ גרסה אחת', await page.locator('main article').count(), 1);
+    check('/' + dir + '/ בעברית', await page.getAttribute('html', 'lang'), 'he');
+    const other = await page.goto(BASE + '/de/' + dir + '/');
+    check('/de/' + dir + '/ עולה', other.status(), 200);
+    check('/de/' + dir + '/ בגרמנית', await page.getAttribute('html', 'lang'), 'de');
   }
 
   console.log('\n== הקישורים מדף המכירה ==');

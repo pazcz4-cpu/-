@@ -1,0 +1,71 @@
+<!--
+  title: Kontakt
+  description: Schreiben Sie uns, ein Mensch antwortet — eine Störung, die die Arbeit blockiert, innerhalb von 4 Stunden während der Geschäftszeiten, alles andere innerhalb von 48.
+-->
+<h1>Kontakt</h1>
+<p class="legal-date">Ein Mensch liest und antwortet — eine Störung, die die Arbeit blockiert, innerhalb von 4 Stunden während der Geschäftszeiten, alles andere innerhalb von 48</p>
+
+<p>Eine Frage zum Produkt, eine Anfrage für eine Demo, eine Kette, die
+ein Angebot braucht, oder etwas, das nicht funktioniert — alles landet
+im selben Postfach, und wir antworten.</p>
+
+<div class="contact-direct">
+  <div>
+    <span class="contact-label">E-Mail</span>
+    <a class="contact-value" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>
+  </div>
+  <button type="button" class="lp-btn lp-btn-ghost" data-copy="{{SUPPORT_EMAIL}}"
+    data-done="Kopiert">Kopieren</button>
+</div>
+
+<div class="contact-direct" id="contact-whatsapp" hidden>
+  <div>
+    <span class="contact-label">WhatsApp für Unternehmen</span>
+    <a class="contact-value" id="contact-whatsapp-link" href="#"></a>
+  </div>
+</div>
+
+<h2>Eine Nachricht senden</h2>
+<form id="contact-form" novalidate>
+  <label class="contact-field">
+    <span>Name <b aria-hidden="true">*</b></span>
+    <input id="contact-name" name="name" type="text" autocomplete="name"
+      maxlength="120" required>
+  </label>
+  <label class="contact-field">
+    <span>E-Mail <b aria-hidden="true">*</b></span>
+    <input id="contact-email" name="email" type="email" autocomplete="email"
+      maxlength="200" required>
+  </label>
+  <label class="contact-field">
+    <span>Name des Betriebs</span>
+    <input id="contact-company" name="company" type="text"
+      autocomplete="organization" maxlength="160">
+  </label>
+  <label class="contact-field">
+    <span>Telefon</span>
+    <input id="contact-phone" name="phone" type="tel" autocomplete="tel"
+      maxlength="40">
+  </label>
+  <label class="contact-field">
+    <span>Nachricht <b aria-hidden="true">*</b></span>
+    <textarea id="contact-message" name="message" rows="6" maxlength="4000"
+      required placeholder="Wie viele Beschäftigte, wie viele Standorte, und was stört an der Planung heute am meisten?"></textarea>
+  </label>
+
+  <div class="contact-trap" aria-hidden="true">
+    <label>Dieses Feld bitte leer lassen
+      <input id="contact-website" name="website" type="text" tabindex="-1"
+        autocomplete="off"></label>
+  </div>
+
+  <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg" id="contact-send">Senden</button>
+  <p class="contact-note">Ihre Angaben dienen ausschließlich der
+  Antwort an Sie. Sie werden in keinen Verteiler aufgenommen. Siehe
+  unsere <a href="/privacy/">Datenschutzerklärung</a>.</p>
+  <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+</form>
+
+<p class="legal-foot">Wenn Sie bereits Kundin oder Kunde sind und
+etwas nicht funktioniert — im System gibt es einen Support-Bereich. Er
+erreicht uns mit Ihren Kontodaten und wird schneller beantwortet.</p>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- המסגרת של עמודי התוכן. הטקסט עצמו יושב ב-content/<עמוד>/
+     <שפה>.html, והבנייה מרכיבה את שניהם לכל צירוף — כתובת לכל
+     שפה, והטקסט כבר בתוך הקובץ שנשלח. ההסבר המלא, וגם למה זה
+     לא נשאר עמוד אחד לשתי שפות, יושב ב-build-site.js ליד
+     CONTENT_PAGES.
+
+     הקובץ הזה אינו נשלח כמו שהוא: הסימונים שבו מוחלפים בבנייה,
+     ובנייה שלא מצאה סימון נעצרת. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title></title>
+<meta name="description" content="">
+<!-- styles.css ראשון: הוא מגדיר את הטוקנים (צבעים, מרווחים,
+     פינות) ש-landing.css משתמש בהם. בלעדיו כל var(--...)
+     בעמוד ריק, והעמוד מוצג בשחור על לבן בלי שום עיצוב. -->
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="legal-body">
+<!-- דילוג לתוכן: הקישור הראשון במסמך, נסתר עד שמקבל
+     מיקוד. מי שגולש במקלדת אינו צריך לעבור על הלוגו,
+     בורר השפה ועל חמש הלשוניות בכל עמוד. -->
+<a class="skip-link" href="#main" data-i18n="landing.skipToContent">דילוג לתוכן הראשי</a>
+
+<nav class="lp-nav">
+  <div class="landing-wrap lp-nav-inner">
+    <a class="lp-brand" href="./"><img class="lp-logo lp-logo-dark" src="brand/logo-lockup.png" alt="SetShifts" width="960" height="255"><img class="lp-logo lp-logo-light" src="brand/logo-lockup-light.png" alt="" aria-hidden="true" width="960" height="255"></a>
+    <div class="lp-nav-spacer"></div>
+    <!-- בורר השפה. האפשרויות נכתבות בזמן הבנייה, וכל אחת מהן
+         היא הכתובת של אותו עמוד בשפה אחרת — ולא החלפת טקסטים
+         במקום. כך הכתובת שבסרגל אומרת את מה שהעמוד מראה, ומי
+         שמשתף את הקישור משתף את השפה שראה. -->
+    <select id="page-language" class="lp-lang" data-i18n-aria-label="landing.language"
+      aria-label="שפה"><!--LANGUAGE_OPTIONS--></select>
+  </div>
+<!-- לשוניות האתר. שורה שנייה ולא באותה שורה עם הלוגו:
+     בעברית השמות ארוכים, ועם הלוגו ובורר השפה אין מקום לחמש
+     לשוניות באף טלפון. -->
+<div class="lp-tabs-wrap">
+  <nav class="landing-wrap lp-tabs" data-i18n-aria-label="landing.siteNav"
+    aria-label="ניווט באתר">
+    <a href="about/" data-tab="about" data-i18n="landing.about">מי אנחנו</a>
+    <a href="stories/" data-tab="stories" data-i18n="landing.stories">איפה זה עוזר</a>
+    <a href="pricing/" data-tab="pricing" data-i18n="landing.pricing">מחירים</a>
+    <a href="faq/" data-tab="faq" data-i18n="landing.faq">שאלות נפוצות</a>
+    <a href="contact/" data-tab="contact" data-i18n="landing.contact">צור קשר</a>
+  </nav>
+</div>
+</nav>
+
+<main id="main" tabindex="-1" class="landing-wrap legal">
+<!--ARTICLE-->
+</main>
+
+<footer class="lp-footer">
+  <div class="landing-wrap lp-footer-inner">
+    <span>SetShifts</span>
+    <span class="lp-nav-spacer"></span>
+    <a href="about/" data-i18n="landing.about">מי אנחנו</a>
+    <a href="stories/" data-i18n="landing.stories">איפה זה עוזר</a>
+    <a href="pricing/" data-i18n="landing.pricing">מחירים</a>
+    <a href="faq/" data-i18n="landing.faq">שאלות נפוצות</a>
+    <a href="contact/" data-i18n="landing.contact">צור קשר</a>
+    <a href="privacy/" data-i18n="landing.privacy">מדיניות פרטיות</a>
+    <a href="terms/" data-i18n="landing.terms">תנאי שימוש</a>
+    <a href="security/" data-i18n="landing.security">אבטחה</a>
+    <a href="accessibility/" data-i18n="landing.accessibility">הצהרת נגישות</a>
+  </div>
+</footer>
+
+<script src="js/page.js"></script>
+<script src="js/talk.js"></script>
+<!--PAGE_SCRIPTS-->
+</body>
+</html>

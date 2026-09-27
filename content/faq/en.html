@@ -1,0 +1,178 @@
+<!--
+  title: Frequently asked questions
+  description: Price, the trial, what happens at the end, who sees what, moving from another system and exporting your data — answered in one place.
+-->
+<h1>Frequently asked questions</h1>
+<p class="legal-date">What people ask before signing up, answered plainly</p>
+
+<h2>Money</h2>
+
+<h3>What does it cost?</h3>
+<p>By active headcount, with unlimited locations on every plan:
+up to 10 staff — ₪199 a month; 11–30 — ₪399; 31–99 — ₪599.
+From 100 staff up the price is agreed in a conversation, because a
+chain that size has needs a price list doesn't cover. All prices
+include VAT.</p>
+
+<h3>What happens at the end of the 14-day trial?</h3>
+<p>If you entered a card, the first charge is taken at the end of the
+trial and it becomes a monthly subscription. If you didn't, access
+pauses and nothing is deleted. Sign in, pick a plan, and everything
+comes back exactly as it was.</p>
+
+<h3>Am I charged during the trial?</h3>
+<p>No. 14 days with no charge, even if you entered a card. The card is
+held by the payment provider, not by us, and the first charge happens
+only when the trial ends.</p>
+
+<h3>Can I cancel?</h3>
+<p>Any time, from inside the system. No annual contract and no exit
+fee. Cancellation takes effect at the end of the period you've paid
+for — not in the middle of a month you already paid.</p>
+
+<h3>What if I grow past my plan's limit?</h3>
+<p>When you try to add the employee who goes over, the system offers
+the right plan and tells you what it costs and when it will be
+charged. Nothing is charged at that moment: the new price applies
+from the next billing.</p>
+
+<h2>The system</h2>
+
+<h3>How long does setup take?</h3>
+<p>A four-step wizard: locations, hours, shifts, people. For a small
+business that's fifteen minutes. If you have a staff list in a
+spreadsheet you can import it, with a template to download.</p>
+
+<h3>I already have a schedule in a spreadsheet. Can I import it?</h3>
+<p>Staff and locations — yes, from Excel or CSV, with duplicate
+detection by email and the ability to undo an import that didn't come
+out right. The schedule itself doesn't need importing: it's rebuilt
+in one click, which is rather the point.</p>
+
+<h3>Does the system schedule for me, or do I decide?</h3>
+<p>You decide. The system proposes a schedule, and you can drag any
+shift from one person to another, assign by hand, or park a shift
+aside. Manual assignments are kept and not overwritten by the next
+run.</p>
+
+<h3>How do I know why it scheduled the way it did?</h3>
+<p>Every shift can answer that. Click it and see why that person was
+chosen and who the alternatives were. A shift that couldn't be filled
+is flagged with the reason — it doesn't stay an empty cell.</p>
+
+<h3>An employee is sick. What now?</h3>
+<p>Drag their shift to someone else, or leave it in the neutral area
+above the table until a replacement is found. If the week is already
+published the system asks for a double confirmation before the
+change, and then you republish.</p>
+
+<h3>Does it handle holidays and Sabbath?</h3>
+<p>Yes. You can mark closed days and nothing is scheduled on them.
+There's also handling for Sabbath end time, which shifts through the
+year.</p>
+
+<h2>Your staff</h2>
+
+<h3>Do staff have to install an app?</h3>
+<p>They don't have to. They get a permanent personal link that opens
+in a browser, with no password and nothing to install — which is what
+makes staff actually use it, because there is no step where they have
+to go and find something in a store. Anyone who wants can add it to
+their home screen, where it looks and behaves like an app.</p>
+
+<h3>Who sees what?</h3>
+<p>By default, staff see their own shifts and their own requests.</p>
+<p>You can turn on <b>team visibility</b> in settings, and then they
+also see who is on each shift with them — useful in a kitchen or on a
+security shift, where you need to know who your pair is. <b>Even
+then</b>, other people's requests, notes and contact details stay
+closed.</p>
+<p>What staff never see: the notes you wrote about them, the
+subscription and billing, and any other company's data. This is
+enforced in the database itself rather than on the screen, so a direct
+request to the server can't get around it either.</p>
+
+<h3>Can an employee flood me with requests?</h3>
+<p>You set a weekly request limit. Past it, the system won't accept
+another request from them. You can choose whether preferences count
+toward that limit.</p>
+
+<h3>What about staff who don't read Hebrew?</h3>
+<p>The system ships in eight languages — Hebrew, English, Arabic,
+Russian, Spanish, French, German and Portuguese. Each person picks
+their own, and sees the schedule in it.</p>
+
+<h2>Attendance and hours</h2>
+
+<h3>Is there a time clock?</h3>
+<p>Yes, in two ways that work together. <b>From a phone</b> — staff
+clock in and out on their own device, on site or in the field, which
+suits drivers, cleaners and anyone not behind a counter.
+<b>From a device at the door</b> — if you prefer a physical clock, the
+system accepts punches directly from common card and chip terminals.</p>
+
+<h3>Which hardware clock works?</h3>
+<p>Any clock that speaks the <b>ADMS</b> protocol; ZKTeco is the common
+example. The device pushes punches to us by itself: no extra software
+to install, no computer that has to stay on, and no middleware. Pick
+the model by what the business needs — card, chip, or both.</p>
+
+<h3>What about a shift left open?</h3>
+<p>It is flagged and not counted as hours. A report with an open shift
+is not ready for payroll, and the system says so rather than guessing a
+number. A manager corrects it by hand, and the correction is logged.</p>
+
+<h3>What comes out at month end?</h3>
+<p>An hours report per person: actual versus planned hours, days
+worked, overtime and leave days. Export to Excel in one click.</p>
+
+<h3>How is overtime counted?</h3>
+<p>By a threshold you set — daily and weekly. The system takes the
+higher of the two rather than adding them, so the same hour is never
+counted twice.</p>
+
+<h3>Is leave managed in the system?</h3>
+<p>Yes. Staff request a date range in advance, a manager approves or
+declines, and approved days appear in the monthly report. <b>An advance
+request is always a paid-leave request</b> — there is no checkbox to
+clear, because an approved day is a paid day.</p>
+
+<h2>Data and security</h2>
+
+<h3>Where does my data live?</h3>
+<p>In the cloud, with an established infrastructure provider,
+encrypted in transit and at rest. The full detail is on the
+<a href="/security/">security page</a>.</p>
+
+<h3>Can I export my data?</h3>
+<p>Yes, any time, without asking us. Your data is yours — including
+if you decide to leave.</p>
+
+<h3>Can another company see my schedule?</h3>
+<p>No. Isolation between companies is enforced at the database level,
+not in browser code. It is covered by automated tests on every
+change.</p>
+
+<h3>What if I delete an employee by mistake?</h3>
+<p>Deleting clears their assignments across every week and asks for
+confirmation first. Before deleting someone already scheduled, it's
+worth exporting.</p>
+
+<h2>Support</h2>
+
+<h3>If something breaks, who answers?</h3>
+<p>A person — and how fast depends on what broke. A failure that
+blocks work, such as a schedule that will not publish today: 4 hours
+during business hours (09:00–18:00, Sunday to Thursday). A question
+or a feature request: 48 hours. Open a ticket in the support area
+inside the system — that is where you pick the kind, and the time
+follows from it — or use the
+<a href="/contact/">contact page</a>.</p>
+
+<h3>We're a large chain and need adjustments. Can we talk?</h3>
+<p>Absolutely — <a href="/contact/">book a meeting</a>. We're early,
+and a request from a chain is a conversation rather than a ticket in
+a queue.</p>
+
+<p class="legal-foot">A question this page didn't answer:
+<a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></p>

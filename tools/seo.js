@@ -41,10 +41,23 @@ const LANGUAGES = [
 
 const DEFAULT_LANG = 'he';
 
+/* עמודי התוכן — אלה שיש להם גרסה מלאה בכל שפה, וכתובת לכל
+   שפה. העמודים המשפטיים אינם כאן: מסמך משפטי מתורגם בלי בדיקה
+   הוא התחייבות שאיש לא קרא, והצהרת נגישות היא הצהרה על תקנות
+   ישראליות שאינה חלה על מבקר מגרמניה. */
+const CONTENT_DIRS = ['about', 'stories', 'pricing', 'faq', 'contact'];
+
+/* אלה נשארים עברית ואנגלית באותה כתובת, עם בורר בתוך העמוד */
+const BILINGUAL_DIRS = ['privacy', 'terms', 'security', 'accessibility', 'guide'];
+
 /* x-default הוא מה שמוצג למי שאף שפה שלו אינה ברשימה. העברית
-   היא השוק הראשון, והיא גם הכתובת בשורש. */
-function pathOf(code) {
-  return code === DEFAULT_LANG ? '/' : '/' + code + '/';
+   היא השוק הראשון, והיא גם הכתובת בשורש.
+
+   sub הוא תת-הנתיב: pathOf('de', 'faq') → /de/faq/, ובעברית
+   → /faq/. בלי הפרמטר זו הכתובת של דף הבית באותה שפה. */
+function pathOf(code, sub) {
+  const base = code === DEFAULT_LANG ? '/' : '/' + code + '/';
+  return sub ? base + sub + '/' : base;
 }
 
 function langOf(code) {
@@ -137,23 +150,44 @@ function translate(html, t, lang) {
    ל-/en/faq/ — כתובת שאינה קיימת. סורק שמוצא שרשרת 404
    מפסיק לסרוק, ולכן זה לא רק מטריד אלא עוצר אינדוקס.
 
-   עמודי התוכן כתובים בעברית ובאנגלית בלבד, ולכן מי שמגיע
-   משפה אחרת מקבל אותם באנגלית — סימון עוגן שאינו נשלח לשרת
-   ואינו יוצר כתובת שנייה לאותו תוכן. */
-/* עוגן רק לעמודי הפרוזה. לא למערכת, ולא לקבצים. */
-const PROSE = /^\/(about|stories|faq|contact|guide|pricing|privacy|terms|security|accessibility)\/$/;
+   עמוד תוכן יש לו גרסה בכל שפה, ולכן קישור אליו מקבל את
+   הקידומת של השפה: מ-/de/ אל /de/faq/. לעמוד המשפטי אין גרסה
+   כזו — הוא עברית ואנגלית באותה כתובת — ולכן הוא מקבל סימון
+   עוגן, שאינו נשלח לשרת ואינו יוצר כתובת שנייה לאותו תוכן. */
+const CONTENT_LINK = new RegExp('^/(' + CONTENT_DIRS.join('|') + ')/$');
+const BILINGUAL_LINK = new RegExp('^/(' + BILINGUAL_DIRS.join('|') + ')/$');
+
+/* כתובת פנימית אחת, בשפה של העמוד שמכיל אותה */
+function localizeHref(absolute, code) {
+  const anchor = code === DEFAULT_LANG ? '' : '#en';
+  if (absolute === '/') return pathOf(code);
+  const content = absolute.match(CONTENT_LINK);
+  if (content) return pathOf(code, content[1]);
+  if (BILINGUAL_LINK.test(absolute)) return absolute + anchor;
+  return absolute;
+}
+
+/* קישורים מוחלטים שכבר כתובים בתוך הטקסט עצמו. קטע התוכן נכתב
+   פעם אחת לכל שפה, והקישורים שבתוכו נכתבים כ-/contact/ — כלומר
+   בעברית. בלי המעבר הזה כל קישור בתוך פסקה גרמנית היה מחזיר את
+   הקורא לעברית, וזו בדיוק הנקודה שבה מבקר מפסיק להבין איפה הוא. */
+function localizeLinks(html, code) {
+  return outsideCode(html, (part) => part.replace(
+    /href="(\/[^"#?]*)"/g,
+    (match, value) => 'href="' + localizeHref(value, code) + '"'));
+}
 
 function absoluteLinks(html, code) {
-  const anchor = code === DEFAULT_LANG ? '' : '#en';
-  return outsideCode(html, (part) => part.replace(
+  return localizeLinks(outsideCode(html, (part) => part.replace(
     /href="(?!https?:|\/\/|\/|#|data:|mailto:|tel:)([^"]*)"/g,
     (match, value) => {
-      /* "./" הוא קישור לשורש, ו-"/./" הוא כתובת שנייה לאותו
-         עמוד מבחינת סורק. */
+      /* "./" הוא קישור לדף הבית, ו-"/./" הוא כתובת שנייה לאותו
+         עמוד מבחינת סורק. דף הבית של אותה שפה, לא של העברית:
+         הלוגו בכל עמוד מקשר כך, ובלי זה מבקר מגרמניה שלוחץ על
+         הלוגו נפל לעברית. */
       const cleaned = String(value).replace(/^\.\//, '');
-      const absolute = '/' + cleaned;
-      return 'href="' + absolute + (PROSE.test(absolute) ? anchor : '') + '"';
-    }));
+      return 'href="/' + cleaned + '"';
+    })), code);
 }
 
 /* ===== hreflang ===== */
@@ -161,12 +195,12 @@ function absoluteLinks(html, code) {
 /* ההצהרה חייבת להיות הדדית ומלאה: כל עמוד מצהיר על כל השפות,
    כולל על עצמו. עמוד שחסר ברשימה של אחר נזרק מהקבוצה, וגוגל
    חוזר להתייחס לשניהם כתוכן כפול. */
-function alternateTags(siteUrl) {
+function alternateTags(siteUrl, sub) {
   return LANGUAGES.map((lang) =>
     '<link rel="alternate" hreflang="' + lang.code +
-    '" href="' + siteUrl + pathOf(lang.code) + '">')
+    '" href="' + siteUrl + pathOf(lang.code, sub) + '">')
     .concat('<link rel="alternate" hreflang="x-default" href="' +
-      siteUrl + pathOf(DEFAULT_LANG) + '">');
+      siteUrl + pathOf(DEFAULT_LANG, sub) + '">');
 }
 
 /* ===== תגיות שיתוף ===== */
@@ -304,8 +338,12 @@ function breadcrumbs(siteUrl, trail) {
 /* שאלות ותשובות. נקראות מהעמוד עצמו ולא נכתבות כאן פעם שנייה:
    שאלה שתשתנה בעמוד ולא כאן תישלח לגוגל כתשובה שאינה קיימת,
    וזו הפרה של הכלל שהתוכן המסומן חייב להיות גלוי בעמוד. */
+/* html יכול להיות עמוד שכתוב בשתי שפות (המשפטיים) או קטע
+   בשפה אחת (עמודי התוכן, מ-content/). בלי הנפילה הזו קטע בשפה
+   אחת היה מחזיר אפס שאלות — כלומר העמוד עולה, הנתונים המובנים
+   פשוט אינם, ואיש אינו רואה שהם חסרים. */
 function faqFromHtml(html, lang) {
-  const article = articleOf(html, lang || 'he');
+  const article = articleOf(html, lang || 'he') || String(html);
   if (!article) return [];
   const items = [];
   /* התשובה נגמרת בכותרת הבאה — או בשורת הסיום של העמוד, שהיא
@@ -356,6 +394,8 @@ function plainText(html) {
 module.exports = {
   LANGUAGES: LANGUAGES,
   DEFAULT_LANG: DEFAULT_LANG,
+  CONTENT_DIRS: CONTENT_DIRS,
+  BILINGUAL_DIRS: BILINGUAL_DIRS,
   ATTRIBUTES: ATTRIBUTES,
   pathOf: pathOf,
   langOf: langOf,
@@ -363,6 +403,7 @@ module.exports = {
   translateText: translateText,
   translateAttributes: translateAttributes,
   absoluteLinks: absoluteLinks,
+  localizeLinks: localizeLinks,
   alternateTags: alternateTags,
   socialTags: socialTags,
   jsonLd: jsonLd,

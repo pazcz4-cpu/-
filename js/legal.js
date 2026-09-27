@@ -39,6 +39,25 @@
     return /^he|^iw/.test(nav) ? 'he' : 'en';
   }
 
+  /* עמודי התוכן — מי אנחנו, איפה זה עוזר, מחירים, שאלות נפוצות
+     וצור קשר — יש להם כתובת לכל שפה. בעמוד משפטי אין: הוא עברית
+     ואנגלית באותה כתובת. לכן כשהמבקר עובר כאן לאנגלית, הלשוניות
+     צריכות להוביל אל /en/faq/ ולא אל /faq/ — אחרת לחיצה על
+     לשונית מתוך המסמך באנגלית מחזירה אותו לעברית. */
+  var CONTENT = ['about', 'stories', 'pricing', 'faq', 'contact'];
+
+  function retarget(lang) {
+    var prefix = lang === 'he' ? '/' : '/' + lang + '/';
+    var links = document.querySelectorAll('.lp-tabs a, .lp-footer a');
+    Array.prototype.forEach.call(links, function (link) {
+      var found = String(link.getAttribute('href') || '')
+        .match(/^\/(?:[a-z]{2}\/)?([a-z]+)\/$/);
+      if (found && CONTENT.indexOf(found[1]) !== -1) {
+        link.setAttribute('href', prefix + found[1] + '/');
+      }
+    });
+  }
+
   function show(lang) {
     var chosen = DIR[lang] ? lang : 'en';
     var articles = document.querySelectorAll('[data-legal]');
@@ -54,6 +73,7 @@
     document.documentElement.setAttribute('lang', chosen);
     document.documentElement.setAttribute('dir', DIR[chosen]);
     try { root.localStorage.setItem(KEY, chosen); } catch (err) { /* לא קריטי */ }
+    retarget(chosen);
   }
 
   /* הדפסה / שמירה כ-PDF. אין כאן ספריית PDF: הדפדפן יודע לשמור

@@ -1,0 +1,71 @@
+<!--
+  title: Контакты
+  description: Напишите нам, и ответит человек — сбой, который блокирует работу, в течение 4 часов в рабочее время, всё остальное в течение 48.
+-->
+<h1>Контакты</h1>
+<p class="legal-date">Читает и отвечает человек — сбой, который блокирует работу, в течение 4 часов в рабочее время, всё остальное в течение 48</p>
+
+<p>Вопрос о продукте, просьба о демонстрации, сеть, которой нужно
+предложение, или что-то, что не работает — всё попадает в один и тот
+же ящик, и мы отвечаем.</p>
+
+<div class="contact-direct">
+  <div>
+    <span class="contact-label">Почта</span>
+    <a class="contact-value" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>
+  </div>
+  <button type="button" class="lp-btn lp-btn-ghost" data-copy="{{SUPPORT_EMAIL}}"
+    data-done="Скопировано">Копировать</button>
+</div>
+
+<div class="contact-direct" id="contact-whatsapp" hidden>
+  <div>
+    <span class="contact-label">WhatsApp для бизнеса</span>
+    <a class="contact-value" id="contact-whatsapp-link" href="#"></a>
+  </div>
+</div>
+
+<h2>Отправить сообщение</h2>
+<form id="contact-form" novalidate>
+  <label class="contact-field">
+    <span>Имя <b aria-hidden="true">*</b></span>
+    <input id="contact-name" name="name" type="text" autocomplete="name"
+      maxlength="120" required>
+  </label>
+  <label class="contact-field">
+    <span>Эл. почта <b aria-hidden="true">*</b></span>
+    <input id="contact-email" name="email" type="email" autocomplete="email"
+      maxlength="200" required>
+  </label>
+  <label class="contact-field">
+    <span>Название компании</span>
+    <input id="contact-company" name="company" type="text"
+      autocomplete="organization" maxlength="160">
+  </label>
+  <label class="contact-field">
+    <span>Телефон</span>
+    <input id="contact-phone" name="phone" type="tel" autocomplete="tel"
+      maxlength="40">
+  </label>
+  <label class="contact-field">
+    <span>Сообщение <b aria-hidden="true">*</b></span>
+    <textarea id="contact-message" name="message" rows="6" maxlength="4000"
+      required placeholder="Сколько сотрудников, сколько точек и что сегодня больше всего мешает в графике?"></textarea>
+  </label>
+
+  <div class="contact-trap" aria-hidden="true">
+    <label>Оставьте это поле пустым
+      <input id="contact-website" name="website" type="text" tabindex="-1"
+        autocomplete="off"></label>
+  </div>
+
+  <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg" id="contact-send">Отправить</button>
+  <p class="contact-note">Ваши данные используются только для ответа
+  вам. Вас не добавляют ни в какие рассылки. См. нашу
+  <a href="/privacy/">политику конфиденциальности</a>.</p>
+  <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+</form>
+
+<p class="legal-foot">Если вы уже клиент и что-то не работает — внутри
+системы есть раздел поддержки. Обращение приходит к нам вместе с
+данными вашей учётной записи и получает ответ быстрее.</p>

@@ -349,15 +349,24 @@ function headExtras(options) {
       ? '<meta name="robots" content="noindex, follow">'
       : '<meta name="robots" content="index, follow, max-snippet:-1, ' +
         'max-image-preview:large, max-video-preview:-1">'])
-    .concat(options.alternates ? seo.alternateTags(SITE_URL) : [])
+    /* alternates: true לדף הבית, או שם תת-הנתיב לעמוד תוכן —
+       כדי ש-/de/faq/ יצהיר על /faq/ ולא על /. הצהרה שמפנה לדף
+       הבית במקום לעמוד המקביל מוציאה את העמוד מהקבוצה. */
+    .concat(options.alternates
+      ? seo.alternateTags(SITE_URL,
+        options.alternates === true ? null : options.alternates) : [])
     .concat(options.social ? seo.socialTags(options.social) : [])
     .concat((options.structured || []).map(seo.jsonLd))
     /* השפה שהעמוד כבר נשלח בה, לפני שקוד כלשהו רץ. בלי זה
        js/i18n/dom.js היה בוחר שפה לפי הדפדפן ומצייר מחדש את
        העמוד — כלומר הכתובת אומרת /en/ והמבקר רואה עברית. */
+    /* ותווית כפתור "דברו איתנו", שנבנה ב-js/talk.js. עמוד תוכן
+       אינו טוען מילוני תרגום — הוא נשלח מתורגם — ולכן התווית
+       שלו נחרטת כאן. */
     .concat(options.pageLang ? ['<script>window.SHIFT_PAGE_LANG=' +
       JSON.stringify(options.pageLang.code) + ';window.SHIFT_PAGE_LANG_FIXED=' +
-      (options.pageLang.code !== seo.DEFAULT_LANG) + ';</script>'] : [])
+      (options.pageLang.code !== seo.DEFAULT_LANG) + ';window.SHIFT_TALK_LABEL=' +
+      JSON.stringify(I18n.t('landing.contact')) + ';</script>'] : [])
     .join('\n');
 }
 
@@ -482,38 +491,26 @@ page('index.html', 'tool/index.html', { manifest: '/tool/manifest.webmanifest', 
    ההגנה היא PLATFORM_OWNER_EMAILS בשרת – אבל אין סיבה לפרסם. */
 page('admin.html', 'admin/index.html', { noindex: true, noServiceWorker: true });
 
-/* עמודי הפרוזה. כולם נכנסים למנועי החיפוש בכוונה: עסק שמחפש
-   "האם אפשר לסמוך עליהם" או "כמה זה עולה" מגיע בדיוק לשם.
+/* ===== העמודים המשפטיים =====
 
-   כולם כתובים באותה תבנית — שתי שפות מלאות ובורר ביניהן, ולא
-   דרך מערכת התרגום של המוצר. עמוד שיווקי שמתורגם לשמונה שפות
-   בלי שאיש קרא אותן הוא שמונה הזדמנויות להבטיח משהו שאינו נכון. */
-const PROSE_PAGES = [
+   מדיניות פרטיות, תנאי שימוש, אבטחה והצהרת נגישות. אלה נשארים
+   עברית ואנגלית באותה כתובת, עם בורר בתוך העמוד (js/legal.js),
+   ובכוונה: מסמך משפטי מתורגם בלי שעורך דין קרא אותו הוא
+   התחייבות שאיש לא בדק, והצהרת נגישות היא הצהרה על תקנות
+   ישראליות שאינה חלה על מבקר מגרמניה. */
+const LEGAL_PAGES = [
   { file: 'privacy.html', dir: 'privacy', label: 'עמוד משפטי' },
   { file: 'terms.html', dir: 'terms', label: 'עמוד משפטי' },
   { file: 'security.html', dir: 'security', label: 'עמוד משפטי' },
-  { file: 'accessibility.html', dir: 'accessibility', label: 'עמוד משפטי' },
-  /* עמודי התוכן. ל"שאלות נפוצות" יש עדיפות גבוהה יותר במפת
-     האתר ולא במקרה: מי שמחפש "תוכנה לסידור עבודה כמה עולה"
-     מגיע בדיוק לשם, וזה תנועה שמתחילה בשאלה אמיתית. */
-  { file: 'about.html', dir: 'about', label: 'מי אנחנו', priority: '0.6' },
-  { file: 'stories.html', dir: 'stories', label: 'איפה זה עוזר', priority: '0.6' },
-  { file: 'faq.html', dir: 'faq', label: 'שאלות נפוצות',
-    priority: '0.7', changefreq: 'monthly', faq: true },
-  /* מחירים. העמוד שמי שמחפש "כמה עולה תוכנה לסידור
-     עבודה" מחפש בפועל, והשאילתה הזו היא כוונת קנייה
-     ולא סקרנות. עד כאן המחירון היה מקטע בתוך דף הבית,
-     ולמקטע אין כתובת משלו שאפשר לדרג אותה. */
-  { file: 'pricing.html', dir: 'pricing', label: 'מחירים',
-    priority: '0.8', changefreq: 'monthly', faq: true },
-  { file: 'contact.html', dir: 'contact', label: 'צור קשר', priority: '0.6' }
+  { file: 'accessibility.html', dir: 'accessibility', label: 'עמוד משפטי' }
 ];
-/* מה שכל עמוד פרוזה מקבל: תצוגה מקדימה משלו, שביל שמוביל אליו,
-   וזהות המוצר.
 
-   עד כאן אף עמוד תוכן לא נשא תגיות שיתוף, ולכן קישור ל"שאלות
-   נפוצות" שנשלח בוואטסאפ הופיע בלי כותרת ובלי תיאור — כלומר
-   נראה כמו קישור מפוקפק. */
+/* מה שכל עמוד דו-לשוני מקבל: תצוגה מקדימה משלו, שביל שמוביל
+   אליו, וזהות המוצר.
+
+   עד כאן אף עמוד כזה לא נשא תגיות שיתוף, ולכן קישור אליו
+   שנשלח בוואטסאפ הופיע בלי כותרת ובלי תיאור — כלומר נראה כמו
+   קישור מפוקפק. */
 function proseHead(item) {
   const meta = metaOf(read(item.file));
   const here = '/' + item.dir + '/';
@@ -544,7 +541,7 @@ function proseHead(item) {
   };
 }
 
-PROSE_PAGES.forEach((item) => {
+LEGAL_PAGES.forEach((item) => {
   page(item.file, item.dir + '/index.html', proseHead(item));
 });
 
@@ -552,6 +549,160 @@ PROSE_PAGES.forEach((item) => {
    העובדים, ומי שפותח אותו עוד לא התחבר לשום דבר. */
 page('guide.html', 'guide/index.html',
   proseHead({ file: 'guide.html', dir: 'guide', label: 'מדריך לעובד/ת' }));
+
+/* ===== עמודי התוכן, פעם אחת לכל שפה =====
+
+   מי אנחנו, איפה זה עוזר, מחירים, שאלות נפוצות וצור קשר. כולם
+   נכנסים למנועי החיפוש בכוונה: עסק שמחפש "האם אפשר לסמוך
+   עליהם" או "כמה זה עולה" מגיע בדיוק לשם.
+
+   עד כאן כל אחד מהם היה קובץ שהכיל שתי גרסאות של הטקסט —
+   עברית ואנגלית — ובורר שהחליף ביניהן. כלומר כתובת אחת לשתי
+   שפות, ושש שפות שלא היו קיימות. עכשיו המסגרת יושבת ב-page.html
+   פעם אחת, הטקסט ב-content/<עמוד>/<שפה>.html, וכל צירוף מקבל
+   כתובת משלו.
+
+   ל"שאלות נפוצות" ול"מחירים" עדיפות גבוהה יותר במפת האתר ולא
+   במקרה: מי שמחפש "תוכנה לסידור עבודה כמה עולה" מגיע בדיוק
+   לשם, וזו שאילתה של כוונת קנייה ולא של סקרנות. */
+const CONTENT_PAGES = [
+  { dir: 'about', key: 'landing.about', priority: '0.6' },
+  { dir: 'stories', key: 'landing.stories', priority: '0.6' },
+  { dir: 'pricing', key: 'landing.pricing',
+    priority: '0.8', changefreq: 'monthly', faq: true },
+  { dir: 'faq', key: 'landing.faq',
+    priority: '0.7', changefreq: 'monthly', faq: true },
+  /* הטופס בעמוד צור קשר. model.js קודם: contact.js קורא ממנו
+     את מספר הוואטסאפ, ובלעדיו הבלוק פשוט אינו מוצג. */
+  { dir: 'contact', key: 'landing.contact', priority: '0.6',
+    scripts: ['/js/backend/model.js', '/js/contact.js'] }
+];
+
+function contentFile(dir, code) {
+  return path.join('content', dir, code + '.html');
+}
+
+/* כותרת ותיאור יושבים בראש קטע התוכן עצמו, ולא בטבלה כאן: מי
+   שכותב את הטקסט בשפה כלשהי כותב גם את מה שיופיע עליו בתוצאות
+   החיפוש, באותו קובץ, ולא נזכר בזה במקום אחר. */
+function contentMeta(text, where) {
+  const header = text.match(/^\s*<!--([\s\S]*?)-->/);
+  if (!header) throw new Error(where + ': אין כותרת (title/description) בראש הקובץ');
+  const meta = {};
+  header[1].split('\n').forEach((line) => {
+    const pair = line.match(/^\s*([a-z]+)\s*:\s*(.+?)\s*$/);
+    if (pair) meta[pair[1]] = pair[2];
+  });
+  ['title', 'description'].forEach((field) => {
+    if (!meta[field]) throw new Error(where + ': חסר ' + field);
+  });
+  return meta;
+}
+
+function contentBody(text) {
+  return text.replace(/^\s*<!--[\s\S]*?-->\s*/, '');
+}
+
+/* בורר השפה. כל אפשרות היא הכתובת של אותו עמוד בשפה אחרת, כדי
+   שהחלפת שפה תהיה מעבר לעמוד ולא החלפת טקסטים במקום — אחרת
+   הכתובת שבסרגל אומרת דבר אחד והעמוד מראה אחר. */
+function languageOptions(dir, current) {
+  const names = {};
+  I18n.list().forEach((lang) => { names[lang.code] = lang.name; });
+  return seo.LANGUAGES.map((lang) =>
+    '<option value="' + seo.pathOf(lang.code, dir) + '"' +
+    ' data-lang="' + lang.code + '" lang="' + lang.code + '"' +
+    (lang.code === current ? ' selected' : '') + '>' +
+    escapeAttr(names[lang.code] || lang.code) + '</option>').join('');
+}
+
+/* סימון שלא הוחלף אינו "חסר משהו" אלא עמוד שבור: המסגרת נשלחת
+   בלי כותרת, בלי תוכן או עם הערה במקום סקריפט, ואיש לא רואה
+   את זה עד שמישהו פותח את העמוד באוויר. */
+function fillMarker(html, marker, value, where) {
+  if (html.indexOf(marker) === -1) {
+    throw new Error(where + ': הסימון ' + marker + ' אינו קיים ב-page.html');
+  }
+  return html.replace(marker, value);
+}
+
+CONTENT_PAGES.forEach((item) => {
+  seo.LANGUAGES.forEach((lang) => {
+    I18n.use(lang.code);
+    const where = contentFile(item.dir, lang.code);
+    const source = read(where);
+    const meta = contentMeta(source, where);
+    const title = meta.title + ' · SetShifts';
+    /* קישורים בתוך הטקסט נכתבים פעם אחת כ-/contact/, ועוברים
+       כאן לשפה של העמוד. בלי זה כל קישור בתוך פסקה גרמנית מחזיר
+       את הקורא לעברית. */
+    const body = seo.localizeLinks(fillLegal(contentBody(source)), lang.code);
+    const article = '<article lang="' + lang.code + '" dir="' + lang.dir + '">\n' +
+      body.replace(/\s+$/, '') + '\n</article>';
+    const here = seo.pathOf(lang.code, item.dir);
+    const label = I18n.t(item.key);
+
+    const structured = [
+      seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL }),
+      seo.breadcrumbs(SITE_URL, [
+        { name: 'SetShifts', path: seo.pathOf(lang.code) },
+        { name: label, path: here }
+      ]),
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        '@id': SITE_URL + here + '#webpage',
+        url: SITE_URL + here,
+        name: title,
+        description: meta.description,
+        inLanguage: lang.code,
+        isPartOf: { '@id': SITE_URL + '/#organization' }
+      }
+    ];
+    /* השאלות נקראות מהקטע בשפה הזו, ולא מהעברית: תשובה שנשלחת
+       לגוגל בשפה שאינה שפת העמוד אינה מופיעה בו. */
+    if (item.faq) {
+      const items = seo.faqFromHtml(body, lang.code);
+      if (items.length) structured.push(seo.faqPage(items));
+    }
+
+    page('page.html', (lang.code === seo.DEFAULT_LANG ? '' : lang.code + '/') +
+      item.dir + '/index.html', {
+      canonical: here,
+      alternates: item.dir,
+      pageLang: lang,
+      social: {
+        siteUrl: SITE_URL, url: SITE_URL + here, ogLocale: lang.ogLocale,
+        title: title, description: meta.description
+      },
+      structured: structured,
+      transform: (html) => {
+        let out = seo.absoluteLinks(
+          seo.translate(html, (key) => I18n.t(key), lang), lang.code);
+        out = fillMarker(out, '<title></title>',
+          '<title>' + seo.plainText(title) + '</title>', where);
+        out = fillMarker(out, '<meta name="description" content="">',
+          '<meta name="description" content="' + escapeAttr(meta.description) + '">',
+          where);
+        out = fillMarker(out, '<!--LANGUAGE_OPTIONS-->',
+          languageOptions(item.dir, lang.code), where);
+        /* הלשונית של העמוד הנוכחי. data-tab ולא ההפניה עצמה:
+           אותה הפניה מופיעה גם בכותרת התחתונה, ושם aria-current
+           היה אומר לקורא מסך שיש שני עמודים נוכחיים. */
+        out = fillMarker(out, 'data-tab="' + item.dir + '"',
+          'data-tab="' + item.dir + '" aria-current="page"', where);
+        out = fillMarker(out, '<!--PAGE_SCRIPTS-->',
+          (item.scripts || []).map((src) =>
+            '<script src="' + src + '"></script>').join('\n'), where);
+        /* התוכן נכנס אחרון, אחרי שכל מה שעובד על המסגרת כבר רץ:
+           הוא כבר בשפה הנכונה, וכל מעבר נוסף עליו הוא רק הזדמנות
+           לשנות אותו בטעות. */
+        return fillMarker(out, '<!--ARTICLE-->', article, where);
+      }
+    });
+  });
+});
+I18n.use(seo.DEFAULT_LANG);
 
 /* הגדרות החיבור לשרת, נכתבות מחדש לכל פריסה.
    המפתח הזה מיועד לדפדפן ואינו סודי – הוא מגיע ממילא לכל מי
@@ -692,7 +843,7 @@ write('sitemap.xml',
       priority: lang.code === seo.DEFAULT_LANG ? '1.0' : '0.9',
       alternates: landingAlternates
     })).join('') +
-  PROSE_PAGES.map((item) =>
+  LEGAL_PAGES.map((item) =>
     sitemapEntry(SITE_URL + '/' + item.dir + '/', {
       lastmod: lastModified(item.file),
       changefreq: item.changefreq || 'yearly',
@@ -702,6 +853,32 @@ write('sitemap.xml',
     lastmod: lastModified('guide.html'),
     changefreq: 'monthly', priority: '0.4'
   }) +
+  /* עמודי התוכן: כתובת לכל שפה, וכל אחת מצהירה על כל האחרות.
+     זו אותה הצהרה שב-hreflang שבעמוד עצמו, וגוגל מבקש את
+     שתיהן. lastmod נלקח מהקובץ של אותה שפה: כשתרגום אחד
+     מתעדכן, רק הכתובת שלו מוצהרת כמשתנה. */
+  CONTENT_PAGES.map((item) => {
+    const alternates = seo.LANGUAGES
+      .map((lang) => ({
+        code: lang.code, href: SITE_URL + seo.pathOf(lang.code, item.dir)
+      }))
+      .concat([{
+        code: 'x-default',
+        href: SITE_URL + seo.pathOf(seo.DEFAULT_LANG, item.dir)
+      }]);
+    return seo.LANGUAGES.map((lang) =>
+      sitemapEntry(SITE_URL + seo.pathOf(lang.code, item.dir), {
+        lastmod: lastModified(contentFile(item.dir, lang.code)),
+        changefreq: item.changefreq || 'yearly',
+        alternates: alternates,
+        priority: lang.code === seo.DEFAULT_LANG
+          ? (item.priority || '0.3')
+          /* גרסת שפה אינה חשובה פחות מהעברית, אבל העברית היא
+             הכתובת שכבר נצברה בה היסטוריה. הפרש קטן, ולא סדר
+             גודל. */
+          : String(Math.max(0.1, Number(item.priority || '0.3') - 0.1).toFixed(1))
+      })).join('');
+  }).join('') +
   '</urlset>\n');
 
 /* ===== עמוד 404 =====
@@ -738,8 +915,13 @@ console.log('נבנה site/ (' + (total / 1024).toFixed(0) + ' KB)');
 console.log('  /       דף המכירה');
 console.log('  /app/   המערכת עם ההתחברות');
 console.log('  /tool/  הכלי המקומי לעסק אחד');
-PROSE_PAGES.forEach((item) => {
-  console.log(('  /' + item.dir + '/').padEnd(10, ' ') + ' ' + (item.label || ''));
+LEGAL_PAGES.forEach((item) => {
+  console.log(('  /' + item.dir + '/').padEnd(18, ' ') + ' ' + (item.label || ''));
+});
+console.log('  /guide/            מדריך לעובד/ת');
+CONTENT_PAGES.forEach((item) => {
+  console.log(('  /[שפה]/' + item.dir + '/').padEnd(18, ' ') +
+    ' ' + seo.LANGUAGES.length + ' שפות');
 });
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {

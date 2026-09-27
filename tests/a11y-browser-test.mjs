@@ -52,8 +52,12 @@ const server = http.createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + server.address().port;
 
+/* גם עמוד תוכן בשפה זרה, ובכללו אחד שנכתב מימין לשמאל: שם
+   נשברות דווקא הצהרות השפה והכיוון, ושם גם מתגלה טקסט שנשאר
+   בעברית בתוך מסגרת גרמנית. */
 const PAGES = ['', 'about', 'stories', 'faq', 'contact',
-  'privacy', 'terms', 'security', 'accessibility'];
+  'privacy', 'terms', 'security', 'accessibility',
+  'de/faq', 'ar/about', 'de'];
 
 const failures = [];
 

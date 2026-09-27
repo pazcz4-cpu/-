@@ -162,6 +162,244 @@ test('אין קישור יחסי שבור בעמודי השפה', function () {
   });
 });
 
+/* ===== עמודי התוכן, שמונה כתובות לכל אחד =====
+
+   עד כאן כל עמוד תוכן היה כתובת אחת שהכילה שתי שפות, ובורר
+   שהחליף ביניהן. מבחינת סורק זה עמוד אחד בעברית עם עוד המון
+   טקסט בתוכו — ושש שפות שלא היו קיימות.
+
+   מה שנבדק כאן הוא בדיוק מה שנשבר בקלות במבנה כזה: כתובת
+   שנבנתה אך אינה מוצהרת, הצהרה שמפנה לדף הבית במקום לעמוד
+   המקביל, קישור פנימי שמחזיר את המבקר לעברית, ותרגום שנשכח
+   ונשאר עותק של האנגלית. */
+console.log('\n== עמודי התוכן: כתובת לכל שפה ==');
+
+var CONTENT = seo.CONTENT_DIRS;
+
+function contentFile(dir, code) {
+  return (code === seo.DEFAULT_LANG ? '' : code + '/') + dir + '/index.html';
+}
+function articleOf(html) {
+  var found = html.match(/<article[^>]*>([\s\S]*?)<\/article>/);
+  return found ? found[1] : '';
+}
+
+test('לכל עמוד תוכן נבנתה כתובת בכל שפה', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      assert(exists(contentFile(dir, lang.code)),
+        contentFile(dir, lang.code) + ' לא נבנה');
+    });
+  });
+});
+
+/* הצהרה שחסרה בעמוד אחד זורקת את כל הקבוצה, וגוגל חוזר לראות
+   את שמונה הכתובות כתוכן כפול של אותו עמוד. */
+test('ההצהרה ההדדית שלמה בכל עמוד תוכן, ומפנה לעמוד המקביל', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var html = read(contentFile(dir, lang.code));
+      seo.LANGUAGES.forEach(function (other) {
+        var expected = '<link rel="alternate" hreflang="' + other.code +
+          '" href="' + DOMAIN + seo.pathOf(other.code, dir) + '">';
+        assert(html.indexOf(expected) !== -1,
+          dir + '/' + lang.code + ' אינו מצהיר על ' + other.code);
+      });
+      assert(html.indexOf('hreflang="x-default" href="' + DOMAIN +
+        seo.pathOf(seo.DEFAULT_LANG, dir) + '">') !== -1,
+        dir + '/' + lang.code + ': x-default אינו מפנה לעמוד המקביל');
+    });
+  });
+});
+
+test('הקישור הקנוני של כל עמוד תוכן מצביע על עצמו', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var expected = '<link rel="canonical" href="' + DOMAIN +
+        seo.pathOf(lang.code, dir) + '">';
+      assert(read(contentFile(dir, lang.code)).indexOf(expected) !== -1,
+        dir + '/' + lang.code + ': הקישור הקנוני אינו מצביע על עצמו');
+    });
+  });
+});
+
+test('כל עמוד תוכן מצהיר על שפתו וכיוון הכתיבה', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var html = read(contentFile(dir, lang.code));
+      var tag = html.match(/<html[^>]*>/)[0];
+      assert(tag.indexOf('lang="' + lang.code + '"') !== -1, dir + ': ' + tag);
+      assert(tag.indexOf('dir="' + lang.dir + '"') !== -1,
+        dir + '/' + lang.code + ': כיוון כתיבה שגוי — ' + tag);
+      var article = html.match(/<article[^>]*>/)[0];
+      assert(article.indexOf('lang="' + lang.code + '"') !== -1,
+        dir + '/' + lang.code + ': התוכן עצמו אינו מצהיר על השפה');
+    });
+  });
+});
+
+/* תרגום שנשכח נראה בדיוק כמו תרגום שקיים: העמוד עולה, יש בו
+   טקסט, ו-hreflang מצהיר עליו. ההבדל היחיד הוא שזה אותו טקסט
+   כמו בשפה אחרת — כלומר הצהרה על תרגום שלא נעשה, וזה בדיוק מה
+   שגוגל מטפל בו כתוכן כפול. */
+test('שמונה השפות הן שמונה טקסטים שונים, ולא עותקים', function () {
+  CONTENT.forEach(function (dir) {
+    var seen = {};
+    seo.LANGUAGES.forEach(function (lang) {
+      var text = seo.plainText(articleOf(read(contentFile(dir, lang.code))));
+      assert(text.length > 200, dir + '/' + lang.code + ': התוכן ריק או קצוץ');
+      assert(!seen[text], dir + ': ' + lang.code + ' זהה ל-' + seen[text]);
+      seen[text] = lang.code;
+    });
+  });
+});
+
+/* הכותרת והתיאור יושבים בראש קטע התוכן, ולכן הם נכתבים שמונה
+   פעמים — ושמונה פעמים אפשר לשכוח אותם, לחזור על אותה כותרת בשתי
+   שפות, או לכתוב תיאור שגוגל יחתוך באמצע מילה. */
+test('לכל עמוד תוכן כותרת ותיאור משלו, באורך שנכנס לתוצאה', function () {
+  CONTENT.forEach(function (dir) {
+    var titles = {};
+    seo.LANGUAGES.forEach(function (lang) {
+      var html = read(contentFile(dir, lang.code));
+      var title = titleOf(html);
+      var description = metaOf(html, 'description');
+      assert(title, dir + '/' + lang.code + ': אין כותרת');
+      assert(description, dir + '/' + lang.code + ': אין תיאור');
+      assert(!titles[title],
+        dir + ': אותה כותרת ב-' + lang.code + ' וב-' + titles[title]);
+      titles[title] = lang.code;
+      /* גוגל חותך כותרת ארוכה באמצע מילה. 70 תווים הוא הגבול
+         המעשי, ו-190 לתיאור. */
+      assert(title.length <= 70,
+        dir + '/' + lang.code + ': כותרת ארוכה מדי (' + title.length + ')');
+      assert(description.length <= 190,
+        dir + '/' + lang.code + ': תיאור ארוך מדי (' + description.length + ')');
+      /* השם עצמו חייב להיות בכותרת: זו השורה שאדם קורא בתוצאה
+         לפני שהוא מחליט אם ללחוץ. */
+      assert(title.indexOf('SetShifts') !== -1,
+        dir + '/' + lang.code + ': אין שם המוצר בכותרת');
+    });
+  });
+});
+
+test('ה-h1 של עמוד תוכן אינו בעברית בשפה שאינה עברית', function () {
+  var hebrew = /[֐-׿]/;
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      if (lang.code === 'he') return;
+      var html = read(contentFile(dir, lang.code));
+      var h1 = (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [, ''])[1];
+      assert(h1.trim(), dir + '/' + lang.code + ': אין h1');
+      assert(!hebrew.test(h1),
+        dir + '/' + lang.code + ': ה-h1 עדיין בעברית — "' + h1.trim() + '"');
+    });
+  });
+});
+
+/* קישור יחסי בעמוד שיושב בתת-תיקייה מצביע למקום אחר לגמרי, וכל
+   קישור פנימי שמוביל חזרה לעברית הוא מבקר שאיבד את השפה שבחר. */
+test('הקישורים בעמוד תוכן נשארים באותה שפה', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var html = read(contentFile(dir, lang.code));
+      var body = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+      var relative = body.match(/href="(?!https?:|\/\/|\/|#|mailto:|tel:|data:)[^"]*"/g) || [];
+      assert(relative.length === 0,
+        contentFile(dir, lang.code) + ': קישור יחסי — ' + relative.slice(0, 3).join(' '));
+      /* שורת הלשוניות. היא מקשרת לחמשת עמודי התוכן, וכולם
+         צריכים להיות באותה שפה כמו העמוד שמכיל אותה. */
+      var tabs = body.match(/<nav[^>]*lp-tabs[^>]*>([\s\S]*?)<\/nav>/);
+      assert(tabs, contentFile(dir, lang.code) + ': אין שורת לשוניות');
+      CONTENT.forEach(function (other) {
+        assert(tabs[1].indexOf('href="' + seo.pathOf(lang.code, other) + '"') !== -1,
+          contentFile(dir, lang.code) + ': הלשונית ' + other + ' אינה באותה שפה');
+      });
+      /* והלשונית של העמוד הנוכחי מסומנת — פעם אחת. שני
+         aria-current במסמך אומרים לקורא מסך ששני עמודים
+         נוכחיים. */
+      var marked = body.match(/aria-current="page"/g) || [];
+      assert(marked.length === 1,
+        contentFile(dir, lang.code) + ': ' + marked.length + ' לשוניות מסומנות');
+      assert(new RegExp('data-tab="' + dir + '" aria-current="page"').test(tabs[1]),
+        contentFile(dir, lang.code) + ': הלשונית המסומנת אינה של העמוד הזה');
+    });
+  });
+});
+
+/* אותו מבנה בכל שמונה השפות.
+
+   תרגום נכתב בעין ולא במחשב, ולכן מה שנופל בו הוא לא תו אחד אלא
+   מקטע שלם: שאלה שנשכחה, שורה שנמחקה מטבלת המחירים, תגית שלא
+   נסגרה וגררה את שאר העמוד לתוכה. שלושת אלה נראים על המסך כמו
+   עמוד תקין וקצת שונה.
+
+   הבדיקה סופרת תגיות בקטע המקור, ומשווה לעברית. היא אינה בודקת
+   שהתרגום טוב — זה לא תפקידה — אלא שהוא מכיל את אותם דברים. */
+test('לכל שפה אותו מבנה כמו לעברית', function () {
+  var TAGS = ['h1', 'h2', 'h3', 'p', 'ul', 'li', 'table', 'tr', 'td',
+    'strong', 'em', 'a', 'form', 'input', 'textarea', 'button'];
+  function shape(file) {
+    var text = fs.readFileSync(file, 'utf8');
+    return TAGS.map(function (tag) {
+      return tag + ':' + (text.match(new RegExp('<' + tag + '[ >]', 'g')) || []).length;
+    }).join(' ');
+  }
+  CONTENT.forEach(function (dir) {
+    var source = path.join(__dirname, '..', 'content', dir);
+    var reference = shape(path.join(source, seo.DEFAULT_LANG + '.html'));
+    seo.LANGUAGES.forEach(function (lang) {
+      var actual = shape(path.join(source, lang.code + '.html'));
+      assert(actual === reference, dir + '/' + lang.code +
+        ':\n        עברית: ' + reference + '\n        ' + lang.code + ':   ' + actual);
+    });
+  });
+});
+
+test('og:locale של עמוד תוכן הוא של שפתו', function () {
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var locale = propertyOf(read(contentFile(dir, lang.code)), 'og:locale');
+      assert(locale === lang.ogLocale,
+        contentFile(dir, lang.code) + ': og:locale הוא ' + locale);
+    });
+  });
+});
+
+/* עמוד שנבנה ואינו במפת האתר הוא עמוד שממתין לסריקה מקרית */
+test('כל כתובת של עמוד תוכן נמצאת במפת האתר, עם השפות החלופיות', function () {
+  var sitemap = read('sitemap.xml');
+  CONTENT.forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var loc = DOMAIN + seo.pathOf(lang.code, dir);
+      assert(sitemap.indexOf('<loc>' + loc + '</loc>') !== -1, 'חסר במפת האתר: ' + loc);
+      assert(sitemap.indexOf('hreflang="' + lang.code + '" href="' + loc + '"') !== -1,
+        'מפת האתר אינה מצהירה על ' + loc);
+    });
+  });
+});
+
+/* השאלות נקראות מהעמוד עצמו, ולכן הן צריכות להיות בשפה שלו:
+   תשובה שנשלחת לגוגל בעברית מעמוד גרמני אינה מופיעה בעמוד. */
+test('הנתונים המובנים של שאלות ותשובות נבנים לכל שפה', function () {
+  ['faq', 'pricing'].forEach(function (dir) {
+    seo.LANGUAGES.forEach(function (lang) {
+      var html = read(contentFile(dir, lang.code));
+      var faq = typed(html, 'FAQPage');
+      assert(faq, contentFile(dir, lang.code) + ': אין FAQPage');
+      assert(faq.mainEntity.length >= 3,
+        contentFile(dir, lang.code) + ': רק ' + faq.mainEntity.length + ' שאלות');
+      var text = seo.plainText(html);
+      faq.mainEntity.forEach(function (item) {
+        assert(text.indexOf(item.name) !== -1,
+          contentFile(dir, lang.code) + ': השאלה אינה בעמוד — "' + item.name + '"');
+        assert(item.acceptedAnswer.text.indexOf('{{') === -1,
+          contentFile(dir, lang.code) + ': סימון שלא הוחלף בתשובה');
+      });
+    });
+  });
+});
+
 /* ===== נתונים מובנים ===== */
 
 console.log('\n== נתונים מובנים ==');

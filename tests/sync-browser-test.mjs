@@ -20,6 +20,15 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1400, height: 950 }, locale: 'he-IL' });
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
+
+/* הבדיקה הזו רק הדפיסה, ולכן היא יכלה לדווח false ולעבור.
+   ככה בדיוק היא שרדה שנה אחרי שהתצוגה שהיא בודקת הפכה
+   למוסתרת: שורה 3 הדפיסה false בכל ריצה, ואיש לא הבחין. */
+function check(label, actual, expected) {
+  const ok = expected instanceof RegExp ? expected.test(String(actual)) : actual === expected;
+  console.log((ok ? '  ✓ ' : '  ✗ ') + label + ' → ' + JSON.stringify(actual));
+  if (!ok) errors.push(label + ': ' + JSON.stringify(actual) + ' ≠ ' + expected);
+}
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
 // שרת ענן מדומה, כדי לבדוק את לוגיקת הסנכרון בלי שירות אמיתי
@@ -50,13 +59,22 @@ await page.addInitScript(() => {
 
 await page.goto(appPath);
 await page.waitForTimeout(800);
+
+/* התצוגה הפתוחה כברירת מחדל היא "לפי עובד", והבדיקה הזו
+   עובדת מול הטבלה של "לפי סניף". כשברירת המחדל התחלפה, הטבלה
+   הפכה ל-hidden -- והבדיקה לא נפלה אלא הפסיקה לבדוק: innerText
+   של אלמנט מוסתר הוא מחרוזת ריקה, והשורה שבודקת את שם הסניף
+   רק הדפיסה false. */
+await page.click('.chip[data-view="branch"]');
+await page.waitForTimeout(400);
+
 console.log('1. indicator:', (await page.locator('#sync-state').textContent()).trim());
 
 // שמירה לענן אחרי בניית סידור
 await page.click('#generate');
 await page.waitForTimeout(1800);
 const writes = await page.evaluate(() => window.__writes.slice());
-console.log('2. cloud writes after generate:', JSON.stringify([...new Set(writes)]));
+check('2. הסידור שנבנה נכתב לענן', [...new Set(writes)].some((w) => w.startsWith('weeks/')), true);
 console.log('   indicator now:', (await page.locator('#sync-state').textContent()).trim());
 
 // המחשב השני משנה את שם הסניף
@@ -68,7 +86,7 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(900);
 const html = await page.locator('#schedule-branch').innerText();
-console.log('3. branch rename from other computer applied:', html.includes('מייפון רמת גן'));
+check('3. שינוי שם סניף ממחשב אחר נקלט', html.includes('מייפון רמת גן'), true);
 console.log('   toast:', (await page.locator('#toast').textContent()).trim());
 
 // המחשב השני משנה שיבוץ בשבוע
@@ -82,7 +100,7 @@ await page.evaluate((path) => {
 }, weekPath);
 await page.waitForTimeout(900);
 const filled = await page.locator('#schedule-branch select.emp-select').evaluateAll(e => e.filter(x => x.value).length);
-console.log('4. week cleared from other computer -> filled selects now:', filled);
+check('4. ניקוי השבוע ממחשב אחר התקבל', filled, 0);
 
 // עריכה מקומית נשמרת חזרה לענן
 await page.evaluate(() => { window.__writes.length = 0; });
@@ -90,7 +108,8 @@ const sel = page.locator('#schedule-branch select.emp-select').first();
 const opts = await sel.locator('option').evaluateAll(o => o.map(x => x.value).filter(Boolean));
 await sel.selectOption(opts[0]);
 await page.waitForTimeout(1500);
-console.log('5. local edit written back to cloud:', (await page.evaluate(() => window.__writes.slice())).length > 0);
+check('5. עריכה מקומית נכתבת חזרה לענן',
+  (await page.evaluate(() => window.__writes.slice())).length > 0, true);
 console.log('   indicator:', (await page.locator('#sync-state').textContent()).trim());
 
 // ייבוא נתונים עם כמה שבועות – כולם צריכים לעלות לענן
@@ -114,8 +133,7 @@ await page.setInputFiles('#import-json', {
 await page.waitForTimeout(2000);
 const weekWrites = await page.evaluate(() =>
   [...new Set(window.__writes)].filter(p => p.startsWith('weeks/')).sort());
-console.log('6. weeks uploaded after import:', JSON.stringify(weekWrites));
-if (weekWrites.length !== 3) { errors.push('ייבוא לא העלה את כל השבועות: ' + weekWrites.length); }
+check('6. הייבוא העלה את כל השבועות', weekWrites.length, 3);
 
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();

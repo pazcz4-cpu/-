@@ -269,10 +269,23 @@
   }
 
   /* השער לכל שינוי בשבוע עצמו. מחזיר true כשהשינוי נחסם. */
+  /* האם השבוע נעול לעריכה -- שאלה בלבד, בלי תופעת לוואי.
+
+     ההפרדה הזו אינה קוסמטית: weekBlocked פותח חלון אישור, ולכן
+     קריאה אליו מתוך ציור מקפיצה את החלון בכל render של שבוע
+     מפורסם -- כולל render שנגרם מהחלון עצמו. מי שרק צריך לדעת
+     אם לצייר כפתור קורא לכאן. */
+  function weekLocked() {
+    if (blocked()) return true;
+    if (!weekIsPublished()) return false;   /* לא פורסם – אין מה לחסום */
+    return publishedUnlocked !== weekKey;
+  }
+
+  /* אותה שאלה, אבל בהקשר של פעולה: כשהתשובה היא "נעול" בגלל
+     פרסום, נפתח חלון האישור. לקריאה מתוך מטפל אירוע בלבד. */
   function weekBlocked() {
     if (blocked()) return true;
-    if (!weekIsPublished()) return true === false;   /* לא פורסם – אין מה לחסום */
-    if (publishedUnlocked === weekKey) return false;
+    if (!weekLocked()) return false;
     askPublishedEdit();
     return true;
   }
@@ -366,6 +379,47 @@
       '<span>' + esc(t('locked.bannerBody')) + '</span>' +
       '<button type="button" class="btn ghost small" id="live-edit-stop">' +
       esc(t('locked.bannerStop')) + '</button>';
+  }
+
+  /* ========== "השבוע נופל חג. לסגור?" ==========
+
+     הפונקציה calendarSuggestions נכתבה, יוצאה ונבדקה -- ואף
+     מסך לא קרא לה. המערכת ידעה בדיוק אילו ימים היא ממליצה
+     לסגור, ומעולם לא שאלה.
+
+     כאן היא שואלת. שני כפתורים, ושניהם מפורשים: סגירה או
+     "לא השבוע". המערכת אינה סוגרת לבד גם כשהמדיניות אומרת
+     סגירה, כי מחיקת שיבוצים ביום שבו העסק דווקא עובד היא נזק
+     שאי אפשר לתקן בלחיצה. */
+  function renderCalendarAsk() {
+    var node = $('#calendar-ask');
+    if (!node) return;
+    var current = week();
+    var suggestions = (!current || Store.calendarAsked(current))
+      ? [] : Store.calendarSuggestions(state, current, weekKey);
+
+    /* שבוע נעול אינו מקום לשאול בו: התשובה היא פעולה שתיחסם.
+       weekLocked ולא weekBlocked -- זה ציור, לא פעולה. */
+    if (!suggestions.length || weekLocked()) {
+      node.classList.add('hidden');
+      node.innerHTML = '';
+      return;
+    }
+
+    var list = suggestions.map(function (item) {
+      return esc(item.name) + ' (' + esc(Data.DAYS[item.dayIdx].name) + ')';
+    }).join(' · ');
+
+    node.innerHTML = '<div class="calendar-ask-text">' +
+      '<b>' + esc(t('calendar.askTitle')) + '</b> ' +
+      '<span>' + list + '</span></div>' +
+      '<div class="calendar-ask-actions">' +
+      '<button type="button" class="btn primary small" id="cal-ask-close">' +
+      esc(tPlural('calendar.askClose', suggestions.length)) +
+      '</button>' +
+      '<button type="button" class="btn ghost small" id="cal-ask-skip">' +
+      esc(t('calendar.askSkip')) + '</button></div>';
+    node.classList.remove('hidden');
   }
 
   var toastTimer = null;
@@ -815,11 +869,40 @@
     return html + '</td>';
   }
 
+  /* ========== כותרת יום, עם מה שנופל בו ==========
+
+     הלוח ידע על סוכות מהיום הראשון, והמסך לא אמר מילה: המועדים
+     הוצגו רק בתוך מגירת תפריט, וכותרות הימים בסידור הראו שם
+     ותאריך בלבד. מנהל שבונה סידור לשבוע של חול המועד לא פותח
+     מגירות -- הוא מסתכל על הטבלה.
+
+     הסימון יושב בכותרת ולא בתאים: הוא נכון ליום כולו, ואותו
+     יום מופיע בכל התצוגות. */
+  function dayHeadCell(day) {
+    var items = Store.calendarDays(state, weekKey)[day.idx] || [];
+    var closed = Store.isHoliday(week(), day.idx);
+    var cls = 'day-head' + (closed ? ' is-closed' : '') +
+      (items.length ? ' has-mark' : '');
+    var html = '<th class="' + cls + '">' + day.name +
+      '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small>';
+    if (items.length) {
+      /* "בערך" מגיע מהלוח המוסלמי, שתחילת החודש בו נקבעת
+         בראייה בפועל. עדיף לומר זאת מאשר להציג ודאות שאינה. */
+      var names = items.map(function (item) {
+        return item.name + (item.approximate ? ' ' + t('calendar.approx') : '');
+      }).join(' · ');
+      var kinds = items.map(function (item) { return item.kindName; }).join(' · ');
+      html += '<em class="day-mark kind-' + esc(items[0].kind) + '" title="' +
+        esc(names + ' · ' + kinds) + '">' + esc(names) + '</em>';
+    }
+    return html + '</th>';
+  }
+
   function renderBranchView(marks) {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.branch') + '</th>' +
       '<th class="row-head">' + t('schedule.shift') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '</tr></thead><tbody>';
 
@@ -1151,7 +1234,7 @@
   function renderEmployeeView(marks) {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '<th class="row-head">' + t('schedule.totalShifts') + '</th></tr></thead><tbody>';
 
@@ -1943,7 +2026,7 @@
   function renderConstraints() {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '</tr></thead><tbody>';
 
@@ -3070,6 +3153,7 @@
     renderEmployeeView(marks);
     renderTray();
     renderPublishedBanner();
+    renderCalendarAsk();
     renderWorkload();
     renderAvailability();
     renderPersonalPicker();
@@ -3725,6 +3809,31 @@
     /* בלי המקטע הזה (העמוד המקומי ב-/tool, שאין בו לוח שנה)
        הקישור היה נופל על null — ועמו כל שאר הקישורים שאחריו,
        כלומר כל המסך. */
+    /* התשובה לשאלה "השבוע נופל חג. לסגור?" */
+    var askHost = $('#calendar-ask');
+    if (askHost) askHost.addEventListener('click', function (event) {
+      var current = week();
+      if (event.target.closest('#cal-ask-skip')) {
+        Store.setCalendarAsked(current, true);
+        persist();
+        render();
+        return;
+      }
+      if (!event.target.closest('#cal-ask-close')) return;
+      if (weekBlocked()) return;
+
+      /* סוגרים את כל מה שהוצע, ומסמנים שנשאל -- גם אם המנהל
+         ביטל באמצע אישור אחד. השאלה נשאלה, והוא ענה עליה. */
+      var closed = 0;
+      Store.calendarSuggestions(state, current, weekKey).forEach(function (item) {
+        if (closeDayFromCalendar(item.dayIdx, item.name)) closed++;
+      });
+      Store.setCalendarAsked(current, true);
+      persist();
+      render();
+      if (closed) toast(tPlural('calendar.askDone', closed));
+    });
+
     var calendarHost = $('#calendar-days');
     if (calendarHost) calendarHost.addEventListener('click', function (event) {
       var button = event.target.closest('[data-cal-close],[data-cal-hours],' +

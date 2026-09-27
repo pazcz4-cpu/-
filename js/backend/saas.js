@@ -144,16 +144,27 @@
         if (week && week._loaded) return Promise.resolve(week);
         return backend.loadWeek(weekKey).then(function (remote) {
           var target = Store.getWeek(state, weekKey);
+          /* גם כאן שדה-שדה, ומאותה סיבה -- אבל הכיוון ההפוך:
+             שדה שחסר כאן נטען ריק, המסך מציג אותו ריק, והשמירה
+             הבאה כותבת את הריק הזה לשרת. ⚠️ כל שדה בשבוע חייב
+             להופיע גם כאן וגם ב-saveWeek, ובדיקה
+             ב-deploy-readiness אוכפת את שניהם. */
           if (remote) {
             target.constraints = remote.constraints || {};
             target.assignments = remote.assignments || {};
             target.manual = remote.manual || {};
             target.holidays = remote.holidays || {};
+            /* שעות מיוחדות ליום. בלעדיהן "ערב חג עד 14:00"
+               נעלם בטעינה הבאה, והמנהל מזין אותו כל שנה מחדש
+               בלי להבין למה הוא לא נשמר. */
+            target.dayHours = remote.dayHours || {};
+            target.calendarAsked = !!remote.calendarAsked;
             /* דיווחי השעון. בלעדיהם דוח השעות היה מראה אפס לכל
                עובד — הנתונים בשרת, והמסך פשוט לא היה מביא אותם. */
             target.punches = Array.isArray(remote.punches) ? remote.punches : [];
             target.shabbatEnd = remote.shabbatEnd || '';
             target.note = remote.note || '';
+            target.generatedAt = remote.generatedAt || null;
             target.published = !!remote.published;
             target.publishedAt = remote.publishedAt || null;
             target.publishedSignature = remote.publishedSignature || '';
@@ -176,15 +187,28 @@
         var week = state.weeks[weekKey];
         if (!week) return Promise.resolve();
         if (Model.can(role, 'schedule.edit')) {
+          /* המטען נבנה שדה-שדה, וזו רשימה לבנה בכוונה: מה
+             שהדפדפן צובר על השבוע אינו נכתב לשרת בלי שמישהו
+             החליט שהוא צריך להיכתב.
+
+             ⚠️ ולכן שדה שנשכח כאן אינו "לא נשמר" אלא **נמחק**:
+             השמירה דורסת את השורה בשרת. כל שדה חדש על השבוע
+             חייב להתווסף גם כאן, ובדיקה ב-deploy-readiness
+             אוכפת את זה מול Store.emptyWeek. */
           return backend.saveWeek(weekKey, {
             constraints: week.constraints, assignments: week.assignments,
             manual: week.manual, holidays: week.holidays,
-            /* דיווחי השעון. המטען נבנה שדה-שדה, ולכן שדה שנשכח
-               כאן אינו "לא נשמר" אלא נמחק: השמירה דורסת את
-               השורה בשרת. חודש של שעות היה נעלם בפרסום הסידור
-               הבא. */
+            /* שעות מיוחדות ליום. "ערב חג: עד 14:00" הוא בדיוק
+               סוג הנתון שהמנהל מזין פעם אחת ומצפה שיישאר. */
+            dayHours: week.dayHours || {},
+            /* "לא השבוע" -- התשובה להצעה לסגור ימי חג */
+            calendarAsked: !!week.calendarAsked,
+            /* דיווחי השעון. חודש של שעות היה נעלם בפרסום
+               הסידור הבא. */
             punches: Array.isArray(week.punches) ? week.punches : [],
-            shabbatEnd: week.shabbatEnd, note: week.note, published: week.published,
+            shabbatEnd: week.shabbatEnd, note: week.note,
+            generatedAt: week.generatedAt || null,
+            published: week.published,
             publishedAt: week.publishedAt, publishedSignature: week.publishedSignature
           });
         }

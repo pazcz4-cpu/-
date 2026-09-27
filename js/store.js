@@ -101,10 +101,16 @@
     return { branches: state.branches.length, employees: state.employees.length };
   }
 
+  /* הצורה המלאה של שבוע.
+
+     זו גם רשימת השדות שהשמירה בשרת חייבת לכסות: היא נבנית
+     שדה-שדה ב-saas.js, ושדה שחסר שם נמחק בכתיבה הבאה. בדיקה
+     ב-deploy-readiness משווה בין השניים. */
   function emptyWeek() {
     return {
-      constraints: {}, assignments: {}, manual: {}, holidays: {}, punches: [],
-      shabbatEnd: '', note: '', generatedAt: null,
+      constraints: {}, assignments: {}, manual: {}, holidays: {},
+      dayHours: {}, punches: [],
+      shabbatEnd: '', note: '', generatedAt: null, calendarAsked: false,
       published: false, publishedAt: null, publishedSignature: ''
     };
   }
@@ -1761,6 +1767,26 @@
     else { week.holidays[dayIdx] = name || ''; }
   }
 
+  /* "לא השבוע" -- והתשובה נשמרת.
+
+     ההצעה לסגור יום נשאלת פעם אחת לשבוע. בלי לזכור את התשובה
+     היא הייתה חוזרת בכל רענון, ומנהל שעובד בחג (חברת שמירה,
+     בית קפה) היה מסלק אותה בכל פעם מחדש עד שיכבה את הלוח
+     לגמרי -- ואז גם לא יידע על החג הבא.
+
+     נשמר על השבוע ולא בהגדרות: זו תשובה על השבוע הזה, ולא
+     מדיניות. השבוע הבא יישאל מחדש. */
+  function calendarAsked(week) {
+    return !!(week && week.calendarAsked);
+  }
+
+  function setCalendarAsked(week, value) {
+    if (!week) return false;
+    if (value === false) { delete week.calendarAsked; return true; }
+    week.calendarAsked = true;
+    return true;
+  }
+
   /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
   function activeShiftsForDay(state, dayIdx, week) {
     if (isHoliday(week, dayIdx)) return [];
@@ -2827,6 +2853,7 @@
     onboardingDone: onboardingDone, setOnboardingDone: setOnboardingDone,
     calendarRule: calendarRule, setCalendarRule: setCalendarRule,
     calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
+    calendarAsked: calendarAsked, setCalendarAsked: setCalendarAsked,
     CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,
     CALENDAR_POLICY: CALENDAR_POLICY,
     employeeShiftTimes: employeeShiftTimes,

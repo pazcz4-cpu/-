@@ -2275,6 +2275,39 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 }
 .c-same-list li { margin: 1px 0; }
 
+/* ===== מה נופל השבוע =====
+
+   הבאנר יושב מעל הסידור ולא בתוך מגירה: מנהל שבונה סידור
+   לשבוע של חול המועד לא פותח תפריטים -- הוא מסתכל על הטבלה,
+   וזה מה שצריך לעצור אותו לפני שהוא מפרסם. */
+.calendar-ask {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--s2);
+  margin: 0 0 var(--s3); padding: var(--s2) var(--s3);
+  border: 1px solid var(--info-line, var(--line));
+  border-inline-start: 4px solid var(--brand);
+  border-radius: var(--r-sm); background: var(--info-bg);
+  font-size: var(--t-sm);
+}
+.calendar-ask.hidden { display: none; }
+.calendar-ask-text { min-width: 0; }
+.calendar-ask-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+/* הסימון בכותרת היום. שקט בכוונה: הוא עובדה על היום, לא
+   אזהרה -- ההחלטה מה לעשות איתו היא של העסק. */
+.day-head .day-mark {
+  display: block; margin-top: 2px;
+  font-style: normal; font-size: 10.5px; font-weight: 600;
+  line-height: 1.25; color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.day-head.has-mark { vertical-align: top; }
+/* חג שאסור בעבודה וערב חג הם השניים שמזיזים סידור, ולכן רק
+   הם צבועים. חול המועד וצום הם מידע, ונשארים אפורים. */
+.day-head .day-mark.kind-yomtov { color: var(--brand); }
+.day-head .day-mark.kind-erev { color: var(--warn); }
+.day-head.is-closed .day-mark { color: var(--muted); }
+
 /* ===== קופון =====
 
    גלוי ומסומן. קודם זו הייתה שורה אפורה מקופלת, ומי שקיבל קוד

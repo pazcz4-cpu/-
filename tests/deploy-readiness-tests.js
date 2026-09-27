@@ -90,6 +90,55 @@ delete require.cache[require.resolve(path+'api/billing/_providers.js')];
   ok('charge זורק עם סיבה ברורה', threw);
 }
 
+/* ===== שדה שנשכח בשמירה אינו "לא נשמר" אלא נמחק =====
+
+   השמירה של שבוע נבנית שדה-שדה ב-saas.js, וזו רשימה לבנה
+   מכוונת. הצד השני של המטבע הוא שכל שדה חדש על השבוע שלא
+   יתווסף שם יימחק בכתיבה הבאה -- והמסך ימשיך להראות אותו עד
+   הרענון, כך שאיש לא יבחין.
+
+   ככה בדיוק נעלמו שעות מיוחדות ליום: המנהל הזין "ערב חג עד
+   14:00", זה עבד על המסך, ובטעינה הבאה זה כבר לא היה שם.
+
+   הבדיקה משווה בין הצורה המלאה של שבוע לבין מה שנשמר בפועל. */
+console.log('\n== שמירת שבוע מכסה את כל השדות ==');
+{
+  const fs = require('fs');
+  const Store = require(path + 'js/store.js');
+  const src = fs.readFileSync(path + 'js/backend/saas.js', 'utf8');
+
+  /* ההערות מוסרות לפני הפירוק. בלעדיהן הסימן שלפני שם השדה
+     הוא פסיק או סוגר; איתן הוא '/', ושדה מתועד היה נקרא כחסר
+     -- כלומר הבדיקה הייתה מתריעה דווקא על מה שמישהו טרח
+     להסביר. */
+  const bare = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+  const expected = Object.keys(Store.emptyWeek());
+
+  const call = /backend\.saveWeek\(weekKey,\s*\{([\s\S]*?)\n\s*\}\);/.exec(bare);
+  ok('נמצאה הקריאה לשמירת שבוע ב-saas.js', !!call);
+  if (call) {
+    const saved = new Set();
+    call[1].replace(/(?:^|[,{])\s*([A-Za-z_][A-Za-z0-9_]*)\s*:/g,
+      (all, name) => { saved.add(name); return all; });
+    const missing = expected.filter((name) => !saved.has(name));
+    ok('כל שדה בשבוע נשמר', missing.length === 0,
+      missing.length ? 'חסרים: ' + missing.join(', ') : String(expected.length) + ' שדות');
+  }
+
+  /* והכיוון ההפוך: שדה שנשמר ואינו נטען חוזר ריק, והשמירה
+     הבאה כותבת את הריק הזה לשרת. */
+  const read = /if \(remote\) \{([\s\S]*?)\n\s*\}/.exec(bare);
+  ok('נמצאה טעינת השבוע ב-saas.js', !!read);
+  if (read) {
+    const loaded = new Set();
+    read[1].replace(/target\.([A-Za-z_][A-Za-z0-9_]*)\s*=/g,
+      (all, name) => { loaded.add(name); return all; });
+    const missing = expected.filter((name) => !loaded.has(name));
+    ok('וכל שדה בשבוע נטען', missing.length === 0,
+      missing.length ? 'חסרים: ' + missing.join(', ') : String(expected.length) + ' שדות');
+  }
+}
+
 console.log('\n' + (bad ? '❌ ' + bad + ' כשלים' : '✅ הכל עבר') + '\n');
 process.exit(bad ? 1 : 0);
 })();

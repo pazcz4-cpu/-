@@ -2282,6 +2282,39 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 }
 .c-same-list li { margin: 1px 0; }
 
+/* ===== מה נופל השבוע =====
+
+   הבאנר יושב מעל הסידור ולא בתוך מגירה: מנהל שבונה סידור
+   לשבוע של חול המועד לא פותח תפריטים -- הוא מסתכל על הטבלה,
+   וזה מה שצריך לעצור אותו לפני שהוא מפרסם. */
+.calendar-ask {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--s2);
+  margin: 0 0 var(--s3); padding: var(--s2) var(--s3);
+  border: 1px solid var(--info-line, var(--line));
+  border-inline-start: 4px solid var(--brand);
+  border-radius: var(--r-sm); background: var(--info-bg);
+  font-size: var(--t-sm);
+}
+.calendar-ask.hidden { display: none; }
+.calendar-ask-text { min-width: 0; }
+.calendar-ask-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+/* הסימון בכותרת היום. שקט בכוונה: הוא עובדה על היום, לא
+   אזהרה -- ההחלטה מה לעשות איתו היא של העסק. */
+.day-head .day-mark {
+  display: block; margin-top: 2px;
+  font-style: normal; font-size: 10.5px; font-weight: 600;
+  line-height: 1.25; color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.day-head.has-mark { vertical-align: top; }
+/* חג שאסור בעבודה וערב חג הם השניים שמזיזים סידור, ולכן רק
+   הם צבועים. חול המועד וצום הם מידע, ונשארים אפורים. */
+.day-head .day-mark.kind-yomtov { color: var(--brand); }
+.day-head .day-mark.kind-erev { color: var(--warn); }
+.day-head.is-closed .day-mark { color: var(--muted); }
+
 /* ===== קופון =====
 
    גלוי ומסומן. קודם זו הייתה שורה אפורה מקופלת, ומי שקיבל קוד
@@ -3332,6 +3365,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Dates this week',
         enable: 'Mark dates on the schedule',
         approx: '(approx.)',
+        askTitle: 'This week:',
+        'askClose.one': 'Close that day',
+        'askClose.other': 'Close those {count} days',
+        askSkip: 'Not this week',
+        'askDone.one': 'One day closed',
+        'askDone.other': '{count} days closed',
         closeDay: 'Close the day',
         specialHours: 'Special hours',
         editHours: 'Change hours',
@@ -4790,6 +4829,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'מועדים בשבוע הזה',
         enable: 'לסמן מועדים בלוח הסידור',
         approx: '(בערך)',
+        askTitle: 'השבוע נופלים:',
+        'askClose.one': 'לסגור את היום הזה',
+        'askClose.other': 'לסגור את {count} הימים',
+        askSkip: 'לא השבוע',
+        'askDone.one': 'יום אחד נסגר',
+        'askDone.other': '{count} ימים נסגרו',
         closeDay: 'לסגור את היום',
         specialHours: 'שעות מיוחדות',
         editHours: 'שינוי השעות',
@@ -6243,6 +6288,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Fechas de esta semana',
         enable: 'Marcar las fechas en el cuadrante',
         approx: '(aprox.)',
+        askTitle: 'Esta semana:',
+        'askClose.one': 'Cerrar ese día',
+        'askClose.other': 'Cerrar esos {count} días',
+        askSkip: 'Esta semana no',
+        'askDone.one': 'Un día cerrado',
+        'askDone.other': '{count} días cerrados',
         closeDay: 'Cerrar el día',
         specialHours: 'Horario especial',
         editHours: 'Cambiar el horario',
@@ -7696,6 +7747,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Dates de cette semaine',
         enable: 'Signaler les dates dans le planning',
         approx: '(env.)',
+        askTitle: 'Cette semaine :',
+        'askClose.one': 'Fermer ce jour',
+        'askClose.other': 'Fermer ces {count} jours',
+        askSkip: 'Pas cette semaine',
+        'askDone.one': 'Un jour fermé',
+        'askDone.other': '{count} jours fermés',
         closeDay: 'Fermer la journée',
         specialHours: 'Horaires spéciaux',
         editHours: 'Modifier les horaires',
@@ -9149,6 +9206,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'المناسبات هذا الأسبوع',
         enable: 'تعليم المناسبات في جدول الورديات',
         approx: '(تقريبًا)',
+        askTitle: 'هذا الأسبوع:',
+        'askClose.one': 'إغلاق هذا اليوم',
+        'askClose.other': 'إغلاق الأيام الـ{count}',
+        askSkip: 'ليس هذا الأسبوع',
+        'askDone.one': 'تم إغلاق يوم واحد',
+        'askDone.other': 'تم إغلاق {count} أيام',
         closeDay: 'إغلاق اليوم',
         specialHours: 'ساعات خاصة',
         editHours: 'تغيير الساعات',
@@ -10602,6 +10665,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Даты на этой неделе',
         enable: 'Отмечать даты в расписании',
         approx: '(примерно)',
+        askTitle: 'На этой неделе:',
+        'askClose.one': 'Закрыть этот день',
+        'askClose.other': 'Закрыть эти {count} дн.',
+        askSkip: 'Не на этой неделе',
+        'askDone.one': 'Один день закрыт',
+        'askDone.other': 'Закрыто дней: {count}',
         closeDay: 'Закрыть день',
         specialHours: 'Особые часы',
         editHours: 'Изменить часы',
@@ -12055,6 +12124,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Termine diese Woche',
         enable: 'Termine im Dienstplan markieren',
         approx: '(ca.)',
+        askTitle: 'Diese Woche:',
+        'askClose.one': 'Diesen Tag schließen',
+        'askClose.other': 'Diese {count} Tage schließen',
+        askSkip: 'Diese Woche nicht',
+        'askDone.one': 'Ein Tag geschlossen',
+        'askDone.other': '{count} Tage geschlossen',
         closeDay: 'Tag schließen',
         specialHours: 'Sonderzeiten',
         editHours: 'Zeiten ändern',
@@ -13508,6 +13583,12 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
         thisWeek: 'Datas desta semana',
         enable: 'Assinalar as datas na escala',
         approx: '(aprox.)',
+        askTitle: 'Esta semana:',
+        'askClose.one': 'Fechar esse dia',
+        'askClose.other': 'Fechar esses {count} dias',
+        askSkip: 'Esta semana não',
+        'askDone.one': 'Um dia fechado',
+        'askDone.other': '{count} dias fechados',
         closeDay: 'Fechar o dia',
         specialHours: 'Horário especial',
         editHours: 'Alterar o horário',
@@ -15808,10 +15889,16 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     return { branches: state.branches.length, employees: state.employees.length };
   }
 
+  /* הצורה המלאה של שבוע.
+
+     זו גם רשימת השדות שהשמירה בשרת חייבת לכסות: היא נבנית
+     שדה-שדה ב-saas.js, ושדה שחסר שם נמחק בכתיבה הבאה. בדיקה
+     ב-deploy-readiness משווה בין השניים. */
   function emptyWeek() {
     return {
-      constraints: {}, assignments: {}, manual: {}, holidays: {}, punches: [],
-      shabbatEnd: '', note: '', generatedAt: null,
+      constraints: {}, assignments: {}, manual: {}, holidays: {},
+      dayHours: {}, punches: [],
+      shabbatEnd: '', note: '', generatedAt: null, calendarAsked: false,
       published: false, publishedAt: null, publishedSignature: ''
     };
   }
@@ -17468,6 +17555,26 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     else { week.holidays[dayIdx] = name || ''; }
   }
 
+  /* "לא השבוע" -- והתשובה נשמרת.
+
+     ההצעה לסגור יום נשאלת פעם אחת לשבוע. בלי לזכור את התשובה
+     היא הייתה חוזרת בכל רענון, ומנהל שעובד בחג (חברת שמירה,
+     בית קפה) היה מסלק אותה בכל פעם מחדש עד שיכבה את הלוח
+     לגמרי -- ואז גם לא יידע על החג הבא.
+
+     נשמר על השבוע ולא בהגדרות: זו תשובה על השבוע הזה, ולא
+     מדיניות. השבוע הבא יישאל מחדש. */
+  function calendarAsked(week) {
+    return !!(week && week.calendarAsked);
+  }
+
+  function setCalendarAsked(week, value) {
+    if (!week) return false;
+    if (value === false) { delete week.calendarAsked; return true; }
+    week.calendarAsked = true;
+    return true;
+  }
+
   /* אילו משמרות פעילות ביום מסוים – איחוד של כל הסניפים הפעילים */
   function activeShiftsForDay(state, dayIdx, week) {
     if (isHoliday(week, dayIdx)) return [];
@@ -18534,6 +18641,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     onboardingDone: onboardingDone, setOnboardingDone: setOnboardingDone,
     calendarRule: calendarRule, setCalendarRule: setCalendarRule,
     calendarDays: calendarDays, calendarSuggestions: calendarSuggestions,
+    calendarAsked: calendarAsked, setCalendarAsked: setCalendarAsked,
     CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,
     CALENDAR_POLICY: CALENDAR_POLICY,
     employeeShiftTimes: employeeShiftTimes,
@@ -21680,10 +21788,23 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   }
 
   /* השער לכל שינוי בשבוע עצמו. מחזיר true כשהשינוי נחסם. */
+  /* האם השבוע נעול לעריכה -- שאלה בלבד, בלי תופעת לוואי.
+
+     ההפרדה הזו אינה קוסמטית: weekBlocked פותח חלון אישור, ולכן
+     קריאה אליו מתוך ציור מקפיצה את החלון בכל render של שבוע
+     מפורסם -- כולל render שנגרם מהחלון עצמו. מי שרק צריך לדעת
+     אם לצייר כפתור קורא לכאן. */
+  function weekLocked() {
+    if (blocked()) return true;
+    if (!weekIsPublished()) return false;   /* לא פורסם – אין מה לחסום */
+    return publishedUnlocked !== weekKey;
+  }
+
+  /* אותה שאלה, אבל בהקשר של פעולה: כשהתשובה היא "נעול" בגלל
+     פרסום, נפתח חלון האישור. לקריאה מתוך מטפל אירוע בלבד. */
   function weekBlocked() {
     if (blocked()) return true;
-    if (!weekIsPublished()) return true === false;   /* לא פורסם – אין מה לחסום */
-    if (publishedUnlocked === weekKey) return false;
+    if (!weekLocked()) return false;
     askPublishedEdit();
     return true;
   }
@@ -21777,6 +21898,47 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
       '<span>' + esc(t('locked.bannerBody')) + '</span>' +
       '<button type="button" class="btn ghost small" id="live-edit-stop">' +
       esc(t('locked.bannerStop')) + '</button>';
+  }
+
+  /* ========== "השבוע נופל חג. לסגור?" ==========
+
+     הפונקציה calendarSuggestions נכתבה, יוצאה ונבדקה -- ואף
+     מסך לא קרא לה. המערכת ידעה בדיוק אילו ימים היא ממליצה
+     לסגור, ומעולם לא שאלה.
+
+     כאן היא שואלת. שני כפתורים, ושניהם מפורשים: סגירה או
+     "לא השבוע". המערכת אינה סוגרת לבד גם כשהמדיניות אומרת
+     סגירה, כי מחיקת שיבוצים ביום שבו העסק דווקא עובד היא נזק
+     שאי אפשר לתקן בלחיצה. */
+  function renderCalendarAsk() {
+    var node = $('#calendar-ask');
+    if (!node) return;
+    var current = week();
+    var suggestions = (!current || Store.calendarAsked(current))
+      ? [] : Store.calendarSuggestions(state, current, weekKey);
+
+    /* שבוע נעול אינו מקום לשאול בו: התשובה היא פעולה שתיחסם.
+       weekLocked ולא weekBlocked -- זה ציור, לא פעולה. */
+    if (!suggestions.length || weekLocked()) {
+      node.classList.add('hidden');
+      node.innerHTML = '';
+      return;
+    }
+
+    var list = suggestions.map(function (item) {
+      return esc(item.name) + ' (' + esc(Data.DAYS[item.dayIdx].name) + ')';
+    }).join(' · ');
+
+    node.innerHTML = '<div class="calendar-ask-text">' +
+      '<b>' + esc(t('calendar.askTitle')) + '</b> ' +
+      '<span>' + list + '</span></div>' +
+      '<div class="calendar-ask-actions">' +
+      '<button type="button" class="btn primary small" id="cal-ask-close">' +
+      esc(tPlural('calendar.askClose', suggestions.length)) +
+      '</button>' +
+      '<button type="button" class="btn ghost small" id="cal-ask-skip">' +
+      esc(t('calendar.askSkip')) + '</button></div>';
+    node.classList.remove('hidden');
   }
 
   var toastTimer = null;
@@ -22226,11 +22388,40 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     return html + '</td>';
   }
 
+  /* ========== כותרת יום, עם מה שנופל בו ==========
+
+     הלוח ידע על סוכות מהיום הראשון, והמסך לא אמר מילה: המועדים
+     הוצגו רק בתוך מגירת תפריט, וכותרות הימים בסידור הראו שם
+     ותאריך בלבד. מנהל שבונה סידור לשבוע של חול המועד לא פותח
+     מגירות -- הוא מסתכל על הטבלה.
+
+     הסימון יושב בכותרת ולא בתאים: הוא נכון ליום כולו, ואותו
+     יום מופיע בכל התצוגות. */
+  function dayHeadCell(day) {
+    var items = Store.calendarDays(state, weekKey)[day.idx] || [];
+    var closed = Store.isHoliday(week(), day.idx);
+    var cls = 'day-head' + (closed ? ' is-closed' : '') +
+      (items.length ? ' has-mark' : '');
+    var html = '<th class="' + cls + '">' + day.name +
+      '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small>';
+    if (items.length) {
+      /* "בערך" מגיע מהלוח המוסלמי, שתחילת החודש בו נקבעת
+         בראייה בפועל. עדיף לומר זאת מאשר להציג ודאות שאינה. */
+      var names = items.map(function (item) {
+        return item.name + (item.approximate ? ' ' + t('calendar.approx') : '');
+      }).join(' · ');
+      var kinds = items.map(function (item) { return item.kindName; }).join(' · ');
+      html += '<em class="day-mark kind-' + esc(items[0].kind) + '" title="' +
+        esc(names + ' · ' + kinds) + '">' + esc(names) + '</em>';
+    }
+    return html + '</th>';
+  }
+
   function renderBranchView(marks) {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.branch') + '</th>' +
       '<th class="row-head">' + t('schedule.shift') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '</tr></thead><tbody>';
 
@@ -22562,7 +22753,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   function renderEmployeeView(marks) {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '<th class="row-head">' + t('schedule.totalShifts') + '</th></tr></thead><tbody>';
 
@@ -23354,7 +23545,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
   function renderConstraints() {
     var html = '<table><thead><tr><th class="row-head">' + t('schedule.employee') + '</th>';
     Data.DAYS.forEach(function (day) {
-      html += '<th class="day-head">' + day.name + '<small>' + Store.formatDate(Store.dateOfDay(weekKey, day.idx)) + '</small></th>';
+      html += dayHeadCell(day);
     });
     html += '</tr></thead><tbody>';
 
@@ -24481,6 +24672,7 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     renderEmployeeView(marks);
     renderTray();
     renderPublishedBanner();
+    renderCalendarAsk();
     renderWorkload();
     renderAvailability();
     renderPersonalPicker();
@@ -25136,6 +25328,31 @@ window.SHIFT_BRAND_FILES = {"logo-mark-white.png":"data:image/png;base64,iVBORw0
     /* בלי המקטע הזה (העמוד המקומי ב-/tool, שאין בו לוח שנה)
        הקישור היה נופל על null — ועמו כל שאר הקישורים שאחריו,
        כלומר כל המסך. */
+    /* התשובה לשאלה "השבוע נופל חג. לסגור?" */
+    var askHost = $('#calendar-ask');
+    if (askHost) askHost.addEventListener('click', function (event) {
+      var current = week();
+      if (event.target.closest('#cal-ask-skip')) {
+        Store.setCalendarAsked(current, true);
+        persist();
+        render();
+        return;
+      }
+      if (!event.target.closest('#cal-ask-close')) return;
+      if (weekBlocked()) return;
+
+      /* סוגרים את כל מה שהוצע, ומסמנים שנשאל -- גם אם המנהל
+         ביטל באמצע אישור אחד. השאלה נשאלה, והוא ענה עליה. */
+      var closed = 0;
+      Store.calendarSuggestions(state, current, weekKey).forEach(function (item) {
+        if (closeDayFromCalendar(item.dayIdx, item.name)) closed++;
+      });
+      Store.setCalendarAsked(current, true);
+      persist();
+      render();
+      if (closed) toast(tPlural('calendar.askDone', closed));
+    });
+
     var calendarHost = $('#calendar-days');
     if (calendarHost) calendarHost.addEventListener('click', function (event) {
       var button = event.target.closest('[data-cal-close],[data-cal-hours],' +

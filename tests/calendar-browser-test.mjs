@@ -29,6 +29,17 @@ try {
   page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
   page.on('dialog', async d => { await d.accept(); });
 
+  /* השעון מקובע, והבדיקה הזו לא הייתה יכולה להתקיים בלעדיו.
+
+     כל מה שנבדק כאן תלוי במה נופל בשבוע הנוכחי -- ו"השבוע
+     הנוכחי" משתנה כל שבוע. הבדיקה עברה בערב ונפלה אחרי חצות,
+     כשהשבוע התחלף מיום כיפור לחול המועד סוכות, בלי ששורת קוד
+     אחת השתנתה.
+
+     22.9.2026 הוא יום שלישי בשבוע של יום כיפור: ערב יום כיפור
+     נופל ביום הראשון של השבוע (אינדקס 0) ויום כיפור בשני. */
+  await page.clock.setFixedTime(new Date('2026-09-22T09:00:00'));
+
   await skipWizard(page);
   await page.goto(APP);
   await page.waitForTimeout(400);
@@ -60,6 +71,80 @@ try {
   /* הסוג מוצג לצד השם: "ערב חג" ו"חג שאסור בעבודה" הם מה
      שקובע מה עושים, והשם לבדו אינו אומר את זה. */
   check('הסוג של כל יום מוצג', /ערב חג/.test(text), true);
+
+  /* ===== ומה שהיה חסר: הסידור עצמו =====
+
+     כל מה שנבדק עד כאן חי בתוך מגירת תפריט. מנהל שבונה סידור
+     לשבוע של חג לא פותח מגירות, והמערכת גם מעולם לא שאלה
+     אותו דבר -- calendarSuggestions נכתבה ואף מסך לא קרא לה. */
+  console.log('\n== הסימון על הסידור עצמו ==');
+  await page.keyboard.press('Escape');
+  await page.click('.tab[data-tab="schedule"]');
+  await page.waitForTimeout(600);
+
+  const marks = await page.locator('#schedule-employee .day-head .day-mark').count();
+  check('כותרות הימים נושאות סימון', marks > 0, true);
+  const headText = await page.locator('#schedule-employee thead').innerText();
+  check('ושם המועד כתוב בהן', /כיפור/.test(headText), true);
+  /* גם בתצוגה לפי סניף, ולא רק באחת מהן */
+  await page.click('.chip[data-view="branch"]');
+  await page.waitForTimeout(500);
+  check('וגם בתצוגה לפי סניף',
+    await page.locator('#schedule-branch .day-head .day-mark').count() > 0, true);
+  await page.click('.chip[data-view="employee"]');
+  await page.waitForTimeout(400);
+
+  console.log('\n== והשאלה נשאלת בפועל ==');
+  check('הבאנר מוצג', await page.locator('#calendar-ask').isVisible(), true);
+  const askText = await page.locator('#calendar-ask').innerText();
+  check('ובו שם החג והיום', /כיפור/.test(askText), true);
+  check('עם כפתור סגירה', await page.locator('#cal-ask-close').count(), 1);
+  check('ועם "לא השבוע"', await page.locator('#cal-ask-skip').count(), 1);
+
+  /* "לא השבוע" נשמר על השבוע. בלי זה השאלה הייתה חוזרת בכל
+     רענון, ומנהל שעובד בחג היה מכבה את הלוח לגמרי -- ואז גם
+     לא יידע על החג הבא. */
+  await page.click('#cal-ask-skip');
+  await page.waitForTimeout(700);
+  check('אחרי "לא השבוע" הבאנר נעלם',
+    await page.locator('#calendar-ask').isVisible(), false);
+  await page.reload();
+  await page.waitForTimeout(1500);
+  check('והוא אינו חוזר אחרי רענון',
+    await page.locator('#calendar-ask').isVisible(), false);
+  /* והסימון בכותרות נשאר: הוא עובדה על היום, לא שאלה */
+  check('אבל הסימון בכותרות נשאר',
+    await page.locator('#schedule-employee .day-head .day-mark').count() > 0, true);
+
+  console.log('\n== ומי שכן רוצה לסגור, סוגר בלחיצה ==');
+  await page.evaluate(() => {
+    const app = window.ShiftApp;
+    const week = app.getState().weeks[window.ShiftStore.currentWeekKey()];
+    window.ShiftStore.setCalendarAsked(week, false);
+    app.render();
+  });
+  await page.waitForTimeout(400);
+  check('הבאנר חזר', await page.locator('#calendar-ask').isVisible(), true);
+  await page.click('#cal-ask-close');
+  await page.waitForTimeout(900);
+  check('היום נסגר', await page.evaluate(() => {
+    const week = window.ShiftApp.getState().weeks[window.ShiftStore.currentWeekKey()];
+    return Object.keys(week.holidays || {}).length > 0;
+  }), true);
+  check('והבאנר נעלם, כי אין מה לשאול',
+    await page.locator('#calendar-ask').isVisible(), false);
+
+  /* מחזירים את השבוע למצב שבו שאר הקובץ מצפה למצוא אותו */
+  await page.evaluate(() => {
+    const app = window.ShiftApp;
+    const week = app.getState().weeks[window.ShiftStore.currentWeekKey()];
+    week.holidays = {};
+    window.ShiftStore.setCalendarAsked(week, false);
+    app.render();
+  });
+  await page.waitForTimeout(400);
+  await page.click('#tools-menu');
+  await page.waitForTimeout(400);
 
   console.log('\n== שתי פעולות לכל יום, ולא אחת ==');
   const first = page.locator('#calendar-days .calendar-day').first();

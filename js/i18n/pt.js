@@ -1022,6 +1022,8 @@
         waAddonLineSub: "Mensalidade",
         waAddonTotalLine: "Total por mês",
         waAddonPeak: "O extra conta o mesmo número de pessoas que a assinatura — o máximo do período. Quem entra a meio do mês conta na cobrança seguinte.",
+        waAddonSoon: "Ainda não está ligado: o número de WhatsApp da empresa aguarda aprovação da Meta. Quando sair, a ativação abre aqui — e até lá não há cobrança por isto.",
+        waAddonPaused: "O extra está marcado como ativo, mas as mensagens ainda não saem: o número da empresa continua em aprovação. Pode desligá-lo aqui a qualquer momento.",
         waAddonConfirm: "Ativar os alertas de WhatsApp para os trabalhadores? A mensalidade sobe 9 ₪ por cada trabalhador ativo, a partir da próxima cobrança.",
         waAddonFailed: "A alteração do extra falhou",
         pricePerEmployee: '{amount} ₪ por pessoa/mês',

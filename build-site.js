@@ -275,6 +275,25 @@ function markBilling(html) {
     'window.SHIFT_BILLING_LIVE = true;');
 }
 
+/* האם ערוץ הוואטסאפ לעובדים חי.
+
+   שלושה תנאים, וכולם הכרחיים: טוקן, מספר מחובר, ושם תבנית
+   מאושרת. חסר אחד מהם — ההודעות אינן יוצאות, ותוספת ההתראות
+   אינה מוצעת למכירה בכלל. אחרת לקוח מחויב 9 ש"ח לעובד ומקבל
+   כלום, והוא לא יגלה את זה: העובדים פשוט לא מקבלים הודעה, וזה
+   נראה כמו שירות שלא עבד מלכתחילה. */
+function waStaffIsLive() {
+  return !!(String(process.env.WHATSAPP_TOKEN || '').trim() &&
+    String(process.env.WHATSAPP_PHONE_ID || '').trim() &&
+    String(process.env.WHATSAPP_STAFF_TEMPLATE || '').trim());
+}
+
+function markWaStaff(html) {
+  if (!waStaffIsLive()) return html;
+  return html.replace('window.SHIFT_WA_STAFF_LIVE = false;',
+    'window.SHIFT_WA_STAFF_LIVE = true;');
+}
+
 /* האם הסרטון קיים. הדף נשלח כבר במצב הנכון, ולכן אין בדיקה
    מהדפדפן – ואין 404 בקונסול של כל מבקר. */
 function markVideo(html) {
@@ -383,7 +402,7 @@ const SW_REGISTER = `
 
 function page(source, target, options) {
   const opts = options || {};
-  let html = markBilling(markVideo(fillLegal(toAbsolutePaths(read(source)))));
+  let html = markWaStaff(markBilling(markVideo(fillLegal(toAbsolutePaths(read(source))))));
   /* מה שקורה לעמוד לפני שהוא נשלח: תרגום בזמן הבנייה, והפיכת
      הקישורים היחסיים למוחלטים כשהוא יורד לתת-תיקייה. */
   if (opts.transform) html = opts.transform(html);
@@ -754,6 +773,7 @@ function buildStamp() {
     'video:    ' + (fs.existsSync(path.join(root, 'assets', 'video',
       'setshifts-demo-he.mp4')) ? 'כן' : 'לא'),
     'billing:  ' + (billingIsLive() ? 'מחובר' : 'לא מחובר'),
+    'wa staff: ' + (waStaffIsLive() ? 'חי' : 'כבוי'),
     'admin:    כן',
     ''
   ].join('\n');

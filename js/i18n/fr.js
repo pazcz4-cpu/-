@@ -1022,6 +1022,8 @@
         waAddonLineSub: "Abonnement",
         waAddonTotalLine: "Total par mois",
         waAddonPeak: "L’option compte le même nombre de salariés que l’abonnement — le maximum de la période. Une personne ajoutée en cours de mois compte au prochain prélèvement.",
+        waAddonSoon: "Pas encore connecté : le numéro WhatsApp professionnel attend la validation de Meta. Dès qu’elle arrive, l’activation s’ouvre ici — et rien n’est facturé d’ici là.",
+        waAddonPaused: "L’option est marquée active, mais les messages ne partent pas encore : le numéro professionnel est toujours en validation. Vous pouvez la désactiver ici à tout moment.",
         waAddonConfirm: "Activer les alertes WhatsApp pour les salariés ? Le montant mensuel augmente de 9 ₪ par salarié actif, dès le prochain prélèvement.",
         waAddonFailed: "La modification de l’option a échoué",
         pricePerEmployee: '{amount} ₪ par personne et par mois',

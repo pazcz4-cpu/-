@@ -183,11 +183,28 @@
           }))
         : '') + '</p>';
     html += '<p class="billing-note">' + esc(t('billing.waAddonPeak')) + '</p>';
-    html += '<div class="row"><button id="billing-addon-toggle" class="btn' +
-      (addonOn ? '' : ' primary') + '" data-on="' + (addonOn ? '1' : '0') + '">' +
-      t(addonOn ? 'billing.waAddonDisable' : 'billing.waAddonEnable') + '</button>' +
-      '<span class="billing-addon-state">' +
-      t(addonOn ? 'billing.waAddonOn' : 'billing.waAddonOff') + '</span></div>';
+    /* הכפתור קיים רק כשהערוץ באמת מחובר.
+
+       תוספת בתשלום שנמכרת לפני שההודעות יוצאות היא לקוח שמחויב
+       9 ₪ לעובד ומקבל כלום. עד שהמספר העסקי מאושר והמשתנים
+       מוגדרים, הכרטיס מסביר מה יהיה ואומר שזה עוד לא פתוח.
+
+       אם התוספת כבר דולקת אצל חברה כלשהי (הדלקה מהמשרד האחורי
+       לפני שהערוץ עלה), הכיבוי כן מוצג -- אחרת אין לה דרך
+       לצאת מחיוב שאינה מקבלת עליו שירות. */
+    if (Model.isWaStaffLive()) {
+      html += '<div class="row"><button id="billing-addon-toggle" class="btn' +
+        (addonOn ? '' : ' primary') + '" data-on="' + (addonOn ? '1' : '0') + '">' +
+        t(addonOn ? 'billing.waAddonDisable' : 'billing.waAddonEnable') + '</button>' +
+        '<span class="billing-addon-state">' +
+        t(addonOn ? 'billing.waAddonOn' : 'billing.waAddonOff') + '</span></div>';
+    } else if (addonOn) {
+      html += '<p class="billing-note error">' + esc(t('billing.waAddonPaused')) + '</p>';
+      html += '<div class="row"><button id="billing-addon-toggle" class="btn" data-on="1">' +
+        t('billing.waAddonDisable') + '</button></div>';
+    } else {
+      html += '<p class="billing-note">' + esc(t('billing.waAddonSoon')) + '</p>';
+    }
     html += '</div>';
 
     /* המחירון. ללא סליקה חיה הוא גם מחירון וגם דרך לעבור תוכנית:
@@ -443,6 +460,9 @@
       var addon = event.target.closest('#billing-addon-toggle');
       if (addon) {
         var turnOn = addon.dataset.on !== '1';
+        /* המסך לא מציג כפתור הפעלה כשהערוץ כבוי, אבל הבדיקה
+           חוזרת כאן: מי שמגיע דרך הקונסולה לא יקנה אוויר. */
+        if (turnOn && !Model.isWaStaffLive()) { say(t('billing.waAddonSoon'), true); return; }
         if (turnOn && !root.confirm(t('billing.waAddonConfirm'))) return;
         say('');
         addon.disabled = true;

@@ -1028,6 +1028,8 @@
         waAddonLineSub: "Subscription",
         waAddonTotalLine: "Total per month",
         waAddonPeak: "The add-on counts the same staff number as the subscription — the peak in the period. Someone added mid-month counts in the coming charge.",
+        waAddonSoon: "Not connected yet: the business WhatsApp number is awaiting Meta approval. Once it clears, you can switch this on here — until then there is nothing to pay for it.",
+        waAddonPaused: "The add-on is marked active, but messages are not going out yet — the business number is still in approval. You can switch it off here at any time.",
         waAddonConfirm: "Turn on WhatsApp alerts for staff? The monthly charge goes up by ₪9 per active employee, from the next charge.",
         waAddonFailed: "Changing the add-on failed",
         pricePerEmployee: '₪{amount} per person / month',

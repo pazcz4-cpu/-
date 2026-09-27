@@ -420,6 +420,9 @@
     var provider = opts.billingProvider ||
       (root.ShiftBilling ? new root.ShiftBilling.MockProvider({ backend: backend }) : null);
     Model.setBillingLive(!!(provider && provider.describe && provider.describe().live === true));
+    /* ערוץ הוואטסאפ לעובדים. נחרט בבנייה כמו דגל הסליקה, ומאותה
+       סיבה: אסור למכור תוספת שההודעות בה עוד אינן יוצאות. */
+    Model.setWaStaffLive(root.SHIFT_WA_STAFF_LIVE === true);
 
     /* שירות החיוב נבנה כאן ולא בתוך הבלוק של מסך המנוי: גם מסך
        העובדים צריך אותו, כדי שתקרת התוכנית תוכל להציע שדרוג

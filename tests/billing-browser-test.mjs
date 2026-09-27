@@ -268,6 +268,36 @@ console.log('16. כרטיס התוספת מופיע במסך המנוי:',
   await addonCard.count() === 1 ? '✓' : '✗');
 if (await addonCard.count() !== 1) errors.push('אין כרטיס לתוספת הוואטסאפ');
 
+/* ===== ובלי ערוץ מחובר אין מה לקנות =====
+
+   זו ההגנה החשובה יותר בבלוק הזה. הכרטיס, החיוב והחשבונית
+   המפוצלת נבנו לפני שההודעות באמת יוצאות; לקוח שיכול להדליק
+   את התוספת עכשיו ישלם 9 ₪ לעובד ולא יקבל דבר. ברירת המחדל
+   של המערכת היא ערוץ כבוי, ולכן זה בדיוק המצב כאן. */
+console.log('    וכל עוד הערוץ כבוי אין כפתור הפעלה:',
+  await page.locator('#billing-addon-toggle').count() === 0 ? '✓' : '✗');
+if (await page.locator('#billing-addon-toggle').count() !== 0) {
+  errors.push('אפשר להדליק תוספת בתשלום לפני שההודעות לעובדים יוצאות');
+}
+console.log('    והכרטיס מסביר למה:',
+  /עוד לא מחובר/.test(await addonCard.innerText()) ? '✓' : '✗');
+if (!/עוד לא מחובר/.test(await addonCard.innerText())) {
+  errors.push('הכרטיס אינו אומר שהשירות עוד לא מחובר');
+}
+
+/* מכאן הערוץ חי, כמו שיהיה ברגע שהמספר העסקי יאושר והמשתנים
+   יוגדרו ב-Vercel. */
+await page.evaluate(() => {
+  window.ShiftModel.setWaStaffLive(true);
+  window.ShiftBillingUI.render();
+});
+await page.waitForTimeout(300);
+console.log('    ומשהערוץ מחובר הכפתור מופיע:',
+  await page.locator('#billing-addon-toggle').count() === 1 ? '✓' : '✗');
+if (await page.locator('#billing-addon-toggle').count() !== 1) {
+  errors.push('הכפתור אינו מופיע גם כשהערוץ מחובר');
+}
+
 /* המחיר מופיע לפני הכפתור. מתג בלי מחיר הוא הפתעה בחיוב הבא. */
 const addonPitch = await addonCard.innerText();
 console.log('    והוא אומר כמה זה עולה:', /9/.test(addonPitch) ? '✓' : '✗');

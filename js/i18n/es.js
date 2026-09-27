@@ -1022,6 +1022,8 @@
         waAddonLineSub: "Cuota de suscripción",
         waAddonTotalLine: "Total al mes",
         waAddonPeak: "El complemento cuenta el mismo número de personas que la suscripción: el máximo del periodo. Quien entra a mitad de mes cuenta en el próximo cargo.",
+        waAddonSoon: "Aún no está conectado: el número de WhatsApp de empresa espera la aprobación de Meta. En cuanto llegue, podrás activarlo aquí; hasta entonces no se cobra nada por él.",
+        waAddonPaused: "El complemento está marcado como activo, pero los mensajes todavía no salen: el número de empresa sigue en aprobación. Puedes desactivarlo aquí en cualquier momento.",
         waAddonConfirm: "¿Activar los avisos de WhatsApp para el personal? El cargo mensual sube 9 ₪ por cada empleado activo, desde el próximo cargo.",
         waAddonFailed: "No se pudo cambiar el complemento",
         pricePerEmployee: '{amount} ₪ por persona al mes',

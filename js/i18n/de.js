@@ -1022,6 +1022,8 @@
         waAddonLineSub: "Abogebühr",
         waAddonTotalLine: "Gesamt pro Monat",
         waAddonPeak: "Der Zusatz zählt dieselbe Personenzahl wie das Abo — den Höchststand im Zeitraum. Wer mitten im Monat dazukommt, zählt in der nächsten Abbuchung.",
+        waAddonSoon: "Noch nicht verbunden: Die geschäftliche WhatsApp-Nummer wartet auf die Freigabe von Meta. Sobald sie da ist, lässt sich der Zusatz hier einschalten — bis dahin wird nichts dafür berechnet.",
+        waAddonPaused: "Der Zusatz ist als aktiv markiert, aber es gehen noch keine Nachrichten raus — die Geschäftsnummer ist noch in der Freigabe. Sie können ihn hier jederzeit abschalten.",
         waAddonConfirm: "WhatsApp-Hinweise für Beschäftigte einschalten? Die Monatsgebühr steigt ab der nächsten Abbuchung um 9 ₪ je aktiver Person.",
         waAddonFailed: "Ändern des Zusatzes fehlgeschlagen",
         pricePerEmployee: '{amount} ₪ pro Person und Monat',

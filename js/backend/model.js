@@ -528,6 +528,21 @@
   function setBillingLive(value) { billingLive = value === true; }
   function isBillingLive() { return billingLive; }
 
+  /* ===== האם ערוץ הוואטסאפ לעובדים חי =====
+
+     אותו היגיון בדיוק, ומאותה סיבה: תוספת בתשלום שנמכרת לפני
+     שההודעות באמת יוצאות היא לקוח שמחויב 9 ש"ח לעובד ומקבל
+     כלום. וזה לא באג שמתגלה — העובדים פשוט לא מקבלים הודעה,
+     וזה נראה בדיוק כמו שירות שלא עבד מלכתחילה.
+
+     הערוץ חי רק כשיש מספר מחובר במטא ותבניות מאושרות, ואת זה
+     יודע רק השרת. הדגל נחרט בבנייה, כמו דגל הסליקה.
+
+     ברירת המחדל היא "לא חי", ולא להפך. */
+  var waStaffLive = false;
+  function setWaStaffLive(value) { waStaffLive = value === true; }
+  function isWaStaffLive() { return waStaffLive; }
+
   /* האם לחברה יש גישה למערכת כרגע, ומה הסיבה אם לא. */
   function accessState(company, now) {
     var today = now ? new Date(now) : new Date();
@@ -848,6 +863,7 @@
     TICKET_KINDS: TICKET_KINDS, TICKET_STATUSES: TICKET_STATUSES,
     TICKET_LIMITS: TICKET_LIMITS, normalizeTicket: normalizeTicket,
     setBillingLive: setBillingLive, isBillingLive: isBillingLive,
+    setWaStaffLive: setWaStaffLive, isWaStaffLive: isWaStaffLive,
     INVITE: INVITE, INVITE_TTL_HOURS: INVITE_TTL_HOURS,
     inviteState: inviteState, canCancelInvite: canCancelInvite,
     SUBSCRIPTION: SUBSCRIPTION, TRIAL_DAYS: TRIAL_DAYS,

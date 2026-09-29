@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>SetShifts – מדריך שבועי למנהל</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm 16mm; }
+  :root {
+    --ink: #1c2333;
+    --muted: #5b6478;
+    --line: #dfe3ec;
+    --brand: #2f5fe0;
+    --brand-soft: #e8eefc;
+    --ok: #1c7a4c;
+    --ok-soft: #e4f4ea;
+    --warn: #8a5a00;
+    --warn-soft: #fff4dc;
+    --bad: #b3283f;
+    --bad-soft: #fde8ec;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0; color: var(--ink); background: #fff;
+    font-family: "Segoe UI", "Rubik", "Liberation Sans", Arial, sans-serif;
+    font-size: 10.3pt; line-height: 1.5;
+  }
+  h1, h2, h3 { margin: 0; line-height: 1.25; text-wrap: balance; }
+  p { margin: 0 0 8px; }
+
+  /* ---------- שער ---------- */
+  .cover { page-break-after: always; padding-top: 6mm; }
+  .cover .kicker { color: var(--brand); font-weight: 700; letter-spacing: .04em; font-size: 10.5pt; }
+  .cover h1 { font-size: 30pt; margin: 6px 0 10px; }
+  .cover .lead { font-size: 13pt; color: var(--muted); max-width: 150mm; margin-bottom: 14mm; }
+
+  .week { width: 100%; border-collapse: collapse; margin-bottom: 10mm; }
+  .week th, .week td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right; vertical-align: top; }
+  .week th { font-size: 9.5pt; color: var(--muted); font-weight: 600; background: #f6f8fc; }
+  .week td.n { width: 11mm; font-weight: 800; font-size: 15pt; color: var(--brand); }
+  .week td.t { font-weight: 700; width: 58mm; }
+  .week td.w { color: var(--muted); width: 32mm; font-size: 10pt; }
+
+  .rule { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: #fafbfe; }
+  .rule b { color: var(--brand); }
+
+  /* ---------- פרקים ---------- */
+  section.step { page-break-before: always; }
+  .step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4mm; }
+  .step-no {
+    flex: none; width: 13mm; height: 13mm; border-radius: 50%;
+    background: var(--brand); color: #fff; font-weight: 800; font-size: 18pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-head h2 { font-size: 20pt; }
+  .step-head .where { color: var(--muted); font-size: 10pt; margin-top: 2px; }
+
+  h3 { font-size: 13pt; margin: 7mm 0 2mm; }
+  ol.do, ul.do { margin: 0 0 8px; padding-inline-start: 6mm; }
+  ol.do li, ul.do li { margin-bottom: 4px; }
+
+  figure { margin: 3mm 0 4mm; break-inside: avoid; }
+  figure img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  figure.narrow img { width: auto; max-width: 100%; max-height: 105mm; margin-inline: auto; }
+  .keep { break-inside: avoid; }
+  figure.sm img { max-height: 44mm; }
+  figure.ex img { max-height: 50mm; }
+  #drag-fig img { width: 80%; margin-inline: auto; }
+  figure.crop .clip { height: 38mm; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; }
+  figure.crop img { border: 0; border-radius: 0; }
+  figcaption { font-size: 9.5pt; color: var(--muted); margin-top: 4px; }
+  figcaption b { display: inline-block; min-width: 5mm; text-align: center; background: #e11d48; color: #fff; border-radius: 50%; font-size: 8.5pt; margin-inline-end: 3px; }
+
+  .pair { display: flex; gap: 6mm; align-items: flex-start; }
+  .pair > * { flex: 1; min-width: 0; }
+  .pair figure { margin-top: 0; }
+
+  .note { border-radius: 8px; padding: 8px 12px; margin: 4mm 0; break-inside: avoid; border: 1px solid; }
+  .note strong { display: block; margin-bottom: 2px; }
+  .note.warn { background: var(--warn-soft); border-color: #ecd49a; color: #5e3d00; }
+  .note.bad  { background: var(--bad-soft);  border-color: #f0b8c2; color: #7d1a2c; }
+  .note.ok   { background: var(--ok-soft);   border-color: #a9d8bd; color: #145a37; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 3mm 0 0; font-size: 10pt; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 5px; vertical-align: -1px; }
+
+  table.ref { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-top: 3mm; }
+  table.ref th, table.ref td { border: 1px solid var(--line); padding: 7px 10px; text-align: right; vertical-align: top; }
+  table.ref th { background: #f6f8fc; font-size: 9.5pt; color: var(--muted); }
+
+  .check li { list-style: none; margin-bottom: 6px; }
+  .check li::before { content: "☐"; margin-inline-end: 8px; color: var(--brand); }
+  .check { padding: 0; }
+  .foot { color: var(--muted); font-size: 9.5pt; margin-top: 8mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ שער ============ -->
+<div class="cover">
+  <div class="kicker">SETSHIFTS · מדריך למנהל</div>
+  <h1>השבוע שלך במערכת,<br>בחמישה שלבים</h1>
+  <p class="lead">מהרגע שהעובדים מגישים בקשות ועד שהסידור מגיע אליהם. כל שלב עם צילום מסך אמיתי מהמערכת, וסימן אדום על הכפתור שלוחצים עליו.</p>
+
+  <table class="week">
+    <thead><tr><th></th><th>מה עושים</th><th>מתי (בדרך כלל)</th><th>כמה זמן</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td class="t">מאשרים או דוחים אילוצים וחופשות</td><td class="w">אחרי שהעובדים הגישו, לפני שבונים</td><td class="w">2–5 דקות</td></tr>
+      <tr><td class="n">2</td><td class="t">מוודאים שהמשמרות בכל הסניפים נכונות לשבוע</td><td class="w">לפני "בנה סידור"</td><td class="w">2 דקות</td></tr>
+      <tr><td class="n">3</td><td class="t">לוחצים "בנה סידור אוטומטי"</td><td class="w">אחרי שלבים 1 ו-2</td><td class="w">כמה שניות</td></tr>
+      <tr><td class="n">4</td><td class="t">תיקונים אחרונים בגרירה</td><td class="w">אחרי שהסידור נבנה</td><td class="w">לפי הצורך</td></tr>
+      <tr><td class="n">5</td><td class="t">בדיקה ופרסום, ואז ייצוא / שליחה</td><td class="w">כשהסידור מוכן</td><td class="w">דקה</td></tr>
+    </tbody>
+  </table>
+
+  <div class="rule">
+    <b>כלל אחד לזכור:</b> רק בקשה <b>שאושרה</b> משפיעה על הסידור. בקשה שממתינה, או שנדחתה, המערכת מתעלמת ממנה כשהיא בונה. לכן שלב 1 תמיד לפני שלב 3.
+  </div>
+</div>
+
+<!-- ============ שלב 1 ============ -->
+<section class="step" style="page-break-before: auto">
+  <div class="step-head">
+    <div class="step-no">1</div>
+    <div>
+      <h2>אישור או דחייה של אילוצים</h2>
+      <div class="where">לשונית "אילוצים"</div>
+    </div>
+  </div>
+
+  <p>עובדים מבקשים חופש, "מעדיף/ה בוקר" או "לא יכול/ה ערב". כל בקשה מחכה לך בלוח צהוב בראש הלשונית.</p>
+
+  <figure>
+    <img src="../../assets/manager-guide/01-pending-requests.png" alt="בקשות שממתינות לאישור">
+    <figcaption><b>1</b>אישור – הבקשה נכנסת לסידור. <b>2</b>דחייה – העובד רואה שהבקשה נדחתה, והמערכת מתעלמת ממנה. <b>3</b>"שימו לב" – עוד עובד ביקש את אותו הדבר באותו יום.</figcaption>
+  </figure>
+
+  <ol class="do">
+    <li>עוברים על הבקשות מלמעלה למטה, ולוחצים <b>אישור</b> או <b>דחייה</b> בכל שורה.</li>
+    <li>שורה עם <b>"שימו לב: בקשה חופפת גם מעובד/ת נוספ/ת"</b> אומרת שאם תאשרו את כולם, יישאר פחות כוח אדם באותו יום. שם מופיע גם מי האחר.</li>
+    <li>בקשה שנדחתה נשארת מסומנת בלוח באדום, כך שתמיד רואים מה נדחה.</li>
+  </ol>
+
+  <div class="note warn"><strong>שימו לב</strong>אין שדה "סיבת הדחייה". אם חשוב שהעובד יבין למה, כדאי להגיד לו ישירות.</div>
+
+  <h3>חופשות</h3>
+  <p>בקשת חופשה יכולה להימשך כמה ימים ולחצות שבועות. היא מופיעה כשורה אחת עם התאריכים, מספר הימים, וסימון <b>בתשלום</b> או <b>ללא תשלום</b>. אישור או דחייה חלים על כל הימים יחד.</p>
+  <figure>
+    <img src="../../assets/manager-guide/03-leave-requests.png" alt="בקשות חופשה">
+    <figcaption><b>1</b>אישור. <b>2</b>דחייה. חופשה בתשלום נספרת בדוח, ומשפיעה על המכסה השבועית של העובד.</figcaption>
+  </figure>
+
+  <div class="keep">
+  <h3>הלוח כולו: מי ביקש מה</h3>
+  <figure>
+    <img src="../../assets/manager-guide/02-constraints-board.png" alt="לוח האילוצים">
+    <figcaption>שורה לכל עובד, עמודה לכל יום. חגים ואירועי לוח השנה מופיעים בראש כל עמודה.</figcaption>
+  </figure>
+  <div class="legend">
+    <span><span class="dot" style="background:#bfe6cf"></span>אושר</span>
+    <span><span class="dot" style="background:#f5c2ca"></span>נדחה</span>
+    <span><span class="dot" style="background:#fbe3a0"></span>ממתין לאישור</span>
+  </div>
+  </div>
+
+  <div class="note ok"><strong>איך יודעים שסיימתם</strong>הלוח הצהוב "בקשות שממתינות לאישורך" נעלם, ואין עוד משבצות צהובות בלוח.</div>
+</section>
+
+<!-- ============ שלב 2 ============ -->
+<section class="step">
+  <div class="step-head">
+    <div class="step-no">2</div>
+    <div>
+      <h2>אישור המשמרות בכל הסניפים</h2>
+      <div class="where">לשונית "סניפים", ואחר כך "סידור שבועי"</div>
+    </div>
+  </div>
+
+  <p>לפני שבונים, מוודאים שלכל סניף מוגדר נכון כמה עובדים צריך, באילו ימים ובאילו שעות.</p>
+
+  <div class="note bad">
+    <strong>חשוב: ההגדרה של הסניף קבועה ומתחזרת כל שבוע</strong>
+    הטבלה בכרטיס הסניף היא תבנית קבועה. שינוי מספר עובדים שם משנה את <b>כל השבועות</b>, לא רק את השבוע הנוכחי.<br>
+    כפתור <b>"איפוס השבוע"</b> אינו מאפס את הדרישות. הוא מוריד רק את <b>השיבוצים</b> של אותו סניף בשבוע שמוצג. אם אין שיבוצים, מופיעה ההודעה "אין שיבוצים בסניף בשבוע הזה".
+  </div>
+
+  <figure>
+    <img src="../../assets/manager-guide/04-branch-definition.png" alt="הגדרת סניף">
+    <figcaption>לכל יום ולכל משמרת: כמה עובדים ובאילו שעות. "0" או "סגור" אומר שאין משמרת. בתחתית אפשר להעתיק ימים ושעות מסניף אחר.</figcaption>
+  </figure>
+
+  <div class="keep">
+  <h3>שינוי חד-פעמי לשבוע אחד</h3>
+  <p>כדי לא לגעת בתבנית הקבועה, עושים שינויים לשבוע הזה מתוך לשונית "סידור שבועי":</p>
+
+  <div class="pair">
+    <div>
+      <ol class="do">
+        <li><b>חג או יום סגור:</b> כשבשבוע יש חג, מופיע פס כחול "השבוע נופלים…". <b>"לסגור את היום הזה"</b> סוגר את היום בכל הסניפים לשבוע הזה בלבד. <b>"לא השבוע"</b> משאיר הכול כרגיל.</li>
+        <li><b>שעות מיוחדות ליום:</b> בתפריט "כלים נוספים", בחלק "אירועי לוח שנה".</li>
+        <li>אחרי השינוי עוברים על הסידור: ימים סגורים מסומנים ברקע מפוספס.</li>
+      </ol>
+    </div>
+    <figure class="narrow">
+      <img src="../../assets/manager-guide/05-week-tools-menu.png" alt="תפריט כלים נוספים">
+      <figcaption>תפריט "כלים נוספים": ניקוי סידור, שמירת שיבוצים ידניים, סיום שבת, ואירועי לוח שנה.</figcaption>
+    </figure>
+  </div>
+  </div>
+
+  <div class="note ok"><strong>איך יודעים שסיימתם</strong>עברתם על כל סניף פעם אחת, וכל הימים החריגים בשבוע הזה (חג, שעות מיוחדות) מטופלים.</div>
+</section>
+
+<!-- ============ שלב 3 ============ -->
+<section class="step">
+  <div class="step-head">
+    <div class="step-no">3</div>
+    <div>
+      <h2>בניית הסידור האוטומטי</h2>
+      <div class="where">לשונית "סידור שבועי"</div>
+    </div>
+  </div>
+
+  <p>אחרי שהבקשות אושרו והמשמרות מוגדרות, לוחצים על הכפתור הכחול. המערכת משבצת את כולם לפי זמינות, אילוצים שאושרו, ומכסת המשמרות של כל עובד.</p>
+
+  <figure>
+    <img src="../../assets/manager-guide/06-toolbar.png" alt="סרגל הכלים">
+    <figcaption><b>1</b>"בנה סידור אוטומטי". משמאל: "כלים נוספים", "ייצוא" ו"בדיקה ופרסום". מימין: ניווט בין שבועות.</figcaption>
+  </figure>
+
+  <h3>מה מופיע אחרי הבנייה</h3>
+  <figure>
+    <img src="../../assets/manager-guide/07-after-generate.png" alt="תוצאת הבנייה">
+    <figcaption>שלוש תגיות מתחת לסרגל: בעיות איוש, הפרות, והמלצות. תצוגה "לפי סניף" או "לפי עובד" בכפתורים שמתחתן.</figcaption>
+  </figure>
+
+  <table class="ref">
+    <thead><tr><th style="width:36mm">תגית</th><th>מה זה אומר</th></tr></thead>
+    <tbody>
+      <tr><td><b>בעיות איוש</b></td><td>משמרת שלא התמלאה במספר העובדים הנדרש, כי אין מי שיכול לקחת אותה.</td></tr>
+      <tr><td><b>הפרות</b></td><td>משהו שנוגד את הכללים, למשל מנוחה בין משמרות. אחרי בנייה אוטומטית זה אמור להיות 0.</td></tr>
+      <tr><td><b>המלצות</b></td><td>הצעות לשיפור, לא חובה לטפל בהן.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:3mm">לחיצה על תגית פותחת את הרשימה המלאה ומראה בדיוק איפה הבעיה.</p>
+
+  <figure>
+    <img src="../../assets/manager-guide/08-issues-open.png" alt="רשימת בעיות פתוחה">
+    <figcaption>הרשימה הפתוחה: כל בעיה עם היום, הסניף והמשמרת.</figcaption>
+  </figure>
+
+  <div class="note warn"><strong>המלכודת</strong>אם "בנה סידור" יוצא עם הרבה בעיות איוש, בדרך כלל הסיבה היא לא הכפתור. או שאושרו יותר מדי בקשות חופש ביום אחד (שלב 1), או שהתבנית של הסניף דורשת יותר עובדים ממה שיש (שלב 2).</div>
+</section>
+
+<!-- ============ שלב 4 ============ -->
+<section class="step">
+  <div class="step-head">
+    <div class="step-no">4</div>
+    <div>
+      <h2>תיקונים אחרונים בגרירה</h2>
+      <div class="where">לשונית "סידור שבועי"</div>
+    </div>
+  </div>
+
+  <p>הסידור האוטומטי הוא נקודת פתיחה. כאן מתאימים אותו לדברים שהמערכת לא יודעת.</p>
+
+  <figure id="drag-fig">
+    <img src="../../assets/manager-guide/09-drag-area.png" alt="שטח ההמתנה ותצוגה לפי עובד">
+    <figcaption><b>1</b>שטח ההמתנה: משמרות שאין בהן עובד. גוררים אותן אל עובד פנוי, או מחזירים לשם משמרת שרוצים לפנות. <b>2</b>גוררים משמרת לתא של עובד אחר באותו יום.</figcaption>
+  </figure>
+
+  <ol class="do">
+    <li>עוברים ל<b>תצוגה לפי עובד</b> כדי להזיז משמרות בין אנשים. בסוף השורה של כל עובד רואים כמה משמרות יש לו מתוך המכסה שלו.</li>
+    <li>אפשר להזיז משמרת רק <b>בתוך אותו יום</b>, ולעובד שאין לו כבר משמרת באותו יום. במקום לגרור אפשר ללחוץ על המשמרת כדי להרים אותה, ואז ללחוץ על העובד.</li>
+    <li>משמרת שאין בה עובד נמצאת ב<b>שטח ההמתנה</b> בראש הטבלה. גוררים אותה לעובד, או גוררים אליו משמרת כדי לפנות אותה.</li>
+    <li>כשבונים מחדש אחרי תיקונים, מפעילים קודם ב"כלים נוספים" את <b>"שמירת שיבוצים ידניים"</b>, כדי שמה שקבעתם ביד לא יימחק.</li>
+  </ol>
+
+  <div class="keep">
+  <h3>תצוגה לפי סניף: בחירה מתוך רשימה</h3>
+  <p>בתצוגה לפי סניף לכל משמרת יש רשימה נפתחת. בוחרים בה עובד, או מוסיפים עוד אחד בכפתור "+ הוסף".</p>
+  <figure class="crop">
+    <div class="clip"><img src="../../assets/manager-guide/10-branch-view.png" alt="תצוגה לפי סניף"></div>
+    <figcaption>כל משמרת: שעות, שם העובד ברשימה נפתחת, והכפתור <b style="background:#fff;color:#1c2333;border:1px solid #ccd">?</b> "למה דווקא הוא?".</figcaption>
+  </figure>
+  </div>
+
+  <div class="note ok"><strong>"למה דווקא הוא?"</strong>הלחיצה על <b>?</b> ליד שיבוץ מסבירה למה נבחר האדם הזה, מי אחר יכל לקחת את המשמרת, ומי לא יכל ומדוע. כך פותרים ויכוח עם עובד בחצי דקה.</div>
+
+  <div class="note warn"><strong>שימו לב לסימן ⚠</strong>ברשימה הנפתחת, שם עובד עם ⚠ ואחריו הערה בסוגריים (למשל "חופש", "חסום", "כבר משובץ", "לא בסניף") אומר שיש סיבה לחשוב פעמיים. אפשר לבחור אותו בכל זאת, אבל אתם עושים זאת בידיעה.</div>
+</section>
+
+<!-- ============ שלב 5 ============ -->
+<section class="step">
+  <div class="step-head">
+    <div class="step-no">5</div>
+    <div>
+      <h2>בדיקה, פרסום וייצוא</h2>
+      <div class="where">לשונית "סידור שבועי", הכפתור הירוק</div>
+    </div>
+  </div>
+
+  <p>עד הפרסום העובדים לא רואים כלום. הסידור הוא טיוטה שרק אתם רואים. הכפתור הירוק "בדיקה ופרסום" נמצא בסרגל, משמאל ל"בנה סידור אוטומטי".</p>
+
+  <div class="pair">
+    <div>
+      <ol class="do">
+        <li>לוחצים <b>בדיקה ופרסום</b>.</li>
+        <li>המערכת מציגה סיכום: כמה בעיות איוש וכמה הפרות נשארו.</li>
+        <li>לוחצים <b>פרסום</b> (<b>1</b> בתמונה) כדי לפרסם כמו שזה, או <b>חזרה לתיקון</b> כדי לחזור לעריכה.</li>
+        <li>מרגע הפרסום העובדים רואים את הסידור, וכל אחד מקבל התראה.</li>
+      </ol>
+    </div>
+    <figure class="narrow sm">
+      <img src="../../assets/manager-guide/12-publish-confirm.png" alt="אישור פרסום">
+      <figcaption><b>2</b>כפתור "פרסום".</figcaption>
+    </figure>
+  </div>
+
+  <figure>
+    <img src="../../assets/manager-guide/13-published.png" alt="אחרי הפרסום">
+    <figcaption>אחרי הפרסום: מופיע "פורסם ב־…" והכפתור מתחלף ל"החזרה לטיוטה".</figcaption>
+  </figure>
+
+  <h3>אם צריך לשנות אחרי הפרסום</h3>
+  <div class="pair">
+    <div>
+      <p>שבוע שפורסם נעול לעריכה. כשמנסים לשנות, מופיע חלון אזהרה. יש שתי דרכים:</p>
+      <ul class="do">
+        <li><b>החזרה לטיוטה:</b> הסידור נעלם מהעובדים עד לפרסום הבא. מתאים כשמשנים הרבה.</li>
+        <li><b>עריכה חיה:</b> כל שינוי מגיע לעובדים מיד, בלי הודעה נוספת. מתאים לתיקון קטן.</li>
+      </ul>
+    </div>
+    <figure class="narrow sm">
+      <img src="../../assets/manager-guide/14-locked-choice.png" alt="שבוע נעול">
+    </figure>
+  </div>
+
+  <div class="note bad"><strong>המלכודת</strong>בעריכה חיה, עובד שכבר תכנן את השבוע לפי מה שראה לא יידע שמשהו השתנה. אחרי שינוי, ספרו לו.</div>
+
+  <div class="keep">
+  <h3>ייצוא</h3>
+  <div class="pair">
+    <div>
+      <p>התפריט <b>ייצוא</b> נותן את הסידור בצורות שאפשר לשלוח או להדפיס:</p>
+      <ul class="do">
+        <li>הסידור כולו: <b>אקסל</b>, <b>CSV</b>, <b>העתק כטקסט</b> או <b>הדפסה</b>.</li>
+        <li><b>ייצוא אישי לעובד:</b> בוחרים עובד, ומקבלים רק את המשמרות שלו, כאקסל או כ<b>טקסט לוואטסאפ</b> להדבקה בהודעה.</li>
+      </ul>
+    </div>
+    <figure class="narrow sm ex">
+      <img src="../../assets/manager-guide/15-export-menu.png" alt="תפריט ייצוא">
+    </figure>
+  </div>
+  </div>
+</section>
+
+<!-- ============ סיכום ============ -->
+<section class="step">
+  <div class="step-head">
+    <div class="step-no" style="background:var(--ok)">✓</div>
+    <div>
+      <h2>רשימת בדיקה קצרה, כל שבוע</h2>
+      <div class="where">להדפיס ולתלות ליד המחשב</div>
+    </div>
+  </div>
+
+  <ul class="check">
+    <li>אין יותר בקשות בלוח הצהוב "בקשות שממתינות לאישורך"</li>
+    <li>בקשות חופשה טופלו (בתשלום / ללא תשלום נכון)</li>
+    <li>ימי חג ושעות מיוחדות של השבוע הוגדרו</li>
+    <li>לחצתי "בנה סידור אוטומטי"</li>
+    <li>עברתי על תגיות "בעיות איוש" ו"הפרות"</li>
+    <li>שיבצתי ידנית את מה שנשאר בשטח ההמתנה (ואם תיקנתי ידנית לפני בנייה מחדש: "שמירת שיבוצים ידניים")</li>
+    <li>לחצתי "בדיקה ופרסום" ואישרתי</li>
+    <li>שלחתי לעובדים את מי שצריך להודיע לו אישית</li>
+  </ul>
+
+  <h3>שאלות שחוזרות</h3>
+  <table class="ref">
+    <thead><tr><th style="width:62mm">השאלה</th><th>התשובה</th></tr></thead>
+    <tbody>
+      <tr><td>לחצתי "איפוס השבוע" ועדיין רואים דרישות</td><td>הכפתור מוריד שיבוצים בלבד. הדרישות (כמה עובדים בכל משמרת) הן תבנית קבועה בכרטיס הסניף.</td></tr>
+      <tr><td>עובד אומר שביקש חופש ולא קיבל</td><td>בדקו בלשונית "אילוצים": אם הבקשה עדיין צהובה, היא לא אושרה, ולכן המערכת התעלמה ממנה.</td></tr>
+      <tr><td>משמרת נשארה ריקה אחרי "בנה סידור"</td><td>אף אחד לא היה פנוי לפי הכללים. היא בשטח ההמתנה. אפשר לגרור אליה עובד ידנית.</td></tr>
+      <tr><td>רוצים לסגור יום אחד רק השבוע</td><td>בפס הכחול של החג: "לסגור את היום הזה". לא לשנות את תבנית הסניף.</td></tr>
+      <tr><td>מבנים מחדש ומאבדים את התיקונים שלי</td><td>לפני הבנייה מפעילים ב"כלים נוספים" את "שמירת שיבוצים ידניים".</td></tr>
+    </tbody>
+  </table>
+
+  <p class="foot">setshifts.com · תמיכה: מתוך המערכת, "קריאת שירות".</p>
+</section>
+
+</body>
+</html>

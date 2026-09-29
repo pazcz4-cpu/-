@@ -39,8 +39,11 @@
 
   var state = Store.emptyState();
   /* המנהל נפתח על השבוע הבא, לא על הנוכחי: סידור נבנה קדימה, והשבוע
-     הנוכחי כבר רץ. מי שרוצה לראות אותו עובר אליו במפורש. */
-  var weekKey = Store.shiftWeekKey(Store.currentWeekKey(), 1);
+     הנוכחי כבר רץ. מי שרוצה לראות אותו עובר אליו במפורש.
+     SHIFT_START_WEEK = 'current' מחזיר את הפתיחה לשבוע הנוכחי, והוא
+     קיים בשביל בדיקות שמזינות נתונים לשבוע של היום. */
+  var weekKey = window.SHIFT_START_WEEK === 'current'
+    ? Store.currentWeekKey() : Store.shiftWeekKey(Store.currentWeekKey(), 1);
   var VIEW_KEY = 'maiphone-shifts-view';
   /* ברירת המחדל היא "לפי עובד": השאלה שמנהל שואל את עצמו ראשונה
      היא מי עובד מתי וכמה משמרות יצאו לכל אחד, ולא מה קורה בסניף
@@ -4486,7 +4489,6 @@
   function importContext() {
     return {
       getState: function () { return state; },
-    getWeekKey: function () { return weekKey; },
       saveFile: saveFile,
       toast: toast,
       createEmployee: function (name) { return addEmployee(name, true); },
@@ -5681,6 +5683,7 @@
     addEmployee: addEmployee,
     addBranch: addBranch,
     getState: function () { return state; },
+    getWeekKey: function () { return weekKey; },
     setState: function (next) { state = Store.migrate(next); render(); },
     applyRemoteConfig: applyRemoteConfig,
     /* שמירת ההגדרות לשרת. חשוף לשימוש חיצוני כי מסלולי הדפדפן

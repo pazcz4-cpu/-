@@ -8,11 +8,22 @@
 </head>
 <body>
 <header class="app-header no-print">
-  <div class="brand">
-    <span class="brand-mark" data-brand-mark="white"></span>
-    <div>
-      <h1 data-i18n="app.title">SetShifts</h1>
-      <p class="sub" data-i18n="app.subtitle">שיבוץ AI לכל הסניפים — לפי זמינות, אילוצים, תפקידים וכללי העסק</p>
+  <div class="header-row">
+    <div class="brand">
+      <span class="brand-mark" data-brand-mark="white"></span>
+      <div>
+        <h1 data-i18n="app.title">SetShifts</h1>
+        <p class="sub" data-i18n="app.subtitle">שיבוץ AI לכל הסניפים — לפי זמינות, אילוצים, תפקידים וכללי העסק</p>
+      </div>
+    </div>
+    <div class="week-bar" id="week-bar">
+        <div class="week-nav">
+          <button id="prev-week" class="btn ghost icon" data-i18n-title="toolbar.prevWeek" data-i18n-aria-label="toolbar.prevWeek" title="שבוע קודם" aria-label="שבוע קודם"><svg class="ico ico-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
+          <button id="next-week" class="btn ghost icon" data-i18n-title="toolbar.nextWeek" data-i18n-aria-label="toolbar.nextWeek" title="שבוע הבא" aria-label="שבוע הבא"><svg class="ico ico-next" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
+          <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
+          <button id="go-next-week" class="btn ghost small" data-i18n="toolbar.nextWeekJump">השבוע הבא</button>
+        </div>
     </div>
   </div>
   <nav class="tabs" id="tabs">
@@ -31,12 +42,6 @@
       <!-- שורה ראשית: איפה אני, ומה מצב השמירה והפרסום. שלושת
            הדברים שמנהל שואל לפני כל פעולה, ותו לא. -->
       <div class="tb-where">
-        <div class="week-nav">
-          <button id="prev-week" class="btn ghost icon" data-i18n-title="toolbar.prevWeek" data-i18n-aria-label="toolbar.prevWeek" title="שבוע קודם" aria-label="שבוע קודם"><svg class="ico ico-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
-          <div class="week-label"><strong id="week-title">—</strong><span id="week-range"></span></div>
-          <button id="next-week" class="btn ghost icon" data-i18n-title="toolbar.nextWeek" data-i18n-aria-label="toolbar.nextWeek" title="שבוע הבא" aria-label="שבוע הבא"><svg class="ico ico-next" aria-hidden="true" focusable="false"><use href="#i-chevron"></use></svg></button>
-          <button id="this-week" class="btn ghost small" data-i18n="toolbar.currentWeek">השבוע הנוכחי</button>
-        </div>
         <div class="tb-state">
           <span id="sync-state" class="sync-state local" data-i18n="status.localOnly">נשמר במכשיר הזה</span>
           <span id="publish-state" class="publish-state hidden"></span>

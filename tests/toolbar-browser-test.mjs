@@ -32,7 +32,7 @@ async function boot(viewport, email) {
   page.on('pageerror', e => errors.push('PAGE: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
   page.on('dialog', async d => { await d.accept(); });
-  await skipWizard(page);
+  await skipWizard(page, { defaultWeek: true });
   await page.goto(APP);
   await page.waitForTimeout(400);
   await page.click('[data-auth-mode="signup"]');
@@ -59,6 +59,13 @@ try {
   const page = await boot(DESK, 'boss@tb.test');
 
   console.log('\n== השבוע בכותרת, בכל לשונית ==');
+  check('המנהל נפתח על השבוע הבא', await page.evaluate(() =>
+    window.ShiftApp.getWeekKey() === window.ShiftStore.shiftWeekKey(window.ShiftStore.currentWeekKey(), 1)), true);
+  check('והכותרת אומרת זאת', (await page.locator('#week-range').innerText()).trim(), 'השבוע הבא');
+  await page.click('#this-week');
+  check('כפתור "השבוע הנוכחי" מעביר אליו', (await page.locator('#week-range').innerText()).trim(), 'השבוע הנוכחי');
+  await page.click('#go-next-week');
+  check('כפתור "השבוע הבא" מחזיר', (await page.locator('#week-range').innerText()).trim(), 'השבוע הבא');
   check('בחירת שבוע בכותרת', await page.locator('.app-header .week-bar .week-nav').isVisible(), true);
   check('והיא אינה בסרגל הסידור', await page.locator('.toolbar .week-nav').count(), 0);
   const weekFont = await page.evaluate(

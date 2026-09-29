@@ -28,15 +28,15 @@ page.on('dialog', async (d) => { await d.accept(); });
 const needs = () => page.evaluate(() =>
   Array.from(document.querySelectorAll('#branches-list > .card:first-child input[data-sched="need"]'))
     .map((i) => Number(i.value)));
-const assigned = () => page.evaluate(() => {
+let editedWeek = null;
+const assigned = () => page.evaluate((key) => {
   const s = window.ShiftApp.getState();
-  const key = window.ShiftStore.currentWeekKey();
   const a = (s.weeks[key] || {}).assignments || {};
   return Object.keys(a).reduce((n, k) => n + (a[k] || []).length, 0);
-});
+}, editedWeek);
 
 try {
-  await skipWizard(page);
+  await skipWizard(page, { defaultWeek: true });
   await page.goto(url('app.html'));
   await page.waitForTimeout(500);
   await page.click('[data-auth-mode="signup"]');
@@ -50,6 +50,7 @@ try {
   await loadSample(page);
 
   await page.click('.tab[data-tab="schedule"]');
+  editedWeek = await page.evaluate(() => window.ShiftApp.getWeekKey());
   await page.click('#generate');
   await page.waitForTimeout(1500);
   const before = await assigned();

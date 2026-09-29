@@ -391,7 +391,7 @@ whatsapp_business_management
 
 ---
 
-## שלב 10 · התבניות  ⬜ *`signup_abandoned_he` **אושרה** 29/09; שלוש תבניות העובדים חסרות*
+## שלב 10 · התבניות  ✅ *כולן הוגשו 29/09 — פרט לתבנית ההצטרפות שבוטלה*
 
 **לאן:** https://business.facebook.com/wa/manage/message-templates
 → **Create template**
@@ -438,7 +438,7 @@ whatsapp_business_management
 על הסידור שלו. זו הודעה על חשבון קיים, והיא עברה כ-Utility
 ללא דיאלוג.
 
-### 2 · סידור חדש פורסם · Utility · Hebrew  ✅ *הוגשה 29/09*
+### 2 · סידור חדש פורסם · Utility · Hebrew  ⏳ *בבדיקה מ-29/09*
 
 ```
 שם: staff_schedule_published_he
@@ -460,7 +460,7 @@ Buttons:
 
 דגימות: `{{1}} דנה כהן` · `{{2}} 5–11.10` · `{{3}} קפה ברזילי`
 
-### 3 · תזכורת לסגירת אילוצים · Utility · Hebrew
+### 3 · תזכורת לסגירת אילוצים · Utility · Hebrew  ⏳ *בבדיקה מ-29/09*
 
 ```
 שם: staff_constraints_reminder_he
@@ -484,7 +484,7 @@ Buttons:
 דגימות: `{{1}} דנה כהן` · `{{2}} 6 שעות` · `{{3}} 5–11.10` ·
 `{{4}} קפה ברזילי`
 
-### 4 · נטישת הרשמה · Marketing · Hebrew
+### 4 · נטישת הרשמה · Marketing · Hebrew  ✅ *מאושרת*
 
 ```
 שם: signup_abandoned_he
@@ -536,7 +536,7 @@ Buttons:
 
 ---
 
-## שלב 11 · לחבר למערכת  ⬜ *תשעה משתנים ו-webhook בוצעו 26/09; חסר PHONE_ID ו-STAFF_TEMPLATE*
+## שלב 11 · לחבר למערכת  ⬜ *תשעה משתנים ו-webhook תקינים; חסר PHONE_ID ו-STAFF_TEMPLATE*
 
 ### א. משתני סביבה
 

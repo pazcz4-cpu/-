@@ -121,6 +121,11 @@ function drawIcon(size, options) {
      של maskable, שבו רק המרכז מובטח להיראות. */
   var inset = opts.padding ? 0.26 : 0.16;
   var placed = logo.square(mark(), size, inset);
+  /* transparent: הפוך ממה שאפל וגוגל רוצות, ובכוונה. מטא דוחה
+     אייקון עם רקע לבן ואומרת את זה במפורש ("Image Contains White
+     Background"), בעוד ששתי החנויות דוחות אייקון שקוף. אותו סמל,
+     שתי גרסאות, ואף אחת מהן אינה פשרה. */
+  if (opts.transparent) return toPng(placed);
   return toPng(logo.onBackground(placed, WHITE));
 }
 

@@ -123,13 +123,17 @@ const ASSETS = [
   { file: 'icon-1024.png', make: () => icons.drawIcon(1024) },
   /* Feature graphic — חובה בגוגל פליי, ומוצגת בראש עמוד
      האפליקציה. גוגל אינה מקבלת שקיפות. */
-  { file: 'feature-1024x500.png', make: () => icons.drawSocial(1024, 500) }
+  { file: 'feature-1024x500.png', make: () => icons.drawSocial(1024, 500) },
+  /* מטא הפוכה משתיהן: היא דוחה רקע לבן ודורשת שקיפות. זו אותה
+     גזירה מאותו קובץ מקור, רק בלי ההרכבה על לבן. */
+  { file: 'icon-1024-transparent.png', keepAlpha: true,
+    make: () => icons.drawIcon(1024, { transparent: true }) }
 ];
 
 function build() {
   fs.mkdirSync(OUT, { recursive: true });
   return ASSETS.map((asset) => {
-    const png = toRgbPng(decode(asset.make()));
+    const png = asset.keepAlpha ? asset.make() : toRgbPng(decode(asset.make()));
     fs.writeFileSync(path.join(OUT, asset.file), png);
     const img = decode(png);
     return { file: asset.file, width: img.width, height: img.height,

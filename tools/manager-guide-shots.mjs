@@ -161,6 +161,11 @@ await page.evaluate((names) => {
   const app = window.ShiftApp;
   const state = app.getState();
   state.employees.forEach((emp, i) => { emp.name = names[i] || emp.name; });
+  /* שיוך לסניפים כמו בעסק אמיתי: מי שעובד בסניף אחד, מי שבשניים,
+     ומי שלא סומן בכלל (זמין בכל הסניפים) */
+  state.employees[0].branches = ['br-center'];
+  state.employees[1].branches = ['br-north', 'br-south'];
+  state.employees[2].branches = [];
   app.applyRemoteConfig({
     settings: state.settings, branches: state.branches, employees: state.employees
   });
@@ -245,10 +250,31 @@ await page.locator('#pending-constraints .pending-item .reject').first().click()
 await page.waitForTimeout(800);
 await shotEl('02-constraints-board', '#constraints-grid');
 
-/* ===== 2. הגדרות השבוע והסניפים ===== */
+/* ===== 2. עובדים: שיוך לסניפים ===== */
+await page.click('.tab[data-tab="employees"]');
+await page.waitForTimeout(700);
+await page.locator('.card[data-emp] [data-action="toggle-card"]').first().click();
+await page.waitForTimeout(400);
+await mark('.card[data-emp]:nth-of-type(1) [data-action="toggle-branch"]', 1, 0);
+await mark('.card[data-emp]:nth-of-type(3) .card-summary', 2, 0);
+await shotRegion('16-employee-branches', ['.card[data-emp]:nth-of-type(1)', '.card[data-emp]:nth-of-type(3)'], 10);
+await unmark();
+
+/* ===== 3. הגדרות השבוע והסניפים ===== */
 await page.click('.tab[data-tab="branches"]');
 await page.waitForTimeout(700);
+await mark('#branches-list > .card:first-child [data-action="reset-branch"]', 1);
 await shotEl('04-branch-definition', '#branches-list > *');
+await unmark();
+
+/* איפוס הדרישות של השבוע: הטבלה מתאפסת והתבנית הקבועה נשארת */
+await page.locator('#branches-list > .card:first-child [data-action="reset-branch"]').click();
+await page.waitForTimeout(600);
+await mark('#branches-list > .card:first-child [data-action="week-template"]', 2);
+await shotEl('17-week-needs-reset', '#branches-list > .card:first-child');
+await unmark();
+await page.locator('#branches-list > .card:first-child [data-action="week-template"]').click();
+await page.waitForTimeout(600);
 
 await page.click('.tab[data-tab="schedule"]');
 await page.waitForTimeout(700);

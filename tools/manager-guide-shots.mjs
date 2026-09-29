@@ -267,13 +267,23 @@ await mark('#branches-list > .card:first-child [data-action="reset-branch"]', 1)
 await shotEl('04-branch-definition', '#branches-list > *');
 await unmark();
 
-/* איפוס הדרישות של השבוע: הטבלה מתאפסת והתבנית הקבועה נשארת */
+/* איפוס הדרישות של הסניף: הטבלה מתאפסת מהשבוע הזה והלאה */
 await page.locator('#branches-list > .card:first-child [data-action="reset-branch"]').click();
 await page.waitForTimeout(600);
-await mark('#branches-list > .card:first-child [data-action="week-template"]', 2);
+await mark('#branches-list > .card:first-child .week-needs-banner', 2);
 await shotEl('17-week-needs-reset', '#branches-list > .card:first-child');
 await unmark();
-await page.locator('#branches-list > .card:first-child [data-action="week-template"]').click();
+
+/* משחזרים את הדרישות כדי שהמשך הצילומים ייעשה על סניף מלא. אין
+   כפתור חזרה, ולכן מחזירים דרך הנתונים */
+await page.evaluate(() => {
+  const app = window.ShiftApp, state = app.getState();
+  state.branches.forEach((b) => { delete b.needsFrom; });
+  app.applyRemoteConfig({
+    settings: state.settings, branches: state.branches, employees: state.employees
+  });
+  app.persistConfig();
+});
 await page.waitForTimeout(600);
 
 await page.click('.tab[data-tab="schedule"]');

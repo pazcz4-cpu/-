@@ -109,7 +109,7 @@
   function emptyWeek() {
     return {
       constraints: {}, assignments: {}, manual: {}, holidays: {},
-      dayHours: {}, schedules: {}, punches: [],
+      dayHours: {}, punches: [],
       shabbatEnd: '', note: '', generatedAt: null, calendarAsked: false,
       published: false, publishedAt: null, publishedSignature: ''
     };
@@ -118,11 +118,11 @@
   function getWeek(state, weekKey) {
     if (!state.weeks[weekKey]) { state.weeks[weekKey] = emptyWeek(); }
     var w = state.weeks[weekKey];
+    stampWeek(w, weekKey);
     if (!w.constraints) w.constraints = {};
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
     if (!w.holidays) w.holidays = {};
-    if (!w.schedules) w.schedules = {};
     if (!Array.isArray(w.punches)) w.punches = [];
     return w;
   }
@@ -198,40 +198,85 @@
     return base === null ? null : formatTime(base + minutes);
   }
 
+  /* מפתח השבוע נשמר על אובייקט השבוע עצמו, כמאפיין שאינו נשמר:
+     כדי לדעת איזו טבלת דרישות חלה על שבוע, צריך לדעת איזה שבוע
+     זה, ופונקציות כמו slotNeed מקבלות רק את האובייקט. */
+  function stampWeek(week, weekKey) {
+    if (!week || !weekKey || week.weekKey === weekKey) return week;
+    Object.defineProperty(week, 'weekKey', {
+      value: weekKey, enumerable: false, configurable: true, writable: true
+    });
+    return week;
+  }
+
   /* הטבלה שלפיה הסניף עובד בשבוע נתון.
 
-     ברירת המחדל היא התבנית הקבועה של הסניף, שחוזרת כל שבוע.
-     מנהל שרוצה דרישות אחרות לשבוע אחד בלבד מאפס אותן, ומאותו רגע
-     לשבוע הזה יש טבלה משלו (week.schedules). התבנית עצמה לא זזה,
-     ושאר השבועות ממשיכים לפיה. */
+     כברירת מחדל זו הטבלה של הסניף עצמו. כשמנהל מאפס את הדרישות
+     הוא בעצם מתחיל טבלה חדשה מהשבוע הזה והלאה (branch.needsFrom),
+     והיא חלה על כל שבוע שאחריו עד האיפוס הבא. שבועות קודמים לא
+     משתנים, וכך גם מה ששובץ. */
+  function needsEntry(branch, weekKey) {
+    var list = branch.needsFrom;
+    if (!weekKey || !Array.isArray(list)) return null;
+    var found = null;
+    list.forEach(function (entry) {
+      if (entry && entry.from <= weekKey && (!found || entry.from > found.from)) found = entry;
+    });
+    return found;
+  }
+
+  function needsFromKey(branch, week) {
+    var entry = needsEntry(branch, week && week.weekKey);
+    return entry ? entry.from : null;
+  }
+
   function weekSchedule(branch, week) {
-    var own = week && week.schedules && week.schedules[branch.id];
-    return own || branch.schedule || {};
+    var entry = needsEntry(branch, week && week.weekKey);
+    return entry ? entry.schedule : (branch.schedule || {});
   }
 
   function hasWeekSchedule(branch, week) {
-    return !!(week && week.schedules && week.schedules[branch.id]);
+    return !!needsEntry(branch, week && week.weekKey);
   }
 
   /* הסניף כפי שהוא נראה בשבוע הזה. עותק שטחי: מי שעורך את
-     schedule שלו עורך את הטבלה של השבוע, לא את התבנית. */
+     schedule שלו עורך את הטבלה שחלה על השבוע. */
   function branchForWeek(branch, week) {
-    if (!hasWeekSchedule(branch, week)) return branch;
-    return Object.assign({}, branch, { schedule: week.schedules[branch.id] });
+    var entry = needsEntry(branch, week && week.weekKey);
+    if (!entry) return branch;
+    return Object.assign({}, branch, { schedule: entry.schedule });
   }
 
-  /* איפוס הדרישות של סניף לשבוע אחד: כל המשמרות נסגרות והמנהל
-     מקליד מחדש רק מה שצריך. שיבוצים שכבר נעשו אינם נוגעים בהם,
-     והתבנית הקבועה נשארת כמו שהיא. */
-  function resetWeekNeeds(week, branch) {
-    if (!week.schedules) week.schedules = {};
-    week.schedules[branch.id] = {};
-    return week.schedules[branch.id];
+  /* השעות של משמרת שאופסה, כדי שמי שמקליד "2" בתא ריק יקבל את
+     השעות של הסניף ולא שעות ברירת מחדל שאינן שלו */
+  function resetHours(branch, dayIdx, shiftId, week) {
+    var entry = needsEntry(branch, week && week.weekKey);
+    var hint = entry && entry.hours && entry.hours[dayIdx] && entry.hours[dayIdx][shiftId];
+    return hint || null;
   }
 
-  /* חזרה לתבנית הקבועה: הטבלה של השבוע נמחקת */
-  function clearWeekSchedule(week, branch) {
-    if (week && week.schedules) delete week.schedules[branch.id];
+  /* איפוס הדרישות של סניף מהשבוע הזה והלאה: כל המשמרות נסגרות
+     והמנהל מקליד מחדש. שיבוצים שכבר נעשו אינם נוגעים בהם. */
+  function resetWeekNeeds(branch, week) {
+    var key = week && week.weekKey;
+    if (!key) return null;
+    var hours = {};
+    var current = weekSchedule(branch, week);
+    Object.keys(current).forEach(function (day) {
+      Object.keys(current[day] || {}).forEach(function (shiftId) {
+        var config = current[day][shiftId];
+        if (!config) return;
+        if (!hours[day]) hours[day] = {};
+        hours[day][shiftId] = { from: config.from || '', to: config.to || '' };
+        if (config.auto) hours[day][shiftId].auto = config.auto;
+      });
+    });
+    var list = (branch.needsFrom || []).filter(function (entry) { return entry.from !== key; });
+    var entry = { from: key, schedule: {}, hours: hours };
+    list.push(entry);
+    list.sort(function (a, b) { return a.from < b.from ? -1 : a.from > b.from ? 1 : 0; });
+    branch.needsFrom = list;
+    return entry;
   }
 
   /* הגדרת משמרת בסניף ביום מסוים, או null אם הסניף סגור אז */
@@ -2044,14 +2089,19 @@
       removed.employees++;
     });
     (state.branches || []).forEach(function (branch) {
-      Object.keys(branch.schedule || {}).forEach(function (day) {
-        var dayMap = branch.schedule[day] || {};
-        Object.keys(dayMap).forEach(function (shiftId) {
-          var config = dayMap[shiftId];
-          if (!config || !config.roles || !config.roles[roleId]) return;
-          delete config.roles[roleId];
-          if (!Object.keys(config.roles).length) delete config.roles;
-          removed.slots++;
+      var tables = [branch.schedule || {}].concat((branch.needsFrom || []).map(function (entry) {
+        return entry.schedule || {};
+      }));
+      tables.forEach(function (table) {
+        Object.keys(table).forEach(function (day) {
+          var dayMap = table[day] || {};
+          Object.keys(dayMap).forEach(function (shiftId) {
+            var config = dayMap[shiftId];
+            if (!config || !config.roles || !config.roles[roleId]) return;
+            delete config.roles[roleId];
+            if (!Object.keys(config.roles).length) delete config.roles;
+            removed.slots++;
+          });
         });
       });
     });
@@ -2583,6 +2633,14 @@
       if (typeof branch.active !== 'boolean') branch.active = true;
       if (!branch.schedule) { branch.schedule = legacySchedule(branch, legacyDayShifts); }
       normalizeSchedule(branch.schedule);
+      if (!Array.isArray(branch.needsFrom)) delete branch.needsFrom;
+      else {
+        branch.needsFrom = branch.needsFrom.filter(function (entry) {
+          return entry && typeof entry.from === 'string' && entry.schedule && typeof entry.schedule === 'object';
+        });
+        branch.needsFrom.forEach(function (entry) { normalizeSchedule(entry.schedule); });
+        if (!branch.needsFrom.length) delete branch.needsFrom;
+      }
       delete branch.need;
       Object.keys(branch.schedule).forEach(function (day) {
         var dayMap = branch.schedule[day] || {};
@@ -2614,10 +2672,7 @@
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
-      if (!weekData.schedules || typeof weekData.schedules !== 'object') weekData.schedules = {};
-      Object.keys(weekData.schedules).forEach(function (branchId) {
-        normalizeSchedule(weekData.schedules[branchId]);
-      });
+      stampWeek(weekData, key);
       if (typeof weekData.published !== 'boolean') weekData.published = false;
       if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
       /* דיווחי שעון. שבוע ישן אינו נושא אותם, ורשימה פגומה
@@ -2674,14 +2729,19 @@
     }
 
     state.branches.forEach(function (branch) {
-      Object.keys(branch.schedule || {}).forEach(function (day) {
-        if (branch.schedule[day] && branch.schedule[day][shiftId]) {
-          delete branch.schedule[day][shiftId];
-          removed.slots++;
-        }
-        if (branch.schedule[day] && !Object.keys(branch.schedule[day]).length) {
-          delete branch.schedule[day];
-        }
+      var tables = [branch.schedule || {}].concat((branch.needsFrom || []).map(function (entry) {
+        return entry.schedule || {};
+      }));
+      tables.forEach(function (table) {
+        Object.keys(table).forEach(function (day) {
+          if (table[day] && table[day][shiftId]) {
+            delete table[day][shiftId];
+            removed.slots++;
+          }
+          if (table[day] && !Object.keys(table[day]).length) {
+            delete table[day];
+          }
+        });
       });
     });
 
@@ -2949,7 +3009,7 @@
     slotConfig: slotConfig,
     weekSchedule: weekSchedule, hasWeekSchedule: hasWeekSchedule,
     branchForWeek: branchForWeek, resetWeekNeeds: resetWeekNeeds,
-    clearWeekSchedule: clearWeekSchedule,
+    resetHours: resetHours, stampWeek: stampWeek, needsFromKey: needsFromKey,
     slotNeed: slotNeed,
     slotHours: slotHours,
     hoursLabel: hoursLabel,

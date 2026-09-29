@@ -81,24 +81,24 @@ try {
   check('האיפוס שרד טעינה מחדש', await page.locator('.week-needs-banner').count(), 1);
   check('הדרישה שהוקלדה שרדה', (await needs())[0], 2);
 
-  /* שבוע אחר לא הושפע */
+  /* שבוע הבא ממשיך מהאיפוס, ושבוע קודם נשאר כמו שהיה */
   await page.click('.tab[data-tab="schedule"]');
   await page.click('#next-week');
   await page.waitForTimeout(500);
   await page.click('.tab[data-tab="branches"]');
   await page.waitForTimeout(400);
-  check('בשבוע הבא אין באנר', await page.locator('.week-needs-banner').count(), 0);
-  check('בשבוע הבא התבנית שלמה', (await needs()).join(), template.join());
+  check('בשבוע הבא יש באנר', await page.locator('.week-needs-banner').count(), 1);
+  check('בשבוע הבא הדרישה שהוקלדה נשמרה', (await needs())[0], 2);
 
-  /* חזרה לתבנית */
   await page.click('.tab[data-tab="schedule"]');
+  await page.click('#prev-week');
   await page.click('#prev-week');
   await page.waitForTimeout(500);
   await page.click('.tab[data-tab="branches"]');
   await page.waitForTimeout(400);
-  await page.locator('[data-action="week-template"]').click();
-  await page.waitForTimeout(500);
-  check('חזרה לתבנית מחזירה את הדרישות', (await needs()).join(), template.join());
+  check('בשבוע קודם אין באנר', await page.locator('.week-needs-banner').count(), 0);
+  check('בשבוע קודם התבנית שלמה', (await needs()).join(), template.join());
+  check('אין כפתור חזרה לתבנית', await page.locator('[data-action="week-template"]').count(), 0);
   check('השיבוצים עדיין שם', await assigned(), before);
   check('אין שגיאות בדף', errors.length, 0);
   if (errors.length) console.log(errors);

@@ -157,10 +157,6 @@
     Object.keys(state.weeks).forEach(function (key) {
       var weekData = state.weeks[key];
       var changed = false;
-      if (weekData.schedules && weekData.schedules[branch.id]) {
-        delete weekData.schedules[branch.id];
-        changed = true;
-      }
       Object.keys(weekData.assignments || {}).forEach(function (slot) {
         var before = weekData.assignments[slot].length;
         weekData.assignments[slot] = weekData.assignments[slot]
@@ -2589,8 +2585,7 @@
          טבלה משלו אם הדרישות של הסניף אופסו לשבוע הזה */
       var branch = Store.branchForWeek(templateBranch, week());
       var onWeek = branch !== templateBranch;
-      var range = Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
-        Store.formatDate(Store.dateOfDay(weekKey, 6));
+      var range = Store.formatDate(Store.dateOfDay(weekKey, 0));
       html += '<div class="card wide' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
         '<label class="check"><input type="checkbox" data-field="active"' +
@@ -2602,10 +2597,9 @@
           ico('trash') + '</button></div>';
 
       if (onWeek) {
-        html += '<div class="week-needs-banner"><span>' +
-          esc(t('branches.weekOnly', { week: range })) + '</span>' +
-          '<button type="button" class="btn ghost small" data-action="week-template">' +
-          esc(t('branches.backToTemplate')) + '</button></div>';
+        html += '<div class="week-needs-banner"><span>' + esc(t('branches.resetFrom', {
+          week: Store.formatDate(Store.dateOfDay(Store.needsFromKey(templateBranch, week()), 0))
+        })) + '</span></div>';
       }
       html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">' +
         t('branches.day') + '</th>';
@@ -4531,44 +4525,34 @@
         Store.setSlotRoleCount(state, dropView, dropCell.dataset.day,
           dropCell.dataset.shift, drop.dataset.roleRemove, 0);
         Store.normalizeSchedule(dropView.schedule);
-        persist(dropOnWeek ? undefined : 'config');
+        persist('config');
         render();
         return;
       }
-      /* איפוס הדרישות של הסניף לשבוע הזה.
+      /* איפוס הדרישות של הסניף, מהשבוע שמוצג והלאה.
 
          מה שמאופס הוא כמה אנשים צריך בכל משמרת, ולא מי ששובץ:
-         שיבוצים שכבר נעשו אינם נוגעים בהם. השבוע מקבל טבלה משלו
-         עם אפסים, והמנהל מקליד רק מה שנדרש השבוע. התבנית הקבועה
-         של הסניף ושאר השבועות נשארים כמו שהיו.
-
-         "חזרה לתבנית" מוחק את הטבלה של השבוע. */
+         שיבוצים שכבר נעשו אינם נוגעים בהם. שבועות קודמים נשארים
+         כמו שהיו. מה שהמנהל מקליד אחרי האיפוס נשמר וחל על כל
+         שבוע שאחריו, עד שיאפס שוב. */
       var reset = event.target.closest('[data-action="reset-branch"]');
       if (reset) {
         if (weekBlocked()) return;
         var resetCard = reset.closest('.card');
         var resetBranch = Store.byId(state.branches, resetCard.dataset.branch);
         if (!resetBranch) return;
-        var range = Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
-          Store.formatDate(Store.dateOfDay(weekKey, 6));
-        if (Store.hasWeekSchedule(resetBranch, week()) &&
-            !confirm(t('branches.resetConfirm', { name: resetBranch.name, week: range }))) return;
-        Store.resetWeekNeeds(week(), resetBranch);
-        persist();
+        var resetView = Store.branchForWeek(resetBranch, week());
+        var resetHere = resetView !== resetBranch && Store.needsFromKey(resetBranch, week()) === weekKey;
+        var typed = resetHere && Object.keys(resetView.schedule).length > 0;
+        if (typed && !confirm(t('branches.resetConfirm', {
+          name: resetBranch.name, week: Store.formatDate(Store.dateOfDay(weekKey, 0))
+        }))) return;
+        Store.resetWeekNeeds(resetBranch, week());
+        persist('config');
         render();
-        toast(t('branches.resetDone', { name: resetBranch.name, week: range }));
-        return;
-      }
-      var back = event.target.closest('[data-action="week-template"]');
-      if (back) {
-        if (weekBlocked()) return;
-        var backCard = back.closest('.card');
-        var backBranch = Store.byId(state.branches, backCard.dataset.branch);
-        if (!backBranch) return;
-        Store.clearWeekSchedule(week(), backBranch);
-        persist();
-        render();
-        toast(t('branches.templateBack', { name: backBranch.name }));
+        toast(t('branches.resetDone', {
+          name: resetBranch.name, week: Store.formatDate(Store.dateOfDay(weekKey, 0))
+        }));
         return;
       }
 
@@ -4596,14 +4580,15 @@
           input.value = '';
           return;
         }
-        if (Store.hasWeekSchedule(branch, week())) {
+        var copyView = Store.branchForWeek(branch, week());
+        if (copyView !== branch) {
           if (weekBlocked()) { input.value = ''; return; }
-          week().schedules[branch.id] = Store.clone(source.schedule);
-          persist();
+          Object.keys(copyView.schedule).forEach(function (day) { delete copyView.schedule[day]; });
+          Object.assign(copyView.schedule, Store.clone(source.schedule));
         } else {
           branch.schedule = Store.clone(source.schedule);
-          persist('config');
         }
+        persist('config');
         render();
         toast(t('branches.copied'));
         return;
@@ -4617,7 +4602,7 @@
           input.hasAttribute('data-role-add')) && weekBlocked()) { render(); return; }
       function saveNeeds() {
         Store.normalizeSchedule(view.schedule);
-        persist(onWeek ? undefined : 'config');
+        persist('config');
       }
 
       /* תמהיל התפקידים במשמרת. שינוי כמות בתפקיד מזיז גם את סך
@@ -4665,7 +4650,7 @@
               { from: defined.from || '09:00', to: defined.to || '17:00' };
             /* בשבוע עם דרישות מאופסות השעות נלקחות מהתבנית של הסניף,
                כדי שמי שמקליד "2" לא יקבל שעות ברירת מחדל שאינן שלו */
-            var kept = onWeek && (branch.schedule[dayIdx] || {})[shiftId];
+            var kept = onWeek && Store.resetHours(branch, dayIdx, shiftId, week());
             if (kept) {
               fallback = { from: kept.from, to: kept.to };
               if (kept.auto) fallback.auto = kept.auto;

@@ -1639,34 +1639,37 @@ test('מועד מוסלמי נושא סימון שהוא מקורב', function (
   });
 });
 
-/* ===== איפוס הדרישות של שבוע ===== */
+/* ===== איפוס הדרישות של סניף ===== */
 
-test('איפוס דרישות מאפס שבוע אחד בלבד ולא נוגע בתבנית ובשיבוצים', function () {
-  var state = Store.createState ? Store.createState() : null;
+test('איפוס דרישות מאפס מהשבוע הזה והלאה ולא נוגע בעבר ובשיבוצים', function () {
   var branch = { id: 'b1', name: 'סניף', active: true, schedule: {
     0: { morning: { need: 2, from: '09:00', to: '16:00' } },
     1: { evening: { need: 1, from: '15:00', to: '22:00' } }
   } };
-  var w1 = { assignments: { '0|b1|morning': ['e1', 'e2'] } };
-  var w2 = {};
-  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 2, 'התבנית לא נקראה');
+  var past = Store.stampWeek({}, '2026-09-13');
+  var now = Store.stampWeek({ assignments: { '0|b1|morning': ['e1', 'e2'] } }, '2026-09-20');
+  var later = Store.stampWeek({}, '2026-10-04');
 
-  Store.resetWeekNeeds(w1, branch);
-  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 0, 'הדרישה לא אופסה');
-  assertEqual(Store.slotNeed(branch, 1, 'evening', w1), 0, 'הדרישה לא אופסה');
-  assertEqual(Store.slotNeed(branch, 0, 'morning', w2), 2, 'שבוע אחר הושפע');
-  assertEqual(branch.schedule[0].morning.need, 2, 'התבנית הקבועה השתנתה');
-  assertEqual(w1.assignments['0|b1|morning'].length, 2, 'שיבוצים נמחקו באיפוס');
+  assertEqual(Store.slotNeed(branch, 0, 'morning', now), 2, 'הדרישה לא נקראה');
+  Store.resetWeekNeeds(branch, now);
+  assertEqual(Store.slotNeed(branch, 0, 'morning', now), 0, 'הדרישה לא אופסה');
+  assertEqual(Store.slotNeed(branch, 1, 'evening', later), 0, 'האיפוס לא חל על שבוע עתידי');
+  assertEqual(Store.slotNeed(branch, 0, 'morning', past), 2, 'שבוע קודם הושפע');
+  assertEqual(now.assignments['0|b1|morning'].length, 2, 'שיבוצים נמחקו באיפוס');
 
-  /* הקלדה בטבלת השבוע משנה אותה בלבד */
-  var view = Store.branchForWeek(branch, w1);
+  /* מה שמוקלד אחרי האיפוס נשמר וחל על כל השבועות שאחריו */
+  var view = Store.branchForWeek(branch, now);
   view.schedule[2] = { middle: { need: 3, from: '12:00', to: '20:00' } };
-  assertEqual(Store.slotNeed(branch, 2, 'middle', w1), 3, 'הדרישה של השבוע לא נקראה');
-  assertEqual(Store.slotNeed(branch, 2, 'middle', w2), 0, 'הדרישה דלפה לשבוע אחר');
-  assert(!branch.schedule[2], 'הדרישה דלפה לתבנית');
+  assertEqual(Store.slotNeed(branch, 2, 'middle', later), 3, 'הדרישה לא עברה לשבוע הבא');
+  assertEqual(Store.slotNeed(branch, 2, 'middle', past), 0, 'הדרישה דלפה אחורה');
+  assert(!branch.schedule[2], 'הדרישה דלפה לטבלה המקורית');
+  assertEqual(Store.resetHours(branch, 0, 'morning', now).from, '09:00', 'השעות של הסניף אבדו');
 
-  Store.clearWeekSchedule(w1, branch);
-  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 2, 'החזרה לתבנית נכשלה');
+  /* איפוס שני, מאוחר יותר, מתחיל טבלה חדשה בלי לגעת בקודמת */
+  Store.resetWeekNeeds(branch, later);
+  assertEqual(Store.slotNeed(branch, 2, 'middle', later), 0, 'האיפוס השני לא חל');
+  assertEqual(Store.slotNeed(branch, 2, 'middle', now), 3, 'האיפוס השני שינה שבוע קודם');
+  assertEqual(branch.needsFrom.length, 2, 'מספר האיפוסים שגוי');
 });
 
 /* ===== שעות מיוחדות ליום ===== */

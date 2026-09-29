@@ -142,7 +142,7 @@ async function shotBand(name, fromSel, toSel, extra) {
 }
 
 /* ===== הקמת העסק ===== */
-await skipWizard(page);
+await skipWizard(page, { defaultWeek: true });
 await page.goto(url('app.html'));
 await page.waitForTimeout(500);
 await page.click('[data-auth-mode="signup"]');
@@ -195,7 +195,8 @@ await page.evaluate(() => {
     off: false, blocked: {}, preferred: {}, note: '', status: 'pending',
     requestedAt: new Date().toISOString(), managerNote: ''
   });
-  const wk = Store.currentWeekKey();
+  /* המנהל נפתח על השבוע הבא, ולכן הבקשות נזרעות אליו */
+  const wk = Store.shiftWeekKey(Store.currentWeekKey(), 1);
   const req = (i, day, extra) => put(wk, emps[i].id + '|' + day, Object.assign(base(), extra));
   req(0, 4, { off: true, note: 'תור לרופא' });
   req(1, 2, { blocked: { evening: true }, note: 'לימודים בערב' });

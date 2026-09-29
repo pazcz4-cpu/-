@@ -167,11 +167,23 @@ try {
     });
     return byBranch;
   });
-  check('הסניף שנבחר התרוקן', after[target] === undefined, true);
-  check('שאר הסניפים לא נגעו',
+  /* האיפוס הוא של הדרישות ולא של השיבוצים: מה ששובץ נשאר */
+  check('השיבוצים של הסניף נשארו', after[target] === before[target], true);
+  check('ושל שאר הסניפים',
     branchIds.slice(1).every((id) => after[id] === before[id]), true);
-  check('ונאמר כמה הוסרו',
-    (await page.locator('#toast').innerText()).trim(), /הוסרו/);
+  check('הדרישות של הסניף אופסו', await page.evaluate((id) => {
+    const Store = window.ShiftStore, app = window.ShiftApp;
+    const branch = Store.byId(app.getState().branches, id);
+    const week = app.getState().weeks[app.getWeekKey()];
+    for (let d = 0; d < 7; d++) {
+      for (const shift of Store.shiftIds(app.getState())) {
+        if (Store.slotNeed(branch, d, shift, week) > 0) return false;
+      }
+    }
+    return true;
+  }, target), true);
+  check('ונאמר שהדרישות אופסו',
+    (await page.locator('#toast').innerText()).trim(), /אופסו/);
 
   console.log('\n  שגיאות בדף: ' + (errors.length ? errors.join(' | ') : 'אין'));
   if (errors.length) failures.push('שגיאות בדף');

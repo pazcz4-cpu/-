@@ -58,8 +58,24 @@ const HIDDEN = ['#export-excel', '#export-csv', '#copy-text', '#print',
 try {
   const page = await boot(DESK, 'boss@tb.test');
 
-  console.log('\n== השורה הראשית נושאת שלושה דברים בלבד ==');
-  check('בחירת שבוע', await page.locator('.tb-where .week-nav').isVisible(), true);
+  console.log('\n== השבוע בכותרת, בכל לשונית ==');
+  check('בחירת שבוע בכותרת', await page.locator('.app-header .week-bar .week-nav').isVisible(), true);
+  check('והיא אינה בסרגל הסידור', await page.locator('.toolbar .week-nav').count(), 0);
+  const weekFont = await page.evaluate(
+    () => parseFloat(getComputedStyle(document.querySelector('#week-title')).fontSize));
+  check('כותרת השבוע גדולה', weekFont >= 24, true);
+  for (const tab of ['constraints', 'employees', 'branches', 'settings']) {
+    await page.click('.tab[data-tab="' + tab + '"]');
+    await page.waitForTimeout(150);
+    check('השבוע נראה בלשונית ' + tab, await page.locator('#week-title').isVisible(), true);
+  }
+  const title = await page.locator('#week-title').innerText();
+  await page.click('#next-week');
+  check('החלפת שבוע מלשונית אחרת', (await page.locator('#week-title').innerText()) !== title, true);
+  await page.click('#this-week');
+  await page.click('.tab[data-tab="schedule"]');
+
+  console.log('\n== השורה הראשית נושאת את מצב השמירה והפרסום ==');
   check('מצב שמירה', await page.locator('.tb-where #sync-state').isVisible(), true);
   check('מצב טיוטה/פרסום', await page.locator('.tb-where #publish-state').count(), 1);
   /* מה שהיה כאן פעם: שתי שורות כפתורים, ייצוא אישי וימי חג */

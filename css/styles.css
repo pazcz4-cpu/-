@@ -247,6 +247,26 @@ body {
 }
 .brand { display: flex; align-items: center; gap: var(--s3); }
 
+/* שורת הכותרת: הלוגו בצד אחד והשבוע הנוכחי בצד השני */
+.header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4); flex-wrap: wrap;
+}
+
+/* השבוע: גדול, כחול, ובכל לשונית. הוא לא שייך לסרגל הסידור. */
+.week-bar .week-nav { gap: var(--s2); flex-wrap: nowrap; }
+.week-bar .week-label { min-width: 230px; }
+.week-bar .week-label strong {
+  font-size: 30px; line-height: var(--lh-tight); font-weight: 800;
+  letter-spacing: -.01em; white-space: nowrap;
+}
+.week-bar .week-label span { font-size: var(--t-sm); color: var(--header-ink); opacity: .85; min-height: 1.3em; }
+.week-bar .btn {
+  background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .28);
+  color: var(--header-ink);
+}
+.week-bar .btn:hover { background: rgba(255, 255, 255, .28); color: var(--header-ink); }
+
 /* ===== הלוגו =====
    שתי הגרסאות נטענות, ו-CSS בוחר ביניהן: מצב כהה יכול להשתנות
    בזמן שהעמוד פתוח, ובחירה שנעשית פעם אחת ב-JavaScript הייתה
@@ -996,6 +1016,12 @@ body { -webkit-tap-highlight-color: transparent; }
 
   .app-header h1 { font-size: 16px; }
   .sub { display: none; }
+  .header-row { gap: 6px; }
+  .week-bar { flex: 1 1 100%; }
+  .week-bar .week-nav { justify-content: space-between; }
+  .week-bar .week-label { min-width: 0; flex: 1; }
+  .week-bar .week-label strong { font-size: 18px; }
+  .week-bar .btn.small { min-height: 34px; padding: 6px 10px; }
   .brand-mark .brand-img { width: 30px; height: 30px; }
 
   /* לשוניות ניתנות לגלילה במקום לרדת שורה */

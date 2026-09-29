@@ -83,7 +83,7 @@ https://wa.me/9727XXXXXXX
 
 ---
 
-## שלב 1 · חשבון פייסבוק אישי
+## שלב 1 · חשבון פייסבוק אישי  ✅ *בוצע 26/09*
 
 **לאן:** https://www.facebook.com/
 
@@ -103,7 +103,7 @@ and security → Two-factor authentication**
 
 ---
 
-## שלב 2 · תיק עסקי (Business Manager)
+## שלב 2 · תיק עסקי  ✅ *בוצע 26/09* (Business Manager)
 
 **לאן:** https://business.facebook.com/
 
@@ -129,7 +129,7 @@ and security → Two-factor authentication**
 
 ---
 
-## שלב 3 · מרכז האבטחה — מה כן ומה לא
+## שלב 3 · מרכז האבטחה  ✅ *בוצע 26/09 — אימות העסק עוד לא נדרש*
 
 **לאן:** **Business settings → Security Center**
 (https://business.facebook.com/settings/security)
@@ -166,7 +166,7 @@ and security → Two-factor authentication**
 
 ---
 
-## שלב 4 · אפליקציה ב-Meta for Developers
+## שלב 4 · אפליקציה ב-Meta for Developers  ✅ *בוצע 26/09*
 
 **לאן:** https://developers.facebook.com/apps/
 
@@ -209,7 +209,7 @@ Connect with customers through WhatsApp
 
 ---
 
-## שלב 5 · שליחת בדיקה — לפני שנוגעים במספר האמיתי
+## שלב 5 · שליחת בדיקה  ✅ *בוצע 26/09 — hello_world הגיע*
 
 **איפה WhatsApp בתפריט? אין אותו.** ההגדרות יושבות **בתוך**
 ה-use case. בלוח הבקרה, השורה הראשונה:
@@ -251,7 +251,7 @@ curl -X POST "https://graph.facebook.com/v26.0/PHONE_NUMBER_ID/messages" \
 
 ---
 
-## שלב 6 · חיבור המספר האמיתי
+## שלב 6 · חיבור המספר האמיתי  ⬜ **הבא בתור**
 
 **לאן:** אותו מסך **API Setup** → **Add phone number**
 
@@ -306,7 +306,7 @@ Description      מערכת שיבוץ עובדים
 
 ---
 
-## שלב 7 · טוקן קבוע
+## שלב 7 · טוקן קבוע  ✅ *בוצע 26/09 — משתמש מערכת `SetShifts API`*
 
 הטוקן שבמסך API Setup מת אחרי 24 שעות.
 
@@ -341,7 +341,7 @@ whatsapp_business_management
 
 ---
 
-## שלב 8 · פרסום האפליקציה
+## שלב 8 · פרסום האפליקציה  ⬜ **חסר**
 
 **לאן:** לוח הבקרה של האפליקציה → תפריט שמאלי → **פרסום**
 (Publishing)
@@ -369,7 +369,7 @@ whatsapp_business_management
 
 ---
 
-## שלב 9 · אמצעי תשלום
+## שלב 9 · אמצעי תשלום  ✅ *בוצע 26/09*
 
 **לאן:** **WhatsApp Manager → Billing**
 (https://business.facebook.com/wa/manage/)
@@ -391,7 +391,7 @@ whatsapp_business_management
 
 ---
 
-## שלב 10 · ארבע התבניות
+## שלב 10 · התבניות  ⬜ *ה-4 הוגשה 26/09; שלוש תבניות העובדים חסרות*
 
 **לאן:** https://business.facebook.com/wa/manage/message-templates
 → **Create template**
@@ -523,7 +523,7 @@ Buttons:
 
 ---
 
-## שלב 11 · לחבר למערכת
+## שלב 11 · לחבר למערכת  ⬜ *תשעה משתנים ו-webhook בוצעו 26/09; חסר PHONE_ID ו-STAFF_TEMPLATE*
 
 ### א. משתני סביבה
 
@@ -559,9 +559,13 @@ WHATSAPP_STAFF_TEMPLATE     staff_schedule_published_he
 → **Edit**
 
 ```
-Callback URL   https://setshifts.com/api/whatsapp-webhook
+Callback URL   https://setshifts.com/api/wa
 Verify token   אותה מחרוזת בדיוק שהכנסת ל-WHATSAPP_VERIFY_TOKEN
 ```
+
+> 🛑 **`/api/wa` ולא `/api/whatsapp-webhook`.** זו נקודת הקצה
+> היחידה שקיימת, והיא משרתת גם את הוובהוק וגם את סריקת
+> הנטישות. כתובת אחרת תחזיר 404 והאימות ייכשל.
 
 → **Verify and save** → **Manage** → סמן `messages`.
 
@@ -590,7 +594,7 @@ https://setshifts.com/version.txt
 
 ---
 
-## שלב 12 · בדיקה מקצה לקצה
+## שלב 12 · בדיקה מקצה לקצה  ⬜ *אחרי הכול*
 
 1. שלח לעצמך `staff_schedule_published_he` מהמערכת
 2. ענה **"הסר"** → וּודא שאתה מסומן כמוסר אצלנו
@@ -611,7 +615,7 @@ https://setshifts.com/version.txt
 | `133010` | המספר לא רשום | השלם רישום ו-PIN (שלב 6) |
 | `190` | הטוקן פג | השתמשת בזמני. עבור לקבוע (שלב 7) |
 | שגיאת הרשאה בשליחה | ה-WABA לא הוקצה למשתמש המערכת | שלב 7 ב׳ |
-| ה-webhook לא מתאמת | המשתנה לא נשמר או לא נפרס | שלב 11 א׳, ואז פריסה מחדש |
+| ה-webhook לא מתאמת | כתובת שגויה, או שהמשתנה לא נפרס | `/api/wa`, ואז פריסה מחדש |
 | לא מגיעות הודעות נכנסות | האפליקציה לא מפורסמת | שלב 8 |
 | שיחת האימות לא הגיעה | משהו ענה במקומך | שלב 0 ב׳ |
 | אימות העסק נדחה | שם/כתובת לא תאמו למסמך | תקן ב-Business info והגש שוב |

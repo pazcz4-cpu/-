@@ -65,7 +65,7 @@
     /* התפקיד, כשהמשמרת מחפשת תפקידים. זו העובדה שמנהל שואל עליה
        ראשונה כשהוא רואה מלצר בעמדת מטבח. משמרת יכולה לבקש כמה
        תפקידים, ולכן נאמר איזה מהם העובד ממלא. */
-    var wanted = slotRoles(state, slot);
+    var wanted = slotRoles(state, slot, week);
     if (wanted.length) {
       var mine = wanted.filter(function (roleId) {
         return roleId && Store.employeeRoles(emp).indexOf(roleId) !== -1;
@@ -114,10 +114,10 @@
 
   /* למה עובד אחר *לא* יכול – אותם תנאים, בסדר שבו המנוע בודק */
   /* התפקידים שהמשמרת הזו מחפשת, בלי המקומות הפתוחים */
-  function slotRoles(state, slot) {
+  function slotRoles(state, slot, week) {
     var branch = Store.byId(state.branches, slot.branchId);
     if (!branch) return [];
-    return Store.slotRoleNeeds(state, branch, slot.dayIdx, slot.shiftId)
+    return Store.slotRoleNeeds(state, branch, slot.dayIdx, slot.shiftId, week)
       .map(function (line) { return line.role; })
       .filter(Boolean);
   }
@@ -129,7 +129,7 @@
     /* התפקיד לפני האילוצים: הוא תנאי יסוד, והוא גם הסיבה
        שהכי קל לתקן – לסמן את העובד. נחסם רק מי שאינו מתאים לאף
        אחד מהמקומות במשמרת. */
-    var blockedRoles = slotRoles(state, slot);
+    var blockedRoles = slotRoles(state, slot, week);
     if (blockedRoles.length && !blockedRoles.some(function (roleId) {
       return Store.employeeFitsRole(state, emp, roleId);
     })) {

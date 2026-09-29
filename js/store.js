@@ -109,7 +109,7 @@
   function emptyWeek() {
     return {
       constraints: {}, assignments: {}, manual: {}, holidays: {},
-      dayHours: {}, punches: [],
+      dayHours: {}, schedules: {}, punches: [],
       shabbatEnd: '', note: '', generatedAt: null, calendarAsked: false,
       published: false, publishedAt: null, publishedSignature: ''
     };
@@ -122,6 +122,7 @@
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
     if (!w.holidays) w.holidays = {};
+    if (!w.schedules) w.schedules = {};
     if (!Array.isArray(w.punches)) w.punches = [];
     return w;
   }
@@ -197,9 +198,45 @@
     return base === null ? null : formatTime(base + minutes);
   }
 
+  /* הטבלה שלפיה הסניף עובד בשבוע נתון.
+
+     ברירת המחדל היא התבנית הקבועה של הסניף, שחוזרת כל שבוע.
+     מנהל שרוצה דרישות אחרות לשבוע אחד בלבד מאפס אותן, ומאותו רגע
+     לשבוע הזה יש טבלה משלו (week.schedules). התבנית עצמה לא זזה,
+     ושאר השבועות ממשיכים לפיה. */
+  function weekSchedule(branch, week) {
+    var own = week && week.schedules && week.schedules[branch.id];
+    return own || branch.schedule || {};
+  }
+
+  function hasWeekSchedule(branch, week) {
+    return !!(week && week.schedules && week.schedules[branch.id]);
+  }
+
+  /* הסניף כפי שהוא נראה בשבוע הזה. עותק שטחי: מי שעורך את
+     schedule שלו עורך את הטבלה של השבוע, לא את התבנית. */
+  function branchForWeek(branch, week) {
+    if (!hasWeekSchedule(branch, week)) return branch;
+    return Object.assign({}, branch, { schedule: week.schedules[branch.id] });
+  }
+
+  /* איפוס הדרישות של סניף לשבוע אחד: כל המשמרות נסגרות והמנהל
+     מקליד מחדש רק מה שצריך. שיבוצים שכבר נעשו אינם נוגעים בהם,
+     והתבנית הקבועה נשארת כמו שהיא. */
+  function resetWeekNeeds(week, branch) {
+    if (!week.schedules) week.schedules = {};
+    week.schedules[branch.id] = {};
+    return week.schedules[branch.id];
+  }
+
+  /* חזרה לתבנית הקבועה: הטבלה של השבוע נמחקת */
+  function clearWeekSchedule(week, branch) {
+    if (week && week.schedules) delete week.schedules[branch.id];
+  }
+
   /* הגדרת משמרת בסניף ביום מסוים, או null אם הסניף סגור אז */
-  function slotConfig(branch, dayIdx, shiftId) {
-    var day = (branch.schedule || {})[dayIdx];
+  function slotConfig(branch, dayIdx, shiftId, week) {
+    var day = weekSchedule(branch, week)[dayIdx];
     var config = day && day[shiftId];
     if (!config || Number(config.need) <= 0) return null;
     return config;
@@ -210,7 +247,7 @@
      מתקיימת. זה המקרה של משמרת ערב בערב פסח — היא מתחילה
      אחרי שהעסק כבר סגר, ובלי זה הלוח היה מבקש לאייש אותה. */
   function slotNeed(branch, dayIdx, shiftId, week) {
-    var config = slotConfig(branch, dayIdx, shiftId);
+    var config = slotConfig(branch, dayIdx, shiftId, week);
     if (!config) return 0;
     if (week && dayHours(week, dayIdx) && !slotHours(week, branch, dayIdx, shiftId)) return 0;
     return Number(config.need) || 0;
@@ -277,7 +314,7 @@
 
   /* שעות בפועל. במוצ״ש ההתחלה נגזרת משעת צאת השבת של אותו שבוע. */
   function slotHours(week, branch, dayIdx, shiftId) {
-    var config = slotConfig(branch, dayIdx, shiftId);
+    var config = slotConfig(branch, dayIdx, shiftId, week);
     if (!config) return null;
     var from = config.from || '';
     if (config.auto === 'motzash') {
@@ -1840,8 +1877,8 @@
      השורה הריקה בסוף היא המקומות הפתוחים. תפקיד שנמחק מההגדרות
      נחשב כאילו אינו – אחרת משמרת הייתה נשארת לנצח בלי מועמדים,
      בלי שאיש יבין למה. */
-  function slotRoleNeeds(state, branch, dayIdx, shiftId) {
-    var config = slotConfig(branch, dayIdx, shiftId);
+  function slotRoleNeeds(state, branch, dayIdx, shiftId, week) {
+    var config = slotConfig(branch, dayIdx, shiftId, week);
     if (!config) return [];
     return roleNeedsOf(state, config, Number(config.need) || 0);
   }
@@ -2034,7 +2071,7 @@
             demands.push({
               dayIdx: day, branchId: branch.id, shiftId: shiftId, need: need,
               /* תמהיל התפקידים: כמה אנשים בכל תפקיד, ומה נשאר פתוח */
-              roleNeeds: slotRoleNeeds(state, branch, day, shiftId)
+              roleNeeds: slotRoleNeeds(state, branch, day, shiftId, week)
             });
           }
         });
@@ -2057,7 +2094,7 @@
         if (slotNeed(branch, dayIdx, shiftId, week) === 0) return false;
         if (emp.shifts.indexOf(shiftId) === -1) return false;
         if (constraint.blocked && constraint.blocked[shiftId]) return false;
-        if (!employeeFitsSlot(state, emp, slotRoleNeeds(state, branch, dayIdx, shiftId))) return false;
+        if (!employeeFitsSlot(state, emp, slotRoleNeeds(state, branch, dayIdx, shiftId, week))) return false;
         return true;
       });
     });
@@ -2577,6 +2614,10 @@
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
+      if (!weekData.schedules || typeof weekData.schedules !== 'object') weekData.schedules = {};
+      Object.keys(weekData.schedules).forEach(function (branchId) {
+        normalizeSchedule(weekData.schedules[branchId]);
+      });
       if (typeof weekData.published !== 'boolean') weekData.published = false;
       if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
       /* דיווחי שעון. שבוע ישן אינו נושא אותם, ורשימה פגומה
@@ -2906,6 +2947,9 @@
     holidayName: holidayName,
     setHoliday: setHoliday,
     slotConfig: slotConfig,
+    weekSchedule: weekSchedule, hasWeekSchedule: hasWeekSchedule,
+    branchForWeek: branchForWeek, resetWeekNeeds: resetWeekNeeds,
+    clearWeekSchedule: clearWeekSchedule,
     slotNeed: slotNeed,
     slotHours: slotHours,
     hoursLabel: hoursLabel,

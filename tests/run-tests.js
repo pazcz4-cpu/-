@@ -1639,6 +1639,36 @@ test('מועד מוסלמי נושא סימון שהוא מקורב', function (
   });
 });
 
+/* ===== איפוס הדרישות של שבוע ===== */
+
+test('איפוס דרישות מאפס שבוע אחד בלבד ולא נוגע בתבנית ובשיבוצים', function () {
+  var state = Store.createState ? Store.createState() : null;
+  var branch = { id: 'b1', name: 'סניף', active: true, schedule: {
+    0: { morning: { need: 2, from: '09:00', to: '16:00' } },
+    1: { evening: { need: 1, from: '15:00', to: '22:00' } }
+  } };
+  var w1 = { assignments: { '0|b1|morning': ['e1', 'e2'] } };
+  var w2 = {};
+  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 2, 'התבנית לא נקראה');
+
+  Store.resetWeekNeeds(w1, branch);
+  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 0, 'הדרישה לא אופסה');
+  assertEqual(Store.slotNeed(branch, 1, 'evening', w1), 0, 'הדרישה לא אופסה');
+  assertEqual(Store.slotNeed(branch, 0, 'morning', w2), 2, 'שבוע אחר הושפע');
+  assertEqual(branch.schedule[0].morning.need, 2, 'התבנית הקבועה השתנתה');
+  assertEqual(w1.assignments['0|b1|morning'].length, 2, 'שיבוצים נמחקו באיפוס');
+
+  /* הקלדה בטבלת השבוע משנה אותה בלבד */
+  var view = Store.branchForWeek(branch, w1);
+  view.schedule[2] = { middle: { need: 3, from: '12:00', to: '20:00' } };
+  assertEqual(Store.slotNeed(branch, 2, 'middle', w1), 3, 'הדרישה של השבוע לא נקראה');
+  assertEqual(Store.slotNeed(branch, 2, 'middle', w2), 0, 'הדרישה דלפה לשבוע אחר');
+  assert(!branch.schedule[2], 'הדרישה דלפה לתבנית');
+
+  Store.clearWeekSchedule(w1, branch);
+  assertEqual(Store.slotNeed(branch, 0, 'morning', w1), 2, 'החזרה לתבנית נכשלה');
+});
+
 /* ===== שעות מיוחדות ליום ===== */
 
 test('שעות מיוחדות חותכות את המשמרת ואינן משנות את הסניף', function () {

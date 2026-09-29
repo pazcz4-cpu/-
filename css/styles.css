@@ -799,6 +799,14 @@ select.emp-select.extra { border-style: dashed; color: var(--muted); }
 /* ===== עורך הימים והשעות של הסניף ===== */
 .card.wide { grid-column: 1 / -1; }
 .sched-wrap { margin-top: 4px; }
+
+/* הדרישות של הסניף אופסו לשבוע הזה: הטבלה שמתחת היא של השבוע ולא התבנית */
+.week-needs-banner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--s2); margin: var(--s2) 0; padding: var(--s2) var(--s3);
+  border-radius: var(--r-md, 8px); border: 1px solid #ecd49a;
+  background: #fff4dc; color: #5e3d00; font-size: var(--t-sm);
+}
 .sched-table { min-width: 620px; }
 .sched-table th { font-size: 13px; }
 td.sched-cell { min-width: 150px; vertical-align: middle; }

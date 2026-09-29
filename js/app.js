@@ -157,6 +157,10 @@
     Object.keys(state.weeks).forEach(function (key) {
       var weekData = state.weeks[key];
       var changed = false;
+      if (weekData.schedules && weekData.schedules[branch.id]) {
+        delete weekData.schedules[branch.id];
+        changed = true;
+      }
       Object.keys(weekData.assignments || {}).forEach(function (slot) {
         var before = weekData.assignments[slot].length;
         weekData.assignments[slot] = weekData.assignments[slot]
@@ -477,7 +481,7 @@
     var field = $('#shabbat-end');
     field.value = current.shabbatEnd || '';
     var needsMotzash = state.branches.some(function (branch) {
-      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening');
+      return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening', week());
     });
     $('#shabbat-field').classList.toggle('hidden', !needsMotzash);
   }
@@ -2580,17 +2584,29 @@
 
   function renderBranches() {
     var html = '';
-    state.branches.forEach(function (branch) {
+    state.branches.forEach(function (templateBranch) {
+      /* הטבלה שמוצגת היא זו של השבוע הנבחר: התבנית הקבועה, או
+         טבלה משלו אם הדרישות של הסניף אופסו לשבוע הזה */
+      var branch = Store.branchForWeek(templateBranch, week());
+      var onWeek = branch !== templateBranch;
+      var range = Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
+        Store.formatDate(Store.dateOfDay(weekKey, 6));
       html += '<div class="card wide' + (branch.active ? '' : ' inactive') + '" data-branch="' + esc(branch.id) + '">';
       html += '<div class="card-head"><input class="name" data-field="name" value="' + esc(branch.name) + '">' +
         '<label class="check"><input type="checkbox" data-field="active"' +
         (branch.active ? ' checked' : '') + '> ' + t('branches.active') + '</label>' +
         '<button class="btn ghost small" data-action="reset-branch" title="' +
-          esc(t('branches.resetTitle')) + '">' + esc(t('branches.resetWeek')) + '</button>' +
+          esc(t('branches.resetTitle', { week: range })) + '">' + esc(t('branches.resetWeek')) + '</button>' +
         '<button class="btn icon danger" data-action="delete-branch" aria-label="' +
           esc(t('common.delete')) + '" title="' + esc(t('common.delete')) + '">' +
           ico('trash') + '</button></div>';
 
+      if (onWeek) {
+        html += '<div class="week-needs-banner"><span>' +
+          esc(t('branches.weekOnly', { week: range })) + '</span>' +
+          '<button type="button" class="btn ghost small" data-action="week-template">' +
+          esc(t('branches.backToTemplate')) + '</button></div>';
+      }
       html += '<div class="table-wrap sched-wrap"><table class="sched-table"><thead><tr><th class="row-head">' +
         t('branches.day') + '</th>';
       shiftList().forEach(function (shift) {
@@ -4509,44 +4525,50 @@
         var dropCard = drop.closest('.card');
         var dropBranch = Store.byId(state.branches, dropCard.dataset.branch);
         if (!dropBranch) return;
-        Store.setSlotRoleCount(state, dropBranch, dropCell.dataset.day,
+        var dropView = Store.branchForWeek(dropBranch, week());
+        var dropOnWeek = dropView !== dropBranch;
+        if (dropOnWeek && weekBlocked()) return;
+        Store.setSlotRoleCount(state, dropView, dropCell.dataset.day,
           dropCell.dataset.shift, drop.dataset.roleRemove, 0);
-        Store.normalizeSchedule(dropBranch.schedule);
-        persist('config');
+        Store.normalizeSchedule(dropView.schedule);
+        persist(dropOnWeek ? undefined : 'config');
         render();
         return;
       }
-      /* איפוס סניף לשבוע הזה: כל השיבוצים של הסניף בשבוע שמוצג
-         יורדים בלחיצה אחת. שאר הסניפים ושאר השבועות אינם נוגעים.
+      /* איפוס הדרישות של הסניף לשבוע הזה.
 
-         זה לא מוחק את ההגדרה של הסניף – הימים, השעות וכמות
-         האנשים נשארים. רק מי שובץ. */
+         מה שמאופס הוא כמה אנשים צריך בכל משמרת, ולא מי ששובץ:
+         שיבוצים שכבר נעשו אינם נוגעים בהם. השבוע מקבל טבלה משלו
+         עם אפסים, והמנהל מקליד רק מה שנדרש השבוע. התבנית הקבועה
+         של הסניף ושאר השבועות נשארים כמו שהיו.
+
+         "חזרה לתבנית" מוחק את הטבלה של השבוע. */
       var reset = event.target.closest('[data-action="reset-branch"]');
       if (reset) {
         if (weekBlocked()) return;
         var resetCard = reset.closest('.card');
         var resetBranch = Store.byId(state.branches, resetCard.dataset.branch);
         if (!resetBranch) return;
-        var current = week();
-        var slots = Object.keys(current.assignments || {}).filter(function (slot) {
-          return slot.split('|')[1] === resetBranch.id;
-        });
-        var count = slots.reduce(function (sum, slot) {
-          return sum + (current.assignments[slot] || []).length;
-        }, 0);
-        if (!count) { toast(t('branches.resetEmpty', { name: resetBranch.name })); return; }
-        if (!confirm(t('branches.resetConfirm', {
-          name: resetBranch.name, count: count,
-          week: Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
-            Store.formatDate(Store.dateOfDay(weekKey, 6))
-        }))) return;
-        slots.forEach(function (slot) {
-          delete current.assignments[slot];
-          if (current.manual) delete current.manual[slot];
-        });
+        var range = Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' +
+          Store.formatDate(Store.dateOfDay(weekKey, 6));
+        if (Store.hasWeekSchedule(resetBranch, week()) &&
+            !confirm(t('branches.resetConfirm', { name: resetBranch.name, week: range }))) return;
+        Store.resetWeekNeeds(week(), resetBranch);
         persist();
         render();
-        toast(t('branches.resetDone', { count: count, name: resetBranch.name }));
+        toast(t('branches.resetDone', { name: resetBranch.name, week: range }));
+        return;
+      }
+      var back = event.target.closest('[data-action="week-template"]');
+      if (back) {
+        if (weekBlocked()) return;
+        var backCard = back.closest('.card');
+        var backBranch = Store.byId(state.branches, backCard.dataset.branch);
+        if (!backBranch) return;
+        Store.clearWeekSchedule(week(), backBranch);
+        persist();
+        render();
+        toast(t('branches.templateBack', { name: backBranch.name }));
         return;
       }
 
@@ -4574,11 +4596,28 @@
           input.value = '';
           return;
         }
-        branch.schedule = Store.clone(source.schedule);
-        persist('config');
+        if (Store.hasWeekSchedule(branch, week())) {
+          if (weekBlocked()) { input.value = ''; return; }
+          week().schedules[branch.id] = Store.clone(source.schedule);
+          persist();
+        } else {
+          branch.schedule = Store.clone(source.schedule);
+          persist('config');
+        }
         render();
         toast(t('branches.copied'));
         return;
+      }
+
+      /* מכאן ואילך עורכים את הטבלה שהסניף עובד לפיה בשבוע שמוצג:
+         התבנית הקבועה, או הטבלה של השבוע אם הדרישות אופסו. */
+      var view = Store.branchForWeek(branch, week());
+      var onWeek = view !== branch;
+      if (onWeek && (input.dataset.sched || input.dataset.roleNeed ||
+          input.hasAttribute('data-role-add')) && weekBlocked()) { render(); return; }
+      function saveNeeds() {
+        Store.normalizeSchedule(view.schedule);
+        persist(onWeek ? undefined : 'config');
       }
 
       /* תמהיל התפקידים במשמרת. שינוי כמות בתפקיד מזיז גם את סך
@@ -4589,13 +4628,12 @@
         var roleDay = roleCell.dataset.day;
         var roleShift = roleCell.dataset.shift;
         if (input.dataset.roleNeed) {
-          Store.setSlotRoleCount(state, branch, roleDay, roleShift,
+          Store.setSlotRoleCount(state, view, roleDay, roleShift,
             input.dataset.roleNeed, Math.max(1, Number(input.value) || 1));
         } else if (input.value) {
-          Store.setSlotRoleCount(state, branch, roleDay, roleShift, input.value, 1);
+          Store.setSlotRoleCount(state, view, roleDay, roleShift, input.value, 1);
         }
-        Store.normalizeSchedule(branch.schedule);
-        persist('config');
+        saveNeeds();
         render();
         return;
       }
@@ -4604,8 +4642,8 @@
         var cell = input.closest('.sched-cell');
         var dayIdx = cell.dataset.day;
         var shiftId = cell.dataset.shift;
-        if (!branch.schedule[dayIdx]) branch.schedule[dayIdx] = {};
-        var config = branch.schedule[dayIdx][shiftId];
+        if (!view.schedule[dayIdx]) view.schedule[dayIdx] = {};
+        var config = view.schedule[dayIdx][shiftId];
 
         if (input.dataset.sched === 'need') {
           var need = Math.max(0, Number(input.value) || 0);
@@ -4617,7 +4655,7 @@
             render();
             return;
           }
-          if (need === 0) { delete branch.schedule[dayIdx][shiftId]; }
+          if (need === 0) { delete view.schedule[dayIdx][shiftId]; }
           else if (config) { config.need = need; }
           else {
             var template = Data.defaultSchedule(null, state.settings.shifts);
@@ -4625,7 +4663,15 @@
             var fallback = (template[dayIdx] && template[dayIdx][shiftId]) ||
               (template[0] && template[0][shiftId]) ||
               { from: defined.from || '09:00', to: defined.to || '17:00' };
-            branch.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
+            /* בשבוע עם דרישות מאופסות השעות נלקחות מהתבנית של הסניף,
+               כדי שמי שמקליד "2" לא יקבל שעות ברירת מחדל שאינן שלו */
+            var kept = onWeek && (branch.schedule[dayIdx] || {})[shiftId];
+            if (kept) {
+              fallback = { from: kept.from, to: kept.to };
+              if (kept.auto) fallback.auto = kept.auto;
+              if (!fallback.from) delete fallback.from;
+            }
+            view.schedule[dayIdx][shiftId] = Object.assign({}, fallback, { need: need });
           }
         } else if (config) {
           if (input.dataset.sched === 'auto') {
@@ -4641,8 +4687,7 @@
             config[input.dataset.sched] = normalized;
           }
         }
-        Store.normalizeSchedule(branch.schedule);
-        persist('config');
+        saveNeeds();
         render();
         return;
       }

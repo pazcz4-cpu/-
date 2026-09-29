@@ -660,6 +660,12 @@
         kind: { bug: 'Algo não funciona', feature: 'Pedido de funcionalidade', question: 'Pergunta' },
         status: { open: 'Aberto', in_progress: 'Em curso', answered: 'Respondido', closed: 'Fechado' }
       },
+      managerGuide: {
+        title: 'Guia do gerente',
+        text: 'A rotina semanal passo a passo, com capturas do sistema. O guia está em hebraico.',
+        download: 'Baixar o guia (PDF)'
+      },
+
       settings: {
         privacyTitle: 'Privacidade e eliminação de dados',
         dataRights: 'Os teus dados são teus: a exportação acima junta tudo num ficheiro, a qualquer momento e sem nos pedires. Para eliminar a conta e todos os dados, envia um pedido do email do titular para support@setshifts.com e eliminamos em 14 dias, com confirmação por escrito. Exporta antes.',

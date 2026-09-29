@@ -666,6 +666,12 @@
         kind: { bug: 'Something is broken', feature: 'Feature request', question: 'Question' },
         status: { open: 'Open', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' }
       },
+      managerGuide: {
+        title: 'Manager guide',
+        text: 'The weekly routine step by step, with screenshots from the system. The guide is in Hebrew.',
+        download: 'Download the guide (PDF)'
+      },
+
       settings: {
         privacyTitle: 'Privacy and deleting your data',
         dataRights: 'Your data is yours: the export above puts all of it in one file, any time, without asking us. To delete the account and all its data, send a request from the account owner\'s email to support@setshifts.com and we delete it within 14 days and confirm in writing. Export first.',

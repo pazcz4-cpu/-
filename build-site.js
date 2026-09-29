@@ -124,7 +124,13 @@ function write(relative, content) {
 function copyDir(from, to, filter) {
   fs.readdirSync(path.join(root, from), { withFileTypes: true }).forEach((entry) => {
     const rel = path.join(from, entry.name);
-    if (entry.isDirectory()) { copyDir(rel, path.join(to, entry.name), filter); return; }
+    if (entry.isDirectory()) {
+      /* צילומי המסך של מדריך המנהל הם חומר מקור ל-PDF. האתר צריך
+         את ה-PDF בלבד, ולא שני מגה של תמונות שאיש לא מבקש. */
+      if (rel === path.join('assets', 'manager-guide')) return;
+      copyDir(rel, path.join(to, entry.name), filter);
+      return;
+    }
     if (filter && !filter(entry.name)) return;
     const target = path.join(out, to, entry.name);
     mkdir(path.dirname(target));
@@ -145,6 +151,13 @@ copyDir('brand', 'brand', (name) => name.endsWith('.png') && name !== 'logo-sour
 /* נכסי הסרטון. ה-mp4 עצמו אינו במאגר כל עוד הוא לא צולם; אם
    הוא קיים – הוא נוסע איתם. README אינו חלק מהאתר. */
 copyDir('assets', 'assets', (name) => !name.endsWith('.md'));
+
+/* מדריך המנהל להורדה, מתוך אפליקציית המנהל. הקובץ מופק ב-
+   tools/manager-guide-pdf.mjs ונשמר במאגר, כך שהבנייה עצמה אינה
+   צריכה דפדפן. */
+mkdir(path.join(out, 'guide'));
+fs.copyFileSync(path.join(root, 'docs', 'manager-guide', 'manager-guide.pdf'),
+  path.join(out, 'guide', 'manager-guide-he.pdf'));
 
 /* ===== אייקונים ===== */
 const ICONS = [

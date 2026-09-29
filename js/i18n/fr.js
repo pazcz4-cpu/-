@@ -660,6 +660,12 @@
         kind: { bug: 'Quelque chose ne marche pas', feature: 'Demande de fonctionnalité', question: 'Question' },
         status: { open: 'Ouvert', in_progress: 'En cours', answered: 'Répondu', closed: 'Fermé' }
       },
+      managerGuide: {
+        title: 'Guide du gestionnaire',
+        text: 'La routine hebdomadaire pas à pas, avec des captures du système. Le guide est en hébreu.',
+        download: 'Télécharger le guide (PDF)'
+      },
+
       settings: {
         privacyTitle: 'Confidentialité et suppression des données',
         dataRights: 'Vos données sont à vous : l’export ci-dessus les réunit dans un seul fichier, à tout moment et sans nous le demander. Pour supprimer le compte et toutes les données, écrivez depuis l’e-mail du titulaire à support@setshifts.com : nous supprimons sous 14 jours et confirmons par écrit. Exportez avant.',

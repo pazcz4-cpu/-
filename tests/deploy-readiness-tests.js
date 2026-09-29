@@ -139,6 +139,22 @@ console.log('\n== שמירת שבוע מכסה את כל השדות ==');
   }
 }
 
+/* ===== מדריך המנהל להורדה ===== */
+{
+  const fs = require('fs');
+  console.log('\n== מדריך המנהל להורדה ==');
+  const pdf = path + 'docs/manager-guide/manager-guide.pdf';
+  ok('קובץ ה-PDF קיים במאגר', fs.existsSync(pdf));
+  ok('והוא PDF אמיתי', fs.existsSync(pdf) && fs.readFileSync(pdf).slice(0, 4).toString() === '%PDF');
+  const html = fs.readFileSync(path + 'app.html', 'utf8');
+  ok('האפליקציה מקשרת אליו מההגדרות ומהתמיכה',
+    (html.match(/href="\/guide\/manager-guide-he\.pdf"/g) || []).length === 2);
+  const build = fs.readFileSync(path + 'build-site.js', 'utf8');
+  ok('הבנייה מעתיקה אותו לאתר', build.indexOf("'manager-guide-he.pdf'") !== -1);
+  ok('והבנייה אינה מעתיקה את צילומי המסך של המדריך',
+    build.indexOf("path.join('assets', 'manager-guide')") !== -1);
+}
+
 console.log('\n' + (bad ? '❌ ' + bad + ' כשלים' : '✅ הכל עבר') + '\n');
 process.exit(bad ? 1 : 0);
 })();

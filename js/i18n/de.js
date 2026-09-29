@@ -660,6 +660,12 @@
         kind: { bug: 'Etwas funktioniert nicht', feature: 'Funktionswunsch', question: 'Frage' },
         status: { open: 'Offen', in_progress: 'In Bearbeitung', answered: 'Beantwortet', closed: 'Geschlossen' }
       },
+      managerGuide: {
+        title: 'Anleitung für Führungskräfte',
+        text: 'Der Wochenablauf Schritt für Schritt, mit Screenshots aus dem System. Die Anleitung ist auf Hebräisch.',
+        download: 'Anleitung herunterladen (PDF)'
+      },
+
       settings: {
         privacyTitle: 'Datenschutz und Löschung',
         dataRights: 'Ihre Daten gehören Ihnen: der Export oben legt alle in eine Datei, jederzeit und ohne Anfrage bei uns. Zum Löschen des Kontos und aller Daten genügt eine Anfrage von der E-Mail-Adresse des Kontoinhabers an support@setshifts.com – wir löschen innerhalb von 14 Tagen und bestätigen schriftlich. Vorher exportieren.',

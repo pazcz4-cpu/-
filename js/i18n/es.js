@@ -660,6 +660,12 @@
         kind: { bug: 'Algo no funciona', feature: 'Petición de función', question: 'Pregunta' },
         status: { open: 'Abierto', in_progress: 'En curso', answered: 'Respondido', closed: 'Cerrado' }
       },
+      managerGuide: {
+        title: 'Guía para gerentes',
+        text: 'La rutina semanal paso a paso, con capturas del sistema. La guía está en hebreo.',
+        download: 'Descargar la guía (PDF)'
+      },
+
       settings: {
         privacyTitle: 'Privacidad y borrado de datos',
         dataRights: 'Tus datos son tuyos: la exportación de arriba los pone todos en un archivo, cuando quieras y sin pedírnoslo. Para borrar la cuenta y todos los datos, escribe desde el correo del titular a support@setshifts.com y los borramos en 14 días, con confirmación por escrito. Exporta antes.',

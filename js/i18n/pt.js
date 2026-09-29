@@ -162,6 +162,7 @@
       toolbar: {
         prevWeek: 'Semana anterior', nextWeek: 'Semana seguinte', thisWeek: 'Esta semana',
         week: 'Semana {from} – {to}', currentWeek: 'Semana atual',
+        nextWeekJump: 'Próxima semana',
         generate: 'Gerar horário', clear: 'Limpar horário',
         keepManual: 'Manter as atribuições manuais',
         copyText: 'Copiar como texto', excel: 'Excel', csv: 'CSV', print: 'Imprimir',

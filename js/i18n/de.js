@@ -162,6 +162,7 @@
       toolbar: {
         prevWeek: 'Vorherige Woche', nextWeek: 'Nächste Woche', thisWeek: 'Diese Woche',
         week: 'Woche {from} – {to}', currentWeek: 'Aktuelle Woche',
+        nextWeekJump: 'Nächste Woche',
         generate: 'Plan erstellen', clear: 'Plan leeren',
         keepManual: 'Manuelle Zuweisungen behalten',
         copyText: 'Als Text kopieren', excel: 'Excel', csv: 'CSV', print: 'Drucken',

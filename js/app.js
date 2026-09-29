@@ -38,7 +38,9 @@
   };
 
   var state = Store.emptyState();
-  var weekKey = Store.currentWeekKey();
+  /* המנהל נפתח על השבוע הבא, לא על הנוכחי: סידור נבנה קדימה, והשבוע
+     הנוכחי כבר רץ. מי שרוצה לראות אותו עובר אליו במפורש. */
+  var weekKey = Store.shiftWeekKey(Store.currentWeekKey(), 1);
   var VIEW_KEY = 'maiphone-shifts-view';
   /* ברירת המחדל היא "לפי עובד": השאלה שמנהל שואל את עצמו ראשונה
      היא מי עובד מתי וכמה משמרות יצאו לכל אחד, ולא מה קורה בסניף
@@ -467,7 +469,12 @@
     var end = Store.dateOfDay(weekKey, 6);
     var label = t('ui.weekLabel', { from: Store.formatDate(start), to: Store.formatDate(end) });
     $('#week-title').textContent = label;
-    $('#week-range').textContent = weekKey === Store.currentWeekKey() ? t('toolbar.currentWeek') : '';
+    var isCurrentWeek = weekKey === Store.currentWeekKey();
+    var isNextWeek = weekKey === Store.shiftWeekKey(Store.currentWeekKey(), 1);
+    $('#week-range').textContent = isCurrentWeek ? t('toolbar.currentWeek')
+      : (isNextWeek ? t('toolbar.nextWeekJump') : '');
+    $('#this-week').classList.toggle('active-week', isCurrentWeek);
+    $('#go-next-week').classList.toggle('active-week', isNextWeek);
     $('#constraints-week').textContent = t('ui.constraintsWeek', { label: label });
 
     renderHolidays();
@@ -3716,6 +3723,9 @@
     $('#prev-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, -1)); });
     $('#next-week').addEventListener('click', function () { goToWeek(Store.shiftWeekKey(weekKey, 1)); });
     $('#this-week').addEventListener('click', function () { goToWeek(Store.currentWeekKey()); });
+    $('#go-next-week').addEventListener('click', function () {
+      goToWeek(Store.shiftWeekKey(Store.currentWeekKey(), 1));
+    });
 
     document.querySelectorAll('.view-switch .chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
@@ -4476,6 +4486,7 @@
   function importContext() {
     return {
       getState: function () { return state; },
+    getWeekKey: function () { return weekKey; },
       saveFile: saveFile,
       toast: toast,
       createEmployee: function (name) { return addEmployee(name, true); },

@@ -169,6 +169,7 @@
       toolbar: {
         prevWeek: 'Previous week', nextWeek: 'Next week', thisWeek: 'This week',
         week: 'Week {from} – {to}', currentWeek: 'Current week',
+        nextWeekJump: 'Next week',
         generate: 'Build schedule', clear: 'Clear schedule',
         keepManual: 'Keep manual assignments',
         copyText: 'Copy as text', excel: 'Excel', csv: 'CSV', print: 'Print',

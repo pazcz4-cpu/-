@@ -162,6 +162,7 @@
       toolbar: {
         prevWeek: 'الأسبوع السابق', nextWeek: 'الأسبوع التالي', thisWeek: 'هذا الأسبوع',
         week: 'أسبوع {from} – {to}', currentWeek: 'الأسبوع الحالي',
+        nextWeekJump: 'الأسبوع القادم',
         generate: 'إنشاء الجدول', clear: 'تفريغ الجدول',
         keepManual: 'الإبقاء على التعيينات اليدوية',
         copyText: 'نسخ كنص', excel: 'إكسل', csv: 'CSV', print: 'طباعة',

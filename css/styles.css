@@ -266,6 +266,8 @@ body {
   color: var(--header-ink);
 }
 .week-bar .btn:hover { background: rgba(255, 255, 255, .28); color: var(--header-ink); }
+.week-bar .btn.active-week { background: #fff; color: var(--brand); border-color: #fff; font-weight: 700; }
+.week-bar .btn.active-week:hover { background: #fff; color: var(--brand); }
 
 /* ===== הלוגו =====
    שתי הגרסאות נטענות, ו-CSS בוחר ביניהן: מצב כהה יכול להשתנות

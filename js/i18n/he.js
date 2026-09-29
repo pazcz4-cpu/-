@@ -168,6 +168,7 @@
       toolbar: {
         prevWeek: 'שבוע קודם', nextWeek: 'שבוע הבא', thisWeek: 'השבוע הנוכחי',
         week: 'שבוע {from} – {to}', currentWeek: 'השבוע הנוכחי',
+        nextWeekJump: 'השבוע הבא',
         generate: 'בנה סידור אוטומטי', clear: 'נקה סידור',
         keepManual: 'שמירת שיבוצים ידניים',
         copyText: 'העתק כטקסט', excel: 'אקסל', csv: 'CSV', print: 'הדפסה',

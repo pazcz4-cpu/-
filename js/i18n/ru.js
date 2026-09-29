@@ -162,6 +162,7 @@
       toolbar: {
         prevWeek: 'Предыдущая неделя', nextWeek: 'Следующая неделя', thisWeek: 'Эта неделя',
         week: 'Неделя {from} – {to}', currentWeek: 'Текущая неделя',
+        nextWeekJump: 'Следующая неделя',
         generate: 'Построить график', clear: 'Очистить график',
         keepManual: 'Сохранить ручные назначения',
         copyText: 'Копировать текстом', excel: 'Excel', csv: 'CSV', print: 'Печать',

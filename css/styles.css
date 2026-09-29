@@ -1075,6 +1075,12 @@ body { -webkit-tap-highlight-color: transparent; }
 }
 .menu-pop.hidden { display: none; }
 
+/* "כלים נוספים" הוא הכפתור הקיצוני בסרגל: בעברית הוא נצמד לקצה
+   השמאלי. תפריט שמיושר לקצה ההתחלה שלו (ימין) נפתח שמאלה אל מחוץ
+   לחלון, ורבע ממנו נחתך. כאן הוא מיושר לקצה הסוף, ולכן נפתח אל תוך
+   העמוד -- ובאנגלית, שבה הסרגל הפוך, זה נכון באותה מידה. */
+#tools-pop { inset-inline-start: auto; inset-inline-end: 0; }
+
 .menu-item {
   display: flex; align-items: center; gap: var(--s2);
   width: 100%; min-height: 40px; padding: var(--s2) var(--s3);

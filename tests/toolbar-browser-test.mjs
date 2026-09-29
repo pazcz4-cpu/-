@@ -82,6 +82,11 @@ try {
   await page.click('#export-menu');
   await page.waitForTimeout(300);
   check('נפתח', await page.locator('#export-pop').isVisible(), true);
+  /* התפריט נפתח מהכפתור אל תוך העמוד, לא אל מחוץ לחלון. בטלפון זה
+     נבדק למטה; כאן נבדק מסך רחב, שבו הכפתור יושב סמוך לקצה. */
+  const exportBox = await page.locator('#export-pop').boundingBox();
+  check('תפריט הייצוא אינו נחתך בקצה החלון',
+    exportBox.x >= 0 && exportBox.x + exportBox.width <= DESK.width, true);
   /* "לאחד את כל אפשרויות הייצוא תחת כפתור אחד" */
   for (const id of ['#export-excel', '#export-csv', '#copy-text', '#print',
                     '#personal-employee', '#personal-excel', '#personal-text']) {
@@ -93,6 +98,12 @@ try {
   await page.waitForTimeout(300);
   check('הכלים נפתחו', await page.locator('#tools-pop').isVisible(), true);
   check('והייצוא נסגר', await page.locator('#export-pop').isVisible(), false);
+  /* "כלים נוספים" הוא הכפתור הקיצוני בסרגל. התפריט שלו נפתח פעם
+     כלפי החוץ, ורבע ממנו היה מחוץ לחלון: הפריטים נחתכו, ואת מה
+     שנחתך אפשר היה לראות רק בגלילה אופקית. */
+  const toolsBox = await page.locator('#tools-pop').boundingBox();
+  check('תפריט הכלים אינו נחתך בקצה החלון',
+    toolsBox.x >= 0 && toolsBox.x + toolsBox.width <= DESK.width, true);
   for (const id of ['#view-only-toggle', '#clear-week', '#keep-manual',
                     '#shabbat-end', '#holiday-days']) {
     check('  ' + id, await page.locator('#tools-pop ' + id).isVisible(), true);

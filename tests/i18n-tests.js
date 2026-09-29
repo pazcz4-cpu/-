@@ -309,5 +309,47 @@ test('אפשר להחזיר זיהוי לפי הדפדפן לקראת חו"ל', 
   assert(I18n.initial() === 'he', 'לא חזרנו לעברית אחרי הבדיקה');
 });
 
+/* ===== צורות יחיד/רבים ===== 
+
+   I18n.t מנווט אובייקטים מקוננים בלבד: 'calendar.askClose.one' הוא
+   calendar ← askClose ← one. מפתח שטוח בשם 'askClose.one' לא נמצא
+   שם, והמסך מציג את שם המפתח עצמו -- כך הכפתור בבאנר של החגים הראה
+   "calendar.askClose" בכל שמונה השפות.
+
+   בדיקת ההתאמה בין השפות לא תפסה את זה, כי flatten מחבר את שני
+   המבנים לאותה מחרוזת. לכן נדרשת בדיקה שמסתכלת על המבנה עצמו. */
+function dottedKeys(obj, prefix, out) {
+  out = out || [];
+  Object.keys(obj).forEach(function (key) {
+    var full = prefix ? prefix + ' ← ' + key : key;
+    if (key.indexOf('.') !== -1) out.push(full);
+    if (obj[key] && typeof obj[key] === 'object') dottedKeys(obj[key], full, out);
+  });
+  return out;
+}
+
+languages.forEach(function (lang) {
+  test(lang.code + ': אין מפתח מילון עם נקודה בשמו', function () {
+    I18n.use(lang.code);
+    var bad = dottedKeys(I18n.active().dict);
+    I18n.use('he');
+    assert(!bad.length, 'מפתחות שטוחים שלא ניתנים לקריאה: ' + bad.join(' | '));
+  });
+
+  test(lang.code + ': באנר המועדים מציג טקסט ולא שם מפתח', function () {
+    I18n.use(lang.code);
+    var one = I18n.plural('calendar.askClose', 1);
+    var many = I18n.plural('calendar.askClose', 3);
+    var doneOne = I18n.plural('calendar.askDone', 1);
+    var doneMany = I18n.plural('calendar.askDone', 3);
+    I18n.use('he');
+    [one, many, doneOne, doneMany].forEach(function (text) {
+      assert(text.indexOf('calendar.') === -1, 'הוצג שם מפתח: ' + text);
+    });
+    assert(one !== many, 'יחיד ורבים זהים: ' + one);
+    assert(many.indexOf('3') !== -1, 'המספר לא נכנס לרבים: ' + many);
+  });
+});
+
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

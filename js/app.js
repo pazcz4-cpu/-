@@ -559,7 +559,8 @@
         var key = Store.slotKey(mobileDay, branch.id, shift.id);
         var flag = marks.cells[key];
         var hours = Store.hoursLabel(Store.slotHours(current, branch, mobileDay, shift.id));
-        var rows = Math.max(need, assigned.length) + 1;
+        var shownRows = slotDisplayList(need, assigned);
+        var rows = shownRows.length + 1;
 
         shiftsHtml += '<div class="m-shift ' + shiftClass(shift.id) +
           (flag ? ' flag-' + flag : '') + '" data-day="' + mobileDay +
@@ -568,7 +569,7 @@
           '<span>' + (hours ? esc(hours) : t('ui.noHours')) +
           (need > 1 ? ' · ' + t('schedule.people', { count: need }) : '') + '</span></div>';
         for (var i = 0; i < rows; i++) {
-          shiftsHtml += mobileSelectHtml(mobileDay, branch, shift.id, i, assigned[i] || '', i >= need);
+          shiftsHtml += mobileSelectHtml(mobileDay, branch, shift.id, i, shownRows[i] || '', i >= need);
         }
         shiftsHtml += '</div>';
       });
@@ -833,9 +834,22 @@
     return emp.name + trainee + (marks.length ? ' ⚠ (' + marks.join(', ') + ')' : '');
   }
 
+  /* השורות במשבצת. המקומות הנדרשים מכילים רק עובדים שנספרים, וריקים
+     אם חסר מישהו. מתלמד אינו תופס מקום נדרש: הוא מוצג אחריהם, כתוספת.
+     הסדר כאן אינו שמור – השמירה קוראת את כל הבחירות ומתעלמת מריקות. */
+  function slotDisplayList(need, assigned) {
+    var staff = [], extras = [];
+    assigned.forEach(function (id) {
+      if (Store.isTrainee(state, id)) extras.push(id); else staff.push(id);
+    });
+    while (staff.length < need) staff.push('');
+    return staff.concat(extras);
+  }
+
   function cellHtml(dayIdx, branch, shiftId, need, marks) {
     var assigned = Store.getAssigned(week(), dayIdx, branch.id, shiftId);
-    var rows = Math.max(need, assigned.length) + 1; // שורה נוספת לשיבוץ חריג (מזוהה ככפל)
+    var shown = slotDisplayList(need, assigned);
+    var rows = shown.length + 1; // שורה נוספת לשיבוץ חריג (מזוהה ככפל)
     var key = Store.slotKey(dayIdx, branch.id, shiftId);
     var cls = 'cell ' + shiftClass(shiftId);
     if (marks.cells[key] === 'error') cls += ' has-error';
@@ -870,7 +884,7 @@
       html += '</div>';
     }
     for (var i = 0; i < rows; i++) {
-      var value = assigned[i] || '';
+      var value = shown[i] || '';
       var extra = i >= need ? ' extra' : '';
       html += '<select class="emp-select' + extra + '" data-slot="' + i + '">';
       html += '<option value="">' + (i >= need ? t('schedule.add') : t('schedule.empty')) + '</option>';

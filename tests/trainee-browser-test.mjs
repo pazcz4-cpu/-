@@ -93,6 +93,32 @@ try {
   check('אין התראות מתלמד בסידור שנבנה', result.problems, 0);
   console.log('   משמרות ליד מלווה:', result.together);
 
+  console.log('\n== במשבצת: המתלמד אינו תופס מקום נדרש ==');
+  await page.click('.tab[data-tab="schedule"]');
+  await page.click('.view-switch [data-view="branch"]');
+  await page.waitForTimeout(400);
+  const cellInfo = await page.evaluate((traineeId) => {
+    const app = window.ShiftApp, Store = window.ShiftStore;
+    const state = app.getState(), week = state.weeks[app.getWeekKey()];
+    const branch = state.branches[0];
+    let target = null;
+    for (let d = 0; d < 7 && !target; d++) {
+      Store.shiftIds(state).forEach((shiftId) => {
+        if (!target && Store.slotNeed(branch, d, shiftId, week) >= 1) target = { d, shiftId };
+      });
+    }
+    const other = state.employees.find((e) => e.id !== traineeId && !e.trainee).id;
+    Store.setAssigned(week, target.d, branch.id, target.shiftId, [traineeId, other]);
+    app.render();
+    const cell = document.querySelector('#schedule-branch td.cell[data-day="' + target.d +
+      '"][data-branch="' + branch.id + '"][data-shift="' + target.shiftId + '"]');
+    const values = Array.from(cell.querySelectorAll('select.emp-select')).map((sel) => sel.value);
+    const need = Store.slotNeed(branch, target.d, target.shiftId, week);
+    return { values, need, other, traineeId };
+  }, id);
+  check('המקום הנדרש הראשון הוא של העובד, לא של המתלמד', cellInfo.values[0], cellInfo.other);
+  check('המתלמד מוצג אחרי המקומות הנדרשים', cellInfo.values[cellInfo.need], cellInfo.traineeId);
+
   console.log('\n== ביטול הסימון מנקה את הבחירה ==');
   await page.click('.tab[data-tab="employees"]');
   await page.waitForTimeout(300);

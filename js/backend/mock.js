@@ -1080,16 +1080,6 @@
     return Promise.resolve(out);
   };
 
-  /* בפיתוח ובבדיקות אין שרת ואין מפתח. התשובה מדומה, ומסומנת ככזו,
-     כדי שאיש לא יחשוב שהעוזר האמיתי ענה. */
-  MockBackend.prototype.askAssistant = function (messages) {
-    try { this._require('schedule.edit'); } catch (err) { return Promise.reject(err); }
-    var list = Array.isArray(messages) ? messages : [];
-    var last = list.length ? String(list[list.length - 1].content || '') : '';
-    if (!last) return Promise.reject(this._fail('invalid', 'A question is required'));
-    return Promise.resolve({ reply: 'תשובה מדומה (מצב פיתוח) לשאלה: ' + last, remaining: 39 });
-  };
-
   MockBackend.prototype.createTicket = function (input) {
     var session;
     try { session = this._require(); } catch (err) { return Promise.reject(err); }

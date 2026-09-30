@@ -46,12 +46,6 @@
     if (lower.indexOf('not linked') !== -1 || lower.indexOf('staff card') !== -1) {
       return fail('no_employee_link', t('server.notLinked'));
     }
-    if (lower.indexOf('daily question limit') !== -1) {
-      return fail('assistant_limit', t('assistant.limit'));
-    }
-    if (lower.indexOf('assistant is not configured') !== -1) {
-      return fail('assistant_off', t('assistant.off'));
-    }
     if (lower.indexOf('already published') !== -1) {
       return fail('week_published', t('server.weekPublished'));
     }
@@ -176,8 +170,6 @@
        מפתח שאסור שיגיע לדפדפן. */
     this.adminEndpoint = opts.adminEndpoint || '/api/create-user';
     this.cancelEndpoint = opts.cancelEndpoint || '/api/cancel-invite';
-    /* העוזר בתוך המערכת. המפתח של Anthropic יושב בשרת בלבד. */
-    this.assistantEndpoint = opts.assistantEndpoint || '/api/assistant';
     /* שינוי מנוי עובר דרך השרת ומשם לספק התשלומים. הדפדפן אינו
        רשאי לכתוב את מצב המנוי – ראו supabase/schema.sql. */
     this.billingEndpoint = opts.billingEndpoint || '/api/billing';
@@ -939,11 +931,6 @@
       if (err && err.code) throw err;
       throw fail('network', (err && err.message) || 'network error');
     });
-  };
-
-  /* שאלה לעוזר. נשלחת השיחה בלבד, בלי נתוני העסק. */
-  SupabaseBackend.prototype.askAssistant = function (messages) {
-    return this._server(this.assistantEndpoint, { messages: messages });
   };
 
   /* יצירת משתמש דורשת מפתח ניהול, ולכן עוברת דרך השרת */

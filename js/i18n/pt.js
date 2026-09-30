@@ -661,24 +661,6 @@
         kind: { bug: 'Algo não funciona', feature: 'Pedido de funcionalidade', question: 'Pergunta' },
         status: { open: 'Aberto', in_progress: 'Em curso', answered: 'Respondido', closed: 'Fechado' }
       },
-      assistant: {
-        title: 'Assistente SetShifts',
-        button: 'Ajuda',
-        close: 'Fechar',
-        hello: 'Olá! Posso responder qualquer pergunta sobre o uso do sistema. Como posso ajudar?',
-        example1: 'Como publico uma escala?',
-        example2: 'Como aprovo pedidos de folga?',
-        example3: 'Como associo um funcionário a uma loja?',
-        note: 'Não digite aqui senhas ou dados pessoais. Não vejo os dados da sua empresa.',
-        placeholder: 'Pergunte sobre o sistema…',
-        send: 'Enviar',
-        thinking: 'Pensando…',
-        limit: 'Você atingiu o limite de perguntas de hoje. Tente amanhã ou abra um chamado na aba "Suporte".',
-        off: 'O assistente ainda não está disponível. Você pode abrir um chamado na aba "Suporte".',
-        failed: 'Não consegui responder agora. Tente daqui a pouco ou abra um chamado na aba "Suporte".',
-        signIn: 'Entre novamente para perguntar.'
-      },
-
       managerGuide: {
         title: 'Guia do gerente',
         text: 'A rotina semanal passo a passo, com capturas do sistema. O guia está em hebraico.',

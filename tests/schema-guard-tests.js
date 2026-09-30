@@ -169,23 +169,5 @@ test('עמודות ההצהרה אינן ברשימת הכתיבה של הדפד
   assert(grant[1].indexOf('wa_declaration') === -1, 'לקוח יכול לכתוב לעצמו הצהרה');
 });
 
-console.log('\n== העוזר: מכסה יומית ==');
-
-test('טבלת המכסה סגורה בפני הדפדפן', function () {
-  assert(/alter table public\.assistant_usage\s+enable row level security/.test(sql),
-    'RLS אינו מופעל על assistant_usage');
-  has('revoke all on public.assistant_usage from anon, authenticated;',
-    'הדפדפן יכול לגעת בטבלת המכסה');
-  assert(!/create policy [a-z_]+ on public\.assistant_usage/.test(sql),
-    'יש מדיניות על טבלת המכסה');
-});
-
-test('הפונקציה שגובה מכסה מותרת ל-service_role בלבד', function () {
-  has('grant execute on function public.assistant_take(uuid, integer) to service_role;',
-    'assistant_take אינה ניתנת ל-service_role');
-  has('revoke all on function public.assistant_take(uuid, integer) from public, anon, authenticated;',
-    'assistant_take נשארת פתוחה לדפדפן');
-});
-
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

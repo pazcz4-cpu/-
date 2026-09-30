@@ -661,24 +661,6 @@
         kind: { bug: 'Etwas funktioniert nicht', feature: 'Funktionswunsch', question: 'Frage' },
         status: { open: 'Offen', in_progress: 'In Bearbeitung', answered: 'Beantwortet', closed: 'Geschlossen' }
       },
-      assistant: {
-        title: 'SetShifts-Assistent',
-        button: 'Hilfe',
-        close: 'Schließen',
-        hello: 'Hallo! Ich beantworte jede Frage zur Nutzung des Systems. Wie kann ich helfen?',
-        example1: 'Wie veröffentliche ich einen Plan?',
-        example2: 'Wie genehmige ich Urlaubsanträge?',
-        example3: 'Wie ordne ich einen Mitarbeitenden einer Filiale zu?',
-        note: 'Geben Sie hier keine Passwörter oder persönlichen Daten ein. Ich sehe Ihre Unternehmensdaten nicht.',
-        placeholder: 'Fragen zum System…',
-        send: 'Senden',
-        thinking: 'Denkt nach…',
-        limit: 'Das Fragenlimit für heute ist erreicht. Versuchen Sie es morgen erneut oder öffnen Sie ein Ticket im Tab "Support".',
-        off: 'Der Assistent ist noch nicht verfügbar. Sie können ein Ticket im Tab "Support" öffnen.',
-        failed: 'Ich konnte gerade nicht antworten. Versuchen Sie es gleich erneut oder öffnen Sie ein Ticket im Tab "Support".',
-        signIn: 'Bitte melden Sie sich erneut an, um zu fragen.'
-      },
-
       managerGuide: {
         title: 'Anleitung für Führungskräfte',
         text: 'Der Wochenablauf Schritt für Schritt, mit Screenshots aus dem System. Die Anleitung ist auf Hebräisch.',

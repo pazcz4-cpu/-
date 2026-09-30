@@ -209,12 +209,16 @@
       marks: {
         dayOff: 'día libre', blocked: 'bloqueado', prefers: 'prefiere',
         notInBranch: 'no es de esta sucursal', notInShift: 'no hace este turno',
-        alreadyAssigned: 'ya asignado', inactive: 'inactivo'
+        alreadyAssigned: 'ya asignado', inactive: 'inactivo',
+        traineeTag: '(en formación)'
       },
 
       issueTypes: {
         'duplicate-shift': 'Exceso de personal',
         'duplicate-employee-slot': 'Asignación duplicada',
+        'trainee-alone': 'En formación, solo/a',
+        'trainee-mentor': 'En formación sin quien lo forme',
+        'trainee-role': 'En formación sin nadie de su rol',
         'double-booked': 'Doble turno',
         understaffed: 'Falta personal',
         'constraint-off': 'Solicitud incumplida',
@@ -348,6 +352,9 @@
         allGood: 'El horario es válido: sin exceso ni falta de personal y sin conflictos de disponibilidad',
         duplicate: 'Exceso de personal: {label} – hay {count} personas asignadas ({names}) en lugar de {need}.',
         roleMismatch: 'Falta una función: {label} — el número de personas está completo, pero nadie cubre {roles}.',
+        traineeAlone: '{name} está en formación y está solo/a en el turno – {label}. Quien está en formación debe trabajar junto a otra persona.',
+        traineeMentor: '{name} está en formación, y en el turno {label} no está ninguno de quienes deben formarlo: {mentors}.',
+        traineeRole: '{name} está en formación, y en el turno {label} no hay nadie de su rol.',
         duplicateSelf: 'Asignación duplicada: {name} está asignado dos veces al mismo turno – {label}.',
         doubleBooked: 'Doble turno: {name} tiene {count} turnos el {day}{where} ({detail}).',
         sameBranch: ' en la misma sucursal', differentBranches: ' en sucursales distintas',
@@ -450,6 +457,13 @@
         anyBranch: 'Todas las ubicaciones',
         allShifts: 'Todos los turnos',
         quotaShort: 'límite {count}',
+        trainee: 'En formación',
+        traineeHint: 'Siempre trabaja junto a otra persona en el turno y no cuenta para el número requerido. Con roles, junto a alguien de su rol.',
+        mentors: 'Quién lo forma (puedes elegir varios)',
+        mentorsAny: 'Sin selección — cualquier empleado puede acompañar.',
+        mentorsPicked: 'La persona en formación solo trabajará junto a una de las elegidas.',
+        noMentors: 'Aún no hay empleados activos que no estén en formación.',
+        traineeShort: 'en formación',
         inactiveTag: 'inactivo',
         noMatch: 'Nadie coincide con esa búsqueda.',
         none: 'Aún no hay personal. Añade a alguien o importa una lista.',

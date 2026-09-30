@@ -158,6 +158,12 @@
      נקראת רק מתוך withAllWeeks, כשכל השבועות כבר בזיכרון. */
   function removeEmployee(emp) {
     state.employees = state.employees.filter(function (item) { return item.id !== emp.id; });
+    /* מלווה שנמחק אינו נשאר ברשימת המלווים של אף מתלמד */
+    state.employees.forEach(function (other) {
+      if (Array.isArray(other.mentors)) {
+        other.mentors = other.mentors.filter(function (id) { return id !== emp.id; });
+      }
+    });
     var touched = [];
     Object.keys(state.weeks).forEach(function (key) {
       var weekData = state.weeks[key];
@@ -464,6 +470,11 @@
   function empNameOf(id) {
     var emp = Store.byId(state.employees, id);
     return emp ? emp.name : t('ui.unknownEmployee');
+  }
+  /* השם כפי שהוא מופיע בייצוא: מתלמד מסומן, כדי שמי שקורא את הסידור
+     ידע שהוא מתלווה ולא ממלא מקום */
+  function empShownOf(id) {
+    return empNameOf(id) + (Store.isTrainee(state, id) ? ' ' + t('marks.traineeTag') : '');
   }
 
   /* ========== כותרת השבוע ========== */
@@ -818,7 +829,8 @@
       .filter(function (s) { return !(s.branchId === branchId && s.shiftId === shiftId); });
     if (busy.length) marks.push(t('marks.alreadyAssigned'));
     if (!emp.active) marks.push(t('marks.inactive'));
-    return emp.name + (marks.length ? ' ⚠ (' + marks.join(', ') + ')' : '');
+    var trainee = emp.trainee === true ? ' ' + t('marks.traineeTag') : '';
+    return emp.name + trainee + (marks.length ? ' ⚠ (' + marks.join(', ') + ')' : '');
   }
 
   function cellHtml(dayIdx, branch, shiftId, need, marks) {
@@ -843,7 +855,7 @@
     var roleLines = Store.slotRoleNeeds(state, branch, dayIdx, shiftId);
     if (roleLines.some(function (line) { return line.role; })) {
       var stillOpen = {};
-      Store.openSeats(state, roleLines, assigned).forEach(function (roleId) {
+      Store.openSeats(state, roleLines, Store.countedAssigned(state, week(), dayIdx, branch.id, shiftId)).forEach(function (roleId) {
         if (roleId) stillOpen[roleId] = (stillOpen[roleId] || 0) + 1;
       });
       html += '<div class="cell-roles">';
@@ -2304,6 +2316,7 @@
         .filter(Boolean).join(', '));
     }
     parts.push(t('employees.quotaShort', { count: emp.maxShifts }));
+    if (emp.trainee === true) parts.push(t('employees.traineeShort'));
     if (!emp.active) parts.push(t('employees.inactiveTag'));
     return parts.join(' · ');
   }
@@ -2347,6 +2360,29 @@
       html += '<div class="card-body">';
       html += '<div class="field"><label class="check"><input type="checkbox" data-field="active"' +
         (emp.active ? ' checked' : '') + '> ' + t('employees.active') + '</label></div>';
+      /* עובד בהתלמדות. מסמנים וי, ומאותו רגע הוא תמיד ליד עובד נוסף
+         במשמרת ואינו נספר בכמות הנדרשת. אפשר גם לבחור מי מכשיר אותו:
+         בלי בחירה כל עובד מתאים (ובעסק עם תפקידים – מי שבתפקיד שלו). */
+      html += '<div class="field trainee-field"><label class="check"><input type="checkbox" data-field="trainee"' +
+        (emp.trainee === true ? ' checked' : '') + '> ' + esc(t('employees.trainee')) + '</label>' +
+        '<p class="hint">' + esc(t('employees.traineeHint')) + '</p>';
+      if (emp.trainee === true) {
+        html += '<label class="title">' + esc(t('employees.mentors')) + '</label>' +
+          '<div class="pills mentor-pills">';
+        var mentorPool = state.employees.filter(function (other) {
+          return other.id !== emp.id && other.active && other.trainee !== true;
+        });
+        mentorPool.forEach(function (other) {
+          var picked = (emp.mentors || []).indexOf(other.id) !== -1;
+          html += '<button class="pill tiny' + (picked ? ' on' : '') +
+            '" data-action="toggle-mentor" data-mentor="' + esc(other.id) + '">' +
+            esc(other.name) + '</button>';
+        });
+        if (!mentorPool.length) html += '<span class="hint">' + esc(t('employees.noMentors')) + '</span>';
+        html += '</div><p class="hint">' + esc(t((emp.mentors || []).length
+          ? 'employees.mentorsPicked' : 'employees.mentorsAny')) + '</p>';
+      }
+      html += '</div>';
       html += '<div class="field"><label class="title">' + t('employees.branchesLabel') + '</label><div class="pills">';
       state.branches.forEach(function (branch) {
         var on = emp.branches.indexOf(branch.id) !== -1 ? ' on' : '';
@@ -3230,7 +3266,7 @@
           var assigned = Store.getAssigned(week(), day.idx, branch.id, shiftId);
           var need = Store.slotNeed(branch, day.idx, shiftId, week());
           if (!assigned.length && !need) return;
-          var names = assigned.map(empNameOf).join(', ') || ('‼ ' + t('ui.missingStaff'));
+          var names = assigned.map(empShownOf).join(', ') || ('‼ ' + t('ui.missingStaff'));
           var hours = Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shiftId));
           dayLines.push('   ' + branch.name + ' – ' + shiftLabel(shiftId) +
             (hours ? ' (' + hours + ')' : '') + ': ' + names);
@@ -3340,9 +3376,10 @@
           var hours = Store.hoursLabel(Store.slotHours(current, branch, day.idx, shift.id));
           if (hours) lines.push(hours);
           if (assigned.length) {
-            assigned.forEach(function (id) { lines.push(empNameOf(id)); });
+            assigned.forEach(function (id) { lines.push(empShownOf(id)); });
           }
-          for (var i = assigned.length; i < need; i++) { lines.push(t('excel.missing')); }
+          var countedNow = Store.countedAssigned(state, current, day.idx, branch.id, shift.id).length;
+          for (var i = countedNow; i < need; i++) { lines.push(t('excel.missing')); }
           maxLines = Math.max(maxLines, lines.length);
           cells.push({ v: lines.join('\n'), s: shiftStyle(shift.id) });
         });
@@ -3628,7 +3665,8 @@
           rows.push([
             Store.formatDate(Store.dateOfDay(weekKey, day.idx)), day.name, branch.name, shift.name,
             Store.hoursLabel(Store.slotHours(week(), branch, day.idx, shift.id)),
-            assigned.map(empNameOf).join(' | '), need, assigned.length
+            assigned.map(empShownOf).join(' | '), need,
+            Store.countedAssigned(state, week(), day.idx, branch.id, shift.id).length
           ]);
         });
       });
@@ -4339,6 +4377,15 @@
         persist('config');
         render();
       }
+      if (action === 'toggle-mentor') {
+        var mentorId = event.target.dataset.mentor;
+        var mentors = (emp.mentors || []).slice();
+        var mentorAt = mentors.indexOf(mentorId);
+        if (mentorAt === -1) mentors.push(mentorId); else mentors.splice(mentorAt, 1);
+        emp.mentors = mentors;
+        persist('config');
+        render();
+      }
       if (action === 'toggle-role') {
         var roleId = event.target.dataset.role;
         var roles = Store.employeeRoles(emp).slice();
@@ -4404,6 +4451,20 @@
       var field = event.target.dataset.field;
       if (!emp || !field) return;
       if (field === 'active') emp.active = event.target.checked;
+      else if (field === 'trainee') {
+        /* מסמנים – נפתחת בחירת המלווים; מבטלים – הבחירה נמחקת */
+        if (event.target.checked) {
+          emp.trainee = true;
+          if (!Array.isArray(emp.mentors)) emp.mentors = [];
+          /* מי שהפך למתלמד אינו יכול ללוות אחרים */
+          state.employees.forEach(function (other) {
+            if (Array.isArray(other.mentors)) {
+              other.mentors = other.mentors.filter(function (id) { return id !== emp.id; });
+            }
+          });
+        }
+        else { delete emp.trainee; delete emp.mentors; }
+      }
       else if (field === 'maxShifts') emp.maxShifts = Math.max(0, Number(event.target.value) || 0);
       else if (field === 'email') emp.email = String(event.target.value || '').trim().toLowerCase();
       else if (field === 'phone') emp.phone = normalizePhone(event.target.value);
@@ -4413,7 +4474,7 @@
       else if (field === 'payrollId') emp.payrollId = String(event.target.value || '').trim();
       else emp[field] = event.target.value;
       persist('config');
-      if (field === 'active' || field === 'maxShifts') render();
+      if (field === 'active' || field === 'maxShifts' || field === 'trainee') render();
     });
 
     var tools = $('#employees-tools');

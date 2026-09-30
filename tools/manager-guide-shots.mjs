@@ -261,6 +261,28 @@ await mark('.card[data-emp]:nth-of-type(3) .card-summary', 2, 0);
 await shotRegion('16-employee-branches', ['.card[data-emp]:nth-of-type(1)', '.card[data-emp]:nth-of-type(3)'], 10);
 await unmark();
 
+/* עובד בהתלמדות: וי, ובחירת מי מכשיר. מסמנים לצילום ומבטלים מיד,
+   כדי שהסידור בהמשך המדריך לא ישתנה בגללו. הכרטיס נבחר לפי המזהה
+   שלו: מיקום בין אחים משתנה כשכרטיס נפתח. */
+const trainId = await page.locator('.card[data-emp]').nth(4).getAttribute('data-emp');
+const trainCard = '.card[data-emp="' + trainId + '"]';
+if (!(await page.locator(trainCard + ' input[data-field="trainee"]').isVisible())) {
+  await page.locator(trainCard + ' [data-action="toggle-card"]').first().click();
+  await page.waitForTimeout(300);
+}
+await page.locator(trainCard + ' input[data-field="trainee"]').check();
+await page.waitForTimeout(400);
+await page.locator(trainCard + ' [data-action="toggle-mentor"]').nth(0).click();
+await page.waitForTimeout(300);
+await page.locator(trainCard + ' [data-action="toggle-mentor"]').nth(1).click();
+await page.waitForTimeout(300);
+await mark(trainCard + ' input[data-field="trainee"]', 1);
+await mark(trainCard + ' .mentor-pills', 2);
+await shotEl('18-trainee', trainCard + ' .trainee-field');
+await unmark();
+await page.locator(trainCard + ' input[data-field="trainee"]').uncheck();
+await page.waitForTimeout(300);
+
 /* ===== 3. הגדרות השבוע והסניפים ===== */
 await page.click('.tab[data-tab="branches"]');
 await page.waitForTimeout(700);

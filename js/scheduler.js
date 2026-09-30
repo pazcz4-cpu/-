@@ -22,6 +22,9 @@
   /* תנאי יסוד שאינם ניתנים לפתרון על ידי החלפת שיבוצים */
   function eligibleForSlot(ctx, emp, demand) {
     if (!emp.active) return false;
+    /* מתלמד אינו ממלא מקום נדרש. הוא מתווסף אחרי שהמשמרות מאוישות,
+       בשלב נפרד (placeTrainees), ורק ליד מי שיכול ללוות אותו. */
+    if (emp.trainee === true && !ctx.allowTrainees) return false;
     if (Store.isHoliday(ctx.week, demand.dayIdx)) return false; // יום חג – אין עבודה
     if (emp.shifts.indexOf(demand.shiftId) === -1) return false;
     if (!employeeAllowedInBranch(emp, demand.branchId)) return false;
@@ -361,7 +364,9 @@
       demands.forEach(function (demand) {
         var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
         if (!week.manual[key]) return;
-        var existing = week.assignments[key] || [];
+        var existing = (week.assignments[key] || []).filter(function (empId) {
+          return !Store.isTrainee(state, empId);
+        });
         existing.slice(0, demand.need).forEach(function (empId) {
           var emp = Store.byId(state.employees, empId);
           if (!emp) return;
@@ -412,6 +417,72 @@
     if (unfilled.length) { unfilled = repair(ctx, unfilled, keepManual, week); }
 
     return { assignments: ctx.assignments, counts: ctx.counts, unfilled: unfilled, ctx: ctx };
+  }
+
+  /* ===== מתלמדים =====
+
+     רצים אחרי שכל המשמרות אוישו, ורק ליד מי שיכול ללוות: משמרת שאין
+     בה אף אחד שאינו מתלמד לא מקבלת מתלמד, ואם המנהל בחר מי מכשיר –
+     רק ליד אחד מהם. מתלמד אינו נספר בכמות הנדרשת, ולכן לעולם לא
+     מחליש כיסוי; הוא רק מתווסף.
+
+     הסבב הוא משמרת אחת לכל מתלמד בכל פעם, כדי שכמה מתלמדים יחלקו
+     את המלווים בהוגנות ולא שהראשון יקח את כל השבוע.
+
+     שיבוץ ידני של מתלמד נשמר כמו שהוא: המנהל החליט. */
+  function placeTrainees(ctx, demands, keepManual, week, rand) {
+    var state = ctx.state;
+    var trainees = state.employees.filter(function (emp) {
+      return emp.active && emp.trainee === true;
+    });
+    if (!trainees.length) return;
+
+    ctx.allowTrainees = true;
+
+    if (keepManual && week) {
+      demands.forEach(function (demand) {
+        var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+        if (!week.manual[key]) return;
+        (week.assignments[key] || []).forEach(function (empId) {
+          if (!Store.isTrainee(state, empId)) return;
+          if ((ctx.assignments[key] || []).indexOf(empId) !== -1) return;
+          applyAssignment(ctx, empId, demand);
+        });
+      });
+    }
+
+    function staffIn(key) {
+      return (ctx.assignments[key] || []).map(function (id) { return Store.byId(state.employees, id); })
+        .filter(function (emp) { return emp && emp.trainee !== true; });
+    }
+    function traineesIn(key) {
+      return (ctx.assignments[key] || []).filter(function (id) { return Store.isTrainee(state, id); }).length;
+    }
+
+    var progressed = true;
+    while (progressed) {
+      progressed = false;
+      trainees.forEach(function (trainee) {
+        var best = null, bestScore = Infinity;
+        demands.forEach(function (demand) {
+          var key = Store.slotKey(demand.dayIdx, demand.branchId, demand.shiftId);
+          var taken = ctx.assignments[key] || [];
+          if (taken.indexOf(trainee.id) !== -1) return;
+          var staff = staffIn(key);
+          if (!staff.length) return;
+          /* לא יותר מתלמדים ממלווים: כל מתלמד צמוד למישהו */
+          if (traineesIn(key) >= staff.length) return;
+          if (!staff.some(function (emp) { return Store.canMentor(state, trainee, emp); })) return;
+          var seat = seatDemand(demand, '');
+          if (!canAssign(ctx, trainee, seat)) return;
+          var score = scoreCandidate(ctx, trainee, seat, rand);
+          if (score < bestScore) { bestScore = score; best = seat; }
+        });
+        if (best) { applyAssignment(ctx, trainee.id, best); progressed = true; }
+      });
+    }
+
+    ctx.allowTrainees = false;
   }
 
   /* כמה העדפות משמרת לא כובדו: העובד עבד באותו יום, אך לא במשמרת שביקש */
@@ -484,6 +555,13 @@
       bestQ = qualityOf(state, week, best);
     }
 
+    /* מתלמדים אחרי הכל: אחרי שהמשמרות אוישו ואחרי שרשראות ההחלפה,
+       שיכלו להזיז מלווה. */
+    placeTrainees(best.ctx, Store.weekDemands(state, week), keepManual, week,
+      makeRandom((opts.seed || 20260101) + 99991));
+    best.assignments = best.ctx.assignments;
+    best.counts = best.ctx.counts;
+
     return { assignments: best.assignments, counts: best.counts, unfilled: best.unfilled, quality: bestQ };
   }
 
@@ -499,7 +577,8 @@
     canAssign: canAssign,
     employeeAllowedInBranch: employeeAllowedInBranch,
     newContext: newContext,
-    applyAssignment: applyAssignment
+    applyAssignment: applyAssignment,
+    placeTrainees: placeTrainees
   };
 
   root.ShiftScheduler = API;

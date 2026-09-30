@@ -209,12 +209,16 @@
       marks: {
         dayOff: 'إجازة', blocked: 'محجوب', prefers: 'يفضّل',
         notInBranch: 'ليس في هذا الفرع', notInShift: 'ليس في هذه المناوبة',
-        alreadyAssigned: 'معيَّن مسبقًا', inactive: 'غير نشط'
+        alreadyAssigned: 'معيَّن مسبقًا', inactive: 'غير نشط',
+        traineeTag: '(متدرّب)'
       },
 
       issueTypes: {
         'duplicate-shift': 'زيادة في الطاقم',
         'duplicate-employee-slot': 'تعيين مكرر',
+        'trainee-alone': 'متدرّب وحده',
+        'trainee-mentor': 'متدرّب بدون المدرّب المحدد',
+        'trainee-role': 'متدرّب بدون موظف بدوره',
         'double-booked': 'ازدواج مناوبات',
         understaffed: 'نقص في التغطية',
         'constraint-off': 'مخالفة طلب',
@@ -348,6 +352,9 @@
         allGood: 'الجدول سليم – لا زيادة ولا نقص في الطاقم ولا تعارض في التفرّغ',
         duplicate: 'زيادة في الطاقم: {label} – معيَّن {count} موظفين ({names}) بدل {need}.',
         roleMismatch: 'دور ناقص: {label} — العدد مكتمل، لكن لا أحد يغطي {roles}.',
+        traineeAlone: '{name} متدرّب وموجود وحده في الوردية – {label}. يجب أن يعمل المتدرّب بجانب موظف آخر.',
+        traineeMentor: '{name} متدرّب، ولا يوجد في الوردية {label} أحد ممن حُدّدوا للتدريب: {mentors}.',
+        traineeRole: '{name} متدرّب، ولا يوجد في الوردية {label} موظف بدوره.',
         duplicateSelf: 'تعيين مكرر: {name} معيَّن مرتين في المناوبة نفسها – {label}.',
         doubleBooked: 'ازدواج مناوبات: {name} معيَّن في {count} مناوبات يوم {day}{where} ({detail}).',
         sameBranch: ' في الفرع نفسه', differentBranches: ' في فروع مختلفة',
@@ -450,6 +457,13 @@
         anyBranch: 'كل الفروع',
         allShifts: 'كل المناوبات',
         quotaShort: 'حصة {count}',
+        trainee: 'متدرّب',
+        traineeHint: 'يعمل دائمًا بجانب موظف آخر في الوردية ولا يُحتسب ضمن العدد المطلوب. في الأعمال ذات الأدوار يعمل بجانب من له دوره.',
+        mentors: 'من يدرّبه (يمكن اختيار أكثر من واحد)',
+        mentorsAny: 'بدون اختيار — يصلح أي موظف للتدريب.',
+        mentorsPicked: 'سيعمل المتدرّب بجانب أحد المختارين فقط.',
+        noMentors: 'لا يوجد بعد موظفون نشطون غير متدرّبين.',
+        traineeShort: 'متدرّب',
         inactiveTag: 'موقوف',
         noMatch: 'لا أحد يطابق هذا البحث.',
         none: 'لا موظفين بعد. أضف واحدًا، أو استورد قائمة.',

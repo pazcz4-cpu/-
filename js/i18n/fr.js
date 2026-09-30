@@ -209,12 +209,16 @@
       marks: {
         dayOff: 'jour de repos', blocked: 'bloqué', prefers: 'préfère',
         notInBranch: 'pas dans cette succursale', notInShift: 'pas sur ce service',
-        alreadyAssigned: 'déjà affecté', inactive: 'inactif'
+        alreadyAssigned: 'déjà affecté', inactive: 'inactif',
+        traineeTag: '(en formation)'
       },
 
       issueTypes: {
         'duplicate-shift': 'Effectif excédentaire',
         'duplicate-employee-slot': 'Affectation en double',
+        'trainee-alone': 'Stagiaire seul(e)',
+        'trainee-mentor': 'Stagiaire sans formateur choisi',
+        'trainee-role': 'Stagiaire sans personne de son rôle',
         'double-booked': 'Double service',
         understaffed: 'Effectif insuffisant',
         'constraint-off': 'Demande non respectée',
@@ -348,6 +352,9 @@
         allGood: 'Le planning est valide – ni sureffectif, ni manque, ni conflit de disponibilité',
         duplicate: 'Effectif excédentaire : {label} – {count} personnes affectées ({names}) au lieu de {need}.',
         roleMismatch: "Rôle manquant : {label} — l'effectif est complet, mais personne ne couvre {roles}.",
+        traineeAlone: '{name} est en formation et seul(e) sur l\'équipe – {label}. Une personne en formation doit travailler à côté d\'un autre employé.',
+        traineeMentor: '{name} est en formation, et l\'équipe {label} ne compte aucune des personnes choisies pour la former : {mentors}.',
+        traineeRole: '{name} est en formation, et l\'équipe {label} n\'a personne de son rôle.',
         duplicateSelf: 'Affectation en double : {name} est affecté deux fois au même service – {label}.',
         doubleBooked: 'Double service : {name} a {count} services le {day}{where} ({detail}).',
         sameBranch: ' dans la même succursale', differentBranches: ' dans des succursales différentes',
@@ -450,6 +457,13 @@
         anyBranch: 'Tous les sites',
         allShifts: 'Tous les services',
         quotaShort: 'limite {count}',
+        trainee: 'En formation',
+        traineeHint: 'Travaille toujours à côté d\'un autre employé sur l\'équipe et ne compte pas dans l\'effectif requis. Avec des rôles, à côté de quelqu\'un de son rôle.',
+        mentors: 'Qui le forme (plusieurs choix possibles)',
+        mentorsAny: 'Aucun choix — tout employé peut l\'accompagner.',
+        mentorsPicked: 'La personne en formation ne travaillera qu\'à côté de l\'une des personnes choisies.',
+        noMentors: 'Aucun employé actif hors formation pour le moment.',
+        traineeShort: 'en formation',
         inactiveTag: 'inactif',
         noMatch: 'Personne ne correspond à cette recherche.',
         none: 'Pas encore de personnel. Ajoutez quelqu’un, ou importez une liste.',

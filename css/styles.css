@@ -2406,3 +2406,7 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 .wa-decl-text li { margin-bottom: var(--s2); }
 .wa-decl-name { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-sm); }
 .wa-decl-name input { max-width: 360px; }
+
+/* עובד בהתלמדות: בחירת מי מכשיר */
+.trainee-field .mentor-pills { max-height: 168px; overflow-y: auto; }
+.trainee-field .hint { margin: var(--s1) 0 var(--s2); }

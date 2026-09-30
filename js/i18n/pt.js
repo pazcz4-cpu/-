@@ -209,12 +209,16 @@
       marks: {
         dayOff: 'folga', blocked: 'bloqueado', prefers: 'prefere',
         notInBranch: 'não é desta filial', notInShift: 'não faz este turno',
-        alreadyAssigned: 'já atribuído', inactive: 'inativo'
+        alreadyAssigned: 'já atribuído', inactive: 'inativo',
+        traineeTag: '(em treinamento)'
       },
 
       issueTypes: {
         'duplicate-shift': 'Excesso de pessoal',
         'duplicate-employee-slot': 'Atribuição duplicada',
+        'trainee-alone': 'Em treinamento, sozinho(a)',
+        'trainee-mentor': 'Em treinamento sem quem treine',
+        'trainee-role': 'Em treinamento sem ninguém da função',
         'double-booked': 'Turno duplo',
         understaffed: 'Falta pessoal',
         'constraint-off': 'Pedido não cumprido',
@@ -348,6 +352,9 @@
         allGood: 'O horário está correto – sem excesso nem falta de pessoal e sem conflitos de disponibilidade',
         duplicate: 'Excesso de pessoal: {label} – {count} pessoas atribuídas ({names}) em vez de {need}.',
         roleMismatch: 'Função em falta: {label} — o número de pessoas está completo, mas ninguém cobre {roles}.',
+        traineeAlone: '{name} está em treinamento e sozinho(a) no turno – {label}. Quem está em treinamento deve trabalhar ao lado de outro funcionário.',
+        traineeMentor: '{name} está em treinamento, e no turno {label} não há ninguém dos escolhidos para treiná-lo(a): {mentors}.',
+        traineeRole: '{name} está em treinamento, e no turno {label} não há ninguém da sua função.',
         duplicateSelf: 'Atribuição duplicada: {name} está atribuído duas vezes ao mesmo turno – {label}.',
         doubleBooked: 'Turno duplo: {name} tem {count} turnos em {day}{where} ({detail}).',
         sameBranch: ' na mesma filial', differentBranches: ' em filiais diferentes',
@@ -450,6 +457,13 @@
         anyBranch: 'Todos os locais',
         allShifts: 'Todos os turnos',
         quotaShort: 'limite {count}',
+        trainee: 'Em treinamento',
+        traineeHint: 'Trabalha sempre ao lado de outro funcionário no turno e não conta para o número necessário. Com funções, ao lado de alguém da sua função.',
+        mentors: 'Quem treina (pode escolher vários)',
+        mentorsAny: 'Sem seleção — qualquer funcionário pode acompanhar.',
+        mentorsPicked: 'A pessoa em treinamento só trabalhará ao lado de um dos escolhidos.',
+        noMentors: 'Ainda não há funcionários ativos que não estejam em treinamento.',
+        traineeShort: 'em treinamento',
         inactiveTag: 'inativo',
         noMatch: 'Ninguém corresponde a essa procura.',
         none: 'Ainda não há pessoal. Adiciona alguém, ou importa uma lista.',

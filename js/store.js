@@ -1698,6 +1698,64 @@
     if (clean.length === 0) { delete week.assignments[key]; } else { week.assignments[key] = clean; }
   }
 
+  /* ===== עובד בהתלמדות =====
+
+     מתמחה אינו עובד שלם: הוא מתלווה למי שכבר יודע. לכן:
+
+       · הוא לא נספר בכמות העובדים שהמשמרת דורשת. משמרת שביקשה
+         שני אנשים מקבלת שני אנשים, ועוד מתלמד אם יש מי שילווה
+         אותו. כך מתלמד לעולם לא מחליש את הכיסוי.
+       · הוא אינו לבד. בכל משמרת שהוא בה חייב להיות לפחות אדם אחד
+         שאינו מתלמד.
+       · כשהעסק מגדיר תפקידים והמתלמד מסומן בתפקיד, המלווה הוא בתפקיד
+         שלו.
+       · המנהל יכול לבחור מי מכשיר (emp.mentors). בחר – רק אחד מהם
+         יכול ללוות אותו, והבחירה גוברת על התפקיד.
+
+     הכללים כאן ולא בממשק: הם כללים של הנתונים, והמנוע, הבדיקות
+     והמסכים כולם נשענים עליהם. */
+  function isTrainee(state, empId) {
+    var emp = byId((state && state.employees) || [], empId);
+    return !!(emp && emp.trainee === true);
+  }
+
+  /* מי במשמרת נספר בכמות הנדרשת: כולם חוץ ממתלמדים */
+  function countedAssigned(state, week, dayIdx, branchId, shiftId) {
+    return getAssigned(week, dayIdx, branchId, shiftId).filter(function (id) {
+      return !isTrainee(state, id);
+    });
+  }
+
+  /* האם העובד שאינו מתלמד יכול ללוות את המתלמד הזה */
+  function canMentor(state, trainee, staff) {
+    if (!trainee || !staff || staff.trainee === true || staff.id === trainee.id) return false;
+    var picked = Array.isArray(trainee.mentors) ? trainee.mentors : [];
+    if (picked.length) return picked.indexOf(staff.id) !== -1;
+    var roles = employeeRoles(trainee);
+    if (!roles.length) return true;
+    return roles.some(function (roleId) { return employeeFitsRole(state, staff, roleId); });
+  }
+
+  /* מה לא תקין אצל המתלמדים במשמרת. סוגים:
+       alone     אין במשמרת אף אחד שאינו מתלמד
+       mentor    המנהל בחר מי מכשיר, ואיש מהם אינו במשמרת
+       role      אין במשמרת מי שבתפקיד של המתלמד */
+  function traineeProblems(state, week, dayIdx, branchId, shiftId) {
+    var ids = getAssigned(week, dayIdx, branchId, shiftId);
+    var staff = ids.map(function (id) { return byId(state.employees || [], id); })
+      .filter(function (emp) { return emp && emp.trainee !== true; });
+    var problems = [];
+    ids.forEach(function (id) {
+      var trainee = byId(state.employees || [], id);
+      if (!trainee || trainee.trainee !== true) return;
+      if (!staff.length) { problems.push({ empId: id, type: 'alone' }); return; }
+      if (staff.some(function (emp) { return canMentor(state, trainee, emp); })) return;
+      var picked = Array.isArray(trainee.mentors) ? trainee.mentors : [];
+      problems.push({ empId: id, type: picked.length ? 'mentor' : 'role' });
+    });
+    return problems;
+  }
+
   /* כל המשמרות של עובד ביום מסוים – הבסיס לזיהוי כפל משמרת */
   function employeeDayAssignments(state, week, empId, dayIdx) {
     var out = [];
@@ -1739,7 +1797,7 @@
   function openSlots(state, week) {
     var out = [];
     weekDemands(state, week).forEach(function (demand) {
-      var assigned = getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
+      var assigned = countedAssigned(state, week, demand.dayIdx, demand.branchId, demand.shiftId);
       var missing = demand.need - assigned.length;
       if (missing > 0) {
         out.push({
@@ -2594,6 +2652,16 @@
       if (!Array.isArray(emp.roles)) emp.roles = [];
       else emp.roles = emp.roles.filter(function (id) { return knownRoles[id]; });
       if (typeof emp.maxShifts !== 'number') emp.maxShifts = 6;
+      /* עובד בהתלמדות, ומי שמכשיר אותו. מלווה שנמחק, שהפך למתלמד
+         בעצמו, או שהוא העובד עצמו – אינו נשאר ברשימה. */
+      if (emp.trainee !== true) { delete emp.trainee; delete emp.mentors; }
+      else {
+        var mentorIds = Array.isArray(emp.mentors) ? emp.mentors : [];
+        emp.mentors = mentorIds.filter(function (id, pos) {
+          var other = byId(state.employees, id);
+          return other && other.id !== emp.id && other.trainee !== true && mentorIds.indexOf(id) === pos;
+        });
+      }
       /* הסדר קבוע: רק ימים אמיתיים ורק משמרות שקיימות בעסק.
          משמרת שנמחקה מההגדרות לא תחסום לנצח יום שאיש לא מבין. */
       if (emp.standing && typeof emp.standing === 'object') {
@@ -2990,6 +3058,8 @@
     CONSTRAINT_STATUS: CONSTRAINT_STATUS,
     setConstraint: setConstraint,
     getAssigned: getAssigned,
+    isTrainee: isTrainee, countedAssigned: countedAssigned,
+    canMentor: canMentor, traineeProblems: traineeProblems,
     setAssigned: setAssigned,
     employeeDayAssignments: employeeDayAssignments,
     openSlots: openSlots, moveShift: moveShift, markManual: markManual,

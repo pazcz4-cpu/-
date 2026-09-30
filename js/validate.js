@@ -67,6 +67,7 @@
 
     state.employees.forEach(function (emp) {
       if (!emp.active) return;
+      if (emp.trainee === true) return;   // מתלמד אינו ממלא מקום נדרש
       if (emp.shifts.indexOf(demand.shiftId) === -1) return;
       if (!Scheduler.employeeAllowedInBranch(emp, demand.branchId)) return;
       if (!Store.employeeFitsRole(state, emp, demand.role)) { wrongRole++; return; }
@@ -145,6 +146,9 @@
     'over-max': GROUPS.VIOLATIONS,
     rest: GROUPS.VIOLATIONS,
     'holiday-assignment': GROUPS.VIOLATIONS,
+    'trainee-alone': GROUPS.VIOLATIONS,
+    'trainee-mentor': GROUPS.VIOLATIONS,
+    'trainee-role': GROUPS.VIOLATIONS,
 
     'pending-constraints': GROUPS.ADVICE,
     'extra-days-off': GROUPS.ADVICE,
@@ -169,7 +173,9 @@
     // 1. בדיקות ברמת הסלוט: חוסר, עודף (כפל משמרת בסניף) ועובד כפול באותו סלוט
     Object.keys(demandMap).forEach(function (key) {
       var demand = demandMap[key];
-      var assigned = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
+      /* מתלמד אינו נספר בכמות הנדרשת: הוא נוסף ליד מי שמלווה אותו */
+      var everyone = Store.getAssigned(week, demand.dayIdx, demand.branchId, demand.shiftId);
+      var assigned = Store.countedAssigned(state, week, demand.dayIdx, demand.branchId, demand.shiftId);
       var label = slotLabel(state, demand.dayIdx, demand.branchId, demand.shiftId);
       /* אילו מקומות במשמרת נשארו בלי אדם מתאים. משמרת יכולה
          להיות מלאה במספר אנשים ועדיין חסרה מטבח. */
@@ -208,8 +214,23 @@
           { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId }));
       }
 
+      /* מתלמד שאין ליד מי שילווה אותו */
+      Store.traineeProblems(state, week, demand.dayIdx, demand.branchId, demand.shiftId)
+        .forEach(function (problem) {
+          var type = 'trainee-' + problem.type;
+          var params = { name: empName(state, problem.empId), label: label };
+          if (problem.type === 'mentor') {
+            var trainee = Store.byId(state.employees, problem.empId) || {};
+            params.mentors = nameList((trainee.mentors || []).map(function (id) { return empName(state, id); }), 4);
+          }
+          issues.push(issue('warning', type, t('alerts.' + (
+            problem.type === 'alone' ? 'traineeAlone' :
+            problem.type === 'mentor' ? 'traineeMentor' : 'traineeRole'), params),
+            { dayIdx: demand.dayIdx, branchId: demand.branchId, shiftId: demand.shiftId, empId: problem.empId }));
+        });
+
       var seen = {};
-      assigned.forEach(function (id) {
+      everyone.forEach(function (id) {
         if (seen[id]) {
           issues.push(issue('error', 'duplicate-employee-slot',
             t('alerts.duplicateSelf', { name: empName(state, id), label: label }),

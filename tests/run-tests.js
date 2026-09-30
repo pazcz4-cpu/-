@@ -3828,5 +3828,154 @@ test('אין אייקון כפול בטקסט של כפתור בשום שפה', 
   I18n.use('he');
 });
 
+/* ===== עובד בהתלמדות =====
+
+   מתלמד אינו עובד שלם: הוא מתלווה למי שכבר יודע. לכן הוא לא נספר
+   בכמות הנדרשת, אינו לבד, ואם המנהל בחר מי מכשיר – רק ליד אחד מהם. */
+console.log('\n== עובד בהתלמדות ==');
+
+function withTrainee(extra) {
+  var state = Store.blankState();
+  state.branches = [{
+    id: 'br1', name: 'סניף מרכז', active: true,
+    schedule: {
+      0: { morning: { need: 1, from: '08:00', to: '16:00' } },
+      1: { morning: { need: 1, from: '08:00', to: '16:00' } },
+      2: { morning: { need: 1, from: '08:00', to: '16:00' } },
+      3: { morning: { need: 1, from: '08:00', to: '16:00' } }
+    }
+  }];
+  function person(id, name, more) {
+    return Object.assign({ id: id, name: name, active: true, branches: [],
+      shifts: Data.ALL_SHIFT_IDS.slice(), maxShifts: 6, roles: [] }, more || {});
+  }
+  state.employees = [person('a', 'אורי'), person('b', 'בן'),
+    person('t', 'תום', { trainee: true, mentors: [] })];
+  if (extra) extra(state, person);
+  return Store.migrate(state);
+}
+
+test('מתלמד אינו נספר בכמות הנדרשת', function () {
+  var state = withTrainee();
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 0, 'br1', 'morning', ['a', 't']);
+  assertEqual(Store.countedAssigned(state, week, 0, 'br1', 'morning').length, 1, 'המתלמד נספר');
+  var report = Validate.validate(state, week);
+  assertEqual(issuesOfType(report, 'duplicate-shift').length, 0, 'מתלמד נחשב עודף באיוש');
+  assertEqual(issuesOfType(report, 'understaffed').filter(function (i) { return i.ref.dayIdx === 0; }).length, 0,
+    'משמרת עם עובד ומתלמד נחשבה חסרה');
+});
+
+test('משמרת שיש בה רק מתלמד נחשבת ריקה ומסומנת', function () {
+  var state = withTrainee();
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 0, 'br1', 'morning', ['t']);
+  var report = Validate.validate(state, week);
+  assert(issuesOfType(report, 'understaffed').some(function (i) { return i.ref.dayIdx === 0; }),
+    'משמרת עם מתלמד בלבד לא סומנה כחסרה');
+  assertEqual(issuesOfType(report, 'trainee-alone').length, 1, 'מתלמד לבד לא סומן');
+  assertEqual(Store.openSlots(state, week).filter(function (s) { return s.dayIdx === 0; }).length, 1,
+    'שטח ההמתנה לא רואה את המשמרת כפתוחה');
+});
+
+test('המנוע לא משבץ מתלמד לבד, ולא במקום עובד נדרש', function () {
+  var state = withTrainee();
+  var week = Store.emptyWeek();
+  build(state, week);
+  for (var d = 0; d < 4; d++) {
+    var counted = Store.countedAssigned(state, week, d, 'br1', 'morning');
+    assertEqual(counted.length, 1, 'הכיסוי הנדרש נפגע ביום ' + d);
+  }
+  var report = Validate.validate(state, week);
+  ['trainee-alone', 'trainee-mentor', 'trainee-role', 'duplicate-shift', 'understaffed']
+    .forEach(function (type) {
+      assertEqual(issuesOfType(report, type).length, 0, 'נמצאה בעיה: ' + type);
+    });
+  var trainee = Store.byId(state.employees, 't');
+  var count = 0;
+  for (var day = 0; day < 4; day++) {
+    if (Store.getAssigned(week, day, 'br1', 'morning').indexOf('t') !== -1) count++;
+  }
+  assert(count > 0, 'המתלמד לא שובץ בכלל ליד אף מלווה');
+  assert(count <= trainee.maxShifts, 'חריגה ממכסת המתלמד');
+});
+
+test('כשהמנהל בחר מי מכשיר – המתלמד רק ליד אחד מהם', function () {
+  var state = withTrainee(function (st) { st.employees[2].mentors = ['b']; });
+  var week = Store.emptyWeek();
+  build(state, week, { seed: 31 });
+  var together = 0;
+  for (var d = 0; d < 4; d++) {
+    var ids = Store.getAssigned(week, d, 'br1', 'morning');
+    if (ids.indexOf('t') === -1) continue;
+    together++;
+    assert(ids.indexOf('b') !== -1, 'המתלמד שובץ ביום ' + d + ' בלי המלווה שנבחר');
+  }
+  assert(together > 0, 'המתלמד לא שובץ בכלל ליד המלווה שנבחר');
+  /* ואם המלווה שנבחר אינו במשמרת, זו בעיה מסומנת ולא שקטה */
+  var manual = Store.emptyWeek();
+  Store.setAssigned(manual, 1, 'br1', 'morning', ['a', 't']);
+  assertEqual(issuesOfType(Validate.validate(state, manual), 'trainee-mentor').length, 1,
+    'מתלמד בלי המלווה שנבחר לא סומן');
+});
+
+test('בעסק עם תפקידים המתלמד מתלווה למי שבתפקיד שלו', function () {
+  var state = withTrainee(function (st, person) {
+    st.settings.roles = [{ id: 'kitchen', name: 'מטבח', color: 0 }, { id: 'waiter', name: 'מלצר', color: 1 }];
+    st.employees = [
+      person('k', 'טבח', { roles: ['kitchen'] }),
+      person('w', 'מלצר', { roles: ['waiter'] }),
+      person('t', 'מתלמד מטבח', { trainee: true, roles: ['kitchen'] })
+    ];
+  });
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 0, 'br1', 'morning', ['w', 't']);
+  assertEqual(issuesOfType(Validate.validate(state, week), 'trainee-role').length, 1,
+    'מתלמד ליד מלצר במקום טבח לא סומן');
+  Store.setAssigned(week, 0, 'br1', 'morning', ['k', 't']);
+  assertEqual(issuesOfType(Validate.validate(state, week), 'trainee-role').length, 0,
+    'מתלמד ליד טבח סומן בטעות');
+
+  /* והמנוע לא מציב אותו ליד המלצר */
+  var built = Store.emptyWeek();
+  build(state, built, { seed: 5 });
+  for (var d = 0; d < 4; d++) {
+    var ids = Store.getAssigned(built, d, 'br1', 'morning');
+    if (ids.indexOf('t') !== -1) assert(ids.indexOf('k') !== -1, 'המתלמד שובץ בלי טבח ביום ' + d);
+  }
+});
+
+test('שיבוץ ידני של מתלמד נשמר בבנייה מחדש', function () {
+  var state = withTrainee();
+  var week = Store.emptyWeek();
+  Store.setAssigned(week, 2, 'br1', 'morning', ['a', 't']);
+  Store.markManual(week, 2, 'br1', 'morning');
+  build(state, week, { keepManual: true });
+  var ids = Store.getAssigned(week, 2, 'br1', 'morning');
+  assert(ids.indexOf('t') !== -1 && ids.indexOf('a') !== -1, 'השיבוץ הידני נדרס: ' + ids.join(','));
+});
+
+test('נרמול: מלווה לא קיים, מתלמד או העובד עצמו – יוצאים מהרשימה', function () {
+  var state = withTrainee(function (st, person) {
+    st.employees.push(person('t2', 'עוד מתלמד', { trainee: true, mentors: [] }));
+    st.employees[2].mentors = ['b', 'b', 'nobody', 't', 't2', 'a'];
+  });
+  assertEqual(JSON.stringify(Store.byId(state.employees, 't').mentors), JSON.stringify(['b', 'a']),
+    'רשימת המלווים לא נוקתה');
+  var plain = Store.byId(state.employees, 'a');
+  assert(plain.trainee === undefined && plain.mentors === undefined, 'עובד רגיל קיבל שדות מתלמד');
+});
+
+test('מתלמד אינו נבחר כמי שיכול לאייש משמרת חסרה', function () {
+  var state = withTrainee(function (st) { st.employees = [st.employees[2]]; });
+  var week = Store.emptyWeek();
+  build(state, week);
+  for (var d = 0; d < 4; d++) {
+    assertEqual(Store.getAssigned(week, d, 'br1', 'morning').length, 0,
+      'מתלמד שובץ לבד ביום ' + d);
+  }
+});
+
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

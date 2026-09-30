@@ -216,12 +216,16 @@
       marks: {
         dayOff: 'day off', blocked: 'blocked', prefers: 'prefers',
         notInBranch: 'not in this location', notInShift: 'not in this shift',
-        alreadyAssigned: 'already assigned', inactive: 'inactive'
+        alreadyAssigned: 'already assigned', inactive: 'inactive',
+        traineeTag: '(trainee)'
       },
 
       issueTypes: {
         'duplicate-shift': 'Overstaffed',
         'duplicate-employee-slot': 'Duplicate assignment',
+        'trainee-alone': 'Trainee alone',
+        'trainee-mentor': 'Trainee without a chosen mentor',
+        'trainee-role': 'Trainee without someone in their role',
         'double-booked': 'Double booking',
         understaffed: 'Understaffed',
         'constraint-off': 'Availability conflict',
@@ -354,6 +358,9 @@
         allGood: 'Schedule is valid – no overstaffing, gaps or availability conflicts',
         duplicate: 'Overstaffed: {label} – {count} people assigned ({names}) instead of {need}.',
         roleMismatch: 'Role missing: {label} — the headcount is full, but nobody covers {roles}.',
+        traineeAlone: '{name} is a trainee and is alone on the shift – {label}. A trainee must work next to another employee.',
+        traineeMentor: '{name} is a trainee, and the shift {label} has none of the chosen mentors: {mentors}.',
+        traineeRole: '{name} is a trainee, and the shift {label} has no one in their role.',
         duplicateSelf: 'Duplicate assignment: {name} is assigned twice to the same shift – {label}.',
         doubleBooked: 'Double booking: {name} is assigned to {count} shifts on {day}{where} ({detail}).',
         sameBranch: ' at the same location', differentBranches: ' at different locations',
@@ -456,6 +463,13 @@
         anyBranch: 'All locations',
         allShifts: 'All shifts',
         quotaShort: 'limit {count}',
+        trainee: 'Trainee',
+        traineeHint: 'Always works next to another employee on the shift and does not count toward the required headcount. With roles, they work next to someone in their role.',
+        mentors: 'Who trains them (you can pick several)',
+        mentorsAny: 'No selection — any employee can mentor.',
+        mentorsPicked: 'The trainee will only work next to one of the selected people.',
+        noMentors: 'There are no active non-trainee employees yet.',
+        traineeShort: 'trainee',
         inactiveTag: 'inactive',
         noMatch: 'Nobody matches that search.',
         none: 'No staff yet. Add one, or import a list.',

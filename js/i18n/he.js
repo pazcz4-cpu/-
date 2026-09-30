@@ -215,12 +215,16 @@
       marks: {
         dayOff: 'חופש', blocked: 'חסום', prefers: 'מעדיף',
         notInBranch: 'לא בסניף', notInShift: 'לא במשמרת',
-        alreadyAssigned: 'כבר משובץ', inactive: 'לא פעיל'
+        alreadyAssigned: 'כבר משובץ', inactive: 'לא פעיל',
+        traineeTag: '(בהתלמדות)'
       },
 
       issueTypes: {
         'duplicate-shift': 'עודף באיוש',
         'duplicate-employee-slot': 'שיבוץ כפול',
+        'trainee-alone': 'מתלמד לבד',
+        'trainee-mentor': 'מתלמד בלי מי שהוגדר להכשיר',
+        'trainee-role': 'מתלמד בלי עובד בתפקידו',
         'double-booked': 'כפל משמרות לעובד',
         understaffed: 'חוסר באיוש',
         'constraint-off': 'הפרת אילוץ',
@@ -353,6 +357,9 @@
         allGood: 'הסידור תקין – אין עודף או חוסר באיוש ואין הפרות אילוצים',
         duplicate: 'עודף באיוש: {label} – משובצים {count} עובדים ({names}) במקום {need}.',
         roleMismatch: 'תפקיד חסר: {label} – המשמרת מלאה במספר אנשים, אבל אין מי שממלא {roles}.',
+        traineeAlone: '{name} בהתלמדות ונמצא/ת לבד במשמרת – {label}. עובד/ת בהתלמדות חייב/ת לעבוד ליד עובד נוסף.',
+        traineeMentor: '{name} בהתלמדות, ובמשמרת {label} אין אף אחד ממי שהוגדרו להכשיר: {mentors}.',
+        traineeRole: '{name} בהתלמדות, ובמשמרת {label} אין עובד בתפקיד שלו.',
         duplicateSelf: 'שיבוץ כפול: {name} משובץ/ת פעמיים באותה משמרת – {label}.',
         doubleBooked: 'כפל משמרות לעובד: {name} משובץ/ת ל-{count} משמרות ביום {day}{where} ({detail}).',
         sameBranch: ' באותו סניף', differentBranches: ' בסניפים שונים',
@@ -455,6 +462,13 @@
         anyBranch: 'כל הסניפים',
         allShifts: 'כל המשמרות',
         quotaShort: 'מכסה {count}',
+        trainee: 'עובד/ת בהתלמדות',
+        traineeHint: 'מתלווה תמיד לעובד נוסף במשמרת ואינו נספר בכמות העובדים הנדרשת. בעסק עם תפקידים הוא מתלווה למי שבתפקיד שלו.',
+        mentors: 'מי מכשיר/ה (אפשר לבחור כמה)',
+        mentorsAny: 'ללא בחירה — כל עובד מתאים ללוות.',
+        mentorsPicked: 'עובד/ת בהתלמדות יעבוד/תעבוד רק ליד אחד מהנבחרים.',
+        noMentors: 'אין עדיין עובדים פעילים שאינם בהתלמדות.',
+        traineeShort: 'בהתלמדות',
         inactiveTag: 'מושבת',
         noMatch: 'אין עובד שתואם לחיפוש.',
         none: 'אין עדיין עובדים. אפשר להוסיף אחד, או לייבא רשימה.',

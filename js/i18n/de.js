@@ -209,12 +209,16 @@
       marks: {
         dayOff: 'freier Tag', blocked: 'gesperrt', prefers: 'bevorzugt',
         notInBranch: 'nicht in dieser Filiale', notInShift: 'nicht für diese Schicht',
-        alreadyAssigned: 'bereits eingeteilt', inactive: 'inaktiv'
+        alreadyAssigned: 'bereits eingeteilt', inactive: 'inaktiv',
+        traineeTag: '(in Ausbildung)'
       },
 
       issueTypes: {
         'duplicate-shift': 'Überbesetzung',
         'duplicate-employee-slot': 'Doppelte Zuteilung',
+        'trainee-alone': 'Azubi allein',
+        'trainee-mentor': 'Azubi ohne gewählte Ausbildende',
+        'trainee-role': 'Azubi ohne Person in der Rolle',
         'double-booked': 'Zwei Schichten an einem Tag',
         understaffed: 'Unterbesetzt',
         'constraint-off': 'Wunsch verletzt',
@@ -348,6 +352,9 @@
         allGood: 'Der Plan ist in Ordnung – keine Über- oder Unterbesetzung und keine Verfügbarkeitskonflikte',
         duplicate: 'Überbesetzung: {label} – {count} Personen eingeteilt ({names}) statt {need}.',
         roleMismatch: 'Rolle fehlt: {label} — die Personenzahl stimmt, aber {roles} ist nicht besetzt.',
+        traineeAlone: '{name} ist in Ausbildung und allein in der Schicht – {label}. Auszubildende müssen neben einer weiteren Person arbeiten.',
+        traineeMentor: '{name} ist in Ausbildung, und in der Schicht {label} ist niemand der gewählten Ausbildenden: {mentors}.',
+        traineeRole: '{name} ist in Ausbildung, und in der Schicht {label} ist niemand in der eigenen Rolle.',
         duplicateSelf: 'Doppelte Zuteilung: {name} ist zweimal derselben Schicht zugeteilt – {label}.',
         doubleBooked: 'Zwei Schichten an einem Tag: {name} hat {count} Schichten am {day}{where} ({detail}).',
         sameBranch: ' in derselben Filiale', differentBranches: ' in verschiedenen Filialen',
@@ -450,6 +457,13 @@
         anyBranch: 'Alle Standorte',
         allShifts: 'Alle Schichten',
         quotaShort: 'Kontingent {count}',
+        trainee: 'Auszubildende/r',
+        traineeHint: 'Arbeitet immer neben einer weiteren Person in der Schicht und zählt nicht zur benötigten Personenzahl. Bei Rollen neben jemandem in der eigenen Rolle.',
+        mentors: 'Wer bildet aus (Mehrfachauswahl möglich)',
+        mentorsAny: 'Keine Auswahl – jede Person kann ausbilden.',
+        mentorsPicked: 'Die auszubildende Person arbeitet nur neben einer der ausgewählten Personen.',
+        noMentors: 'Es gibt noch keine aktiven Mitarbeitenden, die nicht in Ausbildung sind.',
+        traineeShort: 'in Ausbildung',
         inactiveTag: 'inaktiv',
         noMatch: 'Niemand passt zu dieser Suche.',
         none: 'Noch keine Mitarbeitenden. Fügen Sie jemanden hinzu oder importieren Sie eine Liste.',

@@ -1933,3 +1933,49 @@ end;
 $$;
 
 grant execute on function public.set_wa_employee_addon(boolean, text, text) to authenticated;
+
+-- ===== העוזר בתוך המערכת: מכסה יומית =====
+--
+-- כל שאלה לעוזר עולה כסף, ולכן לכל משתמש יש מכסה ליום. המכסה נשמרת
+-- כאן ולא בזיכרון של השרת: Vercel מריצה כמה מופעים במקביל, ומונה
+-- בזיכרון היה מתאפס בכל אחד מהם.
+--
+-- בלי מדיניות RLS כלל, וללא הרשאה לדפדפן: רק service_role, שעוקף RLS,
+-- נוגע בטבלה. משתמש שיכול לכתוב לעצמו "0 שאלות היום" עוקף את המכסה.
+create table if not exists public.assistant_usage (
+  user_id uuid    not null,
+  day     date    not null default ((now() at time zone 'utc')::date),
+  used    integer not null default 0,
+  primary key (user_id, day)
+);
+alter table public.assistant_usage enable row level security;
+revoke all on public.assistant_usage from anon, authenticated;
+
+-- לוקחת שאלה אחת מהמכסה. מחזירה כמה שאלות נשארו להיום, או -1 אם
+-- המכסה נגמרה. פעולה אחת בבסיס הנתונים: שתי שאלות בו-זמנית לא
+-- יכולות שתיהן להיכנס כשנשארה מקום לאחת.
+create or replace function public.assistant_take(p_user uuid, p_limit integer)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_used integer;
+begin
+  insert into public.assistant_usage as u (user_id, day, used)
+  values (p_user, (now() at time zone 'utc')::date, 1)
+  on conflict (user_id, day) do update
+    set used = u.used + 1
+    where u.used < p_limit
+  returning u.used into v_used;
+
+  if v_used is null then
+    return -1;
+  end if;
+  return greatest(p_limit - v_used, 0);
+end;
+$$;
+
+revoke all on function public.assistant_take(uuid, integer) from public, anon, authenticated;
+grant execute on function public.assistant_take(uuid, integer) to service_role;

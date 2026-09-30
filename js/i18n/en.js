@@ -667,6 +667,24 @@
         kind: { bug: 'Something is broken', feature: 'Feature request', question: 'Question' },
         status: { open: 'Open', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' }
       },
+      assistant: {
+        title: 'SetShifts assistant',
+        button: 'Help',
+        close: 'Close',
+        hello: 'Hi! I can answer any question about using the system. How can I help?',
+        example1: 'How do I publish a schedule?',
+        example2: 'How do I approve time-off requests?',
+        example3: 'How do I assign an employee to a branch?',
+        note: 'Do not type passwords or personal details here. I cannot see your business data.',
+        placeholder: 'Ask about the system…',
+        send: 'Send',
+        thinking: 'Thinking…',
+        limit: 'You have reached today\'s question limit. Try again tomorrow, or open a ticket in the "Support" tab.',
+        off: 'The assistant is not available yet. You can open a ticket in the "Support" tab.',
+        failed: 'I could not answer right now. Try again in a moment, or open a ticket in the "Support" tab.',
+        signIn: 'Please sign in again to ask.'
+      },
+
       managerGuide: {
         title: 'Manager guide',
         text: 'The weekly routine step by step, with screenshots from the system. The guide is in Hebrew.',

@@ -485,6 +485,11 @@
         root.ShiftSupportUI.init({ backend: backend, session: session });
       }
 
+      /* העוזר: כפתור צף בפינה, למנהלים ולבעלים */
+      if (root.ShiftAssistantUI) {
+        root.ShiftAssistantUI.init({ backend: backend, session: session });
+      }
+
       /* אשף הפתיחה, אחרון: הוא מכסה את המסך, ולכן כל השאר צריך
          להיות מוכן מתחתיו – מי שמדלג עליו נוחת על מערכת פעילה
          ולא על מסך שעדיין נבנה. */

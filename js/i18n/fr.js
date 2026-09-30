@@ -661,6 +661,24 @@
         kind: { bug: 'Quelque chose ne marche pas', feature: 'Demande de fonctionnalité', question: 'Question' },
         status: { open: 'Ouvert', in_progress: 'En cours', answered: 'Répondu', closed: 'Fermé' }
       },
+      assistant: {
+        title: 'Assistant SetShifts',
+        button: 'Aide',
+        close: 'Fermer',
+        hello: 'Bonjour ! Je peux répondre à toute question sur l\'utilisation du système. Comment puis-je aider ?',
+        example1: 'Comment publier un planning ?',
+        example2: 'Comment approuver les demandes de congé ?',
+        example3: 'Comment affecter un employé à un site ?',
+        note: 'N\'écrivez ici ni mots de passe ni données personnelles. Je ne vois pas les données de votre entreprise.',
+        placeholder: 'Posez une question sur le système…',
+        send: 'Envoyer',
+        thinking: 'Réflexion…',
+        limit: 'Vous avez atteint la limite de questions d\'aujourd\'hui. Réessayez demain ou ouvrez un ticket dans l\'onglet "Assistance".',
+        off: 'L\'assistant n\'est pas encore disponible. Vous pouvez ouvrir un ticket dans l\'onglet "Assistance".',
+        failed: 'Je n\'ai pas pu répondre pour l\'instant. Réessayez dans un instant ou ouvrez un ticket dans l\'onglet "Assistance".',
+        signIn: 'Reconnectez-vous pour poser une question.'
+      },
+
       managerGuide: {
         title: 'Guide du gestionnaire',
         text: 'La routine hebdomadaire pas à pas, avec des captures du système. Le guide est en hébreu.',

@@ -185,6 +185,9 @@ Project → **Settings** → **Environment Variables**. שלושתם
 | `MAIL_REPLY_TO` | לאן ילכו תשובות של עובדים | לא |
 | `CONTACT_TO` | לאן מגיעות פניות מטופס "צור קשר" | לא** |
 | `APP_URL` | `https://www.setshifts.com/app/` | לא* |
+| `ANTHROPIC_API_KEY` | מפתח מ-console.anthropic.com. **סודי**: לא בצ'אט ולא ברפוזיטורי. בלעדיו העוזר בתוך המערכת מחזיר "העוזר אינו מוגדר" | לא, אבל בלעדיו אין עוזר |
+| `ASSISTANT_DAILY_LIMIT` | כמה שאלות ליום לכל משתמש. ברירת מחדל 40 | לא |
+| `ASSISTANT_MODEL` | דגם לעוזר. ברירת מחדל `claude-haiku-4-5-20251001` | לא |
 
 \*\* ברירת המחדל היא `support@setshifts.com`. הגדירו אותו רק אם
 פניות מהאתר צריכות להגיע לתיבה אחרת מקריאות השירות. תשובה לפנייה

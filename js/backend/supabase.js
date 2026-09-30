@@ -317,7 +317,8 @@
     'employee_count', 'employee_peak',
     'coupon_code', 'discount_percent', 'discount_amount', 'discount_charges_left',
     'wa_opt_in', 'wa_opt_out_at',
-    'wa_employee_addon'
+    'wa_employee_addon', 'wa_declaration_at', 'wa_declaration_name',
+    'wa_declaration_version'
   ];
 
   /* קריאת החברה, ובלי שעמודה חסרה תנעל את כולם בחוץ.
@@ -384,6 +385,9 @@
               couponCode: row.coupon_code || '',
               waOptIn: !!row.wa_opt_in, waOptOutAt: row.wa_opt_out_at || null,
               waEmployeeAddon: !!row.wa_employee_addon,
+              waDeclarationAt: row.wa_declaration_at || null,
+              waDeclarationName: row.wa_declaration_name || '',
+              waDeclarationVersion: row.wa_declaration_version || '',
               discountPercent: Number(row.discount_percent) || 0,
               discountAmount: Number(row.discount_amount) || 0,
               discountChargesLeft: Number(row.discount_charges_left) || 0,
@@ -1201,15 +1205,25 @@
      דרך פונקציה בשרת ולא PATCH ישיר: הדגל משנה את הסכום שנגבה,
      ולכן הוא אינו ברשימת העמודות שהדפדפן רשאי לכתוב. השרת בודק
      שמי שמבקש הוא הבעלים. */
-  SupabaseBackend.prototype.setWaEmployeeAddon = function (on) {
+  SupabaseBackend.prototype.setWaEmployeeAddon = function (on, declaration) {
     var self = this;
     var want = !!on;
-    return this._rpc('set_wa_employee_addon', { p_on: want }).then(function (rows) {
+    var decl = declaration || {};
+    return this._rpc('set_wa_employee_addon', {
+      p_on: want,
+      p_declaration_name: want ? String(decl.name || '') : null,
+      p_declaration_version: want ? String(decl.version || '') : null
+    }).then(function (rows) {
       var row = (rows && rows[0]) || rows || {};
       var enabled = row.enabled === undefined ? want : !!row.enabled;
       /* המסך נשען על העותק שבזיכרון, ובלי העדכון הזה המתג חוזר
          למצבו הקודם עד הרענון הבא. */
       if (self._session) self._session.company.waEmployeeAddon = enabled;
+      if (self._session && enabled) {
+        self._session.company.waDeclarationAt = new Date().toISOString();
+        self._session.company.waDeclarationName = String(decl.name || '');
+        self._session.company.waDeclarationVersion = String(decl.version || '');
+      }
       return { enabled: enabled };
     });
   };

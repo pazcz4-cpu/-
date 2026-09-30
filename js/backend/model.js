@@ -355,6 +355,10 @@
      עובדים ליום אחד היה מוזיל את התוספת ולא את המנוי. */
   var WA_EMPLOYEE_PRICE = 9;
 
+  /* גרסת נוסח ההצהרה. כשהנוסח משתנה מעלים אותה, ולכן כל אישור
+     שמור עם הגרסה שאליה הסכימו בפועל. */
+  var WA_DECLARATION_VERSION = '2026-09-30';
+
   function waEmployeeAddon(company) {
     return !!(company && company.waEmployeeAddon);
   }
@@ -877,6 +881,7 @@
     PLANS: PLANS, PLAN_ORDER: PLAN_ORDER, DEFAULT_PLAN: DEFAULT_PLAN,
     WA_EMPLOYEE_PRICE: WA_EMPLOYEE_PRICE,
     waEmployeeAddon: waEmployeeAddon,
+    WA_DECLARATION_VERSION: WA_DECLARATION_VERSION,
     addonPrice: addonPrice,
     priceBreakdown: priceBreakdown,
     totalPrice: totalPrice,

@@ -61,6 +61,12 @@ module.exports = async function ({ body, db }) {
         /* תוספת התראות הוואטסאפ, והסכום שהיא מוסיפה. מוצג כאן
            כי "למה החשבון שלו גדל" היא שאלה שנשאלת מהמסך הזה. */
         waEmployeeAddon: company.wa_employee_addon === true,
+        /* מי חתם על הצהרת האחריות לשליחת וואטסאפ, ומתי */
+        waDeclaration: company.wa_declaration_at ? {
+          at: company.wa_declaration_at,
+          name: company.wa_declaration_name || '',
+          version: company.wa_declaration_version || ''
+        } : null,
         waAddonPrice: Model.WA_EMPLOYEE_PRICE,
         waAddonMonthly: company.wa_employee_addon === true
           ? Model.WA_EMPLOYEE_PRICE * (Seats.billable(company) || 0) : 0,

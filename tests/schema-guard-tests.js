@@ -145,5 +145,29 @@ test('כתיבה ישירה לשבועות מוגבלת למנהל', function ()
     'עובד יכול לכתוב ישירות לשבוע');
 });
 
+console.log('\n== הצהרת אחריות לוואטסאפ ==');
+
+test('הפעלת התוספת דורשת הצהרה בשרת, ולא רק במסך', function () {
+  var at = sql.indexOf('create or replace function public.set_wa_employee_addon');
+  assert(at !== -1, 'לא נמצאה הפונקציה');
+  var block = sql.slice(at, sql.indexOf('$$;', at));
+  assert(block.indexOf("'declaration required'") !== -1, 'ההפעלה אינה דורשת הצהרה');
+  assert(block.indexOf('wa_declaration_by') !== -1 && block.indexOf('wa_declaration_version') !== -1,
+    'ההצהרה אינה נשמרת עם מי אישר ובאיזו גרסה');
+});
+
+test('הפונקציה הישנה, בלי הצהרה, נמחקת ואינה נשארת לעקיפה', function () {
+  has('drop function if exists public.set_wa_employee_addon(boolean);',
+    'הגרסה הישנה של הפונקציה אינה נמחקת');
+  assert(sql.indexOf('grant execute on function public.set_wa_employee_addon(boolean) ') === -1,
+    'הגרסה הישנה עדיין מקבלת הרשאה');
+});
+
+test('עמודות ההצהרה אינן ברשימת הכתיבה של הדפדפן', function () {
+  var grant = /grant update \(([^)]*)\) on public\.companies/.exec(sql);
+  assert(grant, 'לא נמצאה רשימת grant update');
+  assert(grant[1].indexOf('wa_declaration') === -1, 'לקוח יכול לכתוב לעצמו הצהרה');
+});
+
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

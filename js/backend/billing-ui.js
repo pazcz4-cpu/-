@@ -37,6 +37,31 @@
     return keys[status] ? t(keys[status]) : status;
   }
 
+  /* נוסח ההצהרה. אותם סעיפים בכל שפה, וגרסה אחת שנשמרת עם האישור */
+  function declarationHtml() {
+    var html = '<div class="wa-declaration">';
+    html += '<h3>' + esc(t('billing.waDeclTitle')) + '</h3>';
+    html += '<div class="wa-decl-text" tabindex="0" role="region" aria-label="' +
+      esc(t('billing.waDeclTitle')) + '"><ol>';
+    for (var i = 1; i <= 7; i++) {
+      html += '<li>' + esc(t('billing.waDecl' + i)) + '</li>';
+    }
+    html += '</ol></div>';
+    html += '<label class="wa-decl-name"><span>' + esc(t('billing.waDeclName')) +
+      '</span><input type="text" id="wa-decl-name" class="text-input" maxlength="120" ' +
+      'autocomplete="name"></label>';
+    html += '<label class="check wa-decl-agree"><input type="checkbox" id="wa-decl-agree"> ' +
+      '<span>' + esc(t('billing.waDeclAgree')) + '</span></label>';
+    html += '</div>';
+    return html;
+  }
+
+  function declarationReady() {
+    var name = document.getElementById('wa-decl-name');
+    var agree = document.getElementById('wa-decl-agree');
+    return !!(name && agree && agree.checked && name.value.trim().length >= 2);
+  }
+
   function render() {
     var container = document.getElementById('billing-panel');
     if (!container || !ctx) return;
@@ -193,8 +218,21 @@
        לפני שהערוץ עלה), הכיבוי כן מוצג -- אחרת אין לה דרך
        לצאת מחיוב שאינה מקבלת עליו שירות. */
     if (Model.isWaStaffLive()) {
+      /* ההצהרה לפני הכפתור: מי שמפעיל שליחה לעובדים מצהיר שהוא
+         אחראי לאישור ההודעות ולכל מספר שהוא מוסיף. הכפתור נשאר
+         כבוי עד ששם מלא הוקלד והתיבה סומנה, והשרת בודק שוב. */
+      if (addonOn) {
+        if (company.waDeclarationAt) {
+          html += '<p class="billing-note">' + esc(t('billing.waDeclSigned', {
+            name: company.waDeclarationName || '—', date: formatDate(company.waDeclarationAt)
+          })) + '</p>';
+        }
+      } else {
+        html += declarationHtml();
+      }
       html += '<div class="row"><button id="billing-addon-toggle" class="btn' +
-        (addonOn ? '' : ' primary') + '" data-on="' + (addonOn ? '1' : '0') + '">' +
+        (addonOn ? '' : ' primary') + '" data-on="' + (addonOn ? '1' : '0') + '"' +
+        (addonOn ? '' : ' disabled') + '>' +
         t(addonOn ? 'billing.waAddonDisable' : 'billing.waAddonEnable') + '</button>' +
         '<span class="billing-addon-state">' +
         t(addonOn ? 'billing.waAddonOn' : 'billing.waAddonOff') + '</span></div>';
@@ -463,10 +501,15 @@
         /* המסך לא מציג כפתור הפעלה כשהערוץ כבוי, אבל הבדיקה
            חוזרת כאן: מי שמגיע דרך הקונסולה לא יקנה אוויר. */
         if (turnOn && !Model.isWaStaffLive()) { say(t('billing.waAddonSoon'), true); return; }
+        if (turnOn && !declarationReady()) { say(t('billing.waDeclRequired'), true); return; }
         if (turnOn && !root.confirm(t('billing.waAddonConfirm'))) return;
         say('');
         addon.disabled = true;
-        ctx.billing.setWaEmployeeAddon(turnOn).then(function () {
+        var declaration = turnOn ? {
+          name: document.getElementById('wa-decl-name').value.trim(),
+          version: Model.WA_DECLARATION_VERSION
+        } : null;
+        ctx.billing.setWaEmployeeAddon(turnOn, declaration).then(function () {
           render();
           if (ctx.onChange) ctx.onChange();
         }, function (err) {
@@ -500,6 +543,14 @@
         }, function (err) { say((err && err.message) || t('billing.updateFailed'), true); });
       }
     });
+
+    /* הכפתור נפתח רק כששם הוקלד והתיבה סומנה */
+    function syncDeclaration() {
+      var button = document.getElementById('billing-addon-toggle');
+      if (button && button.dataset.on !== '1') button.disabled = !declarationReady();
+    }
+    panel.addEventListener('input', syncDeclaration);
+    panel.addEventListener('change', syncDeclaration);
 
     document.getElementById('tabs').addEventListener('click', function (event) {
       if (event.target.closest('.tab[data-tab="billing"]')) { render(); }

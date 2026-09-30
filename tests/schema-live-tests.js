@@ -691,7 +691,7 @@ check('הלקוח אינו יכול להדליק לעצמו את תוספת הו
   /* והפונקציה שכן מותרת קיימת, אחרת אין דרך להדליק אותה בכלל */
   assertEqual(ask(false,
     "(select has_function_privilege('authenticated'," +
-    "'public.set_wa_employee_addon(boolean)','execute')::text)",
+    "'public.set_wa_employee_addon(boolean,text,text)','execute')::text)",
     'reset role;'), 'true', 'אין הרשאה להריץ את הפונקציה');
 });
 

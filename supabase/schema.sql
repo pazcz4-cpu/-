@@ -1851,11 +1851,34 @@ alter table public.companies
   add column if not exists wa_employee_addon    boolean not null default false,
   add column if not exists wa_employee_addon_at timestamptz;
 
+-- הצהרת האחריות. מי שמפעיל שליחת הודעות וואטסאפ לעובדים מצהיר
+-- שהוא אחראי לאישור ההודעות מול הצוות והעובדים, ולכל מספר טלפון
+-- שהוא מזין למערכת. ההצהרה נשמרת עם מי אישר, מתי, ובאיזו גרסה של
+-- הנוסח -- כדי שאפשר יהיה להראות מה בדיוק אושר.
+--
+-- העמודות אינן ברשימת ה-grant update: לקוח לא כותב לעצמו "אישרתי".
+alter table public.companies
+  add column if not exists wa_declaration_at      timestamptz,
+  add column if not exists wa_declaration_by      uuid,
+  add column if not exists wa_declaration_name    text,
+  add column if not exists wa_declaration_version text;
+
 -- הדלקה וכיבוי של התוספת. רק הבעלים, כמו כל דבר שנוגע בכסף.
 --
 -- התאריך נשמר גם בכיבוי ולא רק בהדלקה: "מתי זה הופעל" ו"מתי
 -- זה כובה" הן אותה שאלה כשלקוח שואל למה חויב.
-create or replace function public.set_wa_employee_addon(p_on boolean)
+--
+-- הדלקה דורשת הצהרה: שם מלא וגרסת הנוסח שאושר. ההצהרה נרשמת בכל
+-- הדלקה מחדש, ולכן האישור האחרון הוא תמיד של ההפעלה הנוכחית.
+-- הגרסה הישנה של הפונקציה (בלי הצהרה) נמחקת: אם היא נשארת, מי
+-- שקורא לה ישירות עוקף את ההצהרה.
+drop function if exists public.set_wa_employee_addon(boolean);
+
+create or replace function public.set_wa_employee_addon(
+  p_on                  boolean,
+  p_declaration_name    text default null,
+  p_declaration_version text default null
+)
 returns table (enabled boolean, changed_at timestamptz)
 language plpgsql
 security definer
@@ -1865,6 +1888,8 @@ declare
   v_role       text;
   v_company_id uuid;
   v_on         boolean := coalesce(p_on, false);
+  v_name       text := btrim(coalesce(p_declaration_name, ''));
+  v_version    text := btrim(coalesce(p_declaration_version, ''));
 begin
   if auth.uid() is null then
     raise exception 'not signed in' using errcode = '28000';
@@ -1883,13 +1908,28 @@ begin
     raise exception 'not allowed' using errcode = '42501';
   end if;
 
-  update public.companies
-     set wa_employee_addon    = v_on,
-         wa_employee_addon_at = now()
-   where id = v_company_id;
+  if v_on and (char_length(v_name) < 2 or v_version = '') then
+    raise exception 'declaration required' using errcode = '22023';
+  end if;
+
+  if v_on then
+    update public.companies
+       set wa_employee_addon      = true,
+           wa_employee_addon_at   = now(),
+           wa_declaration_at      = now(),
+           wa_declaration_by      = auth.uid(),
+           wa_declaration_name    = left(v_name, 120),
+           wa_declaration_version = left(v_version, 40)
+     where id = v_company_id;
+  else
+    update public.companies
+       set wa_employee_addon    = false,
+           wa_employee_addon_at = now()
+     where id = v_company_id;
+  end if;
 
   return query select v_on, now();
 end;
 $$;
 
-grant execute on function public.set_wa_employee_addon(boolean) to authenticated;
+grant execute on function public.set_wa_employee_addon(boolean, text, text) to authenticated;

@@ -362,10 +362,13 @@
      בחשבונית היא סעיף נפרד — וכשלקוח שואל למה החשבון גדל,
      התשובה צריכה להיות על המסך ולא בחישוב בראש. */
   function addonNote(c) {
-    if (!c.waEmployeeAddon) return 'תוספת וואטסאפ לעובדים — כבויה';
+    var signed = c.waDeclaration
+      ? ' · הצהרה: ' + c.waDeclaration.name + ', ' + date(c.waDeclaration.at)
+      : ' · ללא הצהרה חתומה';
+    if (!c.waEmployeeAddon) return 'תוספת וואטסאפ לעובדים — כבויה' + signed;
     return 'תוספת וואטסאפ לעובדים · ' + money(c.waAddonPrice) + ' × ' +
       (c.pricedEmployees == null ? '?' : c.pricedEmployees) +
-      ' = ' + money(c.waAddonMonthly) + ' לחודש';
+      ' = ' + money(c.waAddonMonthly) + ' לחודש' + signed;
   }
 
   function renderCompanyDetail(view) {

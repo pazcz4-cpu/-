@@ -307,8 +307,48 @@ const beforeAddon = await page.locator('.billing-current').innerText();
 console.log('    ולפני ההפעלה הסכום הוא מחיר התוכנית:',
   /399/.test(beforeAddon) ? '✓' : '✗');
 
+/* בלי הצהרה אי אפשר להפעיל: הכפתור כבוי עד ששם הוקלד והתיבה סומנה */
+console.log('    ההצהרה מוצגת לפני ההפעלה:',
+  await page.locator('.wa-declaration .wa-decl-text li').count() === 7 ? '✓' : '✗');
+if (await page.locator('.wa-declaration .wa-decl-text li').count() !== 7) {
+  errors.push('נוסח ההצהרה אינו מוצג בשבעה סעיפים');
+}
+console.log('    והכפתור כבוי בלעדיה:',
+  await page.locator('#billing-addon-toggle').isDisabled() ? '✓' : '✗');
+if (!(await page.locator('#billing-addon-toggle').isDisabled())) {
+  errors.push('אפשר להפעיל את התוספת בלי הצהרה');
+}
+await page.fill('#wa-decl-name', 'פז');
+await page.waitForTimeout(150);
+if (!(await page.locator('#billing-addon-toggle').isDisabled())) {
+  errors.push('שם בלי סימון התיבה פותח את הכפתור');
+}
+await page.check('#wa-decl-agree');
+await page.waitForTimeout(150);
+console.log('    ושם ותיבה פותחים אותו:',
+  !(await page.locator('#billing-addon-toggle').isDisabled()) ? '✓' : '✗');
+if (await page.locator('#billing-addon-toggle').isDisabled()) {
+  errors.push('שם ותיבה מסומנת לא פתחו את הכפתור');
+}
+
+/* השרת עצמו סוגר את הדלת: קריאה ישירה בלי הצהרה נדחית */
+const bypass = await page.evaluate(() =>
+  window.__backend.setWaEmployeeAddon(true, null).then(() => 'accepted', () => 'rejected'));
+console.log('    קריאה ישירה בלי הצהרה נדחית:', bypass === 'rejected' ? '✓' : '✗');
+if (bypass !== 'rejected') errors.push('השרת קיבל הפעלה בלי הצהרה');
+
 await page.click('#billing-addon-toggle');
 await page.waitForTimeout(700);
+const declared = await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+  const c = raw.companies[Object.keys(raw.companies)[0]];
+  return { name: c.waDeclarationName, version: c.waDeclarationVersion, at: !!c.waDeclarationAt };
+});
+console.log('    ההצהרה נשמרה עם שם וגרסה:',
+  declared.name === 'פז' && declared.version && declared.at ? '✓' : '✗');
+if (declared.name !== 'פז' || !declared.version || !declared.at) {
+  errors.push('ההצהרה לא נשמרה: ' + JSON.stringify(declared));
+}
 const afterAddon = await page.locator('.billing-current').innerText();
 
 console.log('17. אחרי ההפעלה הסכום כולל את התוספת:',

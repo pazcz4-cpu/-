@@ -2389,3 +2389,19 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
   line-height: 1.5; cursor: pointer;
 }
 .auth-check input { margin-top: 2px; flex: 0 0 auto; }
+
+/* הצהרת האחריות לפני הפעלת שליחת וואטסאפ לעובדים */
+.wa-declaration {
+  display: flex; flex-direction: column; gap: var(--s3);
+  margin: var(--s3) 0; padding: var(--s3) var(--s4);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface, var(--bg));
+}
+.wa-declaration h3 { margin: 0; font-size: var(--t-md); }
+.wa-decl-text {
+  max-height: 220px; overflow-y: auto; padding: var(--s2) var(--s3);
+  border: 1px solid var(--line); border-radius: var(--r-sm); font-size: var(--t-sm); line-height: 1.6;
+}
+.wa-decl-text ol { margin: 0; padding-inline-start: var(--s4); }
+.wa-decl-text li { margin-bottom: var(--s2); }
+.wa-decl-name { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-sm); }
+.wa-decl-name input { max-width: 360px; }

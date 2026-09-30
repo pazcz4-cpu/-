@@ -978,11 +978,23 @@
 
   /* תוספת התראות הוואטסאפ לעובדים. אותה הרשאה כמו הקופון:
      היא משנה כסף, ולכן היא של הבעלים. */
-  MockBackend.prototype.setWaEmployeeAddon = function (on) {
+  MockBackend.prototype.setWaEmployeeAddon = function (on, declaration) {
     var session;
     try { session = this._require('billing.manage'); } catch (err) { return Promise.reject(err); }
     var company = this.db.companies[session.company.id];
     if (!company) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    /* הדלקה דורשת הצהרת אחריות, כמו בשרת האמיתי */
+    var decl = declaration || {};
+    if (on) {
+      var declName = String(decl.name || '').trim();
+      if (declName.length < 2 || !String(decl.version || '').trim()) {
+        return Promise.reject(this._fail('invalid', t('billing.waDeclRequired')));
+      }
+      company.waDeclarationAt = new Date().toISOString();
+      company.waDeclarationBy = session.user.id;
+      company.waDeclarationName = declName;
+      company.waDeclarationVersion = String(decl.version).trim();
+    }
     company.waEmployeeAddon = !!on;
     this._save();
     this._startSession(session.user.id);

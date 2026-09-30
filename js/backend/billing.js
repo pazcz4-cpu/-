@@ -215,11 +215,11 @@
   /* הדלקה וכיבוי של תוספת התראות הוואטסאפ לעובדים. כמו הקופון,
      זו פעולה מול השרת שלנו ולא מול הסולק: היא משנה את הסכום
      שייגבה בחיוב הבא, ולא עסקה עכשיו. */
-  BillingService.prototype.setWaEmployeeAddon = function (on) {
+  BillingService.prototype.setWaEmployeeAddon = function (on, declaration) {
     if (!this.backend || !this.backend.setWaEmployeeAddon) {
       return Promise.reject(new Error(t('payments.notConnected')));
     }
-    return this.backend.setWaEmployeeAddon(on);
+    return this.backend.setWaEmployeeAddon(on, declaration);
   };
 
   BillingService.prototype.cancel = function () { return this.provider.cancel(); };

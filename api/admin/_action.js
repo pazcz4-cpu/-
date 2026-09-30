@@ -84,6 +84,11 @@ module.exports = async function ({ user, body, db }) {
        ממנו לכבות, או להפעלה שסוכמה בטלפון. נרשם ביומן כמו כל
        פעולה שנוגעת בכסף. */
     const on = (body && body.on) === true;
+    /* הפעלה מהמשרד האחורי אינה עוקפת את ההצהרה: בלי הצהרת אחריות
+       שאושרה על ידי הלקוח, שליחה לעובדים אינה נפתחת */
+    if (on && !company.wa_declaration_at) {
+      return { status: 409, body: { message: 'The customer has not signed the WhatsApp responsibility declaration' } };
+    }
     patch.wa_employee_addon = on;
     patch.wa_employee_addon_at = new Date().toISOString();
     detail.from = company.wa_employee_addon === true;

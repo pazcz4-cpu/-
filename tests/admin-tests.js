@@ -596,6 +596,24 @@ test('שינוי חבילה לא מוכרת נדחה', function () {
   }, function (e) { fake.restore(); throw e; });
 });
 
+test('הפעלת וואטסאפ מהמשרד האחורי דורשת הצהרת אחריות חתומה', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-wa-addon', id: 'co-1', on: true,
+    reason: 'הפעלה שסוכמה בטלפון' }).then(function (res) {
+    assertEqual(res.statusCode, 409, 'התוספת הופעלה בלי הצהרה');
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
+test('כיבוי תוספת וואטסאפ אינו דורש הצהרה', function () {
+  var fake = sampleWorld(); fake.install();
+  return call(action, { action: 'set-wa-addon', id: 'co-1', on: false,
+    reason: 'הלקוח ביקש לכבות' }).then(function (res) {
+    assertEqual(res.statusCode, 200, 'הכיבוי נחסם: ' + res.statusCode);
+    fake.restore();
+  }, function (e) { fake.restore(); throw e; });
+});
+
 /* ===== מחיר מוסכם לרשת =====
 
    לחבילת הרשתות אין מחירון: המחיר נסגר בפגישה ומוזן כאן. בלי

@@ -276,7 +276,7 @@
       return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening') &&
         Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening').auto === 'motzash';
     });
-    if (missingShabbat.length && !week.shabbatEnd) {
+    if (missingShabbat.length && !Store.shabbatEnd(week)) {
       issues.push(issue('warning', 'missing-shabbat-end',
         t('alerts.missingSabbath'),
         { dayIdx: Data.MOTZASH.dayIdx }));

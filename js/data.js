@@ -241,8 +241,7 @@
       weeklyMinutes: 2520
     },
     /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
-    get shifts() { return defaultShifts(); },
-    defaultShabbatEnd: '20:00'
+    get shifts() { return defaultShifts(); }
   };
 
   var API = {

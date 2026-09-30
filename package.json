@@ -30,6 +30,7 @@
     "test:inactive": "node tests/inactive-browser-test.mjs",
     "test:view": "node tests/view-browser-test.mjs",
     "test:toolbar": "node tests/toolbar-browser-test.mjs",
+    "test:shabbat": "node tests/shabbat-browser-test.mjs",
     "test:cells": "node tests/cells-browser-test.mjs",
     "test:empscreen": "node tests/employee-screen-test.mjs",
     "test:onboarding": "node tests/onboarding-browser-test.mjs",

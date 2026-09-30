@@ -162,7 +162,7 @@
             /* דיווחי השעון. בלעדיהם דוח השעות היה מראה אפס לכל
                עובד — הנתונים בשרת, והמסך פשוט לא היה מביא אותם. */
             target.punches = Array.isArray(remote.punches) ? remote.punches : [];
-            target.shabbatEnd = remote.shabbatEnd || '';
+            target.shabbatEnd = Store.shabbatEndForWeek(weekKey) || remote.shabbatEnd || '';
             target.note = remote.note || '';
             target.generatedAt = remote.generatedAt || null;
             target.published = !!remote.published;
@@ -206,7 +206,7 @@
             /* דיווחי השעון. חודש של שעות היה נעלם בפרסום
                הסידור הבא. */
             punches: Array.isArray(week.punches) ? week.punches : [],
-            shabbatEnd: week.shabbatEnd, note: week.note,
+            shabbatEnd: Store.shabbatEnd(week), note: week.note,
             generatedAt: week.generatedAt || null,
             published: week.published,
             publishedAt: week.publishedAt, publishedSignature: week.publishedSignature

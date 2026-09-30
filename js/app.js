@@ -81,11 +81,7 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   function week() {
-    var current = Store.getWeek(state, weekKey);
-    if (!current.shabbatEnd && state.settings.defaultShabbatEnd) {
-      current.shabbatEnd = state.settings.defaultShabbatEnd;
-    }
-    return current;
+    return Store.getWeek(state, weekKey);
   }
 
   /* מצב השמירה האמיתי, ולא הבטחה שנכתבה פעם אחת בקוד. מסך ההגדרות
@@ -3061,7 +3057,6 @@
       restHours.disabled = viewOnly || !restRule.enabled;
     }
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
-    $('#default-shabbat').value = state.settings.defaultShabbatEnd || '';
     renderDeadline();
     renderLimit();
     renderRoles();
@@ -3119,7 +3114,7 @@
     '#employees-list input', '#employees-list button:not(.card-toggle):not(.card-summary)',
     '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
-    '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off', '#default-shabbat',
+    '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off',
     '#opt-clock-window', '#clock-lead',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
@@ -4027,19 +4022,6 @@
       persist();
       render();
       toast(t('toast.holidayMarked', { day: Data.DAYS[dayIdx].name }));
-    });
-
-    $('#shabbat-end').addEventListener('change', function (event) {
-      if (weekBlocked()) { render(); return; }
-      var normalized = Store.normalizeTimeInput(event.target.value);
-      if (normalized === null) {
-        toast(t('errors.invalidTime'));
-        render();
-        return;
-      }
-      week().shabbatEnd = normalized;
-      persist();
-      render();
     });
 
     $('#export-excel').addEventListener('click', exportExcel);
@@ -5156,18 +5138,6 @@
     }
     overtimeInput('#overtime-daily', 'dailyMinutes', 24);
     overtimeInput('#overtime-weekly', 'weeklyMinutes', 120);
-
-    $('#default-shabbat').addEventListener('change', function (event) {
-      var normalized = Store.normalizeTimeInput(event.target.value);
-      if (normalized === null) {
-        toast(t('errors.invalidTime'));
-        render();
-        return;
-      }
-      state.settings.defaultShabbatEnd = normalized;
-      persist('config');
-      render();
-    });
 
     $('#export-json').addEventListener('click', function () {
       saveFile('maiphone-shifts-backup.json', JSON.stringify(state, null, 2), 'application/json');

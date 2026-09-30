@@ -699,8 +699,7 @@
           'Le bouton met à jour les succursales existantes sans toucher aux jours ouverts ni aux effectifs.',
         shiftNamePlaceholder: 'Nom du service',
         sabbathTitle: 'Samedi soir',
-        sabbathDefault: 'Heure de fin du chabbat par défaut pour une nouvelle semaine :',
-        sabbathHint: 'Chaque semaine, vous pouvez ajuster l’heure réelle en haut de l’onglet Planning. ' +
+        sabbathHint: 'La fin du chabbat est calculée automatiquement pour Tel Aviv, pour tout le pays, et se met à jour chaque semaine. Elle ne peut pas être modifiée. ' +
           'Les services du samedi soir commencent une demi-heure plus tard.',
         backup: 'Sauvegarde et restauration',
         exportJson: 'Exporter toutes les données (JSON)', importJson: 'Importer des données',

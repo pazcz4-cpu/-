@@ -699,8 +699,7 @@
           'El botón actualiza las sucursales existentes sin tocar los días abiertos ni el número de personas.',
         shiftNamePlaceholder: 'Nombre del turno',
         sabbathTitle: 'Noche del sábado',
-        sabbathDefault: 'Hora de fin del Sabbat por defecto para una semana nueva:',
-        sabbathHint: 'Cada semana puedes ajustar la hora real en la parte superior de la pestaña Horario. ' +
+        sabbathHint: 'El fin del Sabbat se calcula automáticamente para Tel Aviv, para todo el país, y se actualiza cada semana. No se puede cambiar. ' +
           'Los turnos de la noche del sábado empiezan media hora después.',
         backup: 'Copia de seguridad',
         exportJson: 'Exportar todos los datos (JSON)', importJson: 'Importar datos',

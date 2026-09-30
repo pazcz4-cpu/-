@@ -705,8 +705,7 @@
           'The button updates existing locations without changing open days or headcount.',
         shiftNamePlaceholder: 'Shift name',
         sabbathTitle: 'Saturday night',
-        sabbathDefault: 'Default Sabbath end time for a new week:',
-        sabbathHint: 'You can set the real time each week at the top of the Schedule tab. ' +
+        sabbathHint: 'Sabbath end is calculated automatically for Tel Aviv, for the whole country, and updates every week. It cannot be changed. ' +
           'Saturday-night shifts start half an hour later.',
         backup: 'Backup and restore',
         exportJson: 'Export all data (JSON)', importJson: 'Import data',

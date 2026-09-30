@@ -582,11 +582,13 @@ console.log('\n== ימים, שעות ומוצ״ש ==');
 test('שעת מוצ״ש מחושבת חצי שעה אחרי צאת השבת', function () {
   var state = freshState();
   var weekData = Store.getWeek(state, '2026-09-13');
-  weekData.shabbatEnd = '19:42';
+  var end = Store.shabbatEnd(weekData);
+  assertEqual(end, '19:19', 'צאת שבת של 19.9.2026 בתל אביב');
   var hours = Store.slotHours(weekData, state.branches[0], 6, 'evening');
-  assertEqual(hours.from, '20:12', 'התחלה = צאת שבת + 30 דקות');
+  assertEqual(hours.from, Store.addMinutes(end, 30), 'התחלה = צאת שבת + 30 דקות');
+  assertEqual(hours.from, '19:49', 'התחלה = צאת שבת + 30 דקות');
   assertEqual(hours.to, '23:00', 'סיום ברירת המחדל');
-  assertEqual(Store.hoursLabel(hours), '20:12-23:00', 'תווית השעות');
+  assertEqual(Store.hoursLabel(hours), '19:49-23:00', 'תווית השעות');
 });
 
 test('קלט שעה מתקבל בכמה פורמטים ותמיד נשמר כ-24 שעות', function () {
@@ -607,13 +609,67 @@ test('חציית חצות בחישוב שעת מוצ״ש', function () {
   assertEqual(Store.addMinutes('לא שעה', 30), null, 'קלט לא תקין');
 });
 
-test('ללא שעת צאת שבת – אין שעת התחלה והמערכת מתריעה', function () {
+test('צאת שבת אוטומטי: ערך ידני אינו גובר עליו, ושבוע ישן מתוקן', function () {
   var state = freshState();
+  state.weeks['2026-09-13'] = { constraints: {}, assignments: {}, manual: {}, holidays: {}, shabbatEnd: '20:00', note: '' };
   var weekData = Store.getWeek(state, '2026-09-13');
-  weekData.shabbatEnd = '';
-  assertEqual(Store.slotHours(weekData, state.branches[0], 6, 'evening').from, '', 'אין שעת התחלה');
+  assertEqual(weekData.shabbatEnd, '19:19', 'ערך ידני ישן נדרס בחישוב');
+  weekData.shabbatEnd = '23:59';
+  assertEqual(Store.shabbatEnd(weekData), '19:19', 'גם אם מישהו כותב ערך על השבוע, נקרא החישוב');
+  assertEqual(Store.slotHours(weekData, state.branches[0], 6, 'evening').from, '19:49', 'שעת ההתחלה לפי החישוב');
   var report = Validate.validate(state, weekData);
-  assertEqual(issuesOfType(report, 'missing-shabbat-end').length, 1, 'לא הוצגה התראה על צאת שבת');
+  assertEqual(issuesOfType(report, 'missing-shabbat-end').length, 0, 'אין התראה: השעה תמיד קיימת');
+});
+
+test('צאת שבת: תואם חישוב אסטרונומי עצמאי (astral, תל אביב, 8.5°) בדיוק של דקה', function () {
+  var Shabbat = require('../js/shabbat.js');
+  /* ערכי ייחוס: ספריית astral בפייתון, גובה שמש 8.5- מעלות, מוצאי
+     שבת בתל אביב, בשעון ישראל. כולל השבתות שצמודות למעבר שעון הקיץ. */
+  var reference = [
+    ['2026-03-21', '18:29:24'], ['2026-03-28', '19:34:24'], ['2026-10-24', '18:35:46'],
+    ['2026-10-31', '17:29:23'], ['2026-01-03', '17:28:39'], ['2026-06-20', '20:32:47'],
+    ['2026-12-26', '17:23:12'], ['2027-03-20', '18:28:31'], ['2027-03-27', '19:33:31'],
+    ['2027-10-23', '18:37:00'], ['2027-10-30', '18:30:27'], ['2028-02-05', '17:55:36'],
+    ['2028-07-01', '20:33:40'], ['2030-09-28', '19:06:14']
+  ];
+  reference.forEach(function (row) {
+    var parts = row[0].split('-').map(Number);
+    var mine = Shabbat.endOnSaturday(parts[0], parts[1], parts[2]);
+    var minePartsArr = mine.split(':').map(Number);
+    var expected = row[1].split(':').map(Number);
+    var diff = (minePartsArr[0] * 3600 + minePartsArr[1] * 60) - (expected[0] * 3600 + expected[1] * 60 + expected[2]);
+    assert(diff >= -5 && diff <= 65, row[0] + ': התקבל ' + mine + ', ייחוס ' + row[1]);
+  });
+});
+
+test('צאת שבת: כללי שעון הקיץ בישראל זהים לאלה של אזור הזמן, בכל יום', function () {
+  var Shabbat = require('../js/shabbat.js');
+  var fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false });
+  for (var day = Date.UTC(2024, 0, 1); day < Date.UTC(2040, 0, 1); day += 86400000) {
+    var noonUtc = new Date(day + 12 * 3600000);
+    var expected = Number(fmt.format(noonUtc)) - 12;
+    var actual = Shabbat.israelOffsetHours(noonUtc.getUTCFullYear(), noonUtc.getUTCMonth() + 1, noonUtc.getUTCDate());
+    assertEqual(actual, expected, noonUtc.toISOString().slice(0, 10));
+  }
+});
+
+test('צאת שבת: כל שבוע מקבל שעה סבירה, ושבוע אחד זז בדקות בודדות', function () {
+  var Shabbat = require('../js/shabbat.js');
+  var key = '2026-01-04', previous = null;
+  function minutes(time) { var p = time.split(':').map(Number); return p[0] * 60 + p[1]; }
+  for (var i = 0; i < 104; i++) {
+    var end = Shabbat.endForWeek(key);
+    assert(/^\d\d:\d\d$/.test(end), key + ': ' + end);
+    assert(end >= '16:50' && end <= '20:45', key + ': ' + end);
+    if (previous) {
+      var delta = Math.abs(minutes(end) - minutes(previous));
+      /* מעבר שעון הקיץ מזיז שעה שלמה; חוץ ממנו שבוע אחד זז בדקות */
+      assert(delta <= 12 || (delta >= 48 && delta <= 72), key + ' קפץ ' + delta + ' דקות');
+    }
+    previous = end;
+    key = Store.shiftWeekKey(key, 1);
+  }
+  assertEqual(Shabbat.endForWeek('לא תאריך'), '', 'מפתח לא תקין');
 });
 
 test('שעות נערכות לכל סניף ויום בנפרד', function () {

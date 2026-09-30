@@ -11,6 +11,12 @@
       (typeof require === 'function' ? require('./calendar.js') : null);
   }
 
+  /* צאת שבת מחושב (shabbat.js), ולכן נפתר בכל קריאה מאותה סיבה */
+  function Shabbat() {
+    return root.ShiftShabbat ||
+      (typeof require === 'function' ? require('./shabbat.js') : null);
+  }
+
   /* טקסטים למשתמש מגיעים משכבת התרגום; בלעדיה מוצג המפתח */
   function t(key, params) {
     var i18n = I18n || root.I18n;
@@ -202,11 +208,31 @@
      כדי לדעת איזו טבלת דרישות חלה על שבוע, צריך לדעת איזה שבוע
      זה, ופונקציות כמו slotNeed מקבלות רק את האובייקט. */
   function stampWeek(week, weekKey) {
-    if (!week || !weekKey || week.weekKey === weekKey) return week;
-    Object.defineProperty(week, 'weekKey', {
-      value: weekKey, enumerable: false, configurable: true, writable: true
-    });
+    if (!week || !weekKey) return week;
+    if (week.weekKey !== weekKey) {
+      Object.defineProperty(week, 'weekKey', {
+        value: weekKey, enumerable: false, configurable: true, writable: true
+      });
+    }
+    /* צאת שבת אינו נתון שהמנהל מזין: הוא נקבע לפי השבוע. הערך נכתב
+       על האובייקט בכל פעם, כדי שגם מה שנשמר בשרת, וגם שבוע ישן
+       שהוקלד בו ערך ידני, יישאו את השעה הנכונה. */
+    var auto = shabbatEndForWeek(weekKey);
+    if (auto) week.shabbatEnd = auto;
     return week;
+  }
+
+  /* צאת שבת של השבוע, לפי תל אביב. ריק רק אם המודול אינו זמין. */
+  function shabbatEndForWeek(weekKey) {
+    var mod = Shabbat();
+    return mod ? mod.endForWeek(weekKey) : '';
+  }
+
+  /* צאת שבת של שבוע נתון: המחושב, ואם אי אפשר לדעת איזה שבוע זה
+     (אובייקט שלא עבר דרך getWeek), הערך השמור עליו. */
+  function shabbatEnd(week) {
+    if (!week) return '';
+    return shabbatEndForWeek(week.weekKey) || week.shabbatEnd || '';
   }
 
   /* הטבלה שלפיה הסניף עובד בשבוע נתון.
@@ -363,8 +389,8 @@
     if (!config) return null;
     var from = config.from || '';
     if (config.auto === 'motzash') {
-      var shabbatEnd = (week && week.shabbatEnd) || '';
-      from = shabbatEnd ? addMinutes(shabbatEnd, Data.MOTZASH.offsetMinutes) : '';
+      var shabbatEndTime = shabbatEnd(week);
+      from = shabbatEndTime ? addMinutes(shabbatEndTime, Data.MOTZASH.offsetMinutes) : '';
     }
     var hours = { from: from, to: config.to || '', auto: config.auto || null };
     /* שעות מיוחדות ליום גוברות על התבנית של הסניף */
@@ -2981,6 +3007,8 @@
     toKey: toKey,
     weekStart: weekStart,
     currentWeekKey: currentWeekKey,
+    shabbatEnd: shabbatEnd,
+    shabbatEndForWeek: shabbatEndForWeek,
     shiftWeekKey: shiftWeekKey,
     restRule: restRule,
     restGapMinutes: restGapMinutes,

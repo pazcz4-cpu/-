@@ -699,8 +699,7 @@
           'O botão atualiza as filiais existentes sem mexer nos dias abertos nem no número de pessoas.',
         shiftNamePlaceholder: 'Nome do turno',
         sabbathTitle: 'Sábado à noite',
-        sabbathDefault: 'Hora predefinida de fim do Shabbat para uma semana nova:',
-        sabbathHint: 'Em cada semana podes ajustar a hora real no topo do separador Horário. ' +
+        sabbathHint: 'O fim do Shabbat é calculado automaticamente para Telavive, para todo o país, e atualiza-se todas as semanas. Não pode ser alterado. ' +
           'Os turnos de sábado à noite começam meia hora depois.',
         backup: 'Cópia de segurança',
         exportJson: 'Exportar todos os dados (JSON)', importJson: 'Importar dados',

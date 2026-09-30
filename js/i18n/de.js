@@ -699,8 +699,7 @@
           'Die Schaltfläche aktualisiert bestehende Filialen, ohne Öffnungstage oder Personalstärke zu ändern.',
         shiftNamePlaceholder: 'Name der Schicht',
         sabbathTitle: 'Samstagabend',
-        sabbathDefault: 'Standard-Schabbat-Ende für eine neue Woche:',
-        sabbathHint: 'Die tatsächliche Zeit lässt sich jede Woche oben im Reiter „Dienstplan“ anpassen. ' +
+        sabbathHint: 'Das Schabbat-Ende wird automatisch für Tel Aviv berechnet, für das ganze Land, und jede Woche aktualisiert. Es lässt sich nicht ändern. ' +
           'Die Samstagabendschichten beginnen eine halbe Stunde später.',
         backup: 'Sicherung und Wiederherstellung',
         exportJson: 'Alle Daten exportieren (JSON)', importJson: 'Daten importieren',

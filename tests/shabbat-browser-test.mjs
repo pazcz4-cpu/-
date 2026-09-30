@@ -45,27 +45,27 @@ try {
 
   const weekKey = await page.evaluate(() => window.ShiftApp.getWeekKey());
   const expected = Shabbat.endForWeek(weekKey);
-  check('בשדה מוצגת השעה המחושבת של השבוע', await page.inputValue('#shabbat-end'), expected);
+  check('בשדה מוצגת השעה המחושבת של השבוע', await page.innerText('#shabbat-end'), expected);
   check('השעה בפורמט שעה:דקה', expected, /^\d\d:\d\d$/);
-  check('השדה לקריאה בלבד', await page.getAttribute('#shabbat-end', 'readonly'), '');
+  check('זה טקסט ולא שדה קלט', await page.evaluate(() => document.querySelector('#shabbat-end').tagName), 'SPAN');
 
   /* ניסיון לשנות ידנית: אין מטפל, והשעה לא זזה גם אחרי רענון התצוגה */
   await page.evaluate(() => {
     const field = document.querySelector('#shabbat-end');
-    field.value = '23:59';
+    field.textContent = '23:59';
     field.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await page.click('#next-week');
   await page.click('#prev-week');
   await page.waitForTimeout(300);
-  check('עריכה ידנית לא משנה את השעה', await page.inputValue('#shabbat-end'), expected);
+  check('עריכה ידנית לא משנה את השעה', await page.innerText('#shabbat-end'), expected);
   check('גם בנתוני השבוע', await page.evaluate((k) => window.ShiftApp.getState().weeks[k].shabbatEnd, weekKey), expected);
 
   /* שבוע אחר: שעה אחרת, לפי החישוב */
   await page.click('#next-week');
   await page.waitForTimeout(300);
   const nextKey = Store.shiftWeekKey(weekKey, 1);
-  check('בשבוע הבא מוצגת השעה שלו', await page.inputValue('#shabbat-end'), Shabbat.endForWeek(nextKey));
+  check('בשבוע הבא מוצגת השעה שלו', await page.innerText('#shabbat-end'), Shabbat.endForWeek(nextKey));
 
   /* שעת התחלה של משמרת מוצ״ש בשבוע הנוכחי נגזרת מהשעה */
   const motzash = await page.evaluate((k) => {
@@ -75,11 +75,32 @@ try {
   }, nextKey);
   check('משמרת מוצ״ש מתחילה חצי שעה אחרי', motzash && motzash.from, Store.addMinutes(Shabbat.endForWeek(nextKey), 30));
 
-  /* בהגדרות אין יותר שדה ברירת מחדל להקלדה */
+  /* בהגדרות: אין שדה להקלדת השעה, ויש שדה להפרש ההתחלה */
   await page.click('.tab[data-tab="settings"]');
   await page.waitForTimeout(300);
   check('אין שדה ברירת מחדל לצאת שבת בהגדרות', await page.locator('#default-shabbat').count(), 0);
   check('ההסבר על החישוב מופיע בהגדרות', await page.locator('[data-i18n="settings.sabbathHint"]').innerText(), /תל אביב/);
+  check('ברירת המחדל של ההפרש', await page.inputValue('#motzash-offset'), '30');
+  await page.fill('#motzash-offset', '45');
+  await page.locator('#motzash-offset').dispatchEvent('change');
+  await page.waitForTimeout(400);
+  check('ההפרש החדש נשמר בהגדרות העסק', await page.evaluate(() => window.ShiftApp.getState().settings.motzashOffsetMinutes), 45);
+  await page.fill('#motzash-offset', '999');
+  await page.locator('#motzash-offset').dispatchEvent('change');
+  await page.waitForTimeout(400);
+  check('ערך לא חוקי נדחה וחוזר לקודם', await page.inputValue('#motzash-offset'), '45');
+
+  /* שעת ההתחלה של מוצ״ש זזה, וצאת השבת עצמו לא */
+  await page.click('.tab[data-tab="schedule"]');
+  await page.waitForTimeout(300);
+  check('צאת השבת לא השתנה', await page.innerText('#shabbat-end'), Shabbat.endForWeek(nextKey));
+  const moved = await page.evaluate((k) => {
+    const s = window.ShiftApp.getState();
+    const week = window.ShiftStore.getWeek(s, k);
+    const branch = s.branches.find((b) => b.active && window.ShiftStore.slotConfig(b, 6, 'evening', week));
+    return window.ShiftStore.slotHours(week, branch, 6, 'evening').from;
+  }, nextKey);
+  check('משמרת מוצ״ש מתחילה 45 דקות אחרי', moved, Store.addMinutes(Shabbat.endForWeek(nextKey), 45));
   check('אין שגיאות בדף', errors.length, 0);
   if (errors.length) console.log(errors);
 } finally {

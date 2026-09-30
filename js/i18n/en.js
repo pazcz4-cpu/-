@@ -510,7 +510,7 @@
         copyConfirm: 'Copy the days and hours from {from} to {to}?',
         copied: 'Days and hours copied',
         deleteConfirm: 'Delete {name}? Its assignments will be removed from every week.',
-        autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +30 min'
+        autoSabbath: 'Follows Sabbath end', autoSabbathLabel: 'Sabbath end +{min} min'
       },
 
       publish: {
@@ -705,8 +705,9 @@
           'The button updates existing locations without changing open days or headcount.',
         shiftNamePlaceholder: 'Shift name',
         sabbathTitle: 'Saturday night',
-        sabbathHint: 'Sabbath end is calculated automatically for Tel Aviv, for the whole country, and updates every week. It cannot be changed. ' +
-          'Saturday-night shifts start half an hour later.',
+        sabbathHint: 'Sabbath end is calculated automatically for Tel Aviv, for the whole country, and updates every week. It cannot be changed.',
+        motzashOffset: 'Saturday-night shifts start after Sabbath ends (minutes):',
+        motzashOffsetInvalid: 'Enter a number of minutes between 0 and 180',
         backup: 'Backup and restore',
         exportJson: 'Export all data (JSON)', importJson: 'Import data',
         reset: 'Reset to defaults',

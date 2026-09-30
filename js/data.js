@@ -240,6 +240,8 @@
       dailyMinutes: 516,
       weeklyMinutes: 2520
     },
+    /* כמה דקות אחרי צאת השבת מתחילה משמרת מוצ״ש. נוהל של כל עסק. */
+    motzashOffsetMinutes: MOTZASH.offsetMinutes,
     /* getter כדי שעסק חדש יקבל את שמות המשמרות בשפה הפעילה */
     get shifts() { return defaultShifts(); }
   };

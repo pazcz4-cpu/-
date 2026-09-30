@@ -609,6 +609,25 @@ test('חציית חצות בחישוב שעת מוצ״ש', function () {
   assertEqual(Store.addMinutes('לא שעה', 30), null, 'קלט לא תקין');
 });
 
+test('נוהל העסק: כמה דקות אחרי צאת השבת מתחילה משמרת מוצ״ש', function () {
+  var state = freshState();
+  assertEqual(state.settings.motzashOffsetMinutes, 30, 'ברירת מחדל: חצי שעה');
+  state.settings.motzashOffsetMinutes = 45;
+  var weekData = Store.getWeek(state, '2026-09-13');
+  assertEqual(Store.slotHours(weekData, state.branches[0], 6, 'evening').from, '20:04', 'צאת שבת 19:19 + 45');
+  state.settings.motzashOffsetMinutes = 0;
+  weekData = Store.getWeek(state, '2026-09-13');
+  assertEqual(Store.slotHours(weekData, state.branches[0], 6, 'evening').from, '19:19', 'אפס = בדיוק בצאת השבת');
+  /* צאת השבת עצמו אינו משתנה מההגדרה */
+  assertEqual(Store.shabbatEnd(weekData), '19:19', 'צאת שבת נשאר');
+  assertEqual(Store.motzashOffset({ motzashOffsetMinutes: 'abc' }), 30, 'ערך פגום חוזר לברירת מחדל');
+  assertEqual(Store.motzashOffset({ motzashOffsetMinutes: 500 }), 180, 'תקרה של 3 שעות');
+  assertEqual(Store.motzashOffset({ motzashOffsetMinutes: -5 }), 0, 'לא שלילי');
+  var migrated = Store.migrate({ settings: { motzashOffsetMinutes: 'x', defaultShabbatEnd: '20:00' }, branches: [], employees: [], weeks: {} });
+  assertEqual(migrated.settings.motzashOffsetMinutes, 30, 'מיגרציה מנקה ערך פגום');
+  assert(!('defaultShabbatEnd' in migrated.settings), 'ברירת המחדל הישנה לצאת שבת הוסרה');
+});
+
 test('צאת שבת אוטומטי: ערך ידני אינו גובר עליו, ושבוע ישן מתוקן', function () {
   var state = freshState();
   state.weeks['2026-09-13'] = { constraints: {}, assignments: {}, manual: {}, holidays: {}, shabbatEnd: '20:00', note: '' };

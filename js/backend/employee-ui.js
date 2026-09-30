@@ -413,7 +413,7 @@
     var self = this;
     var out = [];
     /* שעת מוצ״ש נגזרת מצאת השבת של השבוע, ולכן השבוע חייב לדעת מי הוא */
-    Store.stampWeek(self.week, self.weekKey);
+    Store.stampWeek(self.week, self.weekKey, self.state);
     Data.DAYS.forEach(function (day) {
       var slots = Store.employeeDayAssignments(self.state, self.week, self._employeeId(), day.idx);
       slots.forEach(function (slot) {

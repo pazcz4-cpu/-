@@ -85,7 +85,7 @@
               <span class="menu-title" data-i18n="toolbar.weekSettings">הגדרות השבוע</span>
               <label class="check"><input type="checkbox" id="keep-manual" checked> <span data-i18n="toolbar.keepManual">שמירת שיבוצים ידניים</span></label>
               <label class="check shabbat-field" id="shabbat-field"><span data-i18n="toolbar.shabbatEnd">צאת שבת</span>
-                <input type="text" id="shabbat-end" class="time-input" readonly tabindex="-1" maxlength="5" data-i18n-title="settings.sabbathHint" title="מחושב אוטומטית לפי תל אביב. משמרת מוצ״ש מתחילה חצי שעה אחרי השעה הזו">
+                <span id="shabbat-end" class="auto-value" data-i18n-title="settings.sabbathHint" title="מחושב אוטומטית לפי תל אביב"></span>
               </label>
             </div>
             <div class="menu-sep"></div>
@@ -263,8 +263,11 @@
     <h2 data-i18n="settings.sabbathTitle">מוצאי שבת</h2>
     <div class="settings-block">
       <p class="hint" style="margin:0" data-i18n="settings.sabbathHint">
-        צאת שבת מחושב אוטומטית לפי תל אביב, לכל הארץ, ומתעדכן בכל שבוע. אי אפשר לשנות אותו. משמרת מוצ״ש מתחילה חצי שעה אחריו.
+        צאת שבת מחושב אוטומטית לפי תל אביב, לכל הארץ, ומתעדכן בכל שבוע. אי אפשר לשנות אותו.
       </p>
+      <label class="check"><span data-i18n="settings.motzashOffset">משמרת מוצ״ש מתחילה אחרי צאת השבת (בדקות):</span>
+        <input type="number" id="motzash-offset" class="num-input" min="0" max="180" step="5">
+      </label>
     </div>
 
     <h2 data-i18n="settings.backup">גיבוי ושחזור</h2>

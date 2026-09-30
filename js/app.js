@@ -491,8 +491,7 @@
     renderCalendarDays();
 
     var current = week();
-    var field = $('#shabbat-end');
-    field.value = current.shabbatEnd || '';
+    $('#shabbat-end').textContent = current.shabbatEnd || '';
     var needsMotzash = state.branches.some(function (branch) {
       return branch.active && Store.slotConfig(branch, Data.MOTZASH.dayIdx, 'evening', week());
     });
@@ -2570,7 +2569,7 @@
       html += '<div class="sched-times">';
       if (isMotzash) {
         html += '<span class="auto-time" title="' + esc(t('settings.sabbathHint')) + '">' +
-          t('branches.autoSabbathLabel') + '</span>';
+          t('branches.autoSabbathLabel', { min: Store.motzashOffset(state.settings) }) + '</span>';
       } else {
         html += timeInputHtml('from', config.from);
       }
@@ -3057,6 +3056,7 @@
       restHours.disabled = viewOnly || !restRule.enabled;
     }
     $('#opt-one-day-off').checked = !!state.settings.oneDayOffPerWeek;
+    $('#motzash-offset').value = Store.motzashOffset(state.settings);
     renderDeadline();
     renderLimit();
     renderRoles();
@@ -3108,13 +3108,13 @@
 
   var LOCKED_SELECTORS = [
     'select.emp-select', '.cstate', '.pill', '.holiday-chip',
-    '#generate', '#clear-week', '#keep-manual', '#shabbat-end',
+    '#generate', '#clear-week', '#keep-manual',
     '#clear-constraints', '#copy-constraints',
     '#add-employee', '#add-branch', '#import-employees',
     '#employees-list input', '#employees-list button:not(.card-toggle):not(.card-summary)',
     '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
-    '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off',
+    '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off', '#motzash-offset',
     '#opt-clock-window', '#clock-lead',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
@@ -4956,6 +4956,20 @@
       persist('config');
       render();
       toast(changed ? t('toast.hoursUpdated', { count: changed }) : t('toast.hoursAlready'));
+    });
+
+    /* הפרש ההתחלה של משמרת מוצ״ש: הדבר היחיד בצאת השבת שהעסק קובע */
+    $('#motzash-offset').addEventListener('change', function (event) {
+      var raw = String(event.target.value).trim();
+      var n = Number(raw);
+      if (raw === '' || !isFinite(n) || n < 0 || n > 180) {
+        toast(t('settings.motzashOffsetInvalid'));
+        render();
+        return;
+      }
+      state.settings.motzashOffsetMinutes = Math.round(n);
+      persist('config');
+      render();
     });
 
     $('#opt-one-day-off').addEventListener('change', function (event) {

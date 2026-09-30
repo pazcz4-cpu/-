@@ -1148,7 +1148,12 @@ body { -webkit-tap-highlight-color: transparent; }
 .menu-section .personal-select { width: 100%; }
 .menu-section .holiday-chips { gap: var(--s1); }
 .menu-section .shabbat-field { justify-content: space-between; }
-.menu-section .shabbat-field .time-input { width: 84px; }
+.menu-section .shabbat-field .auto-value { min-width: 84px; }
+/* ערך שהמערכת מחשבת: טקסט רגיל ולא שדה, כדי שלא ייראה ניתן לעריכה */
+.auto-value {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums; text-align: end;
+}
 
 @media (max-width: 820px) {
   .toolbar { gap: var(--s2); }

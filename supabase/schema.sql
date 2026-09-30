@@ -761,7 +761,11 @@ begin
     -- מוצ״ש: שעת ההתחלה נגזרת משעת צאת השבת של אותו שבוע
     if coalesce(v_slot->>'auto', '') = 'motzash'
        and coalesce(v_week->>'shabbatEnd', '') <> '' then
-      v_from := to_char((v_week->>'shabbatEnd')::time + interval '30 minutes', 'HH24:MI');
+      -- כמה דקות אחרי צאת השבת: נוהל של העסק (ברירת מחדל 30)
+      v_from := to_char((v_week->>'shabbatEnd')::time + make_interval(mins =>
+        case when coalesce(v_config->'settings'->>'motzashOffsetMinutes', '') ~ '^[0-9]{1,3}$'
+             then least((v_config->'settings'->>'motzashOffsetMinutes')::int, 180)
+             else 30 end), 'HH24:MI');
     end if;
 
     if coalesce(v_from, '') = '' or coalesce(v_to, '') = '' then

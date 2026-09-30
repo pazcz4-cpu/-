@@ -124,7 +124,7 @@
   function getWeek(state, weekKey) {
     if (!state.weeks[weekKey]) { state.weeks[weekKey] = emptyWeek(); }
     var w = state.weeks[weekKey];
-    stampWeek(w, weekKey);
+    stampWeek(w, weekKey, state);
     if (!w.constraints) w.constraints = {};
     if (!w.assignments) w.assignments = {};
     if (!w.manual) w.manual = {};
@@ -207,8 +207,15 @@
   /* מפתח השבוע נשמר על אובייקט השבוע עצמו, כמאפיין שאינו נשמר:
      כדי לדעת איזו טבלת דרישות חלה על שבוע, צריך לדעת איזה שבוע
      זה, ופונקציות כמו slotNeed מקבלות רק את האובייקט. */
-  function stampWeek(week, weekKey) {
+  function stampWeek(week, weekKey, state) {
     if (!week || !weekKey) return week;
+    /* נוהל העסק: כמה דקות אחרי צאת השבת מתחילה משמרת מוצ״ש. נשמר על
+       השבוע כמו מפתחו, כי slotHours מקבלת רק את אובייקט השבוע. */
+    if (state && state.settings) {
+      Object.defineProperty(week, 'motzashOffset', {
+        value: motzashOffset(state.settings), enumerable: false, configurable: true, writable: true
+      });
+    }
     if (week.weekKey !== weekKey) {
       Object.defineProperty(week, 'weekKey', {
         value: weekKey, enumerable: false, configurable: true, writable: true
@@ -220,6 +227,16 @@
     var auto = shabbatEndForWeek(weekKey);
     if (auto) week.shabbatEnd = auto;
     return week;
+  }
+
+  /* הפרש ההתחלה של משמרת מוצ״ש, בדקות שלמות בין 0 ל-180. ערך חסר או
+     פגום חוזר לברירת המחדל. */
+  function motzashOffset(settings) {
+    var raw = settings ? settings.motzashOffsetMinutes : null;
+    if (raw === null || raw === undefined || raw === '') return Data.MOTZASH.offsetMinutes;
+    var n = Math.round(Number(raw));
+    if (!isFinite(n)) return Data.MOTZASH.offsetMinutes;
+    return Math.max(0, Math.min(180, n));
   }
 
   /* צאת שבת של השבוע, לפי תל אביב. ריק רק אם המודול אינו זמין. */
@@ -390,7 +407,8 @@
     var from = config.from || '';
     if (config.auto === 'motzash') {
       var shabbatEndTime = shabbatEnd(week);
-      from = shabbatEndTime ? addMinutes(shabbatEndTime, Data.MOTZASH.offsetMinutes) : '';
+      var offset = week && typeof week.motzashOffset === 'number' ? week.motzashOffset : Data.MOTZASH.offsetMinutes;
+      from = shabbatEndTime ? addMinutes(shabbatEndTime, offset) : '';
     }
     var hours = { from: from, to: config.to || '', auto: config.auto || null };
     /* שעות מיוחדות ליום גוברות על התבנית של הסניף */
@@ -2653,6 +2671,9 @@
     delete state.settings.dayShifts;
     state.settings.shifts = normalizeShifts(state.settings.shifts, legacyHours);
     delete state.settings.defaultHours;
+    state.settings.motzashOffsetMinutes = motzashOffset(state.settings);
+    /* צאת שבת אינו עוד הגדרה של העסק: הוא מחושב לכל שבוע */
+    delete state.settings.defaultShabbatEnd;
     /* רשימה ריקה היא רשימה ריקה. פעם היא מולאה כאן בנתוני הדוגמה,
        וזה החזיר שמונה "עובד/ת" לכל חשבון חדש – ולכל מי שמחק את
        כולם בכוונה. */
@@ -2766,7 +2787,7 @@
       var weekData = state.weeks[key];
       if (typeof weekData.shabbatEnd !== 'string') weekData.shabbatEnd = '';
       if (!weekData.holidays || typeof weekData.holidays !== 'object') weekData.holidays = {};
-      stampWeek(weekData, key);
+      stampWeek(weekData, key, state);
       if (typeof weekData.published !== 'boolean') weekData.published = false;
       if (typeof weekData.publishedSignature !== 'string') weekData.publishedSignature = '';
       /* דיווחי שעון. שבוע ישן אינו נושא אותם, ורשימה פגומה
@@ -3008,6 +3029,7 @@
     weekStart: weekStart,
     currentWeekKey: currentWeekKey,
     shabbatEnd: shabbatEnd,
+    motzashOffset: motzashOffset,
     shabbatEndForWeek: shabbatEndForWeek,
     shiftWeekKey: shiftWeekKey,
     restRule: restRule,

@@ -504,7 +504,7 @@
         copyConfirm: 'Tage und Zeiten von {from} nach {to} kopieren?',
         copied: 'Tage und Zeiten kopiert',
         deleteConfirm: '{name} löschen? Die Einteilungen werden aus allen Wochen entfernt.',
-        autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +30 Min.'
+        autoSabbath: 'Nach Schabbat-Ende', autoSabbathLabel: 'Schabbat-Ende +{min} Min.'
       },
 
       publish: {
@@ -699,8 +699,9 @@
           'Die Schaltfläche aktualisiert bestehende Filialen, ohne Öffnungstage oder Personalstärke zu ändern.',
         shiftNamePlaceholder: 'Name der Schicht',
         sabbathTitle: 'Samstagabend',
-        sabbathHint: 'Das Schabbat-Ende wird automatisch für Tel Aviv berechnet, für das ganze Land, und jede Woche aktualisiert. Es lässt sich nicht ändern. ' +
-          'Die Samstagabendschichten beginnen eine halbe Stunde später.',
+        sabbathHint: 'Das Schabbat-Ende wird automatisch für Tel Aviv berechnet, für das ganze Land, und jede Woche aktualisiert. Es lässt sich nicht ändern.',
+        motzashOffset: 'Samstagabendschichten beginnen nach Schabbat-Ende (Minuten):',
+        motzashOffsetInvalid: 'Gib eine Minutenzahl zwischen 0 und 180 ein',
         backup: 'Sicherung und Wiederherstellung',
         exportJson: 'Alle Daten exportieren (JSON)', importJson: 'Daten importieren',
         reset: 'Auf Standardwerte zurücksetzen',

@@ -504,7 +504,7 @@
         copyConfirm: '¿Copiar los días y las horas de {from} a {to}?',
         copied: 'Días y horas copiados',
         deleteConfirm: '¿Eliminar {name}? Sus asignaciones se quitarán de todas las semanas.',
-        autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +30 min'
+        autoSabbath: 'Según el fin del Sabbat', autoSabbathLabel: 'Fin del Sabbat +{min} min'
       },
 
       publish: {
@@ -699,8 +699,9 @@
           'El botón actualiza las sucursales existentes sin tocar los días abiertos ni el número de personas.',
         shiftNamePlaceholder: 'Nombre del turno',
         sabbathTitle: 'Noche del sábado',
-        sabbathHint: 'El fin del Sabbat se calcula automáticamente para Tel Aviv, para todo el país, y se actualiza cada semana. No se puede cambiar. ' +
-          'Los turnos de la noche del sábado empiezan media hora después.',
+        sabbathHint: 'El fin del Sabbat se calcula automáticamente para Tel Aviv, para todo el país, y se actualiza cada semana. No se puede cambiar.',
+        motzashOffset: 'Los turnos de la noche del sábado empiezan tras el fin del Sabbat (minutos):',
+        motzashOffsetInvalid: 'Indica un número de minutos entre 0 y 180',
         backup: 'Copia de seguridad',
         exportJson: 'Exportar todos los datos (JSON)', importJson: 'Importar datos',
         reset: 'Restablecer valores por defecto',

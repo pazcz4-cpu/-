@@ -893,6 +893,7 @@
         swapped: '{a} et {b} permutés',
         released: "De retour dans la zone d'attente, sans personne dessus",
         refuse: {
+          'constraint': '{name} a une contrainte approuvée à ce moment. Pour le planifier, annulez d’abord la contrainte dans l’onglet Contraintes.',
           'target-busy': '{name} a déjà un créneau ce jour-là',
           'inactive': "{name} est inactif et n'est pas planifié",
           'already-here': '{name} est déjà sur ce créneau',

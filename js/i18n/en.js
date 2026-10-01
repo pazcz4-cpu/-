@@ -899,6 +899,7 @@
         swapped: 'Swapped {a} and {b}',
         released: 'Back in the holding area and nobody is covering it',
         refuse: {
+          'constraint': '{name} has an approved constraint at this time. To schedule them, cancel the constraint in the Constraints tab first.',
           'target-busy': '{name} already has a shift that day',
           'inactive': '{name} is inactive and cannot be scheduled',
           'already-here': '{name} is already on this shift',

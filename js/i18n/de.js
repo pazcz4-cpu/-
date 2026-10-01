@@ -893,6 +893,7 @@
         swapped: '{a} und {b} getauscht',
         released: 'Zurück im Wartebereich und unbesetzt',
         refuse: {
+          'constraint': '{name} hat zu dieser Zeit eine genehmigte Einschränkung. Um die Person einzuplanen, hebe die Einschränkung zuerst im Reiter „Einschränkungen“ auf.',
           'target-busy': '{name} hat an diesem Tag bereits eine Schicht',
           'inactive': '{name} ist inaktiv und wird nicht eingeteilt',
           'already-here': '{name} ist bereits in dieser Schicht',

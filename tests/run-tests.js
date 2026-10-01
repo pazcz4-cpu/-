@@ -1163,15 +1163,82 @@ test('גרירה ממצב ישן נדחית ואינה הורסת נתונים',
   assertEqual(whoIn(ctx.week, 'br-b'), 'e2', 'ירושלים נפגעה');
 });
 
-test('אילוץ של עובד אינו חוסם גרירה – הוא מסומן', function () {
-  /* המנהל מחליט; הבדיקות מסמנות. חסימה כאן הייתה הופכת
-     "אני מחליט" ל"המערכת לא נותנת". */
+test('אילוץ מאושר חוסם גרירה, עד שהמנהל מבטל אותו', function () {
+  /* אילוץ שאושר הוא הבטחה לעובד. אי אפשר לשבץ נגדו, גם לא ידנית;
+     מי שרוצה לשבץ מבטל קודם את האילוץ. */
   var ctx = movableState();
   Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  var move = { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' };
+
+  /* יום חופש מאושר */
   Store.setConstraint(ctx.week, 'e2', 0, { off: true, blocked: {}, preferred: {}, note: '' });
+  var out = Store.moveShift(ctx.state, ctx.week, move);
+  assertEqual(out.ok, false, 'יום חופש מאושר לא חסם');
+  assertEqual(out.reason, 'constraint', 'הסיבה');
+  assertEqual(Store.getAssigned(ctx.week, 0, 'br-a', 'morning').join(), 'e1', 'השיבוץ השתנה למרות החסימה');
+
+  /* משמרת חסומה, באותו יום: משמרת אחרת עדיין אפשרית */
+  Store.setConstraint(ctx.week, 'e2', 0, { off: false, blocked: { morning: true }, preferred: {}, note: '' });
+  assertEqual(Store.moveShift(ctx.state, ctx.week, move).ok, false, 'משמרת חסומה לא חסמה');
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'evening'), null, 'משמרת אחרת חסומה בטעות');
+
+  /* המנהל מבטל את האילוץ, ואז אפשר */
+  Store.setConstraint(ctx.week, 'e2', 0, { off: false, blocked: {}, preferred: {}, note: '' });
+  assertEqual(Store.moveShift(ctx.state, ctx.week, move).ok, true, 'אחרי ביטול האילוץ השיבוץ נחסם');
+});
+
+test('בקשה שממתינה או נדחתה אינה חוסמת שיבוץ', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  var move = { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' };
+  Store.setConstraint(ctx.week, 'e2', 0, { off: true, blocked: {}, preferred: {}, note: '' });
+  var key = Store.constraintKey ? Store.constraintKey('e2', 0) : 'e2|0';
+  ctx.week.constraints[key].status = 'pending';
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'morning'), null, 'בקשה ממתינה חסמה');
+  ctx.week.constraints[key].status = 'rejected';
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'morning'), null, 'בקשה שנדחתה חסמה');
+  ctx.week.constraints[key].status = 'approved';
+  assertEqual(Store.moveShift(ctx.state, ctx.week, move).ok, false, 'בקשה שאושרה לא חסמה');
+});
+
+test('הסדר קבוע חוסם שיבוץ ידני כמו אילוץ מאושר', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  var emp = Store.byId(ctx.state.employees, 'e2');
+  Store.setStanding(emp, 0, { off: true });
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'morning'), 'standing', 'הסדר קבוע לא חסם');
   var out = Store.moveShift(ctx.state, ctx.week,
     { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
-  assertEqual(out.ok, true, 'הגרירה נחסמה בגלל אילוץ');
+  assertEqual(out.ok, false, 'גרירה נגד הסדר קבוע עברה');
+});
+
+test('החלפה נחסמת גם כשהאילוץ הוא של מי שעובר למשמרת השנייה', function () {
+  var ctx = movableState();
+  /* e2 משובץ ב-br-b בוקר; e1 ב-br-a בוקר. onePerDay: גרירה של e1 אל e2 מחליפה. */
+  ctx.state.settings.onePerDay = true;
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', ['e2']);
+  Store.setConstraint(ctx.week, 'e1', 0, { off: false, blocked: { morning: true }, preferred: {}, note: '' });
+  var before = JSON.stringify(ctx.week.assignments);
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  /* e1 חסום בבוקר, אבל הוא כבר משובץ שם. ההחלפה מעבירה אותו ל-br-b בוקר: אותה משמרת, ולכן נחסם */
+  assertEqual(out.ok, false, 'החלפה נגד אילוץ עברה');
+  assertEqual(JSON.stringify(ctx.week.assignments), before, 'השיבוץ השתנה למרות החסימה');
+});
+
+test('שחרור משמרת לשטח ההמתנה אינו נחסם באילוץ', function () {
+  var ctx = movableState();
+  Store.setConstraint(ctx.week, 'e1', 0, { off: true, blocked: {}, preferred: {}, note: '' });
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: null });
+  assertEqual(out.ok, true, 'אפשר תמיד להוריד מישהו ממשמרת');
+});
+
+test('שיבוץ שקדם לאילוץ מסומן בבדיקות', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  Store.setAssigned(ctx.week, 0, 'br-a', 'morning', ['e1', 'e2']);
+  Store.setConstraint(ctx.week, 'e2', 0, { off: true, blocked: {}, preferred: {}, note: '' });
   var report = Validate.validate(ctx.state, ctx.week);
   var flagged = report.issues.filter(function (item) {
     return item.type === 'constraint-off' || item.type === 'constraint-blocked';

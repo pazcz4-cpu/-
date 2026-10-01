@@ -893,6 +893,7 @@
         swapped: '{a} e {b} trocados',
         released: 'Voltou para a zona de espera e fica sem ninguém',
         refuse: {
+          'constraint': '{name} tem uma restrição aprovada neste horário. Para escalar, cancele primeiro a restrição no separador Restrições.',
           'target-busy': '{name} já tem um turno nesse dia',
           'inactive': '{name} está inativo e não é escalado',
           'already-here': '{name} já está neste turno',

@@ -893,6 +893,7 @@
         swapped: '{a} y {b} intercambiados',
         released: 'Vuelve a la zona de espera y queda sin cubrir',
         refuse: {
+          'constraint': '{name} tiene una restricción aprobada en este momento. Para asignarle el turno, cancela antes la restricción en la pestaña Restricciones.',
           'target-busy': '{name} ya tiene un turno ese día',
           'inactive': '{name} está inactivo y no se puede asignar',
           'already-here': '{name} ya está en este turno',

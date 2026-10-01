@@ -608,6 +608,26 @@
     return merged;
   }
 
+  /* האם אילוץ מאושר חוסם את העובד במשמרת הזו. מחזיר את הסיבה
+     ('dayOff' / 'blocked' / 'standing') או null.
+
+     זה כלל של הנתונים ולא של המסך: שיבוץ ידני, גרירה והחלפה כולם
+     נשענים עליו. אילוץ שאושר הוא הבטחה לעובד, ולכן אי אפשר לשבץ
+     נגדו – רק אחרי שהמנהל מבטל את האילוץ עצמו. בקשה שממתינה או
+     נדחתה אינה חוסמת, כמו בכל מקום אחר (getConstraint). */
+  function constraintBlock(state, week, empId, dayIdx, shiftId) {
+    if (!week || !empId) return null;
+    var weekly = getConstraint(week, empId, dayIdx);
+    if (weekly.off) return 'dayOff';
+    if (weekly.blocked && weekly.blocked[shiftId]) return 'blocked';
+    var emp = byId((state && state.employees) || [], empId);
+    if (emp && hasStanding(emp) &&
+        standingBlocks(emp, dayIdx, shiftId, week.weekKey || weekKeyOf(state, week))) {
+      return 'standing';
+    }
+    return null;
+  }
+
   /* עדכון סטטוס בקשה בידי מנהל */
   function setConstraintStatus(week, empId, dayIdx, status, managerNote) {
     var key = constraintKey(empId, dayIdx);
@@ -1895,6 +1915,9 @@
     var target = byId(state.employees, to);
     if (!target) return { ok: false, reason: 'no-employee' };
     if (!target.active) return { ok: false, reason: 'inactive' };
+    if (constraintBlock(state, week, to, dayIdx, shiftId)) {
+      return { ok: false, reason: 'constraint', empId: to };
+    }
 
     var busy = employeeDayAssignments(state, week, to, dayIdx);
     var onePerDay = !!(state.settings && state.settings.onePerDay);
@@ -1907,6 +1930,10 @@
       if (busy.length > 1) return { ok: false, reason: 'target-busy' };
 
       var other = busy[0];
+      /* בהחלפה גם מי שעובר למשמרת השנייה חייב להיות פנוי בה */
+      if (from && constraintBlock(state, week, from, dayIdx, other.shiftId)) {
+        return { ok: false, reason: 'constraint', empId: from };
+      }
       var otherList = getAssigned(week, dayIdx, other.branchId, other.shiftId).slice();
       setAssigned(week, dayIdx, other.branchId, other.shiftId,
         otherList.map(function (id) { return id === to ? from : id; }));
@@ -3029,6 +3056,7 @@
     weekStart: weekStart,
     currentWeekKey: currentWeekKey,
     shabbatEnd: shabbatEnd,
+    constraintBlock: constraintBlock,
     motzashOffset: motzashOffset,
     shabbatEndForWeek: shabbatEndForWeek,
     shiftWeekKey: shiftWeekKey,

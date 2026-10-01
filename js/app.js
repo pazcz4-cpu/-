@@ -516,7 +516,8 @@
     var html = '<select class="emp-select' + (isExtra ? ' extra' : '') + '" data-slot="' + slotIndex + '">';
     html += '<option value="">' + (isExtra ? t('schedule.addPerson') : t('schedule.notAssigned')) + '</option>';
     state.employees.forEach(function (emp) {
-      html += '<option value="' + esc(emp.id) + '"' + (value === emp.id ? ' selected' : '') + '>' +
+      html += '<option value="' + esc(emp.id) + '"' + (value === emp.id ? ' selected' : '') +
+        optionDisabled(emp, dayIdx, shiftId, value) + '>' +
         esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
     });
     if (value && !Store.byId(state.employees, value)) {
@@ -813,6 +814,13 @@
     return { cells: cells, employeesDay: employeesDay };
   }
 
+  /* עובד שאילוץ מאושר חוסם אותו אינו ניתן לבחירה. מי שכבר משובץ
+     כאן (בשיבוץ שקדם לאילוץ) נשאר נבחר, כדי שהמסך לא ישקר. */
+  function optionDisabled(emp, dayIdx, shiftId, selectedId) {
+    if (selectedId === emp.id) return '';
+    return Store.constraintBlock(state, week(), emp.id, dayIdx, shiftId) ? ' disabled' : '';
+  }
+
   function optionLabel(emp, dayIdx, branchId, shiftId) {
     var constraint = Store.getConstraint(week(), emp.id, dayIdx);
     var marks = [];
@@ -885,7 +893,8 @@
       html += '<option value="">' + (i >= need ? t('schedule.add') : t('schedule.empty')) + '</option>';
       state.employees.forEach(function (emp) {
         var selected = value === emp.id ? ' selected' : '';
-        html += '<option value="' + esc(emp.id) + '"' + selected + '>' + esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
+        html += '<option value="' + esc(emp.id) + '"' + selected + optionDisabled(emp, dayIdx, shiftId, value) + '>' +
+          esc(optionLabel(emp, dayIdx, branch.id, shiftId)) + '</option>';
       });
       if (value && !Store.byId(state.employees, value)) {
         html += '<option value="' + esc(value) + '" selected>' + esc(empNameOf(value)) + '</option>';
@@ -1064,7 +1073,7 @@
     if (!out.ok) {
       clearPick();
       render();
-      toast(t('move.refuse.' + out.reason, { name: toName }));
+      toast(t('move.refuse.' + out.reason, { name: out.empId ? nameOf(out.empId) : toName }));
       return;
     }
     clearPick();
@@ -3306,6 +3315,18 @@
     values.forEach(function (value) { if (!seen[value]) { seen[value] = true; unique.push(value); } });
 
     var current = week();
+    /* אילוץ שאושר אינו מתעלמים ממנו, גם לא בשיבוץ ידני. מי שכבר
+       היה משובץ כאן נשאר, ורק מי שמתווסף נבדק: בטלו את האילוץ
+       בלשונית אילוצים אם באמת צריך לשבץ אותו. */
+    var before = Store.getAssigned(current, dayIdx, branchId, shiftId);
+    var refused = unique.filter(function (id) {
+      return before.indexOf(id) === -1 && Store.constraintBlock(state, current, id, dayIdx, shiftId);
+    });
+    if (refused.length) {
+      render();
+      toast(t('move.refuse.constraint', { name: empNameOf(refused[0]) }));
+      return;
+    }
     Store.setAssigned(current, dayIdx, branchId, shiftId, unique);
     current.manual[Store.slotKey(dayIdx, branchId, shiftId)] = true;
     persist();

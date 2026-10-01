@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "test": "node tests/run-tests.js",
+    "golive": "node tools/golive-check.js",
     "start": "npx http-server . -p 8080 -o",
     "build": "node build-artifact.js",
     "vercel-build": "node build-site.js",

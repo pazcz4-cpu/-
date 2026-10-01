@@ -15,6 +15,7 @@
 |---|---|
 | חשבון בנק לחברה | 30/09 |
 | Vercel Pro | 01/10 |
+| תיקון SQL: `create_company` כפולה, פונקציות דחיפה | 01/10 |
 | Apple ID של החברה (`apple@setshifts.com`), אימות דו-שלבי דלוק, שני מספרים מהימנים | 01/10 |
 | תקרת בקשות: SQL הורץ | 01/10 |
 | D-U-N-S (626520454, HAREL ZEDEK SETSHIFTS LTD) | 01/10 |
@@ -62,44 +63,9 @@
 
 ## 2 · לפני הלקוח הראשון: אפשר לסגור השבוע
 
-### 2.1 בדיקת מצב ה-SQL בשרת (תקרת הבקשות כבר הורצה)
-- **סטטוס:** ⬜ אצלך
-- **קישור:** https://supabase.com/dashboard ← SQL Editor
-- **מה לעשות:** להריץ את השאילתה. **תוצאה ריקה = הכול מעודכן.** כל שורה שמופיעה היא דבר שחסר או גרסה ישנה.
-
-```sql
-select 'חסרה פונקציה' as problem, f as name
-from unnest(array['save_own_constraint','save_own_punch','request_leave',
-  'punch_window_open','set_wa_employee_addon','create_company',
-  'week_for_me','week_as_seen','constraints_deadline','save_push_token']) as f
-where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                  where n.nspname = 'public' and p.proname = f)
-union all
-select 'חסרה עמודה', c
-from unnest(array['companies.phone','companies.logo','companies.wa_employee_addon',
-  'companies.wa_declaration_at','companies.wa_declaration_name',
-  'companies.wa_declaration_version','companies.custom_price_per_employee']) as c
-where not exists (select 1 from information_schema.columns
-                  where table_schema = 'public'
-                    and table_name = split_part(c, '.', 1)
-                    and column_name = split_part(c, '.', 2))
-union all
-select 'גרסה ישנה (תקרת בקשות)', 'save_own_constraint'
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.proname = 'save_own_constraint' and p.prosrc like '%v_prefs%'
-union all
-select 'גרסה ישנה (הפרש מוצ״ש)', 'punch_window_open'
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.proname = 'punch_window_open' and p.prosrc not like '%motzashOffsetMinutes%'
-union all
-select 'כפילות פונקציה', p.proname
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.proname in ('set_wa_employee_addon','create_company')
-group by p.proname having count(*) > 1;
-```
-
-- **אם יש שורות:** שלח לי אותן ואשלח את הבלוק המתאים להדבקה.
-- **מלכודת:** אל תדביק לי בתשובה ערכי משתני סביבה.
+### 2.1 מצב ה-SQL בשרת
+- **סטטוס:** ✅ נמצאו שתי בעיות ותוקנו ב-01/10 (Success): `create_company` שהייתה כפולה, ופונקציות ההתראות (`save_push_token`, `forget_push_token`) והטבלה `push_tokens` שחסרו.
+- **נשאר:** ⬜ להריץ את שאילתת הבדיקה פעם נוספת, ולוודא **No rows returned**. השאילתה נמצאת ב-`supabase/` בקובץ הבדיקה של הסכמה, ובגרסה האחרונה בהיסטוריית השיחה.
 
 ### 2.2 Vercel Pro
 - **סטטוס:** ✅ אומת 01/10 (תגית Pro ליד הצוות `setshifts`)

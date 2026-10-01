@@ -1280,6 +1280,13 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
 
 /* ===== מועד סגירת ההגשות ===== */
+.next-week-notice {
+  display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px;
+  font: inherit; font-weight: 600; text-align: center; cursor: pointer;
+  color: var(--info); background: var(--info-bg);
+  border: 1px solid var(--brand); border-radius: 10px;
+}
+.next-week-notice:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .deadline-strip {
   border-radius: 10px; padding: 10px 13px; margin-bottom: 12px;
   font-size: 13.5px; font-weight: 600;

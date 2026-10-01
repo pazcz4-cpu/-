@@ -1329,6 +1329,7 @@
       employee: {
         guideLink: 'איך זה עובד',
         prevWeek: '▶ שבוע קודם', nextWeek: 'שבוע הבא ◀',
+        nextWeekPublished: 'סידור השבוע הבא פורסם – לחצו כדי לראות',
         loadFailed: 'לא ניתן לטעון את הנתונים: {message}',
         saveFailed: 'השמירה נכשלה', reasonSaveFailed: 'שמירת הסיבה נכשלה',
         myShifts: 'המשמרות שלי',

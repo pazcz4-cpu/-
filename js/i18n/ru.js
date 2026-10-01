@@ -1323,6 +1323,7 @@
       employee: {
         guideLink: 'Как это работает',
         prevWeek: '◀ Предыдущая неделя', nextWeek: 'Следующая неделя ▶',
+        nextWeekPublished: 'График следующей недели опубликован – нажмите, чтобы посмотреть',
         loadFailed: 'Не удалось загрузить данные: {message}',
         saveFailed: 'Не удалось сохранить', reasonSaveFailed: 'Не удалось сохранить причину',
         myShifts: 'Мои смены',

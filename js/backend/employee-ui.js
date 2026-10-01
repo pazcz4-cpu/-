@@ -47,7 +47,13 @@
     this.preview = !!options.preview;
     this.previewEmployeeId = options.employeeId || null;
     this.root = document.getElementById('employee-root');
-    this.weekKey = Store.currentWeekKey();
+    /* תצוגה מקדימה נפתחת על השבוע שהמנהל עומד עליו. בלי זה המנהל
+       משווה את מסך העובד, שנפתח על השבוע הנוכחי, לסידור של השבוע
+       הבא שהוא זה עתה פרסם, ומסיק שהשינוי לא הגיע. */
+    this.weekKey = options.weekKey || Store.currentWeekKey();
+    /* האם סידור השבוע הבא כבר פורסם. עובד שפותח את המסך על השבוע
+       הנוכחי צריך לדעת שיש משהו חדש, ולא לגלות את זה בניווט. */
+    this.nextWeekPublished = false;
     this.state = null;
     this.week = null;
     this.busy = false;
@@ -92,6 +98,8 @@
       self.state.weeks[self.weekKey] = self.week;
       return self._loadPrevWeek();
     }).then(function () {
+      return self._loadNextWeekFlag();
+    }).then(function () {
       self.render();
     }, function (err) {
       self.root.innerHTML = '<p class="auth-error">' +
@@ -119,6 +127,18 @@
     return Promise.resolve(this.backend.loadWeek(prevKey)).then(function (week) {
       if (week) self.state.weeks[prevKey] = week;
     }, function () { /* אין שבוע קודם, או שהטעינה נכשלה – השעון עובד בלעדיו */ });
+  };
+
+  /* האם השבוע הבא כבר פורסם. נבדק רק מהשבוע הנוכחי, ושגיאה בו אינה
+     מפילה את המסך: זו הודעה נוחה ולא חלק מהסידור. */
+  EmployeeUI.prototype._loadNextWeekFlag = function () {
+    var self = this;
+    this.nextWeekPublished = false;
+    if (this.weekKey !== Store.currentWeekKey()) return Promise.resolve();
+    if (!this.backend || typeof this.backend.loadWeek !== 'function') return Promise.resolve();
+    return Promise.resolve(this.backend.loadWeek(Store.shiftWeekKey(this.weekKey, 1))).then(function (week) {
+      self.nextWeekPublished = !!(week && week.published);
+    }, function () { /* אין הודעה */ });
   };
 
   EmployeeUI.prototype._bind = function () {
@@ -487,6 +507,11 @@
       }
       html += '<div class="deadline-strip' + (closed ? ' is-closed' : (soon ? ' is-soon' : '')) +
         '">' + esc(text) + '</div>';
+    }
+
+    if (this.nextWeekPublished && this.weekKey === Store.currentWeekKey()) {
+      html += '<button type="button" class="next-week-notice" data-week-step="1">' +
+        esc(t('employee.nextWeekPublished')) + '</button>';
     }
 
     html += '<div class="employee-weeknav">' +

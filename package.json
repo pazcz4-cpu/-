@@ -18,6 +18,7 @@
     "test:shifts": "node tests/shifts-browser-test.mjs",
     "test:deadline": "node tests/deadline-browser-test.mjs",
     "test:preview": "node tests/preview-browser-test.mjs",
+    "test:previewweek": "node tests/preview-week-browser-test.mjs",
     "test:why": "node tests/why-browser-test.mjs",
     "test:save": "node tests/save-state-browser-test.mjs",
     "test:publish": "node tests/publish-browser-test.mjs",

@@ -354,7 +354,8 @@
          ורוצה לראות מה העובד יראה עכשיו, לא מה שהיה בכניסה. */
       previewUI = new root.ShiftEmployeeUI.EmployeeUI({
         backend: backend, session: backend.session() || session,
-        preview: true, employeeId: employeeId
+        preview: true, employeeId: employeeId,
+        weekKey: root.ShiftApp && root.ShiftApp.getWeekKey ? root.ShiftApp.getWeekKey() : undefined
       });
       employeeRoot.addEventListener('click', function (event) {
         if (event.target.closest('#preview-exit')) exitPreview();

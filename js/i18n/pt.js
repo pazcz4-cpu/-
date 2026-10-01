@@ -1323,6 +1323,7 @@
       employee: {
         guideLink: 'Como funciona',
         prevWeek: '◀ Semana anterior', nextWeek: 'Semana seguinte ▶',
+        nextWeekPublished: 'A escala da semana seguinte foi publicada – toque para ver',
         loadFailed: 'Não foi possível carregar os dados: {message}',
         saveFailed: 'Não foi possível guardar', reasonSaveFailed: 'Não foi possível guardar o motivo',
         myShifts: 'Os meus turnos',

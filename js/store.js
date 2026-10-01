@@ -2385,10 +2385,11 @@
      בלי תקרה, עובד אחד שמבקש חמישה ימי חופש מוריד את כל הסידור
      על השאר, והמנהל מגלה את זה רק כשהוא מנסה לשבץ.
 
-     מה נספר: יום שבו העובד הגביל את הזמינות שלו – ביקש חופש או
-     חסם משמרת. העדפה אינה נספרת: היא עוזרת לשיבוץ, ואין סיבה
-     להגביל אותה. בקשה שנדחתה אינה מגבילה דבר ולכן אינה נספרת –
-     כך שעובד שנדחה יכול לבקש יום אחר במקומו.
+     מה נספר: כל בקשה שהעובד הגיש לאותו יום – יום חופש, חסימת
+     משמרת וגם העדפה. העדפה שאושרה היא אילוץ לכל דבר: היא חוסמת
+     שיבוץ באותו יום בכל משמרת אחרת, ולכן היא נספרת בתקרה בדיוק
+     כמו שאר האילוצים. בקשה שנדחתה אינה מגבילה דבר ולכן אינה
+     נספרת – כך שעובד שנדחה יכול לבקש יום אחר במקומו.
 
      הספירה היא לפי ימים, ולא לפי משמרות: "עד 2 בקשות" פירושו
      שני ימים, וזו הצורה שבה מנהל חושב על זה. */
@@ -2398,14 +2399,7 @@
     var max = typeof value.max === 'number' ? value.max : (defaults.max || 2);
     return {
       enabled: !!value.enabled,
-      max: Math.max(1, Math.round(max)),
-      /* ברירת המחדל היא שכן. ערך שאינו מוגדר כלל – עסק שנפתח
-         לפני שההגדרה הייתה קיימת – מקבל את ברירת המחדל ולא
-         "לא", אחרת שינוי גרסה היה משנה בשקט את המשמעות של
-         התקרה אצל לקוחות קיימים. */
-      countPreferences: value.countPreferences === undefined
-        ? (defaults.countPreferences !== false)
-        : !!value.countPreferences
+      max: Math.max(1, Math.round(max))
     };
   }
 
@@ -2447,8 +2441,8 @@
     return out;
   }
 
-  /* האם הרשומה מגבילה זמינות בפועל. בקשה שנדחתה אינה מגבילה
-     דבר, ולכן היא משחררת מקום. */
+  /* האם הרשומה מגבילה זמינות בפועל: חופש או חסימת משמרת. בקשה
+     שנדחתה אינה מגבילה דבר, ולכן היא משחררת מקום. */
   function limitsAvailability(record) {
     if (!record) return false;
     if (constraintStatus(record) === CONSTRAINT_STATUS.REJECTED) return false;
@@ -2463,15 +2457,10 @@
     return Object.keys(record.preferred || {}).length > 0;
   }
 
-  /* האם הבקשה הזו נספרת בתקרה, לפי ההגדרה של העסק.
-
-     שתי תשובות לגיטימיות לאותה שאלה, ולכן זו הגדרה ולא החלטה
-     שלנו: יש מנהל שרוצה לראות בדיוק את מספר הבקשות שהגביל, ויש
-     מנהל שרוצה שהעדפות יזרמו בחופשיות כי הן מידע ולא הגבלה. */
+  /* האם הבקשה הזו נספרת בתקרה. כל בקשה שמגבילה: חופש, חסימה או
+     העדפה. אין הגדרה שמכבה את זה – העדפה היא אילוץ. */
   function countsTowardLimit(state, record) {
-    if (limitsAvailability(record)) return true;
-    if (!constraintLimitSettings(state).countPreferences) return false;
-    return isPreference(record);
+    return limitsAvailability(record) || isPreference(record);
   }
 
   /* כמה בקשות נספרות כבר יש לעובד בשבוע. exceptDay מוחרג, כדי
@@ -2487,13 +2476,6 @@
       if (countsTowardLimit(state, records[key])) count++;
     });
     return count;
-  }
-
-  /* הספירה הישנה, של בקשות שמגבילות זמינות בלבד. נשארת כי היא
-     עדיין השאלה הנכונה במקומות שאינם התקרה. */
-  function countLimitingConstraints(week, empId, exceptDay) {
-    return countCountedConstraints({ settings: { constraintLimit: { countPreferences: false } } },
-      week, empId, exceptDay);
   }
 
   /* כמה עוד מותר לו. null כשאין תקרה. */
@@ -2706,6 +2688,10 @@
     state.settings.motzashOffsetMinutes = motzashOffset(state.settings);
     /* צאת שבת אינו עוד הגדרה של העסק: הוא מחושב לכל שבוע */
     delete state.settings.defaultShabbatEnd;
+    /* ספירת העדפות בתקרה אינה עוד הגדרה: היא תמיד נספרת */
+    if (state.settings.constraintLimit && typeof state.settings.constraintLimit === 'object') {
+      delete state.settings.constraintLimit.countPreferences;
+    }
     /* רשימה ריקה היא רשימה ריקה. פעם היא מולאה כאן בנתוני הדוגמה,
        וזה החזיר שמונה "עובד/ת" לכל חשבון חדש – ולכל מי שמחק את
        כולם בכוונה. */
@@ -3049,7 +3035,6 @@
     teamVisibility: teamVisibility, dayRoster: dayRoster,
     countsTowardLimit: countsTowardLimit, isPreference: isPreference,
     countCountedConstraints: countCountedConstraints,
-    countLimitingConstraints: countLimitingConstraints,
     constraintsLeft: constraintsLeft,
     overConstraintLimit: overConstraintLimit,
     limitsAvailability: limitsAvailability,

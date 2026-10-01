@@ -509,19 +509,16 @@ begin
   -- הסגירה: עובד שיפתח את כלי הפיתוח יוכל אחרת לשלוח בקשה
   -- שלישית כשהמנהל התיר שתיים. חלה על עובדים בלבד.
   --
-  -- מה נספר: יום שבו העובד הגביל זמינות – ביקש חופש או חסם
-  -- משמרת – ובנוסף, לפי הגדרת העסק, גם יום שבו הביע העדפה.
-  -- countPreferences דלוק כברירת מחדל, כולל אצל עסק שנפתח לפני
-  -- שההגדרה נולדה: מנהל שהגביל ל-3 מצפה לראות 3 שורות. בקשה
-  -- שנדחתה אינה נספרת בשום מצב, והיום הנוכחי מוחרג כדי שעריכה
-  -- של בקשה קיימת לא תיספר פעמיים.
+  -- מה נספר: כל יום שבו העובד הגיש בקשה – חופש, חסימת משמרת
+  -- וגם העדפה. העדפה שאושרה היא אילוץ לכל דבר, ולכן היא נספרת
+  -- תמיד. בקשה שנדחתה אינה נספרת בשום מצב, והיום הנוכחי מוחרג
+  -- כדי שעריכה של בקשה קיימת לא תיספר פעמיים.
   if v_role = 'employee'
      and p_constraint is not null and p_constraint <> 'null'::jsonb then
     declare
       v_limit jsonb;
       v_max   int;
       v_used  int;
-      v_prefs boolean;
       v_counts boolean;
     begin
       select config->'settings'->'constraintLimit' into v_limit
@@ -529,14 +526,12 @@ begin
 
       if v_limit is not null and coalesce((v_limit->>'enabled')::boolean, false) then
         v_max := greatest(1, coalesce((v_limit->>'max')::int, 2));
-        v_prefs := coalesce((v_limit->>'countPreferences')::boolean, true);
 
         -- האם הבקשה שעומדת להישמר נספרת בכלל
         v_counts := coalesce((p_constraint->>'off')::boolean, false)
           or (coalesce(jsonb_typeof(p_constraint->'blocked'), 'null') = 'object'
               and p_constraint->'blocked' <> '{}'::jsonb)
-          or (v_prefs
-              and coalesce(jsonb_typeof(p_constraint->'preferred'), 'null') = 'object'
+          or (coalesce(jsonb_typeof(p_constraint->'preferred'), 'null') = 'object'
               and p_constraint->'preferred' <> '{}'::jsonb);
 
         select count(*) into v_used
@@ -547,8 +542,7 @@ begin
            and (coalesce((item.value->>'off')::boolean, false)
                 or (coalesce(jsonb_typeof(item.value->'blocked'), 'null') = 'object'
                     and item.value->'blocked' <> '{}'::jsonb)
-                or (v_prefs
-                    and coalesce(jsonb_typeof(item.value->'preferred'), 'null') = 'object'
+                or (coalesce(jsonb_typeof(item.value->'preferred'), 'null') = 'object'
                     and item.value->'preferred' <> '{}'::jsonb));
 
         if v_counts and v_used >= v_max then

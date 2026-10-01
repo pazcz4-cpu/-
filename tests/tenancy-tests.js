@@ -957,12 +957,9 @@ console.log('\n== תקרת בקשות: אכיפה בשרת ==');
 /* התקרה נאכפת בשרת ולא רק במסך. עובד שיפתח את כלי הפיתוח יוכל
    אחרת לשלוח בקשה שלישית כשהמנהל התיר שתיים. */
 
-function withLimit(backend, max, countPreferences) {
+function withLimit(backend, max) {
   return backend.saveConfig({
-    settings: { constraintLimit: {
-      enabled: true, max: max,
-      countPreferences: countPreferences === undefined ? true : countPreferences
-    } },
+    settings: { constraintLimit: { enabled: true, max: max } },
     branches: [], employees: []
   });
 }
@@ -1007,10 +1004,10 @@ asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה �
     });
 });
 
-asyncTest('העדפה ומחיקה אינן נחסמות כשהעדפות אינן נספרות', function () {
+asyncTest('העדפה נספרת בתקרה, ומחיקה משחררת מקום', function () {
   var backend = freshBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap2b@a.com', password: 'secret1', phone: '054-1234567'})
-    .then(function () { return withLimit(backend, 1, false); })
+    .then(function () { return withLimit(backend, 2); })
     .then(function () {
       return backend.createUser({ email: 'w2b@a.com', password: 'secret1',
         role: 'employee', employeeId: 'emp-c2' });
@@ -1019,11 +1016,17 @@ asyncTest('העדפה ומחיקה אינן נחסמות כשהעדפות אינ
     .then(function () { return backend.signIn({ email: 'w2b@a.com', password: 'secret1' }); })
     .then(function () { return backend.saveOwnConstraint('2026-09-20', 0, { off: true }); })
     .then(function () {
-      /* העדפה אינה מגבילה זמינות, ולכן אינה נספרת */
+      /* העדפה היא אילוץ, ולכן היא תופסת את המקום השני */
       return backend.saveOwnConstraint('2026-09-20', 1, { preferred: { morning: true } });
     })
     .then(function (week) {
-      assertEqual(Object.keys(week.constraints).length, 2, 'העדפה נחסמה');
+      assertEqual(Object.keys(week.constraints).length, 2, 'העדפה נחסמה בטרם הגענו לתקרה');
+      /* בקשה שלישית חורגת, גם אם היא העדפה */
+      return assertRejects(
+        backend.saveOwnConstraint('2026-09-20', 2, { preferred: { evening: true } }),
+        'constraint_limit', 'העדפה שלישית עברה את התקרה');
+    })
+    .then(function () {
       /* ומחיקה משחררת מקום */
       return backend.saveOwnConstraint('2026-09-20', 0, null);
     })

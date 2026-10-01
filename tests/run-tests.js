@@ -3239,12 +3239,9 @@ console.log('\n== תקרת בקשות לעובד ==');
 /* בלי תקרה, עובד אחד שמבקש חמישה ימי חופש מוריד את הסידור על
    השאר, והמנהל מגלה את זה רק כשהוא מנסה לשבץ. */
 
-function limitState(max, countPreferences) {
+function limitState(max) {
   var state = freshState();
-  state.settings.constraintLimit = {
-    enabled: true, max: max,
-    countPreferences: countPreferences === undefined ? true : countPreferences
-  };
+  state.settings.constraintLimit = { enabled: true, max: max };
   return state;
 }
 
@@ -3254,7 +3251,8 @@ function weekWith(records) {
   return week;
 }
 
-test('נספרות רק בקשות שמגבילות זמינות', function () {
+test('נספרת כל בקשה פעילה: חופש, חסימה והעדפה', function () {
+  var state = limitState(9);
   var week = weekWith({
     'e1|0': { off: true },
     'e1|1': { blocked: { morning: true } },
@@ -3262,13 +3260,16 @@ test('נספרות רק בקשות שמגבילות זמינות', function () {
     'e1|3': { off: true, status: 'rejected' },
     'e2|0': { off: true }
   });
-  assertEqual(Store.countLimitingConstraints(week, 'e1'), 2, 'ספירה שגויה');
-  /* העדפה עוזרת לשיבוץ ואין סיבה להגביל אותה */
-  assertEqual(Store.limitsAvailability({ preferred: { x: true } }), false, 'העדפה נספרה');
+  /* העדפה היא אילוץ: היא נספרת כמו כל אחד מהם */
+  assertEqual(Store.countCountedConstraints(state, week, 'e1'), 3, 'ספירה שגויה');
+  assertEqual(Store.countsTowardLimit(state, { preferred: { x: true } }), true, 'העדפה לא נספרה');
+  /* חופש וחסימה מגבילים זמינות; העדפה בפני עצמה אינה, אבל נספרת */
+  assertEqual(Store.limitsAvailability({ preferred: { x: true } }), false, 'העדפה סווגה כחסימה');
   /* בקשה שנדחתה אינה מגבילה דבר, ולכן מפנה מקום לבקשה אחרת */
-  assertEqual(Store.limitsAvailability({ off: true, status: 'rejected' }), false, 'דחייה נספרה');
+  assertEqual(Store.countsTowardLimit(state, { off: true, status: 'rejected' }), false, 'דחייה נספרה');
+  assertEqual(Store.countsTowardLimit(state, { preferred: { x: true }, status: 'rejected' }), false, 'העדפה שנדחתה נספרה');
   /* והספירה של עובד אחד אינה סופרת עובד אחר */
-  assertEqual(Store.countLimitingConstraints(week, 'e2'), 1, 'דליפה בין עובדים');
+  assertEqual(Store.countCountedConstraints(state, week, 'e2'), 1, 'דליפה בין עובדים');
 });
 
 test('כמה נותרו, ומתי חורגים', function () {
@@ -3286,10 +3287,9 @@ test('כמה נותרו, ומתי חורגים', function () {
 });
 
 /* מנהל הגביל ל-3, עובד הגיש שש שורות, ובמסך זה נראה כמו באג.
-   שתי תשובות לגיטימיות לאותה שאלה, ולכן זו הגדרה. */
-test('ברירת המחדל: גם העדפה נספרת בתקרה', function () {
+   העדפה היא אילוץ, ולכן היא נספרת תמיד – אין הגדרה שמכבה את זה. */
+test('העדפה נספרת בתקרה', function () {
   var state = limitState(3);
-  assertEqual(Store.constraintLimitSettings(state).countPreferences, true, 'ברירת המחדל');
   var week = weekWith({
     'e1|0': { off: true },
     'e1|1': { preferred: { evening: true } },
@@ -3298,29 +3298,25 @@ test('ברירת המחדל: גם העדפה נספרת בתקרה', function ()
   assertEqual(Store.constraintsLeft(state, week, 'e1'), 0, 'העדפות לא נספרו');
   assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { preferred: { morning: true } }),
     true, 'העדפה רביעית התקבלה');
+  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { off: true }), true, 'חופש רביעי התקבל');
 });
 
-test('עסק שקדם להגדרה מקבל את ברירת המחדל ולא שקט', function () {
-  /* קובץ הגדרות שנשמר לפני שההגדרה נולדה. שינוי גרסה שמשנה בשקט
-     את המשמעות של תקרה אצל לקוח קיים הוא בדיוק סוג הדבר שנראה
-     כמו באג חודשיים אחר כך. */
-  var state = freshState();
-  state.settings.constraintLimit = { enabled: true, max: 3 };
-  assertEqual(Store.constraintLimitSettings(state).countPreferences, true, 'נפל ל"לא נספרות"');
-});
-
-test('מי שמכבה – העדפות חוזרות להיות חופשיות', function () {
-  var state = limitState(3, false);
+test('ההגדרה הישנה countPreferences אינה משפיעה, והמיגרציה מסירה אותה', function () {
+  var migrated = Store.migrate({
+    settings: { constraintLimit: { enabled: true, max: 3, countPreferences: false } },
+    branches: [], employees: [], weeks: {}
+  });
+  assert(!('countPreferences' in migrated.settings.constraintLimit), 'ההגדרה נשארה');
   var week = weekWith({
     'e1|0': { off: true },
     'e1|1': { preferred: { evening: true } },
     'e1|2': { preferred: { evening: true } }
   });
-  assertEqual(Store.constraintsLeft(state, week, 'e1'), 2, 'העדפות נספרו למרות שכובו');
-  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { preferred: { morning: true } }),
-    false, 'העדפה נחסמה למרות שכובתה');
-  /* ויום חופש עדיין נספר */
-  assertEqual(Store.overConstraintLimit(state, week, 'e1', 3, { off: true }), false, 'יש עוד מקום');
+  assertEqual(Store.constraintsLeft(migrated, week, 'e1'), 0, 'עסק שכיבה את זה עדיין סופר העדפות');
+  /* גם ללא מיגרציה */
+  var raw = freshState();
+  raw.settings.constraintLimit = { enabled: true, max: 3, countPreferences: false };
+  assertEqual(Store.constraintsLeft(raw, week, 'e1'), 0, 'ההגדרה הישנה כיבתה את הספירה');
 });
 
 test('בקשה שנדחתה אינה נספרת בשום מצב', function () {

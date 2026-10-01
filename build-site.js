@@ -87,7 +87,7 @@ const LEGAL = {
   EFFECTIVE_DATE: process.env.LEGAL_EFFECTIVE_DATE ||
     new Date().toISOString().slice(0, 10),
   SUPPORT_EMAIL: 'support@setshifts.com',
-  TRIAL_DAYS: '14'
+  TRIAL_DAYS: '30'
 };
 Object.keys(LEGAL_ENV).forEach((key) => {
   LEGAL[key] = (process.env[LEGAL_ENV[key]] || '').trim();

@@ -352,7 +352,7 @@ drop function if exists public.create_company(text, text, int);
 drop function if exists public.create_company(text, text, int, text);
 
 create or replace function public.create_company(
-  p_name text, p_user_name text, p_trial_days int default 14, p_phone text default '',
+  p_name text, p_user_name text, p_trial_days int default 30, p_phone text default '',
   p_wa_opt_in boolean default false, p_wa_opt_in_text text default '')
 returns public.companies
 language plpgsql

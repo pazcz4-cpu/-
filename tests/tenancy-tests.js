@@ -595,9 +595,15 @@ test('ברירת המחדל של הסליקה היא לא מחובר', function 
 
 test('תקופת ניסיון מעניקה גישה ומסתיימת בזמן', function () {
   var company = Model.newTrialCompany('חברה', new Date('2026-09-01'));
+  /* נגזר מ-TRIAL_DAYS ולא ממספר קבוע: חודש ראשון במתנה הוא 30 יום */
+  assertEqual(Model.TRIAL_DAYS, 30, 'חודש ראשון במתנה');
+  var start = new Date('2026-09-01').getTime();
+  var inside = new Date(start + (Model.TRIAL_DAYS - 2) * 864e5);
+  var after = new Date(start + (Model.TRIAL_DAYS + 2) * 864e5);
   assertEqual(Model.accessState(company, new Date('2026-09-10')).allowed, true, 'בתוך הניסיון');
-  assertEqual(Model.accessState(company, new Date('2026-09-20')).allowed, false, 'אחרי הניסיון');
-  assertEqual(Model.accessState(company, new Date('2026-09-20')).reason, 'trial-ended', 'סיבת החסימה');
+  assertEqual(Model.accessState(company, inside).allowed, true, 'ביום האחרון שלפני הסוף');
+  assertEqual(Model.accessState(company, after).allowed, false, 'אחרי הניסיון');
+  assertEqual(Model.accessState(company, after).reason, 'trial-ended', 'סיבת החסימה');
 });
 
 test('מנוי פעיל שפג חוסם גישה', function () {

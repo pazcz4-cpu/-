@@ -46,7 +46,8 @@ try {
   await page.click('[data-auth-mode="signup"]');
   await page.waitForTimeout(200);
   const note = await page.locator('.auth-trial-note').textContent();
-  check('מספר ימי הניסיון מופיע', /14/.test(note), true);
+  check('נאמר שהחודש הראשון במתנה', /חודש ראשון במתנה/.test(note), true);
+  check('ולא מופיעים 14 ימים', /14/.test(note), false);
   check('התאריך שבו התקופה נגמרת מופיע', /\d{2}[./]\d{2}[./]\d{4}/.test(note), true);
   /* ההרשמה באמת אינה מבקשת כרטיס, ולכן זה מה שכתוב. טקסט שמבטיח
      "החיוב הראשון בתאריך" היה סתירה למה שקורה בפועל. */
@@ -106,7 +107,7 @@ try {
   check('אמצעי תשלום', await billingRow('אמצעי תשלום'), /שמור/);
   check('שורת חיוב ראשון', await billingRow('חיוב ראשון'), /\d{2}[./]\d{2}[./]\d{4}/);
   const notice = await page.locator('.billing-trial').textContent();
-  check('ההודעה מפרטת 14 ימים ללא חיוב', /14/.test(notice), true);
+  check('ההודעה אומרת שהחודש הראשון ללא חיוב', /החודש הראשון/.test(notice), true);
   check('ההודעה מפרטת את הסכום', /199/.test(notice), true);
   check('ההודעה אינה מסומנת כאזהרה',
     await page.locator('.billing-trial.warn').count(), 0);
@@ -128,7 +129,7 @@ try {
   check('חזרנו למצב ניסיון פעיל',
     await page.evaluate(() => window.__backend.session().access.reason), 'trial');
 
-  console.log('\n== החיוב האוטומטי בתום 14 הימים ==');
+  console.log('\n== החיוב האוטומטי בתום החודש הראשון ==');
   /* מדמים את מה שספק התשלומים עושה: התקופה נגמרה, והוא חייב.
      כאן זה נעשה ישירות על השרת המדומה, בדיוק כמו webhook. */
   await page.evaluate(() => {

@@ -210,7 +210,8 @@
         dayOff: 'إجازة', blocked: 'محجوب', prefers: 'يفضّل',
         notInBranch: 'ليس في هذا الفرع', notInShift: 'ليس في هذه المناوبة',
         alreadyAssigned: 'معيَّن مسبقًا', inactive: 'غير نشط',
-        traineeTag: '(متدرّب)'
+        traineeTag: '(متدرّب)',
+        otherPreferred: 'يفضّل مناوبة أخرى'
       },
 
       issueTypes: {
@@ -223,6 +224,7 @@
         understaffed: 'نقص في التغطية',
         'constraint-off': 'مخالفة طلب',
         'constraint-blocked': 'مخالفة طلب',
+        'constraint-preferred': 'مخالفة طلب',
         'branch-mismatch': 'فرع غير مناسب',
         'shift-mismatch': 'نوع مناوبة غير مناسب',
         'over-max': 'تجاوز الحد',
@@ -371,6 +373,7 @@
         constraintOff: 'مخالفة طلب: {name} طلب إجازة يوم {day} لكنه معيَّن في مناوبة {shift} في {branch}.',
         standingConflict: 'خرق قيد ثابت: {name} غير متاح يوم {day} في {shift}، لكنه مجدول في {branch}.',
         constraintBlocked: 'مخالفة طلب: {name} حجب مناوبة {shift} يوم {day} لكنه معيَّن فيها في {branch}.',
+        constraintPreferred: 'مخالفة طلب: طلب {name} مناوبة أخرى يوم {day} (معتمد) لكنه مُسند إلى {shift} في {branch}.',
         branchMismatch: '{name} معيَّن في {branch} يوم {day} رغم أن هذا الفرع غير مُدرج في بطاقته.',
         shiftMismatch: '{name} معيَّن في مناوبة {shift} يوم {day} رغم أن هذا النوع غير مُدرج في بطاقته.',
         overMax: 'تجاوز الحد: {name} معيَّن في {total} مناوبات (الحد الأقصى {max}).',
@@ -894,6 +897,7 @@
         released: 'عادت إلى منطقة الانتظار وبلا تغطية',
         refuse: {
           'constraint': 'لدى {name} قيد معتمد في هذا الوقت. لإسناد المناوبة إليه، ألغِ القيد أولاً من تبويب القيود.',
+          'preference': 'طلب {name} مناوبة أخرى في هذا اليوم وتم اعتماد الطلب. لإسناده هنا، ألغِ التفضيل أولاً من تبويب القيود.',
           'target-busy': 'لدى {name} وردية في ذلك اليوم بالفعل',
           'inactive': '{name} غير نشط ولا يمكن جدولته',
           'already-here': '{name} مُجدوَل في هذه الوردية بالفعل',

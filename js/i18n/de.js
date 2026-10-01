@@ -210,7 +210,8 @@
         dayOff: 'freier Tag', blocked: 'gesperrt', prefers: 'bevorzugt',
         notInBranch: 'nicht in dieser Filiale', notInShift: 'nicht für diese Schicht',
         alreadyAssigned: 'bereits eingeteilt', inactive: 'inaktiv',
-        traineeTag: '(in Ausbildung)'
+        traineeTag: '(in Ausbildung)',
+        otherPreferred: 'bevorzugt andere Schicht'
       },
 
       issueTypes: {
@@ -223,6 +224,7 @@
         understaffed: 'Unterbesetzt',
         'constraint-off': 'Wunsch verletzt',
         'constraint-blocked': 'Wunsch verletzt',
+        'constraint-preferred': 'Wunsch verletzt',
         'branch-mismatch': 'Falsche Filiale',
         'shift-mismatch': 'Falscher Schichttyp',
         'over-max': 'Über dem Limit',
@@ -371,6 +373,7 @@
         constraintOff: 'Wunsch verletzt: {name} wollte am {day} frei, ist aber der Schicht {shift} in {branch} zugeteilt.',
         standingConflict: 'Feste Einschränkung verletzt: {name} ist am {day} nie für {shift} verfügbar, ist aber in {branch} eingeteilt.',
         constraintBlocked: 'Wunsch verletzt: {name} hat die Schicht {shift} am {day} gesperrt, ist ihr aber in {branch} zugeteilt.',
+        constraintPreferred: 'Wunsch verletzt: {name} wollte am {day} eine andere Schicht (genehmigt), ist aber für {shift} in {branch} eingeteilt.',
         branchMismatch: '{name} ist am {day} in {branch} eingeteilt, obwohl diese Filiale nicht in der Mitarbeiterkarte steht.',
         shiftMismatch: '{name} ist am {day} der Schicht {shift} zugeteilt, obwohl dieser Schichttyp nicht in der Mitarbeiterkarte steht.',
         overMax: 'Über dem Limit: {name} hat {total} Schichten (Maximum {max}).',
@@ -894,6 +897,7 @@
         released: 'Zurück im Wartebereich und unbesetzt',
         refuse: {
           'constraint': '{name} hat zu dieser Zeit eine genehmigte Einschränkung. Um die Person einzuplanen, hebe die Einschränkung zuerst im Reiter „Einschränkungen“ auf.',
+          'preference': '{name} wollte an diesem Tag eine andere Schicht, und der Wunsch wurde genehmigt. Um die Person hier einzuplanen, hebe den Wunsch zuerst im Reiter „Einschränkungen“ auf.',
           'target-busy': '{name} hat an diesem Tag bereits eine Schicht',
           'inactive': '{name} ist inaktiv und wird nicht eingeteilt',
           'already-here': '{name} ist bereits in dieser Schicht',

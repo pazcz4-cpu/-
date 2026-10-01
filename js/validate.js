@@ -141,6 +141,7 @@
     'standing-conflict': GROUPS.VIOLATIONS,
     'constraint-off': GROUPS.VIOLATIONS,
     'constraint-blocked': GROUPS.VIOLATIONS,
+    'constraint-preferred': GROUPS.VIOLATIONS,
     'branch-mismatch': GROUPS.VIOLATIONS,
     'shift-mismatch': GROUPS.VIOLATIONS,
     'over-max': GROUPS.VIOLATIONS,
@@ -344,6 +345,13 @@
           } else if (constraint.blocked && constraint.blocked[s.shiftId]) {
             issues.push(issue('error', 'constraint-blocked',
               t('alerts.constraintBlocked', {
+                name: emp.name, shift: shiftName(s.shiftId),
+                day: dayName(day), branch: branchName(state, s.branchId)
+              }),
+              { dayIdx: day, empId: emp.id, branchId: s.branchId, shiftId: s.shiftId }));
+          } else if (Store.constraintBlock(state, week, emp.id, day, s.shiftId) === 'preference') {
+            issues.push(issue('error', 'constraint-preferred',
+              t('alerts.constraintPreferred', {
                 name: emp.name, shift: shiftName(s.shiftId),
                 day: dayName(day), branch: branchName(state, s.branchId)
               }),

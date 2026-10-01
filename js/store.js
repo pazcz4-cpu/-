@@ -620,6 +620,11 @@
     var weekly = getConstraint(week, empId, dayIdx);
     if (weekly.off) return 'dayOff';
     if (weekly.blocked && weekly.blocked[shiftId]) return 'blocked';
+    /* העדפה שאושרה היא אילוץ לכל דבר: ביום שבו העובד ביקש משמרת
+       מסוימת, אפשר לשבץ אותו רק בה (או באחת מהמשמרות שביקש). */
+    var preferred = weekly.preferred || {};
+    var wanted = Object.keys(preferred).filter(function (id) { return preferred[id]; });
+    if (wanted.length && !preferred[shiftId]) return 'preference';
     var emp = byId((state && state.employees) || [], empId);
     if (emp && hasStanding(emp) &&
         standingBlocks(emp, dayIdx, shiftId, week.weekKey || weekKeyOf(state, week))) {
@@ -1916,7 +1921,7 @@
     if (!target) return { ok: false, reason: 'no-employee' };
     if (!target.active) return { ok: false, reason: 'inactive' };
     if (constraintBlock(state, week, to, dayIdx, shiftId)) {
-      return { ok: false, reason: 'constraint', empId: to };
+      return { ok: false, reason: 'constraint', empId: to, block: constraintBlock(state, week, to, dayIdx, shiftId) };
     }
 
     var busy = employeeDayAssignments(state, week, to, dayIdx);
@@ -1932,7 +1937,7 @@
       var other = busy[0];
       /* בהחלפה גם מי שעובר למשמרת השנייה חייב להיות פנוי בה */
       if (from && constraintBlock(state, week, from, dayIdx, other.shiftId)) {
-        return { ok: false, reason: 'constraint', empId: from };
+        return { ok: false, reason: 'constraint', empId: from, block: constraintBlock(state, week, from, dayIdx, other.shiftId) };
       }
       var otherList = getAssigned(week, dayIdx, other.branchId, other.shiftId).slice();
       setAssigned(week, dayIdx, other.branchId, other.shiftId,

@@ -210,7 +210,8 @@
         dayOff: 'folga', blocked: 'bloqueado', prefers: 'prefere',
         notInBranch: 'não é desta filial', notInShift: 'não faz este turno',
         alreadyAssigned: 'já atribuído', inactive: 'inativo',
-        traineeTag: '(em treinamento)'
+        traineeTag: '(em treinamento)',
+        otherPreferred: 'prefere outro turno'
       },
 
       issueTypes: {
@@ -223,6 +224,7 @@
         understaffed: 'Falta pessoal',
         'constraint-off': 'Pedido não cumprido',
         'constraint-blocked': 'Pedido não cumprido',
+        'constraint-preferred': 'Pedido não cumprido',
         'branch-mismatch': 'Filial errada',
         'shift-mismatch': 'Tipo de turno errado',
         'over-max': 'Acima do limite',
@@ -371,6 +373,7 @@
         constraintOff: 'Pedido não cumprido: {name} pediu folga em {day} mas está atribuído ao turno {shift} em {branch}.',
         standingConflict: 'Restrição fixa quebrada: {name} nunca está disponível à {day} para {shift}, mas está escalado em {branch}.',
         constraintBlocked: 'Pedido não cumprido: {name} bloqueou o turno {shift} em {day} mas está atribuído a ele em {branch}.',
+        constraintPreferred: 'Pedido não cumprido: {name} pediu outro turno em {day} (aprovado), mas está escalado/a para {shift} em {branch}.',
         branchMismatch: '{name} está atribuído a {branch} em {day} apesar de essa filial não constar da sua ficha.',
         shiftMismatch: '{name} está atribuído ao turno {shift} em {day} apesar de esse tipo de turno não constar da sua ficha.',
         overMax: 'Acima do limite: {name} tem {total} turnos (máximo {max}).',
@@ -894,6 +897,7 @@
         released: 'Voltou para a zona de espera e fica sem ninguém',
         refuse: {
           'constraint': '{name} tem uma restrição aprovada neste horário. Para escalar, cancele primeiro a restrição no separador Restrições.',
+          'preference': '{name} pediu outro turno neste dia e o pedido foi aprovado. Para escalar aqui, cancele primeiro a preferência no separador Restrições.',
           'target-busy': '{name} já tem um turno nesse dia',
           'inactive': '{name} está inativo e não é escalado',
           'already-here': '{name} já está neste turno',

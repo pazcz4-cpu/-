@@ -35,6 +35,9 @@
     if (constraint) {
       if (constraint.off) return false;
       if (constraint.blocked && constraint.blocked[demand.shiftId]) return false;
+      /* העדפה שאושרה חוסמת את שאר המשמרות באותו יום, כמו כל אילוץ */
+      var wanted = Object.keys(constraint.preferred || {}).filter(function (id) { return constraint.preferred[id]; });
+      if (wanted.length && !constraint.preferred[demand.shiftId]) return false;
     }
     return true;
   }

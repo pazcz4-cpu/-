@@ -216,7 +216,8 @@
         dayOff: 'חופש', blocked: 'חסום', prefers: 'מעדיף',
         notInBranch: 'לא בסניף', notInShift: 'לא במשמרת',
         alreadyAssigned: 'כבר משובץ', inactive: 'לא פעיל',
-        traineeTag: '(בהתלמדות)'
+        traineeTag: '(בהתלמדות)',
+        otherPreferred: 'מעדיף משמרת אחרת'
       },
 
       issueTypes: {
@@ -229,6 +230,7 @@
         understaffed: 'חוסר באיוש',
         'constraint-off': 'הפרת אילוץ',
         'constraint-blocked': 'הפרת אילוץ',
+        'constraint-preferred': 'הפרת אילוץ',
         'branch-mismatch': 'סניף לא מתאים',
         'shift-mismatch': 'משמרת לא מתאימה',
         'over-max': 'חריגה ממכסה',
@@ -376,6 +378,7 @@
         constraintOff: 'הפרת אילוץ: {name} ביקש/ה יום חופש ב{day} אך משובץ/ת ל{shift} ב{branch}.',
         standingConflict: 'הפרת אילוץ קבוע: {name} אינו זמין ב{day} ב{shift}, אך משובץ/ת ל{branch}.',
         constraintBlocked: 'הפרת אילוץ: {name} חסם/ה משמרת {shift} ב{day} אך משובץ/ת אליה ב{branch}.',
+        constraintPreferred: 'הפרת אילוץ: {name} ביקש/ה משמרת אחרת ב{day} והבקשה אושרה, אך משובץ/ת ל{shift} ב{branch}.',
         branchMismatch: '{name} משובץ/ת ב{branch} ({day}) למרות שהסניף אינו מוגדר בכרטיס העובד.',
         shiftMismatch: '{name} משובץ/ת למשמרת {shift} ב{day} למרות שסוג משמרת זה אינו מוגדר בכרטיס העובד.',
         overMax: 'חריגה ממכסה: {name} משובץ/ת ל-{total} משמרות (מקסימום {max}).',
@@ -900,6 +903,7 @@
         released: 'המשמרת חזרה לשטח ההמתנה ואינה מאוישת',
         refuse: {
           'constraint': '{name} מסומן/ת באילוץ מאושר בזמן הזה. כדי לשבץ, בטלו קודם את האילוץ בלשונית אילוצים.',
+          'preference': '{name} ביקש/ה משמרת אחרת ביום הזה, והבקשה אושרה. כדי לשבץ, בטלו קודם את ההעדפה בלשונית אילוצים.',
           'target-busy': 'ל{name} כבר יש משמרת ביום הזה',
           'inactive': '{name} מושבת/ת ואינו/ה משובץ/ת',
           'already-here': '{name} כבר משובץ/ת במשמרת הזו',

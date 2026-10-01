@@ -210,7 +210,8 @@
         dayOff: 'jour de repos', blocked: 'bloqué', prefers: 'préfère',
         notInBranch: 'pas dans cette succursale', notInShift: 'pas sur ce service',
         alreadyAssigned: 'déjà affecté', inactive: 'inactif',
-        traineeTag: '(en formation)'
+        traineeTag: '(en formation)',
+        otherPreferred: 'préfère un autre service'
       },
 
       issueTypes: {
@@ -223,6 +224,7 @@
         understaffed: 'Effectif insuffisant',
         'constraint-off': 'Demande non respectée',
         'constraint-blocked': 'Demande non respectée',
+        'constraint-preferred': 'Demande non respectée',
         'branch-mismatch': 'Mauvaise succursale',
         'shift-mismatch': 'Mauvais type de service',
         'over-max': 'Au-dessus du quota',
@@ -371,6 +373,7 @@
         constraintOff: 'Demande non respectée : {name} a demandé le {day} en repos mais est affecté au service {shift} à {branch}.',
         standingConflict: 'Contrainte permanente non respectée : {name} n’est jamais disponible le {day} pour {shift}, mais est affecté à {branch}.',
         constraintBlocked: 'Demande non respectée : {name} a bloqué le service {shift} le {day} mais y est affecté à {branch}.',
+        constraintPreferred: 'Demande non respectée : {name} a demandé un autre service le {day} (approuvé), mais est planifié(e) sur {shift} à {branch}.',
         branchMismatch: '{name} est affecté à {branch} le {day} alors que cette succursale n’est pas sur sa fiche.',
         shiftMismatch: '{name} est affecté au service {shift} le {day} alors que ce type de service n’est pas sur sa fiche.',
         overMax: 'Au-dessus du quota : {name} a {total} services (maximum {max}).',
@@ -894,6 +897,7 @@
         released: "De retour dans la zone d'attente, sans personne dessus",
         refuse: {
           'constraint': '{name} a une contrainte approuvée à ce moment. Pour le planifier, annulez d’abord la contrainte dans l’onglet Contraintes.',
+          'preference': '{name} a demandé un autre service ce jour-là et la demande a été approuvée. Pour le planifier ici, annulez d’abord la préférence dans l’onglet Contraintes.',
           'target-busy': '{name} a déjà un créneau ce jour-là',
           'inactive': "{name} est inactif et n'est pas planifié",
           'already-here': '{name} est déjà sur ce créneau',

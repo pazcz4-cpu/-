@@ -210,7 +210,8 @@
         dayOff: 'día libre', blocked: 'bloqueado', prefers: 'prefiere',
         notInBranch: 'no es de esta sucursal', notInShift: 'no hace este turno',
         alreadyAssigned: 'ya asignado', inactive: 'inactivo',
-        traineeTag: '(en formación)'
+        traineeTag: '(en formación)',
+        otherPreferred: 'prefiere otro turno'
       },
 
       issueTypes: {
@@ -223,6 +224,7 @@
         understaffed: 'Falta personal',
         'constraint-off': 'Solicitud incumplida',
         'constraint-blocked': 'Solicitud incumplida',
+        'constraint-preferred': 'Solicitud incumplida',
         'branch-mismatch': 'Sucursal incorrecta',
         'shift-mismatch': 'Tipo de turno incorrecto',
         'over-max': 'Por encima del límite',
@@ -371,6 +373,7 @@
         constraintOff: 'Solicitud incumplida: {name} pidió libre el {day} pero está asignado a {shift} en {branch}.',
         standingConflict: 'Restricción fija incumplida: {name} nunca está disponible el {day} para {shift}, pero está asignado en {branch}.',
         constraintBlocked: 'Solicitud incumplida: {name} bloqueó {shift} el {day} pero está asignado a ese turno en {branch}.',
+        constraintPreferred: 'Solicitud incumplida: {name} pidió otro turno el {day} (aprobado), pero está asignado/a a {shift} en {branch}.',
         branchMismatch: '{name} está asignado a {branch} el {day} aunque esa sucursal no está en su ficha.',
         shiftMismatch: '{name} está asignado a {shift} el {day} aunque ese tipo de turno no está en su ficha.',
         overMax: 'Por encima del límite: {name} tiene {total} turnos (máximo {max}).',
@@ -894,6 +897,7 @@
         released: 'Vuelve a la zona de espera y queda sin cubrir',
         refuse: {
           'constraint': '{name} tiene una restricción aprobada en este momento. Para asignarle el turno, cancela antes la restricción en la pestaña Restricciones.',
+          'preference': '{name} pidió otro turno este día y se aprobó. Para asignarlo aquí, cancela antes la preferencia en la pestaña Restricciones.',
           'target-busy': '{name} ya tiene un turno ese día',
           'inactive': '{name} está inactivo y no se puede asignar',
           'already-here': '{name} ya está en este turno',

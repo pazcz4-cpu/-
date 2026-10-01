@@ -217,7 +217,8 @@
         dayOff: 'day off', blocked: 'blocked', prefers: 'prefers',
         notInBranch: 'not in this location', notInShift: 'not in this shift',
         alreadyAssigned: 'already assigned', inactive: 'inactive',
-        traineeTag: '(trainee)'
+        traineeTag: '(trainee)',
+        otherPreferred: 'prefers another shift'
       },
 
       issueTypes: {
@@ -230,6 +231,7 @@
         understaffed: 'Understaffed',
         'constraint-off': 'Availability conflict',
         'constraint-blocked': 'Availability conflict',
+        'constraint-preferred': 'Availability conflict',
         'branch-mismatch': 'Wrong location',
         'shift-mismatch': 'Wrong shift type',
         'over-max': 'Over limit',
@@ -377,6 +379,7 @@
         constraintOff: 'Availability conflict: {name} asked for {day} off but is assigned to {shift} at {branch}.',
         standingConflict: 'Standing arrangement broken: {name} is never available on {day} for {shift}, but is scheduled at {branch}.',
         constraintBlocked: 'Availability conflict: {name} blocked {shift} on {day} but is assigned to it at {branch}.',
+        constraintPreferred: 'Availability conflict: {name} asked for a different shift on {day} (approved) but is scheduled on {shift} at {branch}.',
         branchMismatch: '{name} is assigned to {branch} on {day} although that location is not on their card.',
         shiftMismatch: '{name} is assigned to {shift} on {day} although that shift type is not on their card.',
         overMax: 'Over limit: {name} is assigned {total} shifts (maximum {max}).',
@@ -900,6 +903,7 @@
         released: 'Back in the holding area and nobody is covering it',
         refuse: {
           'constraint': '{name} has an approved constraint at this time. To schedule them, cancel the constraint in the Constraints tab first.',
+          'preference': '{name} asked for a different shift on this day and it was approved. To schedule them here, cancel the preference in the Constraints tab first.',
           'target-busy': '{name} already has a shift that day',
           'inactive': '{name} is inactive and cannot be scheduled',
           'already-here': '{name} is already on this shift',

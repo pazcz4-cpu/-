@@ -827,6 +827,7 @@
     if (constraint.off) marks.push(t('marks.dayOff'));
     else if (constraint.blocked && constraint.blocked[shiftId]) marks.push(t('marks.blocked'));
     else if (constraint.preferred && constraint.preferred[shiftId]) marks.push(t('marks.prefers'));
+    else if (Store.constraintBlock(state, week(), emp.id, dayIdx, shiftId) === 'preference') marks.push(t('marks.otherPreferred'));
     if (!Scheduler.employeeAllowedInBranch(emp, branchId)) marks.push(t('marks.notInBranch'));
     if (emp.shifts.indexOf(shiftId) === -1) marks.push(t('marks.notInShift'));
     var busy = Store.employeeDayAssignments(state, week(), emp.id, dayIdx)
@@ -1073,7 +1074,8 @@
     if (!out.ok) {
       clearPick();
       render();
-      toast(t('move.refuse.' + out.reason, { name: out.empId ? nameOf(out.empId) : toName }));
+      toast(t(out.reason === 'constraint' && out.block === 'preference' ? 'move.refuse.preference' : 'move.refuse.' + out.reason,
+        { name: out.empId ? nameOf(out.empId) : toName }));
       return;
     }
     clearPick();
@@ -3324,7 +3326,8 @@
     });
     if (refused.length) {
       render();
-      toast(t('move.refuse.constraint', { name: empNameOf(refused[0]) }));
+      var why = Store.constraintBlock(state, current, refused[0], dayIdx, shiftId);
+      toast(t(why === 'preference' ? 'move.refuse.preference' : 'move.refuse.constraint', { name: empNameOf(refused[0]) }));
       return;
     }
     Store.setAssigned(current, dayIdx, branchId, shiftId, unique);

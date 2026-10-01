@@ -1201,6 +1201,59 @@ test('בקשה שממתינה או נדחתה אינה חוסמת שיבוץ', f
   assertEqual(Store.moveShift(ctx.state, ctx.week, move).ok, false, 'בקשה שאושרה לא חסמה');
 });
 
+test('העדפה שאושרה חוסמת שיבוץ במשמרת אחרת באותו יום', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  /* אור ביקש ערב, והמנהל אישר. בוקר חסום, ערב פתוח */
+  Store.setConstraint(ctx.week, 'e2', 0, { off: false, blocked: {}, preferred: { evening: true }, note: '' });
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'morning'), 'preference', 'בוקר לא נחסם');
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'evening'), null, 'המשמרת שביקש נחסמה');
+  var out = Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' });
+  assertEqual(out.ok, false, 'גרירה נגד העדפה שאושרה עברה');
+  assertEqual(out.block, 'preference', 'הסיבה');
+  /* יום אחר לא מושפע */
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 1, 'morning'), null, 'יום אחר נחסם');
+  /* ביטול ההעדפה פותח את החסימה */
+  Store.setConstraint(ctx.week, 'e2', 0, { off: false, blocked: {}, preferred: {}, note: '' });
+  assertEqual(Store.moveShift(ctx.state, ctx.week,
+    { dayIdx: 0, branchId: 'br-a', shiftId: 'morning', from: 'e1', to: 'e2' }).ok, true, 'אחרי ביטול ההעדפה נחסם');
+});
+
+test('העדפה שממתינה לאישור אינה חוסמת', function () {
+  var ctx = movableState();
+  Store.setConstraint(ctx.week, 'e2', 0, { off: false, blocked: {}, preferred: { evening: true }, note: '' });
+  ctx.week.constraints['e2|0'].status = 'pending';
+  assertEqual(Store.constraintBlock(ctx.state, ctx.week, 'e2', 0, 'morning'), null, 'העדפה ממתינה חסמה');
+});
+
+test('הבנייה האוטומטית אינה משבצת נגד העדפה שאושרה', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  /* כל עובד מבקש, ובאישור, את משמרת הערב בכל יום. בוקר אסור לשבץ אף אחד. */
+  state.employees.forEach(function (emp) {
+    for (var day = 0; day < 6; day++) {
+      Store.setConstraint(weekData, emp.id, day, { off: false, blocked: {}, preferred: { evening: true }, note: '' });
+    }
+  });
+  build(state, weekData);
+  state.employees.forEach(function (emp) {
+    for (var day = 0; day < 6; day++) {
+      Store.employeeDayAssignments(state, weekData, emp.id, day).forEach(function (slot) {
+        assertEqual(slot.shiftId, 'evening', emp.name + ' שובץ/ה ביום ' + day + ' למשמרת ' + slot.shiftId + ' נגד העדפה מאושרת');
+      });
+    }
+  });
+});
+
+test('שיבוץ שקדם להעדפה שאושרה מסומן בבדיקות', function () {
+  var ctx = movableState();
+  Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);
+  Store.setConstraint(ctx.week, 'e1', 0, { off: false, blocked: {}, preferred: { evening: true }, note: '' });
+  var report = Validate.validate(ctx.state, ctx.week);
+  assertEqual(issuesOfType(report, 'constraint-preferred').length, 1, 'ההפרה לא סומנה');
+});
+
 test('הסדר קבוע חוסם שיבוץ ידני כמו אילוץ מאושר', function () {
   var ctx = movableState();
   Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);

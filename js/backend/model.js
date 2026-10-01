@@ -174,7 +174,7 @@
     return state === INVITE.PENDING || state === INVITE.EXPIRED;
   }
 
-  /* חודש ראשון במתנה: שלושים יום */
+  /* חודש ניסיון ללא עלות: שלושים יום */
   var TRIAL_DAYS = 30;
 
   /* מדיניות הניסיון, במקום אחד.

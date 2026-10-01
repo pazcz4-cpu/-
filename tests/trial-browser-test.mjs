@@ -46,7 +46,7 @@ try {
   await page.click('[data-auth-mode="signup"]');
   await page.waitForTimeout(200);
   const note = await page.locator('.auth-trial-note').textContent();
-  check('נאמר שהחודש הראשון במתנה', /חודש ראשון במתנה/.test(note), true);
+  check('נאמר שיש חודש ניסיון ללא עלות', /חודש ניסיון ללא עלות/.test(note), true);
   check('ולא מופיעים 14 ימים', /14/.test(note), false);
   check('התאריך שבו התקופה נגמרת מופיע', /\d{2}[./]\d{2}[./]\d{4}/.test(note), true);
   /* ההרשמה באמת אינה מבקשת כרטיס, ולכן זה מה שכתוב. טקסט שמבטיח

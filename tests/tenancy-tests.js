@@ -595,8 +595,8 @@ test('ברירת המחדל של הסליקה היא לא מחובר', function 
 
 test('תקופת ניסיון מעניקה גישה ומסתיימת בזמן', function () {
   var company = Model.newTrialCompany('חברה', new Date('2026-09-01'));
-  /* נגזר מ-TRIAL_DAYS ולא ממספר קבוע: חודש ראשון במתנה הוא 30 יום */
-  assertEqual(Model.TRIAL_DAYS, 30, 'חודש ראשון במתנה');
+  /* נגזר מ-TRIAL_DAYS ולא ממספר קבוע: חודש ניסיון ללא עלות הוא 30 יום */
+  assertEqual(Model.TRIAL_DAYS, 30, 'חודש ניסיון ללא עלות');
   var start = new Date('2026-09-01').getTime();
   var inside = new Date(start + (Model.TRIAL_DAYS - 2) * 864e5);
   var after = new Date(start + (Model.TRIAL_DAYS + 2) * 864e5);

@@ -113,10 +113,11 @@
 - ⬜ טלפון שעונים בו. אפל מתקשרת לטלפון ב-D&B.
 
 ### 3.2 Apple Developer Program (99$ לשנה)
-- **סטטוס:** ⏳ אפל תראה את ה-D-U-N-S סביב 05/10
+- **סטטוס:** ⏳ אפל עדיין לא רואה את ה-D-U-N-S ("Your organization was not found", 02/10). לא לשלוח "Request a D-U-N-S Number", כי הוא כבר קיים.
 - **קישורים:** בדיקה https://developer.apple.com/enroll/duns-lookup/ , הרשמה https://developer.apple.com/programs/enroll/
-- **צעדים:** חיפוש החברה ב-lookup. אם מופיעה: Company / Organization, פרטים, אישור סמכות חתימה, תשלום.
-- **מלכודת:** לא Individual "כדי להתקדם". לא להירשם לפני שאפל רואה את המספר.
+- **מה לעשות:** לבדוק ב-lookup מדי יום. כשהחברה מופיעה: Company / Organization, פרטים זהים ל-D&B, אישור סמכות חתימה, תשלום.
+- **אם עד 08/10 עדיין לא:** פנייה לתמיכת אפל (https://developer.apple.com/contact/ → Membership and Account) עם המספר `626520454` ומספרי הפנייה של D&B (Inquiry 10965765, Case 11024034).
+- **מלכודת:** לא Individual "כדי להתקדם". לא פנייה כפולה ל-D&B לפני שבועיים.
 
 ### 3.3 Google Play (25$, שולמו 02/10)
 - **סטטוס:** ✅ חשבון המפתח נוצר (ארגון, `support@set-shifts.com`, מפתח `SetShifts`, D-U-N-S `626520454`). ⬜ נשאר אימות.

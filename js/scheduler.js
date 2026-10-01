@@ -204,6 +204,98 @@
     if (slot.length === 0) delete ctx.assignments[key];
   }
 
+  /* שיבוץ שהוא עצמו העדפה מאושרת של העובד. לא מפנים אותו מפה כדי
+     לכסות משמרת אחרת: העדפה שאושרה היא אילוץ, והעובד לא אמור
+     לשלם עליה בשבירת מה שביקש. */
+  function isPreferredPlacement(ctx, empId, dayIdx, shiftId) {
+    var constraint = ctx.constraints[empId + '|' + dayIdx];
+    return !!(constraint && constraint.preferred && constraint.preferred[shiftId]);
+  }
+
+  /* קדימות לעובד עם העדפה מאושרת.
+
+     עובד שביקש בוקר ואושר לו, חסום בשאר המשמרות באותו יום. אם
+     המנוע ימלא קודם את משמרת הבוקר באחרים, הוא לא ישובץ בכלל
+     וייצא מהיום בלי כלום. לכן מי שיש לו העדפה מאושרת משובץ ראשון,
+     במשמרת שביקש, ורק אחריו ממשיכים לשאר העובדים.
+
+     הסדר ביניהם: מי שהכי פחות משובץ ביחס ליעד שלו קודם, כדי
+     שבמשמרת שמתחרים עליה כמה עובדים עם העדפה ההכרעה תהיה הוגנת.
+     עובד שאין לו איפה לשבץ אותו (אין משמרת פתוחה שביקש, או שהוא
+     חסום מסיבה אחרת) פשוט מדלגים עליו. */
+  function placePreferred(ctx, slots, rand) {
+    var requests = [];
+    Object.keys(ctx.constraints).forEach(function (key) {
+      var record = ctx.constraints[key];
+      var wanted = Object.keys((record && record.preferred) || {}).filter(function (id) {
+        return record.preferred[id];
+      });
+      if (!wanted.length || record.off) return;
+      var cut = key.lastIndexOf('|');
+      requests.push({ empId: key.slice(0, cut), dayIdx: Number(key.slice(cut + 1)), wanted: wanted });
+    });
+    var employees = {};
+    ctx.state.employees.forEach(function (emp) { employees[emp.id] = emp; });
+
+    /* המשמרות שהבקשה יכולה בכלל לתפוס: אותו יום, ואחת מהמשמרות שביקש.
+       נבנה פעם אחת, וכל סבב רק מסנן אותו (פנוי, ומותר לעובד) – כך
+       העלות אינה גדלה עם מספר המשמרות בשבוע. */
+    requests.forEach(function (request) {
+      request.slots = slots.filter(function (slot) {
+        return slot.dayIdx === request.dayIdx && request.wanted.indexOf(slot.shiftId) !== -1;
+      });
+    });
+
+    function optionsOf(request) {
+      var emp = employees[request.empId];
+      if (!emp) return [];
+      return request.slots.filter(function (slot) {
+        if (slot.placed) return false;
+        if (!canAssign(ctx, emp, slot)) return false;
+        var key = Store.slotKey(slot.dayIdx, slot.branchId, slot.shiftId);
+        return (ctx.assignments[key] || []).indexOf(emp.id) === -1;
+      });
+    }
+
+    while (requests.length) {
+      /* קודם מי שיש לו הכי פחות אפשרויות, כמו בשיבוץ הרגיל: עובד
+         שמוגבל לסניף אחד לא יישאר בלי מקום כי עובד גמיש לקח אותו.
+         בשוויון – מי שהכי פחות משובץ ביחס ליעד שלו. */
+      var pick = -1, pickOptions = null, pickCount = Infinity, pickLoad = Infinity;
+      for (var i = 0; i < requests.length; i++) {
+        var options = optionsOf(requests[i]);
+        if (!options.length) { requests.splice(i, 1); i--; continue; }
+        var load = ctx.counts[requests[i].empId] / (ctx.targets[requests[i].empId] || 1) + rand() * 0.01;
+        if (options.length < pickCount || (options.length === pickCount && load < pickLoad)) {
+          pick = i; pickOptions = options; pickCount = options.length; pickLoad = load;
+        }
+      }
+      if (pick === -1) break;
+      var request = requests.splice(pick, 1)[0];
+      var emp = employees[request.empId];
+
+      /* מבין המשמרות שהוא יכול – זו שהכי פחות עובדים אחרים עם
+         העדפה צריכים, ובשוויון לפי הניקוד הרגיל */
+      var best = null, bestRivals = Infinity, bestScore = Infinity;
+      pickOptions.forEach(function (slot) {
+        var rivals = 0;
+        for (var r = 0; r < requests.length; r++) {
+          if (requests[r].slots.indexOf(slot) !== -1) rivals++;
+        }
+        var score = scoreCandidate(ctx, emp, slot, rand);
+        if (rivals < bestRivals || (rivals === bestRivals && score < bestScore)) {
+          bestRivals = rivals; bestScore = score; best = slot;
+        }
+      });
+      applyAssignment(ctx, emp.id, best);
+      best.placed = true;
+    }
+
+    for (var k = slots.length - 1; k >= 0; k--) {
+      if (slots[k].placed) slots.splice(k, 1);
+    }
+  }
+
   /* פאזת תיקון: מנסה לפנות עובד ממשמרת אחרת כדי לכסות משמרת שנשארה ריקה */
   function repair(ctx, unfilled, keepManual, week) {
     var remaining = [];
@@ -237,6 +329,7 @@
           var blocker = blockers[b];
           var blockerKey = Store.slotKey(blocker.dayIdx, blocker.branchId, blocker.shiftId);
           if (keepManual && week && week.manual[blockerKey]) continue; // לא נוגעים בשיבוץ ידני
+          if (isPreferredPlacement(ctx, emp.id, blocker.dayIdx, blocker.shiftId)) continue; // העדפה מאושרת
 
           removeAssignment(ctx, emp.id, blocker.dayIdx, blocker.branchId, blocker.shiftId);
           if (canAssign(ctx, emp, demand)) {
@@ -315,6 +408,7 @@
       for (var b = 0; b < blockers.length; b++) {
         var blocker = blockers[b];
         if (locked[Store.slotKey(blocker.dayIdx, blocker.branchId, blocker.shiftId)]) continue;
+        if (isPreferredPlacement(ctx, emp.id, blocker.dayIdx, blocker.shiftId)) continue; // העדפה מאושרת
 
         removeAssignment(ctx, emp.id, blocker.dayIdx, blocker.branchId, blocker.shiftId);
         if (canAssign(ctx, emp, demand)) {
@@ -392,6 +486,9 @@
         slots.push(seatDemand(demand, role));
       });
     });
+
+    /* עובדים עם העדפה מאושרת משובצים ראשונים, לפני כל השאר */
+    placePreferred(ctx, slots, rand);
 
     /* בכל צעד נבחרת המשמרת עם הכי מעט מועמדים אפשריים כרגע.
        החישוב מחדש אחרי כל שיבוץ מונע מצב שבו שיבוץ מוקדם חוסם משמרת נדירה. */

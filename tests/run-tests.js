@@ -1246,6 +1246,62 @@ test('הבנייה האוטומטית אינה משבצת נגד העדפה שא
   });
 });
 
+test('עובד עם העדפה מאושרת משובץ במשמרת שביקש, לפני שאר העובדים', function () {
+  /* בלי קדימות, עובד אחר היה לוקח קודם את משמרת הבוקר, ומי שביקש בוקר
+     (וחסום בשאר המשמרות באותו יום) היה נשאר בלי כלום. כאן שני עובדים
+     עם העדפה, ושלוש משמרות בוקר ביום: שניהם חייבים לקבל בוקר, בכל ריצה. */
+  var burned = 0;
+  for (var seed = 1; seed <= 40; seed++) {
+    var state = freshState();
+    var weekData = Store.getWeek(state, '2026-09-13');
+    ['emp-1', 'emp-2'].forEach(function (id) {
+      for (var day = 0; day < 6; day++) {
+        Store.setConstraint(weekData, id, day, { off: false, blocked: {}, preferred: { morning: true }, note: '' });
+      }
+    });
+    var result = Scheduler.generate(state, weekData, { attempts: 1, seed: seed });
+    ['emp-1', 'emp-2'].forEach(function (id) {
+      for (var day = 0; day < 6; day++) {
+        var inMorning = Object.keys(result.assignments).some(function (key) {
+          var parts = key.split('|');
+          return Number(parts[0]) === day && parts[2] === 'morning' && result.assignments[key].indexOf(id) !== -1;
+        });
+        if (!inMorning) burned++;
+      }
+    });
+  }
+  assertEqual(burned, 0, 'נשרפו ימים של עובדים עם העדפה מאושרת');
+});
+
+test('עובד שמוגבל לסניף אחד לא נשאר בלי משמרת בגלל עובד גמיש עם העדפה', function () {
+  /* emp-1 רק בסניף מרכז; emp-2 גם במרכז וגם בצפון. שניהם ביקשו בוקר.
+     אם emp-2 לוקח את מרכז, emp-1 נשרף. הוא צריך לקבל את מרכז, ו-emp-2 את צפון. */
+  for (var seed = 1; seed <= 30; seed++) {
+    var state = freshState();
+    var weekData = Store.getWeek(state, '2026-09-13');
+    ['emp-1', 'emp-2'].forEach(function (id) {
+      Store.setConstraint(weekData, id, 0, { off: false, blocked: {}, preferred: { morning: true }, note: '' });
+    });
+    var result = Scheduler.generate(state, weekData, { attempts: 1, seed: seed });
+    assert((result.assignments['0|br-center|morning'] || []).indexOf('emp-1') !== -1,
+      'ריצה ' + seed + ': emp-1 לא קיבל את משמרת הבוקר היחידה שהוא יכול');
+    assert((result.assignments['0|br-north|morning'] || []).indexOf('emp-2') !== -1 ||
+      (result.assignments['0|br-center|morning'] || []).indexOf('emp-2') !== -1,
+      'ריצה ' + seed + ': emp-2 נשרף');
+  }
+});
+
+test('הבנייה לא מפנה עובד ממשמרת שביקש כדי לכסות משמרת אחרת', function () {
+  var state = freshState();
+  var weekData = Store.getWeek(state, '2026-09-13');
+  Store.setConstraint(weekData, 'emp-1', 1, { off: false, blocked: {}, preferred: { evening: true }, note: '' });
+  var result = Scheduler.generate(state, weekData, { attempts: 40, seed: 7 });
+  var mine = Object.keys(result.assignments).filter(function (key) {
+    return key.split('|')[0] === '1' && result.assignments[key].indexOf('emp-1') !== -1;
+  });
+  assert(mine.length === 1 && mine[0].split('|')[2] === 'evening', 'emp-1 אינו בערב ביום 1: ' + mine.join());
+});
+
 test('שיבוץ שקדם להעדפה שאושרה מסומן בבדיקות', function () {
   var ctx = movableState();
   Store.setAssigned(ctx.week, 0, 'br-b', 'morning', []);

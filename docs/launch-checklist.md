@@ -92,8 +92,8 @@
 - **מלכודת:** מוחק גם את חשבון הבדיקה שלך. אין דרך חזרה. לוודא שזה הפרויקט הנכון.
 
 ### 2.7 פרטי העסק באתר
-- **סטטוס:** ⬜ לוודא
-- **מה:** ב-Vercel `LEGAL_ENTITY`, `LEGAL_ID`, `LEGAL_ADDRESS`, `A11Y_CONTACT_NAME`, `A11Y_CONTACT_PHONE` נכונים. חברת הסליקה בודקת את האתר מול המסמכים.
+- **`LEGAL_ENTITY`, `LEGAL_ID`, `LEGAL_ADDRESS`:** ✅ תוקנו ב-Vercel (01/10).
+- **`A11Y_CONTACT_NAME`, `A11Y_CONTACT_PHONE`:** ⬜ לא קיימים. עד שיוגדרו, עמוד הנגישות מציג בפומבי `[A11Y_CONTACT]` ו-`[A11Y_PHONE]`. נדרש שם וטלפון של אדם שעונים לו (רכז נגישות). אחרי ההוספה: Redeploy ובדיקה ב-https://setshifts.com/accessibility/ .
 
 ### 2.8 בדיקות קטנות
 - ⬜ להשוות שעת צאת שבת אחת ב-Hebcal או בלוח מקובל.

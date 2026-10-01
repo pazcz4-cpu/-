@@ -15,6 +15,7 @@
 |---|---|
 | חשבון בנק לחברה | 30/09 |
 | Vercel Pro | 01/10 |
+| פרטי העסק ורכז נגישות באתר | 01/10 |
 | תיקון SQL: `create_company` כפולה, פונקציות דחיפה | 01/10 |
 | Apple ID של החברה (`apple@setshifts.com`), אימות דו-שלבי דלוק, שני מספרים מהימנים | 01/10 |
 | תקרת בקשות: SQL הורץ | 01/10 |
@@ -93,7 +94,7 @@
 
 ### 2.7 פרטי העסק באתר
 - **`LEGAL_ENTITY`, `LEGAL_ID`, `LEGAL_ADDRESS`:** ✅ תוקנו ב-Vercel (01/10).
-- **`A11Y_CONTACT_NAME`, `A11Y_CONTACT_PHONE`:** ⬜ לא קיימים. עד שיוגדרו, עמוד הנגישות מציג בפומבי `[A11Y_CONTACT]` ו-`[A11Y_PHONE]`. נדרש שם וטלפון של אדם שעונים לו (רכז נגישות). אחרי ההוספה: Redeploy ובדיקה ב-https://setshifts.com/accessibility/ .
+- **`A11Y_CONTACT_NAME`, `A11Y_CONTACT_PHONE`:** ✅ הוגדרו ב-Vercel ונעשה Redeploy (01/10).
 
 ### 2.8 בדיקות קטנות
 - ⬜ להשוות שעת צאת שבת אחת ב-Hebcal או בלוח מקובל.

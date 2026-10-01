@@ -1323,7 +1323,8 @@
       employee: {
         guideLink: 'So funktioniert es',
         prevWeek: '◀ Vorherige Woche', nextWeek: 'Nächste Woche ▶',
-        nextWeekPublished: 'Der Dienstplan der nächsten Woche ist veröffentlicht – tippen zum Ansehen',
+        pickTitle: 'Welche Woche möchtest du sehen?',
+        pickPublished: 'Veröffentlicht', pickNotPublished: 'Noch nicht veröffentlicht',
         loadFailed: 'Die Daten konnten nicht geladen werden: {message}',
         saveFailed: 'Speichern fehlgeschlagen', reasonSaveFailed: 'Der Grund konnte nicht gespeichert werden',
         myShifts: 'Meine Schichten',

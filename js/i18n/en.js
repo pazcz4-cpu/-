@@ -1329,7 +1329,8 @@
       employee: {
         guideLink: 'How this works',
         prevWeek: '▶ Previous week', nextWeek: 'Next week ◀',
-        nextWeekPublished: 'Next week\'s schedule is published – tap to view',
+        pickTitle: 'Which week would you like to see?',
+        pickPublished: 'Published', pickNotPublished: 'Not published yet',
         loadFailed: 'Could not load the data: {message}',
         saveFailed: 'Saving failed', reasonSaveFailed: 'Could not save the reason',
         myShifts: 'My shifts',

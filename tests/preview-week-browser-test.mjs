@@ -1,7 +1,6 @@
-/* תצוגת עובד אחרי פרסום: נפתחת על השבוע שהמנהל עומד עליו, מראה בדיוק
-   את מה שפורסם לאותו עובד, ומי שעומד על השבוע הנוכחי רואה שהשבוע הבא
-   פורסם. המקרה שהתלונה עליו: המנהל על השבוע הבא, ותצוגת העובד נפתחה
-   על השבוע הנוכחי והראתה "משמרת ישנה".
+/* מסך העובד אחרי פרסום: בכל פתיחה העובד בוחר איזה שבוע לראות, הנוכחי
+   או הבא, ואחר כך ממשיך לנווט כרגיל. המקרה שהתלונה עליו: המנהל על
+   השבוע הבא, ותצוגת העובד נפתחה על הנוכחי והראתה "משמרת ישנה".
    הרצה: node tests/preview-week-browser-test.mjs */
 import { createRequire } from 'node:module';
 import { loadSample } from './_sample.mjs';
@@ -32,7 +31,7 @@ const rangeOf = (weekKey) =>
   Store.formatDate(Store.dateOfDay(weekKey, 0)) + ' – ' + Store.formatDate(Store.dateOfDay(weekKey, 6));
 
 try {
-  await skipWizard(page, { defaultWeek: true });
+  await skipWizard(page, { defaultWeek: true, weekPick: true });
   await page.goto(url('app.html'));
   await page.waitForTimeout(500);
   await page.click('[data-auth-mode="signup"]');
@@ -70,23 +69,42 @@ try {
   await page.locator('.preview-pick').first().click();
   await page.waitForTimeout(900);
 
-  console.log('\n== התצוגה נפתחת על שבוע המנהל ==');
-  check('השבוע בתצוגה הוא השבוע הבא', await page.locator('.employee-weeknav strong').innerText(), rangeOf(nextKey));
-  const shown = await page.locator('#employee-root .shift-card, #employee-root [data-my-shift]').count();
+  console.log('\n== בפתיחה העובד בוחר איזה שבוע לראות ==');
+  check('נפתח חלון בחירה', await page.locator('#week-pick').isVisible(), true);
+  check('הוא שואל איזה שבוע', await page.locator('#week-pick-title').innerText(), /איזה שבוע/);
+  const optionsText = await page.locator('.week-pick-option').allInnerTexts();
+  check('שתי אפשרויות', optionsText.length, 2);
+  check('הראשונה: השבוע הנוכחי עם התאריכים', optionsText[0], new RegExp('השבוע הנוכחי[\\s\\S]*' + rangeOf(Store.currentWeekKey())));
+  check('השנייה: השבוע הבא עם התאריכים', optionsText[1], new RegExp('השבוע הבא[\\s\\S]*' + rangeOf(nextKey)));
+  check('והיא אומרת שהשבוע הבא פורסם', optionsText[1], /פורסם/);
+  check('התצוגה לא נפתחה על שבוע המנהל מאחורי החלון', await page.locator('.employee-weeknav strong').innerText(), rangeOf(Store.currentWeekKey()));
+
+  console.log('\n== בחירה בשבוע הבא ==');
+  await page.click('[data-pick-week="1"]');
+  await page.waitForTimeout(900);
+  check('החלון נסגר', await page.locator('#week-pick').count(), 0);
+  check('מוצג השבוע הבא', await page.locator('.employee-weeknav strong').innerText(), rangeOf(nextKey));
   const countText = await page.locator('#employee-root').innerText();
   check('מספר המשמרות שלי תואם למנהל', new RegExp('\\b' + expectedShifts + '\\b').test(countText), true);
-  check('אין הודעת "לא רשום" על שבוע ריק', /לא רשום כרגע/.test(countText) && expectedShifts > 0 ? 'bad' : 'ok', 'ok');
 
-  console.log('\n== עובד שעומד על השבוע הנוכחי רואה שהשבוע הבא פורסם ==');
-  check('בשבוע הבא אין הודעה', await page.locator('.next-week-notice').count(), 0);
+  console.log('\n== אחרי הבחירה אפשר לנווט כמו קודם ==');
   await page.click('[data-week-step="-1"]');
+  await page.waitForTimeout(700);
+  check('שבוע קודם', await page.locator('.employee-weeknav strong').innerText(), rangeOf(Store.currentWeekKey()));
+  check('החלון לא חוזר', await page.locator('#week-pick').count(), 0);
+
+  console.log('\n== פתיחה חדשה שואלת שוב, ובחירה בשבוע הנוכחי ==');
+  await page.click('#preview-exit');
+  await page.waitForTimeout(400);
+  await page.click('#user-preview');
+  await page.waitForTimeout(300);
+  await page.locator('.preview-pick').first().click();
   await page.waitForTimeout(900);
-  check('חזרנו לשבוע הנוכחי', await page.locator('.employee-weeknav strong').innerText(), rangeOf(Store.currentWeekKey()));
-  check('מופיעה הודעה שהשבוע הבא פורסם', await page.locator('.next-week-notice').count(), 1);
-  await page.click('.next-week-notice');
-  await page.waitForTimeout(900);
-  check('לחיצה עליה מביאה לשבוע הבא', await page.locator('.employee-weeknav strong').innerText(), rangeOf(nextKey));
-  check('וההודעה נעלמת', await page.locator('.next-week-notice').count(), 0);
+  check('החלון נפתח שוב', await page.locator('#week-pick').isVisible(), true);
+  await page.click('[data-pick-week="0"]');
+  await page.waitForTimeout(500);
+  check('מוצג השבוע הנוכחי', await page.locator('.employee-weeknav strong').innerText(), rangeOf(Store.currentWeekKey()));
+  check('החלון נסגר', await page.locator('#week-pick').count(), 0);
   check('אין שגיאות בדף', errors.length, 0);
   if (errors.length) console.log(errors);
 } finally {

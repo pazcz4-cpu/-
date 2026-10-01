@@ -1280,13 +1280,16 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .why-blocked ul { margin: 8px 0 0; padding-inline-start: 18px; line-height: 1.7; }
 
 /* ===== מועד סגירת ההגשות ===== */
-.next-week-notice {
-  display: block; width: 100%; margin: 0 0 10px; padding: 11px 14px;
-  font: inherit; font-weight: 600; text-align: center; cursor: pointer;
-  color: var(--info); background: var(--info-bg);
-  border: 1px solid var(--brand); border-radius: 10px;
+.week-pick-card h2 { margin: 0 0 14px; font-size: 18px; }
+.week-pick-options { display: flex; flex-direction: column; gap: 10px; }
+.week-pick-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; padding: 13px 16px; text-align: start; font-size: 14px;
 }
-.next-week-notice:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.week-pick-option strong { font-size: 16px; }
+.week-pick-option span { font-variant-numeric: tabular-nums; }
+.week-pick-state { font-size: 12px; font-weight: 600; opacity: .85; }
+.week-pick-state.is-published::before { content: '✓ '; }
 .deadline-strip {
   border-radius: 10px; padding: 10px 13px; margin-bottom: 12px;
   font-size: 13.5px; font-weight: 600;

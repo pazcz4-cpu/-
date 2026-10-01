@@ -1323,7 +1323,8 @@
       employee: {
         guideLink: 'Comment ça marche',
         prevWeek: '◀ Semaine précédente', nextWeek: 'Semaine suivante ▶',
-        nextWeekPublished: 'Le planning de la semaine suivante est publié : touchez pour le voir',
+        pickTitle: 'Quelle semaine souhaitez-vous voir ?',
+        pickPublished: 'Publié', pickNotPublished: 'Pas encore publié',
         loadFailed: 'Impossible de charger les données : {message}',
         saveFailed: 'Échec de l’enregistrement', reasonSaveFailed: 'Impossible d’enregistrer le motif',
         myShifts: 'Mes services',

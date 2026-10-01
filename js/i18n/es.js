@@ -1323,7 +1323,8 @@
       employee: {
         guideLink: 'Cómo funciona',
         prevWeek: '◀ Semana anterior', nextWeek: 'Semana siguiente ▶',
-        nextWeekPublished: 'El horario de la semana siguiente está publicado: toca para verlo',
+        pickTitle: '¿Qué semana quieres ver?',
+        pickPublished: 'Publicado', pickNotPublished: 'Aún no publicado',
         loadFailed: 'No se pudieron cargar los datos: {message}',
         saveFailed: 'No se pudo guardar', reasonSaveFailed: 'No se pudo guardar el motivo',
         myShifts: 'Mis turnos',

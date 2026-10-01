@@ -1323,7 +1323,8 @@
       employee: {
         guideLink: 'كيف يعمل هذا',
         prevWeek: '▶ الأسبوع السابق', nextWeek: 'الأسبوع التالي ◀',
-        nextWeekPublished: 'تم نشر جدول الأسبوع التالي – اضغط لعرضه',
+        pickTitle: 'أي أسبوع تريد أن تراه؟',
+        pickPublished: 'منشور', pickNotPublished: 'لم يُنشر بعد',
         loadFailed: 'تعذّر تحميل البيانات: {message}',
         saveFailed: 'فشل الحفظ', reasonSaveFailed: 'تعذّر حفظ السبب',
         myShifts: 'مناوباتي',

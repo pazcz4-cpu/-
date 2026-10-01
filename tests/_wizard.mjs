@@ -5,12 +5,16 @@
    האשף עצמו נבדק ב-onboarding-browser-test.mjs, שאינו קורא לזה. */
 export async function skipWizard(page, options) {
   const realDefaultWeek = !!(options && options.defaultWeek);
-  await page.addInitScript((keepDefault) => {
+  const askWeek = !!(options && options.weekPick);
+  await page.addInitScript(({ keepDefault, askWeek }) => {
     try { localStorage.setItem('setshifts-onboarding', 'skipped'); }
     catch (err) { /* מצב פרטי */ }
     /* המנהל נפתח על השבוע הבא. רוב הבדיקות מזינות נתונים לשבוע של
        היום, ולכן הן נפתחות על השבוע הנוכחי; מי שבודק את ברירת
        המחדל עצמה מבקש אותה כאן. */
     if (!keepDefault) window.SHIFT_START_WEEK = 'current';
-  }, realDefaultWeek);
+    /* מסך העובד שואל בכל פתיחה איזה שבוע לראות. בדיקות שאינן
+       עוסקות בזה מדלגות על החלון; מי שבודק אותו מבקש אותו כאן. */
+    if (!askWeek) window.SHIFT_WEEK_PICK = 'off';
+  }, { keepDefault: realDefaultWeek, askWeek });
 }

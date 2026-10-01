@@ -47,13 +47,14 @@
     this.preview = !!options.preview;
     this.previewEmployeeId = options.employeeId || null;
     this.root = document.getElementById('employee-root');
-    /* תצוגה מקדימה נפתחת על השבוע שהמנהל עומד עליו. בלי זה המנהל
-       משווה את מסך העובד, שנפתח על השבוע הנוכחי, לסידור של השבוע
-       הבא שהוא זה עתה פרסם, ומסיק שהשינוי לא הגיע. */
-    this.weekKey = options.weekKey || Store.currentWeekKey();
-    /* האם סידור השבוע הבא כבר פורסם. עובד שפותח את המסך על השבוע
-       הנוכחי צריך לדעת שיש משהו חדש, ולא לגלות את זה בניווט. */
-    this.nextWeekPublished = false;
+    this.weekKey = Store.currentWeekKey();
+    /* בכל פתיחה של המסך העובד בוחר איזה שבוע לראות: הנוכחי או הבא.
+       מסך שנפתח על שבוע שהוא לא התכוון אליו גרם לעובד לחשוב שהשינוי
+       לא הגיע. הבחירה נשארת עד הפתיחה הבאה, והניווט בין שבועות
+       ממשיך לעבוד כרגיל. */
+    this.weekChosen = root.SHIFT_WEEK_PICK === 'off';
+    /* האם סידור השבוע הבא כבר פורסם: true / false, ו-null כשלא ידוע */
+    this.nextWeekPublished = null;
     this.state = null;
     this.week = null;
     this.busy = false;
@@ -129,20 +130,62 @@
     }, function () { /* אין שבוע קודם, או שהטעינה נכשלה – השעון עובד בלעדיו */ });
   };
 
-  /* האם השבוע הבא כבר פורסם. נבדק רק מהשבוע הנוכחי, ושגיאה בו אינה
-     מפילה את המסך: זו הודעה נוחה ולא חלק מהסידור. */
+  /* האם השבוע הבא כבר פורסם, בשביל חלון הבחירה. נבדק רק בפתיחה,
+     ושגיאה בו אינה מפילה את המסך: זה מידע נוסף ולא חלק מהסידור. */
   EmployeeUI.prototype._loadNextWeekFlag = function () {
     var self = this;
-    this.nextWeekPublished = false;
+    if (this.weekChosen) return Promise.resolve();
+    this.nextWeekPublished = null;
     if (this.weekKey !== Store.currentWeekKey()) return Promise.resolve();
     if (!this.backend || typeof this.backend.loadWeek !== 'function') return Promise.resolve();
     return Promise.resolve(this.backend.loadWeek(Store.shiftWeekKey(this.weekKey, 1))).then(function (week) {
       self.nextWeekPublished = !!(week && week.published);
-    }, function () { /* אין הודעה */ });
+    }, function () { /* לא ידוע, ואז החלון לא אומר כלום על הפרסום */ });
+  };
+
+  /* חלון הבחירה בפתיחה. אין בו סגירה: או שבוע נוכחי או שבוע הבא. */
+  EmployeeUI.prototype._weekPickHtml = function () {
+    function range(key) {
+      return Store.formatDate(Store.dateOfDay(key, 0)) + ' – ' + Store.formatDate(Store.dateOfDay(key, 6));
+    }
+    var currentKey = Store.currentWeekKey();
+    var nextKey = Store.shiftWeekKey(currentKey, 1);
+    function badge(published) {
+      if (published === null || published === undefined) return '';
+      return '<span class="week-pick-state' + (published ? ' is-published' : '') + '">' +
+        esc(t(published ? 'employee.pickPublished' : 'employee.pickNotPublished')) + '</span>';
+    }
+    return '<div class="why-overlay" id="week-pick" role="dialog" aria-modal="true" aria-labelledby="week-pick-title">' +
+      '<div class="why-card week-pick-card">' +
+      '<h2 id="week-pick-title">' + esc(t('employee.pickTitle')) + '</h2>' +
+      '<div class="week-pick-options">' +
+      '<button type="button" class="btn week-pick-option" data-pick-week="0">' +
+      '<strong>' + esc(t('toolbar.currentWeek')) + '</strong>' +
+      '<span>' + esc(range(currentKey)) + '</span>' + badge(!!(this.week && this.week.published)) +
+      '</button>' +
+      '<button type="button" class="btn primary week-pick-option" data-pick-week="1">' +
+      '<strong>' + esc(t('toolbar.nextWeekJump')) + '</strong>' +
+      '<span>' + esc(range(nextKey)) + '</span>' + badge(this.nextWeekPublished) +
+      '</button>' +
+      '</div></div></div>';
   };
 
   EmployeeUI.prototype._bind = function () {
     var self = this;
+
+    /* בחירת השבוע בפתיחה. גם בתצוגה מקדימה: זה מה שהעובד רואה */
+    this.root.addEventListener('click', function (event) {
+      var pick = event.target.closest('[data-pick-week]');
+      if (!pick) return;
+      self.weekChosen = true;
+      var step = Number(pick.dataset.pickWeek) || 0;
+      if (step) {
+        self.weekKey = Store.shiftWeekKey(Store.currentWeekKey(), step);
+        self.load();
+      } else {
+        self.render();
+      }
+    });
 
     /* מגירת הבקשות נזכרת בין ציורים. בלי זה כל שמירה או עדכון
        חי היו סוגרים אותה בדיוק בזמן שהעובד קורא בתוכה.
@@ -507,11 +550,6 @@
       }
       html += '<div class="deadline-strip' + (closed ? ' is-closed' : (soon ? ' is-soon' : '')) +
         '">' + esc(text) + '</div>';
-    }
-
-    if (this.nextWeekPublished && this.weekKey === Store.currentWeekKey()) {
-      html += '<button type="button" class="next-week-notice" data-week-step="1">' +
-        esc(t('employee.nextWeekPublished')) + '</button>';
     }
 
     html += '<div class="employee-weeknav">' +
@@ -907,8 +945,13 @@
 
     html += this._leaveSection();
     html += '</div>';
+    if (!this.weekChosen) html += this._weekPickHtml();
 
     this.root.innerHTML = html;
+    if (!this.weekChosen) {
+      var first = this.root.querySelector('[data-pick-week="0"]');
+      if (first && first.focus) first.focus();
+    }
     this._showFlash();
   };
 

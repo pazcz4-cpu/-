@@ -71,8 +71,11 @@ try {
     const key = window.ShiftMockBackend.STORE_KEY;
     const db = JSON.parse(localStorage.getItem(key));
     const now = new Date();
-    /* מהיום השלישי בחודש: בתוך החודש בוודאות, ורחוק מגבולותיו */
-    const at = (n, h, m) => new Date(now.getFullYear(), now.getMonth(), n, h, m);
+    /* מהיום השלישי בחודש, ורחוק מגבולותיו. בשבוע הראשון של החודש
+       הימים האלה עוד לא קרו, ודיווח עתידי אינו שעות, ולכן הבדיקה
+       זורעת בחודש הקודם ובוחרת אותו בדוח. */
+    const monthShift = now.getDate() < 8 ? -1 : 0;
+    const at = (n, h, m) => new Date(now.getFullYear(), now.getMonth() + monthShift, n, h, m);
     const punches = [];
     for (let d = 0; d < 3; d++) {
       punches.push({ id: 'a' + d, empId: 'emp-1', kind: 'in', when: at(3 + d, 8, 0), src: 'device' });
@@ -107,6 +110,12 @@ try {
   await page.waitForTimeout(1600);
   await page.click('.tab[data-tab="hours"]');
   await page.waitForTimeout(1500);
+  if (new Date().getDate() < 8) {
+    const prev = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+    await page.fill('#hours-month', prev.getFullYear() + '-' + String(prev.getMonth() + 1).padStart(2, '0'));
+    await page.locator('#hours-month').dispatchEvent('change');
+    await page.waitForTimeout(800);
+  }
 
   const row = async (name) => page.evaluate((who) => {
     const tr = [...document.querySelectorAll('#hours-table tbody tr')]
@@ -143,7 +152,9 @@ try {
   /* היציאה החסרה נוספת ידנית */
   const openDay = await page.evaluate(() => {
     const now = new Date();
-    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-04';
+    /* אותו חודש שבו נזרעו הדיווחים (ראו למעלה) */
+    const when = new Date(now.getFullYear(), now.getMonth() + (now.getDate() < 8 ? -1 : 0), 4);
+    return when.getFullYear() + '-' + String(when.getMonth() + 1).padStart(2, '0') + '-04';
   });
   await page.fill('#punch-date', openDay);
   await page.fill('#punch-time', '17:00');

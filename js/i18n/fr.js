@@ -1358,6 +1358,7 @@
         deadlineHours: 'Les demandes closent dans {hours} heures. Ensuite, plus de modification possible.',
         deadlineClosed: 'Les demandes de cette semaine sont closes. Si quelque chose a changé, parlez-en à votre responsable.',
         deadlineLocked: 'Les demandes de cette semaine sont closes.',
+        deadlineRule: 'Clôture des demandes : chaque {day} à {time}.',
         publishedLocked: 'Le planning est publié – les demandes pour cette semaine ne peuvent plus être modifiées.',
         limitLeft: { one: 'Il vous reste 1 demande sur {max} cette semaine.', other: 'Il vous reste {count} demandes sur {max} cette semaine.' },
         limitSpent: 'Vous avez utilisé vos {max} demandes de la semaine. Annulez-en une pour demander un autre jour.',

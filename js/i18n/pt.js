@@ -1358,6 +1358,7 @@
         deadlineHours: 'Os pedidos fecham daqui a {hours} horas. Depois não dá para alterar.',
         deadlineClosed: 'Os pedidos desta semana estão fechados. Se algo mudou, fala com o teu gestor.',
         deadlineLocked: 'Os pedidos desta semana estão fechados.',
+        deadlineRule: 'Prazo para os pedidos: todas as {day} às {time}.',
         publishedLocked: 'O horário está publicado – os pedidos desta semana já não podem ser alterados.',
         limitLeft: { one: 'Resta-lhe 1 de {max} pedidos esta semana.', other: 'Restam-lhe {count} de {max} pedidos esta semana.' },
         limitSpent: 'Usou os {max} pedidos desta semana. Cancele um para pedir outro dia.',

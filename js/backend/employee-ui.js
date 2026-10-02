@@ -416,6 +416,7 @@
     var record = this._record(dayIdx);
     if (!record) return;                       // אין בקשה – אין מה לצרף אליה
     if (String(record.note || '') === String(note || '')) return;
+    if (this._locked()) { this._flash(t('employee.deadlineLocked')); return; }
 
     this.backend.saveOwnNote(this.weekKey, dayIdx, note).then(function (week) {
       self.week = week;
@@ -552,8 +553,14 @@
           time: pad2(deadlineAt)
         });
       }
+      /* המועד הקבוע נאמר תמיד, לא רק התאריך של השבוע הזה: עובד
+         שיודע ש"כל רביעי ב-18:00" לא צריך לחשב שום דבר. */
+      var rule = t('employee.deadlineRule', {
+        day: (Data.DAYS[Store.deadlineSettings(this.state).dayIdx] || {}).name || '',
+        time: Store.deadlineSettings(this.state).time
+      });
       html += '<div class="deadline-strip' + (closed ? ' is-closed' : (soon ? ' is-soon' : '')) +
-        '">' + esc(text) + '</div>';
+        '">' + esc(text) + '<span class="deadline-rule">' + esc(rule) + '</span></div>';
     }
 
     html += '<div class="employee-weeknav">' +
@@ -908,7 +915,9 @@
       } else if (!shiftIds.length) {
         html += '<div class="m-closed">' + t('employee.noShiftsToday') + '</div>';
       } else {
-        var locked = self.week.published ? ' disabled' : '';
+        /* אחרי מועד הסגירה הכפתורים כבויים, ולא רק מסרבים בלחיצה:
+           כפתור שנראה פעיל ומחזיר הודעה הוא הזמנה לנסות שוב. */
+        var locked = (self.week.published || self._locked()) ? ' disabled' : '';
         html += '<div class="m-cstates">';
         var me = Store.byId(self.state.employees || [], self._employeeId());
         shiftIds.forEach(function (shiftId) {
@@ -930,7 +939,7 @@
           standingDay.off ? ' disabled' : locked);
         html += '</div>';
         var record = self._record(day.idx);
-        if (record && !self.week.published) {
+        if (record && !self.week.published && !self._locked()) {
           html += '<div class="req-reason">' +
             '<label>' + esc(t('constraints.reason')) +
             '<input type="text" class="text-input" maxlength="300" data-note-day="' + day.idx + '"' +

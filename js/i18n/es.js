@@ -1358,6 +1358,7 @@
         deadlineHours: 'Las solicitudes cierran en {hours} horas. Después no podrás cambiarlas.',
         deadlineClosed: 'Las solicitudes de esta semana están cerradas. Si algo cambió, habla con tu responsable.',
         deadlineLocked: 'Las solicitudes de esta semana están cerradas.',
+        deadlineRule: 'Cierre de solicitudes: cada {day} a las {time}.',
         publishedLocked: 'El horario está publicado: ya no se pueden cambiar las solicitudes de esta semana.',
         limitLeft: { one: 'Te queda 1 de {max} solicitudes esta semana.', other: 'Te quedan {count} de {max} solicitudes esta semana.' },
         limitSpent: 'Has usado las {max} solicitudes de esta semana. Cancela una para pedir otro día.',

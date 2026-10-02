@@ -44,14 +44,22 @@ try {
   await page.fill('input[name="phone"]', '054-1234567');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1000);
-  await loadSample(page);
+  await loadSample(page, { keepDeadline: true });
 
   console.log('\n== ההגדרה אצל המנהל ==');
   await page.click('.tab[data-tab="settings"]');
   await page.waitForTimeout(300);
-  check('כבוי כברירת מחדל', await page.locator('#opt-deadline').isChecked(), false);
-  check('השדות נעולים כשכבוי', await page.locator('#deadline-day').isDisabled(), true);
-  check('אין תצוגת מועד', await page.locator('#deadline-preview').textContent(), '');
+  /* ברירת המחדל קבועה: רביעי ב-18:00, דלוק, בלי שהמנהל נגע בדבר */
+  check('דלוק כברירת מחדל', await page.locator('#opt-deadline').isChecked(), true);
+  check('היום הוא רביעי', await page.locator('#deadline-day').inputValue(), '3');
+  check('השעה 18:00', await page.locator('#deadline-time').inputValue(), '18:00');
+  check('והתצוגה אומרת רביעי ב-18:00',
+    await page.locator('#deadline-preview').textContent(), /רביעי.*18:00/);
+
+  await page.uncheck('#opt-deadline');
+  await page.waitForTimeout(400);
+  check('כשכבוי השדות נעולים', await page.locator('#deadline-day').isDisabled(), true);
+  check('ואין תצוגת מועד', await page.locator('#deadline-preview').textContent(), '');
 
   await page.check('#opt-deadline');
   await page.waitForTimeout(400);
@@ -91,6 +99,8 @@ try {
   check('לשבוע שכבר התחיל ההגשות סגורות',
     (await strip.getAttribute('class')).includes('is-closed'), true);
   check('והטקסט אומר את זה', await strip.textContent(), /נסגרו/);
+  check('אחרי המועד אי אפשר ללחוץ על אילוץ',
+    await page.locator('#employee-root .employee-days .cstate:not([disabled])').count(), 0);
 
   /* שלושה שבועות קדימה – המועד בוודאות עוד לפנינו, בכל יום שהוא
      היום בשבוע ובלי תלות בתאריך שבו הבדיקה רצה */
@@ -101,6 +111,10 @@ try {
   check('לשבוע רחוק ההגשות פתוחות',
     (await strip.getAttribute('class')).includes('is-closed'), false);
   check('ומוצג מתי הן נסגרות', await strip.textContent(), /\d{2}\/\d{2}|שעות/);
+  check('והמועד הקבוע נאמר במפורש: כל יום ושעה',
+    await page.locator('.deadline-rule').textContent(), /כל יום שלישי בשעה 18:30/);
+  check('לפני המועד אפשר ללחוץ על אילוץ',
+    (await page.locator('#employee-root .employee-days .cstate:not([disabled])').count()) > 0, true);
 
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));

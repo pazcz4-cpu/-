@@ -1301,6 +1301,7 @@ body.view-only .btn:disabled { opacity: .5; cursor: not-allowed; }
 .deadline-strip.is-closed {
   background: var(--err-bg); color: var(--err); border-color: var(--err-line);
 }
+.deadline-rule { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 500; opacity: .9; }
 .deadline-row { flex-wrap: wrap; gap: 14px; align-items: flex-end; }
 .deadline-row .check { flex-direction: column; align-items: flex-start; gap: 4px; }
 

@@ -429,6 +429,14 @@
       return Promise.reject(this._fail('week_published', t('server.weekPublished')));
     }
 
+    /* מועד הסגירה נאכף כאן ולא רק במסך, כמו בשרת האמיתי. מנהל
+       רשאי לתקן גם אחריו. */
+    if (session.user.role === 'employee' &&
+        Store.deadlinePassed({ settings: (data.config && data.config.settings) || {} },
+          weekKey, this.now())) {
+      return Promise.reject(this._fail('deadline_passed', t('server.deadlinePassed')));
+    }
+
     /* תקרת הבקשות נאכפת כאן ולא רק במסך: מי שיפתח את כלי הפיתוח
        יוכל אחרת לשלוח בקשה שלישית כשהמנהל התיר שתיים. מנהל אינו
        מוגבל – הוא מתקן, לא מבקש. */
@@ -619,6 +627,11 @@
     }
     if (week.published && session.user.role === 'employee') {
       return Promise.reject(this._fail('week_published', t('server.weekPublishedShort')));
+    }
+    if (session.user.role === 'employee' &&
+        Store.deadlinePassed({ settings: (data.config && data.config.settings) || {} },
+          weekKey, this.now())) {
+      return Promise.reject(this._fail('deadline_passed', t('server.deadlinePassed')));
     }
 
     week.constraints[key].note = String(note || '').slice(0, 300);

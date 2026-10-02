@@ -1358,6 +1358,7 @@
         deadlineHours: 'Die Wünsche schließen in {hours} Stunden. Danach ist keine Änderung mehr möglich.',
         deadlineClosed: 'Die Wünsche für diese Woche sind geschlossen. Hat sich etwas geändert, sprechen Sie mit der Leitung.',
         deadlineLocked: 'Die Wünsche für diese Woche sind geschlossen.',
+        deadlineRule: 'Abgabeschluss für Wünsche: jeden {day} um {time} Uhr.',
         publishedLocked: 'Der Plan ist veröffentlicht – Wünsche für diese Woche können nicht mehr geändert werden.',
         limitLeft: { one: 'Sie haben diese Woche noch 1 von {max} Anfragen.', other: 'Sie haben diese Woche noch {count} von {max} Anfragen.' },
         limitSpent: 'Sie haben alle {max} Anfragen dieser Woche genutzt. Ziehen Sie eine zurück, um einen anderen Tag anzufragen.',

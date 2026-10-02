@@ -429,12 +429,18 @@ begin
   select config->'settings'->'constraintsDeadline' into v_deadline
     from public.company_configs where company_id = p_company;
 
-  if v_deadline is null or coalesce((v_deadline->>'enabled')::boolean, false) = false then
+  -- עסק שלא הגדיר מועד נקרא כברירת המחדל: כל יום רביעי ב-18:00.
+  -- זה בדיוק מה שהדפדפן אומר (Data.DEFAULT_SETTINGS), כדי שהמסך
+  -- והשרת לא יחלקו על המועד. רק מי שכיבה במפורש מקבל null.
+  if v_deadline is null then
+    v_deadline := '{}'::jsonb;
+  end if;
+  if coalesce((v_deadline->>'enabled')::boolean, true) = false then
     return null;
   end if;
 
-  v_day  := coalesce((v_deadline->>'dayIdx')::int, 0);
-  v_time := coalesce(nullif(v_deadline->>'time', ''), '20:00')::time;
+  v_day  := coalesce((v_deadline->>'dayIdx')::int, 3);
+  v_time := coalesce(nullif(v_deadline->>'time', ''), '18:00')::time;
   v_tz   := coalesce(nullif(v_deadline->>'timezone', ''), 'Asia/Jerusalem');
 
   -- אחורה מתחילת השבוע עד היום שנבחר, תמיד לפניו
@@ -621,6 +627,17 @@ begin
   end if;
   if v_week.published and v_role = 'employee' then
     raise exception 'week already published' using errcode = '55000';
+  end if;
+
+  -- אחרי מועד הסגירה גם הסיבה אינה משתנה: עובד שמחליף את הנימוק
+  -- אחרי שהמנהל כבר קרא את הבקשה משנה את מה שהוחלט עליו.
+  if v_role = 'employee' then
+    declare v_deadline timestamptz := public.constraints_deadline(v_company, p_week_key);
+    begin
+      if v_deadline is not null and now() > v_deadline then
+        raise exception 'constraint deadline has passed' using errcode = '55001';
+      end if;
+    end;
   end if;
 
   v_key := v_employee || '|' || p_day_idx::text;

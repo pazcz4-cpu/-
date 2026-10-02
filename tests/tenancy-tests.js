@@ -48,7 +48,16 @@ function assertRejects(promise, code, message) {
   });
 }
 
-function freshBackend() { return new Mock.MockBackend(); }
+function freshBackend(opts) { return new Mock.MockBackend(opts); }
+
+/* מועד סגירת ההגשות דלוק כברירת מחדל (רביעי 18:00 לפני השבוע).
+   הבדיקות שבהן עובד מגיש אילוץ לשבוע 2026-09-20 רצות על שעון קבוע
+   לפני המועד, כדי שהתוצאה לא תלויה ביום שבו מריצים אותן. */
+function earlyBackend(opts) {
+  return freshBackend(Object.assign({
+    now: function () { return new Date(2026, 8, 14, 9, 0); }
+  }, opts || {}));
+}
 
 console.log('\n== הרשאות לפי תפקיד ==');
 
@@ -271,7 +280,7 @@ asyncTest('עובד אינו יכול לשמור סידור', function () {
 });
 
 asyncTest('עובד שומר אילוץ של עצמו בלבד', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'owner7@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp7@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-7' });
@@ -345,7 +354,7 @@ asyncTest('לא ניתן להעניק תפקיד בעלים דרך יצירת מ
 console.log('\n== אישור אילוצים ==');
 
 asyncTest('בקשת עובד נשמרת תמיד כממתינה לאישור', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own20@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp20@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-20' });
@@ -360,7 +369,7 @@ asyncTest('בקשת עובד נשמרת תמיד כממתינה לאישור', f
 });
 
 asyncTest('עובד אינו יכול לאשר את הבקשה של עצמו', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own21@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp21@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-21' });
@@ -375,7 +384,7 @@ asyncTest('עובד אינו יכול לאשר את הבקשה של עצמו', f
 });
 
 asyncTest('עובד אינו יכול לשלוח בקשה בשם עובד אחר', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own22@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp22@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-22' });
@@ -391,7 +400,7 @@ asyncTest('עובד אינו יכול לשלוח בקשה בשם עובד אחר
 });
 
 asyncTest('מנהל מאשר ודוחה בקשות', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own23@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp23@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-23' });
@@ -425,7 +434,7 @@ asyncTest('החלטה לא חוקית ובקשה שאינה קיימת נדחו�
 });
 
 asyncTest('העובד רואה אישור או דחייה של בקשה רק אחרי פרסום הסידור', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   var KEY = '2026-09-20';
   return backend.signUpCompany({ companyName: 'חברה', email: 'own26@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
@@ -468,8 +477,72 @@ asyncTest('העובד רואה אישור או דחייה של בקשה רק א�
     });
 });
 
+asyncTest('אחרי מועד הסגירה (רביעי 18:00) עובד אינו משנה בקשה, אבל מנהל כן', function () {
+  var KEY = '2026-09-20';             // המועד: רביעי 16.9 ב-18:00
+  var clock = new Date(2026, 8, 16, 17, 0);
+  var backend = freshBackend({ now: function () { return clock; } });
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own27@a.com', password: 'secret1', phone: '054-1234567'})
+    .then(function () {
+      return backend.createUser({ email: 'emp27@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-27' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp27@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint(KEY, 1, { off: true, blocked: {}, preferred: {} }); })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 1, 'לפני המועד אפשר להגיש');
+      return backend.saveOwnNote(KEY, 1, 'סיבה לפני המועד');
+    })
+    .then(function () {
+      clock = new Date(2026, 8, 16, 18, 1);
+      return assertRejects(backend.saveOwnConstraint(KEY, 1, { off: false, blocked: { morning: true }, preferred: {} }),
+        'deadline_passed', 'שינוי אחרי המועד');
+    })
+    .then(function () {
+      return assertRejects(backend.saveOwnConstraint(KEY, 3, { off: true, blocked: {}, preferred: {} }),
+        'deadline_passed', 'בקשה חדשה אחרי המועד');
+    })
+    .then(function () {
+      return assertRejects(backend.saveOwnConstraint(KEY, 1, null), 'deadline_passed', 'מחיקה אחרי המועד');
+    })
+    .then(function () {
+      return assertRejects(backend.saveOwnNote(KEY, 1, 'סיבה חדשה'), 'deadline_passed', 'שינוי סיבה אחרי המועד');
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'own27@a.com', password: 'secret1' }); })
+    .then(function () { return backend.loadWeek(KEY); })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-27|1'].off, true, 'הבקשה נשארה כמו שהוגשה');
+      assertEqual(week.constraints['emp-27|1'].note, 'סיבה לפני המועד', 'והסיבה');
+    });
+});
+
+asyncTest('מנהל שהזיז את המועד: העובד יכול להגיש עד המועד החדש', function () {
+  var KEY = '2026-09-20';
+  var clock = new Date(2026, 8, 17, 10, 0);   // חמישי: אחרי רביעי 18:00
+  var backend = freshBackend({ now: function () { return clock; } });
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own28@a.com', password: 'secret1', phone: '054-1234567'})
+    .then(function () {
+      return backend.createUser({ email: 'emp28@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-28' });
+    })
+    .then(function () {
+      /* שישי 12:00 במקום רביעי 18:00 */
+      return backend.saveConfig({
+        settings: { constraintsDeadline: { enabled: true, dayIdx: 5, time: '12:00', remindHours: 24 } },
+        branches: [], employees: []
+      });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp28@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint(KEY, 2, { off: true, blocked: {}, preferred: {} }); })
+    .then(function (week) {
+      assertEqual(Object.keys(week.constraints).length, 1, 'עד המועד החדש אפשר להגיש');
+      clock = new Date(2026, 8, 18, 12, 30);
+      return assertRejects(backend.saveOwnConstraint(KEY, 2, null), 'deadline_passed', 'אחרי המועד החדש');
+    });
+});
+
 asyncTest('עריכה חוזרת של בקשה שאושרה מחזירה אותה לאישור', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own25@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'emp25@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-25' });
@@ -1015,7 +1088,7 @@ function withLimit(backend, max) {
 }
 
 asyncTest('עובד אינו יכול לעבור את התקרה גם בפנייה ישירה לשרת', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap1@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 2); })
     .then(function () {
@@ -1037,7 +1110,7 @@ asyncTest('עובד אינו יכול לעבור את התקרה גם בפניי
 
 asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה מלאה', function () {
   /* זו ברירת המחדל: מנהל שהגביל ל-1 מצפה לראות שורה אחת */
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap2@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1); })
     .then(function () {
@@ -1055,7 +1128,7 @@ asyncTest('כשהעדפות נספרות – גם הן נחסמות בתקרה �
 });
 
 asyncTest('העדפה נספרת בתקרה, ומחיקה משחררת מקום', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap2b@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 2); })
     .then(function () {
@@ -1089,7 +1162,7 @@ asyncTest('העדפה נספרת בתקרה, ומחיקה משחררת מקום'
 });
 
 asyncTest('עריכה של בקשה קיימת אינה נספרת פעמיים', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap3@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () { return withLimit(backend, 1); })
     .then(function () {
@@ -1128,7 +1201,7 @@ asyncTest('מנהל אינו מוגבל בתקרה – הוא מתקן, לא מ�
 });
 
 asyncTest('כשהתקרה כבויה אין שום הגבלה', function () {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'cap5@a.com', password: 'secret1', phone: '054-1234567'})
     .then(function () {
       return backend.createUser({ email: 'w5@a.com', password: 'secret1',
@@ -1388,7 +1461,7 @@ console.log('\n== מה שעובד רואה ==');
    הנתונים שהגיעו לדפדפן היו השבוע המלא. מי שפותח כלי פיתוח היה
    רואה את הסידור של כולם ואת הסיבות שעמיתיו כתבו. */
 function companyWithTwo(options) {
-  var backend = freshBackend();
+  var backend = earlyBackend();
   var ids = {};
   var team = !!(options && options.team);
   return backend.signUpCompany({ companyName: 'עסק', email: 'boss@p.com', password: 'secret1', phone: '054-1234567'})

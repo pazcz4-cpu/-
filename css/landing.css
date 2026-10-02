@@ -488,8 +488,9 @@
 
 /* ===================== הסרטון בדף הבית ===================== */
 .lp-video-section { background: var(--surface); }
+/* הסרטון אנכי (9:16, מודעה לנייד), ולכן עמוד צר במרכז ולא מסך רחב */
 .lp-video {
-  max-width: 880px; margin: var(--s6) auto 0;
+  width: min(100%, 360px); margin: var(--s6) auto 0;
   border-radius: var(--r-xl); overflow: hidden;
   box-shadow: var(--e3); background: var(--header-from);
 }
@@ -499,16 +500,17 @@
 .lp-video-play {
   position: relative; display: block; width: 100%;
   padding: 0; border: 0; background: none; cursor: pointer;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 9 / 16;
 }
 .lp-video-play.hidden { display: none; }
 .lp-video-play img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .lp-video-mark {
-  position: absolute; inset-inline-start: 50%; top: 66%;
+  position: absolute; inset-inline-start: 50%; top: 42%;
   transform: translate(-50%, -50%);
   width: 78px; height: 78px; border-radius: var(--r-pill);
   display: flex; align-items: center; justify-content: center;
-  color: var(--brand); background: transparent;
+  color: #fff; background: rgba(8, 14, 38, .62);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .85);
   transition: transform .15s ease;
 }
 [dir="rtl"] .lp-video-mark { transform: translate(50%, -50%); }
@@ -522,7 +524,7 @@
   clip-path: inset(50%); white-space: nowrap;
 }
 
-.lp-video-el { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.lp-video-el { display: block; width: 100%; aspect-ratio: 9 / 16; background: #000; }
 
 .lp-video-soon {
   margin: 0; padding: var(--s5) var(--s4); text-align: center;

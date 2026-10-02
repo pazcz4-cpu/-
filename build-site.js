@@ -177,7 +177,12 @@ ICONS.forEach((icon) => {
 write(path.join('icons', 'social.png'), icons.drawSocial(1200, 630));
 /* תמונת הפתיחה של הסרטון, נגזרת מהלוגו בכל בנייה – כך היא לא
    מתיישנת אם הלוגו מתעדכן. */
-write(path.join('assets', 'video', 'poster.png'), icons.drawPoster(1280, 720));
+/* אם בתיקיית המקור כבר יש תמונת פתיחה (למשל פריים מהסרטון עצמו),
+   היא נשארת כמות שהיא: copyDir העתיק אותה. רק בלעדיה היא נגזרת
+   מהלוגו, כדי שבנייה לא תמחק תמונה אמיתית. */
+if (!fs.existsSync(path.join(root, 'assets', 'video', 'poster.png'))) {
+  write(path.join('assets', 'video', 'poster.png'), icons.drawPoster(1280, 720));
+}
 
 /* ===== manifest לכל אפליקציה ===== */
 function manifest(options) {

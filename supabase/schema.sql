@@ -429,18 +429,14 @@ begin
   select config->'settings'->'constraintsDeadline' into v_deadline
     from public.company_configs where company_id = p_company;
 
-  -- עסק שלא הגדיר מועד נקרא כברירת המחדל: כל יום רביעי ב-18:00.
-  -- זה בדיוק מה שהדפדפן אומר (Data.DEFAULT_SETTINGS), כדי שהמסך
-  -- והשרת לא יחלקו על המועד. רק מי שכיבה במפורש מקבל null.
-  if v_deadline is null then
-    v_deadline := '{}'::jsonb;
-  end if;
-  if coalesce((v_deadline->>'enabled')::boolean, true) = false then
+  -- אין מועד קבוע מראש: כל עסק קובע לעצמו בהגדרות את היום והשעה.
+  -- עד שהמנהל הדליק אותו, ההגשה פתוחה תמיד.
+  if v_deadline is null or coalesce((v_deadline->>'enabled')::boolean, false) = false then
     return null;
   end if;
 
-  v_day  := coalesce((v_deadline->>'dayIdx')::int, 3);
-  v_time := coalesce(nullif(v_deadline->>'time', ''), '18:00')::time;
+  v_day  := coalesce((v_deadline->>'dayIdx')::int, 0);
+  v_time := coalesce(nullif(v_deadline->>'time', ''), '20:00')::time;
   v_tz   := coalesce(nullif(v_deadline->>'timezone', ''), 'Asia/Jerusalem');
 
   -- אחורה מתחילת השבוע עד היום שנבחר, תמיד לפניו

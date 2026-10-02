@@ -44,22 +44,17 @@ try {
   await page.fill('input[name="phone"]', '054-1234567');
   await page.click('#signup-form button[type="submit"]');
   await page.waitForTimeout(1000);
-  await loadSample(page, { keepDeadline: true });
+  await loadSample(page);
 
   console.log('\n== ההגדרה אצל המנהל ==');
   await page.click('.tab[data-tab="settings"]');
   await page.waitForTimeout(300);
-  /* ברירת המחדל קבועה: רביעי ב-18:00, דלוק, בלי שהמנהל נגע בדבר */
-  check('דלוק כברירת מחדל', await page.locator('#opt-deadline').isChecked(), true);
-  check('היום הוא רביעי', await page.locator('#deadline-day').inputValue(), '3');
-  check('השעה 18:00', await page.locator('#deadline-time').inputValue(), '18:00');
-  check('והתצוגה אומרת רביעי ב-18:00',
-    await page.locator('#deadline-preview').textContent(), /רביעי.*18:00/);
-
-  await page.uncheck('#opt-deadline');
-  await page.waitForTimeout(400);
-  check('כשכבוי השדות נעולים', await page.locator('#deadline-day').isDisabled(), true);
-  check('ואין תצוגת מועד', await page.locator('#deadline-preview').textContent(), '');
+  /* אין מועד מראש: המנהל קובע לעצמו יום ושעה */
+  check('כבוי עד שהמנהל מדליק', await page.locator('#opt-deadline').isChecked(), false);
+  check('השדות נעולים כשכבוי', await page.locator('#deadline-day').isDisabled(), true);
+  check('אין תצוגת מועד', await page.locator('#deadline-preview').textContent(), '');
+  check('הכותרת אומרת שזה מועד סגירת אילוצים קבוע',
+    await page.locator('[data-i18n="settings.deadlineTitle"]').innerText(), /סגירת אילוצים קבוע/);
 
   await page.check('#opt-deadline');
   await page.waitForTimeout(400);
@@ -67,6 +62,14 @@ try {
   const preview = await page.locator('#deadline-preview').textContent();
   check('מוצג תאריך מלא ולא רק יום בשבוע', preview, /\d{2}\/\d{2}/);
   check('ומוזכרת בו שעה', preview, /\d{2}:\d{2}/);
+
+  /* רביעי ב-18:00 כבחירה של המנהל, לא כברירת מחדל */
+  await page.selectOption('#deadline-day', '3');
+  await page.fill('#deadline-time', '18:00');
+  await page.locator('#deadline-time').blur();
+  await page.waitForTimeout(400);
+  check('המנהל בחר רביעי 18:00',
+    await page.locator('#deadline-preview').textContent(), /רביעי.*18:00/);
 
   await page.selectOption('#deadline-day', '2');
   await page.waitForTimeout(400);

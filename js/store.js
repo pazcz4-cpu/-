@@ -2530,10 +2530,9 @@
     var defaults = (Data.DEFAULT_SETTINGS && Data.DEFAULT_SETTINGS.constraintsDeadline) || {};
     var value = (state && state.settings && state.settings.constraintsDeadline) || {};
     return {
-      /* לא הוגדר = ברירת המחדל (דלוק). רק מי שכיבה במפורש כבוי */
-      enabled: value.enabled === undefined ? !!defaults.enabled : !!value.enabled,
+      enabled: !!value.enabled,
       dayIdx: typeof value.dayIdx === 'number' ? value.dayIdx : (defaults.dayIdx || 0),
-      time: value.time || defaults.time || '18:00',
+      time: value.time || defaults.time || '20:00',
       remindHours: typeof value.remindHours === 'number'
         ? value.remindHours : (defaults.remindHours || 24)
     };

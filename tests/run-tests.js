@@ -4251,33 +4251,30 @@ test('בקשה ממתינה, אילוץ בלי הכרעה ובקשת חופשה 
 });
 
 
-/* ===== מועד סגירת ההגשות: ברירת מחדל קבועה, רביעי 18:00 ===== */
-test('עסק שלא הגדיר מועד סגירה: רביעי ב-18:00, דלוק', function () {
-  var config = Store.deadlineSettings({ settings: {} });
-  assertEqual(config.enabled, true, 'לא דלוק כברירת מחדל');
-  assertEqual(config.dayIdx, 3, 'היום אינו רביעי');
-  assertEqual(config.time, '18:00', 'השעה אינה 18:00');
-  var bare = Store.deadlineSettings({});
-  assertEqual(bare.enabled, true, 'מצב בלי הגדרות בכלל');
+/* ===== מועד סגירת ההגשות: כל עסק קובע לעצמו ===== */
+test('אין מועד סגירה מראש: עד שהמנהל מדליק, ההגשה פתוחה', function () {
+  assertEqual(Store.deadlineSettings({ settings: {} }).enabled, false, 'דלוק בלי שהמנהל הגדיר');
+  assertEqual(Store.deadlineFor({ settings: {} }, '2026-09-20'), null, 'יש מועד בלי הגדרה');
+  assertEqual(Store.deadlinePassed({ settings: {} }, '2026-09-20', new Date(2030, 0, 1)), false, 'נסגר בלי הגדרה');
 });
 
-test('המועד של השבוע הבא הוא רביעי 18:00 של השבוע שלפניו', function () {
-  var at = Store.deadlineFor({ settings: {} }, '2026-09-20');
+test('מנהל שבחר רביעי 18:00: ההגשות לשבוע הבא נסגרות ברביעי שלפניו', function () {
+  var state = { settings: { constraintsDeadline: { enabled: true, dayIdx: 3, time: '18:00' } } };
+  var at = Store.deadlineFor(state, '2026-09-20');
   assertEqual(at.getFullYear() + '-' + (at.getMonth() + 1) + '-' + at.getDate(), '2026-9-16', 'התאריך');
   assertEqual(at.getDay(), 3, 'יום בשבוע');
   assertEqual(at.getHours() + ':' + at.getMinutes(), '18:0', 'השעה');
-  assertEqual(Store.deadlinePassed({ settings: {} }, '2026-09-20', new Date(2026, 8, 16, 17, 59)), false, 'לפני');
-  assertEqual(Store.deadlinePassed({ settings: {} }, '2026-09-20', new Date(2026, 8, 16, 18, 1)), true, 'אחרי');
+  assertEqual(Store.deadlinePassed(state, '2026-09-20', new Date(2026, 8, 16, 17, 59)), false, 'לפני');
+  assertEqual(Store.deadlinePassed(state, '2026-09-20', new Date(2026, 8, 16, 18, 1)), true, 'אחרי');
 });
 
-test('מנהל ששינה או כיבה את המועד – ההגדרה שלו קובעת', function () {
+test('כל עסק קובע יום ושעה משלו, והשינוי נקרא מיד', function () {
   var moved = { settings: { constraintsDeadline: { enabled: true, dayIdx: 5, time: '12:00' } } };
   var at = Store.deadlineFor(moved, '2026-09-20');
   assertEqual(at.getDay(), 5, 'היום החדש');
   assertEqual(at.getHours(), 12, 'השעה החדשה');
   var off = { settings: { constraintsDeadline: { enabled: false } } };
   assertEqual(Store.deadlineFor(off, '2026-09-20'), null, 'כבוי במפורש');
-  assertEqual(Store.deadlinePassed(off, '2026-09-20', new Date(2030, 0, 1)), false, 'כבוי לא נסגר');
 });
 
 

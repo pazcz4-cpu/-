@@ -21,7 +21,9 @@ const ROUTES = {
   company: require('./_company.js'),
   action: require('./_action.js'),
   tickets: require('./_tickets.js'),
-  coupons: require('./_coupons.js')
+  coupons: require('./_coupons.js'),
+  agents: require('./_agents.js'),
+  demo: require('./_demo.js')
 };
 
 module.exports = endpoint(async function (ctx) {

@@ -195,3 +195,8 @@
 .adm-coupon-form .adm-coupon-note { grid-column: 1 / -1; }
 .adm-coupon-form #cp-code { text-transform: uppercase; letter-spacing: .04em; }
 .adm-coupon-form button { block-size: fit-content; }
+
+/* שורת טופס קצרה (סוכן, הדגמה): שדות שעוברים שורה במסך צר */
+.adm-controls .adm-input { flex: 1 1 11rem; min-width: 0; }
+.adm-check { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); }
+.adm-card h3 { margin: var(--s4) 0 var(--s2); font-size: var(--t-md, 1rem); }

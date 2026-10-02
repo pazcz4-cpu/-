@@ -79,6 +79,11 @@ FakeDb.prototype.install = function () {
       return reply(200, existing ? [existing] : []);
     }
 
+    if (path === '/companies' && (opts.method || 'GET') === 'GET' &&
+        self.noFreeColumn && /free_access=eq\.true/.test(query)) {
+      return reply(400, { message: 'column companies.free_access does not exist' });
+    }
+
     if (path === '/companies' && (opts.method || 'GET') === 'GET') {
       /* מחקים את הסינון שהקוד מבקש: תוקף שעבר וסטטוס מתאים */
       var untilMatch = query.match(/valid_until=lte\.([^&]+)/);
@@ -89,6 +94,14 @@ FakeDb.prototype.install = function () {
         .filter(function (company) {
           if (untilMatch && !(new Date(company.valid_until) <= new Date(untilMatch[1]))) return false;
           if (statuses && statuses.indexOf(company.status) === -1) return false;
+          /* שאילתת הפיילוטים של ה-cron. העמודה נוספה במיגרציה, ולכן
+             בדיקה יכולה לדמות שרת שעדיין אינו מכיר אותה. */
+          if (/free_access=eq\.true/.test(query)) {
+            if (self.noFreeColumn) return false;
+            if (company.free_access !== true) return false;
+          }
+          var idIn = query.match(/id=in\.\(([^)]+)\)/);
+          if (idIn && idIn[1].split(',').indexOf(company.id) === -1) return false;
           return true;
         });
       /* מחזירים רק את העמודות שהקוד ביקש, כמו PostgREST אמיתי.
@@ -176,6 +189,54 @@ test('בלי כותרת בכלל הריצה נדחית', function () {
   db.install();
   return run({ auth: '' }).then(function (res) {
     assertEqual(res.statusCode, 401, 'ריצה בלי הזדהות התקבלה');
+    db.restore();
+  });
+});
+
+console.log('\n== פיילוט ללא תשלום ==');
+
+test('פיילוט ללא תשלום אינו מחויב ואינו נסגר', function () {
+  var db = new FakeDb([company({ id: 'co-pilot', free_access: true, status: 'active',
+    billing_subscription_id: null, valid_until: daysAgo(1) })]);
+  db.install();
+  return run().then(function (res) {
+    assertEqual(db.charges.length, 0, 'פיילוט חויב');
+    assertEqual(db.companies['co-pilot'].status, 'active', 'פיילוט נסגר');
+    assertEqual(res.payload.results[0].reason, 'free-access', 'הסיבה בדוח');
+    db.restore();
+  });
+});
+
+test('פיילוט שהתאריך שלו עבר חוזר להיות לקוח רגיל', function () {
+  var db = new FakeDb([company({ id: 'co-ended', free_access: true, free_until: daysAgo(2),
+    status: 'active', billing_subscription_id: null, valid_until: daysAgo(2) })]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.companies['co-ended'].status, 'expired', 'פיילוט שנגמר בלי כרטיס צריך לפוג');
+    db.restore();
+  });
+});
+
+test('פיילוט פעיל לא פוגע בלקוח משלם לידו', function () {
+  var db = new FakeDb([
+    company({ id: 'co-pilot', free_access: true, status: 'active', billing_subscription_id: null }),
+    company({ id: 'co-paying' })
+  ]);
+  db.install();
+  return run().then(function () {
+    assertEqual(db.charges.length, 1, 'הלקוח המשלם לא חויב');
+    assertEqual(db.companies['co-paying'].status, 'active', 'הלקוח המשלם לא הפך לפעיל');
+    db.restore();
+  });
+});
+
+test('לפני המיגרציה (אין עמודת פיילוט) החיוב ממשיך כרגיל', function () {
+  var db = new FakeDb([company()]);
+  db.noFreeColumn = true;
+  db.install();
+  return run().then(function (res) {
+    assertEqual(res.statusCode, 200, 'הריצה נעצרה בגלל עמודה חסרה');
+    assertEqual(db.charges.length, 1, 'לא בוצע חיוב');
     db.restore();
   });
 });

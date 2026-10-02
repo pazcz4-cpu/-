@@ -90,6 +90,31 @@
     var price = Model.priceLabel(company, employees);
     var html = '';
 
+    /* פיילוט ללא תשלום (נקבע במשרד האחורי). אין חיוב הבא ואין
+       כרטיס לחבר: תאריך תוקף של שנת 2099 על מסך חיוב הוא בדיוק
+       מה שגורם ללקוח לפנות ולשאול. */
+    var free = company.freeAccess === true &&
+      (!company.freeUntil || new Date(company.freeUntil).getTime() > Date.now());
+    if (free) {
+      html += '<p class="billing-trial">' + esc(t('billing.freePilotNotice')) + '</p>';
+      html += '<div class="settings-block billing-current">';
+      html += '<div class="billing-row"><span>' + t('billing.status') + '</span><b class="status-active">' +
+        esc(t('billing.freePilotLabel')) + '</b></div>';
+      html += '<div class="billing-row"><span>' + t('billing.plan') + '</span><b>' + esc(state.plan.name) +
+        ' · ' + esc(state.plan.range) + '</b></div>';
+      html += '<div class="billing-row"><span>' + t('billing.validUntil') + '</span><b>' +
+        esc(company.freeUntil
+          ? t('billing.freePilotUntil', { date: formatDate(company.freeUntil) })
+          : t('billing.freePilotOpen')) + '</b></div>';
+      html += '<div class="billing-row"><span>' + t('billing.activeStaff') + '</span><b>' +
+        esc(state.plan.maxEmployees
+          ? t('billing.of', { count: employees, max: state.plan.maxEmployees })
+          : t('billing.unlimited', { count: employees })) + '</b></div>';
+      html += '</div>';
+      container.innerHTML = html;
+      return;
+    }
+
     /* בתקופת ניסיון הדבר החשוב ביותר על המסך הוא מתי יתבצע החיוב
        הראשון וכמה הוא. זה מופיע ראשון, לפני כל שאר הפרטים. */
     if (onTrial && !company.cancelAtPeriodEnd) {

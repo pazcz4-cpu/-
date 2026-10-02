@@ -126,6 +126,28 @@ const WORLD = {
   }
 };
 
+const AGENTS = {
+  list: { ok: true, agents: [
+    { id: 'ag-1', name: 'רונית סוכנת', code: 'ronit-ab12', email: '', phone: '', commission: 400,
+      qualifyCharges: 3, active: true, note: '', customers: 3, paying: 2, free: 1, qualified: 1,
+      owed: 400, owedCount: 1, paidOut: 0 }
+  ] },
+  report: { ok: true, month: '2026-10',
+    lines: [{ companyId: 'co-9', company: 'פיצה הכפר', agentId: 'ag-1', agent: 'רונית סוכנת',
+      qualifiedAt: new Date().toISOString(), month: '2026-10', amount: 400, status: 'pending', paidAt: null }],
+    older: [], upcoming: [{ companyId: 'co-8', company: 'מאפיית הים', agent: 'רונית סוכנת',
+      nextChargeAt: new Date(Date.now() + 5 * 864e5).toISOString(), paidCharges: 2, amount: 400 }],
+    byAgent: [{ agentId: 'ag-1', agent: 'רונית סוכנת', count: 1, amount: 400, pending: 400, paid: 0 }],
+    totals: { count: 1, amount: 400, pending: 400, olderPending: 0 } },
+  customers: { ok: true, agent: { id: 'ag-1', name: 'רונית סוכנת', qualifyCharges: 3, commission: 400 },
+    customers: [{ id: 'co-9', name: 'פיצה הכפר', status: 'active', freeAccess: false, createdAt: new Date().toISOString(),
+      paidCharges: 3, qualifiedAt: new Date().toISOString(), commission: { amount: 400, status: 'pending', month: '2026-10' } }] }
+};
+const DEMO = {
+  status: { ok: true, exists: false },
+  build: { ok: true }
+};
+
 const sent = [];
 
 try {
@@ -137,6 +159,8 @@ try {
     sent.push({ name, body });
     let payload = WORLD[name] || { ok: true };
     if (name === 'action') payload = { ok: true, company: WORLD.company.company, detail: {} };
+    if (name === 'agents') payload = AGENTS[body.do] || { ok: true };
+    if (name === 'demo') payload = DEMO[body.do] || { ok: true };
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify(payload) });
   });
@@ -323,6 +347,110 @@ try {
   check('הבקשה יצאה', !!toggled, true);
   check('על הקוד הנכון', toggled && toggled.body.code, 'EXTRAMONTH');
   check('ובכיוון הנכון', toggled && toggled.body.active, false);
+
+  console.log('\n== פיילוט ללא תשלום ושיוך לסוכן ==');
+  WORLD.company.company = Object.assign({}, WORLD.company.company, {
+    freeAccess: true, freeUntil: null, isDemo: false, source: 'agent',
+    agent: { id: 'ag-1', name: 'רונית סוכנת', paidCharges: 0, qualifyCharges: 3,
+      commissionAmount: 400, qualifiedAt: null, commission: null }
+  });
+  await page.click('.adm-tab[data-panel="companies"]');
+  await page.waitForTimeout(300);
+  await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
+  await page.waitForTimeout(500);
+  const freeCard = await page.locator('#adm-company-detail').innerText();
+  check('הכרטיס אומר שזה פיילוט ללא תשלום', freeCard, /ללא תשלום/);
+  check('ושהמקור הוא סוכן בשמו', freeCard, /רונית סוכנת/);
+  check('וכפתור הפעולה הופך לסיום פיילוט', freeCard, /סיום פיילוט ללא תשלום/);
+
+  WORLD.company.company = Object.assign({}, WORLD.company.company, { freeAccess: false });
+  await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
+  await page.waitForTimeout(500);
+  check('אחרי הסיום מוצגת התקדמות החיובים',
+    await page.locator('#adm-company-detail').innerText(), /0 מתוך 3 חיובים/);
+
+  sent.length = 0;
+  await page.click('[data-act="set-free"]');
+  await page.waitForTimeout(300);
+  await page.selectOption('#adm-f-on', '1');
+  await page.fill('#adm-f-until', '2027-01-31');
+  await page.fill('#adm-modal-reason', 'פיילוט עם קפה מרכז');
+  await page.click('#adm-modal-ok');
+  await page.waitForTimeout(600);
+  const freeCall = sent.filter((call) => call.body.action === 'set-free').pop();
+  check('בקשת הפיילוט יצאה', !!freeCall, true);
+  check('עם on=true כבוליאני', freeCall && freeCall.body.on, true);
+  check('ועם התאריך', freeCall && freeCall.body.until, '2027-01-31');
+
+  sent.length = 0;
+  await page.click('[data-act="set-agent"]');
+  await page.waitForTimeout(500);
+  check('בחירת הסוכן נטענת עם האתר ועם הסוכן',
+    await page.locator('#adm-f-agent option').count(), 2);
+  await page.selectOption('#adm-f-agent', 'ag-1');
+  await page.fill('#adm-modal-reason', 'הוקם בטלפון');
+  await page.click('#adm-modal-ok');
+  await page.waitForTimeout(600);
+  const agentCall = sent.filter((call) => call.body.action === 'set-agent').pop();
+  check('בקשת השיוך יצאה עם הסוכן', agentCall && agentCall.body.agentId, 'ag-1');
+
+  console.log('\n== סינון לפי מקור ==');
+  sent.length = 0;
+  await page.selectOption('#adm-filter-source', 'agent');
+  await page.waitForTimeout(500);
+  const filterCall = sent.filter((call) => call.name === 'companies').pop();
+  check('הסינון נשלח לשרת', filterCall && filterCall.body.source, 'agent');
+
+  console.log('\n== סוכנים ובונוסים ==');
+  await page.click('.adm-tab[data-panel="agents"]');
+  await page.waitForTimeout(700);
+  const agentsText = await page.locator('#panel-agents').innerText();
+  check('הסוכן מוצג', agentsText, /רונית סוכנת/);
+  check('ועם העמלה', agentsText, /400/);
+  check('הדוח החודשי מציג מי הגיע ליעד', agentsText, /פיצה הכפר/);
+  check('ומי יגיע בחיוב הבא', agentsText, /מאפיית הים/);
+  check('כפתור העתקת קישור קיים עם הקוד',
+    await page.locator('[data-copy-link]').first().getAttribute('data-copy-link'), /\/\?ref=ronit-ab12$/);
+
+  sent.length = 0;
+  await page.fill('#ag-name', 'דוד סוכן');
+  await page.fill('#ag-commission', '300');
+  await page.fill('#ag-qualify', '3');
+  await page.click('#adm-agent-form button[type="submit"]');
+  await page.waitForTimeout(600);
+  const saved = sent.filter((call) => call.name === 'agents' && call.body.do === 'save').pop();
+  check('שמירת סוכן יצאה', !!saved, true);
+  check('עם השם', saved && saved.body.name, 'דוד סוכן');
+  check('ועם העמלה', saved && saved.body.commission, '300');
+
+  sent.length = 0;
+  await page.click('[data-pay="co-9"]');
+  await page.waitForTimeout(500);
+  const payCall = sent.filter((call) => call.body.do === 'pay').pop();
+  check('סימון תשלום עמלה יצא', payCall && payCall.body.companyIds[0], 'co-9');
+  check('כתשלום', payCall && payCall.body.paid, true);
+
+  await page.click('[data-agent-customers="ag-1"]');
+  await page.waitForTimeout(500);
+  check('לקוחות הסוכן מוצגים עם החיובים',
+    await page.locator('#adm-agent-customers').innerText(), /פיצה הכפר/);
+
+  console.log('\n== חשבון הדגמה ==');
+  await page.click('.adm-tab[data-panel="demo"]');
+  await page.waitForTimeout(500);
+  check('לפני היצירה הכפתור הוא יצירה',
+    await page.locator('#adm-demo-form button[type="submit"]').innerText(), /יצירת חשבון הדגמה/);
+  sent.length = 0;
+  await page.fill('#demo-manager', 'demo-manager@setshifts.com');
+  await page.fill('#demo-employee', 'demo-employee@setshifts.com');
+  await page.fill('#demo-password', 'Demo-pass-2026');
+  await page.click('#adm-demo-form button[type="submit"]');
+  await page.waitForTimeout(500);
+  const built = sent.filter((call) => call.body.do === 'build').pop();
+  check('היצירה יצאה עם שני המיילים',
+    built && built.body.managerEmail + '|' + built.body.employeeEmail,
+    'demo-manager@setshifts.com|demo-employee@setshifts.com');
+  check('ועם הסיסמה', built && built.body.password, 'Demo-pass-2026');
 
   console.log('\n== במסך צר ==');
   await page.setViewportSize({ width: 390, height: 844 });

@@ -44,10 +44,20 @@ module.exports = async function ({ db }) {
   const ticketsCall = await db('/support_tickets?select=status&limit=20000');
   const tickets = (ticketsCall.ok && ticketsCall.body) || [];
 
-  /* ===== לפי מצב ולפי חבילה ===== */
+  /* ===== לפי מצב ולפי חבילה =====
+     חשבון הדגמה אינו לקוח: הוא לא נספר בשום מספר של הלוח. פיילוט
+     ללא תשלום כן נספר כלקוח, ובשורה נפרדת כדי שלא יתערבב עם
+     משלמים. */
+  const real = companies.filter(function (company) { return !company.is_demo; });
+  const demoCount = companies.length - real.length;
+  const freeCount = real.filter(function (company) { return company.free_access === true; }).length;
+  const bySource = { direct: 0, agent: 0 };
+  real.forEach(function (company) {
+    bySource[company.source === 'agent' ? 'agent' : 'direct']++;
+  });
   const byStatus = {};
   const byPlan = {};
-  companies.forEach(function (company) {
+  real.forEach(function (company) {
     byStatus[company.status] = (byStatus[company.status] || 0) + 1;
     if (company.status === 'active' || company.status === 'trial') {
       byPlan[company.plan] = (byPlan[company.plan] || 0) + 1;
@@ -70,7 +80,7 @@ module.exports = async function ({ db }) {
 
   /* ===== מה דורש פעולה =====
      שלוש רשימות, לא שלושה מספרים: הן קצרות ואפשר להתקשר לפיהן. */
-  const trialsEnding = companies
+  const trialsEnding = real
     .filter(function (company) {
       if (company.status !== 'trial' || !company.valid_until) return false;
       const days = daysFromNow(company.valid_until);
@@ -85,7 +95,7 @@ module.exports = async function ({ db }) {
     })
     .sort(function (a, b) { return a.days - b.days; });
 
-  const failing = companies
+  const failing = real
     .filter(function (company) { return company.status === 'past_due'; })
     .map(function (company) {
       return {
@@ -94,7 +104,7 @@ module.exports = async function ({ db }) {
       };
     });
 
-  const canceling = companies
+  const canceling = real
     .filter(function (company) {
       return company.cancel_at_period_end && company.status !== 'canceled';
     })
@@ -108,7 +118,10 @@ module.exports = async function ({ db }) {
       generatedAt: now.toISOString(),
       vat: { rate: Money.vatRate(), pricesInclude: Money.pricesIncludeVat() },
       counts: {
-        companies: companies.length,
+        companies: real.length,
+        free: freeCount,
+        demo: demoCount,
+        bySource: bySource,
         byStatus: byStatus,
         byPlan: byPlan,
         users: users.filter(function (u) { return u.active; }).length,

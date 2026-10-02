@@ -13,7 +13,8 @@
 
   var config = window.SHIFT_CONFIG || {};
   var session = null;
-  var data = { overview: null, companies: null, tickets: null };
+  var data = { overview: null, companies: null, tickets: null, agents: null, demo: null,
+              report: null, reportMonth: '', agentCustomers: null };
   var current = 'overview';
   var TOKEN_KEY = 'setshifts-admin-session-v1';
 
@@ -52,6 +53,10 @@
   };
   var TICKET_STATUS = {
     open: 'פתוחה', in_progress: 'בטיפול', answered: 'נענתה', closed: 'נסגרה'
+  };
+  var SOURCE_LABEL = {
+    '': 'כל המקורות', direct: 'האתר', agent: 'סוכנים',
+    free: 'פיילוט ללא תשלום', demo: 'הדגמה'
   };
   var PLAN_LABEL = { starter: 'קטן', growth: 'בינוני', business: 'גדול', enterprise: 'רשתות' };
 
@@ -168,6 +173,11 @@
       'נטו ' + money(view.money.allTime.net) + ' · מע"מ ' + money(view.money.allTime.vat));
     html += tile('קריאות פתוחות', String((counts.tickets.open || 0) +
       (counts.tickets.in_progress || 0)), 'ממתינות למענה');
+    /* מאיפה הלקוחות הגיעו, ומי מהם לא משלם. חשבון הדגמה אינו נספר. */
+    html += tile('מקור הלקוחות',
+      (counts.bySource ? counts.bySource.direct : 0) + ' אתר · ' +
+      (counts.bySource ? counts.bySource.agent : 0) + ' סוכנים',
+      counts.free ? counts.free + ' בפיילוט ללא תשלום' : 'אין פיילוטים ללא תשלום');
     html += '</div>';
 
     html += '<p class="adm-note" style="margin:calc(var(--s3) * -1) 0 var(--s5)">' +
@@ -268,6 +278,16 @@
 
   /* ===== לקוחות ===== */
 
+  /* מקור הלקוח במילה אחת: האתר, שם הסוכן, או סימון מיוחד */
+  function sourceCell(row) {
+    var html = row.isDemo ? '<span class="adm-flag">הדגמה</span>'
+      : row.source === 'agent'
+        ? 'סוכן' + (row.agentName ? ': ' + esc(row.agentName) : '')
+        : 'האתר';
+    if (row.freeAccess) html += ' <span class="adm-flag">ללא תשלום</span>';
+    return html;
+  }
+
   function renderCompanies() {
     var node = document.getElementById('panel-companies');
     var list = data.companies;
@@ -283,6 +303,13 @@
             return '<option value="' + key + '"' +
               (data.status === key ? ' selected' : '') + '>' +
               esc(STATUS_LABEL[key]) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<select class="adm-select" id="adm-filter-source">' +
+          Object.keys(SOURCE_LABEL).map(function (key) {
+            return '<option value="' + key + '"' +
+              ((data.source || '') === key ? ' selected' : '') + '>' +
+              esc(SOURCE_LABEL[key]) + '</option>';
           }).join('') +
         '</select>' +
         '<button class="adm-btn" id="adm-refresh">רענון</button>' +
@@ -301,7 +328,7 @@
 
     html += '<p class="adm-card-sub">' + list.shown + ' מתוך ' + list.total + '</p>' +
       '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
-      '<th>עסק</th><th>בעלים</th><th>חבילה</th><th>מצב</th>' +
+      '<th>עסק</th><th>בעלים</th><th>מקור</th><th>חבילה</th><th>מצב</th>' +
       '<th class="num">משתמשים</th><th>בתוקף עד</th>' +
       '<th class="num">שילם עד היום</th><th>נפתח</th><th></th>' +
       '</tr></thead><tbody>';
@@ -313,6 +340,7 @@
           (row.openTickets ? ' <span class="adm-flag">' + row.openTickets +
             ' קריאות</span>' : '') + '</td>' +
         '<td class="wide">' + esc(row.ownerEmail || '—') + '</td>' +
+        '<td>' + sourceCell(row) + '</td>' +
         '<td>' + esc(PLAN_LABEL[row.plan] || row.plan) + '</td>' +
         '<td>' + statusPill(row.status) +
           (row.cancelAtPeriodEnd ? ' <span class="adm-flag">מבטל</span>' : '') +
@@ -356,6 +384,20 @@
       return 'מחיר מוסכם' + (c.listPrice ? ' · מחירון ' + money(c.listPrice) : '');
     }
     return c.byQuote ? 'חבילת רשתות — לפי הצעת מחיר' : 'לפי המחירון';
+  }
+
+  /* כמה חיובים הלקוח כבר שילם, ומתי הסוכן מגיע לעמלה עליו */
+  function agentNote(c) {
+    if (c.source !== 'agent' || !c.agent) return 'נרשם בעצמו דרך האתר';
+    var a = c.agent;
+    if (c.freeAccess) return 'פיילוט ללא תשלום — אין עמלה';
+    var note = a.paidCharges + ' מתוך ' + a.qualifyCharges + ' חיובים · עמלה ' + money(a.commissionAmount);
+    if (a.commission) {
+      note += a.commission.status === 'paid' ? ' · שולמה' : ' · ממתינה לתשלום';
+    } else if (a.qualifiedAt) {
+      note += ' · הגיע ליעד';
+    }
+    return note;
   }
 
   /* תוספת התראות הוואטסאפ. שורה נפרדת ולא חלק מהמחיר, כי
@@ -403,6 +445,14 @@
         addonNote(c)) +
       tile('אמצעי תשלום', c.hasCard ? 'יש' : 'אין',
         c.billingProvider || 'לא חובר') +
+      tile('תשלום', c.isDemo ? 'חשבון הדגמה'
+        : c.freeAccess ? 'ללא תשלום' : 'רגיל',
+        c.freeAccess
+          ? (c.freeUntil ? 'פיילוט עד ' + date(c.freeUntil) : 'פיילוט ללא הגבלת זמן')
+          : (c.isDemo ? 'לא נספר בלוח ובעמלות' : 'לפי המחיר החודשי')) +
+      tile('מקור הגעה', c.source === 'agent'
+        ? (c.agent ? esc(c.agent.name) : 'סוכן') : 'האתר',
+        agentNote(c), c.source === 'agent') +
       tile('שימוש', String(view.usage.weeks) + ' שבועות',
         view.usage.published + ' פורסמו · אחרון ' + date(view.usage.lastWeekAt)) +
     '</div>';
@@ -414,6 +464,10 @@
         '">שינוי חבילה</button>' +
       '<button class="adm-btn" data-act="set-price" data-id="' + esc(c.id) +
         '">מחיר מוסכם</button>' +
+      '<button class="adm-btn" data-act="set-free" data-id="' + esc(c.id) + '">' +
+        (c.freeAccess ? 'סיום פיילוט ללא תשלום' : 'פיילוט ללא תשלום') + '</button>' +
+      '<button class="adm-btn" data-act="set-agent" data-id="' + esc(c.id) +
+        '">שיוך לסוכן</button>' +
       '<button class="adm-btn" data-act="set-wa-addon" data-id="' + esc(c.id) + '">' +
         (c.waEmployeeAddon ? 'כיבוי תוספת וואטסאפ' : 'הפעלת תוספת וואטסאפ') + '</button>' +
       '<button class="adm-btn" data-act="set-status" data-id="' + esc(c.id) +
@@ -703,8 +757,52 @@
         }).join('') +
         '</select></label>'
     },
+    /* פיילוט: לקוח שמקבל את המערכת בלי תשלום. הוא נספר כלקוח, לא
+       נכנס להכנסה החוזרת, ולא מזכה סוכן בעמלה. */
+    'set-free': {
+      title: 'פיילוט ללא תשלום',
+      fields: '<label class="adm-field"><span>מצב</span>' +
+        '<select class="adm-select" id="adm-f-on">' +
+        '<option value="1">פיילוט ללא תשלום</option>' +
+        '<option value="0">סיום הפיילוט</option>' +
+        '</select></label>' +
+        '<label class="adm-field"><span>עד תאריך (ריק = ללא הגבלה)</span>' +
+        '<input class="adm-input" id="adm-f-until" type="date"></label>' +
+        '<label class="adm-field"><span>בסיום: כמה ימים להמשיך בלי חיוב</span>' +
+        '<input class="adm-input" id="adm-f-days" type="number" min="0" max="90" value="14"></label>' +
+        '<p class="adm-hint">בפיילוט המנוי פעיל ואינו מחויב. אחרי הסיום הלקוח חוזר ' +
+        'להיות לקוח רגיל עם מספר הימים שנקבע, ואז הוא נדרש לחבר כרטיס. ' +
+        'מחיר שונה מהמחירון (לא חינם) קובעים ב"מחיר מוסכם".</p>'
+    },
+    'set-agent': {
+      title: 'שיוך לסוכן מכירות',
+      fields: '<label class="adm-field"><span>הלקוח הגיע מ</span>' +
+        '<select class="adm-select" id="adm-f-agent"></select></label>' +
+        '<p class="adm-hint">ההגעה דרך קישור של סוכן נרשמת לבד בהרשמה. כאן מתקנים ' +
+        'או משייכים ידנית. עמלה שכבר שולמה אינה משתנה.</p>'
+    },
     'set-cancel': { title: 'סימון סיום בתום התקופה', fields: '' }
   };
+
+  function fillAgentChoice(id) {
+    var select = document.getElementById('adm-f-agent');
+    if (!select) return;
+    var c = (data.detail && data.detail.company) || null;
+    var current = c && c.id === id && c.agent ? c.agent.id : '';
+    function paint(agents) {
+      select.innerHTML = '<option value="">האתר (ללא סוכן)</option>' +
+        agents.map(function (agent) {
+          return '<option value="' + esc(agent.id) + '"' + (agent.id === current ? ' selected' : '') +
+            '>' + esc(agent.name) + (agent.active ? '' : ' (לא פעיל)') + '</option>';
+        }).join('');
+    }
+    if (data.agents) { paint(data.agents.agents); return; }
+    paint([]);
+    api('agents', { do: 'list' }).then(function (body) {
+      data.agents = body;
+      paint(body.agents);
+    }).catch(function () { /* יישאר "האתר" */ });
+  }
 
   /* המחיר הנוכחי של הלקוח שפתוח על המסך, בתוך טופס המחיר */
   function fillPrice(id) {
@@ -734,6 +832,7 @@
        ומוצא טופס ריק במצב "סכום קבוע" עלול לשמור סכום קבוע
        בלי לשים לב שהחליף צורת תמחור. */
     if (action === 'set-price') fillPrice(id);
+    if (action === 'set-agent') fillAgentChoice(id);
     document.getElementById('adm-modal-reason').value = '';
     document.getElementById('adm-modal-error').hidden = true;
     document.getElementById('adm-modal').hidden = false;
@@ -767,18 +866,213 @@
     /* בוליאני ולא מחרוזת: השרת בודק === true, ו-"0" הוא אמת. */
     var on = document.getElementById('adm-f-on');
     if (on) payload.on = on.value === '1';
+    var until = document.getElementById('adm-f-until');
+    if (until && until.value) payload.until = until.value;
+    var agentChoice = document.getElementById('adm-f-agent');
+    if (agentChoice) payload.agentId = agentChoice.value;
     if (pending.action === 'set-cancel') payload.cancel = !pending.extra.cancelNow;
 
     var button = document.getElementById('adm-modal-ok');
     button.disabled = true;
     api('action', payload).then(function () {
       closeAction();
+      data.agents = null; data.report = null;
       return Promise.all([loadOverview(), loadCompanies(), openCompany(payload.id)]);
     }).catch(function (error) {
       var box = document.getElementById('adm-modal-error');
       box.textContent = error.message;
       box.hidden = false;
     }).then(function () { button.disabled = false; });
+  }
+
+  /* ===== סוכני מכירות ===== */
+
+  function referralLink(code) {
+    return window.location.origin + '/?ref=' + encodeURIComponent(code);
+  }
+
+  function monthNow() {
+    var now = new Date();
+    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  }
+
+  function agentForm(agent) {
+    var a = agent || {};
+    return '<form id="adm-agent-form" class="adm-controls" data-id="' + esc(a.id || '') + '">' +
+      '<input class="adm-input" id="ag-name" placeholder="שם הסוכן" maxlength="120" required value="' + esc(a.name || '') + '">' +
+      '<input class="adm-input" id="ag-code" placeholder="קוד לקישור (אנגלית; ריק = אוטומטי)" maxlength="39" ' +
+        (a.id ? 'disabled ' : '') + 'value="' + esc(a.code || '') + '">' +
+      '<input class="adm-input" id="ag-commission" type="number" min="0" step="1" placeholder="עמלה בשקלים ללקוח" required value="' +
+        esc(a.commission == null ? '' : a.commission) + '">' +
+      '<input class="adm-input" id="ag-qualify" type="number" min="1" max="24" step="1" placeholder="חיובים עד זכאות" value="' +
+        esc(a.qualifyCharges || 3) + '" title="כמה חיובים מוצלחים הלקוח צריך לשלם עד שהסוכן זכאי לעמלה">' +
+      '<input class="adm-input" id="ag-email" type="email" placeholder="מייל" value="' + esc(a.email || '') + '">' +
+      '<input class="adm-input" id="ag-phone" type="tel" placeholder="טלפון" value="' + esc(a.phone || '') + '">' +
+      '<input class="adm-input" id="ag-note" placeholder="הערה" maxlength="500" value="' + esc(a.note || '') + '">' +
+      (a.id ? '<label class="adm-check"><input type="checkbox" id="ag-active"' + (a.active ? ' checked' : '') + '> פעיל</label>' : '') +
+      '<button class="adm-btn is-primary" type="submit">' + (a.id ? 'שמירת סוכן' : 'הוספת סוכן') + '</button>' +
+      (a.id ? '<button class="adm-btn" type="button" id="ag-cancel">ביטול</button>' : '') +
+      '</form><p id="adm-agent-msg" class="adm-error" hidden></p>';
+  }
+
+  function renderAgents() {
+    var node = document.getElementById('panel-agents');
+    var list = data.agents;
+    var html = '<div class="adm-card"><h2>סוכני מכירות</h2>' +
+      '<p class="adm-card-sub">לכל סוכן קישור אישי. לקוח שנרשם דרך הקישור נרשם כמגיע ממנו. ' +
+      'עמלה מגיעה על לקוח שמשלם — כמה חיובים מוצלחים שנקבעו לסוכן — ולא על פיילוט ללא תשלום.</p>' +
+      agentForm(data.editAgent) + '</div>';
+
+    if (!list) {
+      node.innerHTML = html + '<p class="adm-empty">טוען…</p>';
+      return;
+    }
+    html += '<div class="adm-card"><h2>הסוכנים</h2>';
+    if (!list.agents.length) {
+      html += '<p class="adm-empty">עוד אין סוכנים.</p></div>';
+    } else {
+      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>סוכן</th><th class="num">עמלה</th><th class="num">יעד</th><th class="num">לקוחות</th>' +
+        '<th class="num">הגיעו ליעד</th><th class="num">לתשלום</th><th class="num">שולם</th><th>קישור</th><th></th>' +
+        '</tr></thead><tbody>';
+      list.agents.forEach(function (agent) {
+        html += '<tr><td>' + esc(agent.name) +
+          (agent.active ? '' : ' <span class="adm-flag">לא פעיל</span>') + '</td>' +
+          '<td class="num">' + esc(money(agent.commission)) + '</td>' +
+          '<td class="num">' + agent.qualifyCharges + ' חיובים</td>' +
+          '<td class="num">' + agent.customers + (agent.free ? ' (' + agent.free + ' פיילוט)' : '') + '</td>' +
+          '<td class="num">' + agent.qualified + '</td>' +
+          '<td class="num">' + esc(money(agent.owed)) + (agent.owedCount ? ' (' + agent.owedCount + ')' : '') + '</td>' +
+          '<td class="num">' + esc(money(agent.paidOut)) + '</td>' +
+          '<td><button class="adm-btn is-small" data-copy-link="' + esc(referralLink(agent.code)) + '">העתקת קישור</button></td>' +
+          '<td><button class="adm-btn is-small" data-agent-edit="' + esc(agent.id) + '">עריכה</button> ' +
+          '<button class="adm-btn is-small" data-agent-customers="' + esc(agent.id) + '">לקוחות</button></td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+    html += '<div id="adm-agent-customers"></div>';
+
+    /* דוח בונוסים חודשי */
+    var month = data.reportMonth || monthNow();
+    html += '<div class="adm-card"><h2>בונוסים לפי חודש</h2>' +
+      '<p class="adm-card-sub">מי הגיע ליעד באותו חודש, כמה מגיע לכל סוכן, ומה נשאר לא משולם מחודשים קודמים.</p>' +
+      '<div class="adm-controls"><input class="adm-input" id="adm-report-month" type="month" value="' + esc(month) + '">' +
+      '<button class="adm-btn" id="adm-report-load">הצגה</button></div>';
+    html += renderReport(data.report) + '</div>';
+    node.innerHTML = html;
+  }
+
+  function reportRows(rows, withPay) {
+    return '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+      '<th>לקוח</th><th>סוכן</th><th>הגיע ליעד</th><th class="num">עמלה</th><th>מצב</th>' +
+      (withPay ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      rows.map(function (row) {
+        return '<tr><td class="wide">' + esc(row.company) + '</td><td>' + esc(row.agent) + '</td>' +
+          '<td>' + esc(date(row.qualifiedAt)) + '</td>' +
+          '<td class="num">' + esc(money(row.amount)) + '</td>' +
+          '<td>' + (row.status === 'paid'
+            ? '<span class="adm-pill is-active">שולם</span>'
+            : '<span class="adm-pill is-past_due">ממתין</span>') + '</td>' +
+          (withPay ? '<td><button class="adm-btn is-small" data-pay="' + esc(row.companyId) + '" data-paid="' +
+            (row.status === 'paid' ? '0' : '1') + '">' +
+            (row.status === 'paid' ? 'ביטול סימון' : 'סימון כשולם') + '</button></td>' : '') +
+          '</tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  function renderReport(report) {
+    if (!report) return '<p class="adm-empty">טוען…</p>';
+    var html = '<div class="adm-tiles">' +
+      tile('הגיעו ליעד החודש', String(report.totals.count), 'לקוחות') +
+      tile('עמלות החודש', money(report.totals.amount), 'לתשלום ' + money(report.totals.pending), true) +
+      tile('חוב מחודשים קודמים', money(report.totals.olderPending), report.older.length + ' עמלות') +
+      '</div>';
+    if (report.byAgent.length) {
+      html += '<h3>לפי סוכן</h3><div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>סוכן</th><th class="num">לקוחות</th><th class="num">סכום</th><th class="num">לתשלום</th></tr></thead><tbody>' +
+        report.byAgent.map(function (item) {
+          return '<tr><td>' + esc(item.agent) + '</td><td class="num">' + item.count + '</td>' +
+            '<td class="num">' + esc(money(item.amount)) + '</td><td class="num">' + esc(money(item.pending)) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    html += '<h3>מי הגיע ליעד החודש</h3>' +
+      (report.lines.length ? reportRows(report.lines, true) : '<p class="adm-empty">אף לקוח לא הגיע ליעד בחודש הזה.</p>');
+    if (report.older.length) {
+      html += '<h3>עמלות שלא שולמו מחודשים קודמים</h3>' + reportRows(report.older, true);
+    }
+    if (report.upcoming.length) {
+      html += '<h3>יגיעו ליעד בחיוב הבא</h3><div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>לקוח</th><th>סוכן</th><th>חיוב הבא</th><th class="num">עמלה צפויה</th></tr></thead><tbody>' +
+        report.upcoming.map(function (item) {
+          return '<tr><td class="wide">' + esc(item.company) + '</td><td>' + esc(item.agent) + '</td>' +
+            '<td>' + esc(date(item.nextChargeAt)) + '</td><td class="num">' + esc(money(item.amount)) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    return html;
+  }
+
+  function renderAgentCustomers(view) {
+    var node = document.getElementById('adm-agent-customers');
+    if (!node) return;
+    var html = '<div class="adm-card"><h2>הלקוחות של ' + esc(view.agent.name) + '</h2>';
+    if (!view.customers.length) {
+      node.innerHTML = html + '<p class="adm-empty">עוד אין לקוחות.</p></div>';
+      return;
+    }
+    html += '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+      '<th>לקוח</th><th>מצב</th><th class="num">חיובים</th><th>עמלה</th></tr></thead><tbody>' +
+      view.customers.map(function (c) {
+        var commission = c.freeAccess ? 'פיילוט — אין עמלה'
+          : c.commission ? money(c.commission.amount) + (c.commission.status === 'paid' ? ' · שולם' : ' · ממתין')
+            : c.paidCharges + ' מתוך ' + view.agent.qualifyCharges;
+        return '<tr class="adm-row-link" data-company="' + esc(c.id) + '"><td class="wide">' + esc(c.name) + '</td>' +
+          '<td>' + statusPill(c.status) + '</td><td class="num">' + c.paidCharges + '</td>' +
+          '<td>' + esc(commission) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+    node.innerHTML = html;
+  }
+
+  /* ===== חשבון הדגמה ===== */
+
+  function renderDemo() {
+    var node = document.getElementById('panel-demo');
+    var view = data.demo;
+    var html = '<div class="adm-card"><h2>חשבון הדגמה</h2>' +
+      '<p class="adm-card-sub">עסק לדוגמה עם עובדים, סידור שפורסם, דוח שעות ובקשות אילוץ — ושבוע הבא ריק, ' +
+      'כדי לבנות בו סידור מול הלקוח. אינו נספר בלוח, בהכנסה או בעמלות. "איפוס" מחזיר הכול למצב ההתחלה.</p>';
+    if (!view) {
+      node.innerHTML = html + '<p class="adm-empty">טוען…</p></div>';
+      return;
+    }
+    if (view.exists) {
+      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>משתמש</th><th>תפקיד</th><th>מייל</th></tr></thead><tbody>' +
+        view.users.map(function (user) {
+          return '<tr><td>' + esc(user.name || '—') + '</td><td>' +
+            esc({ owner: 'מנהל', manager: 'מנהל', employee: 'עובד' }[user.role] || user.role) +
+            '</td><td class="wide" dir="ltr">' + esc(user.email) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<p class="adm-note">נתונים נכתבו לאחרונה: ' + esc(date(view.resetAt)) + '</p>';
+    }
+    html += '<form id="adm-demo-form" class="adm-controls">' +
+      '<input class="adm-input" id="demo-manager" type="email" required placeholder="מייל מנהל ההדגמה" dir="ltr" value="' +
+        esc(demoEmail('manager')) + '">' +
+      '<input class="adm-input" id="demo-employee" type="email" required placeholder="מייל עובד ההדגמה" dir="ltr" value="' +
+        esc(demoEmail('employee')) + '">' +
+      '<input class="adm-input" id="demo-password" type="text" required minlength="8" maxlength="72" autocomplete="off" ' +
+        'placeholder="סיסמה (8 תווים ומעלה)">' +
+      '<button class="adm-btn is-primary" type="submit">' +
+        (view.exists ? 'איפוס ההדגמה' : 'יצירת חשבון הדגמה') + '</button></form>' +
+      '<p class="adm-hint">הסיסמה נקבעת ב-Supabase ואינה נשמרת כאן. בשני משתמשים: מנהל לראות את מסך הסידור, ' +
+      'ועובד לראות את צד העובד בטלפון. איפוס מחליף גם את הסיסמה.</p>' +
+      '<p id="adm-demo-msg" class="adm-error" hidden></p></div>';
+    node.innerHTML = html;
+  }
+
+  function demoEmail(kind) {
+    var users = (data.demo && data.demo.users) || [];
+    var wanted = kind === 'manager' ? ['owner', 'manager'] : ['employee'];
+    var found = users.filter(function (user) { return wanted.indexOf(user.role) !== -1; })[0];
+    return found ? found.email : '';
   }
 
   /* ===== טעינה ===== */
@@ -792,7 +1086,7 @@
   }
 
   function loadCompanies() {
-    return api('companies', { q: data.query || '', status: data.status || '' })
+    return api('companies', { q: data.query || '', status: data.status || '', source: data.source || '' })
       .then(function (body) {
         data.companies = body;
         if (current === 'companies') renderCompanies();
@@ -803,6 +1097,29 @@
     return api('tickets', { action: 'list' }).then(function (body) {
       data.tickets = body;
       if (current === 'tickets') renderTickets();
+    });
+  }
+
+  function loadAgents() {
+    return api('agents', { do: 'list' }).then(function (body) {
+      data.agents = body;
+      return api('agents', { do: 'report', month: data.reportMonth || monthNow() });
+    }).then(function (report) {
+      data.report = report;
+      if (current === 'agents') renderAgents();
+    }).catch(function (error) {
+      var node = document.getElementById('panel-agents');
+      if (node) node.innerHTML = '<p class="adm-error">' + esc(error.message) + '</p>';
+    });
+  }
+
+  function loadDemo() {
+    return api('demo', { do: 'status' }).then(function (body) {
+      data.demo = body;
+      if (current === 'demo') renderDemo();
+    }).catch(function (error) {
+      var node = document.getElementById('panel-demo');
+      if (node) node.innerHTML = '<p class="adm-error">' + esc(error.message) + '</p>';
     });
   }
 
@@ -825,6 +1142,8 @@
     if (panel === 'companies') { renderCompanies(); if (!data.companies) loadCompanies(); }
     if (panel === 'tickets') { renderTickets(); if (!data.tickets) loadTickets(); }
     if (panel === 'coupons') { renderCoupons(); if (!data.coupons) loadCoupons(); }
+    if (panel === 'agents') { renderAgents(); loadAgents(); }
+    if (panel === 'demo') { renderDemo(); loadDemo(); }
   }
 
   function start() {
@@ -890,6 +1209,51 @@
       return;
     }
 
+    var copy = event.target.closest('[data-copy-link]');
+    if (copy) {
+      var link = copy.dataset.copyLink;
+      var done = function () { copy.textContent = 'הועתק'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done, function () { window.prompt('הקישור:', link); });
+      } else { window.prompt('הקישור:', link); }
+      return;
+    }
+
+    var editAgent = event.target.closest('[data-agent-edit]');
+    if (editAgent) {
+      data.editAgent = (data.agents && data.agents.agents || []).filter(function (agent) {
+        return agent.id === editAgent.dataset.agentEdit;
+      })[0] || null;
+      renderAgents();
+      window.scrollTo(0, 0);
+      return;
+    }
+    if (event.target.id === 'ag-cancel') { data.editAgent = null; renderAgents(); return; }
+
+    var seeCustomers = event.target.closest('[data-agent-customers]');
+    if (seeCustomers) {
+      api('agents', { do: 'customers', agentId: seeCustomers.dataset.agentCustomers })
+        .then(renderAgentCustomers)
+        .catch(function (error) { window.alert(error.message); });
+      return;
+    }
+
+    if (event.target.id === 'adm-report-load') {
+      data.reportMonth = document.getElementById('adm-report-month').value || monthNow();
+      data.report = null;
+      renderAgents();
+      loadAgents();
+      return;
+    }
+
+    var payButton = event.target.closest('[data-pay]');
+    if (payButton) {
+      api('agents', { do: 'pay', companyIds: [payButton.dataset.pay], paid: payButton.dataset.paid === '1' })
+        .then(function () { data.report = null; renderAgents(); return loadAgents(); })
+        .catch(function (error) { window.alert(error.message); });
+      return;
+    }
+
     var toggle = event.target.closest('[data-coupon-toggle]');
     if (toggle) {
       api('coupons', {
@@ -941,6 +1305,42 @@
   });
 
   document.addEventListener('submit', function (event) {
+    if (event.target.id === 'adm-agent-form') {
+      event.preventDefault();
+      var agentBox = document.getElementById('adm-agent-msg');
+      agentBox.hidden = true;
+      var active = document.getElementById('ag-active');
+      var payload = {
+        do: 'save', id: event.target.dataset.id || '',
+        name: document.getElementById('ag-name').value,
+        code: document.getElementById('ag-code').value,
+        commission: document.getElementById('ag-commission').value,
+        qualifyCharges: document.getElementById('ag-qualify').value,
+        email: document.getElementById('ag-email').value,
+        phone: document.getElementById('ag-phone').value,
+        note: document.getElementById('ag-note').value
+      };
+      if (active) payload.active = active.checked;
+      api('agents', payload).then(function () {
+        data.editAgent = null; data.report = null;
+        renderAgents();
+        return loadAgents();
+      }).catch(function (error) { agentBox.textContent = error.message; agentBox.hidden = false; });
+      return;
+    }
+    if (event.target.id === 'adm-demo-form') {
+      event.preventDefault();
+      var demoBox = document.getElementById('adm-demo-msg');
+      demoBox.hidden = true;
+      api('demo', {
+        do: 'build',
+        managerEmail: document.getElementById('demo-manager').value,
+        employeeEmail: document.getElementById('demo-employee').value,
+        password: document.getElementById('demo-password').value
+      }).then(function () { return loadDemo(); })
+        .catch(function (error) { demoBox.textContent = error.message; demoBox.hidden = false; });
+      return;
+    }
     if (event.target.id !== 'adm-coupon-form') return;
     event.preventDefault();
     var box = document.getElementById('adm-coupon-msg');
@@ -971,8 +1371,9 @@
   });
 
   document.addEventListener('change', function (event) {
-    if (event.target.id !== 'adm-filter-status') return;
-    data.status = event.target.value;
+    if (event.target.id !== 'adm-filter-status' && event.target.id !== 'adm-filter-source') return;
+    if (event.target.id === 'adm-filter-source') data.source = event.target.value;
+    else data.status = event.target.value;
     loadCompanies();
   });
 

@@ -202,6 +202,18 @@ FakeSupabase.prototype.fetch = function (url, options) {
     return reply(200, this.companies[companyId]);
   }
 
+  /* שיוך לסוכן. כמו בשרת: רק קוד של סוכן קיים, ורק פעם אחת */
+  if (path === '/rest/v1/rpc/attach_referral') {
+    this.referralCalls = (this.referralCalls || []).concat([body.p_code]);
+    if (this.referralFails) return reply(500, { message: 'boom' });
+    var attacher = this.companyUsers[this._userFromAuth(headers)];
+    if (!attacher) return reply(403, { message: 'not signed in' });
+    var attached = this.companies[attacher.company_id];
+    if (attached.agent_code) return reply(200, 'already');
+    if (body.p_code === 'dana') { attached.agent_code = 'dana'; return reply(200, 'ok'); }
+    return reply(200, 'unknown');
+  }
+
   if (path === '/rest/v1/rpc/decide_constraint') {
     var actor = this.companyUsers[this._userFromAuth(headers)];
     if (!actor || ['owner', 'manager'].indexOf(actor.role) === -1) {
@@ -425,6 +437,70 @@ run('הרשמת חברה יוצרת בעלים עם תקופת ניסיון', fu
     assertEqual(rpc.length, 1, 'create_company לא נקרא בדיוק פעם אחת');
     assertEqual(rpc[0].body.p_trial_days, Model.TRIAL_DAYS, 'מספר ימי הניסיון אינו לפי המודל');
   });
+});
+
+/* ===== מאיפה הלקוח הגיע ===== */
+var Referral = require('../js/referral.js');
+function withReferralStorage(code) {
+  var store = memoryStorage();
+  globalThis.localStorage = store;
+  globalThis.ShiftReferral = Referral;
+  if (code) Referral.capture('?ref=' + code, store);
+  return store;
+}
+function endReferral() { delete globalThis.localStorage; delete globalThis.ShiftReferral; }
+var SIGNUP = { email: 'ref@test.co.il', password: 'secret123', name: 'דנה', companyName: 'עסק מהפניה', phone: '054-1234567' };
+
+run('הרשמה דרך קישור של סוכן משייכת את הלקוח אליו', function () {
+  var server = new FakeSupabase();
+  var store = withReferralStorage('dana');
+  return makeBackend(server).signUpCompany(SIGNUP).then(function () {
+    endReferral();
+    assertEqual((server.referralCalls || []).join(','), 'dana', 'attach_referral לא נקרא עם הקוד');
+    var company = server.companies[Object.keys(server.companies)[0]];
+    assertEqual(company.agent_code, 'dana', 'הלקוח לא שויך');
+    assertEqual(Referral.get(store), null, 'הקוד נשאר אחרי ששויך');
+  }, function (err) { endReferral(); throw err; });
+});
+
+run('הרשמה בלי קישור היא האתר: אין קריאת שיוך', function () {
+  var server = new FakeSupabase();
+  withReferralStorage(null);
+  return makeBackend(server).signUpCompany(SIGNUP).then(function () {
+    endReferral();
+    assertEqual((server.referralCalls || []).length, 0, 'נקראה attach_referral בלי קוד');
+  }, function (err) { endReferral(); throw err; });
+});
+
+run('כישלון בשיוך אינו מפיל את ההרשמה, והקוד נשמר לניסיון הבא', function () {
+  var server = new FakeSupabase();
+  server.referralFails = true;
+  var store = withReferralStorage('dana');
+  return makeBackend(server).signUpCompany(SIGNUP).then(function (session) {
+    endReferral();
+    assertEqual(session.user.role, 'owner', 'ההרשמה נכשלה בגלל השיוך');
+    assertEqual(Referral.get(store), 'dana', 'הקוד נמחק למרות שהשיוך נכשל');
+  }, function (err) { endReferral(); throw err; });
+});
+
+run('קוד שאינו קיים נמחק, וההרשמה תקינה', function () {
+  var server = new FakeSupabase();
+  var store = withReferralStorage('ghost');
+  return makeBackend(server).signUpCompany(SIGNUP).then(function (session) {
+    endReferral();
+    assertEqual(session.company.status, 'trial', 'הרשמה');
+    assertEqual(Referral.get(store), null, 'קוד לא קיים נשאר');
+  }, function (err) { endReferral(); throw err; });
+});
+
+run('הקוד נשמר גם על משתמש האימות, למי שמאשר מייל ממכשיר אחר', function () {
+  var server = new FakeSupabase();
+  withReferralStorage('dana');
+  return makeBackend(server).signUpCompany(SIGNUP).then(function () {
+    endReferral();
+    var signup = server.calls.filter(function (c) { return c.path === '/auth/v1/signup'; })[0];
+    assertEqual(signup.body.data.ref, 'dana', 'הקוד לא נשלח במטא-דאטה');
+  }, function (err) { endReferral(); throw err; });
 });
 
 run('סיסמה קצרה נדחית לפני פנייה לשרת', function () {

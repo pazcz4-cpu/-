@@ -21,6 +21,10 @@ module.exports = async function ({ body, db }) {
   const term = String((body && body.q) || '');
   const status = String((body && body.status) || '');
   const plan = String((body && body.plan) || '');
+  /* מקור: direct = האתר, agent = דרך סוכן, free = פיילוט ללא תשלום,
+     demo = חשבון הדגמה */
+  const source = String((body && body.source) || '');
+  const agentFilter = String((body && body.agentId) || '');
   const limit = Math.min(Math.max(Number((body && body.limit) || 200), 1), 1000);
 
   const companiesCall = await db('/companies?select=*&order=created_at.desc&limit=5000');
@@ -37,6 +41,14 @@ module.exports = async function ({ body, db }) {
 
   const ticketsCall = await db('/support_tickets?select=company_id,status&limit=20000');
   const tickets = (ticketsCall.ok && ticketsCall.body) || [];
+
+  /* שמות הסוכנים. אם הטבלה עוד לא קיימת (המיגרציה לא רצה), הרשימה
+     עדיין נטענת, בלי שם סוכן. */
+  const agentsCall = await db('/sales_agents?select=id,name,code&limit=1000');
+  const agentById = {};
+  ((agentsCall.ok && agentsCall.body) || []).forEach(function (agent) {
+    agentById[agent.id] = agent;
+  });
 
   /* קיבוץ מראש, כדי שלא נסרוק את כל המשתמשים לכל חברה */
   const owners = {};
@@ -62,6 +74,11 @@ module.exports = async function ({ body, db }) {
     .filter(function (company) {
       if (status && company.status !== status) return false;
       if (plan && company.plan !== plan) return false;
+      if (source === 'direct' && (company.is_demo || company.source === 'agent')) return false;
+      if (source === 'agent' && (company.is_demo || company.source !== 'agent')) return false;
+      if (source === 'free' && company.free_access !== true) return false;
+      if (source === 'demo' && company.is_demo !== true) return false;
+      if (agentFilter && company.agent_id !== agentFilter) return false;
       return matches(company, owners[company.id], term);
     })
     .slice(0, limit)
@@ -89,6 +106,13 @@ module.exports = async function ({ body, db }) {
         cancelAtPeriodEnd: !!company.cancel_at_period_end,
         hasCard: !!company.billing_subscription_id,
         createdAt: company.created_at,
+        freeAccess: company.free_access === true,
+        freeUntil: company.free_until || null,
+        isDemo: company.is_demo === true,
+        source: company.source === 'agent' ? 'agent' : 'direct',
+        agentId: company.agent_id || null,
+        agentName: company.agent_id && agentById[company.agent_id]
+          ? agentById[company.agent_id].name : null,
         ownerEmail: owner ? owner.email : null,
         ownerName: owner ? owner.name : null,
         users: seats[company.id] || 0,

@@ -435,6 +435,31 @@ console.log('14. שדה הקופון במסך המנוי אינו details מקו
 if (visible === 'details') errors.push('שדה הקופון עדיין מקופל');
 await fresh.close();
 
+/* ===== פיילוט ללא תשלום: המסך אינו מדבר על חיוב =====
+   לקוח שקיבל את המערכת בחינם ורואה "החיוב הבא: 2099" או כפתור
+   "חיבור כרטיס" פונה לשאול. */
+await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem('maiphone-mock-server-v1'));
+  const id = Object.keys(raw.companies)[0];
+  raw.companies[id].freeAccess = true;
+  raw.companies[id].freeUntil = null;
+  raw.companies[id].status = 'active';
+  raw.companies[id].validUntil = '2099-12-31T00:00:00.000Z';
+  localStorage.setItem('maiphone-mock-server-v1', JSON.stringify(raw));
+});
+await page.reload();
+await page.waitForTimeout(900);
+await page.click('[data-screen="billing"]').catch(() => {});
+await page.waitForTimeout(500);
+const freePanel = await page.locator('#billing-panel').innerText();
+console.log('15. פיילוט ללא תשלום: המסך אומר שאין חיוב:', /ללא תשלום/.test(freePanel) ? '✓' : '✗');
+if (!/ללא תשלום/.test(freePanel)) errors.push('מסך המנוי לא אומר שהחשבון ללא תשלום');
+console.log('    ואינו מציג חיוב הבא ו-2099:', !/2099|החיוב הבא/.test(freePanel) ? '✓' : '✗');
+if (/2099|החיוב הבא/.test(freePanel)) errors.push('פיילוט מציג חיוב הבא');
+console.log('    ואין כפתור חיבור כרטיס:',
+  (await page.locator('#billing-add-card').count()) === 0 ? '✓' : '✗');
+if ((await page.locator('#billing-add-card').count()) !== 0) errors.push('פיילוט מציג חיבור כרטיס');
+
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();
 if (errors.length) process.exit(1);

@@ -4278,5 +4278,58 @@ test('כל עסק קובע יום ושעה משלו, והשינוי נקרא מ�
 });
 
 
+/* ===== קישור הפניה של סוכן ===== */
+var Referral = require('../js/referral.js');
+function memStore() {
+  var data = {};
+  return { getItem: function (k) { return k in data ? data[k] : null; },
+    setItem: function (k, v) { data[k] = String(v); }, removeItem: function (k) { delete data[k]; } };
+}
+
+test('קוד הפניה נקרא מהכתובת, באותיות קטנות', function () {
+  assertEqual(Referral.fromSearch('?ref=dana'), 'dana', 'פשוט');
+  assertEqual(Referral.fromSearch('?utm=x&ref=Dana-2'), 'dana-2', 'אותיות גדולות ופרמטר נוסף');
+  assertEqual(Referral.fromSearch('?other=1'), null, 'אין קוד');
+  assertEqual(Referral.fromSearch(''), null, 'ריק');
+});
+
+test('קוד שאינו תקין אינו נשמר: לא מקבלים סימנים, רווחים או קוד קצר מדי', function () {
+  assertEqual(Referral.fromSearch('?ref=a'), null, 'קצר מדי');
+  assertEqual(Referral.fromSearch('?ref=<script>'), null, 'תגית');
+  assertEqual(Referral.fromSearch('?ref=a%20b'), null, 'רווח');
+  assertEqual(Referral.fromSearch('?ref=' + new Array(60).join('a')), null, 'ארוך מדי');
+  var store = memStore();
+  assertEqual(Referral.capture('?ref=<x>', store), null, 'נשמר קוד פסול');
+  assertEqual(Referral.get(store), null, 'נקרא קוד פסול');
+});
+
+test('הקוד נשמר ל-60 יום ואז פג', function () {
+  var store = memStore();
+  var day = 864e5;
+  Referral.capture('?ref=dana', store, 1000);
+  assertEqual(Referral.get(store, 1000 + 59 * day), 'dana', 'לפני 60 יום');
+  assertEqual(Referral.get(store, 1000 + 61 * day), null, 'אחרי 60 יום');
+});
+
+test('הקישור האחרון שנלחץ הוא זה שקובע', function () {
+  var store = memStore();
+  Referral.capture('?ref=first', store, 1000);
+  Referral.capture('?ref=second', store, 2000);
+  assertEqual(Referral.get(store, 3000), 'second', 'הישן לא הוחלף');
+  Referral.capture('', store, 4000);
+  assertEqual(Referral.get(store, 5000), 'second', 'כתובת בלי קוד מחקה את השמור');
+  Referral.clear(store);
+  assertEqual(Referral.get(store, 5000), null, 'clear');
+});
+
+test('אחסון חסום אינו שובר את הדף', function () {
+  var broken = { getItem: function () { throw new Error('blocked'); },
+    setItem: function () { throw new Error('blocked'); }, removeItem: function () { throw new Error('blocked'); } };
+  assertEqual(Referral.capture('?ref=dana', broken), 'dana', 'הלכידה אמורה לחזור עם הקוד');
+  assertEqual(Referral.get(broken), null, 'קריאה מאחסון חסום');
+  Referral.clear(broken);
+});
+
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

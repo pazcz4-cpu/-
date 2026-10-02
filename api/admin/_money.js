@@ -133,8 +133,12 @@ function monthlyOf(company, plans) {
    שמשלמים היום. זה המספר שאומר אם העסק גדל, ולא סכום החיובים
    של החודש שעבר – שמושפע מתאריכי חידוש. */
 function recurring(companies, plans) {
+  /* פיילוט ללא תשלום וחשבון הדגמה אינם הכנסה, גם אם הם פעילים
+     והחבילה שלהם בעלת מחיר: מי שרואה אותם בתחזית מצפה לכסף
+     שלא יגיע. */
   const paying = (companies || []).filter(function (company) {
-    return company.status === 'active' && !company.cancel_at_period_end;
+    return company.status === 'active' && !company.cancel_at_period_end &&
+      !company.free_access && !company.is_demo;
   });
   const total = sum(paying.map(function (company) {
     return monthlyOf(company, plans);

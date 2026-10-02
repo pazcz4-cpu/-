@@ -318,7 +318,9 @@
     'coupon_code', 'discount_percent', 'discount_amount', 'discount_charges_left',
     'wa_opt_in', 'wa_opt_out_at',
     'wa_employee_addon', 'wa_declaration_at', 'wa_declaration_name',
-    'wa_declaration_version'
+    'wa_declaration_version',
+    /* פיילוט ללא תשלום: החשבון פעיל בלי חיוב, ומסך המנוי אומר את זה */
+    'free_access', 'free_until'
   ];
 
   /* קריאת החברה, ובלי שעמודה חסרה תנעל את כולם בחוץ.
@@ -391,6 +393,8 @@
               discountPercent: Number(row.discount_percent) || 0,
               discountAmount: Number(row.discount_amount) || 0,
               discountChargesLeft: Number(row.discount_charges_left) || 0,
+              freeAccess: row.free_access === true,
+              freeUntil: row.free_until || null,
               validUntil: row.valid_until, createdAt: row.created_at
             };
             self._session = {
@@ -404,6 +408,22 @@
             return self._session;
           });
       });
+  };
+
+  /* שיוך לקוח חדש לסוכן, מהקוד שנשמר מהקישור.
+
+     כישלון כאן אינו כישלון הרשמה: לקוח שנרשם אך לא שויך הוא לקוח
+     לכל דבר, והמשרד האחורי יכול לשייך אותו ידנית. לכן שום שגיאה
+     אינה עוברת הלאה, והקוד נשמר עד שהשרת עונה ("ok", "unknown",
+     "already", "late") – מצב רשת רע בהרשמה לא ימחק את השיוך. */
+  SupabaseBackend.prototype._attachReferral = function (fallbackCode) {
+    var Ref = root.ShiftReferral;
+    var code = (Ref && Ref.get()) || fallbackCode || null;
+    if (!code) return Promise.resolve(null);
+    return this._rpc('attach_referral', { p_code: code }).then(function (answer) {
+      if (Ref) Ref.clear();
+      return answer;
+    }, function () { return null; });
   };
 
   /* משלים הרשמה שנקטעה באמצע בגלל אישור המייל.
@@ -425,6 +445,10 @@
         p_phone: Model.normalizePhone(meta.phone),
         p_wa_opt_in: !!meta.wa_opt_in,
         p_wa_opt_in_text: meta.wa_opt_in ? String(meta.wa_opt_in_text || '') : ''
+      }).then(function () {
+        /* הקוד נשמר גם על משתמש האימות: הלקוח מאשר את המייל לפעמים
+           ממכשיר אחר, שבו הקישור המקורי מעולם לא נפתח */
+        return self._attachReferral(String(meta.ref || '').toLowerCase());
       }).then(function () { return self._loadSession(); });
     }, function () {
       /* אם לא הצלחנו לקרוא את המשתמש, נופלים חזרה להתנהגות הרגילה */
@@ -607,6 +631,7 @@
            רשום כמי שהסכים. */
         data: {
           name: input.name || '', company_name: companyName, phone: phone,
+          ref: (root.ShiftReferral && root.ShiftReferral.get()) || '',
           wa_opt_in: !!input.waOptIn,
           wa_opt_in_text: input.waOptIn ? String(input.waOptInText || '').slice(0, 400) : ''
         }
@@ -625,6 +650,8 @@
         p_wa_opt_in: !!input.waOptIn,
         p_wa_opt_in_text: input.waOptIn ? String(input.waOptInText || '').slice(0, 400) : ''
       });
+    }).then(function () {
+      return self._attachReferral(null);
     }).then(function () {
       return self._loadSession();
     });

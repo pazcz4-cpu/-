@@ -1956,3 +1956,116 @@ end;
 $$;
 
 grant execute on function public.set_wa_employee_addon(boolean, text, text) to authenticated;
+
+-- FREE PILOT, DEMO, SALES AGENTS: פיילוט ללא תשלום, הדגמה וסוכני מכירות
+--
+-- הכול נכתב מהמשרד האחורי (service_role). grant update על
+-- companies מוגבל ל-(name, tax_id, phone, logo), ולכן לקוח אינו
+-- יכול לסמן את עצמו כפיילוט, כהדגמה או כמי שהגיע דרך סוכן.
+
+-- סוכנים. הטבלה סגורה לחלוטין בפני הדפדפן: בה יושבות עמלות.
+create table if not exists public.sales_agents (
+  id              uuid primary key default gen_random_uuid(),
+  name            text not null check (length(trim(name)) between 1 and 120),
+  -- הקוד שבקישור ההפניה: setshifts.com/?ref=<code>
+  code            text not null unique check (code ~ '^[a-z0-9][a-z0-9_-]{1,38}$'),
+  email           text,
+  phone           text,
+  -- העמלה בשקלים על כל לקוח שהגיע ליעד
+  commission      integer not null default 0 check (commission >= 0),
+  -- כמה חיובים מוצלחים (בתשלום) לקוח צריך לשלם עד שהסוכן מקבל עמלה
+  qualify_charges integer not null default 3 check (qualify_charges between 1 and 24),
+  active          boolean not null default true,
+  note            text,
+  created_at      timestamptz not null default now()
+);
+
+alter table public.sales_agents enable row level security;
+revoke all on public.sales_agents from authenticated, anon;
+
+alter table public.companies
+  -- פיילוט: ללא תשלום, ועד free_until אם נקבע
+  add column if not exists free_access    boolean not null default false,
+  add column if not exists free_until     timestamptz,
+  -- חשבון הדגמה של בעל המוצר. אינו נספר בהכנסה ובעמלות.
+  add column if not exists is_demo        boolean not null default false,
+  -- מאיפה הלקוח הגיע: 'direct' = האתר, 'agent' = דרך סוכן
+  add column if not exists source         text not null default 'direct'
+    check (source in ('direct', 'agent')),
+  add column if not exists agent_id       uuid references public.sales_agents(id) on delete set null,
+  add column if not exists referral_code  text,
+  add column if not exists attributed_at  timestamptz;
+
+create index if not exists companies_agent_idx
+  on public.companies (agent_id) where agent_id is not null;
+
+-- עמלה שנוצרה: שורה אחת לכל לקוח שהגיע ליעד. הסכום נשמר ברגע
+-- שהשורה נוצרת, כדי ששינוי עמלה בעתיד לא ישכתב היסטוריה.
+create table if not exists public.agent_commissions (
+  company_id    uuid primary key references public.companies(id) on delete cascade,
+  agent_id      uuid not null references public.sales_agents(id) on delete restrict,
+  qualified_at  timestamptz not null,
+  month         text not null check (month ~ '^\d{4}-\d{2}$'),
+  amount        integer not null check (amount >= 0),
+  status        text not null default 'pending' check (status in ('pending', 'paid')),
+  paid_at       timestamptz,
+  note          text,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists agent_commissions_agent_idx
+  on public.agent_commissions (agent_id, month);
+
+alter table public.agent_commissions enable row level security;
+revoke all on public.agent_commissions from authenticated, anon;
+
+-- שיוך לקוח חדש לסוכן. נקרא מהדפדפן מיד אחרי ההרשמה, עם הקוד
+-- שנשמר מהקישור. security definer: הלקוח אינו רשאי לכתוב את
+-- השדות האלה בעצמו.
+--
+-- מחזירה טקסט קצר ולא שגיאה, כי כישלון בשיוך לעולם אינו אמור
+-- לעצור הרשמה: ok | unknown | already | late | forbidden
+--   · already: כבר שויך (או שהמשרד האחורי שייך ידנית)
+--   · late: עברו יומיים מההרשמה. קישור שנלחץ אחרי שבוע אינו
+--           סיבה לשנות מקור של לקוח קיים.
+create or replace function public.attach_referral(p_code text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company uuid := public.current_company_id();
+  v_row     public.companies;
+  v_agent   public.sales_agents;
+begin
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  if not public.is_manager() then
+    return 'forbidden';
+  end if;
+
+  select * into v_row from public.companies where id = v_company;
+  if v_row.attributed_at is not null or v_row.agent_id is not null then
+    return 'already';
+  end if;
+  if v_row.created_at < now() - interval '2 days' then
+    return 'late';
+  end if;
+
+  select * into v_agent from public.sales_agents
+   where code = lower(trim(coalesce(p_code, ''))) and active;
+  if not found then
+    return 'unknown';
+  end if;
+
+  update public.companies
+     set agent_id = v_agent.id, source = 'agent',
+         referral_code = v_agent.code, attributed_at = now()
+   where id = v_company;
+  return 'ok';
+end;
+$$;
+
+grant execute on function public.attach_referral(text) to authenticated;

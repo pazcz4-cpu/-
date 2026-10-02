@@ -10,6 +10,7 @@
 const Money = require('./_money.js');
 const Seats = require('../_seats.js');
 const Model = require('../../js/backend/model.js');
+const Agents = require('./_agents-core.js');
 
 module.exports = async function ({ body, db }) {
   const id = String((body && body.id) || '').trim();
@@ -41,6 +42,30 @@ module.exports = async function ({ body, db }) {
   const weeks = (weeksCall.ok && weeksCall.body) || [];
   const plan = Model.PLANS[company.plan];
 
+  /* מקור הלקוח, ואם הגיע דרך סוכן – כמה חיובים שילם עד היום
+     ומתי יגיע ליעד. טבלת הסוכנים עוד לא קיימת לפני המיגרציה, ואז
+     הכרטיס נטען בלי החלק הזה. */
+  let agent = null;
+  if (company.agent_id) {
+    const agentCall = await db('/sales_agents?id=eq.' + encodeURIComponent(company.agent_id) + '&select=*');
+    const row = agentCall.ok && agentCall.body && agentCall.body[0];
+    if (row) {
+      const paid = Agents.paidCharges(events);
+      const when = Agents.qualifiedAt(paid, row.qualify_charges);
+      const commissionCall = await db('/agent_commissions?company_id=eq.' + key + '&select=*');
+      const commission = commissionCall.ok && commissionCall.body && commissionCall.body[0];
+      agent = {
+        id: row.id, name: row.name, code: row.code,
+        commissionAmount: row.commission, qualifyCharges: row.qualify_charges,
+        paidCharges: paid.length, qualifiedAt: when,
+        commission: commission
+          ? { amount: commission.amount, status: commission.status, month: commission.month,
+              paidAt: commission.paid_at }
+          : null
+      };
+    }
+  }
+
 
   return {
     body: {
@@ -71,6 +96,11 @@ module.exports = async function ({ body, db }) {
         waAddonMonthly: company.wa_employee_addon === true
           ? Model.WA_EMPLOYEE_PRICE * (Seats.billable(company) || 0) : 0,
         byQuote: !!(plan && plan.quote),
+        freeAccess: company.free_access === true,
+        freeUntil: company.free_until || null,
+        isDemo: company.is_demo === true,
+        source: company.source === 'agent' ? 'agent' : 'direct',
+        agent: agent,
         status: company.status, validUntil: company.valid_until,
         currentPeriodEnd: company.current_period_end,
         cancelAtPeriodEnd: !!company.cancel_at_period_end,

@@ -484,8 +484,29 @@ module.exports = async function handler(req, res) {
 
   if (!due.ok) return send(res, 500, { message: 'Could not read companies' });
 
+  /* פיילוט ללא תשלום: לא מחייבים ולא סוגרים, עד שהוא נגמר. נקרא
+     בשאילתה נפרדת ולא ברשימת העמודות שלמעלה: העמודה נוספת
+     במיגרציה, וקריאה שנכשלת כאן (לפני שהמיגרציה רצה) פירושה
+     "אין פיילוטים", לא חיוב שנעצר לכולם. */
+  const freeIds = {};
+  const dueIds = (due.body || []).map(function (company) { return company.id; });
+  if (dueIds.length) {
+    const freeCall = await db('/companies?id=in.(' + dueIds.map(encodeURIComponent).join(',') +
+      ')&free_access=eq.true&select=id,free_until');
+    if (freeCall.ok && Array.isArray(freeCall.body)) {
+      freeCall.body.forEach(function (row) {
+        /* פיילוט שהתאריך שלו עבר חוזר להיות לקוח רגיל */
+        if (!row.free_until || new Date(row.free_until) > now) freeIds[row.id] = true;
+      });
+    }
+  }
+
   const results = [];
   for (const company of due.body || []) {
+    if (freeIds[company.id]) {
+      results.push({ company: company.id, action: 'skipped', reason: 'free-access' });
+      continue;
+    }
     /* ביטל – לא מחייבים, רק סוגרים */
     if (company.cancel_at_period_end) {
       await patchCompany(company.id, { status: 'canceled' });

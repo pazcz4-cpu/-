@@ -445,6 +445,8 @@
         reasonSaved: 'Grund gespeichert', reasonGiven: 'Angegebener Grund: {text}',
         managerNote: 'Notiz der Führungskraft: {text}',
         needsApproval: 'Jeder Wunsch geht an Ihre Führungskraft und wirkt sich erst nach der Genehmigung auf den Plan aus.',
+        decisionHiddenManager: 'Zusagen und Ablehnungen sehen Mitarbeitende erst nach der Veröffentlichung des Dienstplans. Bis dahin erscheint die Anfrage für sie als offen.',
+        decisionAfterPublish: 'Die Antwort auf Ihre Anfrage erscheint hier, sobald der Dienstplan veröffentlicht ist.',
         noChange: 'Keine Änderung'
       },
 

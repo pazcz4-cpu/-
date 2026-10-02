@@ -331,7 +331,10 @@
     out.assignments = assignments;
     var constraints = {};
     Object.keys(week.constraints || {}).forEach(function (key) {
-      if (mine && key.indexOf(mine + '|') === 0) constraints[key] = week.constraints[key];
+      if (mine && key.indexOf(mine + '|') === 0) {
+        /* החלטת המנהל לפני פרסום אינה עוברת לעובד (כמו בשרת) */
+        constraints[key] = Store.visibleToEmployee(week.constraints[key], week.published);
+      }
     });
     out.constraints = constraints;
     out.manual = {};

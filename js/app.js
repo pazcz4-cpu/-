@@ -3101,7 +3101,7 @@
         free: t('constraints.free'),
         preferred: t('constraints.preferred'),
         blocked: t('constraints.blocked')
-      });
+      }) + ' ' + t('constraints.decisionHiddenManager');
     }
     if (window.I18nDom) { window.I18nDom.fillPicker($('#language-select')); }
   }

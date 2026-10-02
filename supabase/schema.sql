@@ -1366,9 +1366,21 @@ returns jsonb language sql immutable set search_path = public as $$
        where p_employee is not null and item->>'empId' = p_employee
     ), '[]'::jsonb),
     -- הבקשות שלו מוצגות לו תמיד, גם לפני פרסום – הוא זה שהגיש
-    -- אותן, והוא צריך לראות מה מצבן.
+    -- אותן. אבל אישור או דחייה של המנהל מוצגים לו רק אחרי הפרסום:
+    -- עד אז הבקשה נראית ממתינה, בלי הערת המנהל ובלי מי החליט ומתי.
+    -- רק בקשה שהמנהל באמת הכריע בה (decidedAt) מוסתרת. בקשת חופשה
+    -- (requestId) היא בקשה נפרדת, וההחלטה עליה מוצגת מיד.
     'constraints', coalesce((
-      select jsonb_object_agg(item.key, item.value)
+      select jsonb_object_agg(item.key,
+               case
+                 when not coalesce(p_published, false)
+                  and item.value ? 'decidedAt'
+                  and not (item.value ? 'requestId')
+                  and (item.value->>'status') in ('approved', 'rejected')
+                 then (item.value - 'decidedAt' - 'decidedBy' - 'managerNote')
+                      || jsonb_build_object('status', 'pending')
+                 else item.value
+               end)
         from jsonb_each(coalesce(p_week->'constraints', '{}'::jsonb)) as item(key, value)
        where p_employee is not null and item.key like p_employee || '|%'
     ), '{}'::jsonb)

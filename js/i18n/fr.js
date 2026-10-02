@@ -445,6 +445,8 @@
         reasonSaved: 'Motif enregistré', reasonGiven: 'Motif indiqué : {text}',
         managerNote: 'Note du responsable : {text}',
         needsApproval: 'Chaque demande passe par votre responsable et n’affecte le planning qu’une fois approuvée.',
+        decisionHiddenManager: 'Les acceptations et les refus ne sont visibles par l’employé qu’après la publication du planning. D’ici là, la demande lui apparaît en attente.',
+        decisionAfterPublish: 'La réponse à votre demande s’affichera ici une fois le planning publié.',
         noChange: 'Aucun changement'
       },
 

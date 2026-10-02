@@ -424,6 +424,50 @@ asyncTest('החלטה לא חוקית ובקשה שאינה קיימת נדחו�
     });
 });
 
+asyncTest('העובד רואה אישור או דחייה של בקשה רק אחרי פרסום הסידור', function () {
+  var backend = freshBackend();
+  var KEY = '2026-09-20';
+  return backend.signUpCompany({ companyName: 'חברה', email: 'own26@a.com', password: 'secret1', phone: '054-1234567'})
+    .then(function () {
+      return backend.createUser({ email: 'emp26@a.com', password: 'secret1', role: 'employee', employeeId: 'emp-26' });
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp26@a.com', password: 'secret1' }); })
+    .then(function () { return backend.saveOwnConstraint(KEY, 1, { off: true, blocked: {}, preferred: {} }); })
+    .then(function () { return backend.saveOwnConstraint(KEY, 2, { off: false, blocked: { morning: true }, preferred: {} }); })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'own26@a.com', password: 'secret1' }); })
+    .then(function () { return backend.decideConstraint(KEY, 'emp-26', 1, 'approved', 'בסדר גמור'); })
+    .then(function () { return backend.decideConstraint(KEY, 'emp-26', 2, 'rejected', 'צריך אותך'); })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp26@a.com', password: 'secret1' }); })
+    .then(function () { return backend.loadWeek(KEY); })
+    .then(function (week) {
+      var approved = week.constraints['emp-26|1'];
+      var rejected = week.constraints['emp-26|2'];
+      assertEqual(approved.status, 'pending', 'אישור לפני פרסום מוצג כממתין');
+      assertEqual(rejected.status, 'pending', 'דחייה לפני פרסום מוצגת כממתינה');
+      assert(!approved.managerNote && !rejected.managerNote, 'הערת המנהל דלפה לפני פרסום');
+      assert(!approved.decidedAt && !approved.decidedBy && !rejected.decidedAt, 'פרטי ההחלטה דלפו לפני פרסום');
+      assertEqual(approved.off, true, 'תוכן הבקשה נשאר');
+      return backend.signOut();
+    })
+    .then(function () { return backend.signIn({ email: 'own26@a.com', password: 'secret1' }); })
+    .then(function () { return backend.loadWeek(KEY); })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-26|1'].status, 'approved', 'המנהל תמיד רואה את ההחלטה');
+      return backend.publishWeek(KEY, true);
+    })
+    .then(function () { return backend.signOut(); })
+    .then(function () { return backend.signIn({ email: 'emp26@a.com', password: 'secret1' }); })
+    .then(function () { return backend.loadWeek(KEY); })
+    .then(function (week) {
+      assertEqual(week.constraints['emp-26|1'].status, 'approved', 'אחרי פרסום האישור מוצג');
+      assertEqual(week.constraints['emp-26|2'].status, 'rejected', 'אחרי פרסום הדחייה מוצגת');
+      assertEqual(week.constraints['emp-26|2'].managerNote, 'צריך אותך', 'ואיתה ההערה');
+    });
+});
+
 asyncTest('עריכה חוזרת של בקשה שאושרה מחזירה אותה לאישור', function () {
   var backend = freshBackend();
   return backend.signUpCompany({ companyName: 'חברה', email: 'own25@a.com', password: 'secret1', phone: '054-1234567'})

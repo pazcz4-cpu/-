@@ -451,6 +451,8 @@
         reasonSaved: 'Reason saved', reasonGiven: 'Reason you gave: {text}',
         managerNote: 'Manager note: {text}',
         needsApproval: 'Every request goes to your manager and only affects the schedule once approved.',
+        decisionHiddenManager: 'Approvals and rejections are shown to the employee only after the schedule is published. Until then the request looks pending to them.',
+        decisionAfterPublish: 'The answer to your request will appear here once the schedule is published.',
         noChange: 'No change'
       },
 

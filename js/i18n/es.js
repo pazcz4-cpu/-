@@ -445,6 +445,8 @@
         reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
         managerNote: 'Nota del responsable: {text}',
         needsApproval: 'Cada solicitud pasa por tu responsable y solo afecta al horario una vez aprobada.',
+        decisionHiddenManager: 'Las aprobaciones y los rechazos solo se muestran al empleado cuando se publica el horario. Hasta entonces la solicitud le aparece como pendiente.',
+        decisionAfterPublish: 'La respuesta a tu solicitud aparecerá aquí cuando se publique el horario.',
         noChange: 'Sin cambios'
       },
 

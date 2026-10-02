@@ -4224,5 +4224,32 @@ test('מתלמד אינו נבחר כמי שיכול לאייש משמרת חס�
 });
 
 
+/* ===== מה שהעובד רואה מהחלטת המנהל ===== */
+test('החלטת מנהל על בקשה מוסתרת מהעובד לפני פרסום', function () {
+  var decided = { off: true, status: 'rejected', managerNote: 'לא', decidedAt: '2026-09-20T10:00:00Z', decidedBy: 'u1', note: 'חתונה' };
+  var seen = Store.visibleToEmployee(decided, false);
+  assertEqual(seen.status, 'pending', 'נחשפה הדחייה');
+  assertEqual(seen.managerNote, '', 'נחשפה הערת המנהל');
+  assert(seen.decidedAt === undefined && seen.decidedBy === undefined, 'נחשפו פרטי ההחלטה');
+  assertEqual(seen.note, 'חתונה', 'הסיבה של העובד נעלמה');
+  assertEqual(decided.status, 'rejected', 'הפונקציה שינתה את המקור');
+});
+
+test('אחרי פרסום ההחלטה מוצגת כמו שהיא', function () {
+  var decided = { off: true, status: 'approved', managerNote: 'בסדר', decidedAt: '2026-09-20T10:00:00Z' };
+  assertEqual(Store.visibleToEmployee(decided, true), decided, 'שונתה אחרי פרסום');
+});
+
+test('בקשה ממתינה, אילוץ בלי הכרעה ובקשת חופשה אינם מוסתרים', function () {
+  var pending = { off: true, status: 'pending' };
+  assertEqual(Store.visibleToEmployee(pending, false), pending, 'ממתינה שונתה');
+  var manual = { off: true };
+  assertEqual(Store.visibleToEmployee(manual, false), manual, 'אילוץ שהמנהל הזין שונה');
+  var leave = { off: true, status: 'approved', requestId: 'r1', decidedAt: '2026-09-20T10:00:00Z', managerNote: 'נסיעה טובה' };
+  assertEqual(Store.visibleToEmployee(leave, false), leave, 'החלטה על חופשה הוסתרה');
+  assertEqual(Store.visibleToEmployee(null, false), null, 'null');
+});
+
+
 console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed === 0 ? 0 : 1);

@@ -328,7 +328,11 @@
 
   /* הרשומה כפי שנשמרה – העובד רואה גם בקשה שממתינה או שנדחתה */
   EmployeeUI.prototype._record = function (dayIdx) {
-    return Store.getConstraintRecord(this.week, this._employeeId(), dayIdx);
+    /* החלטת המנהל מוצגת רק אחרי פרסום. השרת כבר מסתיר אותה מהעובד;
+       כאן זה גם מה שרואה המנהל בתצוגה המקדימה, שקוראת את כל הנתונים. */
+    return Store.visibleToEmployee(
+      Store.getConstraintRecord(this.week, this._employeeId(), dayIdx),
+      !!(this.week && this.week.published));
   };
 
   EmployeeUI.prototype._constraint = function (dayIdx) {
@@ -864,7 +868,8 @@
         free: t('constraints.free'),
         preferred: t('constraints.preferred'),
         blocked: t('constraints.blocked')
-      })) + '<br><b>' + esc(t('constraints.needsApproval')) + '</b></p>';
+      })) + '<br><b>' + esc(t('constraints.needsApproval')) + '</b> ' +
+        esc(t('constraints.decisionAfterPublish')) + '</p>';
 
       /* המכסה נאמרת מראש. עובד שמגלה אותה רק כשהוא נחסם חושב
          שהמערכת תקולה, ולא שיש כלל. המספר כבר באריח שלמעלה;

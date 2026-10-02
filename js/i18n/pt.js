@@ -445,6 +445,8 @@
         reasonSaved: 'Motivo guardado', reasonGiven: 'Motivo indicado: {text}',
         managerNote: 'Nota do responsável: {text}',
         needsApproval: 'Cada pedido passa pelo teu responsável e só afeta o horário depois de aprovado.',
+        decisionHiddenManager: 'As aprovações e recusas só aparecem ao funcionário depois de a escala ser publicada. Até lá, o pedido surge-lhe como pendente.',
+        decisionAfterPublish: 'A resposta ao teu pedido aparecerá aqui quando a escala for publicada.',
         noChange: 'Sem alterações'
       },
 

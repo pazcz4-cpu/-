@@ -450,6 +450,33 @@
     return record.status || CONSTRAINT_STATUS.APPROVED;
   }
 
+  /* מה שהעובד רואה מהחלטת המנהל. אישור או דחייה של בקשת אילוץ
+     אינם מוצגים לעובד לפני שהסידור פורסם: עד אז הבקשה נראית לו
+     ממתינה, בלי הערת המנהל ובלי מי החליט ומתי. כך החלטה על יום אחד
+     אינה הופכת למשא ומתן על סידור שעדיין נבנה.
+
+     רק בקשה שהמנהל באמת הכריע בה (decidedAt) מוסתרת. רשומה בלי
+     הכרעה – למשל אילוץ שהמנהל הזין בעצמו – אינה בקשה של העובד
+     ולכן נשארת כמות שהיא. בקשת חופשה היא בקשה נפרדת עם לוח משלה
+     (requestId), והחלטה עליה מוצגת מיד כמו קודם.
+
+     הפונקציה אינה משנה את הרשומה שנשלחה אליה. */
+  function visibleToEmployee(record, published) {
+    if (!record || published) return record;
+    if (record.requestId) return record;
+    var status = record.status;
+    if (!record.decidedAt ||
+        (status !== CONSTRAINT_STATUS.APPROVED && status !== CONSTRAINT_STATUS.REJECTED)) {
+      return record;
+    }
+    var out = JSON.parse(JSON.stringify(record));
+    out.status = CONSTRAINT_STATUS.PENDING;
+    out.managerNote = '';
+    delete out.decidedAt;
+    delete out.decidedBy;
+    return out;
+  }
+
   function isEffective(record) {
     return !!record && constraintStatus(record) === CONSTRAINT_STATUS.APPROVED;
   }
@@ -3120,6 +3147,7 @@
     weekKeyOf: weekKeyOf,
     effectiveConstraint: effectiveConstraint,
     constraintStatus: constraintStatus,
+    visibleToEmployee: visibleToEmployee,
     setConstraintStatus: setConstraintStatus,
     pendingConstraints: pendingConstraints,
     emptyConstraint: emptyConstraint,

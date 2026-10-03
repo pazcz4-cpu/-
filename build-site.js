@@ -89,6 +89,8 @@ const LEGAL = {
   SUPPORT_EMAIL: 'support@setshifts.com',
   /* שעות המענה האנושי של SetShifts בלבד. אינן קשורות לשעות ולהגדרות
      שבתוך המערכת של כל עסק (סניפים, משמרות, שעות פתיחה). */
+  SUPPORT_FROM: Model.SUPPORT_HOURS_FROM,
+  SUPPORT_TO: Model.SUPPORT_HOURS_TO,
   SUPPORT_HOURS_HE: 'ראשון עד חמישי, ' + Model.SUPPORT_HOURS_FROM + '–' + Model.SUPPORT_HOURS_TO,
   SUPPORT_HOURS_EN: 'Sunday to Thursday, ' + Model.SUPPORT_HOURS_FROM + '–' + Model.SUPPORT_HOURS_TO,
   TRIAL_DAYS: '30'

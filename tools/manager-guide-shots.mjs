@@ -389,6 +389,21 @@ await page.waitForTimeout(400);
 await shotRegion('15-export-menu', ['#export-menu', '#export-pop'], 12);
 await page.click('#export-menu');
 
+/* הגדרות: מועד סגירת אילוצים. הערכים בצילום הם דוגמה: אין מועד
+   מראש, וכל עסק קובע לעצמו אם לסגור ומתי. */
+await page.click('.tab[data-tab="settings"]');
+await page.waitForTimeout(300);
+await page.check('#opt-deadline');
+await page.selectOption('#deadline-day', '3');
+await page.fill('#deadline-time', '18:00');
+await page.locator('#deadline-time').blur();
+await page.waitForTimeout(400);
+await page.locator('[data-i18n="settings.deadlineTitle"]').scrollIntoViewIfNeeded();
+await mark('#opt-deadline', 1);
+await mark('#deadline-day', 2);
+await shotEl('19-settings-deadline', '.settings-block:has(#opt-deadline)');
+await unmark();
+
 console.log(saved.join('\n'));
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();

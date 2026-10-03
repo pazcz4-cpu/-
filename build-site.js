@@ -87,6 +87,10 @@ const LEGAL = {
   EFFECTIVE_DATE: process.env.LEGAL_EFFECTIVE_DATE ||
     new Date().toISOString().slice(0, 10),
   SUPPORT_EMAIL: 'support@setshifts.com',
+  /* שעות המענה האנושי של SetShifts בלבד. אינן קשורות לשעות ולהגדרות
+     שבתוך המערכת של כל עסק (סניפים, משמרות, שעות פתיחה). */
+  SUPPORT_HOURS_HE: 'ראשון עד חמישי, ' + Model.SUPPORT_HOURS_FROM + '–' + Model.SUPPORT_HOURS_TO,
+  SUPPORT_HOURS_EN: 'Sunday to Thursday, ' + Model.SUPPORT_HOURS_FROM + '–' + Model.SUPPORT_HOURS_TO,
   TRIAL_DAYS: '30'
 };
 Object.keys(LEGAL_ENV).forEach((key) => {

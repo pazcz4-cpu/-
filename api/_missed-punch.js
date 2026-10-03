@@ -20,15 +20,18 @@
    כפילות גם כששתי ריצות חופפות.
 
    ═══ ערוץ ═══
-   מייל (Resend) כבר עכשיו. דחיפה לאפליקציה תצטרף כשתהיה שליחת
-   push מהשרת (מפתחות APNs/Firebase), ווואטסאפ עם #92. */
+   התראת דחיפה לטלפון בלבד, לא מייל (החלטה 03/10). עד ששליחת push
+   מהשרת קיימת (מפתחות APNs/Firebase, אחרי שהאפליקציות בחנויות), הריצה
+   אינה עושה דבר, וה-cron אינו מוגדר ב-vercel.json. בינתיים העובד רואה
+   את ההתראה בתוך האפליקציה (employee-ui.js, Store.missedClockIn).
+   כשה-push נבנה: deliver ב-run() שולח לאסימוני push_tokens של העובד,
+   ומחזירים את ה-cron ל-vercel.json. */
 'use strict';
 
 const { projectUrl } = require('./_supabase.js');
 const { zonedToUtc, offsetAt } = require('./_zone.js');
 const Store = require('../js/store.js');
 const Model = require('../js/backend/model.js');
-const Mail = require('./_mail.js');
 
 const SEND_WINDOW_MIN = 30;
 const DEFAULT_AFTER_MIN = 10;
@@ -36,69 +39,41 @@ const AFTER_CHOICES = [5, 10, 15, 30];
 
 const COPY = {
   he: { subject: 'המשמרת שלך התחילה ב-{time} ולא נרשמה כניסה',
-    hello: 'שלום {name},',
     body: 'המשמרת שלך ({shift}{branch}) התחילה היום ב-{time}, ועדיין לא נרשמה כניסה בשעון הנוכחות.',
     phone: 'אם כבר הגעת: פתח/י את האפליקציה ולחץ/י "כניסה".',
-    device: 'אם כבר הגעת: החתם/י בשעון שבסניף.',
-    late: 'אם יש עיכוב, עדכן/י את המנהל.', open: 'פתיחת האפליקציה',
-    footer: 'נשלח מ-{company} דרך SetShifts. התזכורת נשלחת רק כשהעסק הפעיל שעון נוכחות.' },
+    device: 'אם כבר הגעת: החתם/י בשעון שבסניף.' },
   en: { subject: 'Your shift started at {time} and you haven’t clocked in',
-    hello: 'Hi {name},',
     body: 'Your shift ({shift}{branch}) started today at {time}, and no clock-in has been recorded yet.',
     phone: 'If you’re already there, open the app and tap “Clock in”.',
-    device: 'If you’re already there, clock in at the branch time clock.',
-    late: 'If you’re running late, let your manager know.', open: 'Open the app',
-    footer: 'Sent by {company} via SetShifts. This reminder is sent only when the business uses the time clock.' },
+    device: 'If you’re already there, clock in at the branch time clock.' },
   ar: { subject: 'بدأت مناوبتك في {time} ولم يُسجَّل دخولك',
-    hello: 'مرحبًا {name}،',
     body: 'بدأت مناوبتك ({shift}{branch}) اليوم في {time}، ولم يُسجَّل دخول في ساعة الحضور بعد.',
     phone: 'إذا وصلت بالفعل: افتح التطبيق واضغط "دخول".',
-    device: 'إذا وصلت بالفعل: سجّل الدخول في ساعة الفرع.',
-    late: 'إذا كنت متأخرًا، أبلغ المدير.', open: 'فتح التطبيق',
-    footer: 'أُرسلت من {company} عبر SetShifts. يُرسل هذا التذكير فقط عندما يستخدم النشاط ساعة الحضور.' },
+    device: 'إذا وصلت بالفعل: سجّل الدخول في ساعة الفرع.' },
   de: { subject: 'Ihre Schicht hat um {time} begonnen, aber Sie haben sich nicht eingestempelt',
-    hello: 'Hallo {name},',
     body: 'Ihre Schicht ({shift}{branch}) hat heute um {time} begonnen, und es ist noch kein Einstempeln erfasst.',
     phone: 'Wenn Sie schon da sind: App öffnen und auf „Einstempeln“ tippen.',
-    device: 'Wenn Sie schon da sind: an der Stempeluhr der Filiale einstempeln.',
-    late: 'Wenn Sie sich verspäten, informieren Sie bitte Ihre Führungskraft.', open: 'App öffnen',
-    footer: 'Gesendet von {company} über SetShifts. Diese Erinnerung kommt nur, wenn der Betrieb die Zeiterfassung nutzt.' },
+    device: 'Wenn Sie schon da sind: an der Stempeluhr der Filiale einstempeln.' },
   es: { subject: 'Tu turno empezó a las {time} y no has fichado la entrada',
-    hello: 'Hola {name}:',
     body: 'Tu turno ({shift}{branch}) empezó hoy a las {time} y todavía no se ha registrado la entrada.',
     phone: 'Si ya llegaste: abre la app y pulsa «Entrada».',
-    device: 'Si ya llegaste: ficha en el reloj de la sucursal.',
-    late: 'Si vas a llegar tarde, avisa a tu responsable.', open: 'Abrir la app',
-    footer: 'Enviado por {company} a través de SetShifts. Este aviso solo se envía cuando el negocio usa el control horario.' },
+    device: 'Si ya llegaste: ficha en el reloj de la sucursal.' },
   fr: { subject: 'Votre poste a commencé à {time} et votre arrivée n’est pas pointée',
-    hello: 'Bonjour {name},',
     body: 'Votre poste ({shift}{branch}) a commencé aujourd’hui à {time}, et aucune arrivée n’a encore été pointée.',
     phone: 'Si vous êtes déjà sur place : ouvrez l’application et appuyez sur « Arrivée ».',
-    device: 'Si vous êtes déjà sur place : pointez à la pointeuse du site.',
-    late: 'En cas de retard, prévenez votre responsable.', open: 'Ouvrir l’application',
-    footer: 'Envoyé par {company} via SetShifts. Ce rappel n’est envoyé que si l’entreprise utilise la pointeuse.' },
+    device: 'Si vous êtes déjà sur place : pointez à la pointeuse du site.' },
   pt: { subject: 'O seu turno começou às {time} e a entrada não foi registada',
-    hello: 'Olá {name},',
     body: 'O seu turno ({shift}{branch}) começou hoje às {time} e ainda não foi registada a entrada no ponto.',
     phone: 'Se já chegou: abra a app e toque em «Entrada».',
-    device: 'Se já chegou: registe a entrada no relógio da filial.',
-    late: 'Se vai chegar atrasado, avise o seu gestor.', open: 'Abrir a app',
-    footer: 'Enviado por {company} através da SetShifts. Este lembrete só é enviado quando o negócio usa o registo de ponto.' },
+    device: 'Se já chegou: registe a entrada no relógio da filial.' },
   ru: { subject: 'Ваша смена началась в {time}, а приход не отмечен',
-    hello: 'Здравствуйте, {name}!',
     body: 'Ваша смена ({shift}{branch}) началась сегодня в {time}, но приход в табеле ещё не отмечен.',
     phone: 'Если вы уже на месте: откройте приложение и нажмите «Приход».',
-    device: 'Если вы уже на месте: отметьтесь на терминале в филиале.',
-    late: 'Если опаздываете, сообщите руководителю.', open: 'Открыть приложение',
-    footer: 'Отправлено {company} через SetShifts. Напоминание приходит, только если бизнес использует учёт времени.' }
+    device: 'Если вы уже на месте: отметьтесь на терминале в филиале.' }
 };
-const RTL = { he: true, ar: true };
 
 function fill(text, params) {
   return String(text).replace(/\{(\w+)\}/g, function (m, k) { return params[k] !== undefined ? String(params[k]) : m; });
-}
-function esc(v) {
-  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /* ההגדרות של התזכורת, מנורמלות */
@@ -166,21 +141,13 @@ function findMissed(input) {
   return out;
 }
 
-function buildMail(input) {
+/* נוסח ההתראה: כותרת קצרה וגוף, בשפה שבה המנהל הדליק את השעון */
+function buildMessage(input) {
   const w = COPY[input.lang] || COPY.he;
-  const rtl = !!RTL[input.lang];
   const params = { name: input.name || '', time: input.time, shift: input.shift || '',
     branch: input.branch ? ', ' + input.branch : '', company: input.company || 'SetShifts' };
   const action = input.mode === 'device' ? w.device : w.phone;
-  const lines = [fill(w.hello, params), fill(w.body, params), action, w.late];
-  const text = lines.join('\n') + '\n\n' + input.appUrl + '\n\n' + fill(w.footer, params);
-  const html = '<div dir="' + (rtl ? 'rtl' : 'ltr') + '" style="font-family:system-ui,Arial,sans-serif;' +
-    'text-align:' + (rtl ? 'right' : 'left') + ';color:#1e293b;line-height:1.6">' +
-    lines.map(function (l) { return '<p style="margin:0 0 10px">' + esc(l) + '</p>'; }).join('') +
-    (input.mode === 'device' ? '' : '<p><a href="' + esc(input.appUrl) + '" style="display:inline-block;background:#23499f;' +
-      'color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">' + esc(w.open) + '</a></p>') +
-    '<p style="font-size:12px;color:#64748b">' + esc(fill(w.footer, params)) + '</p></div>';
-  return { subject: fill(w.subject, params), text: text, html: html };
+  return { title: fill(w.subject, params), body: fill(w.body, params) + ' ' + action };
 }
 
 async function rest(path, options) {
@@ -211,7 +178,11 @@ function timeIn(iso, timeZone) {
   } catch (err) { return iso.slice(11, 16); }
 }
 
-async function run(now) {
+/* deliver(user, message, item) -> Promise<boolean>. בלי deliver אין ערוץ,
+   ולכן אין גם רישום ב-punch_reminders: כשה-push יופעל, משמרות עתידיות
+   יקבלו התראה כרגיל. */
+async function run(now, deliver) {
+  if (typeof deliver !== 'function') return { skipped: 'no channel' };
   const summary = { companies: 0, due: 0, sent: 0, skipped: 0, failed: 0 };
   const filter = encodeURIComponent(JSON.stringify({ settings: { timeclock: { enabled: true } } }));
   const configs = await rest('/company_configs?select=company_id,config&config=cs.' + filter);
@@ -224,7 +195,6 @@ async function run(now) {
     'cancel_at_period_end,billing_subscription_id,is_demo');
   const companies = {};
   ((companiesCall.ok && companiesCall.body) || []).forEach(function (c) { companies[c.id] = c; });
-  const appUrl = String(process.env.PUBLIC_BASE_URL || 'https://setshifts.com').replace(/\/+$/, '') + '/app/';
 
   for (const row of rows) {
     const config = row.config || {};
@@ -255,25 +225,25 @@ async function run(now) {
       summary.due++;
       const userCall = await rest('/company_users?company_id=eq.' + encodeURIComponent(row.company_id) +
         '&employee_id=eq.' + encodeURIComponent(item.empId) +
-        '&active=eq.true&updates_consent_at=not.is.null&select=email,name&limit=1');
+        '&active=eq.true&updates_consent_at=not.is.null&select=id,name&limit=1');
       const user = userCall.ok && userCall.body && userCall.body[0];
-      if (!user || !user.email) { summary.skipped++; continue; }
+      if (!user || !user.id) { summary.skipped++; continue; }
 
       /* קודם רושמים, אחר כך שולחים: ריצה מקבילה תיתקל במפתח הקיים */
       const claim = await rest('/punch_reminders', {
         method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
-        body: [{ company_id: row.company_id, employee_id: item.empId, shift_start: item.start, channel: 'email' }]
+        body: [{ company_id: row.company_id, employee_id: item.empId, shift_start: item.start, channel: 'push' }]
       });
       if (!claim.ok || !Array.isArray(claim.body) || !claim.body.length) { summary.skipped++; continue; }
 
       const branch = (state.branches || []).filter(function (b) { return b.id === item.branchId; })[0];
       const shift = Store.shiftById(state, item.shiftId) || {};
       const emp = (state.employees || []).filter(function (e) { return e.id === item.empId; })[0] || {};
-      const mail = buildMail({ lang: rule.lang, name: emp.name || user.name, time: timeIn(item.start, rule.timeZone),
+      const message = buildMessage({ lang: rule.lang, name: emp.name || user.name, time: timeIn(item.start, rule.timeZone),
         shift: shift.name || '', branch: (state.branches || []).length > 1 && branch ? branch.name : '',
-        company: company.name, mode: rule.mode, appUrl: appUrl });
-      const result = await Mail.send({ to: user.email, subject: mail.subject, text: mail.text, html: mail.html });
-      if (result.ok) summary.sent++; else summary.failed++;
+        company: company.name, mode: rule.mode });
+      const delivered = await deliver(user, message, item);
+      if (delivered) summary.sent++; else summary.failed++;
     }
   }
   return summary;
@@ -286,16 +256,14 @@ module.exports = async function handler(req, res) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return send(res, 500, { message: 'Server is not configured' });
   }
-  /* בלי מייל אין ערוץ. זו הגדרה חסרה, לא תקלה. */
-  if (!Mail.ready()) return send(res, 200, { ok: true, skipped: 'mail not configured' });
+  /* ערוץ הדחיפה עוד לא קיים. ריצה ידנית מחזירה את זה במפורש. */
   try {
-    const summary = await run(new Date());
-    console.log('[missed-punch]', JSON.stringify(summary));
+    const summary = await run(new Date(), null);
     return send(res, 200, Object.assign({ ok: true }, summary));
   } catch (err) {
     return send(res, 500, { message: 'failed' });
   }
 };
 
-module.exports._internals = { findMissed: findMissed, buildMail: buildMail, reminderSettings: reminderSettings,
+module.exports._internals = { findMissed: findMissed, buildMessage: buildMessage, reminderSettings: reminderSettings,
   naiveToUtc: naiveToUtc, run: run, COPY: COPY, AFTER_CHOICES: AFTER_CHOICES };

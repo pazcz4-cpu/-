@@ -81,7 +81,38 @@
     this._bind();
     /* החלפת שפה מציירת מחדש גם את מסך העובד */
     if (root.I18n) { root.I18n.onChange(function () { if (self.state) self.render(); }); }
-    return this.load();
+    /* בדיקה פעם בדקה: האם משמרת התחילה ולא נרשמה כניסה. עובד שהאפליקציה
+       פתוחה אצלו (או ברקע) מקבל התראה, גם אם לא נגע במסך. */
+    if (!this.preview && root.setInterval) {
+      this._missedTimer = root.setInterval(function () { self._checkMissed(); }, 60000);
+    }
+    return this.load().then(function () { self._checkMissed(); });
+  };
+
+  /* המשמרת התחילה ולא נרשמה כניסה: התראה באפליקציה, פעם אחת לכל משמרת.
+     בלי מייל (החלטה 03/10). הפס על המסך מצויר ב-render; כאן רק מוודאים
+     שהוא מופיע גם בלי שהעובד נגע במסך, ושולחים התראה אם הוא אישר התראות. */
+  EmployeeUI.prototype._checkMissed = function () {
+    if (this.preview || !this.state || !this.week || this.busy) return;
+    if (this.weekKey !== Store.currentWeekKey() || !Store.timeclock(this.state).enabled) return;
+    var missed = Store.missedClockIn(this.state, this.week, this.weekKey, this._employeeId(), null,
+      this.state.weeks[Store.shiftWeekKey(this.weekKey, -1)] || null);
+    var shown = !!(this.root && this.root.querySelector('.punch-missed'));
+    if (!!missed !== shown) this.render();
+    if (!missed) return;
+
+    var key = 'shift-missed-notified:' + this._employeeId() + ':' + missed.start.getTime();
+    try { if (root.localStorage.getItem(key)) return; root.localStorage.setItem(key, '1'); }
+    catch (err) { if (this._missedNotified === key) return; this._missedNotified = key; }
+    var Notify = root.ShiftNotify;
+    if (Notify && Notify.show) {
+      Notify.show({
+        title: t('employee.clockMissedTitle'),
+        body: t(Store.allowsPhonePunch(this.state) ? 'employee.clockMissed' : 'employee.clockMissedDevice',
+          { time: pad2(missed.start) }),
+        tag: 'missed-' + missed.start.getTime()
+      });
+    }
   };
 
   EmployeeUI.prototype.load = function () {

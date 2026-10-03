@@ -4,8 +4,6 @@
 
 process.env.SUPABASE_URL = 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
-process.env.RESEND_API_KEY = 're_test';
-process.env.MAIL_FROM = 'SetShifts <no-reply@setshifts.com>';
 process.env.CRON_SECRET = 'cron-secret';
 
 var I18n = require('../js/i18n/core.js');
@@ -106,19 +104,17 @@ test('עובד שהושבת: אין תזכורת', function () {
 
 console.log('\n== הנוסח ==');
 
-test('מייל בעברית מכוון לאפליקציה במצב טלפון', function () {
-  var mail = M.buildMail({ lang: 'he', name: 'דנה', time: '09:30', shift: 'בוקר', branch: '',
-    company: 'קפה', mode: 'phone', appUrl: 'https://setshifts.com/app/' });
-  assert(/09:30/.test(mail.subject), 'השעה בכותרת');
-  assert(/לחץ\/י "כניסה"/.test(mail.text), 'הוראה לטלפון');
-  assert(mail.html.indexOf('dir="rtl"') !== -1, 'כיוון');
+test('נוסח ההתראה: שעה בכותרת, והוראה לאפליקציה במצב טלפון', function () {
+  var msg = M.buildMessage({ lang: 'he', name: 'דנה', time: '09:30', shift: 'בוקר', branch: '',
+    company: 'קפה', mode: 'phone' });
+  assert(/09:30/.test(msg.title), 'השעה בכותרת');
+  assert(/לחץ\/י "כניסה"/.test(msg.body), 'הוראה לטלפון');
 });
 
-test('במצב שעון בסניף: הוראה להחתים בשעון, בלי כפתור לאפליקציה', function () {
-  var mail = M.buildMail({ lang: 'he', name: 'דנה', time: '09:30', shift: 'בוקר', branch: 'מרכז',
-    company: 'קפה', mode: 'device', appUrl: 'https://setshifts.com/app/' });
-  assert(/בשעון שבסניף/.test(mail.text), 'הוראה למכשיר');
-  assert(mail.html.indexOf('href=') === -1, 'כפתור לאפליקציה במצב מכשיר');
+test('במצב שעון בסניף: הוראה להחתים בשעון', function () {
+  var msg = M.buildMessage({ lang: 'he', name: 'דנה', time: '09:30', shift: 'בוקר', branch: 'מרכז',
+    company: 'קפה', mode: 'device' });
+  assert(/בשעון שבסניף/.test(msg.body), 'הוראה למכשיר');
 });
 
 test('שמונה שפות, אותם שדות', function () {
@@ -143,7 +139,7 @@ function fakeServer(opts) {
         text: function () { return Promise.resolve(body === undefined ? '' : JSON.stringify(body)); },
         json: function () { return Promise.resolve(body); } });
     }
-    if (url.indexOf('resend.com') !== -1) { sentMail.push(JSON.parse(init.body)); return reply(200, { id: 'm1' }); }
+    if (url.indexOf('resend.com') !== -1) { throw new Error('נשלח מייל'); }
     if (url.indexOf('/company_configs') !== -1) {
       return reply(200, [{ company_id: 'co-1', config: { settings: state.settings, employees: state.employees, branches: state.branches } }]);
     }
@@ -157,7 +153,7 @@ function fakeServer(opts) {
     if (url.indexOf('/company_users') !== -1) {
       /* השרת האמיתי מסנן updates_consent_at=not.is.null */
       assert(url.indexOf('updates_consent_at=not.is.null') !== -1, 'לא סוננו עובדים בלי הסכמה');
-      return reply(200, opts.noConsent ? [] : [{ email: 'dana@cafe.co.il', name: 'דנה' }]);
+      return reply(200, opts.noConsent ? [] : [{ id: 'user-dana', name: 'דנה' }]);
     }
     if (url.indexOf('/punch_reminders') !== -1 && method === 'POST') {
       var row = JSON.parse(init.body)[0];
@@ -168,29 +164,42 @@ function fakeServer(opts) {
     }
     return reply(404, {});
   };
-  return { sentMail: sentMail, reminders: reminders };
+  return { sentMail: sentMail, reminders: reminders, deliver: function (user, message) {
+    sentMail.push({ to: user.id, title: message.title }); return Promise.resolve(true);
+  } };
 }
 
-test('ריצה שולחת מייל אחד, וריצה שנייה לא שולחת שוב', async function () {
+test('בלי ערוץ (היום): אין שליחה ואין רישום, כדי שה-push יעבוד כשיופעל', async function () {
   var server = fakeServer({});
-  var first = await M.run(new Date('2026-09-14T06:41:00Z'));
+  var result = await M.run(new Date('2026-09-14T06:41:00Z'), null);
+  assertEqual(result.skipped, 'no channel');
+  assertEqual(Object.keys(server.reminders).length, 0);
+});
+
+test('עם ערוץ (בעתיד): התראה אחת לעובד, וריצה שנייה לא שולחת שוב', async function () {
+  var server = fakeServer({});
+  var first = await M.run(new Date('2026-09-14T06:41:00Z'), server.deliver);
   assertEqual(first.sent, 1, 'ריצה ראשונה');
-  assertEqual(server.sentMail[0].to[0], 'dana@cafe.co.il');
-  var second = await M.run(new Date('2026-09-14T06:46:00Z'));
+  assertEqual(server.sentMail[0].to, 'user-dana');
+  var second = await M.run(new Date('2026-09-14T06:46:00Z'), server.deliver);
   assertEqual(second.sent, 0, 'נשלח פעמיים');
-  assertEqual(server.sentMail.length, 1);
 });
 
 test('עובד בלי הסכמה לעדכונים: לא נשלח, ולא נרשם', async function () {
   var server = fakeServer({ noConsent: true });
-  var result = await M.run(new Date('2026-09-14T06:41:00Z'));
+  var result = await M.run(new Date('2026-09-14T06:41:00Z'), server.deliver);
   assertEqual(result.sent, 0); assertEqual(Object.keys(server.reminders).length, 0);
 });
 
 test('עסק שהמנוי שלו פג: לא שולחים לעובדים שלו', async function () {
   var server = fakeServer({ status: 'trial', validUntil: '2026-09-01T00:00:00Z' });
-  var result = await M.run(new Date('2026-09-14T06:41:00Z'));
+  var result = await M.run(new Date('2026-09-14T06:41:00Z'), server.deliver);
   assertEqual(result.sent, 0); assertEqual(server.sentMail.length, 0);
+});
+
+test('אין cron של התראות שעון ב-vercel.json (אין מייל, וה-push עוד לא קיים)', function () {
+  var vercel = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'vercel.json'), 'utf8'));
+  assert(!(vercel.crons || []).some(function (c) { return /action=missed/.test(c.path); }), 'נשאר cron');
 });
 
 console.log('\n== הדלת ==');
@@ -205,11 +214,12 @@ test('בלי CRON_SECRET נדחה, גם דרך נקודת הקצה של השעו
   assertEqual(res.statusCode, 401);
 });
 
-test('עם הסוד, ב-GET כמו ש-Vercel קורא ל-cron: רץ', async function () {
-  fakeServer({ clock: { enabled: false } });
+test('עם הסוד: עונה שאין עדיין ערוץ, ולא שולח כלום', async function () {
+  fakeServer({});
   var res = await call(timeclock, { method: 'GET', url: '/api/timeclock?action=missed', query: { action: 'missed' },
     headers: { authorization: 'Bearer cron-secret' } });
   assertEqual(res.statusCode, 200, res.body);
+  assertEqual(JSON.parse(res.body).skipped, 'no channel');
 });
 
 test('וואטסאפ: cron ב-GET מגיע לסריקת הנטישות ולא לאימות של מטא', async function () {

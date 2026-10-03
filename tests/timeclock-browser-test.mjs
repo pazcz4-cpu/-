@@ -167,6 +167,16 @@ try {
     backend._save();
   });
 
+  /* התראות הדפדפן נלכדות במקום להיות מוצגות: הבדיקה רוצה לדעת
+     שההתראה נשלחה ומה כתוב בה, לא לבקש הרשאה מהדפדפן. */
+  await page.addInitScript(() => {
+    window.__notified = [];
+    Object.defineProperty(window, 'ShiftNotify', {
+      configurable: true,
+      get() { return this.__sn; },
+      set(value) { value.show = (o) => { window.__notified.push(o); return true; }; this.__sn = value; }
+    });
+  });
   await page.evaluate(() => localStorage.removeItem('maiphone-mock-session-v1'));
   await page.reload();
   await page.waitForTimeout(900);
@@ -182,6 +192,13 @@ try {
   if (sinceMidnight > 16) {
     check('מוצגת תזכורת שהמשמרת התחילה ולא נרשמה כניסה',
       await page.locator('.punch-missed').innerText(), /התחילה ב-00:00/);
+    const sent = await page.evaluate(() => window.__notified);
+    check('ונשלחה התראה אחת באפליקציה', sent.length, 1);
+    check('עם כותרת ושעה', sent[0] && (sent[0].title + ' | ' + sent[0].body), /לא נרשמה כניסה.*00:00/);
+    await page.reload();
+    await page.waitForTimeout(1500);
+    check('בטעינה חוזרת לא נשלחת התראה שנייה על אותה משמרת',
+      await page.evaluate(() => window.__notified.length), 0);
   }
   check('והכפתור אומר "כניסה"',
     await page.locator('.punch-btn').innerText(), /כניסה/);

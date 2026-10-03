@@ -170,14 +170,14 @@
   /* נוסח הבאנר יושב כאן ולא בקבצי התרגום: הוא חייב לעבוד גם בעמודים
      שאינם טוענים אותם (עמודי התוכן), ובשפה של העמוד. */
   var COPY = {
-    he: { title: 'עוגיות ומעקב', text: 'אנחנו משתמשים בעוגיות ובכלי מדידה של צדדים שלישיים כדי להבין מאיפה מגיעים מבקרים ולשפר את הפרסום שלנו. בלי הסכמה לא נטען שום כלי כזה.', privacy: 'מדיניות הפרטיות', accept: 'מאשר/ת', decline: 'לא, תודה' },
-    en: { title: 'Cookies and tracking', text: 'We use cookies and third-party measurement tools to understand where visitors come from and to improve our advertising. Without your consent none of these tools is loaded.', privacy: 'Privacy policy', accept: 'Accept', decline: 'No, thanks' },
-    ar: { title: 'ملفات تعريف الارتباط والتتبع', text: 'نستخدم ملفات تعريف الارتباط وأدوات قياس من جهات خارجية لمعرفة مصدر الزوار وتحسين إعلاناتنا. بدون موافقتك لا يتم تحميل أي من هذه الأدوات.', privacy: 'سياسة الخصوصية', accept: 'أوافق', decline: 'لا، شكراً' },
-    de: { title: 'Cookies und Tracking', text: 'Wir verwenden Cookies und Messwerkzeuge von Drittanbietern, um zu verstehen, woher Besucher kommen, und um unsere Werbung zu verbessern. Ohne Ihre Zustimmung wird keines dieser Werkzeuge geladen.', privacy: 'Datenschutzerklärung', accept: 'Zustimmen', decline: 'Nein, danke' },
-    es: { title: 'Cookies y seguimiento', text: 'Usamos cookies y herramientas de medición de terceros para entender de dónde llegan los visitantes y mejorar nuestra publicidad. Sin tu consentimiento no se carga ninguna de ellas.', privacy: 'Política de privacidad', accept: 'Aceptar', decline: 'No, gracias' },
-    fr: { title: 'Cookies et suivi', text: 'Nous utilisons des cookies et des outils de mesure tiers pour comprendre d’où viennent les visiteurs et améliorer notre publicité. Sans votre accord, aucun de ces outils n’est chargé.', privacy: 'Politique de confidentialité', accept: 'Accepter', decline: 'Non, merci' },
-    pt: { title: 'Cookies e rastreamento', text: 'Usamos cookies e ferramentas de medição de terceiros para perceber de onde vêm os visitantes e melhorar a nossa publicidade. Sem o seu consentimento, nenhuma delas é carregada.', privacy: 'Política de privacidade', accept: 'Aceitar', decline: 'Não, obrigado' },
-    ru: { title: 'Файлы cookie и отслеживание', text: 'Мы используем cookie и сторонние средства измерения, чтобы понимать, откуда приходят посетители, и улучшать нашу рекламу. Без вашего согласия ни одно из этих средств не загружается.', privacy: 'Политика конфиденциальности', accept: 'Согласен', decline: 'Нет, спасибо' }
+    he: { settings: 'הגדרות עוגיות', title: 'עוגיות ומעקב', text: 'אנחנו משתמשים בעוגיות ובכלי מדידה של צדדים שלישיים כדי להבין מאיפה מגיעים מבקרים ולשפר את הפרסום שלנו. בלי הסכמה לא נטען שום כלי כזה.', privacy: 'מדיניות הפרטיות', accept: 'מאשר/ת', decline: 'לא, תודה' },
+    en: { settings: 'Cookie settings', title: 'Cookies and tracking', text: 'We use cookies and third-party measurement tools to understand where visitors come from and to improve our advertising. Without your consent none of these tools is loaded.', privacy: 'Privacy policy', accept: 'Accept', decline: 'No, thanks' },
+    ar: { settings: 'إعدادات ملفات تعريف الارتباط', title: 'ملفات تعريف الارتباط والتتبع', text: 'نستخدم ملفات تعريف الارتباط وأدوات قياس من جهات خارجية لمعرفة مصدر الزوار وتحسين إعلاناتنا. بدون موافقتك لا يتم تحميل أي من هذه الأدوات.', privacy: 'سياسة الخصوصية', accept: 'أوافق', decline: 'لا، شكراً' },
+    de: { settings: 'Cookie-Einstellungen', title: 'Cookies und Tracking', text: 'Wir verwenden Cookies und Messwerkzeuge von Drittanbietern, um zu verstehen, woher Besucher kommen, und um unsere Werbung zu verbessern. Ohne Ihre Zustimmung wird keines dieser Werkzeuge geladen.', privacy: 'Datenschutzerklärung', accept: 'Zustimmen', decline: 'Nein, danke' },
+    es: { settings: 'Ajustes de cookies', title: 'Cookies y seguimiento', text: 'Usamos cookies y herramientas de medición de terceros para entender de dónde llegan los visitantes y mejorar nuestra publicidad. Sin tu consentimiento no se carga ninguna de ellas.', privacy: 'Política de privacidad', accept: 'Aceptar', decline: 'No, gracias' },
+    fr: { settings: 'Paramètres des cookies', title: 'Cookies et suivi', text: 'Nous utilisons des cookies et des outils de mesure tiers pour comprendre d’où viennent les visiteurs et améliorer notre publicité. Sans votre accord, aucun de ces outils n’est chargé.', privacy: 'Politique de confidentialité', accept: 'Accepter', decline: 'Non, merci' },
+    pt: { settings: 'Definições de cookies', title: 'Cookies e rastreamento', text: 'Usamos cookies e ferramentas de medição de terceiros para perceber de onde vêm os visitantes e melhorar a nossa publicidade. Sem o seu consentimento, nenhuma delas é carregada.', privacy: 'Política de privacidade', accept: 'Aceitar', decline: 'Não, obrigado' },
+    ru: { settings: 'Настройки cookie', title: 'Файлы cookie и отслеживание', text: 'Мы используем cookie и сторонние средства измерения, чтобы понимать, откуда приходят посетители, и улучшать нашу рекламу. Без вашего согласия ни одно из этих средств не загружается.', privacy: 'Политика конфиденциальности', accept: 'Согласен', decline: 'Нет, спасибо' }
   };
 
   function language() {
@@ -221,6 +221,24 @@
     root.document.body.appendChild(bar);
   }
 
+  /* קישור "הגדרות עוגיות" בכותרת התחתונה: מאפשר לשנות את ההחלטה.
+     נחשף רק כשיש מעקב בכלל. */
+  function settingsLink() {
+    if (!root.document || !root.document.querySelectorAll) return;
+    var nodes = root.document.querySelectorAll('[data-consent-settings]');
+    Array.prototype.forEach.call(nodes, function (node) {
+      node.hidden = false;
+      node.textContent = text('settings');
+      node.addEventListener('click', function (event) {
+        if (event.preventDefault) event.preventDefault();
+        var s = store();
+        try { if (s) s.removeItem(CONSENT_KEY); } catch (err) { /* לא קריטי */ }
+        forget();
+        banner();
+      });
+    });
+  }
+
   /* data-track="pricing|lead|..." על אלמנט: לחיצה מתעדת אירוע */
   function bindClicks() {
     if (!root.document) return;
@@ -232,9 +250,17 @@
 
   function init() {
     if (!enabled()) return;
-    start();
-    banner();
-    bindClicks();
+    /* באפליקציה (מצב conversion) עובדים ועובדות נכנסים עם נתוני משמרות.
+       שם שום סקריפט צד שלישי לא נטען בכניסה, ואין באנר: רק הרשמה והתחלת
+       ניסיון של בעל עסק מפעילים אותו, ורק אם ההסכמה ניתנה קודם בעמוד
+       הציבורי. */
+    var conversionOnly = root.SHIFT_TRACKING_MODE === 'conversion';
+    if (!conversionOnly) {
+      start();
+      banner();
+      bindClicks();
+      settingsLink();
+    }
     if (/\/pricing\/?$/.test((root.location && root.location.pathname) || '')) track('pricing');
     /* חזרה מעמוד התשלום עם כרטיס שמור */
     if (/[?&]billing=done/.test((root.location && root.location.search) || '')) track('trial');

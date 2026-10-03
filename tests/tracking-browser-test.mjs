@@ -65,6 +65,10 @@ console.log('\n== יש מזהה, אין הסכמה ==');
   await page.waitForTimeout(500);
   check('ההחלטה נשמרת: לא שואלים שוב', await page.locator('#consent-banner').count(), 0);
   check('וגם אחרי רענון אין בקשות', external.length, 0);
+  check('קישור הגדרות עוגיות מוצג', await page.locator('[data-consent-settings]').first().isVisible(), true);
+  await page.locator('[data-consent-settings]').first().click();
+  await page.waitForTimeout(300);
+  check('לחיצה עליו מציגה שוב את הבאנר', await page.locator('#consent-banner').count(), 1);
   await ctx.close();
 }
 

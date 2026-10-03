@@ -1508,6 +1508,7 @@
 
       common: {
         emailUs: 'Écrivez-nous',
+        supportHours: "Horaires du service SetShifts : du dimanche au jeudi, {from}–{to}",
         moveUp: 'Monter', moveDown: 'Descendre', timePlaceholder: 'hh:mm',
         save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', close: 'Fermer',
         yes: 'Oui', no: 'Non', all: 'Tout', and: 'et', more: 'et {count} de plus'

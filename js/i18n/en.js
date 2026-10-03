@@ -1514,6 +1514,7 @@
 
       common: {
         emailUs: 'Email us',
+        supportHours: "SetShifts support hours: Sunday to Thursday, {from}–{to}",
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',
         yes: 'Yes', no: 'No', all: 'All', and: 'and', more: 'and {count} more'

@@ -1508,6 +1508,7 @@
 
       common: {
         emailUs: 'Escríbenos',
+        supportHours: "Horario de atención de SetShifts: de domingo a jueves, {from}–{to}",
         moveUp: 'Subir', moveDown: 'Bajar', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Cerrar',
         yes: 'Sí', no: 'No', all: 'Todo', and: 'y', more: 'y {count} más'

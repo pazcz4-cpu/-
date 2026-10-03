@@ -230,6 +230,13 @@
     return '<a href="' + href + '" target="_blank" rel="noopener">' + esc(label) + '</a>';
   }
 
+  /* שעות המענה של SetShifts בלבד. אין להן קשר לשעות ולהגדרות שבתוך
+     המערכת של העסק. */
+  function supportHoursLine() {
+    return '<p class="auth-hint">' + esc(t('common.supportHours', {
+      from: Model.SUPPORT_HOURS_FROM, to: Model.SUPPORT_HOURS_TO })) + '</p>';
+  }
+
   function supportLink() {
     var address = Model.SUPPORT_EMAIL;
     return '<a href="mailto:' + esc(address) + '">' + esc(address) + '</a>';
@@ -698,12 +705,12 @@
                 : '') +
               '<button id="auth-blocked-addcard" class="btn primary">' + t('auth.blockedAddCard') + '</button>' +
               '<button id="auth-blocked-recheck" class="btn ghost">' + t('auth.blockedRecheck') + '</button>' +
-              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>'
+              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>' + supportHoursLine()
             : owner
             ? '<p class="auth-hint">' + t('auth.blockedOwner') + '</p>' +
               /* ההודעה מבקשת לפנות לתמיכה, ולכן חייבת גם לומר לאן.
                  זה המסך שבו לקוח חסום מחליט אם להילחם או לוותר. */
-              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>'
+              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>' + supportHoursLine()
             : '<p class="auth-hint">' + t('auth.blockedMember') + '</p>') +
         '</div>' +
         '<button id="auth-signout-blocked" class="btn ghost">' + t('auth.signOut') + '</button>' +

@@ -499,7 +499,9 @@
     var contact = document.getElementById('footer-contact');
     if (contact) {
       contact.innerHTML = esc(t('common.emailUs')) + ' <a href="mailto:' +
-        esc(Model.SUPPORT_EMAIL) + '">' + esc(Model.SUPPORT_EMAIL) + '</a>';
+        esc(Model.SUPPORT_EMAIL) + '">' + esc(Model.SUPPORT_EMAIL) + '</a>'
+      contact.innerHTML += '<br><small>' + esc(t('common.supportHours', {
+        from: Model.SUPPORT_HOURS_FROM, to: Model.SUPPORT_HOURS_TO })) + '</small>';
     }
     /* וואטסאפ מופיע רק כשיש מספר. קישור שבור לערוץ תמיכה
        גרוע מאין ערוץ בכלל. */

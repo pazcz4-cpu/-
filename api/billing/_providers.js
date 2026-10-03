@@ -356,8 +356,9 @@ const payplus = {
       language_code: input.language || 'he',
       sendEmailApproval: !saveOnly,
       sendEmailFailure: false,
-      /* דקות. דף שנשאר פתוח שעה אינו משרת איש. */
-      expiry_datetime: '30',
+      /* דקות. ברירת המחדל קצרה כי הלקוח יושב מול הדף. קישור שנשלח
+         במייל מהמשרד האחורי מבקש יותר (input.expiryMinutes). */
+      expiry_datetime: String(Math.max(5, Math.min(Number(input.expiryMinutes) || 30, 10080))),
       refURL_success: input.returnUrl,
       refURL_failure: input.failureUrl || input.cancelUrl,
       refURL_cancel: input.cancelUrl,

@@ -23,6 +23,8 @@ const Model = require('../../js/backend/model.js');
 
 /* אורך תקופת חיוב, זהה לזה שבמנוע החיוב היומי */
 const MONTH_DAYS = 30;
+/* כמו ב-cron.js: כמה ימים ממשיכים לנסות אחרי כישלון */
+const GRACE_DAYS = 7;
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -168,6 +170,23 @@ module.exports = async function handler(req, res) {
     if (!verified.verified) {
       /* שמירת כרטיס בלי חיוב – אין עסקה לאמת, וזה תקין */
       note = verified.reason === 'no-transaction' ? 'card-saved' : 'unverified';
+      if (note === 'card-saved') {
+        /* לקוח שנחסם כי הכרטיס לא עבד (פג תוקף, נדחה שבעה ימים) והוחלף
+           לו כרטיס, בעצמו או דרך המשרד האחורי: חוזר למצב "תשלום לא
+           עבר" מהיום. מנוע החיוב יגבה בריצה הבאה -- ואם גם זה ייכשל,
+           ימי החסד רצים מחדש. בלי זה כרטיס חדש היה יושב ליד חשבון
+           חסום ואיש לא היה מנסה לגבות ממנו. */
+        const blockedByPayment = company.status === 'expired' ||
+          (company.status === 'past_due' && company.valid_until &&
+            new Date(company.valid_until).getTime() + GRACE_DAYS * 864e5 < Date.now());
+        if (blockedByPayment && !company.cancel_at_period_end) {
+          const nowIso = new Date().toISOString();
+          patch.status = 'past_due';
+          patch.valid_until = nowIso;
+          patch.current_period_end = nowIso;
+          note = 'card-saved-retry';
+        }
+      }
     } else if (verified.outcome === 'approved') {
       const plan = Model.PLANS[company.plan] || Model.PLANS[Model.DEFAULT_PLAN];
       const expected = plan.priceMonthly;

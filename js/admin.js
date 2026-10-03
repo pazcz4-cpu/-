@@ -469,6 +469,8 @@
         (c.freeAccess ? 'סיום פיילוט ללא תשלום' : 'פיילוט ללא תשלום') + '</button>' +
       '<button class="adm-btn" data-act="set-agent" data-id="' + esc(c.id) +
         '">שיוך לסוכן</button>' +
+      '<button class="adm-btn" data-act="card-link" data-id="' + esc(c.id) +
+        '">החלפת כרטיס אשראי</button>' +
       '<button class="adm-btn" data-act="set-wa-addon" data-id="' + esc(c.id) + '">' +
         (c.waEmployeeAddon ? 'כיבוי תוספת וואטסאפ' : 'הפעלת תוספת וואטסאפ') + '</button>' +
       '<button class="adm-btn" data-act="set-status" data-id="' + esc(c.id) +
@@ -775,6 +777,17 @@
         'להיות לקוח רגיל עם מספר הימים שנקבע, ואז הוא נדרש לחבר כרטיס. ' +
         'מחיר שונה מהמחירון (לא חינם) קובעים ב"מחיר מוסכם".</p>'
     },
+    /* הכרטיס אינו מוזן במשרד האחורי: נפתח עמוד תשלום מאובטח של
+       הספק, והקישור נמסר ללקוח (במייל מכאן, או ידנית). */
+    'card-link': {
+      title: 'החלפת כרטיס אשראי ללקוח',
+      fields: '<p class="adm-hint">נוצר קישור לעמוד תשלום מאובטח של חברת הסליקה, תקף יומיים. ' +
+        'הלקוח מזין שם כרטיס חדש, והוא מחליף את הישן. לקוח חסום בגלל כרטיס שנדחה או פג ' +
+        'חוזר לפעולה כשהכרטיס נשמר, והחיוב נגבה בריצת החיוב הבאה.</p>' +
+        '<label class="adm-check"><input type="checkbox" id="adm-f-send" checked> ' +
+        'שליחת הקישור במייל לבעלים של החשבון</label>' +
+        '<div id="adm-card-result"></div>'
+    },
     'set-agent': {
       title: 'שיוך לסוכן מכירות',
       fields: '<label class="adm-field"><span>הלקוח הגיע מ</span>' +
@@ -835,6 +848,8 @@
     if (action === 'set-price') fillPrice(id);
     if (action === 'set-agent') fillAgentChoice(id);
     document.getElementById('adm-modal-reason').value = '';
+    document.getElementById('adm-modal-ok').hidden = false;
+    document.getElementById('adm-modal-cancel').textContent = 'ביטול';
     document.getElementById('adm-modal-error').hidden = true;
     document.getElementById('adm-modal').hidden = false;
     var first = document.querySelector('#adm-modal-fields input, #adm-modal-fields select');
@@ -875,6 +890,31 @@
 
     var button = document.getElementById('adm-modal-ok');
     button.disabled = true;
+
+    if (pending.action === 'card-link') {
+      var sendBox = document.getElementById('adm-f-send');
+      api('card', { id: pending.id, reason: payload.reason, send: !!(sendBox && sendBox.checked) })
+        .then(function (result) {
+          var out = document.getElementById('adm-card-result');
+          out.innerHTML = '<p class="adm-hint">' +
+            (result.emailed ? 'נשלח במייל אל ' + esc(result.to) + '. '
+              : result.emailError ? 'המייל לא נשלח (' + (result.emailError === 'not_configured'
+                ? 'שליחת מייל לא מוגדרת' : 'השליחה נכשלה') + '). '
+                : 'המייל לא נשלח. ') +
+            'אפשר להעביר את הקישור ללקוח בעצמך:</p>' +
+            '<input class="adm-input" id="adm-card-url" readonly dir="ltr" value="' + esc(result.url) + '">' +
+            '<div class="adm-modal-actions"><button class="adm-btn" id="adm-card-copy" type="button">העתקת הקישור</button></div>';
+          button.hidden = true;
+          document.getElementById('adm-modal-cancel').textContent = 'סגירה';
+        })
+        .catch(function (error) {
+          var box = document.getElementById('adm-modal-error');
+          box.textContent = error.message;
+          box.hidden = false;
+        }).then(function () { button.disabled = false; });
+      return;
+    }
+
     api('action', payload).then(function () {
       closeAction();
       data.agents = null; data.report = null;
@@ -1360,6 +1400,14 @@
       return;
     }
 
+    if (event.target.id === 'adm-card-copy') {
+      var cardUrl = document.getElementById('adm-card-url');
+      cardUrl.select();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cardUrl.value);
+      else document.execCommand('copy');
+      event.target.textContent = 'הועתק';
+      return;
+    }
     if (event.target.id === 'adm-export-companies') { exportCompanies(); return; }
     if (event.target.id === 'adm-export-agents') { exportAgents(); return; }
 

@@ -702,9 +702,9 @@ test('פתיחת חשבון אינה יוצרת מנוי אצל הספק מעצ�
 
   Model.setBillingLive(true);
   var withBilling = Model.accessState(company, when);
-  assertEqual(withBilling.reason, 'trial-no-card',
+  assertEqual(withBilling.reason, 'card-required',
     'עם סליקה, החשבון החדש מדווח על מצב אחר: ' + withBilling.reason);
-  assert(withBilling.allowed, 'חשבון חדש נחסם');
+  assert(!withBilling.allowed, 'עם סליקה חשבון בלי כרטיס נכנס לפני שהזין אמצעי תשלום');
 
   Model.setBillingLive(false);
   var pilot = Model.accessState(company, when);

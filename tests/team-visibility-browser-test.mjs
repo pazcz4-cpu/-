@@ -29,6 +29,29 @@ function check(label, actual, expected) {
   if (!ok) failures.push(label + ': ' + JSON.stringify(actual) + ' ≠ ' + expected);
 }
 
+/* ברירת המחדל של הלשוניות היא היום. בשבת העובד בדוגמה לא עובד,
+   ולכן "הוא מסומן ברשימה" נבדק ביום שבו הוא כן עובד -- אחרת
+   הבדיקה תלויה ביום השבוע שבו היא רצה. */
+async function showMyDay(page) {
+  /* בודק בלי להזיז את הלשונית שנבחרה: מי שמסתכל על התוצאה אחר כך
+     מצפה ליום ברירת המחדל. */
+  const tabs = await page.locator('.team-tab').count();
+  const original = await page.locator('.team-tab.is-on').first();
+  const originalIndex = await page.evaluate(
+    () => [...document.querySelectorAll('.team-tab')].findIndex((t) => t.classList.contains('is-on')));
+  let found = (await page.locator('.team-me').count()) > 0;
+  for (let i = 0; i < tabs && !found; i++) {
+    await page.locator('.team-tab').nth(i).click();
+    await page.waitForTimeout(150);
+    found = (await page.locator('.team-me').count()) > 0;
+  }
+  if (originalIndex >= 0) {
+    await page.locator('.team-tab').nth(originalIndex).click();
+    await page.waitForTimeout(150);
+  }
+  return found;
+}
+
 const browser = await chromium.launch();
 const errors = [];
 
@@ -173,8 +196,7 @@ try {
       });
       return names.size;
     }) > 1, true);
-  check('והעובד עצמו מסומן ברשימה',
-    await page.locator('.team-me').count() > 0, true);
+  check('והעובד עצמו מסומן ברשימה', await showMyDay(page), true);
 
   console.log('\n== לשוניות הימים ==');
   check('שבע לשוניות', await page.locator('.team-tab').count(), 7);
@@ -391,7 +413,7 @@ try {
     document.querySelectorAll('.team-person').forEach((n) => names.add(n.textContent.trim()));
     return names.size;
   }) > 1, true);
-  check('והעובד עצמו מסומן', await page.locator('.team-me').count() > 0, true);
+  check('והעובד עצמו מסומן', await showMyDay(page), true);
 
   /* מה שהגיע לדפדפן שלו, ולא רק מה שהמסך הציג: עמית מגיע כשם
      ומזהה, והכרטיס שלו – מייל, טלפון והערה – אינו מגיע כלל. */

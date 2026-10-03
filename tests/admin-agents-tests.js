@@ -93,6 +93,12 @@ Db.prototype.install = function () {
       });
     }
 
+    if (parsed.host === 'api.resend.com') {
+      self.mails = self.mails || [];
+      self.mails.push(JSON.parse(opts.body));
+      return reply(200, { id: 'mail-1' });
+    }
+
     if (parsed.pathname === '/auth/v1/user') {
       var token = ((opts.headers && opts.headers.Authorization) || '').replace('Bearer ', '');
       return self.sessions[token] ? reply(200, self.sessions[token]) : reply(401, { message: 'bad token' });
@@ -694,6 +700,121 @@ test('אחרי היצירה הסטטוס מראה את החברה ואת שני 
       assertEqual(res.payload.exists, true, 'קיים');
       assertEqual(res.payload.users.length, 2, 'משתמשים');
       assert(res.payload.resetAt, 'מתי אופס');
+    });
+  });
+});
+
+/* ===== החלפת כרטיס ללקוח מהמשרד האחורי ===== */
+var providers = require('../api/billing/_providers.js');
+
+function withStubProvider(live, fn) {
+  var seen = [];
+  providers.stub = {
+    live: function () { return live; },
+    createCheckout: function (input) {
+      seen.push(input);
+      return Promise.resolve({ url: 'https://pay.example/page/abc' });
+    }
+  };
+  process.env.BILLING_PROVIDER = 'stub';
+  process.env.RESEND_API_KEY = 'k';
+  process.env.MAIL_FROM = 'SetShifts <no-reply@setshifts.com>';
+  function undo() {
+    delete providers.stub; delete process.env.BILLING_PROVIDER;
+    delete process.env.RESEND_API_KEY; delete process.env.MAIL_FROM;
+  }
+  return Promise.resolve().then(function () { return fn(seen); }).then(
+    function (v) { undo(); return v; }, function (e) { undo(); throw e; });
+}
+
+var CARD_SEED = {
+  companies: [customer({ id: 'co-1', name: 'קפה חסום', status: 'expired', billing_subscription_id: 'tok-old' })],
+  company_users: [{ id: 'u-own', company_id: 'co-1', email: 'owner@cafe.co.il', name: 'בעלים',
+    role: 'owner', active: true, created_at: daysAgo(100) }]
+};
+
+test('קישור להחלפת כרטיס נוצר בעמוד שמירה בלבד ונשלח במייל לבעלים', function () {
+  return withDb(CARD_SEED, function (db) {
+    return withStubProvider(true, function (seen) {
+      return call({ op: 'card', id: 'co-1', reason: 'הכרטיס פג תוקף', send: true }).then(function (res) {
+        assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
+        assertEqual(res.payload.url, 'https://pay.example/page/abc', 'הקישור לא חזר');
+        assertEqual(res.payload.emailed, true, 'המייל לא נשלח');
+        assertEqual(seen[0].saveCardOnly, true, 'עמוד החלפה חייב לשמור בלבד, בלי חיוב');
+        assertEqual(seen[0].companyId, 'co-1', 'מזהה החברה לא נשלח לספק');
+        assert(seen[0].expiryMinutes >= 1440, 'הקישור קצר מדי למשלוח במייל');
+        assertEqual(db.mails.length, 1, 'מספר מיילים');
+        assertEqual(db.mails[0].to[0], 'owner@cafe.co.il', 'נשלח לכתובת אחרת');
+        assert(db.mails[0].text.indexOf('https://pay.example/page/abc') !== -1, 'הקישור אינו במייל');
+      });
+    });
+  });
+});
+
+test('בלי סימון שליחה הקישור חוזר למסך ולא נשלח', function () {
+  return withDb(CARD_SEED, function (db) {
+    return withStubProvider(true, function () {
+      return call({ op: 'card', id: 'co-1', reason: 'מוסר בטלפון', send: false }).then(function (res) {
+        assertEqual(res.payload.emailed, false, 'נשלח בלי בקשה');
+        assert(!db.mails || db.mails.length === 0, 'נשלח מייל');
+      });
+    });
+  });
+});
+
+test('הקישור עצמו אינו נרשם ביומן, אבל נרשם מי יצר אותו ולמה', function () {
+  return withDb(CARD_SEED, function (db) {
+    return withStubProvider(true, function () {
+      return call({ op: 'card', id: 'co-1', reason: 'הכרטיס פג תוקף', send: true }).then(function () {
+        var entry = db.tables.billing_events.filter(function (e) { return e.type === 'admin.card-link'; })[0];
+        assert(entry, 'אין שורת יומן');
+        assertEqual(entry.payload.by, 'boss@setshifts.com', 'מי');
+        assertEqual(entry.payload.reason, 'הכרטיס פג תוקף', 'למה');
+        assert(JSON.stringify(entry).indexOf('pay.example') === -1, 'הקישור נשמר ביומן');
+      });
+    });
+  });
+});
+
+test('בלי סיבה, או בלי סליקה חיה, או לא בעל מוצר: נדחה', function () {
+  return withDb(CARD_SEED, function () {
+    return withStubProvider(true, function () {
+      return call({ op: 'card', id: 'co-1', reason: '', send: true }).then(function (res) {
+        assertEqual(res.statusCode, 400, 'בלי סיבה');
+        return call({ op: 'card', id: 'co-1', reason: 'בדיקה' }, { token: 'customer-token' });
+      }).then(function (res) {
+        assertEqual(res.statusCode, 403, 'לקוח רגיל קיבל קישור');
+      });
+    }).then(function () {
+      return withStubProvider(false, function () {
+        return call({ op: 'card', id: 'co-1', reason: 'בדיקה' }).then(function (res) {
+          assertEqual(res.statusCode, 501, 'סליקה לא חיה');
+        });
+      });
+    });
+  });
+});
+
+test('חברה בלי בעלים פעיל לא מקבלת קישור', function () {
+  return withDb({ companies: CARD_SEED.companies, company_users: [] }, function () {
+    return withStubProvider(true, function () {
+      return call({ op: 'card', id: 'co-1', reason: 'בדיקה' }).then(function (res) {
+        assertEqual(res.statusCode, 409, 'נשלח בלי בעלים');
+      });
+    });
+  });
+});
+
+test('כשהמייל לא מוגדר הקישור עדיין חוזר, עם הסיבה', function () {
+  return withDb(CARD_SEED, function () {
+    return withStubProvider(true, function () {
+      delete process.env.RESEND_API_KEY;
+      return call({ op: 'card', id: 'co-1', reason: 'בדיקה', send: true }).then(function (res) {
+        assertEqual(res.statusCode, 200, 'נכשל כולו');
+        assertEqual(res.payload.emailed, false, 'דווח כנשלח');
+        assertEqual(res.payload.emailError, 'not_configured', 'סיבה');
+        assert(res.payload.url, 'אין קישור למסירה ידנית');
+      });
     });
   });
 });

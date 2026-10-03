@@ -137,6 +137,21 @@
         return;
       }
       if (event.target.closest('#auth-signout-blocked')) { self.signOut(); }
+      if (event.target.closest('#auth-blocked-recheck')) { root.location.reload(); }
+      var addCard = event.target.closest('#auth-blocked-addcard');
+      if (addCard) {
+        /* פותח את עמוד התשלום של הספק; הדפדפן עובר לשם ולא חוזר
+           לכאן עד שהלקוח סיים. הכרטיס עצמו לא עובר דרכנו. */
+        addCard.disabled = true;
+        try { root.sessionStorage.removeItem('billing-recheck'); } catch (err) { /* לא קריטי */ }
+        self.backend.setSubscription({ action: 'payment-method' }).then(function () {
+          addCard.disabled = false;
+        }, function (err) {
+          addCard.disabled = false;
+          var box = self.gate.querySelector('.auth-error');
+          if (box) { box.textContent = (err && err.message) || t('billing.updateFailed'); box.classList.remove('hidden'); }
+        });
+      }
       if (event.target.closest('#auth-forgot')) {
         event.preventDefault();
         self.mode = 'reset';
@@ -642,16 +657,46 @@
     });
   };
 
+  /* מצבי חסימה שמתיישבים בהוספת כרטיס. מצבים אחרים (ביטל,
+     מנוי שאינו פעיל) דורשים שיחה, ולכן שם נשארת הפנייה לתמיכה. */
+  var CARD_FIXES = ['card-required', 'trial-ended', 'expired', 'past-due-expired'];
+
   AuthUI.prototype.showBlocked = function (session) {
     this.appRoot.classList.add('hidden');
     this.gate.classList.remove('hidden');
+    var owner = Model.can(session.user.role, 'billing.manage');
+    var canAddCard = owner && Model.isBillingLive() && CARD_FIXES.indexOf(session.access.reason) !== -1;
+
+    /* חזרה מעמוד התשלום: אישור הכרטיס מגיע מהספק לשרת, ולפעמים
+       באיחור של שניות. בודקים מחדש כמה פעמים לפני שמוותרים. */
+    var returned = /[?&]billing=done/.test((root.location && root.location.search) || '');
+    var checking = false;
+    if (canAddCard && returned) {
+      var tries = 0;
+      try { tries = Number(root.sessionStorage.getItem('billing-recheck') || 0); } catch (err) { tries = 3; }
+      if (tries < 3) {
+        checking = true;
+        try { root.sessionStorage.setItem('billing-recheck', String(tries + 1)); } catch (err) { /* ללא ספירה */ }
+        root.setTimeout(function () { root.location.reload(); }, 3500);
+      }
+    }
     this.gate.innerHTML =
       '<div class="auth-card">' +
         '<h1 class="auth-title">' + esc(session.company.name) + '</h1>' +
         '<div class="auth-blocked">' +
           '<h2>' + t('auth.blocked') + '</h2>' +
           '<p>' + esc(session.access.text) + '</p>' +
-          (Model.can(session.user.role, 'billing.manage')
+          (canAddCard
+            ? '<p class="auth-error hidden"></p>' +
+              '<p class="auth-hint">' + t(session.access.reason === 'card-required'
+                ? 'auth.blockedCardNoteTrial' : 'auth.blockedCardNoteCharge') + '</p>' +
+              (checking
+                ? '<p class="auth-hint">' + t('auth.blockedChecking') + '</p>'
+                : '') +
+              '<button id="auth-blocked-addcard" class="btn primary">' + t('auth.blockedAddCard') + '</button>' +
+              '<button id="auth-blocked-recheck" class="btn ghost">' + t('auth.blockedRecheck') + '</button>' +
+              '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>'
+            : owner
             ? '<p class="auth-hint">' + t('auth.blockedOwner') + '</p>' +
               /* ההודעה מבקשת לפנות לתמיכה, ולכן חייבת גם לומר לאן.
                  זה המסך שבו לקוח חסום מחליט אם להילחם או לוותר. */

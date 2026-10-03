@@ -159,6 +159,8 @@ try {
     sent.push({ name, body });
     let payload = WORLD[name] || { ok: true };
     if (name === 'action') payload = { ok: true, company: WORLD.company.company, detail: {} };
+    if (name === 'card') payload = { ok: true, url: 'https://pay.example/page/abc', to: 'gal@galil.co.il',
+      emailed: true, emailError: null, expiresInHours: 48 };
     if (name === 'agents') payload = AGENTS[body.do] || { ok: true };
     if (name === 'demo') payload = DEMO[body.do] || { ok: true };
     await route.fulfill({ status: 200, contentType: 'application/json',
@@ -402,6 +404,26 @@ try {
   check('ייצוא הלקוחות הוריד xlsx', custFile.suggestedFilename(), /^setshifts-customers-.*\.xlsx$/);
   check('ובתוכו שם עסק', (await import('node:fs')).readFileSync(await custFile.path())
     .includes(Buffer.from('מסעדת הגליל')), true);
+
+  console.log('\n== החלפת כרטיס ==');
+  sent.length = 0;
+  /* אחרי פעולה הרשימה והכרטיס נטענים מחדש במקביל; מחכים שהכרטיס יחזור */
+  await page.waitForSelector('[data-act="card-link"]', { timeout: 5000 });
+  await page.waitForTimeout(400);
+  await page.click('[data-act="card-link"]');
+  await page.waitForTimeout(300);
+  check('החלון נפתח עם סימון שליחה במייל כברירת מחדל',
+    await page.locator('#adm-f-send').isChecked(), true);
+  await page.fill('#adm-modal-reason', 'הכרטיס פג תוקף');
+  await page.click('#adm-modal-ok');
+  await page.waitForTimeout(500);
+  const cardCall = sent.filter((call) => call.name === 'card').pop();
+  check('הבקשה יצאה על הלקוח הנכון', cardCall && cardCall.body.id, 'co-2');
+  check('עם בקשת שליחה במייל', cardCall && cardCall.body.send, true);
+  check('הקישור מוצג להעתקה', await page.locator('#adm-card-url').inputValue(), 'https://pay.example/page/abc');
+  check('ונאמר למי נשלח המייל', await page.locator('#adm-card-result').innerText(), /gal@galil\.co\.il/);
+  await page.click('#adm-modal-cancel');
+  await page.waitForTimeout(200);
 
   console.log('\n== סינון לפי מקור ==');
   sent.length = 0;

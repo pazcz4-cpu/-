@@ -3577,7 +3577,8 @@ test('בלי סליקה, חשבון בניסיון אינו מתבקש להוס�
 
   Model.setBillingLive(true);
   var live = Model.accessState(company, when);
-  assertEqual(live.reason, 'trial-no-card', 'עם סליקה – מבקשים כרטיס');
+  assertEqual(live.reason, 'card-required', 'עם סליקה – הכרטיס נדרש לפני הניסיון');
+  assert(!live.allowed, 'עם סליקה, חשבון חדש בלי כרטיס נכנס למערכת');
   assert(/אמצעי תשלום/.test(live.text), 'ההודעה עם סליקה אינה מזכירה אמצעי תשלום');
 
   Model.setBillingLive(false);

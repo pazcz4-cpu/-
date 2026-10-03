@@ -387,6 +387,56 @@ test('שמירת כרטיס מקשרת את הטוקן ומשאירה את הל�
   });
 });
 
+/* לקוח שנחסם כי הכרטיס פג, ומחליפים לו כרטיס (בעצמו או דרך המשרד
+   האחורי): בלי הטיפול הזה הכרטיס החדש יושב ליד חשבון חסום, ומנוע
+   החיוב לא מנסה לגבות מחשבון שאינו בסטטוס שהוא סורק. */
+test('החלפת כרטיס ללקוח שפג מחזירה אותו למצב "תשלום לא עבר" לגבייה', function () {
+  var db = new FakeDb();
+  db.companies['co-1'].status = 'expired';
+  db.companies['co-1'].valid_until = '2026-09-01T00:00:00Z';
+  db.install();
+  var before = Date.now();
+  return withPayPlus(function () {
+    return payplusPost({ page_request_uid: 'req-r1', more_info: 'co-1',
+      data: { token: 'tok-replaced' } }).then(function (res) {
+      var company = db.companies['co-1'];
+      assertEqual(company.billing_subscription_id, 'tok-replaced', 'הטוקן לא הוחלף');
+      assertEqual(company.status, 'past_due', 'לקוח חסום נשאר חסום עם כרטיס חדש');
+      assert(new Date(company.valid_until).getTime() >= before - 1000, 'התוקף לא אופס לעכשיו');
+      assertEqual(res.payload.note, 'card-saved-retry', 'הסיווג שגוי');
+    });
+  });
+});
+
+test('החלפת כרטיס ללקוח משלם פעיל לא משנה לו סטטוס או תוקף', function () {
+  var db = new FakeDb();
+  db.companies['co-1'].status = 'active';
+  db.companies['co-1'].valid_until = '2026-11-20T00:00:00Z';
+  db.install();
+  return withPayPlus(function () {
+    return payplusPost({ page_request_uid: 'req-r2', more_info: 'co-1',
+      data: { token: 'tok-replaced-2' } }).then(function (res) {
+      assertEqual(db.companies['co-1'].status, 'active', 'סטטוס שונה');
+      assertEqual(db.companies['co-1'].valid_until, '2026-11-20T00:00:00Z', 'תוקף שונה');
+      assertEqual(db.companies['co-1'].billing_subscription_id, 'tok-replaced-2', 'הטוקן לא הוחלף');
+      assertEqual(res.payload.note, 'card-saved', 'הסיווג שגוי');
+    });
+  });
+});
+
+test('לקוח שביטל ופג אינו מופעל מחדש בשמירת כרטיס', function () {
+  var db = new FakeDb();
+  db.companies['co-1'].status = 'expired';
+  db.companies['co-1'].cancel_at_period_end = true;
+  db.install();
+  return withPayPlus(function () {
+    return payplusPost({ page_request_uid: 'req-r3', more_info: 'co-1',
+      data: { token: 'tok-x' } }).then(function () {
+      assertEqual(db.companies['co-1'].status, 'expired', 'לקוח שביטל הופעל מחדש');
+    });
+  });
+});
+
 test('חיוב מאושר בסכום הנכון הופך את המנוי לפעיל', function () {
   var db = new FakeDb();
   db.install();

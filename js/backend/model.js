@@ -599,8 +599,12 @@
             text: translate('access.trialPilot', 'תקופת ניסיון.',
               { days: daysLeft, date: endsOn }) };
         }
-        return { allowed: true, reason: 'trial-no-card', daysLeft: daysLeft,
-          text: translate('access.trialNoCard', 'תקופת ניסיון.',
+        /* סליקה חיה: הכרטיס נדרש כבר בהקמה, לפני חודש הניסיון.
+           הלקוח אינו משלם עכשיו; החיוב הראשון בתום החודש, והדרך
+           להימנע ממנו היא לבטל. כלומר ברירת המחדל היא להמשיך,
+           ולא להפך. לקוח שאין לו כרטיס אינו נכנס למערכת עד שיש. */
+        return { allowed: false, reason: 'card-required', daysLeft: daysLeft,
+          text: translate('access.cardRequired', 'הוסיפו אמצעי תשלום כדי להתחיל את חודש הניסיון.',
             { days: daysLeft, date: endsOn }) };
       }
       return { allowed: true, reason: 'trial', daysLeft: daysLeft,

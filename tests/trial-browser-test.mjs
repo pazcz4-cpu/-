@@ -169,6 +169,54 @@ try {
   check('ההסבר מכוון להוספת אמצעי תשלום',
     await page.evaluate(() => window.__backend.session().access.text), /אמצעי תשלום/);
 
+  console.log('\n== סליקה חיה: כרטיס נדרש לפני הניסיון ==');
+  /* חשבון חדש בלי כרטיס נחסם עד שהוזן אמצעי תשלום, והמסך החסום
+     מציע לבעלים להוסיף אחד -- אחרת הוא היה נתקע בלי מוצא. */
+  const blocked = await page.evaluate(() => {
+    const backend = window.__backend;
+    const company = backend.db.companies[backend.session().company.id];
+    company.status = 'trial';
+    company.billingSubscriptionId = null;
+    company.validUntil = new Date(Date.now() + 25 * 864e5).toISOString();
+    backend._save();
+    window.ShiftModel.setBillingLive(true);
+    backend.__calls = [];
+    backend.setSubscription = function (patch) {
+      backend.__calls.push(patch.action);
+      return Promise.resolve(null);
+    };
+    const session = backend.session();
+    session.access = window.ShiftModel.accessState(session.company, new Date());
+    const ui = new window.ShiftAuthUI.AuthUI({ backend: backend, onSignedIn: () => null, onSignedOut: () => null });
+    ui.showBlocked(session);
+    return session.access.reason;
+  });
+  check('החשבון החדש בלי כרטיס חסום', blocked, 'card-required');
+  check('המסך החסום מסביר שלא יהיה חיוב עכשיו',
+    await page.locator('.auth-blocked').innerText(), /לא יתבצע חיוב עכשיו/);
+  check('ויש כפתור הוספת אמצעי תשלום',
+    await page.locator('#auth-blocked-addcard').isVisible(), true);
+  await page.click('#auth-blocked-addcard');
+  await page.waitForTimeout(300);
+  check('הלחיצה פותחת את עמוד התשלום (payment-method)',
+    await page.evaluate(() => window.__backend.__calls.indexOf('payment-method') !== -1), true);
+
+  /* כרטיס שפג: אותו מסך, עם נוסח של המשך גבייה ולא של ניסיון */
+  const expiredText = await page.evaluate(() => {
+    const backend = window.__backend;
+    const session = backend.session();
+    session.company.status = 'expired';
+    session.company.billingSubscriptionId = 'tok-old';
+    session.access = window.ShiftModel.accessState(session.company, new Date());
+    const ui = new window.ShiftAuthUI.AuthUI({ backend: backend, onSignedIn: () => null, onSignedOut: () => null });
+    ui.showBlocked(session);
+    return document.querySelector('.auth-blocked').innerText;
+  });
+  check('מנוי שפג מציע גם הוא להחליף כרטיס',
+    await page.locator('#auth-blocked-addcard').isVisible(), true);
+  check('ללא הבטחה של "אין חיוב עכשיו"', /לא יתבצע חיוב עכשיו/.test(expiredText), false);
+  await page.evaluate(() => window.ShiftModel.setBillingLive(false));
+
   console.log('\n  שגיאות בדף:', errors.length ? errors.join(' | ') : 'אין');
   if (errors.length) failures.push('שגיאות: ' + errors.join(' | '));
 } finally {

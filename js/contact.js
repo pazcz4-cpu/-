@@ -220,6 +220,7 @@
           form.reset();
           openedAt = Date.now();
           say(form, t.ok, 'ok');
+          if (root.ShiftTracking) root.ShiftTracking.track('lead');
           return;
         }
         if (response.status === 429) { say(form, t.busy, 'error'); return; }

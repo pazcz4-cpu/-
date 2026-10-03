@@ -320,6 +320,9 @@
       waOptInText: form.waOptIn && form.waOptIn.checked ? t('auth.marketingOptIn') : ''
     }).then(function (session) {
       self._setBusy(false);
+      /* אירוע המרה לשיווק. בלי הסכמה ובלי מזהה מעקב הוא אינו עושה דבר,
+         והוא לא נושא שום פרט על הנרשם. */
+      if (root.ShiftTracking) root.ShiftTracking.track('signup');
       self._enter(session);
     }, function (err) {
       self._setBusy(false);

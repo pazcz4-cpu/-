@@ -2426,3 +2426,20 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 /* עובד בהתלמדות: בחירת מי מכשיר */
 .trainee-field .mentor-pills { max-height: 168px; overflow-y: auto; }
 .trainee-field .hint { margin: var(--s1) 0 var(--s2); }
+
+
+/* באנר הסכמה למעקב. מופיע רק כשהוגדר מזהה מעקב ועוד לא נבחר. */
+.consent-banner {
+  position: fixed; inset-inline: 12px; bottom: 12px; z-index: 2147483000;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+  padding: 12px 14px; background: var(--surface, #fff); color: var(--ink, #1b2330);
+  border: 1px solid var(--line, #d9dfec); border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, .22); font-size: .9rem; line-height: 1.5;
+}
+.consent-banner p { margin: 0; flex: 1 1 18rem; }
+.consent-banner a { color: var(--brand, #3b5bdb); }
+.consent-btn {
+  min-height: 40px; padding: 0 16px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line, #d9dfec); background: var(--surface, #fff); color: inherit; font: inherit;
+}
+.consent-accept { background: var(--brand, #3b5bdb); border-color: var(--brand, #3b5bdb); color: #fff; font-weight: 700; }

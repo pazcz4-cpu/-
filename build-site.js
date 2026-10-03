@@ -765,6 +765,30 @@ write('admin/config.js',
     supabaseAnonKey: SUPABASE_ANON_KEY
   }, null, 2) + ';\n');
 
+/* מזהי מעקב שיווקי. ריק = כבוי. הפעלה דורשת עדכון מדיניות הפרטיות
+   (docs/marketing-strategy.md), ולכן אין ברירת מחדל. */
+const META_PIXEL_ID = String(process.env.META_PIXEL_ID || '').replace(/\D/g, '');
+const GA4_ID = /^G-[A-Z0-9]+$/.test(String(process.env.GA4_ID || '').trim())
+  ? String(process.env.GA4_ID).trim() : '';
+/* הגנה: אסור להפעיל מעקב כשהמדיניות שלנו עדיין אומרת שאין מעקב.
+   הצהרה כוזבת בפרטיות גרועה יותר מכל פיקסל. */
+if (META_PIXEL_ID || GA4_ID) {
+  const claims = [
+    ['privacy.html', /אין כלי אנליטיקה ואין פיקסלים|No analytics and no pixels/],
+    ['security.html', /אף קובץ Cookie|No cookies/i]
+  ].filter(([file, pattern]) => pattern.test(read(file))).map(([file]) => file);
+  if (claims.length) {
+    console.error('\n✖ הוגדר מזהה מעקב (META_PIXEL_ID / GA4_ID), אבל ' + claims.join(', ') +
+      ' עדיין מצהירים שאין עוגיות, אנליטיקה או פיקסלים.\n' +
+      '  מעדכנים את הנוסח (אחרי סקירה משפטית) ואז מפעילים. ראו docs/marketing-strategy.md.');
+    process.exit(1);
+  }
+}
+write('js/tracking-config.js',
+  '/* נוצר אוטומטית על ידי build-site.js – אין לערוך ידנית. */\n' +
+  'window.SHIFT_CONFIG = Object.assign(window.SHIFT_CONFIG || {}, ' +
+  JSON.stringify({ metaPixelId: META_PIXEL_ID, ga4Id: GA4_ID }) + ');\n');
+
 write('app/config.js',
   '/* נוצר אוטומטית על ידי build-site.js – אין לערוך ידנית. */\n' +
   'window.SHIFT_CONFIG = ' + JSON.stringify({

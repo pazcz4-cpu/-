@@ -490,7 +490,7 @@ Body:
 להפסקת ההתראות השב/י "הסר".
 
 Footer:
-SetShifts · support@setshifts.com
+הודעה אוטומטית, אין מענה כאן · support@setshifts.com
 
 Buttons:
 1. Visit website · "לצפייה בסידור" · https://setshifts.com/app/
@@ -513,7 +513,7 @@ Body:
 להפסקת ההתראות השב/י "הסר".
 
 Footer:
-SetShifts · support@setshifts.com
+הודעה אוטומטית, אין מענה כאן · support@setshifts.com
 
 Buttons:
 1. Visit website · "להגשת אילוצים" · https://setshifts.com/app/
@@ -551,6 +551,18 @@ Buttons:
 
 דגימות: `{{1}} דנה כהן` · `{{2}} חודש ניסיון נוסף` ·
 `{{3}} EXTRAMONTH` · `{{4}} 3.10`
+
+### המספר הוא מספר שליחה בלבד (החלטה 03/10)
+
+המספר רשום ב-Cloud API **בלבד**, בלי אפליקציית WhatsApp או
+WhatsApp Business עליו, ובלי coexistence. לכן אין שום תלות
+במכשיר: אפשר לכבות אותו לצמיתות. בשתי התבניות ל-Utility הפוטר
+אומר "הודעה אוטומטית, אין מענה כאן" ומפנה ל-support@setshifts.com.
+
+מה כן צריך לשמור: ה-SIM חי (חבילה עם חיוב אוטומטי, לא כרטיס נטען
+שפג), וה-PIN של האימות הדו-שלבי של המספר במנהל סיסמאות, לא בצ'אט
+ולא בקוד. אם יידרש קוד פעם נוספת (איפוס PIN, מעבר מספר), ה-SIM
+צריך להיות זמין.
 
 ### ארבע הערות על התבניות
 

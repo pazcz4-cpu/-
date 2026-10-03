@@ -1422,7 +1422,7 @@
     var node = document.getElementById('panel-marketing');
     var r = data.marketing;
     var html = '<div class="adm-card"><h2>שיווק</h2>' +
-      '<p class="adm-card-sub">הנתונים נמשכים מהמערכת עצמה: הרשמות, כרטיסים, חיובים ולידים. רק ההוצאה על פרסום מוזנת ידנית, פעם בשבוע, מהסיכום של Meta ושל גוגל. ' +
+      '<p class="adm-card-sub">הנתונים נמשכים מהמערכת עצמה: הרשמות, כרטיסים, חיובים ולידים. ההוצאה על פרסום נמשכת כל יום מ-Meta ומ-Google Ads כשהם מחוברים (מצב החיבור בתחתית), ומוזנת ידנית לערוץ שאינו מחובר. ' +
       'משלם = לקוח שיש לו חיוב מוצלח אחד לפחות; פיילוט ללא תשלום והדגמה לא נספרים כמשלמים.</p>' +
       '<div class="adm-controls"><label class="adm-field" for="mk-weeks"><span>חלון</span>' +
       '<select class="adm-select" id="mk-weeks">' + [4, 8, 12, 26, 52].map(function (n) {
@@ -1475,8 +1475,19 @@
         }).join('') + '</tbody></table></div></div>';
     }
 
+    var sync = r.sync || {};
+    function syncLine(key, label) {
+      var s = sync[key] || {};
+      if (!s.configured && !(s.last)) return '<li><b>' + esc(label) + ':</b> לא מחובר. ההוצאה מוזנת ידנית.</li>';
+      if (!s.last) return '<li><b>' + esc(label) + ':</b> מחובר, עוד לא רץ.</li>';
+      return '<li><b>' + esc(label) + ':</b> ' + (s.last.ok
+        ? 'סונכרן ' + esc(date(s.last.at)) + ' ' + esc(new Date(s.last.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })) +
+          ' (' + s.last.weeks + ' שבועות)'
+        : '<span class="adm-error-inline">נכשל ' + esc(date(s.last.at)) + ': ' + esc(s.last.error || '') + '</span>') + '</li>';
+    }
     html += '<div class="adm-card"><h2>הוצאות פרסום</h2>' +
-      '<p class="adm-card-sub">מזינים פעם בשבוע את הסכום שנגבה בכל ערוץ (Meta Ads Manager, Google Ads). הזנה חוזרת לאותו שבוע וערוץ מחליפה את הקודמת.</p>' +
+      '<ul class="adm-sync">' + syncLine('meta', 'Meta') + syncLine('google', 'Google Ads') + '</ul>' +
+      '<p class="adm-card-sub">ערוץ מחובר מתעדכן לבד כל יום ומחליף הזנה ידנית של אותו שבוע. ערוץ שאינו מחובר (או ערוץ אחר) מזינים כאן פעם בשבוע.</p>' +
       '<form id="mk-spend-form" class="adm-grid-form">' +
       '<label class="adm-field" for="mk-week"><span>שבוע (כל יום בו)</span><input class="adm-input" id="mk-week" type="date" value="' + esc(weekSunday(1)) + '" required></label>' +
       '<label class="adm-field" for="mk-channel"><span>ערוץ</span><input class="adm-input" id="mk-channel" list="mk-channels" value="meta" maxlength="40" required>' +
@@ -1488,7 +1499,7 @@
     if (r.spend.length) {
       html += '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>שבוע שמתחיל</th><th>ערוץ</th><th class="num">סכום</th><th>הערה</th><th></th></tr></thead><tbody>' +
         r.spend.slice(0, 40).map(function (s) {
-          return '<tr><td>' + esc(date(s.weekStart)) + '</td><td>' + esc(s.channel) + '</td><td class="num">' + esc(moneyExact(s.amount)) +
+          return '<tr><td>' + esc(date(s.weekStart)) + '</td><td>' + esc(s.channel) + (s.auto ? ' <span class="adm-flag">אוטומטי</span>' : '') + '</td><td class="num">' + esc(moneyExact(s.amount)) +
             '</td><td>' + esc(s.note) + '</td><td><button class="adm-btn is-small" data-spend-delete="' + esc(s.id) + '">מחיקה</button></td></tr>';
         }).join('') + '</tbody></table></div>';
     }

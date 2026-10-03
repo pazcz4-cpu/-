@@ -160,6 +160,8 @@ const LEADS = {
 };
 const MARKETING = {
   ok: true, weeks: 12, firstWeek: '2026-07-12', payingTotal: 2, untrackedShare: 60,
+  sync: { meta: { configured: true, last: { at: NOW_ISO, ok: true, weeks: 6, error: null } },
+    google: { configured: false, last: null } },
   totals: { leads: 2, signups: 5, withCard: 2, teamAdded: 1, paying: 1, spend: 1000,
     cac: 1000, costPerLead: 500, costPerSignup: 200 },
   weekList: [{ week: '2026-09-27', leads: 2, signups: 5, withCard: 2, teamAdded: 1, paying: 1, spend: 1000,
@@ -645,6 +647,8 @@ try {
   check('ומוצג ערוץ Meta', mkText, /Meta/);
   check('מוצג קמפיין', mkText, /owners-pain/);
   check('אזהרה כשרוב ההרשמות בלי מקור', mkText, /60% מההרשמות הגיעו בלי מקור/);
+  check('מצב הסנכרון של Meta מוצג', mkText, /Meta: סונכרן .* \(6 שבועות\)/);
+  check('וגוגל שאינו מחובר אומר שמזינים ידנית', mkText, /Google Ads: לא מחובר/);
 
   sent.length = 0;
   await page.fill('#mk-amount', '1250.5');

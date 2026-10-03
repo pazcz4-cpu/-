@@ -211,3 +211,7 @@
 .adm-field-hint { display: block; margin-top: var(--s1); font-size: var(--t-xs, .75rem); line-height: 1.4; color: var(--muted); }
 .adm-form-actions { display: flex; gap: var(--s2); align-items: end; grid-column: 1 / -1; }
 .adm-controls .adm-field { margin: 0; }
+
+/* מצב הסנכרון האוטומטי של הוצאות הפרסום */
+.adm-sync { margin: 0 0 10px; padding-inline-start: 18px; font-size: 14px; line-height: 1.7; }
+.adm-error-inline { color: var(--err); }

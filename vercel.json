@@ -79,6 +79,10 @@
     {
       "path": "/api/timeclock?action=missed",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/marketing-sync?action=meta",
+      "schedule": "17 4 * * *"
     }
   ]
 }

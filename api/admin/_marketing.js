@@ -96,6 +96,22 @@ async function report(ctx) {
   const leadsCall = await db('/leads?select=*&order=created_at.desc&limit=10000');
   const leads = (leadsCall.ok && leadsCall.body) || [];
 
+  /* הסנכרון האוטומטי: מה הוגדר, ומתי רץ לאחרונה בכל ערוץ */
+  const syncCall = await db('/billing_events?type=eq.marketing.sync&select=payload,received_at' +
+    '&order=received_at.desc&limit=50');
+  const sync = {
+    meta: { configured: !!(String(process.env.META_ADS_TOKEN || '').trim() &&
+      String(process.env.META_AD_ACCOUNT_ID || '').trim()), last: null },
+    google: { configured: !!String(process.env.GOOGLE_ADS_SYNC_SECRET || '').trim(), last: null }
+  };
+  ((syncCall.ok && syncCall.body) || []).forEach(function (row) {
+    const p = row.payload || {};
+    if (sync[p.channel] && !sync[p.channel].last) {
+      sync[p.channel].last = { at: p.at || row.received_at, ok: p.ok === true, weeks: p.weeks || 0,
+        error: p.error || null };
+    }
+  });
+
   const spendCall = await db('/marketing_spend?select=*&order=week_start.desc&limit=5000');
   const spend = (spendCall.ok && spendCall.body) || [];
 
@@ -189,10 +205,11 @@ async function report(ctx) {
       ok: true, weeks: weeks, firstWeek: firstWeek,
       totals: totals, weekList: weekList, channels: channelList, campaigns: campaignList,
       payingTotal: payingTotal,
+      sync: sync,
       untrackedShare: windowCompanies.length ? Math.round((untracked / windowCompanies.length) * 100) : null,
       spend: spend.map(function (s) {
         return { id: s.id, weekStart: s.week_start, channel: s.channel, amount: Number(s.amount),
-          note: s.note || '' };
+          note: s.note || '', auto: /^אוטומטי/.test(s.note || '') };
       }),
       /* שורות גולמיות לייצוא, כדי שהקובץ יכלול הכול ולא רק סיכומים */
       raw: {

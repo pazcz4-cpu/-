@@ -460,7 +460,9 @@
     '</div>';
 
     html += '<div class="adm-controls">' +
-      '<button class="adm-btn is-primary" data-act="extend-trial" data-id="' + esc(c.id) +
+      '<button class="adm-btn is-primary" data-act="support-access" data-id="' + esc(c.id) +
+        '">כניסה למערכת הלקוח</button>' +
+      '<button class="adm-btn" data-act="extend-trial" data-id="' + esc(c.id) +
         '">מתן תקופה ללא תשלום</button>' +
       '<button class="adm-btn" data-act="set-plan" data-id="' + esc(c.id) +
         '">שינוי חבילה</button>' +
@@ -559,7 +561,9 @@
         '<td class="wide">' + esc(ticket.subject) + '</td>' +
         '<td>' + esc(TICKET_STATUS[ticket.status] || ticket.status) + '</td>' +
         '<td><button class="adm-btn is-small" data-ticket="' + esc(ticket.id) +
-          '">מענה</button></td>' +
+          '">מענה</button> <button class="adm-btn is-small" data-act="support-access" data-id="' +
+          esc(ticket.company_id) + '" data-reason="' + esc('טיפול בקריאה: ' + (ticket.subject || '')) +
+          '">כניסה למערכת הלקוח</button></td>' +
         '</tr>' +
         '<tr><td colspan="6" class="wide" style="color:var(--muted)">' +
           esc(ticket.body) +
@@ -789,6 +793,14 @@
         'שליחת הקישור במייל לבעלים של החשבון</label>' +
         '<div id="adm-card-result"></div>'
     },
+    /* כניסת תמיכה: נפתחת לשונית חדשה במערכת של הלקוח, כבעלים שלו */
+    'support-access': {
+      title: 'כניסה למערכת הלקוח',
+      fields: '<p class="adm-hint">תיפתח לשונית חדשה במערכת של הלקוח, כבעלים שלו ועם כל הנתונים. ' +
+        'הלקוח לא מתנתק ולא מקבל הודעה. בראש המסך יופיע פס אדום, וסגירת הלשונית מסיימת את הכניסה. ' +
+        'פעולות שתבצע שם נראות אצלו כשלו, והכניסה נרשמת ביומן.</p>' +
+        '<div id="adm-support-result"></div>'
+    },
     /* הקמת לקוח בפיילוט ללא תשלום, בלי כרטיס. רק מכאן: הרשמה מהאתר
        או מקישור של סוכן תמיד דורשת כרטיס כשהסליקה חיה. */
     'create-customer': {
@@ -864,7 +876,7 @@
        בלי לשים לב שהחליף צורת תמחור. */
     if (action === 'set-price') fillPrice(id);
     if (action === 'set-agent' || action === 'create-customer') fillAgentChoice(id);
-    document.getElementById('adm-modal-reason').value = '';
+    document.getElementById('adm-modal-reason').value = (extra && extra.reason) || '';
     document.getElementById('adm-modal-ok').hidden = false;
     document.getElementById('adm-modal-cancel').textContent = 'ביטול';
     document.getElementById('adm-modal-error').hidden = true;
@@ -907,6 +919,30 @@
 
     var button = document.getElementById('adm-modal-ok');
     button.disabled = true;
+
+    if (pending.action === 'support-access') {
+      /* החלון נפתח כאן, בתוך הלחיצה: דפדפן חוסם חלון שנפתח אחרי
+         בקשת רשת. הכתובת נקבעת לו כשהשרת עונה. */
+      var tab = window.open('about:blank', '_blank');
+      api('support', { id: pending.id, reason: payload.reason }).then(function (result) {
+        if (tab && !tab.closed) {
+          tab.location.href = result.url;
+          closeAction();
+        } else {
+          document.getElementById('adm-support-result').innerHTML =
+            '<p class="adm-hint">הדפדפן חסם את פתיחת הלשונית. הקישור (תקף לשימוש אחד):</p>' +
+            '<a class="adm-btn is-primary" id="adm-support-link" target="_blank" rel="noopener" href="' +
+            esc(result.url) + '">פתיחת המערכת של ' + esc(result.company) + '</a>';
+          button.hidden = true;
+        }
+      }).catch(function (error) {
+        if (tab) tab.close();
+        var box = document.getElementById('adm-modal-error');
+        box.textContent = error.message;
+        box.hidden = false;
+      }).then(function () { button.disabled = false; });
+      return;
+    }
 
     if (pending.action === 'create-customer') {
       var sendMail = document.getElementById('adm-f-send');
@@ -1404,7 +1440,7 @@
     if (act) {
       var isCancel = act.dataset.act === 'set-cancel';
       openAction(act.dataset.act, act.dataset.id,
-        { cancelNow: isCancel && /ביטול/.test(act.textContent) });
+        { cancelNow: isCancel && /ביטול/.test(act.textContent), reason: act.dataset.reason || '' });
       return;
     }
 

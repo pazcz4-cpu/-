@@ -104,6 +104,12 @@ Db.prototype.install = function () {
       return self.sessions[token] ? reply(200, self.sessions[token]) : reply(401, { message: 'bad token' });
     }
 
+    if (parsed.pathname === '/auth/v1/admin/generate_link') {
+      self.authCalls.push({ method: method, path: parsed.pathname, body: body });
+      if (!body || body.type !== 'magiclink') return reply(400, { msg: 'bad type' });
+      return reply(200, { action_link: 'https://x/verify?token=secret-link', hashed_token: 'hash-for-' + body.email });
+    }
+
     if (parsed.pathname.indexOf('/auth/v1/admin/users') === 0) {
       self.authCalls.push({ method: method, path: parsed.pathname, body: body });
       if (method === 'POST') {
@@ -912,6 +918,75 @@ test('הסיסמה נשלחת במייל רק כשביקשו, והיא אינה 
     });
   }).then(function () {
     delete process.env.RESEND_API_KEY; delete process.env.MAIL_FROM;
+  });
+});
+
+/* ===== כניסת תמיכה ===== */
+var SUPPORT_SEED = {
+  companies: [customer({ id: 'co-1', name: 'קפה לתמיכה', status: 'expired' })],
+  company_users: [
+    { id: 'u-emp', company_id: 'co-1', email: 'emp@cafe.co.il', role: 'employee', active: true, created_at: daysAgo(90) },
+    { id: 'u-own', company_id: 'co-1', email: 'owner@cafe.co.il', role: 'owner', active: true, created_at: daysAgo(100) }
+  ]
+};
+
+test('כניסת תמיכה מחזירה כתובת עם אסימון חד־פעמי לבעלים, גם לחשבון חסום', function () {
+  process.env.PUBLIC_BASE_URL = 'https://setshifts.com';
+  return withDb(SUPPORT_SEED, function (db) {
+    return call({ op: 'support', id: 'co-1', reason: 'טיפול בקריאה: הסידור לא נשמר' }).then(function (res) {
+      assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
+      assertEqual(res.payload.as, 'owner@cafe.co.il', 'לא נכנס כבעלים');
+      assert(res.payload.url.indexOf('https://setshifts.com/app/?support=hash-for-owner%40cafe.co.il') === 0, res.payload.url);
+      assert(res.payload.url.indexOf('co=') !== -1, 'שם הלקוח לפס');
+      var link = db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; })[0];
+      assertEqual(link.body.email, 'owner@cafe.co.il', 'פנה למשתמש אחר');
+    });
+  });
+});
+
+test('כל כניסה נרשמת ביומן עם מי, למה ולאיזה משתמש, בלי האסימון', function () {
+  return withDb(SUPPORT_SEED, function (db) {
+    return call({ op: 'support', id: 'co-1', reason: 'בדיקת תקלה' }).then(function () {
+      var entry = db.tables.billing_events.filter(function (e) { return e.type === 'admin.support-access'; })[0];
+      assert(entry, 'אין שורת יומן');
+      assertEqual(entry.payload.by, 'boss@setshifts.com', 'מי');
+      assertEqual(entry.payload.reason, 'בדיקת תקלה', 'למה');
+      assertEqual(entry.payload.detail.as, 'owner@cafe.co.il', 'כמי');
+      assert(JSON.stringify(entry).indexOf('hash-for') === -1, 'האסימון נשמר ביומן');
+    });
+  });
+});
+
+test('כניסת תמיכה: בלי סיבה, לקוח רגיל, חברה לא קיימת, או חברה בלי בעלים/מנהל - נדחה', function () {
+  return withDb(SUPPORT_SEED, function (db) {
+    return call({ op: 'support', id: 'co-1', reason: '' }).then(function (res) {
+      assertEqual(res.statusCode, 400, 'בלי סיבה');
+      return call({ op: 'support', id: 'co-1', reason: 'בדיקה' }, { token: 'customer-token' });
+    }).then(function (res) {
+      assertEqual(res.statusCode, 403, 'לקוח רגיל קיבל כניסה');
+      return call({ op: 'support', id: 'nope', reason: 'בדיקה' });
+    }).then(function (res) {
+      assertEqual(res.statusCode, 404, 'חברה לא קיימת');
+      assertEqual(db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; }).length, 0,
+        'נוצר אסימון בבקשה שנדחתה');
+    });
+  }).then(function () {
+    return withDb({ companies: SUPPORT_SEED.companies, company_users: [SUPPORT_SEED.company_users[0]] }, function () {
+      return call({ op: 'support', id: 'co-1', reason: 'בדיקה' }).then(function (res) {
+        assertEqual(res.statusCode, 409, 'נכנס כעובד');
+      });
+    });
+  });
+});
+
+test('בלי בעלים נכנסים כמנהל', function () {
+  return withDb({ companies: SUPPORT_SEED.companies, company_users: [
+    { id: 'u-mgr', company_id: 'co-1', email: 'mgr@cafe.co.il', role: 'manager', active: true, created_at: daysAgo(10) }
+  ] }, function () {
+    return call({ op: 'support', id: 'co-1', reason: 'בדיקה' }).then(function (res) {
+      assertEqual(res.payload.as, 'mgr@cafe.co.il', 'מנהל');
+      assertEqual(res.payload.role, 'manager', 'תפקיד');
+    });
   });
 });
 

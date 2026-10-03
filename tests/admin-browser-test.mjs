@@ -159,6 +159,8 @@ try {
     sent.push({ name, body });
     let payload = WORLD[name] || { ok: true };
     if (name === 'action') payload = { ok: true, company: WORLD.company.company, detail: {} };
+    if (name === 'support') payload = { ok: true, company: 'מסעדת הגליל', as: 'gal@galil.co.il', role: 'owner',
+      url: url('app.html') + '?support=tok123&co=' + encodeURIComponent('מסעדת הגליל') };
     if (name === 'customer') payload = { ok: true, companyId: 'co-2', email: 'dana@pilot.co.il',
       password: 'abcd-efgh-jkmn', emailed: false, emailError: 'not_configured', loginUrl: 'https://setshifts.com/app/' };
     if (name === 'card') payload = { ok: true, url: 'https://pay.example/page/abc', to: 'gal@galil.co.il',
@@ -426,6 +428,35 @@ try {
   check('ונאמר למי נשלח המייל', await page.locator('#adm-card-result').innerText(), /gal@galil\.co\.il/);
   await page.click('#adm-modal-cancel');
   await page.waitForTimeout(200);
+
+  console.log('\n== כניסה למערכת הלקוח ==');
+  await page.click('.adm-tab[data-panel="companies"]');
+  await page.waitForTimeout(300);
+  await page.click('#panel-companies tbody tr:nth-child(2) [data-open]');
+  await page.waitForSelector('[data-act="support-access"]', { timeout: 5000 });
+  await page.waitForTimeout(300);
+  check('הכפתור מופיע בכרטיס הלקוח', await page.locator('#adm-company-detail [data-act="support-access"]').count(), 1);
+  sent.length = 0;
+  await page.click('#adm-company-detail [data-act="support-access"]');
+  await page.waitForTimeout(300);
+  check('נדרשת סיבה לפני הכניסה', await page.locator('#adm-modal-reason').isVisible(), true);
+  await page.fill('#adm-modal-reason', 'הלקוח לא מצליח לפרסם סידור');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.click('#adm-modal-ok')
+  ]);
+  await popup.waitForLoadState('domcontentloaded');
+  await popup.waitForTimeout(800);
+  const supportCall = sent.filter((call) => call.name === 'support').pop();
+  check('הבקשה יצאה על הלקוח הנכון', supportCall && supportCall.body.id, 'co-2');
+  check('ועם הסיבה', supportCall && supportCall.body.reason, 'הלקוח לא מצליח לפרסם סידור');
+  check('נפתחה לשונית חדשה באפליקציה', popup.url(), /app\.html/);
+  check('פס מצב התמיכה אדום וקבוע', await popup.locator('#support-banner').isVisible(), true);
+  check('ונושא את שם הלקוח', await popup.locator('#support-banner').innerText(), /מסעדת הגליל/);
+  check('וההתחברות יושבת בלשונית ולא בדפדפן', await popup.evaluate(
+    () => !!sessionStorage.getItem('shift-support-mode-v1')), true);
+  await popup.close();
+  await page.waitForTimeout(300);
 
   console.log('\n== הקמת לקוח ללא כרטיס ==');
   await page.click('.adm-tab[data-panel="companies"]');

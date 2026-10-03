@@ -457,7 +457,10 @@
 
   AuthUI.prototype._enter = function (session) {
     var self = this;
-    if (!session.access.allowed) { return this.showBlocked(session); }
+    /* מצב תמיכה נכנס גם לחשבון חסום: בעל המוצר בא לראות ולטפל, ודווקא
+       לקוח חסום הוא זה שפונה. */
+    var supporting = !!(root.ShiftSupportMode && root.ShiftSupportMode.active());
+    if (!session.access.allowed && !supporting) { return this.showBlocked(session); }
     return this._redeemPending().then(function () {
       self.gate.classList.add('hidden');
       self.appRoot.classList.remove('hidden');

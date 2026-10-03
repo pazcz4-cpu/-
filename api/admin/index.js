@@ -25,7 +25,8 @@ const ROUTES = {
   agents: require('./_agents.js'),
   demo: require('./_demo.js'),
   card: require('./_card.js'),
-  customer: require('./_customer.js')
+  customer: require('./_customer.js'),
+  support: require('./_support.js')
 };
 
 module.exports = endpoint(async function (ctx) {

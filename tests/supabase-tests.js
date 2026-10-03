@@ -162,6 +162,18 @@ FakeSupabase.prototype.fetch = function (url, options) {
     return reply(200, { access_token: makeToken(match), refresh_token: 'r-' + match, expires_in: 3600 });
   }
 
+  /* כניסת תמיכה: הגיבוב שהמשרד האחורי קיבל מ-generate_link. חד־פעמי. */
+  if (path === '/auth/v1/verify') {
+    var supportUser = String(body.token_hash || '').indexOf('hash-') === 0
+      ? body.token_hash.slice(5) : null;
+    this.supportUsed = this.supportUsed || {};
+    if (body.type !== 'magiclink' || !supportUser || !this.users[supportUser] || this.supportUsed[body.token_hash]) {
+      return reply(403, { message: 'Email link is invalid or has expired' });
+    }
+    this.supportUsed[body.token_hash] = true;
+    return reply(200, { access_token: makeToken(supportUser), refresh_token: 'r-' + supportUser, expires_in: 3600 });
+  }
+
   if (path === '/auth/v1/logout') return reply(204);
 
   /* שליחת קישור לאיפוס סיסמה. Supabase עונה 200 גם לכתובת שאינה
@@ -1674,6 +1686,84 @@ run('אחסון חסום: ההתחברות עובדת, והמצב נשמר בז�
     assert(backend.session() !== null, 'המשתמש נותק אחרי פעולה');
   });
 });
+
+console.log('\n== כניסת תמיכה מהמשרד האחורי ==');
+
+function withSupportUrl(search, fn) {
+  var saved = { location: globalThis.location, history: globalThis.history,
+    sessionStorage: globalThis.sessionStorage, mode: globalThis.ShiftSupportMode };
+  var store = {};
+  globalThis.sessionStorage = {
+    getItem: function (k) { return k in store ? store[k] : null; },
+    setItem: function (k, v) { store[k] = String(v); },
+    removeItem: function (k) { delete store[k]; },
+    clear: function () { store = {}; }
+  };
+  globalThis.location = { hash: '', pathname: '/app/', search: search, origin: 'https://setshifts.com' };
+  globalThis.replacedUrls = [];
+  globalThis.history = { replaceState: function (a, b, url) { globalThis.replacedUrls.push(url); } };
+  globalThis.ShiftSupportMode = require('../js/support-mode.js');
+  function restore() {
+    globalThis.location = saved.location; globalThis.history = saved.history;
+    globalThis.sessionStorage = saved.sessionStorage; globalThis.ShiftSupportMode = saved.mode;
+  }
+  return Promise.resolve().then(function () { return fn(store); }).then(
+    function (v) { restore(); return v; }, function (e) { restore(); throw e; });
+}
+
+run('אסימון תמיכה מוחלף בהתחברות כבעלים, וממחק את עצמו מהכתובת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  var ownerId;
+  return backend.signUpCompany({ email: 'owner@support.test', password: 'secret123', name: 'בעלים',
+    companyName: 'קפה תמיכה', phone: '054-1234567' }).then(function (session) {
+    ownerId = session.user.id;
+    backend._clearTokens();
+    return withSupportUrl('?support=hash-' + ownerId + '&co=%D7%A7%D7%A4%D7%94', function (store) {
+      assertEqual(globalThis.ShiftSupportMode.active(), true, 'מצב תמיכה לא זוהה');
+      return backend.restore().then(function (session) {
+        assert(session, 'לא נוצרה התחברות');
+        assertEqual(session.user.role, 'owner', 'לא נכנס כבעלים');
+        assertEqual(session.company.name, 'קפה תמיכה', 'חברה');
+        assertEqual(globalThis.replacedUrls[0], '/app/', 'האסימון נשאר בכתובת');
+        assert(JSON.parse(store[globalThis.ShiftSupportMode.FLAG]).company === 'קפה', 'שם הלקוח לא נשמר לפס');
+      });
+    });
+  });
+});
+
+run('אסימון תמיכה פועל פעם אחת בלבד', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  var ownerId;
+  return backend.signUpCompany({ email: 'owner2@support.test', password: 'secret123', name: 'בעלים',
+    companyName: 'קפה תמיכה', phone: '054-1234567' }).then(function (session) {
+    ownerId = session.user.id;
+    backend._clearTokens();
+    return withSupportUrl('?support=hash-' + ownerId, function () { return backend.restore(); });
+  }).then(function (first) {
+    assert(first, 'הכניסה הראשונה נכשלה');
+    backend._clearTokens();
+    return withSupportUrl('?support=hash-' + ownerId, function () { return backend.restore(); });
+  }).then(function (second) {
+    assertEqual(second, null, 'אסימון שנצרך הוכנס שוב');
+    assert(backend.takeLinkError(), 'לא נשמרה הודעת שגיאה');
+  });
+});
+
+run('במצב תמיכה האחסון הוא של הלשונית, ובלי תמיכה הוא של הדפדפן', function () {
+  return withSupportUrl('?support=abc', function () {
+    var local = { name: 'local' };
+    globalThis.localStorage = local;
+    assert(globalThis.ShiftSupportMode.storage() === globalThis.sessionStorage, 'תמיכה צריכה לשבת ב-sessionStorage');
+  }).then(function () {
+    return withSupportUrl('', function () {
+      assert(globalThis.ShiftSupportMode.storage() === globalThis.localStorage, 'רגיל צריך localStorage');
+      assertEqual(globalThis.ShiftSupportMode.active(), false, 'מצב תמיכה בלי אסימון');
+    });
+  }).then(function () { delete globalThis.localStorage; });
+});
+
 
 chain.then(function () {
   console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');

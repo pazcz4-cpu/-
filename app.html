@@ -635,6 +635,7 @@
 <script src="js/backend/users-ui.js"></script>
 <script src="js/backend/billing.js"></script>
 <script src="js/backend/billing-ui.js"></script>
+<script src="js/support-mode.js"></script>
 <script src="js/backend/support-ui.js"></script>
 <script src="js/backend/preview-ui.js"></script>
 <script src="js/backend/onboarding-ui.js"></script>
@@ -663,7 +664,8 @@
         anonKey: config.supabaseAnonKey,
         adminEndpoint: config.adminEndpoint || '/api/create-user',
         cancelEndpoint: config.cancelEndpoint || '/api/cancel-invite',
-        storage: window.localStorage
+        /* כניסת תמיכה מהמשרד האחורי יושבת באחסון של הלשונית בלבד */
+        storage: window.ShiftSupportMode ? window.ShiftSupportMode.storage() : window.localStorage
       });
     } else {
       backend = new window.ShiftMockBackend.MockBackend({ storage: window.localStorage });
@@ -686,6 +688,7 @@
     /* נחשף לצורך בדיקות ולאבחון מהקונסולה. אין כאן הרשאה נוספת:
        כל פעולה עוברת ממילא דרך השרת עם האסימון של המשתמש. */
     window.__backend = backend;
+    if (window.ShiftSupportMode) { window.ShiftSupportMode.begin(); window.ShiftSupportMode.banner(); }
     window.ShiftSaas.boot({ backend: backend });
   })();
 </script>

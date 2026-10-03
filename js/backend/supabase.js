@@ -571,6 +571,18 @@
     var self = this;
     /* קישור אישי קודם לכל: מי שהגיע איתו מתכוון להיכנס כמוהו,
        גם אם במכשיר הזה שמור אסימון ישן של מישהו אחר. */
+    /* כניסת תמיכה מהמשרד האחורי (js/support-mode.js): האסימון חד־פעמי
+       ומוחלף בהתחברות רגילה כבעלים של החברה. */
+    var supportToken = root.ShiftSupportMode ? root.ShiftSupportMode.take() : '';
+    if (supportToken) {
+      return this.redeemSupport(supportToken)
+        .then(function () { return self._loadSession(); })
+        .catch(function (err) {
+          self._linkError = (err && err.message) || t('link.invalid');
+          self._clearTokens();
+          return null;
+        });
+    }
     var token = linkTokenFromUrl();
     if (token) {
       stripLinkToken();
@@ -1007,6 +1019,19 @@
   SupabaseBackend.prototype.createAccessLink = function (userId) {
     return this._server(this.adminEndpoint,
       { mode: 'link', op: 'create', userId: userId });
+  };
+
+  /* החלפת אסימון התמיכה בהתחברות. verify של GoTrue מקבל את הגיבוב
+     שהשרת קיבל מ-generate_link, ומחזיר התחברות רגילה. */
+  SupabaseBackend.prototype.redeemSupport = function (tokenHash) {
+    var self = this;
+    return this._raw('/auth/v1/verify', {
+      method: 'POST', token: null, body: { type: 'magiclink', token_hash: tokenHash }
+    }).then(function (data) {
+      if (!data || !data.access_token) throw fail('bad_link', t('link.invalid'));
+      self._storeTokens(data);
+      return self.tokens;
+    });
   };
 
   SupabaseBackend.prototype.revokeAccessLink = function (userId) {

@@ -146,19 +146,10 @@ function buildDemoData(now) {
   Store.markPublished(prev, new Date(now || Date.now()));
   Store.markPublished(current, new Date(now || Date.now()));
 
-  /* שבוע הבא: טיוטה ריקה, עם בקשות שממתינות לאישור */
-  const next = Store.getWeek(state, nextWeek);
-  Store.setConstraint(next, 'emp-1', 3, { off: true, blocked: {}, preferred: {},
-    note: 'תור לרופא', status: 'pending' });
-  Store.setConstraint(next, 'emp-2', 4, { off: true, blocked: {}, preferred: {},
-    note: 'אירוע משפחתי', status: 'pending' });
-  Store.setConstraint(next, 'emp-4', 0, { off: false, blocked: {}, preferred: { morning: true },
-    note: '', status: 'pending' });
-  Store.setConstraint(next, 'emp-5', 2, { off: false, blocked: { morning: true }, preferred: {},
-    note: 'לימודים', status: 'pending' });
-  Store.setConstraint(next, 'emp-6', 1, { off: true, blocked: {}, preferred: {},
-    note: '', status: 'pending' });
-  Store.setConstraintStatus(next, 'emp-6', 1, 'approved', '');
+  /* שבוע הבא: טיוטה ריקה ונקייה. בלי בקשות חופש: בהדגמה ראשונה
+     לוחצים "בנה סידור" ומקבלים סידור מלא בלי אף התראה, ולא
+     מסבירים ללקוח למה מישהו קיבל חופש. */
+  Store.getWeek(state, nextWeek);
 
   /* דיווחי שעון: כל השבוע הקודם, והימים שעברו בשבוע הנוכחי.
      דוח השעות נראה אמיתי ולא ריק. */

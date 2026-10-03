@@ -664,7 +664,7 @@ test('הנתונים: 11 עובדים, 2 סניפים, 4 משמרות ביום, 
       assertEqual(weeks[1].published, true, 'שבוע נוכחי מפורסם');
       assertEqual(weeks[2].published, false, 'שבוע הבא טיוטה');
       assertEqual(Object.keys(weeks[2].week.assignments).length, 0, 'שבוע הבא ריק, לבנייה מול הלקוח');
-      assert(Object.keys(weeks[2].week.constraints).length >= 3, 'בקשות ממתינות לשבוע הבא');
+      assertEqual(Object.keys(weeks[2].week.constraints).length, 0, 'בשבוע הבא אין בקשות: הבנייה בהדגמה נקייה');
       assert(weeks[0].week.punches.length > 20, 'דיווחי שעון לדוח השעות');
       var need = 0, got = 0;
       config.branches.forEach(function (branch) {
@@ -682,11 +682,13 @@ test('הנתונים: 11 עובדים, 2 סניפים, 4 משמרות ביום, 
   });
 });
 
-test('שבוע הבא מתמלא כולו בבנייה אוטומטית, גם עם בקשות החופש שממתינות', function () {
+test('שבוע הבא נבנה מלא ובלי אף התראה: אין חוסרים, אין הפרות ואין המלצות', function () {
   var Demo = require('../api/admin/_demo.js');
   var Store = require('../js/store.js');
   var Scheduler = require('../js/scheduler.js');
-  ['2026-10-03T12:00:00Z', '2026-10-08T10:00:00Z', '2026-12-25T05:00:00Z'].forEach(function (when) {
+  var Validate = require('../js/validate.js');
+  ['2026-10-03T12:00:00Z', '2026-10-08T10:00:00Z', '2026-10-10T21:30:00Z', '2026-12-25T05:00:00Z',
+    '2027-03-29T08:00:00Z'].forEach(function (when) {
     var data = Demo.buildDemoData(new Date(when));
     var keys = Object.keys(data.weeks).sort();
     var state = Store.emptyState();
@@ -706,6 +708,12 @@ test('שבוע הבא מתמלא כולו בבנייה אוטומטית, גם ע
       });
     });
     assertEqual(got, need, 'משמרות חסרות בשבוע הבא (' + when + ')');
+    week.assignments = result.assignments;
+    var issues = Validate.validate(state, week).issues;
+    assertEqual(issues.map(function (i) { return i.type; }).join(','), '', 'התראות בשבוע הבא (' + when + ')');
+    keys.slice(0, 2).forEach(function (k) {
+      assertEqual(Validate.validate(state, state.weeks[k]).issues.length, 0, 'התראות בשבוע שפורסם ' + k);
+    });
   });
 });
 

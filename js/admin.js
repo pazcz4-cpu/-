@@ -1292,15 +1292,15 @@
     var html = '<div class="adm-card"><h2>מערכת הדגמה</h2>' +
       '<p class="adm-card-sub">עסק לדוגמה עם 8 עובדים, 2 סניפים ו-4 משמרות ביום: סידור שפורסם, דוח שעות ' +
       'ובקשות אילוץ שממתינות לאישור — ושבוע הבא ריק, כדי לבנות בו סידור מול הלקוח ולהתאים אותו לעסק שלו.</p>' +
-      '<div class="adm-form-actions">' +
-      '<button class="adm-btn is-primary" id="adm-demo-enter" type="button">כניסה למערכת ההדגמה</button></div>' +
-      '<p class="adm-hint">נפתח בלשונית חדשה, בלי מייל ובלי סיסמה. השינויים לא נשמרים: בכל כניסה מכאן ' +
-      'הכול חוזר להתחלה. אינו נספר בלוח, בהכנסה או בעמלות, ופרסום סידור בהדגמה אינו שולח הודעות.</p>' +
-      '<p id="adm-demo-msg" class="adm-error" hidden></p>';
+      '<div class="adm-demo">' +
+      '<button class="adm-btn is-primary" id="adm-demo-enter" type="button">כניסה למערכת ההדגמה</button>' +
+      '<p id="adm-demo-msg" class="adm-error" hidden></p>' +
+      '<p class="adm-demo-note">נפתח בלשונית חדשה, בלי מייל ובלי סיסמה. השינויים לא נשמרים: בכל כניסה מכאן ' +
+      'הכול חוזר להתחלה. אינו נספר בלוח, בהכנסה או בעמלות, ופרסום סידור בהדגמה אינו שולח הודעות.</p>';
     if (view && view.exists && view.resetAt) {
-      html += '<p class="adm-note">כניסה אחרונה: ' + esc(date(view.resetAt)) + '</p>';
+      html += '<p class="adm-demo-note">כניסה אחרונה: ' + esc(date(view.resetAt)) + '</p>';
     }
-    node.innerHTML = html + '</div>';
+    node.innerHTML = html + '</div></div>';
   }
 
   /* החלון נפתח בתוך הלחיצה: דפדפן חוסם חלון שנפתח אחרי בקשת רשת */

@@ -587,6 +587,13 @@ try {
   check('אין שדות מייל או סיסמה', await page.locator('#panel-demo input').count(), 0);
   check('יש כפתור כניסה', await page.locator('#adm-demo-enter').innerText(), /כניסה למערכת ההדגמה/);
   check('ההסבר אומר שהשינויים לא נשמרים', await page.locator('#panel-demo').innerText(), /לא נשמרים/);
+  const demoBoxes = await page.evaluate(() => {
+    const button = document.getElementById('adm-demo-enter').getBoundingClientRect();
+    const note = document.querySelector('#panel-demo .adm-demo-note').getBoundingClientRect();
+    return { buttonBottom: button.bottom, noteTop: note.top };
+  });
+  check('הכפתור אינו עולה על ההסבר', demoBoxes.buttonBottom <= demoBoxes.noteTop, true);
+  if (process.env.SHOT) await page.locator('#panel-demo').screenshot({ path: process.env.SHOT });
   sent.length = 0;
   const [demoTab] = await Promise.all([
     page.waitForEvent('popup'),

@@ -209,6 +209,10 @@
 }
 .adm-grid-form .adm-field { margin: 0; }
 .adm-field-hint { display: block; margin-top: var(--s1); font-size: var(--t-xs, .75rem); line-height: 1.4; color: var(--muted); }
+/* מערכת ההדגמה: כפתור והסבר בעמודה, בלי השוליים השליליים של adm-hint */
+.adm-demo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); }
+.adm-demo p { margin: 0; }
+.adm-demo-note { font-size: var(--t-sm); line-height: 1.6; color: var(--muted); max-width: 72ch; }
 .adm-form-actions { display: flex; gap: var(--s2); align-items: end; grid-column: 1 / -1; }
 .adm-controls .adm-field { margin: 0; }
 

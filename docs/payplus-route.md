@@ -107,7 +107,7 @@ Settings → Environment Variables. הערכים מודבקים ישירות מ�
 ואצל PayPlus צריך להגדיר את כתובת ההודעה החוזרת:
 
 ```
-https://setshifts.com/api/billing/webhook
+https://setshifts.com/api/billing/webhook/
 ```
 
 ---

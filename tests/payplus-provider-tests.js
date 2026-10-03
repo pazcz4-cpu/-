@@ -320,7 +320,7 @@ test('שמירת כרטיס היא בדיקת כרטיס, לא חיוב ולא �
       assertEqual(sent.create_token, true, 'לא נתבקש טוקן, ואז אין ממה לגבות בהמשך');
       assertEqual(sent.more_info, 'co-1', 'מזהה החברה לא נשלח');
       assertEqual(sent.initial_invoice, undefined, 'הונפקה חשבונית על עסקה בלי כסף');
-      assertEqual(sent.refURL_callback, 'https://setshifts.com/api/billing/webhook',
+      assertEqual(sent.refURL_callback, 'https://setshifts.com/api/billing/webhook/',
         'כתובת ההודעה החוזרת שגויה');
       assertEqual(result.url, 'https://payplus.co.il/pay/1', 'הכתובת לא הוחזרה');
     });

@@ -496,7 +496,7 @@ node tools/payplus-smoke.js
 > הייצור אינם אותם מפתחות.
 
 ואצל PayPlus צריך להגדיר את כתובת ההודעה החוזרת:
-`https://setshifts.com/api/billing/webhook`
+`https://setshifts.com/api/billing/webhook/`
 
 ### המשרד האחורי
 

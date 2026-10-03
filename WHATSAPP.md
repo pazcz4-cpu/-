@@ -741,7 +741,7 @@ WHATSAPP_API_VERSION       גרסת ה-Graph API לשליחה. למשל v26.0
 Edit:
 
 ```
-Callback URL   https://setshifts.com/api/wa
+Callback URL   https://setshifts.com/api/wa/
 Verify token   אותה מחרוזת שהכנסת ל-WHATSAPP_VERIFY_TOKEN
 ```
 

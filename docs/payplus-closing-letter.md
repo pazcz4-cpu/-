@@ -48,7 +48,7 @@
 
 | | |
 |---|---|
-| כתובת ההודעה החוזרת | `https://setshifts.com/api/billing/webhook` |
+| כתובת ההודעה החוזרת | `https://setshifts.com/api/billing/webhook/` |
 | שמירת טוקן | מופעלת (`create_token`) |
 | עסקת J2 (בדיקת כרטיס) | מותרת מהדף |
 | אמצעי תשלום | כרטיס אשראי, **Apple Pay**, **Google Pay**, וביט אם אפשר |

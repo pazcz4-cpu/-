@@ -362,7 +362,9 @@ const payplus = {
       refURL_success: input.returnUrl,
       refURL_failure: input.failureUrl || input.cancelUrl,
       refURL_cancel: input.cancelUrl,
-      refURL_callback: (process.env.PUBLIC_BASE_URL || '') + '/api/billing/webhook',
+      /* עם "/" בסוף: האתר מוגדר trailingSlash, וכתובת בלי "/" מקבלת
+         הפניה 308. שרת שמחזיר הודעה אינו חייב לעקוב אחרי הפניה. */
+      refURL_callback: (process.env.PUBLIC_BASE_URL || '') + '/api/billing/webhook/',
       send_failure_callback: true,
       /* חוזר אלינו כפי ששלחנו, ולכן נושא את מזהה החברה */
       more_info: input.companyId,

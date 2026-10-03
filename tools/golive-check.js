@@ -78,6 +78,16 @@ async function server() {
 async function doors() {
   title('דלתות שחייבות להיות סגורות');
 
+  // Vercel crons, PayPlus, Meta and ZKTeco devices don't follow redirects:
+  // with "trailingSlash": true a path without "/" may answer 308.
+  for (const p of ['/api/billing/cron', '/api/billing/webhook', '/api/wa', '/iclock/cdata']) {
+    const r = await call(p);
+    if (r.status === 308 || r.status === 301) {
+      bad(p + ' מחזיר הפניה ' + r.status + ' ל-' + (r.headers.get('location') || '?') +
+        '. מי שקורא לכתובת הזו בלי "/" בסוף (cron, סליקה, מטא, שעון) לא יגיע לשרת');
+    } else if (r.status) ok(p + ' בלי הפניה (' + r.status + ')');
+  }
+
   const cron = await call('/api/billing/cron');
   if (cron.status === 401) ok('/api/billing/cron בלי סוד: 401');
   else if (cron.status === 0) bad('/api/billing/cron – אין חיבור');

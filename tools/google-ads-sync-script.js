@@ -3,7 +3,7 @@
    (לא שומרים את הערך בקובץ הזה), ומתזמנים יומי. */
 function main() {
   // SetShifts: שולח את הוצאת הפרסום היומית של 30 הימים האחרונים
-  var URL = 'https://setshifts.com/api/marketing-sync?action=google';
+  var URL = 'https://setshifts.com/api/marketing-sync/?action=google';
   var SECRET = 'PASTE_GOOGLE_ADS_SYNC_SECRET_HERE';
 
   var tz = AdsApp.currentAccount().getTimeZone();

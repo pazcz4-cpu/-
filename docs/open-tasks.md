@@ -1,4 +1,4 @@
-# טבלת משימות — מצב 03/10/2026
+# טבלת משימות — מצב 04/10/2026
 
 מקרא: ✅ בוצע · ⏳ ממתין למישהו אחר · ⬜ פתוח אצלך · 🔨 פתוח אצלי
 
@@ -6,10 +6,10 @@
 
 | נושא | מה | מצב |
 |---|---|---|
-| הסכמת עובדים | תיבת חובה בכניסה ראשונה: עדכונים במייל/אפליקציה/וואטסאפ, לא שיווק. נוסח, גרסה ותאריך נשמרים | ✅ בקוד · ⬜ SQL (משימה 1) |
-| לידים | טופס בדף הבית ובצור קשר (שם עסק, איש קשר, טלפון, מייל, עובדים, זמן בשבוע, הסכמה). לשונית "לידים" במשרד האחורי | ✅ בקוד · ⬜ SQL (משימה 1) |
-| מדידת מקור | utm/fbclid על כל חברה בהרשמה, רק בהסכמה | ✅ בקוד · ⬜ SQL (משימה 1) |
-| לשונית "שיווק" | משפך שבועי, עלות לקוח לפי ערוץ וקמפיין, ייצוא כל הנתונים ל-Excel | ✅ בקוד · ⬜ SQL (משימה 1) |
+| הסכמת עובדים | תיבת חובה בכניסה ראשונה: עדכונים במייל/אפליקציה/וואטסאפ, לא שיווק. נוסח, גרסה ותאריך נשמרים | ✅ |
+| לידים | טופס בדף הבית ובצור קשר (שם עסק, איש קשר, טלפון, מייל, עובדים, זמן בשבוע, הסכמה). לשונית "לידים" במשרד האחורי | ✅ |
+| מדידת מקור | utm/fbclid על כל חברה בהרשמה, רק בהסכמה | ✅ |
+| לשונית "שיווק" | משפך שבועי, עלות לקוח לפי ערוץ וקמפיין, ייצוא כל הנתונים ל-Excel | ✅ |
 | סנכרון הוצאות פרסום | Meta אוטומטי כל בוקר, Google Ads דרך סקריפט, מצב סנכרון במסך | ✅ בקוד · ⬜ חיבור (משימות 9–10) |
 | הטבת הקמה | "הקמה ואיפיון כלולים במחיר" בדף הבית, מחירים, שאלות נפוצות, צור קשר, 8 שפות | ✅ |
 | ספריית מודעות | 7 זוויות, רימרקטינג, Reels, גוגל, לוח אורגני | ✅ |
@@ -17,186 +17,15 @@
 | מדריכים | מדריך מנהל (PDF חדש עם עמוד שעון), מדריך עובד | ✅ |
 | תזכורת שבועית | כל יום ראשון 08:52: ייצוא ושליחה לניתוח | ✅ מתוזמנת |
 | תיקון | סריקת הרשמות שננטשו (וואטסאפ) לא רצה מה-cron | ✅ |
+| SQL הסכמת עובדים ושיווק | הורץ ב-Supabase (היה משימה 1) | ✅ |
+| משימות מתוזמנות (cron) | לא רצו 3 ימים: האתר הפנה לכתובת עם "/" וה-cron לא עוקב. הנתיבים תוקנו, CRON_SECRET תקין, הרצה ידנית החזירה 200 (היה משימה 2) | ✅ 04/10 |
 | SQL קודם | פונקציות מ-02/10 ו-"FREE PILOT, DEMO, SALES AGENTS" | ✅ הורץ |
 
 ---
 
 ## ⬜ פתוח אצלך
 
-### 1. הרצת SQL: הסכמת עובדים ושיווק
-- **סטטוס:** ⬜ פתוח אצלך
-- **חוסם:** הסכמת עובדים, שמירת לידים בטבלה, לשונית "שיווק". משימות 9–10 תלויות בו. (הקטע האחרון, `punch_reminders`, ישמש את התראות הדחיפה בהמשך; אין נזק בהרצה עכשיו.)
-- **קישור:** https://supabase.com/dashboard/project/_/sql/new (לבחור את הפרויקט)
-- **מה לעשות:** להדביק את כל הבלוק, Run, ואחרי "Success" לפרוס.
-
-```sql
--- EMPLOYEE UPDATES CONSENT: הסכמת עובד לקבלת עדכונים שוטפים
-alter table public.company_users
-  add column if not exists updates_consent_at      timestamptz,
-  add column if not exists updates_consent_text    text,
-  add column if not exists updates_consent_version text;
-
-create or replace function public.save_updates_consent(p_text text, p_version text)
-returns timestamptz
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_at timestamptz;
-begin
-  if coalesce(btrim(p_text), '') = '' then
-    raise exception 'consent text required' using errcode = '22023';
-  end if;
-  update public.company_users
-     set updates_consent_at      = now(),
-         updates_consent_text    = left(btrim(p_text), 2000),
-         updates_consent_version = left(coalesce(btrim(p_version), ''), 40)
-   where id = auth.uid()
-  returning updates_consent_at into v_at;
-  if v_at is null then
-    raise exception 'user not found' using errcode = 'P0002';
-  end if;
-  return v_at;
-end
-$$;
-
-grant execute on function public.save_updates_consent(text, text) to authenticated;
-
--- MARKETING: מקור הגעה, לידים והוצאות פרסום
-
-alter table public.companies
-  add column if not exists utm_source   text,
-  add column if not exists utm_medium   text,
-  add column if not exists utm_campaign text,
-  add column if not exists utm_content  text,
-  add column if not exists utm_term     text,
-  add column if not exists click_id     text,
-  add column if not exists utm_at       timestamptz;
-
-create index if not exists companies_utm_idx
-  on public.companies (utm_source, utm_campaign) where utm_source is not null;
-
-create or replace function public.attach_attribution(p_utm jsonb)
-returns text
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_company uuid := public.current_company_id();
-  v_row     public.companies;
-  v_src     text := left(btrim(coalesce(p_utm->>'utm_source', '')), 80);
-  v_med     text := left(btrim(coalesce(p_utm->>'utm_medium', '')), 80);
-  v_cam     text := left(btrim(coalesce(p_utm->>'utm_campaign', '')), 120);
-  v_con     text := left(btrim(coalesce(p_utm->>'utm_content', '')), 120);
-  v_ter     text := left(btrim(coalesce(p_utm->>'utm_term', '')), 120);
-  v_clk     text := left(btrim(coalesce(p_utm->>'fbclid', p_utm->>'gclid', '')), 200);
-begin
-  if v_company is null then
-    raise exception 'not signed in' using errcode = '28000';
-  end if;
-  if not public.is_manager() then
-    return 'forbidden';
-  end if;
-  if v_src = '' and v_med = '' and v_cam = '' and v_clk = '' then
-    return 'empty';
-  end if;
-
-  select * into v_row from public.companies where id = v_company;
-  if v_row.utm_at is not null then
-    return 'already';
-  end if;
-  if v_row.created_at < now() - interval '2 days' then
-    return 'late';
-  end if;
-
-  update public.companies
-     set utm_source = nullif(v_src, ''), utm_medium = nullif(v_med, ''),
-         utm_campaign = nullif(v_cam, ''), utm_content = nullif(v_con, ''),
-         utm_term = nullif(v_ter, ''), click_id = nullif(v_clk, ''),
-         utm_at = now()
-   where id = v_company;
-  return 'ok';
-end;
-$$;
-
-grant execute on function public.attach_attribution(jsonb) to authenticated;
-
-create table if not exists public.leads (
-  id               uuid primary key default gen_random_uuid(),
-  created_at       timestamptz not null default now(),
-  updated_at       timestamptz not null default now(),
-  business_name    text not null check (length(trim(business_name)) between 1 and 160),
-  contact_name     text not null check (length(trim(contact_name)) between 1 and 120),
-  phone            text not null check (length(phone) between 6 and 40),
-  email            text not null check (length(email) between 5 and 200),
-  employees        integer check (employees between 1 and 100000),
-  hours_per_week   text check (hours_per_week in ('lt1', '1-3', '3-6', '6plus', 'unknown')),
-  note             text,
-  contact_consent  boolean not null default false,
-  consent_text     text,
-  lang             text,
-  page             text,
-  utm_source       text,
-  utm_medium       text,
-  utm_campaign     text,
-  utm_content      text,
-  utm_term         text,
-  click_id         text,
-  status           text not null default 'new'
-    check (status in ('new', 'contacted', 'demo', 'won', 'lost')),
-  admin_note       text,
-  converted_company_id uuid references public.companies(id) on delete set null
-);
-
-create index if not exists leads_created_idx on public.leads (created_at desc);
-create index if not exists leads_status_idx  on public.leads (status);
-
-alter table public.leads enable row level security;
-revoke all on public.leads from authenticated, anon;
-
-create table if not exists public.marketing_spend (
-  id          uuid primary key default gen_random_uuid(),
-  week_start  date not null,
-  channel     text not null check (length(trim(channel)) between 1 and 40),
-  amount      numeric(10, 2) not null check (amount >= 0),
-  note        text,
-  created_at  timestamptz not null default now(),
-  unique (week_start, channel)
-);
-
-alter table public.marketing_spend enable row level security;
-revoke all on public.marketing_spend from authenticated, anon;
-
--- MISSED CLOCK-IN REMINDERS: תזכורת לעובד שהמשמרת התחילה ולא נרשמה כניסה
-create table if not exists public.punch_reminders (
-  company_id   uuid not null references public.companies(id) on delete cascade,
-  employee_id  text not null,
-  shift_start  timestamptz not null,
-  channel      text,
-  sent_at      timestamptz not null default now(),
-  primary key (company_id, employee_id, shift_start)
-);
-
-alter table public.punch_reminders enable row level security;
-revoke all on public.punch_reminders from authenticated, anon;
-```
-
-- **איך יודעים:** "Success. No rows returned". אחרי הפריסה, ב-https://setshifts.com/admin/ הלשונית "שיווק" נטענת בלי שגיאה אדומה, ו"לידים" מציגה "אין לידים".
-- **המלכודת:** כל עובד קיים יתבקש לסמן את תיבת ההסכמה בכניסה הבאה. להודיע למנהלים מראש.
-
-### 2. `CRON_SECRET` ב-Vercel
-- **סטטוס:** ⬜ פתוח אצלך (אם עוד לא הוגדר)
-- **חוסם:** סנכרון Meta, סריקת הרשמות שננטשו, והחיוב החודשי של PayPlus.
-- **קישור:** https://vercel.com/dashboard ← הפרויקט ← Settings ← Environment Variables
-- **מה לעשות:** אם כבר קיים, לא לגעת. אחרת להוסיף משתנה בשם:
-  ```
-  CRON_SECRET
-  ```
-  ערך: מחרוזת אקראית ארוכה שאתה מייצר. Redeploy.
-- **איך יודעים:** Settings ← Cron Jobs: ליד `/api/billing/cron` ההרצה האחרונה עם 200 ולא 401.
-- **המלכודת:** לא מדביקים את הערך בצ'אט.
+(משימות 1–2 בוצעו ומופיעות בטבלה למעלה. המספור נשמר כדי שההפניות בין המשימות לא ישתנו.)
 
 ### 3. ספק סליקה (ישראכרט)
 - **סטטוס:** ⬜ פתוח אצלך

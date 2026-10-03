@@ -20,6 +20,7 @@
 | SQL הסכמת עובדים ושיווק | הורץ ב-Supabase (היה משימה 1) | ✅ |
 | משימות מתוזמנות (cron) | לא רצו 3 ימים: האתר הפנה לכתובת עם "/" וה-cron לא עוקב. הנתיבים תוקנו, CRON_SECRET תקין, הרצה ידנית החזירה 200 (היה משימה 2) | ✅ 04/10 |
 | Pixel של Meta ו-GA4 | פיקסל `SetShifts Website` (מזהה 1094053676693573) בתיק Setshifts; GA4 `G-X6Z7MPZVYF` בחשבון של SetShifts. מוגדרים ב-Vercel (Production). נבדק: PageView ו-ViewContent בבדיקת האירועים של Meta, משתמש פעיל ב-Realtime של GA, רק אחרי "מאשר/ת" (היה משימה 4) | ✅ 04/10 |
+| גיבוי גישה ל-Analytics | pazcz4@gmail.com נוסף כ-Administrator ברמת ה-Account, לצד support@set-shifts.com (היה משימה 26) | ✅ 04/10 |
 | SQL קודם | פונקציות מ-02/10 ו-"FREE PILOT, DEMO, SALES AGENTS" | ✅ הורץ |
 
 ---
@@ -49,14 +50,6 @@
   ```
 - **איך יודעים:** מספר מסוף ואישור בכתב לחיוב חוזר.
 - **המלכודת:** שם החברה, ח.פ. וכתובת באתר חייבים להיות זהים למסמכים.
-
-### 26. גיבוי: מייל פרטי כמנהל נוסף ב-Google Analytics
-- **סטטוס:** ⬜ פתוח אצלך
-- **חוסם:** שום דבר. מונע נעילה אם חשבון Google Workspace של SetShifts מושעה (משימה 13).
-- **קישור:** https://analytics.google.com ← גלגל השיניים (Admin) למטה משמאל ← Account access management
-- **מה לעשות:** "+" ← Add users ← הג'ימייל הפרטי ← תפקיד Administrator ← Add.
-- **איך יודעים:** הג'ימייל הפרטי מופיע ברשימה עם Administrator.
-- **המלכודת:** לבצע ברמת ה-Account (SetShifts) ולא רק ברמת ה-Property, אחרת אין גישה לנכסים שייווצרו בהמשך.
 
 ### 5. דף פייסבוק ואינסטגרם עסקי
 - **סטטוס:** ⬜ פתוח אצלך

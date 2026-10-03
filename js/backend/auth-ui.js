@@ -138,6 +138,26 @@
       }
       if (event.target.closest('#auth-signout-blocked')) { self.signOut(); }
       if (event.target.closest('#auth-blocked-recheck')) { root.location.reload(); }
+      var consentButton = event.target.closest('#auth-updates-continue');
+      if (consentButton) {
+        var box = self.gate.querySelector('#auth-updates-check');
+        if (!box || !box.checked) {
+          var message = self.gate.querySelector('.auth-error');
+          if (message) { message.textContent = t('auth.updatesRequired'); message.classList.remove('hidden'); }
+          return;
+        }
+        consentButton.disabled = true;
+        /* הנוסח נשמר כפי שהוצג: בשפה שבה העובד קרא אותו */
+        Promise.resolve(self.backend.saveUpdatesConsent(t('auth.updatesText'), Model.UPDATES_CONSENT_VERSION))
+          .then(function () {
+            var fresh = self.backend.session();
+            if (fresh) { self._enter(fresh); }
+          }, function (err) {
+            consentButton.disabled = false;
+            var message = self.gate.querySelector('.auth-error');
+            if (message) { message.textContent = (err && err.message) || t('auth.failedSignIn'); message.classList.remove('hidden'); }
+          });
+      }
       var addCard = event.target.closest('#auth-blocked-addcard');
       if (addCard) {
         /* פותח את עמוד התשלום של הספק; הדפדפן עובר לשם ולא חוזר
@@ -471,6 +491,13 @@
        לקוח חסום הוא זה שפונה. */
     var supporting = !!(root.ShiftSupportMode && root.ShiftSupportMode.active());
     if (!session.access.allowed && !supporting) { return this.showBlocked(session); }
+    /* עובד שטרם הסכים לקבל עדכונים שוטפים לא נכנס עד שהסכים. null =
+       ידוע שלא ניתנה; undefined = השרת עוד לא מכיר את העמודה (לפני
+       המיגרציה), ואז לא חוסמים. */
+    if (!supporting && session.user.role === 'employee' &&
+        session.user.updatesConsentAt === null) {
+      return this.showUpdatesConsent(session);
+    }
     return this._redeemPending().then(function () {
       self.gate.classList.add('hidden');
       self.appRoot.classList.remove('hidden');
@@ -715,6 +742,26 @@
                  זה המסך שבו לקוח חסום מחליט אם להילחם או לוותר. */
               '<p class="auth-hint">' + t('common.emailUs') + ' ' + supportLink() + '</p>' + supportHoursLine()
             : '<p class="auth-hint">' + t('auth.blockedMember') + '</p>') +
+        '</div>' +
+        '<button id="auth-signout-blocked" class="btn ghost">' + t('auth.signOut') + '</button>' +
+      '</div>';
+    return Promise.resolve(null);
+  };
+
+  /* הסכמת עובד לעדכונים שוטפים. תיבת סימון חובה, ובלעדיה אין המשך. */
+  AuthUI.prototype.showUpdatesConsent = function (session) {
+    this.appRoot.classList.add('hidden');
+    this.gate.classList.remove('hidden');
+    this.gate.innerHTML =
+      '<div class="auth-card">' +
+        '<h1 class="auth-title">' + esc(session.company.name) + '</h1>' +
+        '<div class="auth-consent">' +
+          '<h2>' + esc(t('auth.updatesTitle')) + '</h2>' +
+          '<p class="auth-error hidden"></p>' +
+          '<label class="check auth-consent-check"><input type="checkbox" id="auth-updates-check"> ' +
+            '<span>' + esc(t('auth.updatesText')) + '</span></label>' +
+          '<p class="auth-hint">' + esc(t('auth.updatesNote')) + '</p>' +
+          '<button id="auth-updates-continue" class="btn primary">' + esc(t('auth.updatesContinue')) + '</button>' +
         '</div>' +
         '<button id="auth-signout-blocked" class="btn ghost">' + t('auth.signOut') + '</button>' +
       '</div>';

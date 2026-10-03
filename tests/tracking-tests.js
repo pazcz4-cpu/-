@@ -117,5 +117,23 @@ test('באנר ההסכמה בשפת העמוד, ובכל שמונה השפות 
   });
 });
 
+test('הערת "ממתין לבדיקת עו״ד" נשארת במסמכים ואינה מופיעה באתר', function () {
+  var fs = require('fs'), path = require('path');
+  var root = path.join(__dirname, '..');
+  var pages = ['privacy.html', 'security.html', 'terms.html', 'landing.html', 'page.html', 'accessibility.html'];
+  ['about', 'contact', 'faq', 'pricing', 'stories'].forEach(function (dir) {
+    ['he', 'en', 'ar', 'de', 'es', 'fr', 'pt', 'ru'].forEach(function (lang) {
+      pages.push(path.join('content', dir, lang + '.html'));
+    });
+  });
+  pages.forEach(function (file) {
+    var full = path.join(root, file);
+    if (!fs.existsSync(full)) return;
+    var text = fs.readFileSync(full, 'utf8');
+    assert(!/לבדיקת עו|ממתין לבדיקת עו|pending lawyer|awaiting legal review/i.test(text),
+      file + ' מכיל הערה פנימית על בדיקה משפטית');
+  });
+});
+
 console.log('\n' + (failed ? '❌ ' : '✅ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
 process.exit(failed ? 1 : 0);

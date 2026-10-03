@@ -2069,3 +2069,161 @@ end;
 $$;
 
 grant execute on function public.attach_referral(text) to authenticated;
+
+-- EMPLOYEE UPDATES CONSENT: הסכמת עובד לקבלת עדכונים שוטפים
+-- כל עובד מצהיר, בכניסה הראשונה, שהוא מסכים לקבל ממקום העבודה עדכונים
+-- על המשמרות שלו במייל, באפליקציה ובוואטסאפ. לא שיווק. הנוסח שהוצג
+-- נשמר יחד עם התאריך והגרסה, ולא רק דגל: השאלה בדיעבד היא "מתי, ומה
+-- עמד מול העיניים שלו".
+alter table public.company_users
+  add column if not exists updates_consent_at      timestamptz,
+  add column if not exists updates_consent_text    text,
+  add column if not exists updates_consent_version text;
+
+-- הכתיבה רק דרך הפונקציה, ורק לשורה של הקורא (אין כאן p_user_id).
+-- ה-grant update על company_users מוגבל לעמודות אחרות בכוונה.
+create or replace function public.save_updates_consent(p_text text, p_version text)
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_at timestamptz;
+begin
+  if coalesce(btrim(p_text), '') = '' then
+    raise exception 'consent text required' using errcode = '22023';
+  end if;
+  update public.company_users
+     set updates_consent_at      = now(),
+         updates_consent_text    = left(btrim(p_text), 2000),
+         updates_consent_version = left(coalesce(btrim(p_version), ''), 40)
+   where id = auth.uid()
+  returning updates_consent_at into v_at;
+  if v_at is null then
+    raise exception 'user not found' using errcode = 'P0002';
+  end if;
+  return v_at;
+end
+$$;
+
+grant execute on function public.save_updates_consent(text, text) to authenticated;
+
+-- MARKETING: מקור הגעה, לידים והוצאות פרסום
+--
+-- שלוש תוספות, וכולן נקראות ונכתבות רק מהמשרד האחורי (service_role)
+-- חוץ מ-attach_attribution, שבה הלקוח עצמו מצרף את מקור ההגעה שלו
+-- ברגע ההרשמה. הטבלאות החדשות סגורות לחלוטין בפני הדפדפן.
+
+-- 1. מקור ההגעה של חברה. נשמר רק אם המבקר אישר מדידה (ראו tracking.js).
+alter table public.companies
+  add column if not exists utm_source   text,
+  add column if not exists utm_medium   text,
+  add column if not exists utm_campaign text,
+  add column if not exists utm_content  text,
+  add column if not exists utm_term     text,
+  -- fbclid / gclid: מזהה הלחיצה של Meta או Google
+  add column if not exists click_id     text,
+  add column if not exists utm_at       timestamptz;
+
+create index if not exists companies_utm_idx
+  on public.companies (utm_source, utm_campaign) where utm_source is not null;
+
+-- כמו attach_referral: מנהל החברה, תוך יומיים מההרשמה, פעם אחת.
+-- החזרה: ok / already / late / empty / forbidden
+create or replace function public.attach_attribution(p_utm jsonb)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_company uuid := public.current_company_id();
+  v_row     public.companies;
+  v_src     text := left(btrim(coalesce(p_utm->>'utm_source', '')), 80);
+  v_med     text := left(btrim(coalesce(p_utm->>'utm_medium', '')), 80);
+  v_cam     text := left(btrim(coalesce(p_utm->>'utm_campaign', '')), 120);
+  v_con     text := left(btrim(coalesce(p_utm->>'utm_content', '')), 120);
+  v_ter     text := left(btrim(coalesce(p_utm->>'utm_term', '')), 120);
+  v_clk     text := left(btrim(coalesce(p_utm->>'fbclid', p_utm->>'gclid', '')), 200);
+begin
+  if v_company is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  if not public.is_manager() then
+    return 'forbidden';
+  end if;
+  if v_src = '' and v_med = '' and v_cam = '' and v_clk = '' then
+    return 'empty';
+  end if;
+
+  select * into v_row from public.companies where id = v_company;
+  if v_row.utm_at is not null then
+    return 'already';
+  end if;
+  if v_row.created_at < now() - interval '2 days' then
+    return 'late';
+  end if;
+
+  update public.companies
+     set utm_source = nullif(v_src, ''), utm_medium = nullif(v_med, ''),
+         utm_campaign = nullif(v_cam, ''), utm_content = nullif(v_con, ''),
+         utm_term = nullif(v_ter, ''), click_id = nullif(v_clk, ''),
+         utm_at = now()
+   where id = v_company;
+  return 'ok';
+end;
+$$;
+
+grant execute on function public.attach_attribution(jsonb) to authenticated;
+
+-- 2. לידים מהאתר: מי השאיר פרטים, ומה מצבו.
+create table if not exists public.leads (
+  id               uuid primary key default gen_random_uuid(),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  business_name    text not null check (length(trim(business_name)) between 1 and 160),
+  contact_name     text not null check (length(trim(contact_name)) between 1 and 120),
+  phone            text not null check (length(phone) between 6 and 40),
+  email            text not null check (length(email) between 5 and 200),
+  employees        integer check (employees between 1 and 100000),
+  -- דלי ולא מספר: lt1 / 1-3 / 3-6 / 6plus / unknown
+  hours_per_week   text check (hours_per_week in ('lt1', '1-3', '3-6', '6plus', 'unknown')),
+  note             text,
+  -- הסכמה שיחזרו אליו. הנוסח והזמן נשמרים: זו הסיבה היחידה שמותר לפנות.
+  contact_consent  boolean not null default false,
+  consent_text     text,
+  lang             text,
+  page             text,
+  utm_source       text,
+  utm_medium       text,
+  utm_campaign     text,
+  utm_content      text,
+  utm_term         text,
+  click_id         text,
+  status           text not null default 'new'
+    check (status in ('new', 'contacted', 'demo', 'won', 'lost')),
+  -- הערות פנימיות של מי שמטפל בליד
+  admin_note       text,
+  converted_company_id uuid references public.companies(id) on delete set null
+);
+
+create index if not exists leads_created_idx on public.leads (created_at desc);
+create index if not exists leads_status_idx  on public.leads (status);
+
+alter table public.leads enable row level security;
+revoke all on public.leads from authenticated, anon;
+
+-- 3. הוצאות פרסום, בהזנה ידנית: שבוע, ערוץ, סכום. ה-CAC מחושב מהן.
+create table if not exists public.marketing_spend (
+  id          uuid primary key default gen_random_uuid(),
+  week_start  date not null,
+  channel     text not null check (length(trim(channel)) between 1 and 40),
+  amount      numeric(10, 2) not null check (amount >= 0),
+  note        text,
+  created_at  timestamptz not null default now(),
+  unique (week_start, channel)
+);
+
+alter table public.marketing_spend enable row level security;
+revoke all on public.marketing_spend from authenticated, anon;

@@ -2443,3 +2443,15 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
   border: 1px solid var(--line, #d9dfec); background: var(--surface, #fff); color: inherit; font: inherit;
 }
 .consent-accept { background: var(--brand, #3b5bdb); border-color: var(--brand, #3b5bdb); color: #fff; font-weight: 700; }
+
+/* הסכמת עובד לעדכונים שוטפים: התיבה היא הדבר היחיד במסך, לכן גדולה */
+.auth-consent { padding: 4px 0 14px; }
+.auth-consent h2 { font-size: 17px; margin: 0 0 12px; }
+.auth-consent-check {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px; margin: 0 0 10px; border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 8px); background: var(--surface);
+  font-size: 14px; line-height: 1.5; cursor: pointer;
+}
+.auth-consent-check input { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.auth-consent .btn { width: 100%; }

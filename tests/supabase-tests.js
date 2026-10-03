@@ -226,6 +226,12 @@ FakeSupabase.prototype.fetch = function (url, options) {
     return reply(200, 'unknown');
   }
 
+  if (path === '/rest/v1/rpc/attach_attribution') {
+    this.attributionCalls = (this.attributionCalls || []).concat([body.p_utm]);
+    if (this.attributionFails) return reply(500, { message: 'boom' });
+    return reply(200, 'ok');
+  }
+
   if (path === '/rest/v1/rpc/decide_constraint') {
     var actor = this.companyUsers[this._userFromAuth(headers)];
     if (!actor || ['owner', 'manager'].indexOf(actor.role) === -1) {
@@ -251,6 +257,17 @@ FakeSupabase.prototype.fetch = function (url, options) {
     if (!wanted) return reply(400, { code: '22023', message: 'name required' });
     me.name = wanted.slice(0, 80);
     return reply(200, me);
+  }
+
+  /* save_updates_consent: השורה של הקורא בלבד; העמודה נוספה במיגרציה */
+  if (path === '/rest/v1/rpc/save_updates_consent') {
+    var consenter = this.companyUsers[this._userFromAuth(headers)];
+    if (!consenter) return reply(400, { message: 'user not found' });
+    if (!String(body.p_text || '').trim()) return reply(400, { code: '22023', message: 'consent text required' });
+    consenter.updates_consent_at = new Date().toISOString();
+    consenter.updates_consent_text = body.p_text;
+    consenter.updates_consent_version = body.p_version;
+    return reply(200, consenter.updates_consent_at);
   }
 
   if (path === '/rest/v1/rpc/save_own_constraint') {
@@ -482,6 +499,43 @@ run('הרשמה בלי קישור היא האתר: אין קריאת שיוך', 
     endReferral();
     assertEqual((server.referralCalls || []).length, 0, 'נקראה attach_referral בלי קוד');
   }, function (err) { endReferral(); throw err; });
+});
+
+/* ===== מקור הגעה (utm) ===== */
+function withTracking(utm) {
+  globalThis.ShiftTracking = { utm: function () { return utm; } };
+}
+function endTracking() { delete globalThis.ShiftTracking; }
+
+run('הרשמה עם הסכמה למדידה שולחת את מקור ההגעה', function () {
+  var server = new FakeSupabase();
+  withTracking({ utm_source: 'facebook', utm_campaign: 'owners-pain', fbclid: 'abc', at: 1 });
+  return makeBackend(server).signUpCompany(SIGNUP).then(function () {
+    endTracking();
+    var sent = (server.attributionCalls || [])[0];
+    assert(sent, 'attach_attribution לא נקרא');
+    assertEqual(sent.utm_source, 'facebook', 'המקור לא נשלח');
+    assertEqual(sent.fbclid, 'abc', 'מזהה הלחיצה לא נשלח');
+  }, function (err) { endTracking(); throw err; });
+});
+
+run('בלי הסכמה למדידה (utm ריק) אין שום קריאה', function () {
+  var server = new FakeSupabase();
+  withTracking(null);
+  return makeBackend(server).signUpCompany(SIGNUP).then(function () {
+    endTracking();
+    assertEqual((server.attributionCalls || []).length, 0, 'נשלח מקור הגעה בלי הסכמה');
+  }, function (err) { endTracking(); throw err; });
+});
+
+run('כישלון בשמירת מקור ההגעה אינו מפיל הרשמה', function () {
+  var server = new FakeSupabase();
+  server.attributionFails = true;
+  withTracking({ utm_source: 'facebook', at: 1 });
+  return makeBackend(server).signUpCompany(SIGNUP).then(function (session) {
+    endTracking();
+    assert(session && session.company, 'ההרשמה נכשלה');
+  }, function (err) { endTracking(); throw err; });
 });
 
 run('כישלון בשיוך אינו מפיל את ההרשמה, והקוד נשמר לניסיון הבא', function () {
@@ -1508,6 +1562,60 @@ run('גם /auth/v1 ולוכסן בסוף מנוקים', function () {
   assertEqual(urlOf('  https://a.supabase.co  '), 'https://a.supabase.co', 'רווחים');
   /* מה שאינו סיומת של Supabase נשאר – יש מי שמריץ מאחורי דומיין משלו */
   assertEqual(urlOf('https://api.setshifts.com/sb'), 'https://api.setshifts.com/sb', 'נתיב משלו');
+});
+
+console.log('\n== הסכמת עובד לעדכונים שוטפים ==');
+
+run('עמודת ההסכמה עוד לא קיימת: ההסכמה "לא ידועה" ואינה חוסמת', function () {
+  var server = new FakeSupabase();
+  var storage = memoryStorage();
+  var backend = makeBackend(server, storage);
+  return backend.signUpCompany({
+    email: 'uc1@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
+    assertEqual(session.user.updatesConsentAt, undefined, 'שורה בלי העמודה חייבת להיות undefined');
+    var backend2 = makeBackend(server, storage);
+    server.failNext = { status: 400, body: { code: '42703', message: 'column updates_consent_at does not exist' } };
+    return backend2.restore().then(function (restored) {
+      assert(restored, 'ההתחברות לא שוחזרה כשהעמודה חסרה');
+      assertEqual(restored.user.updatesConsentAt, undefined, 'חסרה עמודה – ההסכמה חייבת להיות לא ידועה');
+    });
+  });
+});
+
+run('הסכמה ידועה כחסרה (null) – ואחרי השמירה היא נרשמת עם הנוסח והגרסה', function () {
+  var server = new FakeSupabase();
+  var storage = memoryStorage();
+  var backend = makeBackend(server, storage);
+  return backend.signUpCompany({
+    email: 'uc2@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function (session) {
+    var id = session.user.id;
+    server.companyUsers[id].updates_consent_at = null;
+    var backend2 = makeBackend(server, storage);
+    return backend2.restore().then(function (restored) {
+      assertEqual(restored.user.updatesConsentAt, null, 'null אמור לסמן "ידוע שלא ניתנה"');
+      return backend2.saveUpdatesConsent('אני מסכים לעדכונים', 'updates-1');
+    }).then(function () {
+      assert(backend2.session().user.updatesConsentAt, 'ההתחברות לא התעדכנה');
+      assertEqual(server.companyUsers[id].updates_consent_text, 'אני מסכים לעדכונים', 'הנוסח לא נשמר');
+      assertEqual(server.companyUsers[id].updates_consent_version, 'updates-1', 'הגרסה לא נשמרה');
+      var call = server.calls.filter(function (c) {
+        return c.path === '/rest/v1/rpc/save_updates_consent';
+      }).pop();
+      assertEqual(Object.keys(call.body).sort().join(','), 'p_text,p_version',
+        'נשלח מזהה משתמש, או משהו מעבר לנוסח ולגרסה');
+    });
+  });
+});
+
+run('הסכמה בלי נוסח נדחית בשרת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  return backend.signUpCompany({
+    email: 'uc3@sb.test', password: 'secret123', name: 'פז', companyName: 'עסק', phone: '054-1234567'}).then(function () {
+    return backend.saveUpdatesConsent('   ', 'updates-1').then(function () {
+      throw new Error('הסכמה ריקה התקבלה');
+    }, function () { /* צפוי */ });
+  });
 });
 
 console.log('\n== זהות: השם שלי מול שם העסק ==');

@@ -14,7 +14,8 @@
   var config = window.SHIFT_CONFIG || {};
   var session = null;
   var data = { overview: null, companies: null, tickets: null, agents: null, demo: null,
-              report: null, reportMonth: '', agentCustomers: null };
+              report: null, reportMonth: '', agentCustomers: null, leads: null, leadStatus: '',
+              marketing: null, marketingWeeks: 12 };
   var current = 'overview';
   var TOKEN_KEY = 'setshifts-admin-session-v1';
 
@@ -969,7 +970,13 @@
         document.getElementById('adm-modal-cancel').textContent = 'סגירה';
         data.companies = null;
         data.agents = null;
-        return Promise.all([loadOverview(), loadCompanies(), openCompany(result.companyId)]);
+        var leadId = pending && pending.extra && pending.extra.leadId;
+        var linked = leadId
+          ? api('leads', { action: 'update', id: leadId, companyId: result.companyId }).then(loadLeads, function () {})
+          : Promise.resolve();
+        return linked.then(function () {
+          return Promise.all([loadOverview(), loadCompanies(), openCompany(result.companyId)]);
+        });
       }).catch(function (error) {
         var box = document.getElementById('adm-modal-error');
         box.textContent = error.message;
@@ -1326,6 +1333,210 @@
 
   /* ===== טעינה ===== */
 
+
+  /* ===== לידים ===== */
+
+  var LEAD_STATUS = { new: 'חדש', contacted: 'נוצר קשר', demo: 'הדגמה', won: 'נסגר', lost: 'לא רלוונטי' };
+  var HOURS_LABEL = { lt1: 'עד שעה', '1-3': '1–3 שעות', '3-6': '3–6 שעות', '6plus': 'מעל 6 שעות', unknown: 'לא יודע' };
+  var CHANNEL_LABEL = { meta: 'Meta (פייסבוק/אינסטגרם)', google: 'גוגל', tiktok: 'טיקטוק',
+    linkedin: 'לינקדאין', agents: 'סוכנים', direct: 'ישיר / לא ידוע' };
+
+  /* מספר ישראלי לקישור וואטסאפ: ספרות בלבד, 0 בתחילה הופך ל-972 */
+  function waNumber(phone) {
+    var digits = String(phone || '').replace(/\D/g, '');
+    if (digits.indexOf('00') === 0) digits = digits.slice(2);
+    if (digits.charAt(0) === '0') digits = '972' + digits.slice(1);
+    return digits;
+  }
+
+  function renderLeads() {
+    var node = document.getElementById('panel-leads');
+    var view = data.leads;
+    var html = '<div class="adm-card"><h2>לידים מהאתר</h2>' +
+      '<p class="adm-card-sub">מי השאיר פרטים בטופס באתר. הסטטוס הוא סדר העבודה שלך: חדש, נוצר קשר, הדגמה, נסגר. ' +
+      'הם מופיעים גם במייל התמיכה ברגע שהגיעו.</p>';
+    if (!view) { node.innerHTML = html + '<p class="adm-empty">טוען…</p></div>'; return; }
+    html += '<div class="adm-controls">' + ['', 'new', 'contacted', 'demo', 'won', 'lost'].map(function (key) {
+      var label = key ? LEAD_STATUS[key] : 'הכל';
+      var count = key ? view.counts[key] : view.counts.all;
+      return '<button class="adm-btn' + ((data.leadStatus || '') === key ? ' is-primary' : '') +
+        '" data-lead-filter="' + key + '">' + esc(label) + ' (' + (count || 0) + ')</button>';
+    }).join('') + '<button class="adm-btn" id="adm-export-leads">ייצוא ל-Excel</button></div>';
+    if (!view.leads.length) { node.innerHTML = html + '<p class="adm-empty">אין לידים במצב הזה.</p></div>'; return; }
+    html += '<div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+      '<th>נכנס</th><th>עסק</th><th>איש קשר</th><th class="num">עובדים</th><th>זמן בשבוע</th>' +
+      '<th>מקור</th><th>סטטוס</th><th>הערה</th><th></th></tr></thead><tbody>';
+    view.leads.forEach(function (lead) {
+      html += '<tr data-lead-row="' + esc(lead.id) + '"><td>' + esc(date(lead.createdAt)) + '</td>' +
+        '<td class="wide"><b>' + esc(lead.business) + '</b></td>' +
+        '<td>' + esc(lead.name) + '<br><a href="tel:' + esc(lead.phone) + '" dir="ltr">' + esc(lead.phone) + '</a>' +
+        ' · <a href="https://wa.me/' + esc(waNumber(lead.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a><br>' +
+        '<a href="mailto:' + esc(lead.email) + '" dir="ltr">' + esc(lead.email) + '</a></td>' +
+        '<td class="num">' + esc(lead.employees == null ? '—' : lead.employees) + '</td>' +
+        '<td>' + esc(HOURS_LABEL[lead.hours] || '—') + '</td>' +
+        '<td>' + esc(lead.source ? lead.source + (lead.campaign ? ' / ' + lead.campaign : '') : 'ישיר') + '</td>' +
+        '<td><select class="adm-select" data-lead-status="' + esc(lead.id) + '">' +
+        Object.keys(LEAD_STATUS).map(function (k) {
+          return '<option value="' + k + '"' + (lead.status === k ? ' selected' : '') + '>' + esc(LEAD_STATUS[k]) + '</option>';
+        }).join('') + '</select>' +
+        (lead.companyId ? ' <button class="adm-btn is-small" data-company="' + esc(lead.companyId) + '">הלקוח</button>' : '') + '</td>' +
+        '<td><input class="adm-input" data-lead-note="' + esc(lead.id) + '" maxlength="500" value="' + esc(lead.adminNote) + '"></td>' +
+        '<td><button class="adm-btn is-small" data-lead-customer="' + esc(lead.id) + '">הקמת פיילוט</button> ' +
+        '<button class="adm-btn is-small" data-lead-delete="' + esc(lead.id) + '">מחיקה</button></td></tr>';
+    });
+    node.innerHTML = html + '</tbody></table></div></div>';
+  }
+
+  function loadLeads() {
+    return api('leads', { action: 'list', status: data.leadStatus || '' }).then(function (body) {
+      data.leads = body;
+      if (current === 'leads') renderLeads();
+    }).catch(function (error) {
+      var node = document.getElementById('panel-leads');
+      if (node) node.innerHTML = '<p class="adm-error">' + esc(error.message) + '</p>';
+    });
+  }
+
+  function exportLeads() {
+    var view = data.leads;
+    if (!view || !view.leads.length) { window.alert('אין נתונים לייצוא.'); return; }
+    downloadWorkbook('setshifts-leads-' + today() + '.xlsx', [sheetOf('לידים',
+      [12, 26, 20, 16, 28, 10, 14, 18, 18, 12, 30],
+      ['נכנס', 'עסק', 'איש קשר', 'טלפון', 'מייל', 'עובדים', 'זמן בשבוע', 'מקור', 'קמפיין', 'סטטוס', 'הערה'],
+      view.leads.map(function (l) {
+        return [date(l.createdAt), l.business, l.name, l.phone, l.email, l.employees,
+          HOURS_LABEL[l.hours] || '', l.source || 'ישיר', l.campaign || '', LEAD_STATUS[l.status], l.adminNote];
+      }))]);
+  }
+
+  /* ===== שיווק ===== */
+
+  function pct(a, b) { return b > 0 ? Math.round((a / b) * 100) + '%' : '—'; }
+  function weekSunday(offset) {
+    var d = new Date();
+    d.setDate(d.getDate() - d.getDay() - (offset || 0) * 7);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function renderMarketing() {
+    var node = document.getElementById('panel-marketing');
+    var r = data.marketing;
+    var html = '<div class="adm-card"><h2>שיווק</h2>' +
+      '<p class="adm-card-sub">הנתונים נמשכים מהמערכת עצמה: הרשמות, כרטיסים, חיובים ולידים. רק ההוצאה על פרסום מוזנת ידנית, פעם בשבוע, מהסיכום של Meta ושל גוגל. ' +
+      'משלם = לקוח שיש לו חיוב מוצלח אחד לפחות; פיילוט ללא תשלום והדגמה לא נספרים כמשלמים.</p>' +
+      '<div class="adm-controls"><label class="adm-field" for="mk-weeks"><span>חלון</span>' +
+      '<select class="adm-select" id="mk-weeks">' + [4, 8, 12, 26, 52].map(function (n) {
+        return '<option value="' + n + '"' + (n === data.marketingWeeks ? ' selected' : '') + '>' + n + ' שבועות</option>';
+      }).join('') + '</select></label>' +
+      '<button class="adm-btn" id="mk-refresh">רענון</button>' +
+      '<button class="adm-btn is-primary" id="mk-export">ייצוא כל הנתונים ל-Excel</button></div></div>';
+    if (!r) { node.innerHTML = html + '<p class="adm-empty">טוען…</p>'; return; }
+    var t = r.totals;
+    html += '<div class="adm-tiles">' +
+      tile('לידים', t.leads, 'עלות ללייד: ' + (t.costPerLead == null ? '—' : money(t.costPerLead))) +
+      tile('הרשמות', t.signups, 'עלות להרשמה: ' + (t.costPerSignup == null ? '—' : money(t.costPerSignup))) +
+      tile('עם כרטיס', t.withCard, pct(t.withCard, t.signups) + ' מההרשמות') +
+      tile('הוסיפו צוות', t.teamAdded, pct(t.teamAdded, t.signups) + ' מההרשמות') +
+      tile('משלמים חדשים', t.paying, pct(t.paying, t.signups) + ' מההרשמות', true) +
+      tile('הוצאה', money(t.spend), 'בחלון הנבחר') +
+      tile('עלות רכישת לקוח', t.cac == null ? '—' : money(t.cac), 'יעד: עד 1,400 ₪', true) +
+      tile('משלמים בסך הכל', r.payingTotal, 'מאז ומעולם') + '</div>';
+    if (r.untrackedShare != null && r.untrackedShare >= 50) {
+      html += '<p class="adm-error">' + r.untrackedShare + '% מההרשמות הגיעו בלי מקור שמיש. ' +
+        'בדוק שהפיקסל והאישור למדידה פעילים ושהקישורים במודעות כוללים utm_source ו-utm_campaign. ' +
+        'עד אז ההשוואה בין ערוצים אינה אמינה.</p>';
+    }
+
+    html += '<div class="adm-card"><h2>לפי שבוע</h2><div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+      '<th>שבוע שמתחיל</th><th class="num">לידים</th><th class="num">הרשמות</th><th class="num">עם כרטיס</th>' +
+      '<th class="num">הוסיפו צוות</th><th class="num">משלמים חדשים</th><th class="num">הוצאה</th><th class="num">עלות ללקוח</th>' +
+      '</tr></thead><tbody>' + r.weekList.map(function (w) {
+        return '<tr><td>' + esc(date(w.week)) + '</td><td class="num">' + w.leads + '</td><td class="num">' + w.signups +
+          '</td><td class="num">' + w.withCard + '</td><td class="num">' + w.teamAdded + '</td><td class="num">' + w.paying +
+          '</td><td class="num">' + (w.spend ? esc(money(w.spend)) : '—') + '</td><td class="num">' +
+          (w.cac == null ? '—' : esc(money(w.cac))) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+
+    html += '<div class="adm-card"><h2>לפי ערוץ</h2><div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+      '<th>ערוץ</th><th class="num">לידים</th><th class="num">הרשמות</th><th class="num">עם כרטיס</th><th class="num">משלמים</th>' +
+      '<th class="num">הכנסה</th><th class="num">הוצאה</th><th class="num">עלות ללקוח</th><th class="num">הכנסה/הוצאה</th>' +
+      '</tr></thead><tbody>' + r.channels.map(function (c) {
+        return '<tr><td>' + esc(CHANNEL_LABEL[c.key] || c.key) + '</td><td class="num">' + c.leads + '</td><td class="num">' + c.signups +
+          '</td><td class="num">' + c.withCard + '</td><td class="num">' + c.paying + '</td><td class="num">' + esc(money(c.revenue)) +
+          '</td><td class="num">' + (c.spend ? esc(money(c.spend)) : '—') + '</td><td class="num">' + (c.cac == null ? '—' : esc(money(c.cac))) +
+          '</td><td class="num">' + (c.roas == null ? '—' : c.roas) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+
+    if (r.campaigns.length) {
+      html += '<div class="adm-card"><h2>לפי קמפיין</h2><div class="adm-scroll"><table class="adm-table"><thead><tr>' +
+        '<th>ערוץ / קמפיין</th><th class="num">הרשמות</th><th class="num">משלמים</th></tr></thead><tbody>' +
+        r.campaigns.map(function (c) {
+          return '<tr><td>' + esc(c.key) + '</td><td class="num">' + c.signups + '</td><td class="num">' + c.paying + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
+    html += '<div class="adm-card"><h2>הוצאות פרסום</h2>' +
+      '<p class="adm-card-sub">מזינים פעם בשבוע את הסכום שנגבה בכל ערוץ (Meta Ads Manager, Google Ads). הזנה חוזרת לאותו שבוע וערוץ מחליפה את הקודמת.</p>' +
+      '<form id="mk-spend-form" class="adm-grid-form">' +
+      '<label class="adm-field" for="mk-week"><span>שבוע (כל יום בו)</span><input class="adm-input" id="mk-week" type="date" value="' + esc(weekSunday(1)) + '" required></label>' +
+      '<label class="adm-field" for="mk-channel"><span>ערוץ</span><input class="adm-input" id="mk-channel" list="mk-channels" value="meta" maxlength="40" required>' +
+      '<datalist id="mk-channels"><option value="meta"><option value="google"><option value="tiktok"><option value="linkedin"><option value="other"></datalist></label>' +
+      '<label class="adm-field" for="mk-amount"><span>סכום (₪)</span><input class="adm-input" id="mk-amount" type="number" min="0" step="0.01" required></label>' +
+      '<label class="adm-field" for="mk-note"><span>הערה</span><input class="adm-input" id="mk-note" maxlength="200"></label>' +
+      '<div class="adm-field"><span>&nbsp;</span><button class="adm-btn is-primary" type="submit">שמירה</button></div></form>' +
+      '<p id="mk-msg" class="adm-error" hidden></p>';
+    if (r.spend.length) {
+      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>שבוע שמתחיל</th><th>ערוץ</th><th class="num">סכום</th><th>הערה</th><th></th></tr></thead><tbody>' +
+        r.spend.slice(0, 40).map(function (s) {
+          return '<tr><td>' + esc(date(s.weekStart)) + '</td><td>' + esc(s.channel) + '</td><td class="num">' + esc(moneyExact(s.amount)) +
+            '</td><td>' + esc(s.note) + '</td><td><button class="adm-btn is-small" data-spend-delete="' + esc(s.id) + '">מחיקה</button></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    node.innerHTML = html + '</div>';
+  }
+
+  function loadMarketing() {
+    return api('marketing', { action: 'report', weeks: data.marketingWeeks }).then(function (body) {
+      data.marketing = body;
+      if (current === 'marketing') renderMarketing();
+    }).catch(function (error) {
+      var node = document.getElementById('panel-marketing');
+      if (node) node.innerHTML = '<p class="adm-error">' + esc(error.message) + '</p>';
+    });
+  }
+
+  /* קובץ אחד עם הכול, בנוי להעלאה לניתוח: סיכום שבועי, ערוצים,
+     קמפיינים, ושורה לכל הרשמה ולכל ליד. מספרים נשמרים כמספרים. */
+  function exportMarketing() {
+    var r = data.marketing;
+    if (!r) { window.alert('הנתונים עוד נטענים.'); return; }
+    downloadWorkbook('setshifts-marketing-' + today() + '.xlsx', [
+      sheetOf('סיכום שבועי', [14, 10, 10, 10, 12, 14, 12, 14],
+        ['שבוע שמתחיל', 'לידים', 'הרשמות', 'עם כרטיס', 'הוסיפו צוות', 'משלמים חדשים', 'הוצאה (₪)', 'עלות ללקוח (₪)'],
+        r.weekList.map(function (w) { return [w.week, w.leads, w.signups, w.withCard, w.teamAdded, w.paying, w.spend, w.cac == null ? '' : w.cac]; })),
+      sheetOf('לפי ערוץ', [20, 10, 10, 10, 10, 14, 12, 14, 12],
+        ['ערוץ', 'לידים', 'הרשמות', 'עם כרטיס', 'משלמים', 'הכנסה ברוטו (₪)', 'הוצאה (₪)', 'עלות ללקוח (₪)', 'הכנסה/הוצאה'],
+        r.channels.map(function (c) { return [c.key, c.leads, c.signups, c.withCard, c.paying, c.revenue, c.spend, c.cac == null ? '' : c.cac, c.roas == null ? '' : c.roas]; })),
+      sheetOf('לפי קמפיין', [34, 10, 10], ['ערוץ / קמפיין', 'הרשמות', 'משלמים'],
+        r.campaigns.map(function (c) { return [c.key, c.signups, c.paying]; })),
+      sheetOf('הרשמות', [26, 12, 10, 12, 18, 18, 18, 14, 10, 10, 8, 14, 12],
+        ['עסק', 'נפתח', 'מצב', 'חבילה', 'ערוץ', 'קמפיין', 'מדיום', 'תוכן', 'פיילוט', 'כרטיס', 'משתמשים', 'חיוב ראשון', 'הכנסה ברוטו (₪)'],
+        r.raw.companies.map(function (c) {
+          return [c.name, date(c.createdAt), STATUS_LABEL[c.status] || c.status, PLAN_LABEL[c.plan] || c.plan, c.source,
+            c.campaign, c.medium, c.content, c.free ? 'כן' : '', c.hasCard ? 'כן' : '', c.users,
+            c.firstCharge ? date(c.firstCharge) : '', c.revenueGross];
+        })),
+      sheetOf('לידים', [12, 26, 20, 16, 28, 10, 14, 14, 18, 12, 8],
+        ['נכנס', 'עסק', 'איש קשר', 'טלפון', 'מייל', 'עובדים', 'זמן בשבוע', 'ערוץ', 'קמפיין', 'סטטוס', 'הפך ללקוח'],
+        r.raw.leads.map(function (l) {
+          return [date(l.createdAt), l.business, l.name, l.phone, l.email, l.employees, HOURS_LABEL[l.hours] || '',
+            l.source, l.campaign, LEAD_STATUS[l.status] || l.status, l.converted ? 'כן' : ''];
+        })),
+      sheetOf('הוצאות', [14, 16, 12, 30], ['שבוע שמתחיל', 'ערוץ', 'סכום (₪)', 'הערה'],
+        r.spend.map(function (s) { return [s.weekStart, s.channel, s.amount, s.note]; }))
+    ]);
+  }
+
   function loadOverview() {
     return api('overview').then(function (body) {
       data.overview = body;
@@ -1392,6 +1603,8 @@
     if (panel === 'tickets') { renderTickets(); if (!data.tickets) loadTickets(); }
     if (panel === 'coupons') { renderCoupons(); if (!data.coupons) loadCoupons(); }
     if (panel === 'agents') { renderAgents(); loadAgents(); }
+    if (panel === 'leads') { renderLeads(); loadLeads(); }
+    if (panel === 'marketing') { renderMarketing(); loadMarketing(); }
     if (panel === 'demo') { renderDemo(); loadDemo(); }
   }
 
@@ -1495,6 +1708,40 @@
       event.target.textContent = 'הועתק';
       return;
     }
+    if (event.target.id === 'adm-export-leads') { exportLeads(); return; }
+    if (event.target.id === 'mk-export') { exportMarketing(); return; }
+    if (event.target.id === 'mk-refresh') { data.marketing = null; renderMarketing(); loadMarketing(); return; }
+
+    var leadFilter = event.target.closest('[data-lead-filter]');
+    if (leadFilter) { data.leadStatus = leadFilter.dataset.leadFilter; loadLeads(); return; }
+
+    var leadDelete = event.target.closest('[data-lead-delete]');
+    if (leadDelete) {
+      if (!window.confirm('למחוק את הליד לצמיתות? הפרטים שלו יימחקו.')) return;
+      api('leads', { action: 'delete', id: leadDelete.dataset.leadDelete })
+        .then(loadLeads).catch(function (error) { window.alert(error.message); });
+      return;
+    }
+
+    var leadCustomer = event.target.closest('[data-lead-customer]');
+    if (leadCustomer) {
+      var chosen = ((data.leads && data.leads.leads) || []).filter(function (l) { return l.id === leadCustomer.dataset.leadCustomer; })[0];
+      if (!chosen) return;
+      openAction('create-customer', 'new', { leadId: chosen.id });
+      document.getElementById('adm-f-company').value = chosen.business || '';
+      document.getElementById('adm-f-owner').value = chosen.name || '';
+      document.getElementById('adm-f-email').value = chosen.email || '';
+      document.getElementById('adm-f-phone').value = chosen.phone || '';
+      return;
+    }
+
+    var spendDelete = event.target.closest('[data-spend-delete]');
+    if (spendDelete) {
+      api('marketing', { action: 'spend-delete', id: spendDelete.dataset.spendDelete })
+        .then(loadMarketing).catch(function (error) { window.alert(error.message); });
+      return;
+    }
+
     if (event.target.id === 'adm-export-companies') { exportCompanies(); return; }
     if (event.target.id === 'adm-export-agents') { exportAgents(); return; }
 
@@ -1588,6 +1835,20 @@
       }).catch(function (error) { agentBox.textContent = error.message; agentBox.hidden = false; });
       return;
     }
+    if (event.target.id === 'mk-spend-form') {
+      event.preventDefault();
+      var spendBox = document.getElementById('mk-msg');
+      spendBox.hidden = true;
+      api('marketing', {
+        action: 'spend-save',
+        weekStart: document.getElementById('mk-week').value,
+        channel: document.getElementById('mk-channel').value,
+        amount: document.getElementById('mk-amount').value,
+        note: document.getElementById('mk-note').value
+      }).then(loadMarketing)
+        .catch(function (error) { spendBox.textContent = error.message; spendBox.hidden = false; });
+      return;
+    }
     if (event.target.id === 'adm-demo-form') {
       event.preventDefault();
       var demoBox = document.getElementById('adm-demo-msg');
@@ -1635,6 +1896,25 @@
     if (event.target.id === 'adm-filter-source') data.source = event.target.value;
     else data.status = event.target.value;
     loadCompanies();
+  });
+
+  document.addEventListener('change', function (event) {
+    var status = event.target.closest && event.target.closest('[data-lead-status]');
+    if (status) {
+      api('leads', { action: 'update', id: status.dataset.leadStatus, status: status.value })
+        .then(loadLeads).catch(function (error) { window.alert(error.message); });
+      return;
+    }
+    var note = event.target.closest && event.target.closest('[data-lead-note]');
+    if (note) {
+      api('leads', { action: 'update', id: note.dataset.leadNote, adminNote: note.value })
+        .catch(function (error) { window.alert(error.message); });
+      return;
+    }
+    if (event.target.id === 'mk-weeks') {
+      data.marketingWeeks = Number(event.target.value) || 12;
+      data.marketing = null; renderMarketing(); loadMarketing();
+    }
   });
 
   document.addEventListener('keydown', function (event) {

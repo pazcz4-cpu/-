@@ -274,7 +274,14 @@
     var company = this.db.companies[user.companyId];
     if (!company) return null;
     return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, employeeId: user.employeeId },
+      user: {
+        id: user.id, email: user.email, name: user.name, role: user.role, employeeId: user.employeeId,
+        /* בשרת האמיתי הערך הזה מגיע מהמסד. כאן הדרישה כבויה אלא אם
+           הופעלה במפורש (db.requireUpdatesConsent), כדי שהדגמה ובדיקות
+           ישנות לא ייעצרו במסך הסכמה. */
+        updatesConsentAt: this.db.requireUpdatesConsent && user.role === 'employee'
+          ? (user.updatesConsentAt || null) : undefined
+      },
       company: clone(company),
       access: Model.accessState(company, this.now())
     };
@@ -928,6 +935,19 @@
   /* כל משתמש רשאי לשנות את השם שלו – ורק אותו. אין כאן userId,
      ולכן אי אפשר לכוון את הפעולה לשורה של מישהו אחר. התפקיד
      והשיוך לכרטיס העובד אינם נוגעים בה. */
+  MockBackend.prototype.saveUpdatesConsent = function (text, version) {
+    var session;
+    try { session = this._require(); } catch (err) { return Promise.reject(err); }
+    if (!String(text || '').trim()) return Promise.reject(this._fail('invalid', 'consent text required'));
+    var user = this.db.users[session.user.id];
+    if (!user) return Promise.reject(this._fail('not_found', t('server.userNotFound')));
+    user.updatesConsentAt = this.now().toISOString();
+    user.updatesConsentText = String(text).slice(0, 2000);
+    user.updatesConsentVersion = String(version || '').slice(0, 40);
+    this._save();
+    return Promise.resolve(user.updatesConsentAt);
+  };
+
   MockBackend.prototype.saveOwnName = function (name) {
     var session;
     try { session = this._require(); } catch (err) { return Promise.reject(err); }

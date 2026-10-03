@@ -140,6 +140,14 @@
 
         ctaTitle: 'Try it on next week’s schedule',
         ctaBody: 'Set up your team, build one week, and see the difference. It takes an afternoon.',
+        onboardTitle: 'We set the system up with you',
+        onboardBody: 'You are not on your own at the start: we help with implementation and building the system for your business, specification included. It is all part of the subscription price, at no extra charge.',
+        onboardP1: 'Specification: one conversation about your branches, roles, shifts and rules',
+        onboardP2: 'Setup: configuring the system and importing your employees, together with you',
+        onboardP3: 'Support: until the first schedule is published and your team can see it',
+        leadTitle: 'Want us to call you back?',
+        leadSub: 'Leave your details and a person will get back to you during support hours. A few short questions help us come prepared.',
+        heroLead: 'or leave your details and we’ll call you',
         footerRights: 'All rights reserved.',
         /* נגישות בשורת הניווט. עד כאן הן היו בעברית בכל
            שמונה עמודי השפה — כלומר קורא מסך של מבקר מגרמניה
@@ -1138,6 +1146,12 @@
         signOut: 'Sign out', blocked: 'Access blocked',
         blockedOwner: 'Contact support to activate the subscription.',
         blockedMember: 'Ask the account owner to renew the subscription.',
+        updatesTitle: "Before you continue",
+        updatesText: "I confirm that I agree to receive from my workplace, by email, the app and WhatsApp messages, ongoing updates about my shifts: schedule publication, changes to it, reminders and decisions on requests I submitted. These messages are for work purposes only, and not for marketing or advertising.",
+        updatesCheck: "I have read and I agree",
+        updatesContinue: "Continue",
+        updatesRequired: "Tick the box to continue.",
+        updatesNote: "You can ask to stop at any time through your manager.",
         blockedAddCard: "Add a payment method",
         blockedRecheck: "I've added it, continue",
         blockedChecking: "Checking whether the card was saved…",

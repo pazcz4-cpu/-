@@ -143,6 +143,39 @@ const AGENTS = {
     customers: [{ id: 'co-9', name: 'פיצה הכפר', status: 'active', freeAccess: false, createdAt: new Date().toISOString(),
       paidCharges: 3, qualifiedAt: new Date().toISOString(), commission: { amount: 400, status: 'pending', month: '2026-10' } }] }
 };
+const NOW_ISO = new Date().toISOString();
+const LEADS = {
+  ok: true,
+  counts: { all: 2, new: 1, contacted: 1, demo: 0, won: 0, lost: 0 },
+  leads: [
+    { id: 'ld-1', createdAt: NOW_ISO, updatedAt: NOW_ISO, business: 'קפה הנחל', name: 'דנה כהן',
+      phone: '054-123 4567', email: 'dana@cafe.co.il', employees: 14, hours: '3-6', note: null,
+      consent: true, lang: 'he', page: '/', source: 'facebook', medium: 'paid', campaign: 'owners-pain',
+      content: null, term: null, clickId: 'FB1', status: 'new', adminNote: '', companyId: null },
+    { id: 'ld-2', createdAt: NOW_ISO, updatedAt: NOW_ISO, business: 'מסעדת הים', name: 'רן',
+      phone: '0521234567', email: 'ran@sea.co.il', employees: 30, hours: '6plus', note: null,
+      consent: true, lang: 'he', page: '/', source: null, medium: null, campaign: null,
+      content: null, term: null, clickId: null, status: 'contacted', adminNote: 'חזרו אליי ביום ג׳', companyId: null }
+  ]
+};
+const MARKETING = {
+  ok: true, weeks: 12, firstWeek: '2026-07-12', payingTotal: 2, untrackedShare: 60,
+  totals: { leads: 2, signups: 5, withCard: 2, teamAdded: 1, paying: 1, spend: 1000,
+    cac: 1000, costPerLead: 500, costPerSignup: 200 },
+  weekList: [{ week: '2026-09-27', leads: 2, signups: 5, withCard: 2, teamAdded: 1, paying: 1, spend: 1000,
+    costPerLead: 500, costPerSignup: 200, cac: 1000 }],
+  channels: [{ key: 'meta', signups: 3, withCard: 1, paying: 1, revenue: 199, spend: 800, leads: 1, cac: 800, costPerLead: 800, roas: 0.25 },
+    { key: 'direct', signups: 2, withCard: 1, paying: 0, revenue: 0, spend: 0, leads: 1, cac: null, costPerLead: null, roas: null }],
+  campaigns: [{ key: 'meta / owners-pain', signups: 3, paying: 1 }],
+  spend: [{ id: 'sp-1', weekStart: '2026-09-27', channel: 'meta', amount: 800, note: 'קמפיין כאב' }],
+  raw: {
+    companies: [{ id: 'co-1', name: 'קפה מרכז', createdAt: NOW_ISO, status: 'trial', plan: 'starter', source: 'meta',
+      campaign: 'owners-pain', medium: 'paid', content: '', term: '', clickId: 'FB1', free: false, hasCard: true,
+      users: 2, firstCharge: '', revenueGross: 0 }],
+    leads: [{ createdAt: NOW_ISO, business: 'קפה הנחל', name: 'דנה כהן', phone: '054', email: 'dana@cafe.co.il',
+      employees: 14, hours: '3-6', status: 'new', source: 'meta', campaign: 'owners-pain', converted: false }]
+  }
+};
 const DEMO = {
   status: { ok: true, exists: false },
   build: { ok: true }
@@ -167,6 +200,8 @@ try {
       emailed: true, emailError: null, expiresInHours: 48 };
     if (name === 'agents') payload = AGENTS[body.do] || { ok: true };
     if (name === 'demo') payload = DEMO[body.do] || { ok: true };
+    if (name === 'leads') payload = body.action === 'list' ? LEADS : { ok: true, lead: LEADS.leads[0] };
+    if (name === 'marketing') payload = body.action === 'report' ? MARKETING : { ok: true };
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify(payload) });
   });
@@ -565,6 +600,74 @@ try {
   const overflow = await page.evaluate(() =>
     document.documentElement.scrollWidth - document.documentElement.clientWidth);
   check('אין גלילה אופקית של הדף', overflow <= 1, true);
+
+
+  console.log('\n== לידים ==');
+  sent.length = 0;
+  await page.click('.adm-tab[data-panel="leads"]');
+  await page.waitForTimeout(600);
+  const leadsText = await page.locator('#panel-leads').innerText();
+  check('הליד מוצג עם שם העסק', leadsText, /קפה הנחל/);
+  check('ועם כמות העובדים וזמן ההכנה', leadsText, /3–6 שעות/);
+  check('ועם מקור ההגעה', leadsText, /facebook \/ owners-pain/);
+  check('וליד בלי מקור מסומן כישיר', leadsText, /ישיר/);
+  check('מוצג קישור וואטסאפ עם קידומת ישראל',
+    await page.locator('#panel-leads a[href^="https://wa.me/972"]').first().getAttribute('href'), /^https:\/\/wa\.me\/972541234567$/);
+  check('ספירה לפי סטטוס על המסננים', await page.locator('[data-lead-filter="new"]').innerText(), /חדש \(1\)/);
+  await page.click('[data-lead-filter="contacted"]');
+  await page.waitForTimeout(400);
+  check('הסינון נשלח לשרת', sent.filter((c) => c.name === 'leads').pop().body.status, 'contacted');
+
+  sent.length = 0;
+  await page.selectOption('[data-lead-status="ld-1"]', 'demo');
+  await page.waitForTimeout(400);
+  const upd = sent.filter((c) => c.name === 'leads' && c.body.action === 'update').pop();
+  check('שינוי סטטוס נשלח', upd && upd.body.status, 'demo');
+  check('עבור הליד הנכון', upd && upd.body.id, 'ld-1');
+
+  await page.click('[data-lead-customer="ld-1"]');
+  await page.waitForTimeout(300);
+  check('הקמת פיילוט מליד ממלאת את הטופס',
+    (await page.inputValue('#adm-f-company')) + '|' + (await page.inputValue('#adm-f-email')),
+    'קפה הנחל|dana@cafe.co.il');
+  await page.click('#adm-modal-cancel');
+
+  const [leadsFile] = await Promise.all([page.waitForEvent('download'), page.click('#adm-export-leads')]);
+  check('ייצוא לידים הוריד קובץ', leadsFile.suggestedFilename(), /^setshifts-leads-\d{4}-\d{2}-\d{2}\.xlsx$/);
+
+  console.log('\n== שיווק ==');
+  sent.length = 0;
+  await page.click('.adm-tab[data-panel="marketing"]');
+  await page.waitForTimeout(700);
+  const mkText = await page.locator('#panel-marketing').innerText();
+  check('נטען דוח שיווק', sent.some((c) => c.name === 'marketing' && c.body.action === 'report'), true);
+  check('מוצגת עלות רכישת לקוח', mkText, /עלות רכישת לקוח/);
+  check('ומוצג ערוץ Meta', mkText, /Meta/);
+  check('מוצג קמפיין', mkText, /owners-pain/);
+  check('אזהרה כשרוב ההרשמות בלי מקור', mkText, /60% מההרשמות הגיעו בלי מקור/);
+
+  sent.length = 0;
+  await page.fill('#mk-amount', '1250.5');
+  await page.click('#mk-spend-form button[type="submit"]');
+  await page.waitForTimeout(500);
+  const spendCall = sent.filter((c) => c.name === 'marketing' && c.body.action === 'spend-save').pop();
+  check('הוצאה נשלחת עם ערוץ וסכום', spendCall && spendCall.body.channel + '|' + spendCall.body.amount, 'meta|1250.5');
+  check('לכל שדה בטופס ההוצאה יש תווית',
+    await page.evaluate(() => [...document.querySelectorAll('#mk-spend-form label.adm-field')]
+      .every((l) => l.htmlFor && document.getElementById(l.htmlFor))), true);
+
+  const [mkFile] = await Promise.all([page.waitForEvent('download'), page.click('#mk-export')]);
+  check('ייצוא כל הנתונים הוריד xlsx', mkFile.suggestedFilename(), /^setshifts-marketing-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  const mkZip = (await import('node:fs')).readFileSync(await mkFile.path());
+  check('הקובץ הוא ZIP תקין', mkZip.slice(0, 2).toString(), 'PK');
+  check('כולל הרשמה גולמית', mkZip.includes(Buffer.from('קפה מרכז')), true);
+  check('כולל ליד גולמי', mkZip.includes(Buffer.from('קפה הנחל')), true);
+  check('כולל הוצאה', mkZip.includes(Buffer.from('קמפיין כאב')), true);
+  check('כולל גיליון לפי ערוץ', mkZip.includes(Buffer.from('לפי ערוץ')), true);
+
+  const overflowMk = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  check('אין גלילה אופקית בשיווק', overflowMk <= 1, true);
 
   console.log('\n== יציאה ==');
   await page.setViewportSize({ width: 1400, height: 1000 });

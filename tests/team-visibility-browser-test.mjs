@@ -52,6 +52,32 @@ async function showMyDay(page) {
   return found;
 }
 
+/* שמות שונים בכל ימי השבוע, לא רק ביום ברירת המחדל: ביום שבת יש
+   מעט משמרות, ולכן בדיקה על היום הנוכחי בלבד נכשלה לסירוגין. */
+async function teamNames(page, selector) {
+  const tabs = await page.locator('.team-tab').count();
+  const originalIndex = await page.evaluate(
+    () => [...document.querySelectorAll('.team-tab')].findIndex((t) => t.classList.contains('is-on')));
+  const names = new Set();
+  for (let i = 0; i < tabs; i++) {
+    await page.locator('.team-tab').nth(i).click();
+    await page.waitForTimeout(100);
+    const found = await page.evaluate((sel) => {
+      const out = [];
+      document.querySelectorAll(sel).forEach((n) => {
+        n.textContent.split(',').forEach((v) => { if (v.trim()) out.push(v.trim()); });
+      });
+      return out;
+    }, selector);
+    found.forEach((n) => names.add(n));
+  }
+  if (originalIndex >= 0) {
+    await page.locator('.team-tab').nth(originalIndex).click();
+    await page.waitForTimeout(100);
+  }
+  return names.size;
+}
+
 const browser = await chromium.launch();
 const errors = [];
 
@@ -189,13 +215,7 @@ try {
   const slots = await page.locator('.team-slot').count();
   check('יש בה משמרות של הצוות', slots > 0, true);
   check('ושמות של יותר מאדם אחד',
-    await page.evaluate(() => {
-      const names = new Set();
-      document.querySelectorAll('.team-slot span').forEach((n) => {
-        n.textContent.split(',').forEach((v) => { if (v.trim()) names.add(v.trim()); });
-      });
-      return names.size;
-    }) > 1, true);
+    (await teamNames(page, '.team-slot span')) > 1, true);
   check('והעובד עצמו מסומן ברשימה', await showMyDay(page), true);
 
   console.log('\n== לשוניות הימים ==');
@@ -408,11 +428,8 @@ try {
   await page.locator('.team-fold summary').click();
   await page.waitForTimeout(500);
   check('ויש בה משמרות', await page.locator('.team-slot').count() > 0, true);
-  check('ושמות של יותר מאדם אחד', await page.evaluate(() => {
-    const names = new Set();
-    document.querySelectorAll('.team-person').forEach((n) => names.add(n.textContent.trim()));
-    return names.size;
-  }) > 1, true);
+  check('ושמות של יותר מאדם אחד',
+    (await teamNames(page, '.team-person')) > 1, true);
   check('והעובד עצמו מסומן', await showMyDay(page), true);
 
   /* מה שהגיע לדפדפן שלו, ולא רק מה שהמסך הציג: עמית מגיע כשם

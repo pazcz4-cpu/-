@@ -352,8 +352,13 @@
     var userId = this._userId();
     if (!userId) { this._clearTokens(); return Promise.resolve(null); }
 
-    return this._rest('/company_users?id=eq.' + encodeURIComponent(userId) +
-      '&select=id,email,name,role,employee_id,active,company_id,joined_at')
+    var profileBase = '/company_users?id=eq.' + encodeURIComponent(userId) +
+      '&select=id,email,name,role,employee_id,active,company_id,joined_at';
+    /* עמודת ההסכמה נוספה במיגרציה. לפניה הבקשה נכשלת בגלל עמודה
+       לא מוכרת, ולכן חוזרים לבקשה הישנה: הסכמה "לא ידועה" (undefined)
+       אינה חוסמת כניסה, בניגוד ל"ידוע שלא ניתנה" (null). */
+    return this._rest(profileBase + ',updates_consent_at')
+      .catch(function () { return self._rest(profileBase); })
       .then(function (rows) {
         var profile = rows && rows[0];
         /* שתי סיבות שונות לחלוטין לכך שאין התחברות, ואסור לבלבל
@@ -400,7 +405,9 @@
             self._session = {
               user: {
                 id: profile.id, email: profile.email, name: profile.name,
-                role: profile.role, employeeId: profile.employee_id
+                role: profile.role, employeeId: profile.employee_id,
+                updatesConsentAt: profile.updates_consent_at === undefined
+                  ? undefined : (profile.updates_consent_at || null)
               },
               company: company,
               access: Model.accessState(company, self.now())
@@ -422,6 +429,19 @@
     if (!code) return Promise.resolve(null);
     return this._rpc('attach_referral', { p_code: code }).then(function (answer) {
       if (Ref) Ref.clear();
+      return answer;
+    }, function () { return null; });
+  };
+
+  /* מקור ההגעה (utm / fbclid), לצורך מדידת עלות לקוח לפי ערוץ.
+     ShiftTracking.utm() מחזיר ערך רק אם המבקר אישר מדידה, ולכן בלי
+     הסכמה אין כאן מה לשלוח. כישלון אינו מפיל הרשמה, מאותה סיבה
+     כמו בשיוך לסוכן. */
+  SupabaseBackend.prototype._attachAttribution = function () {
+    var T = root.ShiftTracking;
+    var found = T && T.utm ? T.utm() : null;
+    if (!found) return Promise.resolve(null);
+    return this._rpc('attach_attribution', { p_utm: found }).then(function (answer) {
       return answer;
     }, function () { return null; });
   };
@@ -449,6 +469,8 @@
         /* הקוד נשמר גם על משתמש האימות: הלקוח מאשר את המייל לפעמים
            ממכשיר אחר, שבו הקישור המקורי מעולם לא נפתח */
         return self._attachReferral(String(meta.ref || '').toLowerCase());
+      }).then(function () {
+        return self._attachAttribution();
       }).then(function () { return self._loadSession(); });
     }, function () {
       /* אם לא הצלחנו לקרוא את המשתמש, נופלים חזרה להתנהגות הרגילה */
@@ -664,6 +686,8 @@
       });
     }).then(function () {
       return self._attachReferral(null);
+    }).then(function () {
+      return self._attachAttribution();
     }).then(function () {
       return self._loadSession();
     });
@@ -1090,6 +1114,17 @@
   }
 
   /* ===== זהות: השם שלי, ושם העסק ===== */
+
+  /* הסכמת העובד לעדכונים שוטפים. הנוסח נשמר כפי שהוצג, בשפה שבה
+     הוא נקרא. */
+  SupabaseBackend.prototype.saveUpdatesConsent = function (text, version) {
+    var self = this;
+    return this._rpc('save_updates_consent', { p_text: text, p_version: version })
+      .then(function (at) {
+        if (self._session) self._session.user.updatesConsentAt = at || new Date().toISOString();
+        return at;
+      });
+  };
 
   /* company_users_update דורש is_manager(), ולכן עובד לא יכול היה
      לתקן שגיאת כתיב בשם של עצמו. הפונקציה בשרת היא security

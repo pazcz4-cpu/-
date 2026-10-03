@@ -84,6 +84,9 @@
      ולמענה האוטומטי בוואטסאפ. */
   var SUPPORT_REPLY_HOURS = 48;        // שאלה או בקשת פיתוח
   var SUPPORT_URGENT_HOURS = 4;        // "משהו לא עובד", בשעות הפעילות
+  /* גרסת נוסח ההסכמה של העובד לעדכונים שוטפים (auth.updates*).
+     משנים את הנוסח -- מעלים את המספר, וכך אפשר לדעת מי הסכים למה. */
+  var UPDATES_CONSENT_VERSION = 'updates-1';
   var SUPPORT_HOURS_FROM = '09:00';
   var SUPPORT_HOURS_TO = '15:30';
 
@@ -871,6 +874,7 @@
     SUPPORT_EMAIL: SUPPORT_EMAIL,
     SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS,
     SUPPORT_URGENT_HOURS: SUPPORT_URGENT_HOURS,
+    UPDATES_CONSENT_VERSION: UPDATES_CONSENT_VERSION,
     SUPPORT_HOURS_FROM: SUPPORT_HOURS_FROM, SUPPORT_HOURS_TO: SUPPORT_HOURS_TO,
     supportReplyHours: supportReplyHours,
     WHATSAPP_NUMBER: WHATSAPP_NUMBER,

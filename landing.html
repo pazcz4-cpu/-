@@ -83,6 +83,7 @@
         <a class="lp-btn lp-btn-ghost lp-btn-lg" href="#how" data-i18n="landing.heroSecondary">איך זה עובד</a>
       </div>
       <p class="lp-hero-note" id="hero-note"></p>
+      <p class="lp-hero-lead"><a href="#lead" data-i18n="landing.heroLead">או השאירו פרטים ונחזור אליכם</a></p>
     </div>
 
   </div>
@@ -304,6 +305,23 @@
   </div>
 </section>
 
+<!-- ===== הקמה ואיפיון כלולים =====
+     ההטבה שמורידה את החשש מ"זה ייקח לי שבוע להקים". מופיעה לפני
+     המחיר בכוונה: מי שקורא מחיר רוצה קודם לדעת מה כלול בו. -->
+<section class="lp-section lp-section-alt" id="onboarding">
+  <div class="landing-wrap lp-onboard">
+    <div>
+      <h2 data-i18n="landing.onboardTitle">אנחנו מקימים איתכם את המערכת</h2>
+      <p class="lp-section-sub" data-i18n="landing.onboardBody"></p>
+    </div>
+    <ul class="lp-onboard-list">
+      <li data-i18n="landing.onboardP1"></li>
+      <li data-i18n="landing.onboardP2"></li>
+      <li data-i18n="landing.onboardP3"></li>
+    </ul>
+  </div>
+</section>
+
 <!-- ===== תוכניות ===== -->
 <section class="lp-section" id="pricing">
   <div class="landing-wrap">
@@ -348,6 +366,19 @@
         <p id="faq6-answer"></p>
       </details>
     </div>
+  </div>
+</section>
+
+<!-- ===== ליד: השארת פרטים =====
+     למי שאינו מוכן להירשם עכשיו. השאלות (כמה עובדים, כמה זמן
+     בשבוע) נשלחות לשרת יחד עם מקור ההגעה, אם המבקר אישר מדידה. -->
+<section class="lp-section" id="lead">
+  <div class="landing-wrap lp-lead-grid">
+    <div>
+      <h2 data-i18n="landing.leadTitle">רוצים שנחזור אליכם?</h2>
+      <p class="lp-section-sub" data-i18n="landing.leadSub"></p>
+    </div>
+    <div class="lp-lead-box" data-lead-form></div>
   </div>
 </section>
 
@@ -404,6 +435,7 @@
 <script>window.SHIFT_BILLING_LIVE = false;</script>
 <script src="js/backend/model.js"></script>
 <script src="js/talk.js"></script>
+<script src="js/lead.js"></script>
 <script>
 (function () {
   'use strict';

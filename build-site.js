@@ -618,7 +618,7 @@ const CONTENT_PAGES = [
   /* הטופס בעמוד צור קשר. model.js קודם: contact.js קורא ממנו
      את מספר הוואטסאפ, ובלעדיו הבלוק פשוט אינו מוצג. */
   { dir: 'contact', key: 'landing.contact', priority: '0.6',
-    scripts: ['/js/backend/model.js', '/js/contact.js'] }
+    scripts: ['/js/backend/model.js', '/js/contact.js', '/js/lead.js'] }
 ];
 
 function contentFile(dir, code) {

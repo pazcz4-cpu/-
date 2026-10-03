@@ -1290,7 +1290,7 @@
     var node = document.getElementById('panel-demo');
     var view = data.demo;
     var html = '<div class="adm-card"><h2>מערכת הדגמה</h2>' +
-      '<p class="adm-card-sub">עסק לדוגמה עם 8 עובדים, 2 סניפים ו-4 משמרות ביום: סידור שפורסם, דוח שעות ' +
+      '<p class="adm-card-sub">עסק לדוגמה עם 11 עובדים, 2 סניפים ו-4 משמרות ביום: סידור שפורסם, דוח שעות ' +
       'ובקשות אילוץ שממתינות לאישור — ושבוע הבא ריק, כדי לבנות בו סידור מול הלקוח ולהתאים אותו לעסק שלו.</p>' +
       '<div class="adm-demo">' +
       '<button class="adm-btn is-primary" id="adm-demo-enter" type="button">כניסה למערכת ההדגמה</button>' +

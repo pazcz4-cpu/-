@@ -1,7 +1,7 @@
 /* מערכת ההדגמה למכירות.
 
    בעל המוצר מגיע לבית עסק, לוחץ במשרד האחורי "כניסה למערכת
-   ההדגמה", ומראה את המוצר על עסק שנראה אמיתי: 8 עובדים בשמות,
+   ההדגמה", ומראה את המוצר על עסק שנראה אמיתי: 11 עובדים בשמות,
    2 סניפים, 4 משמרות ביום, סידור שפורסם, דוח שעות, בקשות אילוץ
    שממתינות לאישור – ושבוע הבא ריק, כדי לבנות בו סידור בלחיצה מול
    העיניים של הלקוח. משם מתאימים אותו לעסק שמולך.
@@ -34,6 +34,9 @@ const Shabbat = require('../../js/shabbat.js');
 
 const OPEN_ENDED = '2099-12-31T00:00:00.000Z';
 const COMPANY_NAME = 'עסק לדוגמה';
+/* התוכנית הבינונית (11–30): בתוכנית הקטנה 11 עובדים חורגים מהתקרה,
+   ואין מקום להוסיף עובד מול הלקוח */
+const PLAN = 'growth';
 const OWNER = { email: 'demo.owner@setshifts.com', name: 'בעל העסק' };
 
 /* ארבע משמרות ביום, חופפות, כמו בבית קפה או מסעדה */
@@ -45,7 +48,9 @@ const SHIFTS = [
 ];
 const BRANCHES = [{ id: 'br-center', name: 'סניף מרכז' }, { id: 'br-north', name: 'סניף צפון' }];
 const ALL = SHIFTS.map(function (shift) { return shift.id; });
-/* שלושה קבועים בכל סניף, מחליף אחד בשניהם, וסטודנטית בלי בקרים */
+/* ארבעה קבועים בכל סניף, שני מחליפים בשניהם, וסטודנטית בלי בקרים.
+   11 ולא 8: עם 8 בדיוק יש מקום לכל המשמרות רק כשאף אחד לא ביקש
+   חופש, ובשבוע הבא יש בקשות – והסידור שנבנה מול הלקוח יצא עם חורים. */
 const EMPLOYEES = [
   { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
   { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
@@ -54,11 +59,15 @@ const EMPLOYEES = [
   { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
   { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
   { branches: [], shifts: ALL, maxShifts: 6, note: 'מחליף בשני הסניפים' },
-  { branches: [], shifts: ['noon', 'afternoon', 'evening'], maxShifts: 5, note: 'סטודנטית – בלי בקרים' }
+  { branches: [], shifts: ['noon', 'afternoon', 'evening'], maxShifts: 5, note: 'סטודנטית – בלי בקרים' },
+  { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: [], shifts: ALL, maxShifts: 6, note: 'מחליפה בשני הסניפים' }
 ];
 
 const NAMES = ['דנה כהן', 'יוסי לוי', 'מיכל אברהם', 'רועי ביטון',
-  'נועה פרידמן', 'עידו מזרחי', 'שירה דהן', 'אורי שפירא'];
+  'נועה פרידמן', 'עידו מזרחי', 'שירה דהן', 'אורי שפירא',
+  'תמר גולן', 'אביב חדד', 'ליאור כץ'];
 
 /* מחולל דטרמיניסטי: אותו איפוס נותן אותה הדגמה, וגם אפשר לבדוק */
 function lcg(seed) {
@@ -294,7 +303,7 @@ async function status(ctx) {
 async function ensureCompany(db, existing) {
   if (!existing) {
     const created = await db('/companies', { method: 'POST', body: [{
-      name: COMPANY_NAME, plan: 'starter', status: 'active',
+      name: COMPANY_NAME, plan: PLAN, status: 'active',
       valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
       free_access: true, is_demo: true
     }] });
@@ -304,7 +313,7 @@ async function ensureCompany(db, existing) {
   }
   await db('/companies?id=eq.' + encodeURIComponent(existing.id), {
     method: 'PATCH', prefer: 'return=minimal',
-    body: { name: COMPANY_NAME, status: 'active', valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
+    body: { name: COMPANY_NAME, plan: PLAN, status: 'active', valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
       free_access: true, cancel_at_period_end: false }
   });
   return { company: Object.assign({}, existing, { name: COMPANY_NAME }) };

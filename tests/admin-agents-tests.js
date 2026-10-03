@@ -643,11 +643,12 @@ test('כניסה ראשונה: חברת הדגמה פעילה וללא תשלו�
   });
 });
 
-test('הנתונים: 8 עובדים, 2 סניפים, 4 משמרות ביום, סידור מלא ושבוע הבא ריק', function () {
+test('הנתונים: 11 עובדים, 2 סניפים, 4 משמרות ביום, סידור מלא ושבוע הבא ריק', function () {
   return withDb({}, function (db) {
     return call(DEMO_ENTER).then(function () {
       var config = db.tables.company_configs[0].config;
-      assertEqual(config.employees.length, 8, 'עובדים');
+      assertEqual(config.employees.length, 11, 'עובדים');
+      assertEqual(db.tables.companies[0].plan, 'growth', 'תוכנית שמכילה 11 עובדים');
       assertEqual(config.branches.length, 2, 'סניפים');
       assertEqual(config.settings.shifts.length, 4, 'משמרות');
       assert(config.employees.every(function (e) { return !/עובד\/ת/.test(e.name); }), 'שמות גנריים');
@@ -681,6 +682,33 @@ test('הנתונים: 8 עובדים, 2 סניפים, 4 משמרות ביום, �
   });
 });
 
+test('שבוע הבא מתמלא כולו בבנייה אוטומטית, גם עם בקשות החופש שממתינות', function () {
+  var Demo = require('../api/admin/_demo.js');
+  var Store = require('../js/store.js');
+  var Scheduler = require('../js/scheduler.js');
+  ['2026-10-03T12:00:00Z', '2026-10-08T10:00:00Z', '2026-12-25T05:00:00Z'].forEach(function (when) {
+    var data = Demo.buildDemoData(new Date(when));
+    var keys = Object.keys(data.weeks).sort();
+    var state = Store.emptyState();
+    state.settings = data.config.settings; state.branches = data.config.branches; state.employees = data.config.employees;
+    state.weeks = {};
+    keys.forEach(function (k) { state.weeks[k] = Object.assign(Store.emptyWeek(), data.weeks[k].week); });
+    var week = state.weeks[keys[2]];
+    var result = Scheduler.generate(state, week, { attempts: 120, seed: 5 });
+    var need = 0, got = 0;
+    state.branches.forEach(function (branch) {
+      Object.keys(branch.schedule).forEach(function (day) {
+        Object.keys(branch.schedule[day]).forEach(function (shift) {
+          var n = branch.schedule[day][shift].need;
+          need += n;
+          got += Math.min(n, (result.assignments[day + '|' + branch.id + '|' + shift] || []).length);
+        });
+      });
+    });
+    assertEqual(got, need, 'משמרות חסרות בשבוע הבא (' + when + ')');
+  });
+});
+
 test('כל כניסה מאפסת: מה ששונה בהדגמה נמחק, בלי חברה או משתמש כפולים', function () {
   return withDb({}, function (db) {
     return call(DEMO_ENTER).then(function () {
@@ -699,7 +727,7 @@ test('כל כניסה מאפסת: מה ששונה בהדגמה נמחק, בלי 
       assertEqual(db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; }).length, 2,
         'אסימון חדש בכל כניסה');
       assertEqual(db.tables.company_weeks.length, 3, 'שבועות שנוספו בהדגמה נמחקו');
-      assertEqual(db.tables.company_configs[0].config.employees.length, 8, 'העובדים חזרו למצב ההתחלה');
+      assertEqual(db.tables.company_configs[0].config.employees.length, 11, 'העובדים חזרו למצב ההתחלה');
     });
   });
 });

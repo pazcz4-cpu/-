@@ -1840,6 +1840,24 @@ run('אסימון תמיכה מוחלף בהתחברות כבעלים, וממח�
   });
 });
 
+run('כניסה להדגמה: אותו אסימון, מסומנת כהדגמה, וגם demo נמחק מהכתובת', function () {
+  var server = new FakeSupabase();
+  var backend = makeBackend(server);
+  var ownerId;
+  return backend.signUpCompany({ email: 'demo.owner@setshifts.test', password: 'secret123', name: 'בעל העסק',
+    companyName: 'עסק לדוגמה', phone: '054-1234567' }).then(function (session) {
+    ownerId = session.user.id;
+    backend._clearTokens();
+    return withSupportUrl('?support=hash-' + ownerId + '&co=x&demo=1', function (store) {
+      return backend.restore().then(function (session) {
+        assert(session, 'לא נוצרה התחברות');
+        assertEqual(globalThis.replacedUrls[0], '/app/', 'demo נשאר בכתובת');
+        assertEqual(JSON.parse(store[globalThis.ShiftSupportMode.FLAG]).demo, true, 'לא סומן כהדגמה');
+      });
+    });
+  });
+});
+
 run('אסימון תמיכה פועל פעם אחת בלבד', function () {
   var server = new FakeSupabase();
   var backend = makeBackend(server);

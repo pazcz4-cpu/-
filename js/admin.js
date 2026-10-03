@@ -1284,51 +1284,45 @@
     node.innerHTML = html;
   }
 
-  /* ===== חשבון הדגמה ===== */
+  /* ===== מערכת הדגמה ===== */
 
   function renderDemo() {
     var node = document.getElementById('panel-demo');
     var view = data.demo;
-    var html = '<div class="adm-card"><h2>חשבון הדגמה</h2>' +
-      '<p class="adm-card-sub">עסק לדוגמה עם עובדים, סידור שפורסם, דוח שעות ובקשות אילוץ — ושבוע הבא ריק, ' +
-      'כדי לבנות בו סידור מול הלקוח. אינו נספר בלוח, בהכנסה או בעמלות. "איפוס" מחזיר הכול למצב ההתחלה.</p>';
-    if (!view) {
-      node.innerHTML = html + '<p class="adm-empty">טוען…</p></div>';
-      return;
-    }
-    if (view.exists) {
-      html += '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>משתמש</th><th>תפקיד</th><th>מייל</th></tr></thead><tbody>' +
-        view.users.map(function (user) {
-          return '<tr><td>' + esc(user.name || '—') + '</td><td>' +
-            esc({ owner: 'מנהל', manager: 'מנהל', employee: 'עובד' }[user.role] || user.role) +
-            '</td><td class="wide" dir="ltr">' + esc(user.email) + '</td></tr>';
-        }).join('') + '</tbody></table></div>' +
-        '<p class="adm-note">נתונים נכתבו לאחרונה: ' + esc(date(view.resetAt)) + '</p>';
-    }
-    html += '<form id="adm-demo-form" class="adm-grid-form">' +
-      field('demo-manager', 'מייל מנהל ההדגמה',
-        '<input class="adm-input" id="demo-manager" type="email" required dir="ltr" value="' +
-          esc(demoEmail('manager')) + '">') +
-      field('demo-employee', 'מייל עובד ההדגמה',
-        '<input class="adm-input" id="demo-employee" type="email" required dir="ltr" value="' +
-          esc(demoEmail('employee')) + '">') +
-      field('demo-password', 'סיסמה לשניהם',
-        '<input class="adm-input" id="demo-password" type="text" required minlength="8" maxlength="72" autocomplete="off">',
-        '8 תווים ומעלה') +
+    var html = '<div class="adm-card"><h2>מערכת הדגמה</h2>' +
+      '<p class="adm-card-sub">עסק לדוגמה עם 8 עובדים, 2 סניפים ו-4 משמרות ביום: סידור שפורסם, דוח שעות ' +
+      'ובקשות אילוץ שממתינות לאישור — ושבוע הבא ריק, כדי לבנות בו סידור מול הלקוח ולהתאים אותו לעסק שלו.</p>' +
       '<div class="adm-form-actions">' +
-      '<button class="adm-btn is-primary" type="submit">' +
-        (view.exists ? 'איפוס ההדגמה' : 'יצירת חשבון הדגמה') + '</button></div></form>' +
-      '<p class="adm-hint">הסיסמה נקבעת ב-Supabase ואינה נשמרת כאן. בשני משתמשים: מנהל לראות את מסך הסידור, ' +
-      'ועובד לראות את צד העובד בטלפון. איפוס מחליף גם את הסיסמה.</p>' +
-      '<p id="adm-demo-msg" class="adm-error" hidden></p></div>';
-    node.innerHTML = html;
+      '<button class="adm-btn is-primary" id="adm-demo-enter" type="button">כניסה למערכת ההדגמה</button></div>' +
+      '<p class="adm-hint">נפתח בלשונית חדשה, בלי מייל ובלי סיסמה. השינויים לא נשמרים: בכל כניסה מכאן ' +
+      'הכול חוזר להתחלה. אינו נספר בלוח, בהכנסה או בעמלות, ופרסום סידור בהדגמה אינו שולח הודעות.</p>' +
+      '<p id="adm-demo-msg" class="adm-error" hidden></p>';
+    if (view && view.exists && view.resetAt) {
+      html += '<p class="adm-note">כניסה אחרונה: ' + esc(date(view.resetAt)) + '</p>';
+    }
+    node.innerHTML = html + '</div>';
   }
 
-  function demoEmail(kind) {
-    var users = (data.demo && data.demo.users) || [];
-    var wanted = kind === 'manager' ? ['owner', 'manager'] : ['employee'];
-    var found = users.filter(function (user) { return wanted.indexOf(user.role) !== -1; })[0];
-    return found ? found.email : '';
+  /* החלון נפתח בתוך הלחיצה: דפדפן חוסם חלון שנפתח אחרי בקשת רשת */
+  function enterDemo(button) {
+    var box = document.getElementById('adm-demo-msg');
+    box.hidden = true;
+    button.disabled = true;
+    var tab = window.open('about:blank', '_blank');
+    api('demo', { do: 'enter' }).then(function (result) {
+      if (tab && !tab.closed) {
+        tab.location.href = result.url;
+      } else {
+        box.innerHTML = 'הדפדפן חסם את פתיחת הלשונית. <a id="adm-demo-link" target="_blank" rel="noopener" href="' +
+          esc(result.url) + '">פתיחת ההדגמה</a> (קישור לשימוש אחד)';
+        box.hidden = false;
+      }
+      return loadDemo();
+    }).catch(function (error) {
+      if (tab) tab.close();
+      box.textContent = error.message;
+      box.hidden = false;
+    }).then(function () { button.disabled = false; });
   }
 
   /* ===== טעינה ===== */
@@ -1671,6 +1665,7 @@
     if (event.target.id === 'adm-modal-ok') { submitAction(); return; }
     if (event.target.id === 'adm-modal-cancel') { closeAction(); return; }
     if (event.target.id === 'adm-refresh') { loadCompanies(); return; }
+    if (event.target.id === 'adm-demo-enter') { enterDemo(event.target); return; }
 
     var open = event.target.closest('[data-open]');
     if (open) { openCompany(open.dataset.open); return; }
@@ -1858,19 +1853,6 @@
         note: document.getElementById('mk-note').value
       }).then(loadMarketing)
         .catch(function (error) { spendBox.textContent = error.message; spendBox.hidden = false; });
-      return;
-    }
-    if (event.target.id === 'adm-demo-form') {
-      event.preventDefault();
-      var demoBox = document.getElementById('adm-demo-msg');
-      demoBox.hidden = true;
-      api('demo', {
-        do: 'build',
-        managerEmail: document.getElementById('demo-manager').value,
-        employeeEmail: document.getElementById('demo-employee').value,
-        password: document.getElementById('demo-password').value
-      }).then(function () { return loadDemo(); })
-        .catch(function (error) { demoBox.textContent = error.message; demoBox.hidden = false; });
       return;
     }
     if (event.target.id !== 'adm-coupon-form') return;

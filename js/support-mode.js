@@ -10,7 +10,11 @@
    2. האסימון נלקח מהכתובת ונמחק ממנה מיד, כדי שלא יישאר בהיסטוריה.
    3. פס אדום קבוע בראש המסך. הפעולות בפנים מתבצעות כבעלים של
       הלקוח, והן נראות אצלו כשלו; מי שלא רואה שהוא בתוך חשבון של
-      מישהו אחר עלול לעבוד בו כאילו הוא שלו. */
+      מישהו אחר עלול לעבוד בו כאילו הוא שלו.
+
+   מערכת ההדגמה נכנסת באותה דרך (/app/?support=...&demo=1), עם
+   אותו אחסון של לשונית, ופס אחר: שם אין לקוח שנפגע, ומה שחשוב
+   לדעת הוא שהשינויים לא נשמרים. */
 (function (root) {
   'use strict';
 
@@ -45,7 +49,7 @@
   function begin() {
     if (!param('support')) return;
     try {
-      root.sessionStorage.setItem(FLAG, JSON.stringify({ company: param('co'), at: Date.now() }));
+      root.sessionStorage.setItem(FLAG, JSON.stringify({ company: param('co'), demo: param('demo') === '1', at: Date.now() }));
     } catch (err) { /* בלי אחסון אין מצב תמיכה יציב, והכניסה תיכשל */ }
   }
 
@@ -56,7 +60,7 @@
     begin();
     try {
       if (root.history && root.history.replaceState) {
-        var clean = root.location.search.replace(/([?&])(support|co)=[^&]*/g, '$1')
+        var clean = root.location.search.replace(/([?&])(support|co|demo)=[^&]*/g, '$1')
           .replace(/[?&]+$/, '').replace(/\?&/, '?');
         root.history.replaceState(null, '', root.location.pathname + clean + root.location.hash);
       }
@@ -82,13 +86,17 @@
     var bar = root.document.createElement('div');
     bar.id = 'support-banner';
     bar.setAttribute('role', 'status');
-    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483000;background:#b42318;' +
+    var color = info.demo ? '#4338ca' : '#b42318';
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483000;background:' + color + ';' +
       'color:#fff;padding:8px 14px;font:600 14px/1.4 system-ui,sans-serif;display:flex;gap:12px;' +
       'align-items:center;justify-content:space-between;direction:rtl';
-    bar.innerHTML = '<span>מצב תמיכה · אתה בתוך החשבון של ' + esc(info.company || 'לקוח') +
-      '. כל פעולה כאן נעשית בשם הלקוח.</span>' +
-      '<button id="support-exit" type="button" style="background:#fff;color:#b42318;border:0;' +
-      'border-radius:6px;padding:4px 12px;font:inherit;cursor:pointer">סיום ויציאה</button>';
+    bar.innerHTML = '<span>' + (info.demo
+      ? 'מערכת הדגמה · השינויים לא נשמרים: בכל כניסה מהמשרד האחורי הכול חוזר להתחלה.'
+      : 'מצב תמיכה · אתה בתוך החשבון של ' + esc(info.company || 'לקוח') +
+        '. כל פעולה כאן נעשית בשם הלקוח.') + '</span>' +
+      '<button id="support-exit" type="button" style="background:#fff;color:' + color + ';border:0;' +
+      'border-radius:6px;padding:4px 12px;font:inherit;cursor:pointer">' +
+      (info.demo ? 'יציאה מההדגמה' : 'סיום ויציאה') + '</button>';
     root.document.body.appendChild(bar);
     root.document.body.style.paddingTop = '44px';
     root.document.getElementById('support-exit').addEventListener('click', end);

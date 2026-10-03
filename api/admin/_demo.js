@@ -1,32 +1,61 @@
-/* חשבון הדגמה למכירות.
+/* מערכת ההדגמה למכירות.
 
-   בעל המוצר מגיע לבית עסק, נכנס עם משתמש ההדגמה, ומראה את המוצר
-   על עסק שנראה אמיתי: עובדים בשמות, סידור שפורסם, דוח שעות,
-   בקשות אילוץ שממתינות לאישור – ושבוע הבא ריק, כדי לבנות בו סידור
-   בלחיצה מול העיניים של הלקוח.
+   בעל המוצר מגיע לבית עסק, לוחץ במשרד האחורי "כניסה למערכת
+   ההדגמה", ומראה את המוצר על עסק שנראה אמיתי: 8 עובדים בשמות,
+   2 סניפים, 4 משמרות ביום, סידור שפורסם, דוח שעות, בקשות אילוץ
+   שממתינות לאישור – ושבוע הבא ריק, כדי לבנות בו סידור בלחיצה מול
+   העיניים של הלקוח. משם מתאימים אותו לעסק שמולך.
+
+   בלי מיילים ובלי סיסמאות: המשתמש של ההדגמה פנימי
+   (demo.owner@setshifts.com), נוצר כאן עם סיסמה אקראית שאיש אינו
+   יודע, והכניסה היא אסימון חד־פעמי כמו בכניסת התמיכה.
+
+   כל כניסה מתחילה מאפס: לפני שהאסימון נמסר, כל מה ששונה בהדגמה
+   הקודמת נמחק והנתונים נכתבים מחדש. אין צורך לזכור לאפס.
 
    מה שמבדיל אותו מלקוח אמיתי:
    · is_demo: אינו נספר בלוח, בהכנסה ובעמלות סוכנים.
    · free_access: פעיל, לא מחויב ולא פג.
-   · איפוס בלחיצה: אחרי הדגמה, כל מה שנוסף או שונה חוזר למצב ההתחלה.
+   · לעובדים אין מייל וטלפון, ולכן פרסום סידור בהדגמה אינו שולח
+     הודעה לאף אחד.
 
    אין כאן "סביבת הדגמה" בחשבונות של לקוחות: זה נשאר כמו שהוחלט
    (נתוני דוגמה בחשבון אמיתי הם נתונים שאפשר לפרסם בטעות). זה
-   חשבון נפרד, בבעלות בעל המוצר בלבד, וההרשאה היחידה ליצור אותו
-   היא שער המשרד האחורי.
-
-   הסיסמה נשלחת מהמשרד האחורי אל השרת, נקבעת ב-Supabase, ואינה
-   נשמרת בשום מקום אחר. */
+   חשבון נפרד, בבעלות בעל המוצר בלבד, והדרך היחידה להיכנס אליו
+   היא שער המשרד האחורי. */
 'use strict';
 
+const crypto = require('crypto');
 const { projectUrl } = require('../_supabase.js');
+const Data = require('../../js/data.js');
 const Store = require('../../js/store.js');
 const Scheduler = require('../../js/scheduler.js');
 const Shabbat = require('../../js/shabbat.js');
 
 const OPEN_ENDED = '2099-12-31T00:00:00.000Z';
-const COMPANY_NAME = 'קפה לדוגמה';
-const DEMO_EMPLOYEE_ID = 'emp-1';
+const COMPANY_NAME = 'עסק לדוגמה';
+const OWNER = { email: 'demo.owner@setshifts.com', name: 'בעל העסק' };
+
+/* ארבע משמרות ביום, חופפות, כמו בבית קפה או מסעדה */
+const SHIFTS = [
+  { id: 'morning', name: 'בוקר', from: '07:00', to: '13:00', color: 0 },
+  { id: 'noon', name: 'צהריים', from: '11:00', to: '17:00', color: 1 },
+  { id: 'afternoon', name: 'אחר הצהריים', from: '15:00', to: '21:00', color: 3 },
+  { id: 'evening', name: 'ערב', from: '18:00', to: '23:00', color: 2 }
+];
+const BRANCHES = [{ id: 'br-center', name: 'סניף מרכז' }, { id: 'br-north', name: 'סניף צפון' }];
+const ALL = SHIFTS.map(function (shift) { return shift.id; });
+/* שלושה קבועים בכל סניף, מחליף אחד בשניהם, וסטודנטית בלי בקרים */
+const EMPLOYEES = [
+  { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-center'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: ['br-north'], shifts: ALL, maxShifts: 6, note: '' },
+  { branches: [], shifts: ALL, maxShifts: 6, note: 'מחליף בשני הסניפים' },
+  { branches: [], shifts: ['noon', 'afternoon', 'evening'], maxShifts: 5, note: 'סטודנטית – בלי בקרים' }
+];
 
 const NAMES = ['דנה כהן', 'יוסי לוי', 'מיכל אברהם', 'רועי ביטון',
   'נועה פרידמן', 'עידו מזרחי', 'שירה דהן', 'אורי שפירא'];
@@ -67,8 +96,18 @@ function minutesOf(hhmm) {
 function buildDemoData(now) {
   const state = Store.emptyState();
   state.settings.onboardingDone = true;
-  state.employees.forEach(function (emp, index) {
-    emp.name = NAMES[index] || emp.name;
+  state.settings.shifts = SHIFTS.map(function (shift) { return Object.assign({}, shift); });
+  /* שעון הנוכחות דלוק: דוח השעות הוא חלק ממה שמראים */
+  state.settings.timeclock = Object.assign({}, state.settings.timeclock, { enabled: true, mode: 'phone' });
+  state.branches = BRANCHES.map(function (branch) {
+    const schedule = Data.defaultSchedule(null, SHIFTS);
+    schedule[5] = { morning: { need: 2, from: '07:00', to: '14:00' } };
+    return { id: branch.id, name: branch.name, active: true, schedule: schedule };
+  });
+  state.employees = EMPLOYEES.map(function (seed, index) {
+    return { id: 'emp-' + (index + 1), name: NAMES[index], active: true,
+      branches: seed.branches.slice(), shifts: seed.shifts.slice(),
+      maxShifts: seed.maxShifts, note: seed.note };
   });
 
   const today = israelToday(now || new Date());
@@ -158,8 +197,6 @@ function buildDemoData(now) {
   return {
     config: { settings: state.settings, branches: state.branches, employees: state.employees },
     weeks: weeks,
-    employee: { id: DEMO_EMPLOYEE_ID, name: state.employees[0].name },
-    manager: { name: 'בעל העסק' },
     companyName: COMPANY_NAME
   };
 }
@@ -178,10 +215,6 @@ async function authCall(path, options) {
   let body = null;
   if (text) { try { body = JSON.parse(text); } catch (err) { body = { message: text }; } }
   return { ok: response.ok, status: response.status, body: body };
-}
-
-function validEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 200;
 }
 
 async function findDemo(db) {
@@ -256,94 +289,106 @@ async function status(ctx) {
   };
 }
 
-/* יצירה או איפוס: אותה פעולה. בפעם הראשונה נוצרים החברה והמשתמשים;
-   בפעמים הבאות הנתונים נמחקים ונכתבים מחדש, והמשתמשים נשארים. */
-async function build(ctx) {
-  const body = ctx.body || {};
-  const password = String(body.password || '');
-  if (password.length < 8 || password.length > 72) {
-    return { status: 400, body: { message: 'password must be 8–72 characters' } };
-  }
-  const managerEmail = String(body.managerEmail || '').trim().toLowerCase();
-  const employeeEmail = String(body.employeeEmail || '').trim().toLowerCase();
-  if (!validEmail(managerEmail) || !validEmail(employeeEmail)) {
-    return { status: 400, body: { message: 'Enter a valid manager email and employee email' } };
-  }
-  if (managerEmail === employeeEmail) {
-    return { status: 400, body: { message: 'The manager and the employee need different emails' } };
-  }
-
-  const found = await findDemo(ctx.db);
-  if (found.error) return found.error;
-  let company = found.company;
-  const data = buildDemoData(new Date());
-
-  if (!company) {
-    const created = await ctx.db('/companies', { method: 'POST', body: [{
-      name: data.companyName, plan: 'starter', status: 'active',
+/* החברה עצמה: נוצרת בפעם הראשונה, ובכל כניסה מוודאים שהיא פעילה
+   וללא תשלום (מישהו יכול היה לשנות אותה ממסך הלקוח) */
+async function ensureCompany(db, existing) {
+  if (!existing) {
+    const created = await db('/companies', { method: 'POST', body: [{
+      name: COMPANY_NAME, plan: 'starter', status: 'active',
       valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
       free_access: true, is_demo: true
     }] });
-    company = created.ok && created.body && created.body[0];
-    if (!company) {
-      return { status: 500, body: { message: 'Could not create the demo account (has the migration run?)' } };
-    }
-  } else {
-    /* גם בחברה קיימת מוודאים שהיא מסומנת פעילה וללא תשלום */
-    await ctx.db('/companies?id=eq.' + encodeURIComponent(company.id), {
-      method: 'PATCH', prefer: 'return=minimal',
-      body: { status: 'active', valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
-        free_access: true, cancel_at_period_end: false }
-    });
+    const company = created.ok && created.body && created.body[0];
+    return company ? { company: company }
+      : { error: { status: 500, body: { message: 'Could not create the demo account (has the migration run?)' } } };
   }
+  await db('/companies?id=eq.' + encodeURIComponent(existing.id), {
+    method: 'PATCH', prefer: 'return=minimal',
+    body: { name: COMPANY_NAME, status: 'active', valid_until: OPEN_ENDED, current_period_end: OPEN_ENDED,
+      free_access: true, cancel_at_period_end: false }
+  });
+  return { company: Object.assign({}, existing, { name: COMPANY_NAME }) };
+}
 
-  const manager = await ensureUser(ctx.db, company, {
-    email: managerEmail, password: password, name: data.manager.name, role: 'owner', employeeId: null });
-  if (manager.error) return manager.error;
-  const employee = await ensureUser(ctx.db, company, {
-    email: employeeEmail, password: password, name: data.employee.name, role: 'employee',
-    employeeId: data.employee.id });
-  if (employee.error) return employee.error;
+/* מי נכנס: בעלים או מנהל פעיל שכבר קיים בהדגמה, ואם אין –
+   המשתמש הפנימי, עם סיסמה אקראית שאינה נשמרת ואינה מוצגת */
+async function ensureOwner(db, company) {
+  const call = await db('/company_users?company_id=eq.' + encodeURIComponent(company.id) +
+    '&active=eq.true&role=in.(owner,manager)&select=id,email,role&order=created_at.asc&limit=20');
+  const people = (call.ok && call.body) || [];
+  const found = people.filter(function (p) { return p.role === 'owner'; })[0] || people[0];
+  if (found && found.email) return { email: found.email };
+  const made = await ensureUser(db, company, {
+    email: OWNER.email, password: crypto.randomBytes(24).toString('base64url'),
+    name: OWNER.name, role: 'owner', employeeId: null });
+  return made.error ? made : { email: OWNER.email };
+}
 
+/* מחיקת כל מה שהיה, וכתיבת ההדגמה מההתחלה */
+async function writeData(db, company, data) {
   const key = encodeURIComponent(company.id);
-  const wiped = await ctx.db('/company_weeks?company_id=eq.' + key, { method: 'DELETE', prefer: 'return=minimal' });
+  const wiped = await db('/company_weeks?company_id=eq.' + key, { method: 'DELETE', prefer: 'return=minimal' });
   if (!wiped.ok) return { status: 500, body: { message: 'Could not clear the old demo data' } };
 
   const now = new Date().toISOString();
-  const config = await ctx.db('/company_configs', {
+  const config = await db('/company_configs', {
     method: 'POST', prefer: 'return=minimal,resolution=merge-duplicates',
     body: [{ company_id: company.id, config: data.config, updated_at: now }]
   });
   if (!config.ok) return { status: 500, body: { message: 'Could not write the demo settings' } };
 
-  const weekKeys = Object.keys(data.weeks);
-  const weeks = await ctx.db('/company_weeks', {
+  const weeks = await db('/company_weeks', {
     method: 'POST', prefer: 'return=minimal,resolution=merge-duplicates',
-    body: weekKeys.map(function (weekKey) {
+    body: Object.keys(data.weeks).map(function (weekKey) {
       return { company_id: company.id, week_key: weekKey, week: data.weeks[weekKey].week,
         published: data.weeks[weekKey].published, updated_at: now };
     })
   });
   if (!weeks.ok) return { status: 500, body: { message: 'Could not write the demo schedule' } };
+  return null;
+}
 
+/* כניסה: איפוס מלא, ואז אסימון חד־פעמי לבעלים של ההדגמה */
+async function enter(ctx) {
+  const found = await findDemo(ctx.db);
+  if (found.error) return found.error;
+  const ensured = await ensureCompany(ctx.db, found.company);
+  if (ensured.error) return ensured.error;
+  const company = ensured.company;
+
+  const owner = await ensureOwner(ctx.db, company);
+  if (owner.error) return owner.error;
+
+  const data = buildDemoData(new Date());
+  const failed = await writeData(ctx.db, company, data);
+  if (failed) return failed;
+
+  const generated = await authCall('/auth/v1/admin/generate_link', {
+    method: 'POST', body: { type: 'magiclink', email: owner.email }
+  });
+  const hash = generated.ok && generated.body &&
+    (generated.body.hashed_token || (generated.body.properties && generated.body.properties.hashed_token));
+  if (!hash) return { status: 502, body: { message: 'Could not open the demo' } };
+
+  /* האסימון עצמו אינו נרשם ביומן */
   await ctx.db('/billing_events', { method: 'POST', prefer: 'return=minimal', body: [{
-    id: 'admin:' + company.id + ':demo-reset:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8),
-    provider: 'admin', company_id: company.id, type: 'admin.demo-reset',
-    payload: { by: ctx.user.email, at: now, created: !found.company }
+    id: 'admin:' + company.id + ':demo-enter:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8),
+    provider: 'admin', company_id: company.id, type: 'admin.demo-enter',
+    payload: { by: ctx.user.email, at: new Date().toISOString(), created: !found.company }
   }] });
 
+  const base = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   return {
     body: {
       ok: true, created: !found.company,
       company: { id: company.id, name: company.name },
-      manager: { email: managerEmail, name: data.manager.name },
-      employee: { email: employeeEmail, name: data.employee.name },
-      weeks: weekKeys
+      url: base + '/app/?support=' + encodeURIComponent(hash) +
+        '&co=' + encodeURIComponent(company.name) + '&demo=1'
     }
   };
 }
 
-const DO = { status: status, build: build };
+const DO = { status: status, enter: enter };
 
 module.exports = async function (ctx) {
   const name = String((ctx.body && ctx.body.do) || 'status');

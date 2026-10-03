@@ -180,7 +180,7 @@ const MARKETING = {
 };
 const DEMO = {
   status: { ok: true, exists: false },
-  build: { ok: true }
+  enter: { ok: true, created: true, company: { id: 'demo-co', name: 'עסק לדוגמה' } }
 };
 
 const sent = [];
@@ -202,6 +202,8 @@ try {
       emailed: true, emailError: null, expiresInHours: 48 };
     if (name === 'agents') payload = AGENTS[body.do] || { ok: true };
     if (name === 'demo') payload = DEMO[body.do] || { ok: true };
+    if (name === 'demo' && body.do === 'enter') payload = Object.assign({}, payload,
+      { url: url('app.html') + '?support=demo-tok&co=' + encodeURIComponent('עסק לדוגמה') + '&demo=1' });
     if (name === 'leads') payload = body.action === 'list' ? LEADS : { ok: true, lead: LEADS.leads[0] };
     if (name === 'marketing') payload = body.action === 'report' ? MARKETING : { ok: true };
     await route.fulfill({ status: 200, contentType: 'application/json',
@@ -579,22 +581,30 @@ try {
   check('לקוחות הסוכן מוצגים עם החיובים',
     await page.locator('#adm-agent-customers').innerText(), /פיצה הכפר/);
 
-  console.log('\n== חשבון הדגמה ==');
+  console.log('\n== מערכת הדגמה ==');
   await page.click('.adm-tab[data-panel="demo"]');
   await page.waitForTimeout(500);
-  check('לפני היצירה הכפתור הוא יצירה',
-    await page.locator('#adm-demo-form button[type="submit"]').innerText(), /יצירת חשבון הדגמה/);
+  check('אין שדות מייל או סיסמה', await page.locator('#panel-demo input').count(), 0);
+  check('יש כפתור כניסה', await page.locator('#adm-demo-enter').innerText(), /כניסה למערכת ההדגמה/);
+  check('ההסבר אומר שהשינויים לא נשמרים', await page.locator('#panel-demo').innerText(), /לא נשמרים/);
   sent.length = 0;
-  await page.fill('#demo-manager', 'demo-manager@setshifts.com');
-  await page.fill('#demo-employee', 'demo-employee@setshifts.com');
-  await page.fill('#demo-password', 'Demo-pass-2026');
-  await page.click('#adm-demo-form button[type="submit"]');
-  await page.waitForTimeout(500);
-  const built = sent.filter((call) => call.body.do === 'build').pop();
-  check('היצירה יצאה עם שני המיילים',
-    built && built.body.managerEmail + '|' + built.body.employeeEmail,
-    'demo-manager@setshifts.com|demo-employee@setshifts.com');
-  check('ועם הסיסמה', built && built.body.password, 'Demo-pass-2026');
+  const [demoTab] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.click('#adm-demo-enter')
+  ]);
+  await demoTab.waitForLoadState('domcontentloaded');
+  await demoTab.waitForTimeout(800);
+  const entered = sent.filter((call) => call.name === 'demo' && call.body.do === 'enter').pop();
+  check('הכניסה יצאה לשרת', !!entered, true);
+  check('נפתחה לשונית חדשה באפליקציה', demoTab.url(), /app\.html/);
+  check('פס ההדגמה מופיע', await demoTab.locator('#support-banner').isVisible(), true);
+  check('ואומר שהשינויים לא נשמרים', await demoTab.locator('#support-banner').innerText(), /מערכת הדגמה.*לא נשמרים/);
+  check('הפס אינו אדום של מצב תמיכה', await demoTab.locator('#support-banner').evaluate(
+    (node) => getComputedStyle(node).backgroundColor), 'rgb(67, 56, 202)');
+  check('ההתחברות יושבת בלשונית', await demoTab.evaluate(
+    () => JSON.parse(sessionStorage.getItem('shift-support-mode-v1') || '{}').demo), true);
+  await demoTab.close();
+  await page.waitForTimeout(300);
 
   console.log('\n== במסך צר ==');
   await page.setViewportSize({ width: 390, height: 844 });

@@ -605,10 +605,13 @@ test('הלוח מפריד בין לקוחות מהאתר ללקוחות של ס�
 /* ═══════════════ חשבון הדגמה ═══════════════ */
 console.log('\n== חשבון הדגמה ==');
 
-var DEMO_FORM = { op: 'demo', do: 'build', password: 'demo-pass-123',
-  managerEmail: 'demo@setshifts.com', employeeEmail: 'demo.employee@setshifts.com' };
+var DEMO_ENTER = { op: 'demo', do: 'enter' };
 
-test('לפני שנוצר, הסטטוס אומר שאין חשבון הדגמה', function () {
+function demoWeeks(db) {
+  return db.tables.company_weeks.slice().sort(function (a, b) { return a.week_key < b.week_key ? -1 : 1; });
+}
+
+test('לפני הכניסה הראשונה, הסטטוס אומר שאין חשבון הדגמה', function () {
   return withDb({}, function () {
     return call({ op: 'demo', do: 'status' }).then(function (res) {
       assertEqual(res.payload.exists, false, 'קיים');
@@ -616,34 +619,45 @@ test('לפני שנוצר, הסטטוס אומר שאין חשבון הדגמה'
   });
 });
 
-test('יצירה: חברה מסומנת הדגמה, פעילה וללא תשלום, עם שני משתמשים', function () {
+test('כניסה ראשונה: חברת הדגמה פעילה וללא תשלום, משתמש פנימי בלי מייל אמיתי, וקישור חד־פעמי', function () {
   return withDb({}, function (db) {
-    return call(DEMO_FORM).then(function (res) {
+    return call(DEMO_ENTER).then(function (res) {
       assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
       var company = db.tables.companies[0];
       assertEqual(company.is_demo, true, 'הדגמה');
       assertEqual(company.free_access, true, 'ללא תשלום');
       assertEqual(company.status, 'active', 'פעילה');
-      assertEqual(db.tables.company_users.length, 2, 'משתמשים');
-      var roles = db.tables.company_users.map(function (u) { return u.role; }).sort().join(',');
-      assertEqual(roles, 'employee,owner', 'תפקידים');
-      var employee = db.tables.company_users.filter(function (u) { return u.role === 'employee'; })[0];
-      assertEqual(employee.employee_id, 'emp-1', 'העובד קשור לכרטיס');
-      assert(employee.joined_at, 'העובד אמור להופיע כמי שהצטרף');
-      assertEqual(db.authCalls.filter(function (c) { return c.method === 'POST'; }).length, 2, 'משתמשי Auth');
-      assertEqual(db.authCalls[0].body.password, 'demo-pass-123', 'הסיסמה נקבעת ב-Auth');
+      assertEqual(db.tables.company_users.length, 1, 'משתמש אחד');
+      assertEqual(db.tables.company_users[0].role, 'owner', 'בעלים');
+      assertEqual(db.tables.company_users[0].email, 'demo.owner@setshifts.com', 'מייל פנימי');
+      var created = db.authCalls.filter(function (c) { return c.method === 'POST' && c.path === '/auth/v1/admin/users'; });
+      assertEqual(created.length, 1, 'משתמש Auth');
+      assert(String(created[0].body.password).length >= 24, 'סיסמה אקראית ארוכה');
+      var link = db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; })[0];
+      assertEqual(link.body.email, 'demo.owner@setshifts.com', 'האסימון לבעלים של ההדגמה');
+      assert(/\/app\/\?support=hash-for-demo\.owner%40setshifts\.com&co=.+&demo=1$/.test(res.payload.url), res.payload.url);
+      var log = db.tables.billing_events.filter(function (e) { return e.type === 'admin.demo-enter'; });
+      assertEqual(log.length, 1, 'נרשם ביומן');
+      assert(JSON.stringify(log[0]).indexOf('hash-for') === -1, 'האסימון נרשם ביומן');
     });
   });
 });
 
-test('הנתונים: עובדים בשמות, שני שבועות שפורסמו ושבוע הבא כטיוטה', function () {
+test('הנתונים: 8 עובדים, 2 סניפים, 4 משמרות ביום, סידור מלא ושבוע הבא ריק', function () {
   return withDb({}, function (db) {
-    return call(DEMO_FORM).then(function () {
+    return call(DEMO_ENTER).then(function () {
       var config = db.tables.company_configs[0].config;
       assertEqual(config.employees.length, 8, 'עובדים');
+      assertEqual(config.branches.length, 2, 'סניפים');
+      assertEqual(config.settings.shifts.length, 4, 'משמרות');
       assert(config.employees.every(function (e) { return !/עובד\/ת/.test(e.name); }), 'שמות גנריים');
+      assert(config.employees.every(function (e) { return !e.email && !e.phone; }), 'לעובד בהדגמה יש מייל או טלפון');
       assertEqual(config.settings.onboardingDone, true, 'האשף אינו נפתח בהדגמה');
-      var weeks = db.tables.company_weeks.slice().sort(function (a, b) { return a.week_key < b.week_key ? -1 : 1; });
+      assertEqual(config.settings.timeclock.enabled, true, 'שעון נוכחות דלוק');
+      config.branches.forEach(function (branch) {
+        assertEqual(Object.keys(branch.schedule[0]).length, 4, 'ארבע משמרות ביום חול ב' + branch.name);
+      });
+      var weeks = demoWeeks(db);
       assertEqual(weeks.length, 3, 'שלושה שבועות');
       assertEqual(weeks[0].published, true, 'שבוע קודם מפורסם');
       assertEqual(weeks[1].published, true, 'שבוע נוכחי מפורסם');
@@ -651,61 +665,79 @@ test('הנתונים: עובדים בשמות, שני שבועות שפורסמ�
       assertEqual(Object.keys(weeks[2].week.assignments).length, 0, 'שבוע הבא ריק, לבנייה מול הלקוח');
       assert(Object.keys(weeks[2].week.constraints).length >= 3, 'בקשות ממתינות לשבוע הבא');
       assert(weeks[0].week.punches.length > 20, 'דיווחי שעון לדוח השעות');
-      assert(Object.keys(weeks[0].week.assignments).length > 20, 'סידור מלא');
+      var need = 0, got = 0;
+      config.branches.forEach(function (branch) {
+        Object.keys(branch.schedule).forEach(function (day) {
+          Object.keys(branch.schedule[day]).forEach(function (shift) {
+            var n = branch.schedule[day][shift].need;
+            need += n;
+            got += Math.min(n, (weeks[0].week.assignments[day + '|' + branch.id + '|' + shift] || []).length);
+          });
+        });
+      });
+      assertEqual(got, need, 'כל המשמרות בשבוע שפורסם מאוישות');
       assert(!('published' in weeks[0].week), 'published נשמר בעמודה ולא בתוך השבוע');
     });
   });
 });
 
-test('איפוס: אותה חברה, אותם משתמשים, נתונים חדשים בלי כפילות', function () {
+test('כל כניסה מאפסת: מה ששונה בהדגמה נמחק, בלי חברה או משתמש כפולים', function () {
   return withDb({}, function (db) {
-    return call(DEMO_FORM).then(function () {
+    return call(DEMO_ENTER).then(function () {
       db.tables.company_weeks.push({ company_id: db.tables.companies[0].id, week_key: '2030-01-06', week: {}, published: true });
       db.tables.company_configs[0].config.employees.push({ id: 'extra', name: 'נוסף' });
-      return call(DEMO_FORM);
+      db.tables.companies[0].status = 'canceled';
+      return call(DEMO_ENTER);
     }).then(function (res) {
+      assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
       assertEqual(res.payload.created, false, 'לא נוצר מחדש');
       assertEqual(db.tables.companies.length, 1, 'חברה כפולה');
-      assertEqual(db.tables.company_users.length, 2, 'משתמשים כפולים');
+      assertEqual(db.tables.companies[0].status, 'active', 'החברה חזרה להיות פעילה');
+      assertEqual(db.tables.company_users.length, 1, 'משתמשים כפולים');
+      assertEqual(db.authCalls.filter(function (c) { return c.method === 'POST' && c.path === '/auth/v1/admin/users'; }).length, 1,
+        'משתמש Auth נוצר פעמיים');
+      assertEqual(db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; }).length, 2,
+        'אסימון חדש בכל כניסה');
       assertEqual(db.tables.company_weeks.length, 3, 'שבועות שנוספו בהדגמה נמחקו');
       assertEqual(db.tables.company_configs[0].config.employees.length, 8, 'העובדים חזרו למצב ההתחלה');
-      assertEqual(db.authCalls.filter(function (c) { return c.method === 'PUT'; }).length, 2, 'הסיסמאות נקבעו מחדש');
     });
   });
 });
 
-test('סיסמה חלשה או מייל לא תקין נדחים לפני שנוגעים בשרת', function () {
-  return withDb({}, function (db) {
-    return call(Object.assign({}, DEMO_FORM, { password: 'short' })).then(function (res) {
-      assertEqual(res.statusCode, 400, 'סיסמה קצרה');
-      return call(Object.assign({}, DEMO_FORM, { managerEmail: 'לא-מייל' }));
-    }).then(function (res) {
-      assertEqual(res.statusCode, 400, 'מייל');
-      return call(Object.assign({}, DEMO_FORM, { employeeEmail: DEMO_FORM.managerEmail }));
-    }).then(function (res) {
-      assertEqual(res.statusCode, 400, 'אותו מייל לשניים');
-      assertEqual(db.tables.companies.length, 0, 'נוצרה חברה');
-      assertEqual(db.authCalls.length, 0, 'נוצר משתמש');
+test('הדגמה ישנה עם בעלים קיים: נכנסים כבעלים הזה, ואין משתמש פנימי חדש', function () {
+  var seed = {
+    companies: [{ id: 'demo-co', name: 'קפה לדוגמה', is_demo: true, free_access: true, status: 'active',
+      created_at: daysAgo(30) }],
+    company_users: [{ id: 'old-owner', company_id: 'demo-co', email: 'me@example.com', role: 'owner',
+      active: true, created_at: daysAgo(30) }]
+  };
+  return withDb(seed, function (db) {
+    return call(DEMO_ENTER).then(function (res) {
+      assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
+      var link = db.authCalls.filter(function (c) { return c.path.indexOf('generate_link') !== -1; })[0];
+      assertEqual(link.body.email, 'me@example.com', 'נכנסים כבעלים הקיים');
+      assertEqual(db.authCalls.filter(function (c) { return c.method === 'POST' && c.path === '/auth/v1/admin/users'; }).length, 0,
+        'נוצר משתמש מיותר');
+      assertEqual(db.tables.companies[0].name, 'עסק לדוגמה', 'שם העסק עודכן');
     });
   });
 });
 
-test('כתובת שכבר שייכת לחשבון אחר נדחית ואינה נדרסת', function () {
-  return withDb({ authEmails: ['demo@setshifts.com'] }, function (db) {
-    return call(DEMO_FORM).then(function (res) {
-      assertEqual(res.statusCode, 409, 'כתובת תפוסה');
-      assert(/Choose another/.test(res.payload.message), res.payload.message);
-      assertEqual(db.authCalls.filter(function (c) { return c.method === 'PUT'; }).length, 0, 'סיסמה של חשבון זר שונתה');
-    });
-  });
-});
-
-test('אחרי היצירה הסטטוס מראה את החברה ואת שני המשתמשים', function () {
+test('אחרי כניסה הסטטוס מראה מתי נכתבו הנתונים', function () {
   return withDb({}, function () {
-    return call(DEMO_FORM).then(function () { return call({ op: 'demo', do: 'status' }); }).then(function (res) {
+    return call(DEMO_ENTER).then(function () { return call({ op: 'demo', do: 'status' }); }).then(function (res) {
       assertEqual(res.payload.exists, true, 'קיים');
-      assertEqual(res.payload.users.length, 2, 'משתמשים');
       assert(res.payload.resetAt, 'מתי אופס');
+    });
+  });
+});
+
+test('הפעולה הישנה עם מיילים וסיסמה אינה קיימת יותר', function () {
+  return withDb({}, function (db) {
+    return call({ op: 'demo', do: 'build', password: 'demo-pass-123',
+      managerEmail: 'a@b.co', employeeEmail: 'c@d.co' }).then(function (res) {
+      assertEqual(res.statusCode, 400, 'build');
+      assertEqual(db.tables.companies.length, 0, 'נוצרה חברה');
     });
   });
 });

@@ -40,8 +40,8 @@
         faq6Q: 'Quando é que sou cobrado, exatamente?',
         faq6A: 'Registas-te sem cartão e o primeiro mês é grátis. Para continuar depois da experiência, adicionas um método de pagamento no ecrã da subscrição, e daí em diante é mensal até cancelares. Quem não adicionar nada simplesmente para no fim da experiência — os dados ficam guardados e podes exportá-los sempre.',
         signIn: 'Entrar',
-        start: 'Começar grátis',
-        startLong: 'Começar grátis – 1 mês',
+        start: 'Experimente 1 mês grátis',
+        startLong: 'Experimente 1 mês grátis',
         /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
            שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
            מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
@@ -123,7 +123,7 @@
         how3Body: 'Um clique constrói a semana. Revê os avisos, corrige o que importa, publica — e cada um vê os seus turnos.',
         pricingTitle: 'Preço simples, pelo tamanho da equipa',
         pricingSubtitle: 'Lojas ilimitadas em todos os planos. Cancela quando quiseres.',
-        pricingCta: 'Começar grátis',
+        pricingCta: 'Experimente 1 mês grátis',
         quoteMessage: 'Olá, somos uma rede com mais de 100 colaboradores e queremos agendar uma reunião sobre o SetShifts.',
         pricingNote: 'Preços em ILS, por mês, IVA incluído. Primeiro mês grátis em todos os planos.',
         planPopular: 'O mais escolhido',

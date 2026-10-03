@@ -40,8 +40,8 @@
         faq6Q: 'Quand suis-je débité exactement ?',
         faq6A: 'Vous vous inscrivez sans carte bancaire, et le premier mois est gratuit. Pour continuer après l’essai, vous ajoutez un moyen de paiement sur l’écran d’abonnement, et c’est ensuite mensuel jusqu’à résiliation. Si vous n’ajoutez rien, cela s’arrête simplement à la fin de l’essai : vos données sont conservées et vous pouvez toujours les exporter.',
         signIn: 'Connexion',
-        start: 'Essai gratuit',
-        startLong: 'Essai gratuit – 1 mois',
+        start: 'Un mois d’essai gratuit',
+        startLong: 'Un mois d’essai gratuit',
         /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
            שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
            מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
@@ -123,7 +123,7 @@
         how3Body: 'Un clic construit la semaine. Parcourez les alertes, corrigez l’essentiel, publiez — et chacun voit ses créneaux.',
         pricingTitle: 'Un tarif simple, selon la taille de l’équipe',
         pricingSubtitle: 'Sites illimités sur toutes les formules. Résiliable à tout moment.',
-        pricingCta: 'Commencer gratuitement',
+        pricingCta: 'Un mois d’essai gratuit',
         quoteMessage: 'Bonjour, nous sommes un réseau de plus de 100 salariés et souhaitons prendre rendez-vous au sujet de SetShifts.',
         pricingNote: 'Tarifs en ILS, par mois, TVA incluse. Premier mois offert sur toutes les formules.',
         planPopular: 'Le plus choisi',

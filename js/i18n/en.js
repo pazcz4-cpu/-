@@ -40,7 +40,7 @@
         planTrialLine: 'First month free, then',
         faq6Q: 'When exactly am I charged?',
         faq6A: 'You sign up without a credit card, and the first month is free. To continue after the trial you add a payment method on the subscription screen, and from then it is monthly until you cancel. If you add nothing, it simply stops at the end of the trial — your data is kept, and you can always export it.',
-        signIn: 'Sign in', start: 'Start free', startLong: 'Start free – 1 month',
+        signIn: 'Sign in', start: 'Free 1-month trial', startLong: 'Free 1-month trial',
         /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
            שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
            מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
@@ -127,7 +127,7 @@
 
         pricingTitle: 'Simple pricing, by team size',
         pricingSubtitle: 'Unlimited locations on every plan. Cancel any time.',
-        pricingCta: 'Start free',
+        pricingCta: 'Free 1-month trial',
         quoteMessage: 'Hello, we are a chain with more than 100 staff and would like to book a meeting about SetShifts.',
         pricingNote: 'All prices in ILS, per month, VAT included. First month free on every plan.',
         planPopular: 'Most popular',

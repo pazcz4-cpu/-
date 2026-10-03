@@ -40,8 +40,8 @@
         faq6Q: 'Wann genau werde ich abgebucht?',
         faq6A: 'Sie registrieren sich ohne Kreditkarte, und der erste Monat ist gratis. Um nach der Testphase weiterzumachen, fügen Sie im Abo-Bildschirm eine Zahlungsart hinzu; ab dann wird monatlich abgebucht, bis Sie kündigen. Wer nichts hinzufügt, hört am Ende der Testphase einfach auf – die Daten bleiben erhalten und lassen sich jederzeit exportieren.',
         signIn: 'Anmelden',
-        start: 'Gratis starten',
-        startLong: 'Gratis starten – 1 Monat',
+        start: 'Einen Monat gratis testen',
+        startLong: 'Einen Monat gratis testen',
         /* כותרת העמוד והתיאור שלו בתוצאות החיפוש. לא הכותרת
            שעל המסך — זו השורה שאדם רואה בגוגל לפני שהוא יודע
            מה המוצר, ולכן היא מתחילה במה שמחפשים ולא בשם המוצר. */
@@ -123,7 +123,7 @@
         how3Body: 'Ein Klick baut die Woche. Hinweise durchgehen, das Wichtige korrigieren, veröffentlichen – und jede Person sieht ihre Schichten.',
         pricingTitle: 'Einfacher Preis, nach Teamgröße',
         pricingSubtitle: 'Unbegrenzte Standorte in jedem Tarif. Jederzeit kündbar.',
-        pricingCta: 'Gratis starten',
+        pricingCta: 'Einen Monat gratis testen',
         quoteMessage: 'Hallo, wir sind eine Kette mit mehr als 100 Mitarbeitenden und möchten einen Termin zu SetShifts vereinbaren.',
         pricingNote: 'Alle Preise in ILS, pro Monat, inkl. MwSt. Erster Monat gratis in jedem Tarif.',
         planPopular: 'Am beliebtesten',

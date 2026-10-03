@@ -159,6 +159,8 @@ try {
     sent.push({ name, body });
     let payload = WORLD[name] || { ok: true };
     if (name === 'action') payload = { ok: true, company: WORLD.company.company, detail: {} };
+    if (name === 'customer') payload = { ok: true, companyId: 'co-2', email: 'dana@pilot.co.il',
+      password: 'abcd-efgh-jkmn', emailed: false, emailError: 'not_configured', loginUrl: 'https://setshifts.com/app/' };
     if (name === 'card') payload = { ok: true, url: 'https://pay.example/page/abc', to: 'gal@galil.co.il',
       emailed: true, emailError: null, expiresInHours: 48 };
     if (name === 'agents') payload = AGENTS[body.do] || { ok: true };
@@ -424,6 +426,30 @@ try {
   check('ונאמר למי נשלח המייל', await page.locator('#adm-card-result').innerText(), /gal@galil\.co\.il/);
   await page.click('#adm-modal-cancel');
   await page.waitForTimeout(200);
+
+  console.log('\n== הקמת לקוח ללא כרטיס ==');
+  await page.click('.adm-tab[data-panel="companies"]');
+  await page.waitForTimeout(300);
+  sent.length = 0;
+  await page.click('[data-act="create-customer"]');
+  await page.waitForTimeout(500);
+  check('הטופס נפתח עם בחירת חבילה וסוכן',
+    (await page.locator('#adm-f-plan option').count() > 0) && (await page.locator('#adm-f-agent option').count() > 0), true);
+  await page.fill('#adm-f-company', 'קפה הפיילוט');
+  await page.fill('#adm-f-owner', 'דנה');
+  await page.fill('#adm-f-email', 'dana@pilot.co.il');
+  await page.fill('#adm-f-phone', '054-1234567');
+  await page.fill('#adm-modal-reason', 'פיילוט עם בית קפה');
+  await page.click('#adm-modal-ok');
+  await page.waitForTimeout(600);
+  const created2 = sent.filter((call) => call.name === 'customer').pop();
+  check('הבקשה יצאה עם שם העסק', created2 && created2.body.companyName, 'קפה הפיילוט');
+  check('ועם מייל הבעלים', created2 && created2.body.email, 'dana@pilot.co.il');
+  check('ועם הסיבה', created2 && created2.body.reason, 'פיילוט עם בית קפה');
+  check('הסיסמה מוצגת להעתקה', await page.locator('#adm-card-url').inputValue(), /abcd-efgh-jkmn/);
+  check('ונאמר שהמייל לא נשלח ולמה', await page.locator('#adm-create-result').innerText(), /שליחת מייל לא מוגדרת/);
+  await page.click('#adm-modal-cancel');
+  await page.waitForTimeout(300);
 
   console.log('\n== סינון לפי מקור ==');
   sent.length = 0;

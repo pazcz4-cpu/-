@@ -819,6 +819,102 @@ test('כשהמייל לא מוגדר הקישור עדיין חוזר, עם הס
   });
 });
 
+/* ===== הקמת לקוח ללא כרטיס מהמשרד האחורי ===== */
+var NEW_CUSTOMER = { op: 'customer', reason: 'פיילוט עם בית קפה', companyName: 'קפה הפיילוט',
+  ownerName: 'דנה', email: 'Dana@Pilot.co.il', phone: '054-1234567', plan: 'starter' };
+
+test('לקוח פיילוט נוצר פעיל, ללא תשלום, עם בעלים ועם הגדרות ריקות', function () {
+  return withDb({}, function (db) {
+    return call(NEW_CUSTOMER).then(function (res) {
+      assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
+      var company = db.tables.companies[0];
+      assertEqual(company.free_access, true, 'לא ללא תשלום');
+      assertEqual(company.status, 'active', 'לא פעיל');
+      assert(company.valid_until.indexOf('2099') === 0, 'יש תאריך סיום');
+      assertEqual(company.source, 'direct', 'מקור');
+      var owner = db.tables.company_users[0];
+      assertEqual(owner.role, 'owner', 'תפקיד');
+      assertEqual(owner.email, 'dana@pilot.co.il', 'המייל לא נורמל');
+      assertEqual(owner.company_id, company.id, 'שיוך');
+      assertEqual(db.tables.company_configs.length, 1, 'אין שורת הגדרות');
+      assert(res.payload.password && res.payload.password.length >= 12, 'לא נוצרה סיסמה');
+      assertEqual(db.authCalls.filter(function (c) { return c.method === 'POST'; }).length, 1, 'משתמש');
+    });
+  });
+});
+
+test('אפשר לקבוע תאריך סיום, חבילה ושיוך לסוכן מהרגע הראשון', function () {
+  return withDb({ sales_agents: [agent()] }, function (db) {
+    return call(Object.assign({}, NEW_CUSTOMER, { until: '2099-01-31', plan: 'growth', agentId: 'ag-1' }))
+      .then(function (res) {
+        assertEqual(res.statusCode, 200, JSON.stringify(res.payload));
+        var company = db.tables.companies[0];
+        assertEqual(company.plan, 'growth', 'חבילה');
+        assert(company.free_until.indexOf('2099-01-31') === 0, 'פיילוט עד');
+        assertEqual(company.source, 'agent', 'מקור');
+        assertEqual(company.agent_id, 'ag-1', 'סוכן');
+      });
+  });
+});
+
+test('לקוח פיילוט אינו מזכה בעמלה', function () {
+  return withDb({ sales_agents: [agent()] }, function () {
+    return call(Object.assign({}, NEW_CUSTOMER, { agentId: 'ag-1' })).then(function () {
+      return call({ op: 'agents', do: 'report' });
+    }).then(function (res) {
+      assertEqual(res.payload.lines.length, 0, 'עמלה על פיילוט');
+    });
+  });
+});
+
+test('הקמת לקוח: בלי סיבה, בלי טלפון, מייל פגום, חבילה לא מוכרת, או לא בעל מוצר - נדחה', function () {
+  return withDb({}, function (db) {
+    return call(Object.assign({}, NEW_CUSTOMER, { reason: '' })).then(function (res) {
+      assertEqual(res.statusCode, 400, 'בלי סיבה');
+      return call(Object.assign({}, NEW_CUSTOMER, { phone: '12' }));
+    }).then(function (res) {
+      assertEqual(res.statusCode, 400, 'טלפון');
+      return call(Object.assign({}, NEW_CUSTOMER, { email: 'nope' }));
+    }).then(function (res) {
+      assertEqual(res.statusCode, 400, 'מייל');
+      return call(Object.assign({}, NEW_CUSTOMER, { plan: 'gold' }));
+    }).then(function (res) {
+      assertEqual(res.statusCode, 400, 'חבילה');
+      return call(NEW_CUSTOMER, { token: 'customer-token' });
+    }).then(function (res) {
+      assertEqual(res.statusCode, 403, 'לקוח רגיל הקים לקוח');
+      assertEqual(db.tables.companies.length, 0, 'נוצרה חברה');
+      assertEqual(db.authCalls.length, 0, 'נוצר משתמש');
+    });
+  });
+});
+
+test('מייל שכבר רשום נדחה ולא נוצרת חברה יתומה', function () {
+  return withDb({ authEmails: ['dana@pilot.co.il'] }, function (db) {
+    return call(NEW_CUSTOMER).then(function (res) {
+      assertEqual(res.statusCode, 409, 'כתובת תפוסה');
+      assertEqual(db.tables.companies.length, 0, 'נוצרה חברה');
+    });
+  });
+});
+
+test('הסיסמה נשלחת במייל רק כשביקשו, והיא אינה נרשמת ביומן', function () {
+  process.env.RESEND_API_KEY = 'k';
+  process.env.MAIL_FROM = 'SetShifts <no-reply@setshifts.com>';
+  return withDb({}, function (db) {
+    return call(Object.assign({}, NEW_CUSTOMER, { send: true })).then(function (res) {
+      assertEqual(res.payload.emailed, true, 'לא נשלח');
+      assertEqual(db.mails[0].to[0], 'dana@pilot.co.il', 'נמען');
+      assert(db.mails[0].text.indexOf(res.payload.password) !== -1, 'הסיסמה אינה במייל');
+      var logged = JSON.stringify(db.tables.billing_events);
+      assert(logged.indexOf(res.payload.password) === -1, 'הסיסמה נשמרה ביומן');
+      assert(db.tables.billing_events.some(function (e) { return e.type === 'admin.create-customer'; }), 'אין יומן');
+    });
+  }).then(function () {
+    delete process.env.RESEND_API_KEY; delete process.env.MAIL_FROM;
+  });
+});
+
 queue.then(function () {
   console.log('\n' + (failed === 0 ? '✅ ' : '❌ ') + passed + ' בדיקות עברו, ' + failed + ' נכשלו\n');
   process.exit(failed === 0 ? 0 : 1);

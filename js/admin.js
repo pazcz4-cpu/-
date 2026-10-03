@@ -314,6 +314,7 @@
         '</select>' +
         '<button class="adm-btn" id="adm-refresh">רענון</button>' +
         '<button class="adm-btn" id="adm-export-companies">ייצוא ל-Excel</button>' +
+        '<button class="adm-btn is-primary" data-act="create-customer" data-id="new">הקמת לקוח ללא כרטיס</button>' +
       '</div>';
 
     if (!list) {
@@ -788,6 +789,22 @@
         'שליחת הקישור במייל לבעלים של החשבון</label>' +
         '<div id="adm-card-result"></div>'
     },
+    /* הקמת לקוח בפיילוט ללא תשלום, בלי כרטיס. רק מכאן: הרשמה מהאתר
+       או מקישור של סוכן תמיד דורשת כרטיס כשהסליקה חיה. */
+    'create-customer': {
+      title: 'הקמת לקוח בפיילוט ללא תשלום',
+      fields: '<p class="adm-hint">הלקוח נוצר פעיל וללא תשלום, ונכנס בלי להזין כרטיס. ' +
+        'את הסיסמה תראה כאן אחרי היצירה (ואפשר לשלוח אותה במייל).</p>' +
+        '<label class="adm-field"><span>שם העסק</span><input class="adm-input" id="adm-f-company" maxlength="120"></label>' +
+        '<label class="adm-field"><span>שם הבעלים</span><input class="adm-input" id="adm-f-owner"></label>' +
+        '<label class="adm-field"><span>מייל הבעלים (שם המשתמש)</span><input class="adm-input" id="adm-f-email" type="email" dir="ltr"></label>' +
+        '<label class="adm-field"><span>טלפון</span><input class="adm-input" id="adm-f-phone" type="tel" dir="ltr"></label>' +
+        '<label class="adm-field"><span>חבילה</span><select class="adm-select" id="adm-f-plan">' + '__PLANS__' + '</select></label>' +
+        '<label class="adm-field"><span>הפיילוט עד תאריך (ריק = ללא הגבלה)</span><input class="adm-input" id="adm-f-until" type="date"></label>' +
+        '<label class="adm-field"><span>הגיע מ</span><select class="adm-select" id="adm-f-agent"></select></label>' +
+        '<label class="adm-check"><input type="checkbox" id="adm-f-send" checked> שליחת פרטי הכניסה במייל לבעלים</label>' +
+        '<div id="adm-create-result"></div>'
+    },
     'set-agent': {
       title: 'שיוך לסוכן מכירות',
       fields: '<label class="adm-field"><span>הלקוח הגיע מ</span>' +
@@ -841,12 +858,12 @@
     if (!form) return;
     pending = { action: action, id: id, extra: extra || {} };
     document.getElementById('adm-modal-title').textContent = form.title;
-    document.getElementById('adm-modal-fields').innerHTML = form.fields;
+    document.getElementById('adm-modal-fields').innerHTML = form.fields.replace('__PLANS__', planOptions());
     /* הטופס נפתח על מה שקיים היום. מי שבא לשנות תעריף לעובד
        ומוצא טופס ריק במצב "סכום קבוע" עלול לשמור סכום קבוע
        בלי לשים לב שהחליף צורת תמחור. */
     if (action === 'set-price') fillPrice(id);
-    if (action === 'set-agent') fillAgentChoice(id);
+    if (action === 'set-agent' || action === 'create-customer') fillAgentChoice(id);
     document.getElementById('adm-modal-reason').value = '';
     document.getElementById('adm-modal-ok').hidden = false;
     document.getElementById('adm-modal-cancel').textContent = 'ביטול';
@@ -890,6 +907,40 @@
 
     var button = document.getElementById('adm-modal-ok');
     button.disabled = true;
+
+    if (pending.action === 'create-customer') {
+      var sendMail = document.getElementById('adm-f-send');
+      api('customer', {
+        reason: payload.reason,
+        companyName: document.getElementById('adm-f-company').value,
+        ownerName: document.getElementById('adm-f-owner').value,
+        email: document.getElementById('adm-f-email').value,
+        phone: document.getElementById('adm-f-phone').value,
+        plan: document.getElementById('adm-f-plan').value,
+        until: document.getElementById('adm-f-until').value,
+        agentId: document.getElementById('adm-f-agent').value,
+        send: !!(sendMail && sendMail.checked)
+      }).then(function (result) {
+        document.getElementById('adm-create-result').innerHTML =
+          '<p class="adm-hint">הלקוח נוצר. ' + (result.emailed ? 'פרטי הכניסה נשלחו במייל. '
+            : result.emailError ? 'המייל לא נשלח (' + (result.emailError === 'not_configured'
+              ? 'שליחת מייל לא מוגדרת' : 'השליחה נכשלה') + '). ' : '') +
+          'שמור את הסיסמה עכשיו, היא לא תוצג שוב:</p>' +
+          '<input class="adm-input" id="adm-card-url" readonly dir="ltr" value="' +
+          esc(result.email + '  /  ' + result.password) + '">' +
+          '<div class="adm-modal-actions"><button class="adm-btn" id="adm-card-copy" type="button">העתקה</button></div>';
+        button.hidden = true;
+        document.getElementById('adm-modal-cancel').textContent = 'סגירה';
+        data.companies = null;
+        data.agents = null;
+        return Promise.all([loadOverview(), loadCompanies(), openCompany(result.companyId)]);
+      }).catch(function (error) {
+        var box = document.getElementById('adm-modal-error');
+        box.textContent = error.message;
+        box.hidden = false;
+      }).then(function () { button.disabled = false; });
+      return;
+    }
 
     if (pending.action === 'card-link') {
       var sendBox = document.getElementById('adm-f-send');

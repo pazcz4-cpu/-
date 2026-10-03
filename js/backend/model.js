@@ -85,7 +85,7 @@
   var SUPPORT_REPLY_HOURS = 48;        // שאלה או בקשת פיתוח
   var SUPPORT_URGENT_HOURS = 4;        // "משהו לא עובד", בשעות הפעילות
   var SUPPORT_HOURS_FROM = '09:00';
-  var SUPPORT_HOURS_TO = '18:00';
+  var SUPPORT_HOURS_TO = '15:30';
 
   function supportReplyHours(kind) {
     return kind === 'bug' ? SUPPORT_URGENT_HOURS : SUPPORT_REPLY_HOURS;

@@ -67,7 +67,7 @@ try {
   const promise = await a.page.locator('#support-promise').textContent();
   check('ההבטחה נוקבת בזמן לתקלה', /4 שעות/.test(promise), true);
   check('ובזמן לשאר הפניות', /48 שעות/.test(promise), true);
-  check('ואומרת מהן שעות הפעילות', /09:00–18:00/.test(promise), true);
+  check('ואומרת מהן שעות הפעילות', /09:00–15:30/.test(promise), true);
   check('כתובת המייל מוצגת כערוץ',
     await a.page.locator('#support-mail').getAttribute('href'), 'mailto:support@setshifts.com');
   check('רשימה ריקה בהתחלה',

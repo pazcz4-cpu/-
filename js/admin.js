@@ -313,6 +313,7 @@
           }).join('') +
         '</select>' +
         '<button class="adm-btn" id="adm-refresh">רענון</button>' +
+        '<button class="adm-btn" id="adm-export-companies">ייצוא ל-Excel</button>' +
       '</div>';
 
     if (!list) {
@@ -885,6 +886,102 @@
     }).then(function () { button.disabled = false; });
   }
 
+  /* ===== ייצוא ל-Excel =====
+     נבנה בדפדפן מהנתונים שכבר נטענו, עם אותו כותב xlsx שבו
+     המערכת מייצאת דוחות ללקוחות. סכומים נשמרים כמספרים ולא כטקסט,
+     כדי שאפשר יהיה לסכם אותם. */
+
+  function sheetOf(name, widths, head, rows) {
+    var S = window.ShiftXlsx.STYLE;
+    return {
+      name: name, cols: widths, freeze: { row: 1, col: 0 },
+      rows: [{ cells: head.map(function (label) { return { v: label, s: S.HEADER }; }), height: 22 }]
+        .concat(rows.map(function (row) {
+          return row.map(function (value) { return { v: value == null ? '' : value, s: S.PLAIN }; });
+        }))
+    };
+  }
+
+  function downloadWorkbook(fileName, sheets) {
+    if (!window.ShiftXlsx) { window.alert('רכיב הייצוא לא נטען. רענן את הדף.'); return; }
+    var blob = new Blob([window.ShiftXlsx.build(sheets)], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+  }
+
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  function exportCompanies() {
+    var list = data.companies;
+    if (!list || !list.companies.length) { window.alert('אין נתונים לייצוא.'); return; }
+    downloadWorkbook('setshifts-customers-' + today() + '.xlsx', [sheetOf('לקוחות',
+      [26, 28, 16, 16, 14, 16, 10, 14, 14, 14, 14, 16],
+      ['עסק', 'בעלים', 'מקור', 'סוכן', 'חבילה', 'מצב', 'ללא תשלום', 'משתמשים',
+        'בתוקף עד', 'שילם עד היום (ברוטו)', 'שילם עד היום (נטו)', 'נפתח'],
+      list.companies.map(function (row) {
+        return [row.name, row.ownerEmail || '',
+          row.isDemo ? 'הדגמה' : (row.source === 'agent' ? 'סוכן' : 'האתר'),
+          row.agentName || '', PLAN_LABEL[row.plan] || row.plan,
+          STATUS_LABEL[row.status] || row.status, row.freeAccess ? 'כן' : '',
+          row.users, date(row.validUntil), row.paidGross, row.paidNet, date(row.createdAt)];
+      }))]);
+  }
+
+  function exportAgents() {
+    var list = data.agents;
+    var report = data.report;
+    if (!list) { window.alert('הנתונים עוד נטענים.'); return; }
+    var month = data.reportMonth || monthNow();
+    var sheets = [sheetOf('סוכנים', [22, 18, 12, 12, 12, 10, 10, 12, 12, 14, 14, 26],
+      ['סוכן', 'קוד', 'עמלה (₪)', 'חיובים עד זכאות', 'לקוחות', 'בפיילוט', 'משלמים',
+        'הגיעו ליעד', 'עמלות שלא שולמו (₪)', 'שולם עד היום (₪)', 'פעיל', 'קישור'],
+      list.agents.map(function (agent) {
+        return [agent.name, agent.code, agent.commission, agent.qualifyCharges, agent.customers,
+          agent.free, agent.paying, agent.qualified, agent.owed, agent.paidOut,
+          agent.active ? 'כן' : 'לא', referralLink(agent.code)];
+      }))];
+    function lines(rows) {
+      return rows.map(function (row) {
+        return [row.company, row.agent, date(row.qualifiedAt), row.amount,
+          row.status === 'paid' ? 'שולם' : 'ממתין', row.paidAt ? date(row.paidAt) : ''];
+      });
+    }
+    var lineHead = ['לקוח', 'סוכן', 'הגיע ליעד', 'עמלה (₪)', 'מצב', 'שולם בתאריך'];
+    if (report) {
+      sheets.push(sheetOf('בונוסים ' + month, [26, 20, 14, 12, 10, 14], lineHead, lines(report.lines)));
+      sheets.push(sheetOf('לא שולם מקודם', [26, 20, 14, 12, 10, 14], lineHead, lines(report.older)));
+      sheets.push(sheetOf('יגיעו ליעד', [26, 20, 16, 14, 14],
+        ['לקוח', 'סוכן', 'החיוב הבא', 'חיובים עד היום', 'עמלה צפויה (₪)'],
+        report.upcoming.map(function (item) {
+          return [item.company, item.agent, date(item.nextChargeAt), item.paidCharges, item.amount];
+        })));
+    }
+    /* כל הלקוחות של כל הסוכנים בגיליון אחד: זה מה שמשווים מול
+       מה שהסוכן טוען שהביא */
+    Promise.all(list.agents.map(function (agent) {
+      return api('agents', { do: 'customers', agentId: agent.id }).then(function (view) {
+        return view.customers.map(function (c) {
+          return [agent.name, c.name, STATUS_LABEL[c.status] || c.status, c.freeAccess ? 'כן' : '',
+            date(c.createdAt), c.paidCharges, c.qualifiedAt ? date(c.qualifiedAt) : '',
+            c.commission ? c.commission.amount : '',
+            c.commission ? (c.commission.status === 'paid' ? 'שולם' : 'ממתין') : ''];
+        });
+      });
+    })).then(function (groups) {
+      var rows = [].concat.apply([], groups);
+      sheets.push(sheetOf('לקוחות לפי סוכן', [20, 26, 14, 10, 14, 10, 14, 12, 10],
+        ['סוכן', 'לקוח', 'מצב', 'פיילוט', 'נרשם', 'חיובים', 'הגיע ליעד', 'עמלה (₪)', 'מצב עמלה'], rows));
+      downloadWorkbook('setshifts-agents-' + month + '.xlsx', sheets);
+    }).catch(function (error) { window.alert(error.message); });
+  }
+
   /* ===== סוכני מכירות ===== */
 
   function referralLink(code) {
@@ -896,23 +993,42 @@
     return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   }
 
+  /* שדה עם שם גלוי. placeholder נעלם ברגע שמקלידים, ושדה ריק
+     בלי שם הוא בדיוק מה שמבלבל: "3" ו-"0" אינם אומרים אם זו
+     עמלה או מספר חיובים. */
+  function field(id, label, input, hint) {
+    return '<label class="adm-field" for="' + id + '"><span>' + esc(label) + '</span>' + input +
+      (hint ? '<small class="adm-field-hint">' + esc(hint) + '</small>' : '') + '</label>';
+  }
+
   function agentForm(agent) {
     var a = agent || {};
-    return '<form id="adm-agent-form" class="adm-controls" data-id="' + esc(a.id || '') + '">' +
-      '<input class="adm-input" id="ag-name" placeholder="שם הסוכן" maxlength="120" required value="' + esc(a.name || '') + '">' +
-      '<input class="adm-input" id="ag-code" placeholder="קוד לקישור (אנגלית; ריק = אוטומטי)" maxlength="39" ' +
-        (a.id ? 'disabled ' : '') + 'value="' + esc(a.code || '') + '">' +
-      '<input class="adm-input" id="ag-commission" type="number" min="0" step="1" placeholder="עמלה בשקלים ללקוח" required value="' +
-        esc(a.commission == null ? '' : a.commission) + '">' +
-      '<input class="adm-input" id="ag-qualify" type="number" min="1" max="24" step="1" placeholder="חיובים עד זכאות" value="' +
-        esc(a.qualifyCharges || 3) + '" title="כמה חיובים מוצלחים הלקוח צריך לשלם עד שהסוכן זכאי לעמלה">' +
-      '<input class="adm-input" id="ag-email" type="email" placeholder="מייל" value="' + esc(a.email || '') + '">' +
-      '<input class="adm-input" id="ag-phone" type="tel" placeholder="טלפון" value="' + esc(a.phone || '') + '">' +
-      '<input class="adm-input" id="ag-note" placeholder="הערה" maxlength="500" value="' + esc(a.note || '') + '">' +
-      (a.id ? '<label class="adm-check"><input type="checkbox" id="ag-active"' + (a.active ? ' checked' : '') + '> פעיל</label>' : '') +
-      '<button class="adm-btn is-primary" type="submit">' + (a.id ? 'שמירת סוכן' : 'הוספת סוכן') + '</button>' +
+    return '<form id="adm-agent-form" class="adm-grid-form" data-id="' + esc(a.id || '') + '">' +
+      field('ag-name', 'שם הסוכן',
+        '<input class="adm-input" id="ag-name" maxlength="120" required value="' + esc(a.name || '') + '">') +
+      field('ag-code', 'קוד בקישור',
+        '<input class="adm-input" id="ag-code" maxlength="39" dir="ltr" ' + (a.id ? 'disabled ' : '') +
+          'value="' + esc(a.code || '') + '">',
+        a.id ? 'הקוד אינו משתנה אחרי שנוצר' : 'אנגלית קטנה וספרות. ריק = ייווצר אוטומטית') +
+      field('ag-commission', 'עמלה ללקוח (₪)',
+        '<input class="adm-input" id="ag-commission" type="number" min="0" step="1" required value="' +
+          esc(a.commission == null ? '' : a.commission) + '">',
+        'הסכום שהסוכן מקבל על כל לקוח שהגיע ליעד') +
+      field('ag-qualify', 'חיובים עד זכאות',
+        '<input class="adm-input" id="ag-qualify" type="number" min="1" max="24" step="1" value="' +
+          esc(a.qualifyCharges || 3) + '">',
+        'כמה חיובים מוצלחים הלקוח משלם עד שהעמלה מגיעה') +
+      field('ag-email', 'מייל הסוכן',
+        '<input class="adm-input" id="ag-email" type="email" dir="ltr" value="' + esc(a.email || '') + '">') +
+      field('ag-phone', 'טלפון הסוכן',
+        '<input class="adm-input" id="ag-phone" type="tel" dir="ltr" value="' + esc(a.phone || '') + '">') +
+      field('ag-note', 'הערה (פנימית)',
+        '<input class="adm-input" id="ag-note" maxlength="500" value="' + esc(a.note || '') + '">') +
+      (a.id ? '<label class="adm-check"><input type="checkbox" id="ag-active"' + (a.active ? ' checked' : '') + '> סוכן פעיל</label>' : '') +
+      '<div class="adm-form-actions"><button class="adm-btn is-primary" type="submit">' +
+        (a.id ? 'שמירת סוכן' : 'הוספת סוכן') + '</button>' +
       (a.id ? '<button class="adm-btn" type="button" id="ag-cancel">ביטול</button>' : '') +
-      '</form><p id="adm-agent-msg" class="adm-error" hidden></p>';
+      '</div></form><p id="adm-agent-msg" class="adm-error" hidden></p>';
   }
 
   function renderAgents() {
@@ -956,8 +1072,10 @@
     var month = data.reportMonth || monthNow();
     html += '<div class="adm-card"><h2>בונוסים לפי חודש</h2>' +
       '<p class="adm-card-sub">מי הגיע ליעד באותו חודש, כמה מגיע לכל סוכן, ומה נשאר לא משולם מחודשים קודמים.</p>' +
-      '<div class="adm-controls"><input class="adm-input" id="adm-report-month" type="month" value="' + esc(month) + '">' +
-      '<button class="adm-btn" id="adm-report-load">הצגה</button></div>';
+      '<div class="adm-controls"><label class="adm-field" for="adm-report-month"><span>חודש</span>' +
+      '<input class="adm-input" id="adm-report-month" type="month" value="' + esc(month) + '"></label>' +
+      '<button class="adm-btn" id="adm-report-load">הצגה</button>' +
+      '<button class="adm-btn" id="adm-export-agents">ייצוא ל-Excel</button></div>';
     html += renderReport(data.report) + '</div>';
     node.innerHTML = html;
   }
@@ -1053,15 +1171,19 @@
         }).join('') + '</tbody></table></div>' +
         '<p class="adm-note">נתונים נכתבו לאחרונה: ' + esc(date(view.resetAt)) + '</p>';
     }
-    html += '<form id="adm-demo-form" class="adm-controls">' +
-      '<input class="adm-input" id="demo-manager" type="email" required placeholder="מייל מנהל ההדגמה" dir="ltr" value="' +
-        esc(demoEmail('manager')) + '">' +
-      '<input class="adm-input" id="demo-employee" type="email" required placeholder="מייל עובד ההדגמה" dir="ltr" value="' +
-        esc(demoEmail('employee')) + '">' +
-      '<input class="adm-input" id="demo-password" type="text" required minlength="8" maxlength="72" autocomplete="off" ' +
-        'placeholder="סיסמה (8 תווים ומעלה)">' +
+    html += '<form id="adm-demo-form" class="adm-grid-form">' +
+      field('demo-manager', 'מייל מנהל ההדגמה',
+        '<input class="adm-input" id="demo-manager" type="email" required dir="ltr" value="' +
+          esc(demoEmail('manager')) + '">') +
+      field('demo-employee', 'מייל עובד ההדגמה',
+        '<input class="adm-input" id="demo-employee" type="email" required dir="ltr" value="' +
+          esc(demoEmail('employee')) + '">') +
+      field('demo-password', 'סיסמה לשניהם',
+        '<input class="adm-input" id="demo-password" type="text" required minlength="8" maxlength="72" autocomplete="off">',
+        '8 תווים ומעלה') +
+      '<div class="adm-form-actions">' +
       '<button class="adm-btn is-primary" type="submit">' +
-        (view.exists ? 'איפוס ההדגמה' : 'יצירת חשבון הדגמה') + '</button></form>' +
+        (view.exists ? 'איפוס ההדגמה' : 'יצירת חשבון הדגמה') + '</button></div></form>' +
       '<p class="adm-hint">הסיסמה נקבעת ב-Supabase ואינה נשמרת כאן. בשני משתמשים: מנהל לראות את מסך הסידור, ' +
       'ועובד לראות את צד העובד בטלפון. איפוס מחליף גם את הסיסמה.</p>' +
       '<p id="adm-demo-msg" class="adm-error" hidden></p></div>';
@@ -1237,6 +1359,9 @@
         .catch(function (error) { window.alert(error.message); });
       return;
     }
+
+    if (event.target.id === 'adm-export-companies') { exportCompanies(); return; }
+    if (event.target.id === 'adm-export-agents') { exportAgents(); return; }
 
     if (event.target.id === 'adm-report-load') {
       data.reportMonth = document.getElementById('adm-report-month').value || monthNow();

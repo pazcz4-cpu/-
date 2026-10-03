@@ -394,6 +394,15 @@ try {
   const agentCall = sent.filter((call) => call.body.action === 'set-agent').pop();
   check('בקשת השיוך יצאה עם הסוכן', agentCall && agentCall.body.agentId, 'ag-1');
 
+  console.log('\n== ייצוא לקוחות ==');
+  const [custFile] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('#adm-export-companies')
+  ]);
+  check('ייצוא הלקוחות הוריד xlsx', custFile.suggestedFilename(), /^setshifts-customers-.*\.xlsx$/);
+  check('ובתוכו שם עסק', (await import('node:fs')).readFileSync(await custFile.path())
+    .includes(Buffer.from('מסעדת הגליל')), true);
+
   console.log('\n== סינון לפי מקור ==');
   sent.length = 0;
   await page.selectOption('#adm-filter-source', 'agent');
@@ -411,6 +420,25 @@ try {
   check('ומי יגיע בחיוב הבא', agentsText, /מאפיית הים/);
   check('כפתור העתקת קישור קיים עם הקוד',
     await page.locator('[data-copy-link]').first().getAttribute('data-copy-link'), /\/\?ref=ronit-ab12$/);
+
+  /* כל שדה בטופס הסוכן נושא שם גלוי, לא רק placeholder */
+  const labels = await page.locator('#adm-agent-form label.adm-field > span').allInnerTexts();
+  check('לכל שדה בטופס הסוכן יש תווית', labels.join('|'),
+    /שם הסוכן.*קוד בקישור.*עמלה ללקוח.*חיובים עד זכאות.*מייל.*טלפון.*הערה/);
+  check('ולכל תווית שדה מקושר',
+    await page.evaluate(() => [...document.querySelectorAll('#adm-agent-form label.adm-field')]
+      .every((l) => l.htmlFor && document.getElementById(l.htmlFor))), true);
+
+  const [agentsFile] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('#adm-export-agents')
+  ]);
+  check('ייצוא הסוכנים הוריד קובץ xlsx', agentsFile.suggestedFilename(), /^setshifts-agents-\d{4}-\d{2}\.xlsx$/);
+  const agentsPath = await agentsFile.path();
+  const agentsZip = (await import('node:fs')).readFileSync(agentsPath);
+  check('והקובץ הוא ZIP תקין של xlsx', agentsZip.slice(0, 2).toString(), 'PK');
+  check('ובתוכו שם הסוכן', agentsZip.includes(Buffer.from('רונית סוכנת')), true);
+  check('ושם הלקוח מהדוח', agentsZip.includes(Buffer.from('פיצה הכפר')), true);
 
   sent.length = 0;
   await page.fill('#ag-name', 'דוד סוכן');

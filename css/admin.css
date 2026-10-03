@@ -200,3 +200,14 @@
 .adm-controls .adm-input { flex: 1 1 11rem; min-width: 0; }
 .adm-check { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); }
 .adm-card h3 { margin: var(--s4) 0 var(--s2); font-size: var(--t-md, 1rem); }
+
+/* טפסים עם שדות מסומנים: רשת שעוברת לעמודה אחת במסך צר */
+.adm-grid-form {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  align-items: start; margin-bottom: var(--s3);
+}
+.adm-grid-form .adm-field { margin: 0; }
+.adm-field-hint { display: block; margin-top: var(--s1); font-size: var(--t-xs, .75rem); line-height: 1.4; color: var(--muted); }
+.adm-form-actions { display: flex; gap: var(--s2); align-items: end; grid-column: 1 / -1; }
+.adm-controls .adm-field { margin: 0; }

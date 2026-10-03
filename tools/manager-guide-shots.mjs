@@ -404,6 +404,15 @@ await mark('#deadline-day', 2);
 await shotEl('19-settings-deadline', '.settings-block:has(#opt-deadline)');
 await unmark();
 
+/* הגדרות: שעון נוכחות ותזכורת על כניסה שלא נרשמה */
+await page.check('#opt-clock');
+await page.waitForTimeout(400);
+await page.locator('[data-i18n="settings.clockTitle"]').scrollIntoViewIfNeeded();
+await mark('#opt-clock', 1);
+await mark('#opt-clock-remind', 2);
+await shotEl('20-settings-clock', '.settings-block:has(#opt-clock)');
+await unmark();
+
 console.log(saved.join('\n'));
 console.log('errors:', errors.length ? errors.join(' | ') : 'none');
 await browser.close();

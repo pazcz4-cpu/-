@@ -41,6 +41,8 @@
 
 const { projectUrl } = require('./_supabase.js');
 const Store = require('../js/store.js');
+const missedPunch = require('./_missed-punch.js');
+const { zonedToUtc, offsetAt } = require('./_zone.js');
 
 /* תשובות הפרוטוקול הן טקסט, לא JSON. מכשיר שיקבל JSON פשוט
    לא יבין, ויתחיל לנסות שוב בלולאה. */
@@ -87,49 +89,6 @@ function readBody(req) {
     req.on('end', function () { resolve(data); });
     req.on('error', function () { resolve(''); });
   });
-}
-
-/* המרת "2026-09-24 08:03:11" באזור זמן נתון לרגע ב-UTC.
-
-   נעשה בשתי איטרציות ולא בנוסחה: ההיסט עצמו תלוי ברגע (שעון
-   קיץ), ולכן מחשבים היסט משוער, מתקנים, ובודקים שוב. הלילה
-   שבו השעון זז הוא בדיוק המקרה שבו חישוב חד-פעמי טועה בשעה. */
-function zonedToUtc(localText, timeZone) {
-  const match = String(localText || '').trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
-  if (!match) return null;
-  const parts = match.slice(1).map(function (value) { return Number(value || 0); });
-  const asUtc = Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
-  let guess = asUtc;
-  for (let i = 0; i < 2; i++) {
-    const offset = offsetAt(guess, timeZone);
-    if (offset === null) return new Date(asUtc);
-    guess = asUtc - offset;
-  }
-  return new Date(guess);
-}
-
-/* ההיסט של אזור הזמן ברגע מסוים, בדקות-מילישניות */
-function offsetAt(stamp, timeZone) {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timeZone, hour12: false,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-    const parts = {};
-    formatter.formatToParts(new Date(stamp)).forEach(function (part) {
-      if (part.type !== 'literal') parts[part.type] = Number(part.value);
-    });
-    const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day,
-      parts.hour === 24 ? 0 : parts.hour, parts.minute, parts.second);
-    return asUtc - stamp;
-  } catch (err) {
-    /* אזור זמן שאינו מוכר: עדיף לרשום את השעה כפי שהיא מאשר
-       לזרוק דיווח. המנהל יראה סטייה ויתקן, ודיווח שנזרק
-       אי אפשר לשחזר. */
-    return null;
-  }
 }
 
 /* שורת ATTLOG: מספר עובד, תאריך ושעה, סוג, אופן זיהוי, ועוד.
@@ -311,6 +270,11 @@ module.exports = async function handler(req, res) {
   const action = String(query.action || '').replace(/\.(aspx|asp|php)$/i, '').toLowerCase();
   const sn = String(query.SN || query.sn || '').trim();
 
+  /* תזכורת לעובד שהמשמרת שלו התחילה ולא נרשמה כניסה. מגיע מה-cron
+     של Vercel (כל 5 דקות), לא ממכשיר, ומוגן ב-CRON_SECRET. הוא יושב
+     כאן ולא בקובץ משלו כדי לא להוסיף פונקציית שרת. */
+  if (action === 'missed') return missedPunch(req, res);
+
   /* בדיקת חיבור מהמכשיר. חייבת לענות גם בלי מספר סידורי. */
   if (action === 'test' || action === 'ping') return text(res, 200, 'OK');
   if (!sn) return text(res, 200, 'OK');
@@ -361,6 +325,6 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports._internals = {
-  zonedToUtc: zonedToUtc, parseAttlog: parseAttlog, handshake: handshake,
+  zonedToUtc: zonedToUtc, offsetAt: offsetAt, parseAttlog: parseAttlog, handshake: handshake,
   queryOf: queryOf
 };

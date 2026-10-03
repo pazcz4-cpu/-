@@ -2826,6 +2826,16 @@
         mode.value = clock.mode;
         mode.disabled = viewOnly || !clock.enabled;
       }
+      var remindToggle = $('#opt-clock-remind');
+      if (remindToggle) {
+        remindToggle.checked = clock.enabled && clock.remindMissed;
+        remindToggle.disabled = viewOnly || !clock.enabled;
+        var remindAfter = $('#clock-remind-after');
+        if (remindAfter) {
+          remindAfter.value = String(clock.remindAfter);
+          remindAfter.disabled = viewOnly || !clock.enabled || !clock.remindMissed;
+        }
+      }
       var windowToggle = $('#opt-clock-window');
       if (windowToggle) {
         var windowRule = Store.punchWindowRule(state);
@@ -3115,7 +3125,7 @@
     '#emp-bulk-active', '#emp-bulk-inactive',
     '#branches-list input', '#branches-list button', '#branches-list select',
     '#opt-one-per-day', '#opt-rest', '#rest-hours', '#opt-one-day-off', '#motzash-offset',
-    '#opt-clock-window', '#clock-lead',
+    '#opt-clock-window', '#clock-lead', '#opt-clock-remind', '#clock-remind-after',
     '#opt-deadline', '#deadline-day', '#deadline-time', '#deadline-remind',
     '#reset-all'
   ];
@@ -5058,6 +5068,16 @@
         saveClock({ requireShift: event.target.checked });
       });
     }
+    if ($('#opt-clock-remind')) {
+      $('#opt-clock-remind').addEventListener('change', function (event) {
+        saveClock({ remindMissed: event.target.checked, remindLang: I18n.code() });
+      });
+    }
+    if ($('#clock-remind-after')) {
+      $('#clock-remind-after').addEventListener('change', function (event) {
+        saveClock({ remindAfter: Number(event.target.value) });
+      });
+    }
     if ($('#clock-lead')) {
       $('#clock-lead').addEventListener('change', function (event) {
         var hours = Number(event.target.value);
@@ -5071,7 +5091,9 @@
       $('#opt-clock').addEventListener('change', function (event) {
         var current = Store.timeclock(state);
         state.settings.timeclock = Object.assign({}, state.settings.timeclock, {
-          enabled: event.target.checked, mode: current.mode, devices: current.devices
+          enabled: event.target.checked, mode: current.mode, devices: current.devices,
+          /* שפת התזכורות לעובדים: השפה שבה המנהל הדליק את השעון */
+          remindLang: (state.settings.timeclock && state.settings.timeclock.remindLang) || I18n.code()
         });
         persist('config');
         render();

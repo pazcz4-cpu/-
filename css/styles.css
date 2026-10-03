@@ -2455,3 +2455,17 @@ body[data-emp-view="leave"] .employee-screen > [data-emp-part]:not([data-emp-par
 }
 .auth-consent-check input { width: 20px; height: 20px; flex: none; margin-top: 2px; }
 .auth-consent .btn { width: 100%; }
+
+/* המשמרת התחילה ולא נרשמה כניסה. בולט, כי זה מה שהעובד צריך לעשות
+   עכשיו, אבל לא אדום: זו תזכורת, לא שגיאה. */
+.punch-missed {
+  display: flex; gap: var(--s2); align-items: flex-start;
+  margin: 0 0 var(--s3); padding: var(--s3);
+  border: 1px solid var(--warn-line, #f5c26b); border-radius: var(--r-md);
+  background: var(--warn-bg, #fff7e6); color: var(--ink);
+  font-size: var(--t-sm); line-height: 1.5; font-weight: 600;
+}
+.punch-missed svg { flex: none; margin-top: 2px; }
+
+/* בורר אופן הדיווח בשעון: "מהטלפון ומהשעון" ארוך מתיבת מספר */
+#clock-mode { width: auto; min-width: 10em; }

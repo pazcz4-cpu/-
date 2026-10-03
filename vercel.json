@@ -75,6 +75,10 @@
     {
       "path": "/api/wa?action=abandoned",
       "schedule": "0 9-20 * * *"
+    },
+    {
+      "path": "/api/timeclock?action=missed",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

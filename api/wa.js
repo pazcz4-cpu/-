@@ -9,7 +9,7 @@
 
      GET                         אימות מול מטא. טוקן האימות.
      POST + x-hub-signature-256  אירוע ממטא. חתימת HMAC.
-     POST + Bearer CRON_SECRET   סריקת נטישות. הסוד של Vercel.
+     GET/POST ?action=abandoned  סריקת נטישות (cron). Bearer CRON_SECRET.
 
    הסדר אינו שרירותי: החתימה נבדקת לפני הסוד, כי אירוע ממטא
    לעולם אינו נושא את הסוד שלנו -- ובקשה שנושאת את שניהם היא
@@ -20,7 +20,14 @@ const webhook = require('./_wa-webhook.js');
 const abandoned = require('./_wa-abandoned.js');
 
 module.exports = async function handler(req, res) {
-  if (req.method === 'GET') return webhook(req, res);
+  if (req.method === 'GET') {
+    /* Vercel מפעיל cron ב-GET, לא ב-POST. בלי הענף הזה הסריקה
+       המתוזמנת הגיעה לאימות של מטא ומעולם לא רצה. הסוד נבדק
+       בתוך abandoned עצמו. */
+    const url = new URL(req.url, 'https://setshifts.com');
+    if (url.searchParams.get('action') === 'abandoned') return abandoned(req, res);
+    return webhook(req, res);
+  }
 
   if (req.method === 'POST') {
     const url = new URL(req.url, 'https://setshifts.com');

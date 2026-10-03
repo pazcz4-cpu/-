@@ -1144,8 +1144,40 @@
       /* phone – העובד מדווח מהטלפון. device – רק שעון בסניף.
          both – שניהם, וכל סניף בוחר בפועל מה יש לו. */
       mode: value.mode === 'device' || value.mode === 'both' ? value.mode : 'phone',
-      devices: Array.isArray(value.devices) ? value.devices : []
+      devices: Array.isArray(value.devices) ? value.devices : [],
+      /* תזכורת לעובד שהמשמרת התחילה ולא נרשמה כניסה. דלוקה כברירת
+         מחדל כשהשעון דלוק; בלי שעון אין תזכורת בכלל. הנוסח נשלח
+         בשפה שבה המנהל הדליק את השעון (remindLang). */
+      remindMissed: value.remindMissed !== false,
+      remindAfter: [5, 10, 15, 30].indexOf(Number(value.remindAfter)) !== -1
+        ? Number(value.remindAfter) : 10,
+      remindLang: value.remindLang || ''
     };
+  }
+
+  /* האם צריך להזכיר לעובד עכשיו: יש לו משמרת בסידור שפורסם שהתחילה
+     לפני remindAfter דקות, שעוד לא נגמרה, ואין לו כניסה מאז שנפתח
+     חלון הכניסה שלה. מחזיר את המשמרת, או null. מקבילה בצד הלקוח
+     ל-api/_missed-punch.js, כדי שהעובד שפותח את האפליקציה יראה את
+     זה גם בלי מייל. */
+  function missedClockIn(state, week, weekKey, empId, now, prevWeek) {
+    var clock = timeclock(state);
+    if (!clock.enabled || !clock.remindMissed || !week || !week.published) return null;
+    var at = now ? new Date(now).getTime() : Date.now();
+    var lead = punchWindowRule(state).leadMinutes * 60000;
+    var punches = punchesOf(week, empId).concat(prevWeek ? punchesOf(prevWeek, empId) : []);
+    var shifts = employeeShiftTimes(state, week, weekKey, empId);
+    for (var i = 0; i < shifts.length; i++) {
+      var shift = shifts[i];
+      var start = shift.start.getTime();
+      if (at < start + clock.remindAfter * 60000 || at >= shift.end.getTime()) continue;
+      var inside = punches.some(function (punch) {
+        var stamp = Date.parse(punch.at);
+        return punch.kind === PUNCH.IN && stamp >= start - lead && stamp <= at;
+      });
+      if (!inside) return shift;
+    }
+    return null;
   }
 
   function allowsPhonePunch(state) {
@@ -3121,6 +3153,7 @@
     CALENDAR_SETS: CALENDAR_SETS, CALENDAR_KINDS: CALENDAR_KINDS,
     CALENDAR_POLICY: CALENDAR_POLICY,
     employeeShiftTimes: employeeShiftTimes,
+    missedClockIn: missedClockIn,
     canPunchIn: canPunchIn,
     DEFAULT_PUNCH_LEAD_MINUTES: DEFAULT_PUNCH_LEAD_MINUTES,
     payrollSummary: payrollSummary,

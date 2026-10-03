@@ -717,6 +717,7 @@ main[tabindex="-1"]:focus { outline: none; }
 
 /* ===================== הקמה כלולה, וליד ===================== */
 .lp-hero-lead { margin: 10px 0 0; font-size: 15px; }
+.lp-hero-extra { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
 .lp-hero-lead a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
 
 .lp-onboard { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }

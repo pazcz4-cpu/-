@@ -2227,3 +2227,18 @@ create table if not exists public.marketing_spend (
 
 alter table public.marketing_spend enable row level security;
 revoke all on public.marketing_spend from authenticated, anon;
+
+-- MISSED CLOCK-IN REMINDERS: תזכורת לעובד שהמשמרת התחילה ולא נרשמה כניסה
+-- שורה אחת לכל משמרת שנשלחה עליה תזכורת. המפתח מונע תזכורת כפולה גם
+-- כששתי ריצות של ה-cron חופפות. נכתב רק מהשרת (service_role).
+create table if not exists public.punch_reminders (
+  company_id   uuid not null references public.companies(id) on delete cascade,
+  employee_id  text not null,
+  shift_start  timestamptz not null,
+  channel      text,
+  sent_at      timestamptz not null default now(),
+  primary key (company_id, employee_id, shift_start)
+);
+
+alter table public.punch_reminders enable row level security;
+revoke all on public.punch_reminders from authenticated, anon;

@@ -67,6 +67,17 @@ try {
     window.ShiftStore.timeclock(window.ShiftApp.getState()).mode), 'phone');
   check('והבורר נפתח', await page.locator('#clock-mode').isDisabled(), false);
 
+  console.log('\n== תזכורת על כניסה שלא נרשמה ==');
+  check('דלוקה כברירת מחדל כשהשעון דלוק', await page.isChecked('#opt-clock-remind'), true);
+  check('והבחירה בדקות פתוחה', await page.locator('#clock-remind-after').isDisabled(), false);
+  await page.selectOption('#clock-remind-after', '15');
+  await page.waitForTimeout(600);
+  check('15 דקות נשמר', await page.evaluate(() =>
+    window.ShiftStore.timeclock(window.ShiftApp.getState()).remindAfter), 15);
+  check('ונרשמה שפת התזכורות', await page.evaluate(() =>
+    window.ShiftStore.timeclock(window.ShiftApp.getState()).remindLang), 'he');
+  check('מוסבר מה קורה כשהשעון כבוי', await page.locator('[data-i18n="settings.clockOffHint"]').innerText(), /בקופה/);
+
   console.log('\n== שעות נוספות ==');
   check('התיבה קיימת', await page.locator('#opt-overtime').isVisible(), true);
   await page.check('#opt-overtime');
@@ -165,6 +176,13 @@ try {
   await page.waitForTimeout(1800);
 
   check('כרטיס השעון מוצג לעובד', await page.locator('.punch-card').count(), 1);
+  /* המשמרת התחילה ב-00:00, והתזכורת אחרי 15 דקות. בדקות הראשונות
+     של היום עוד אין תזכורת, ולכן הבדיקה מדלגת עליהן. */
+  const sinceMidnight = new Date().getHours() * 60 + new Date().getMinutes();
+  if (sinceMidnight > 16) {
+    check('מוצגת תזכורת שהמשמרת התחילה ולא נרשמה כניסה',
+      await page.locator('.punch-missed').innerText(), /התחילה ב-00:00/);
+  }
   check('והכפתור אומר "כניסה"',
     await page.locator('.punch-btn').innerText(), /כניסה/);
   check('והמצב הוא "לא רשום"',
@@ -174,6 +192,7 @@ try {
   await page.waitForTimeout(1200);
   check('אחרי הדיווח המצב הוא "בפנים"',
     await page.locator('.punch-state b').innerText(), /בפנים מאז/);
+  check('והתזכורת נעלמה', await page.locator('.punch-missed').count(), 0);
   check('והכפתור התחלף ל"יציאה"',
     await page.locator('.punch-btn').innerText(), /יציאה/);
   check('ונשמר דיווח אחד בשרת', await page.evaluate(async () => {

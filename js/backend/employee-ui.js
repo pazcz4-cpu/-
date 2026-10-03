@@ -602,6 +602,21 @@
 
        מוצג רק בשבוע הנוכחי. דיווח כניסה על השבוע הבא אינו דבר
        שקיים, וכפתור שמופיע שם הוא הזמנה לטעות. */
+    /* המשמרת התחילה ולא נרשמה כניסה. רק בעסק שהדליק שעון נוכחות,
+       ורק בשבוע הנוכחי. התזכורת במייל נשלחת מהשרת (api/_missed-punch.js);
+       כאן היא מוצגת למי שפותח את האפליקציה. */
+    var missed = null;
+    if (Store.timeclock(this.state).enabled && this.weekKey === Store.currentWeekKey()) {
+      missed = Store.missedClockIn(this.state, this.week, this.weekKey, this._employeeId(), null,
+        this.state.weeks[Store.shiftWeekKey(this.weekKey, -1)] || null);
+    }
+    var missedLine = missed ? '<p class="punch-missed" role="alert">' + ico('warn') + '<span>' +
+      esc(t(Store.allowsPhonePunch(this.state) ? 'employee.clockMissed' : 'employee.clockMissedDevice',
+        { time: pad2(missed.start) })) + '</span></p>' : '';
+    if (missed && !Store.allowsPhonePunch(this.state)) {
+      html += '<div class="m-card punch-card" data-emp-part="clock">' + missedLine + '</div>';
+    }
+
     if (Store.allowsPhonePunch(this.state) && this.weekKey === Store.currentWeekKey()) {
       /* השבוע שלפני. משמרת לילה של מוצאי שבת נכנסת ביום האחרון
          של השבוע ויוצאת בראשון בבוקר, ובלי השבוע הקודם העובד
@@ -630,6 +645,7 @@
           { hours: Store.formatMinutes(todayMinutes) })) + '</span>';
       }
       html += '</div>';
+      if (!inside) html += missedLine;
 
       /* ===== כניסה רק כשיש משמרת =====
 

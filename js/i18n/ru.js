@@ -1536,6 +1536,7 @@
 
       common: {
         emailUs: 'Напишите нам',
+        callUs: 'Телефон',
         supportHours: "Часы работы поддержки SetShifts: с воскресенья по четверг, {from}–{to}",
         moveUp: 'Выше', moveDown: 'Ниже', timePlaceholder: 'чч:мм',
         save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', close: 'Закрыть',

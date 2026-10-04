@@ -87,6 +87,8 @@ const LEGAL = {
   EFFECTIVE_DATE: process.env.LEGAL_EFFECTIVE_DATE ||
     new Date().toISOString().slice(0, 10),
   SUPPORT_EMAIL: 'support@setshifts.com',
+  SUPPORT_PHONE: Model.SUPPORT_PHONE,
+  SUPPORT_PHONE_TEL: Model.SUPPORT_PHONE_TEL,
   /* שעות המענה האנושי של SetShifts בלבד. אינן קשורות לשעות ולהגדרות
      שבתוך המערכת של כל עסק (סניפים, משמרות, שעות פתיחה). */
   SUPPORT_FROM: Model.SUPPORT_HOURS_FROM,
@@ -492,7 +494,8 @@ function landingStructured(lang) {
   return [
     seo.organization(SITE_URL, {
       legalName: LEGAL.LEGAL_ENTITY || null,
-      supportEmail: Model.SUPPORT_EMAIL
+      supportEmail: Model.SUPPORT_EMAIL,
+      supportPhone: Model.SUPPORT_PHONE_TEL
     }),
     seo.softwareApplication(SITE_URL, {
       description: description,
@@ -571,7 +574,7 @@ function proseHead(item) {
   const meta = metaOf(read(item.file));
   const here = '/' + item.dir + '/';
   const structured = [
-    seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL }),
+    seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL, supportPhone: Model.SUPPORT_PHONE_TEL }),
     seo.breadcrumbs(SITE_URL, [
       { name: 'SetShifts', path: '/' },
       { name: item.label, path: here }
@@ -704,7 +707,7 @@ CONTENT_PAGES.forEach((item) => {
     const label = I18n.t(item.key);
 
     const structured = [
-      seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL }),
+      seo.organization(SITE_URL, { supportEmail: Model.SUPPORT_EMAIL, supportPhone: Model.SUPPORT_PHONE_TEL }),
       seo.breadcrumbs(SITE_URL, [
         { name: 'SetShifts', path: seo.pathOf(lang.code) },
         { name: label, path: here }

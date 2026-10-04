@@ -1542,6 +1542,7 @@
 
       common: {
         emailUs: 'כתבו לנו',
+        callUs: 'טלפון',
         supportHours: "שעות השירות של SetShifts: ראשון עד חמישי, {from}–{to}",
         moveUp: 'העלאה', moveDown: 'הורדה', timePlaceholder: 'שש:דד',
         save: 'שמירה', cancel: 'ביטול', delete: 'מחיקה', close: 'סגירה',

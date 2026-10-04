@@ -554,6 +554,8 @@
     if (contact) {
       contact.innerHTML = esc(t('common.emailUs')) + ' <a href="mailto:' +
         esc(Model.SUPPORT_EMAIL) + '">' + esc(Model.SUPPORT_EMAIL) + '</a>'
+      contact.innerHTML += ' · ' + esc(t('common.callUs')) + ' <a href="tel:' +
+        esc(Model.SUPPORT_PHONE_TEL) + '" dir="ltr">' + esc(Model.SUPPORT_PHONE) + '</a>';
       contact.innerHTML += '<br><small>' + esc(t('common.supportHours', {
         from: Model.SUPPORT_HOURS_FROM, to: Model.SUPPORT_HOURS_TO })) + '</small>';
     }

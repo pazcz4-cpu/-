@@ -164,10 +164,13 @@ try {
 
   console.log('\n== כתובת יצירת קשר ==');
   {
-    const mailto = page.locator('#footer-contact a');
+    const mailto = page.locator('#footer-contact a[href^="mailto:"]');
     check('כתובת תמיכה בדף המכירה', await mailto.getAttribute('href'),
       'mailto:support@setshifts.com');
     check('והיא מוצגת ללקוח', await mailto.textContent(), 'support@setshifts.com');
+    const tel = page.locator('#footer-contact a[href^="tel:"]');
+    check('טלפון התמיכה בדף המכירה', await tel.getAttribute('href'), 'tel:+97239228281');
+    check('ומוצג בכתיב מקומי', await tel.textContent(), '03-922-8281');
     /* כפתור וואטסאפ מופיע רק כשיש מספר – קישור שבור גרוע מאין קישור */
     const hasNumber = await page.evaluate(() => !!window.ShiftModel.WHATSAPP_NUMBER);
     check('וואטסאפ מוצג רק כשיש מספר',

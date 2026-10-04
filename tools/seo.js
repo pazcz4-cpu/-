@@ -267,6 +267,7 @@ function organization(siteUrl, options) {
       '@type': 'ContactPoint',
       contactType: 'customer support',
       email: opts.supportEmail,
+      ...(opts.supportPhone ? { telephone: opts.supportPhone } : {}),
       availableLanguage: LANGUAGES.map((lang) => lang.code)
     }];
   }

@@ -1536,6 +1536,7 @@
 
       common: {
         emailUs: 'Escreve-nos',
+        callUs: 'Telefone',
         supportHours: "Horário de atendimento da SetShifts: de domingo a quinta-feira, {from}–{to}",
         moveUp: 'Subir', moveDown: 'Descer', timePlaceholder: 'hh:mm',
         save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Fechar',

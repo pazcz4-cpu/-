@@ -1536,6 +1536,7 @@
 
       common: {
         emailUs: 'راسلنا',
+        callUs: 'هاتف',
         supportHours: "ساعات خدمة SetShifts: من الأحد إلى الخميس، {from}–{to}",
         moveUp: 'رفع', moveDown: 'خفض', timePlaceholder: 'سس:دد',
         save: 'حفظ', cancel: 'إلغاء', delete: 'حذف', close: 'إغلاق',

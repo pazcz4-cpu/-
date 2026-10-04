@@ -1542,6 +1542,7 @@
 
       common: {
         emailUs: 'Email us',
+        callUs: 'Phone',
         supportHours: "SetShifts support hours: Sunday to Thursday, {from}–{to}",
         moveUp: 'Move up', moveDown: 'Move down', timePlaceholder: 'hh:mm',
         save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close',

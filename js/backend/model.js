@@ -69,6 +69,9 @@
   /* כתובת התמיכה. מקום אחד, כדי שדף המכירה והמערכת לא יציגו
      לעולם שתי כתובות שונות. */
   var SUPPORT_EMAIL = 'support@setshifts.com';
+  /* קו טלפון שעונים בו בשעות השירות. מופיע גם בדף הפייסבוק. */
+  var SUPPORT_PHONE = '03-922-8281';
+  var SUPPORT_PHONE_TEL = '+97239228281';
 
   /* ===== זמן המענה האנושי =====
 
@@ -871,7 +874,7 @@
 
   var API = {
     ROLES: ROLES, ROLE_NAMES: ROLE_NAMES, CAPABILITIES: CAPABILITIES, can: can,
-    SUPPORT_EMAIL: SUPPORT_EMAIL,
+    SUPPORT_EMAIL: SUPPORT_EMAIL, SUPPORT_PHONE: SUPPORT_PHONE, SUPPORT_PHONE_TEL: SUPPORT_PHONE_TEL,
     SUPPORT_REPLY_HOURS: SUPPORT_REPLY_HOURS,
     SUPPORT_URGENT_HOURS: SUPPORT_URGENT_HOURS,
     UPDATES_CONSENT_VERSION: UPDATES_CONSENT_VERSION,

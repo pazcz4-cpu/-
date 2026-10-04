@@ -602,6 +602,14 @@ test('קובץ האימות של Bing יושב בשורש', function () {
   assert(/<user>[A-F0-9]{32}<\/user>/.test(xml), 'קוד האימות אינו בתבנית הצפויה');
 });
 
+/* Meta בודקת את דף הבית בלבד. תג שנעלם בשקט מנתק את הדומיין מהתיק
+   העסקי, ואז אי אפשר לערוך תצוגות קישורים ולמדוד מודעות. */
+test('תג אימות הדומיין של Meta יושב בדף הבית, ורק בו', function () {
+  assert(/<meta name="facebook-domain-verification" content="[a-z0-9]{20,}">/.test(read('index.html')),
+    'אין תג אימות של Meta בדף הבית');
+  assert(read('en/index.html').indexOf('facebook-domain-verification') === -1, 'התג הוכפל לדף באנגלית');
+});
+
 test('עמוד שגיאה קיים ואינו נכנס לתוצאות', function () {
   assert(exists('404.html'), 'אין עמוד 404');
   var html = read('404.html');

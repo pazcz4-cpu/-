@@ -366,6 +366,15 @@ function metaOf(html) {
 const escapeAttr = seo.escapeAttr;
 const escapeText = seo.escapeText;
 
+/* אימות הבעלות על הדומיין מול Meta (התיק העסקי Setshifts).
+
+   תג ולא קובץ, בניגוד ל-Bing: Meta בודקת את דף הבית, ותג שיושב
+   רק בו אינו נוגע בשאר האתר. הערך ציבורי – הוא מופיע בקוד המקור
+   של דף הבית. אם Meta מנפיקה ערך חדש, מחליפים כאן, או ב-Vercel
+   דרך META_DOMAIN_VERIFICATION בלי לגעת בקוד. */
+const META_DOMAIN_VERIFICATION = String(process.env.META_DOMAIN_VERIFICATION ||
+  'u7eksns21pi0qnme0poykht1x2auqb').trim();
+
 /* תגיות שכל עמוד צריך: אייקון, manifest ומצב אפליקציה באייפון */
 function headExtras(options) {
   /* רק לעמודים שיש להם manifest. עמודי התוכן לא קיבלו אחד,
@@ -398,6 +407,9 @@ function headExtras(options) {
     .concat(options.alternates
       ? seo.alternateTags(SITE_URL,
         options.alternates === true ? null : options.alternates) : [])
+    .concat(options.domainVerification && META_DOMAIN_VERIFICATION
+      ? ['<meta name="facebook-domain-verification" content="' +
+        escapeAttr(META_DOMAIN_VERIFICATION) + '">'] : [])
     .concat(options.social ? seo.socialTags(options.social) : [])
     .concat((options.structured || []).map(seo.jsonLd))
     /* השפה שהעמוד כבר נשלח בה, לפני שקוד כלשהו רץ. בלי זה
@@ -512,6 +524,7 @@ seo.LANGUAGES.forEach((lang) => {
       manifest: '/app/manifest.webmanifest',
       canonical: here,
       alternates: true,
+      domainVerification: lang.code === seo.DEFAULT_LANG,
       pageLang: lang,
       social: {
         siteUrl: SITE_URL,
